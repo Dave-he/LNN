@@ -20,9 +20,11 @@ LNN/
 ├── docs/                       # 文档目录（调研报告、论文总结、学习笔记等）
 ├── papers/                     # 论文归档与每日追踪
 │   └── daily/                  # 每日/定期论文抓取记录
-├── prompts/                    # 通用 AI Agents / Skills 提示词配置 (兼容多平台)
-│   ├── paper-analyzer.md
-│   └── paper-translator.md
+├── skills/                     # 符合 Vercel Skills 标准的 AI Agents 技能库
+│   ├── paper-analyzer/
+│   │   └── SKILL.md
+│   └── paper-translator/
+│       └── SKILL.md
 ├── projects/                   # 开源项目克隆、复现代码与实验项目
 ├── analysis/                   # 实验结果分析、数据或可视化相关
 └── scripts/                    # 自动化脚本（论文抓取、数据处理等）
@@ -65,20 +67,34 @@ LNN/
 4. **元数据 (YAML Frontmatter)**：
    - 建议在每篇新建研究报告或笔记顶部添加 YAML frontmatter，至少包含 `title`, `tags`, `date` 等字段，便于 Obsidian 进行检索与属性管理。
 
-## 🤖 通用 Agents / Skills (论文分析与研究)
+## 🤖 通用 Agents / Skills (基于 Vercel Skills)
 
-本项目提取了专门用于**论文研读与分析**的 AI Agent 提示词配置（位于 `prompts/` 目录下）。这些 Prompt 是完全跨平台和模型无关的，**全面兼容 Claude, Gemini, Codex, Qwen, ChatGPT 等各类主流 AI 大模型工具**，也同样适用于 Cursor, Windsurf, Trae 等 AI 代码编辑器。
+本项目使用 [Vercel Skills](https://github.com/vercel-labs/skills) 规范来管理专门用于**论文研读与分析**的 AI Agents。您可以将本项目 `skills/` 目录下的技能，通过软链接的方式一键导入到各种 AI 编码工具和终端中（如 Cursor, Windsurf, Trae, Claude Code 等），无需手动复制粘贴。
 
-您可以直接将 `prompts/` 目录下的 `.md` 文件内容：
-1. 粘贴发送给 Web 端的 **Claude / Gemini / Qwen**，让其扮演对应的专家角色；
-2. 作为 System Prompt (系统提示词) 填入 API 调用代码中；
-3. 配置到 AI IDE 的 `.cursorrules` / Custom Instructions 中进行全局挂载调用。
+### 安装与使用
+1. 确保您的环境中已安装 Node.js。
+2. 运行以下命令，使用 `skills` CLI 将项目内的技能以软链接方式安装到您首选的 AI 助手中：
 
-- **`prompts/paper-analyzer.md` (论文分析专家)**
+```bash
+# 进入项目根目录
+cd LNN
+
+# 交互式添加本地技能 (软链接到您的 AI 工具)
+npx skills add ./skills/paper-analyzer
+npx skills add ./skills/paper-translator
+
+# 此时，技能配置文件会软链接到工具的配置目录（如 .cursorrules 或 .trae/skills 等）
+```
+
+### 内置的论文研究 Skills
+
+- **`paper-analyzer` (论文分析专家)**
   - **功能**：读取并分析学术论文，结构化提取论文的“核心问题”、“方法论”、“关键成果”及“局限性”。
   - **触发场景**：快速了解论文核心贡献，或帮您总结长篇文献时使用。
-- **`prompts/paper-translator.md` (学术论文翻译专家)**
+- **`paper-translator` (学术论文翻译专家)**
   - **功能**：用于学术英语与中文的精准翻译，严格保留学术术语（如 *Liquid Neural Networks*）、数学公式及排版。
   - **触发场景**：需要精准中英互译摘要、特定段落或通篇文献时使用。
+
+您不仅可以在编辑器中调用，也可以将 `SKILL.md` 的内容发给 Web 端的 Claude, Gemini, Qwen 等大模型进行日常论文研读。
 
 ## 🚀 后续计划
