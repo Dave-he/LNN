@@ -1,0 +1,1191 @@
+1
+Accuracy, Memory Efficiency and Generalization: A
+Comparative Study on Liquid Neural Networks and
+Recurrent Neural Networks
+Shilong Zong Alex Bierly Almuatazbellah Boker Hoda Eldardiry
+arXiv:2510.07578v1 [cs.LG] 8 Oct 2025
+Abstract—This review aims to conduct a comparative analysis
+of liquid neural networks (LNNs) and traditional recurrent
+neural networks (RNNs) and their variants, such as long short-
+term memory networks (LSTMs) and gated recurrent units
+(GRUs). The core dimensions of the analysis include model
+accuracy, memory efficiency, and generalization ability. By sys-
+tematically reviewing existing research, this paper explores the
+basic principles, mathematical models, key characteristics, and
+inherent challenges of these neural network architectures in
+processing sequential data. Research findings reveal that LNN,
+as an emerging, biologically inspired, continuous-time dynamic
+neural network, demonstrates significant potential in handling
+noisy, non-stationary data, and achieving out-of-distribution
+(OOD) generalization. Additionally, some LNN variants out-
+perform traditional RNN in terms of parameter efficiency and
+computational speed. However, RNN remains a cornerstone in
+sequence modeling due to its mature ecosystem and successful
+applications across various tasks. This review identifies the com-
+monalities and differences between LNNs and RNNs, summarizes
+their respective shortcomings and challenges, and points out
+valuable directions for future research, particularly emphasizing
+the importance of improving the scalability of LNNs to promote
+their application in broader and more complex scenarios.
+Index Terms—deep learning (DL), liquid neural networks
+(LNN), recurrent neural networks (RNN), efficiency, generaliza-
+tion, sequence modeling, robotics
+I. INTRODUCTION
+SEQUENCE modeling plays a crucial role in numerous
+fields of artificial intelligence, such as natural language
+processing, speech recognition, time series prediction, and
+robot control [1], [2]. As the complexity, dynamism, and noise
+interference of real-world data continue to increase, there is a
+growing demand in both academia and industry for sequence
+models that are not only accurate but also efficient and robust.
+Recurrent neural networks (RNNs) and their important
+variants, such as long short-term memory (LSTM) [1] and
+gated recurrent units (GRUs), are the foundational architec-
+tures for deep learning in sequence data processing. These
+models capture temporal dependencies through their internal
+recurrent connections and memory units, achieving significant
+Shilong Zong is with the Department of Computer Science, Virginia Tech,
+Blacksburg, VA 24061 USA (e-mail: shilongz@vt.edu).
+Alex Bierly is with the Department of Electrical and Computer Engineering,
+Virginia Tech, Blacksburg, VA 24061 USA (e-mail: akbierly@vt.edu).
+Almuatazbellah Boker is with the Department of Electrical and Com-
+puter Engineering, Virginia Tech, Blacksburg, VA 24061 USA (e-mail:
+boker@vt.edu).
+Hoda Eldardiry is with the Department of Computer Science, Virginia Tech,
+Blacksburg, VA 24061 USA (e-mail: hdardiry@vt.edu).
+success across various tasks. However, traditional RNNs also
+face well-known limitations, including difficulty in effectively
+learning very long-range dependencies [3], potential issues
+such as gradient vanishing or exploding during training, and
+inherent computational efficiency bottlenecks when handling
+extremely long sequences.
+In recent years, Liquid Neural Networks (LNNs) have
+emerged as a novel category of neural networks, attracting
+significant attention. LNNs draw inspiration from biological
+neural systems (such as the nervous system of the nematode
+Caenorhabditis elegans) [4], [5], [6], [7] and continuous-
+time dynamic systems theory. Unlike traditional RNNs, which
+operate on discrete time steps, LNNs describe the continuous
+evolution of their neural states through ordinary differential
+equations (ODEs) [4], [8]. This fundamental difference enables
+LNNs to adaptively adjust their behavior and temporal scales
+according to the dynamic characteristics of input data, thereby
+potentially overcoming some inherent limitations of RNNs,
+particularly in handling irregularly sampled data, noise inter-
+ference, and achieving stronger generalization capabilities.
+Many real-world phenomena are inherently continuous,
+and LNN’s continuous-time dynamic properties enable it to
+naturally represent time-varying signals and potentially handle
+irregularly sampled data more effectively. The core innovation
+of LNN lies in its time-processing mechanism, which may of-
+fer inherent advantages in specific scenarios. The limitations of
+RNN in handling long-range dependencies and gradient issues
+have directly driven the exploration of alternative architectures
+like LNNs [3].
+This review aims to conduct a comprehensive comparative
+study of LNN and traditional RNN in terms of model architec-
+ture, mathematical foundations, accuracy, memory efficiency,
+and generalization ability. This paper will systematically re-
+view the relevant literature, identify their commonalities and
+differences, summarize their respective shortcomings and chal-
+lenges, and point out valuable directions for future research,
+with a particular focus on the scalability of LNN. While
+existing literature includes comparisons of specific models on
+particular tasks [4], [5], [9], a comprehensive review that sys-
+tematically contrasts the LNN and RNN architectural families
+across the core dimensions of accuracy, memory efficiency,
+and generalization remains less common [6], [10]. This paper
+aims to fill this gap by synthesizing recent advancements to
+provide a holistic perspective, with a particular emphasis on
+the emerging LNN paradigm and its potential to address the
+inherent limitations of traditional recurrent models.
+Overall, the contribution of this paper is manifested in
+providing a comparative study of recurrent neural networks
+(RNNs) and Liquid Neural Networks (LNNs) and illustrating
+the advantages of LNNs for predicting data with long-term
+time dependencies. We support our study with three case
+studies; namely, trajectory prediction task using real-world
+motion capture data, a synthetic time series prediction task
+involving damped sine waves, and modeling Intensive Care
+Unit (ICU) patient state evolution. Finally, we outline future
+research directions for LNNs.
+The structure of this paper is as follows: Section 3 provides
+a detailed introduction to the model architecture and theoret-
+ical basis of recurrent neural networks (RNNs) and Liquid
+Neural Networks (LNNs). Section 4 compares and analyzes
+the two models in terms of accuracy, memory efficiency, and
+generalization ability. Section 5 presents a more practical case
+study. Section 6 discusses future research directions and open
+issues. Section 7 summarizes the entire paper.
+II. MODEL ARCHITECTURE
+To understand the core differences and potential of LNNs
+and RNNs, we first need to analyze their respective architec-
+tural designs and mathematical principles in depth. RNNs and
+their gated variants capture sequence dependencies through
+iterative updates at discrete time steps, while LNNs intro-
+duce continuous-time dynamics, which fundamentally change
+their behavior. To illustrate the fundamental architectural
+differences, Figures 1 and 2 provide a conceptual compari-
+son between the discrete-time processing of RNNs and the
+continuous-time dynamics of LNNs. The subsequent Table I
+summarizes the main characteristics of the RNN and LNN
+model families.
+Fig. 1: Recurrent Neural Network (RNN) unfolding represen-
+tation illustrating the temporal expansion of recurrent connec-
+tions. The left side shows the compact recurrent structure with
+feedback connections, while the right side demonstrates the
+unfolded network across multiple time steps. Each time step
+receives input xt, updates hidden state ht, and produces output
+ot, with weight matrices (W, U, V) shared across all time steps.
+A. Recurrent Neural Network
+RNN is a neural network designed for processing sequential
+data. Its core idea is to use internal recursive structures to
+transmit and maintain information from previous time steps.
+1) Standard RNN: Standard RNNs process each element
+of an input sequence in order. At each time step, the network
+receives the current input and the hidden state from the
+previous time step, then calculates a new hidden state and
+2
+Fig. 2: Conceptual architecture of a Liquid Neural Network
+(LNN). Input layer (left): minput streams I1,...,Im provide
+event-like signals over time, forming the input vector x(t).
+Liquid layer (middle): a recurrent, heterogeneous reservoir
+with continuous-time state h(t); its dynamics follow an ODE
+˙
+h(t) = f h(t),x(t); θ , and the arrows depict recurrent
+couplings among units. Readout layer (right): n readout
+units R1,...,Rn compute task-specific outputs from the liquid
+state, typically r(t) = Wh(t) + b; dashed lines indicate dense
+projections from the liquid layer to each readout. The far-
+right sketch illustrates example output trajectories/decisions
+produced by the readouts.
+the current output. The hidden state acts as a compressed
+representation of past information for the network.
+The core calculation process of a standard RNN can be
+described by the following formula:
+Hidden status updates:
+ht = σh Whhht−1 + Wxhxt + bh , (1)
+Output calculation:
+yt = σy Whyht + by , (2)
+where xt is the input at time step t, ht is the hidden state,
+ht−1 is the hidden state at the previous time step, and yt is
+the output. Wxh, Whh, and Why are the weight matrices from
+the input to the hidden layer, hidden layer to hidden layer, and
+hidden layer to output layer, respectively. bh and by are bias
+vectors. σh and σy are typically activation functions, such as
+tanh or sigmoid.
+2) Long Short-Term Memory (LSTM) Network: LSTM was
+proposed to solve the gradient vanishing or explosion problem
+faced by standard RNNs when learning long-range dependen-
+cies [1]. LSTM introduces an explicit memory unit (cell state
+Ct) and three gating mechanisms—forget gate, input gate, and
+output gate—to finely control the flow of information in the
+cell state.
+The gating mechanism and state update of LSTM are defined
+by the following formulas:
+Forgetfulness Gate (ft):
+ft = σ Wf [ht−1, xt] + bf. (3)
+This gate decides which information to discard from the
+cellular state.
+Input Gate (it) and Candidate Cell State (Ct):
+This stage determines which new information will be stored
+in the cell state. It comprises two parts working in tandem:
+the input gate (it), which uses a sigmoid function to decide
+3
+TABLE I: Overview of Recurrent Neural Network (RNN) and Liquid Neural Network (LNN) Model Families
+Family Architecture Core Principle Temporal Mechanism Advantages Limitations
+RNN Standard RNN Discrete recurrence Sequential hidden-state
+update
+Simple structure; processes
+sequences
+RNN LSTM Gated discrete recurrence Cell state with forget / input
+Mitigates gradient issues;
+/ output gates
+captures long-term deps
+RNN GRU Simplified gated recurrence Update and reset gates Fewer params; faster than
+LSTM; similar accuracy
+Vanishing/exploding
+gradients; struggles with
+long-term deps
+Many parameters;
+computationally heavy
+Slightly less expressive on
+some tasks
+LNN LTC Continuous ODE with
+NN-modulated linear ODE Bounded stability; adaptive
+dynamic τ
+scales
+LNN CfC Closed-form ODE
+Embedded NN combination Solver-free; fast
+approximation
+training/inference
+LNN NCP Sparse bio-inspired structure ODE neurons, sparse
+Compact; interpretable;
+connectivity
+robust
+LNN Liquid-S4 Linearised LTC state-space
+Linearised LTC state
+Excellent long-range deps;
+model
+evolution
+parameter-efficient
+LNN LRC / LRCU ODE with liquid capacitance State-dependent capacitance;
+Improves LTC oscillations;
+Euler update
+efficient
+Needs ODE solver; stiff eqs
+hard
+Approximation error; theory
+complex
+Sparse design needs expert
+tuning
+Relies on SSM theory;
+design complex
+New approach; ecosystem
+immature
+which values will be updated, and a tanh layer that generates
+a vector of new candidate values, the candidate cell state (Ct).
+it = σ Wi[ht−1, xt] + bi , (4)
+Ct = tanh Wc[ht−1, xt] + bc. (5)
+This gate decides which new information to store in the cell
+state. It consists of two parts: a sigmoid layer which decides
+the update proportion (the input gate it), and a tanh layer that
+creates a vector of new candidate values, Ct, which could be
+added to the cell state.
+Cell State Update (Ct):
+Ct = ft ⊙Ct−1 + it ⊙Ct, (6)
+This gate combines the forget gate and the input gate to update
+the cell state. Output Gate (ot):
+ot = σ Wo[ht−1, xt] + bo , (7)
+This gate decides which parts of the cell state to output.
+Hidden State Update (ht):
+ht = ot ⊙tanh Ct , (8)
+Here,Wf,Wi,Wc,Wo are weight matrices, bf,bi,bc,bo are
+bias vectors, σ(·) is the sigmoid function, tanh(·) is the hyper-
+bolic tangent function, ⊙denotes element-wise multiplication,
+and [ht−1, xt] denotes the concatenation of ht−1 and xt.
+3) Gate-controlled Recirculation Unit: GRU is a simplified
+version of LSTM, designed to maintain performance compa-
+rable to LSTM while reducing the number of parameters and
+computational complexity. GRU merges the forget gate and
+input gate of LSTM into a single “update gate” and directly
+fuses the cell state and hidden state.
+The core equation of GRU is as follows:
+Reset Gate (rt): Determines how much of the past information
+to forget.
+rt = σ Wr[ht−1, xt] + br , (9)
+Update Gate (zt): Decides how much of the past hidden state
+and how much of the candidate hidden state to use.
+zt = σ Wz[ht−1, xt] + bz , (10)
+Candidate Hidden State (˜
+ht): Computes the candidate activa-
+tion for the current time step.
+˜
+ht = tanh Wh[ rt ⊙ht−1, xt] + bh (11)
+Final Hidden State (ht): Combines the previous hidden state
+and the candidate hidden state according to the update gate.
+ht = (1−zt) ⊙ht−1 + zt ⊙˜
+ht, (12)
+where, Wr,Wz,Wh are weight matrices, br,bz,bh are bias
+vectors.
+4) Intrinsic challenges of RNNs: Although LSTM and GRU
+alleviate the problems of standard RNNs to some extent
+through gating mechanisms, they still face some inherent
+challenges:
+1) Gradient vanishing/explosion: When processing very
+long sequences, even LSTM and GRU may experience
+gradients that become too small or too large during
+backpropagation through time (BPTT), thereby hinder-
+ing effective learning [3].
+2) Capturing extremely long-range dependencies: Although
+LSTM/GRU are designed to capture long-range depen-
+dencies, their ability to capture dependencies in ex-
+tremely long sequences (e.g., thousands of time steps)
+remains limited in practice [4].
+3) Computational cost: The sequential processing nature
+of RNNs makes them difficult to parallelize at scale
+like convolutional networks or transformers, which may
+result in slower training and inference speeds when
+handling very long sequences. Additionally, training
+RNNs may require significant computational resources
+and memory.
+The evolution from standard RNNs to LSTM/GRU was
+primarily driven by the need to address gradient issues and
+4
+improve memory capabilities. This backdrop laid the ground-
+work for the emergence of LNNs, which aim to tackle these
+challenges from a fundamentally different angle—continuous
+dynamics rather than discrete gating.
+B. Continuous-Time Neural Networks and the Liquid Neural
+Networks (LNNs) Family
+Continuous-time neural networks represent a class of mod-
+els where the evolution of neuron states is described by ordi-
+nary differential equations (ODEs), rather than discrete-time
+recurrence relations [11]. Liquid Neural Networks (LNNs) are
+a prominent and biologically-inspired subclass of these models
+[4], [8]. A key characteristic of many LNN variants is their
+use of state- and input-dependent dynamics, often realized
+through learned, adaptive time constants, which allows them
+to dynamically adjust their response properties to incoming
+signals. Unlike RNNs, which operate on discrete time steps,
+the state of a continuous-time model is a continuous function
+of time. This continuity enables them to naturally handle
+irregularly sampled time series data and model underlying
+continuous processes. Specifically, LNNs are a biologically-
+inspired subset of these models, often inspired by the neural
+circuitry of the nematode Caenorhabditis elegans [4], [7]. A
+key feature of many LNN variants is that their neurons can dy-
+namically adjust their response time or “memory span” based
+on input signals, often through a learned time constant. The
+LNN family has evolved rapidly, leading to several key archi-
+tectures with distinct trade-offs in performance, computational
+efficiency, and interpretability. The following subsections will
+detail these foundational variants, from the original Liquid
+Time-Constant (LTC) networks to more recent, specialized
+designs.
+1) Basic LNN: The dynamics of LNN are usually described
+by a set of ordinary differential equations, which can be written
+in general form as:
+dh(t)
+dt= f h(t), x(t), t, θ , (13)
+In this context, h(t) represents the hidden state vector of
+the network at time t, x(t) is the input vector, and θ is
+the learnable parameter of the network. The function f is a
+general nonlinear function, parameterized by θ, that defines
+the dynamics of the hidden state. In practice, f is typically
+implemented as a neural network, such as a multi-layer
+perceptron (MLP), which takes the current state h(t) and input
+x(t) as its inputs to compute the state’s rate of change.
+When (13) has no analytical solution (i.e. no closed-
+form solution), numerical ODE solvers (such as Runge-Kutta
+methods, DOPRI5, or Euler methods) are used to approximate
+the system’s state evolution at discrete time points.
+The LNN family has evolved rapidly, showing a clear trend
+from general-purpose models requiring numerical solvers to
+more efficient and specialized architectures. This progres-
+sion begins with foundational models like neural ODEs and
+the original Liquid Time-Constant (LTC) networks [4], [8].
+To address the computational cost of solvers, Closed-form
+(14)
+Continuous-time (CfC) networks [9] were developed to pro-
+vide an analytical approximation. Concurrently, Neural Circuit
+Policies (NCPs) [7] emphasized sparsity and biological inter-
+pretability. More recent advancements include hybrid models
+like Liquid-S4 [12], which integrates LNN principles with
+powerful State-Space Models (SSMs), and Liquid Resistance-
+Capacitance (LRC) networks [13], which refine the core ODE
+mechanics for improved stability and biological plausibility.
+This evolution highlights a consistent research direction toward
+making LNNs more practical, powerful, and versatile. The
+following subsections will detail these key variants, each
+defined by a distinct mathematical formulation.
+2) Liquid time constant network (LTC): LTC is a specific
+type of LNN whose core idea is that the “time constant” of
+neurons is dynamic and learned by the network itself based
+on input and current state[4]. Its state equation is typically
+expressed as:
+dx(t)
+dt=−
+1
+τ + NN(x(t),I(t),θ) ⊙x(t)
++ NN(x(t),I(t),θ) ⊙A
+where x(t) is the hidden state, I(t) is the input, τ is a base
+time-constant vector, and A is a learnable bias vector. The
+term NN(·) represents a parameterized nonlinear mapping that
+modulates the system’s dynamics based on the current state
+and input. This mapping is typically implemented as a shallow
+neural network with a sigmoid or tanh activation function. Its
+output dynamically adjusts both the decay rate of the state
+(i.e., the effective time constant) and its coupling to the bias
+term A.
+The core difference between the update mechanisms of
+LTC and RNN lies not in trainable vs. fixed weights, but in
+how those weights define the system’s dynamics. In an RNN,
+the weight matrices like Whh and Wxh are fixed parameters
+that define a static state-transition function. In contrast, the
+parameters within the LTC’s NN(·) function are also fixed
+after training. However, the output of this function, which dy-
+namically modulates the ODE’s coefficients (e.g., the effective
+time constant), changes at every moment based on the current
+state x(t) and input I(t). This makes the system’s temporal
+dynamics inherently adaptive and state-dependent, allowing
+neurons to adjust their response and memory characteristics
+on-the-fly. This adaptive property is a key mechanism for
+handling non-stationary data and is central to LTC’s reported
+robustness and generalization capabilities.
+In RNNs, Whh and Wxh are fixed during the inference
+stage after learning. In LTCs, however, the terms 1
+τ +
+NN x(t),I(t),θ act as the reciprocal of an effective time
+constant, which varies with the current state x(t) and input
+I(t) because NN is a neural network. This means that the
+rate at which neurons “forget” or “respond” is not static
+but adaptive. This adaptive property embedded in the basic
+ODE is a powerful mechanism for handling changing temporal
+patterns and data non-stationarity, which may be the key
+reason for its reported robustness and generalization ability.
+LTC exhibits stable and bounded behavior and has good ex-
+pressive capabilities. To address the stiff ordinary differential
+equations (ODEs) often encountered in LTCs, a practical fixed-
+step ODE solver known as the ”Fused Solver” was introduced.
+This solver is designed to combine the stability of implicit
+Euler methods with the efficiency of their explicit counterparts
+[4].
+3) Closed-form solutions for continuous-time neural net-
+works (CfC): The primary motivation for CfC [9] is to avoid
+the high computational cost and complexity associated with
+numerical ODE solvers in models like LTC. This is based on
+the assumption that the differential equation appears in a linear
+form. Its final form is typically represented as:
+x(t) = σ−f(x, I; θf) t ⊙ g(x, I; θg)
++ 1−σ−f(x, I; θf) t ⊙ h(x, I; θg),
+(15)
+where f, g, and h are nonlinear functions parameterized
+by learnable weights (θf, θg, and θh), which are typically
+implemented as shallow neural networks. The function σ is
+the sigmoid function, acting as a mixing gate. Compared
+with solver-based LNNs, CfC has faster training and inference
+speeds and a smaller computational footprint.
+4) Neural Circuit Policy (NCP): NCP refers to LNNs with
+sparse, biologically inspired connection structures, typically
+constructed using LTC or CfC neurons [7]. NCPs typically
+adopt a four-layer design (sensory layer, intermediate layer,
+command layer, and motor layer). NCPs emphasize model
+compactness, interpretability, and robustness.
+5) Liquid-S4 (LTC State Space Model): The standard
+continuous-time state-space model (SSM) is expressed as
+x′(t) = Ax(t) + Bu(t), y(t) = Cx(t) + Du(t). Recently
+proposed sequence-structured state-space models (S4) and the
+Mamba model have introduced structural and selective im-
+provements, demonstrating outstanding performance in long-
+sequence modeling [14], [15], [16].
+Liquid-S4 integrates the principles of Long-Term Modeling
+(LTC) with the Structured State Space Model (SSM), aiming to
+balance LTC’s generalization capability with S4’s scalability
+for handling long sequences. Its dynamic equations can be
+expressed as [12]:
+˙
+x= (A+ Bu) x+ Bu, (16)
+y= Cx, (17)
+where A,Band Care matrices of appropriate dimensions. The
+LTC state space model demonstrates improved generalization
+capabilities on long-range dependency tasks and typically
+requires fewer parameters than the S4 model.
+6) Liquid Resistive Neural Network (LRC): The LRC
+network is an extension of the LTC and saturated liquid
+time constant STC networks (Saturated Liquid Time-Constant
+(STC)), introducing a “liquid capacitance” term to make the
+membrane capacitance state-dependent, aiming to enhance
+biological plausibility and suppress oscillations. The LRC unit
+(LRCU) is its efficient version, solved using an explicit Euler
+method with single-step expansion.
+Compared to LTC/STC, LRC exhibits better generalization,
+accuracy, and stability, particularly when using simple solvers.
+Its performance is comparable to that of LSTM, GRU, and
+neural ODEs [13].
+5
+III. LITERATURE-BASED COMPARATIVE ANALYSIS
+A. Accuracy
+In time series prediction and classification benchmark tests,
+LTC demonstrates accuracy that is superior to or on par with
+LSTM, CT-RNN, and neural ODE across various tasks such
+as gesture recognition, occupancy detection, traffic prediction,
+and human activity recognition [4]. For example, in ges-
+ture recognition, LTC achieves an accuracy rate of 69.55%,
+while LSTM achieves 64.57% [4]. In traffic prediction, LTC’s
+mean squared error was 0.099, while LSTM’s was 0.169 [4].
+GLNN demonstrated significant accuracy improvements over
+traditional LNN and neural ODE in tasks such as predicting
+damped sinusoidal trajectories (GLNN loss 1.0738 vs LNN
+2.5494 vs neural ODE 1.9899) and modeling nonlinear RLC
+circuits (GLNN accuracy 0.95 vs LNN 0.75) [10]. In OCT
+image analysis, GLNN achieved an accuracy of 0.98 and an
+F1 score, outperforming traditional LNN (accuracy 0.96, F1
+score 0.88) [10]. Liquid-S4 achieved an average performance
+of 87.32% on the Long-Range Arena benchmark across image,
+text, audio, and medical time series, demonstrating state-of-
+the-art generalization capabilities [12].
+On the original speech command dataset, Liquid-S4
+achieved an accuracy rate of 96.78% [12]. UA-LNN out-
+performed standard LNN, LSTM, and MLP models in time
+series prediction, with superior R2, RMSE, and MAE, and
+demonstrated higher accuracy, precision, recall, and F1 scores
+in multi-class classification tasks, especially under noisy con-
+ditions [17]. LRC/LRCU outperforms LSTM, GRU, and MGU
+in RNN benchmarks and successfully solves neural ODE
+tasks [13]. In benchmarks such as PhysioNet, CfC achieves
+performance comparable to or even better than LSTM and
+ODE-RNN while being significantly faster [9]. For traditional
+RNNS, LSTM and GRU typically exhibit comparable accuracy
+[1]. For complex systems with fewer parameters, LSTM some-
+times performs slightly better, but this difference diminishes
+as the number of neurons increases.
+As shown in Table II, the continuous-time nature and
+adaptive time constant of LNNs appear to contribute to their
+strong performance, especially on dynamic or irregularly sam-
+pled data that discrete models may struggle with [4], [5].
+Specific design choices in LNN variants (e.g., the closed-
+form solution in CfC [9], capacitors in LRC [13], and un-
+certainty in UA-LNN [17]) target specific aspects to improve
+accuracy in different scenarios. Although many LNN variants
+claim exceptional accuracy, the specific tasks and conditions
+where they excel vary. For example, Liquid-S4 performs
+well on remote dependencies [12], UA-LNN performs well
+under noisy conditions [17], and CfC offers a good speed-
+accuracy trade-off [9]. This suggests that there is no single
+”best” LNN, but rather a suite of specialized tools. Different
+LNNs (LTC, CfC, Liquid-S4, UA-LNN, LRC) have reported
+high accuracy on different benchmarks or under different
+conditions. Their architectural innovations are targeted (e.g.,
+CfC for speed, UA-LNN for noise). This means that ”high
+accuracy” in LNNs is not a single property but depends on the
+specific LNN architecture and the context of the task at hand.
+Therefore, selecting an LNN requires careful consideration
+of the problem’s characteristics (e.g., sequence length, noise
+level, computational budget).
+B. Efficiency
+Fig. 3: The number of the parameters of the Long Short-Term
+Memory (LSTM) and Gated Recurrent Unit (GRU) models
+as a function of the number of neurons and the order of the
+dynamics determined by nA = nP.
+1) Memory efficiency: number of parameters, model size,
+and solving the “memory curse”: For RNN (LSTM/GRU),
+GRU typically has fewer parameters than LSTM due to its
+simpler gate structure, yet achieves comparable performance.
+For example, Figures 3 and 4, adapted from Lawry´ nczuk
+(2021) [1], illustrate that GRU consistently has fewer param-
+eters than LSTM under various configurations.
+Fig. 4: The number of parameters of the Long Short-Term
+Memory (LSTM) and Gated Recurrent Unit (GRU) models
+as a function of the number of neurons and the order of the
+dynamics determined by nB; nA = 0.
+For LNNs, NCPs are exceptionally compact; for example,
+an autonomous driving task uses only 19 neurons and 253
+synapses, which is several orders of magnitude smaller than
+LSTM [7]. CfC achieves state-of-the-art performance while
+using a “relatively small parameter set” [9]. A CfC model for
+IMDB(IMDB movie review dataset) has 75k parameters, while
+a CfC-NCP has 37k parameters.It has been reported that LNNs
+on Loihi-2 use 1–3 orders of magnitude fewer parameters
+than other NNs [6]. Liquid-S4 achieves state-of-the-art perfor-
+mance on speech commands with 30% fewer parameters than
+S4 [3]. The continuous-time nature and adaptive dynamics
+of LNNs may enable them to represent complex temporal
+patterns more effectively than discrete models that require
+many expansion steps or large hidden states to capture similar
+information.Efficiency-related indicators are summarized in
+Table I.
+6
+2) Computational efficiency: training speed, inference la-
+tency, and energy consumption (including neuromorphic im-
+plementations): For RNNs (LSTM/GRU), GRU is typically
+faster than LSTM due to the lower computational complexity
+per unit. However, sequential processing limits the paralleliza-
+tion of both. Using these models for nonlinear optimization in
+MPC(Model Predictive Control (MPC)) involves significant
+computational complexity.
+For LNNs, a key advantage of CfC is speed. Their train-
+ing/inference speeds are 1–5 orders of magnitude faster than
+their ODE-based counterparts, and they are much faster than
+LSTM due to the avoidance of ODE solvers [9]. For Phy-
+sioNet, CfC training speeds are 160 times faster than ODE-
+RNN [9]. Training LTC using vanilla BPTT (Backpropagation
+Through Time (BPTT)) may consume a significant amount of
+memory (O(LT)) [4] . Their dependence on ODE solvers
+may make them slower than CfC. LRCU is an Eulerian
+discretization version of LRC, which is highly efficient. Train-
+ing LRC with 1 expansion per step is 2.5 times faster than
+using 6 expansions [13]. The sparse and compact nature of
+NCP suggests high computational efficiency.On neuromorphic
+hardware (Loihi-2), LNN demonstrates exceptional efficiency
+[6]. LNN on Loihi-2 achieved 91.3% accuracy for CIFAR-10
+classification, consuming only 213 microjoules per frame.It
+has been reported that for such tasks, Loihi-2 achieves energy
+efficiency over 100 times higher than CPUs and nearly 30
+times higher than GPUs. Compared to DNN/CNN/SNN on
+GPUs, LNN on Loihi-2 also exhibits lower latency (15.2ms)
+and higher power efficiency (25.3GOP/s/W).
+The drivers behind LNN’s efficiency gains are multifaceted:
+some variants (CfC) optimize raw speed on traditional hard-
+ware by eliminating solvers, while others (NCP, universal
+LNN) exhibit exceptional energy efficiency and low parameter
+counts, making them suitable for edge devices and neuromor-
+phic computing. This contrasts with RNNs, where efficiency
+improvements are typically incremental. RNNs (LSTM, GRU)
+inherently incur sequential processing costs and memory re-
+quirements, especially for long sequences (the memory curse)
+[3]. LNNs address this issue from different angles: CfC
+improves speed by eliminating the ODE solver bottleneck [9];
+NCP leverages extreme sparsity to achieve parameter and com-
+putational efficiency; and general-purpose LNNs show promise
+on energy-efficient neuromorphic hardware [6]. This suggests
+that LNNs are not merely aiming to be “better RNNs,” but
+are exploring fundamentally different efficiency pathways to
+adapt to different computational paradigms (fast traditional
+computing versus low-power neuromorphic computing).
+C. Generalization Ability
+1) Robustness to noise data and distribution changes:
+UA-LNN is specifically designed for noise resilience, mod-
+eling output uncertainty through Monte Carlo dropout [17].
+They maintain excellent performance under strong noise in
+prediction and classification tasks (e.g., arrhythmia detection,
+cancer detection [5], [17]). NCP also demonstrates robustness;
+forward models that do not utilize temporal characteristics
+typically fail on noisy data, while NCP (derived from LTC)
+7
+TABLE II: Summary of Accuracy-related Benchmarks Comparing Liquid Neural Networks (LNNs) and Recurrent Neural
+Networks (RNNs)
+Benchmark / Task Models Reported Metric Key Finding / Comparison
+Gesture recognition LTC, LSTM Accuracy (%) LTC achieves 69.55% versus 64.57% for
+LSTM.
+Traffic forecasting LTC, LSTM Mean Squared Error LTC (0.099) is markedly lower than LSTM
+(0.169).
+Long-Range Arena (avg.) Liquid-S4 Accuracy (87.32%) Liquid-S4 reaches state-of-the-art performance.
+PhysioNet CfC, ODE–RNN Accuracy / AUC (similar) CfC offers comparable accuracy but trains
+substantially faster.
+OCT image classification (retinal disease) GLNN, LNN Accuracy (%), F1 score GLNN achieves 0.98 Acc / 0.98 F1, surpassing
+LNN at 0.96 Acc / 0.88 F1.
+Noisy time-series prediction UA-LNN, LNN, LSTM, MLP R2, RMSE, MAE UA-LNN consistently outperforms all other
+models.
+Classic RNN benchmarks LRCU, LSTM, GRU Accuracy (%) LRCU outperforms both LSTM and GRU
+across tasks.
+Damped-sine trajectory prediction GLNN, LNN, Neural ODE Loss GLNN (1.0738) significantly beats LNN
+(2.5494) and Neural ODE (1.9899).
+TABLE III: Efficiency-related Indicators Comparing Liquid Neural Networks (LNNs) and Recurrent Neural Networks (RNNs)
+Family Model # Params
+(example / range)
+Training
+Speed
+Inference
+Latency Energy Efficiency Trait
+Key
+Recurrent Neural Networks (RNNs)
+RNN GRU Typically < LSTM Faster than LSTM Faster than LSTM — Simpler gating
+RNN LSTM More than GRU — — — Memory-heavy cells
+Liquid Neural Networks (LNNs)
+LNN CfC IMDB 75k; NCP-CfC
+37k
+16× faster than
+ODE-RNN
+1–5 orders faster — Solver-free closed form
+LNN NCP 19 neurons, 253
+synapses
+— — — Ultra-compact sparse
+design
+LNN LTC —
+Solver-dependent;
+BPTT memory Solver-dependent — —
+LNN LRCU — Efficient (Euler discr.) Efficient — Simplified LRC
+LNN Liquid-S4 30% fewer than S4 — — — Combines SSM
+efficiency
+LNN LNN (Loihi-2) 1–3 orders fewer
+parameters
+— 15.2 ms (CIFAR-10) 213 µJ / frame Neuromorphic HW
+optimisation
+can filter out transient disturbances. LRC enhances generaliza-
+tion ability and accuracy, especially when using inexpensive
+solvers, and suppresses oscillations, contributing to stability
+[13].
+2) Out-of-distribution (OOD) generalization ability: One
+of the key advantages of LNNs lies in their OOD general-
+ization capability. LNNs, especially in their differential equa-
+tion and closed-form representations, demonstrate decision
+robustness when generalizing to new environments with drastic
+scene changes (e.g., flight navigation), which is a unique
+characteristic of these models [5]. They learn to “extract task-
+relevant features and discard irrelevant ones.” Time series
+OOD is particularly challenging due to distribution shifts,
+diverse latent features, and non-stationary dynamics [18].
+The traditional independent and identically distributed (i.i.d.)
+assumption typically does not hold. A review on time series
+OOD organizes methodologies across three dimensions: data
+distribution, representation learning, and OOD evaluation. It
+emphasizes that LNNs leverage dynamic causal modeling to
+achieve adaptability and robustness [18].
+3) The influence of continuous temporal dynamics and
+adaptability on generalization: The continuous-time nature
+of LNNs enables them to model system dynamics more
+faithfully, potentially capturing underlying causal structures
+that are invariant across distributions [4], [8]. Adaptive time
+constants and parameters enable LNNs to adapt to changing
+conditions during inference, which is crucial for OOD sce-
+narios where test data differs from training data [5], [6]. This
+contrasts with static RNNs, where parameters are fixed after
+training. The superior OOD generalization ability of LNNs
+may stem from their ability to learn more fundamental and
+causal representations of tasks through continuous and adap-
+tive dynamics.This makes them less susceptible to surface-
+level changes in the input distribution that may deceive models
+dependent on statistical correlations learned from a fixed
+training set. OOD generalization requires models to perform
+well on unseen data distributions. LNNs have been reported to
+perform well in this regard, for example, in flight navigation
+through “extracting tasks” and “discarding irrelevant features”
+[5]. Their continuous-time dynamics and adaptability are key
+architectural features. These features may enable LNNs to
+learn the underlying causal mechanisms of systems rather than
+merely learning surface correlations present in the training
+data. Causal mechanisms are more likely to remain invariant
+across different distributions. Therefore, compared to models
+that overfit the characteristics of the training distribution, the
+architectural features of LNNs promote the learning of more
+robust and transferable representations, thereby achieving bet-
+ter OOD generalization.
+IV. CASE STUDY
+This section conducts an empirical comparative study
+to evaluate the performance characteristics of liquid neu-
+ral networks (LNNs) and standard recurrent neural net-
+works (RNNs)—specifically long short-term memory net-
+works (LSTMs) and gated recurrent units (GRUs)—on repre-
+sentative sequence data tasks. The case study draws on three
+different experimental settings: a trajectory prediction task
+using real-world motion capture data, a synthetic time series
+prediction task involving damped sine waves, and a high-
+dimensional complex prediction task involving ICU patient
+health states.
+A. Methodology
+The primary objective of the case study is to compare LNN
+and traditional RNN side by side, focusing on their ability to
+learn time dependencies, efficiency in terms of model parame-
+ters and training duration, and accuracy in sequence prediction.
+To this end, we conducted the following experiments.
+The first experiment focuses on trajectory prediction using
+the Minari dataset. This dataset contains trajectories from
+simulated Walker2d agents, forming a complex, continuous-
+time, high-dimensional sequence modeling problem. The task
+is defined as predicting the next 17 observation features given
+the previous 10 states (each state includes 17 observation
+features and 6 action features). For this experiment, a Liquid
+Time Constant Network (LTC) with 64 hidden units was
+implemented. The dynamics of the LTC model are described
+by a system of ordinary differential equations, which are nu-
+merically solved using an adaptive solver. The input dimension
+of the LTC is 23 (observations + actions). As a baseline, a
+standard LSTM network was adopted, also configured with
+64 hidden units and a single layer, and matched the input
+and output dimensions of the LTC model. Both models were
+trained for 20 cycles using the Adam optimizer with a learning
+rate of 0.001, and the mean squared error (MSE) between the
+predicted subsequent observations and the actual values was
+minimized as the loss function.
+The second experiment involves a synthetic time series
+prediction task, specifically modeling damped sine waves.
+This task was chosen to evaluate the model’s ability to
+capture oscillatory and decaying patterns from a simpler, more
+controllable data source. To this end, a custom liquid neural
+network (LNN) inspired by neural circuit policy (NCP) prin-
+ciples and employing random neural wiring was developed.
+The LNN consists of 32 hidden neurons, whose ODE-based
+dynamics are integrated using the Euler method, with each
+input sample using 5 discrete time steps. The input and output
+of this task are both one-dimensional. A gated recurrent unit
+(GRU) network, also with 32 hidden units and a single layer,
+is implemented as the corresponding RNN model. In this
+experiment, both models were trained for 100 cycles using
+8
+(a) Training loss com-
+parison.
+(b) Comparison of
+training time per
+round.
+(c) Comparison of
+training memory
+usage.
+Fig. 5: Comparison of (a) average loss, (b) training time
+per round, and (c) training memory usage between Liquid
+Time-Constant (LTC) (Liquid Neural Network (LNN)) and
+Long Short-Term Memory (LSTM) (Recurrent Neural Net-
+work (RNN)) in the Walker2d trajectory prediction task.
+the Adam optimizer and MSE loss function, with a learning
+rate of 0.005 for the LNN and 0.01 for the GRU.
+The third experiment models Intensive Care Unit (ICU)
+patient state evolution on the MIMIC-III dataset using a
+CfC Liquid Neural Network and a GRU baseline, comparing
+accuracy, efficiency, and long-horizon robustness [19]. Data
+are discretized into non-overlapping 12-hour bins, aggregating
+physiological/lab features and interventions; the final design
+includes 18 physiological/laboratory variables and 3 inter-
+vention variables as predictors (interventions are not pre-
+diction targets). Preprocessing includes forward-fill of vitals,
+zero-fill for absent interventions, outlier capping/clamping to
+physiologically plausible ranges, and iterative imputation via
+Bayesian ridge. The CfC uses 2 layers with 128 hidden units;
+the GRU baseline has 2 layers with 128 hidden units. Both
+are trained with Adam (lr 10−3), batch size 64, for 30 epochs,
+minimizing MSE betweenˆ
+xt+1 and xt+1. Evaluation covers
+(i) single-step MAE/RMSE/R2 in normalized feature space,
+(ii) K-step rollouts (K = 2,3,5) with recursive predictions
+and true interventions each step, and (iii) efficiency: parameter
+counts, peak GPU memory during training, and throughput
+(examples/sec, steps/sec). Train/val/test is a 70/15/15 split by
+patient ID to avoid patient overlap. Lastly, both models were
+evaluated separately for robustness, where gaussian noise was
+introduced to the test data. This dataset and pipeline were
+adapted from related research by Lejarza et al., which used
+an alternate data-driven approach to model Patient Health: a
+stochastic Markov Decision Process (MDP) [20].
+B. Experimental Results and Analysis
+Many studies focus only on comparing the accuracy of
+LNNs and RNNs, while overlooking their computational ef-
+ficiency [5]. The experiments conducted provide some com-
+parative insights into the learning capabilities and efficiency
+of LNN and RNN models.and further details of efficiency-
+related indicators across different architectures are summarized
+in Table III.
+1) Learning ability and prediction accuracy: In terms
+of learning ability and prediction accuracy, both types of
+networks demonstrated the ability to learn complex patterns
+from sequence data. For the Walker2d trajectory prediction
+task, comparing the average loss curves of LTC (labeled as
+LNN in the experiment) and LSTM (labeled as RNN in the
+experiment) (as shown in Figure 5a), it can be seen that in the
+early stages of training, the losses of both models decreased
+rapidly, indicating that they were able to effectively learn the
+dynamic characteristics of the data. Although LSTM appears
+to reach a lower loss plateau faster and maintain slightly lower
+loss values throughout the entire process in this specific run,
+LTC also exhibits a trend of continuous learning and loss
+reduction. In the prediction of individual trajectory features
+(as shown in Figure 6), both LTC and LSTM achieve varying
+degrees of accuracy in approximating the true trajectory, which
+intuitively reflects their predictive capabilities.
+For the synthetic damped-sine-wave prediction task, the
+learned trajectories in Figs. 10 and 11 compare a custom LNN
+with a GRU. Both models capture the periodicity and the
+decaying envelope, reducing the prediction error; however, the
+LNN yields a visibly tighter fit across the horizon—especially
+near peaks and zero-crossings—indicating a more faithful
+modeling of the underlying damped dynamics. Under addi-
+tive zero-mean Gaussian input noise (σ/amp = 0.10), both
+models attempt to recover the clean waveform, with the LNN
+exhibiting stronger smoothing and noise rejection. A more
+comprehensive robustness comparison would require quantita-
+tive metrics and multiple noise settings, but these observations
+suggest that the LNN architecture is better suited to this noisy
+synthetic task.
+Fig. 6: True values and Liquid Time-Constant (LTC) (Liq-
+uid Neural Network (LNN)) and Long Short-Term Memory
+(LSTM) (Recurrent Neural Network (RNN)) prediction results
+for a specific feature of the Walker2d trajectory.
+The ICU Patient experiment also found promising results in
+relation to CfC. As seen in Figure 7, the single-step precision
+for CfC and GRU is effectively identical (MAE/RMSE differ-
+ences of the order of 10−3 in normalized space), indicating
+that there is no short-horizon loss due to the compactness
+of CfC. Under multi-step rollouts, CfC exhibits consistently
+lower error accumulation, achieving ≈10–11% lower RMSE
+by K=5, suggesting more stable long-horizon dynamics.
+2) Efficiency: We evaluate robustness under additive i.i.d.
+Gaussian noise; unless otherwise noted, noise is zero-mean
+with variance chosen to yield a moderate signal-to-noise ratio.
+In terms of efficiency, the experiments revealed significant
+differences between different architectures. The comparison
+9
+Fig. 7: Prediction error comparison (RMSE and MAE) be-
+tween Closed-form Continuous-time (CfC) and GRU across
+single-step and multi-step rollouts (K = 2,3,5) on ICU
+patient trajectories.
+Fig. 8: Peak GPU memory usage during training for CfC and
+GRU models on ICU patient trajectory prediction.
+of training times in the Walker2d trajectory prediction task (as
+shown in Figure 5b) clearly indicates that the LTC model using
+an ODE solver requires longer computation time per training
+epoch (e.g., approximately 7–8 seconds per epoch for LTC
+and approximately 1–2 seconds per epoch for LSTM). This
+reflects the higher computational overhead typically associated
+with continuous-time dynamic modeling. However, in terms of
+memory usage (as shown in Figure 5c), LTC exhibits relatively
+stable and slightly lower GPU memory consumption compared
+to LSTM during training. Combining the parameter count
+information obtained from torchinfo.summary in the previous
+analysis (in this experimental setup, the LTC model with 64
+hidden units has approximately 10k-12k parameters, while the
+LSTM model has approximately 20k–22k parameters), LTC
+demonstrates an advantage in parameter efficiency. This sug-
+gests that LNNs may achieve effective encoding of complex
+dynamics with fewer parameters, though this may come at
+the cost of longer training time per epoch. For custom LNNs
+(a) Long Short-Term Memory
+(LSTM) (Recurrent Neural Net-
+work (RNN)) prediction on noisy
+sequences (additive zero-mean
+Gaussian noise).
+(b) Liquid Time-Constant (LTC)
+(Liquid Neural Network (LNN))
+prediction on noisy sequences
+(additive zero-mean Gaussian
+noise).
+Fig. 9: (a) Long Short-Term Memory (LSTM) (Recurrent
+Neural Network (RNN)) and (b) Liquid Time-Constant (LTC)
+(Liquid Neural Network (LNN)) model prediction perfor-
+mance on noisy sequences (additive zero-mean Gaussian
+noise) (including true signal, noise input, and model predic-
+tion).
+and GRUs on the damped sine wave task, although direct
+comparisons of parameter counts and training times are not
+shown, GRUs are generally considered more efficient than
+LSTM, while the efficiency of custom LNNs highly depends
+on specific implementation details such as the number of
+neurons, connection density, and ODE integration step size.
+For the high-dimensional ICU patient health prediction task,
+CfC uses∼18×fewer parameters (0.011M vs. 0.203M) and
+∼6.5×lower peak GPU memory (40 MB vs. 259 MB) during
+training, but trains∼3×slower in throughput terms (e.g., 384
+vs. 1298 examples/sec) (Figure 8). Overall, the ICU findings
+complement the earlier case studies: CfC preserves short-
+horizon accuracy while improving long-horizon robustness and
+resource efficiency, with a practical trade-off in training speed.
+Fig. 10: LNN fitting of a damped sine wave (ground truth vs.
+LNN prediction). The LNN closely tracks both the periodic
+component and the decaying envelope.
+10
+3) General observation and implicit generalization abili-
+ties: In terms of general observation and implicit generaliza-
+tion capabilities, the LTC model demonstrates strong learning
+performance on complex, high-dimensional Walker2d trajec-
+tory data, combined with its parameter efficiency, suggesting
+its potential for tasks requiring precise modeling of continu-
+ous dynamic systems. Its continuous-time nature theoretically
+facilitates handling sequences with irregular sampling or time-
+varying dynamics. Performance under noisy conditions (as
+shown in Figure 9a and Figure 9b) also preliminarily
+demonstrates LNN’s ability to resist interference and extract
+signal essence to some extent, while the RNN baseline exhibits
+more severe performance degradation under the same noisy
+conditions, which is crucial for enhancing model robustness
+and generalization to noisy real-world data.
+Although this case study did not directly conduct rigorous
+out-of-distribution (OOD) testing, the inherent characteristics
+of the LNN architecture, such as continuous-time processing,
+adaptive dynamics, and parameter efficiency demonstrated in
+certain variants, are all favorable factors for improving gen-
+eralization performance. The model’s relatively small number
+of parameters typically implies lower overfitting risk, which
+may indirectly promote generalization.
+Fig. 11: GRU fitting of a damped sine wave (ground truth
+vs. GRU prediction). The GRU learns the overall trend but
+shows larger deviations near turning points and in following
+the decaying envelope.
+For the ICU patient case study, gaussian noise was in-
+jected into the evaluation data after training to assess stabil-
+ity under measurement uncertainty. For each rollout horizon
+K ∈{1,2,3,5}, noise scales σ∈{0.0,0.01,0.02,0.05}were
+tested, with σ defined relative to the min–max normalized
+feature range. Models were rolled forward for K steps with
+noisy inputs, while true interventions were retained, and mean
+Fig. 12: Robustness comparison of CfC and RNN-GRU
+(RMSE).
+absolute error (MAE) and root mean squared error (RMSE)
+were computed against the ground truth.
+As seen in figure 12, Both models tolerate small pertur-
+bations (σ = 0.01–0.02) with only∼5–15% degradation in
+RMSE. At σ= 0.02, CfC and GRU behave similarly, showing
+∼13–15% higher MAE and∼6–10% higher RMSE compared
+to the baseline. At stronger noise (σ = 0.05), differences
+emerge: CfC exhibits a∼50% increase in MAE and∼40%
+increase in RMSE, while GRU increases by∼47% MAE and
+∼31% RMSE. Across rollout horizons, relative degradation
+is consistent (e.g., K = 1 vs. K = 5), indicating that noise
+effects do not amplify substantially with longer rollouts. In
+this experiment, CfC and GRU are comparably robust under
+mild perturbations.
+In summary, this case study provides empirical evidence
+for the comparison between LNN and RNN through concrete
+experimental results. The results indicate that LNN can ef-
+fectively learn complex sequence dynamics and demonstrate
+potential in terms of parameter efficiency, although certain
+implementations (such as LTC, which relies on complex ODE
+solvers) may be slower in training compared to traditional
+RNNs. These observations provide valuable insights into the
+intrinsic characteristics of different neural network architec-
+tures when handling sequence data and the trade-offs in
+practical applications.
+V. FUTURE WORK AND OPEN CHALLENGES
+A. Enhancing the scalability of liquid neural networks
+Although certain liquid models such as Neural Circuit
+Policies (NCPs) are notably compact [7], scaling liquid
+neural networks (LNNs) to very large datasets and high-
+dimensional state spaces remains open. Promising directions
+include (i) algorithmic improvements to stiff/fast solvers and
+stability-aware integration, (ii) solver-free formulations that
+preserve continuous-time benefits while reducing overheads
+(e.g., Closed-form Continuous-time models, CfC [9]), and (iii)
+memory-efficient training alternatives to BPTT together with
+distributed and mixed-precision training. On the systems side,
+mapping continuous dynamics to parallel hardware requires
+11
+careful partitioning and scheduling, and exploiting sparsity and
+event-driven computation at scale.
+B. Advancing Robustness and OOD Generalization in Dy-
+namic Environments
+A central challenge is adaptation under distribution shift
+and temporal non-stationarity. Future work should pursue
+online/continual learning procedures for LNNs and RNNs,
+stronger uncertainty quantification and calibration (extending
+the UA-LNN line [17]), and invariance-inducing objectives
+that maintain performance under sensor noise, missing data, or
+regime changes. Robust control viewpoints and OOD naviga-
+tion results for liquid models suggest promising headroom, but
+stress testing in rapidly changing environments is still required
+[5].
+C. Optimizing LNNs for Specialized Hardware and Edge
+Computing
+Liquid models are a natural fit for low-power, event-
+driven, and neuromorphic substrates. Co-design of algo-
+rithms and hardware—quantization, pruning, low-rank/state-
+space compression, and operator fusion—can reduce latency
+and energy while preserving stability guarantees. Solver-
+free liquid variants are particularly attractive for embed-
+ded deployment [9]. A systematic evaluation protocol (accu-
+racy–latency–energy–memory) across edge devices will help
+identify when liquid dynamics provide the strongest advan-
+tage.
+D. New Applications and Hybrid Methods
+It is valuable to explore how LNNs can be applied beyond
+current use cases, including modeling complex physical pro-
+cesses, advanced control, and clinical decision support. Hybrid
+architectures that couple continuous-time liquid dynamics with
+complementary inductive biases—such as Transformers for
+long-range attention or graph neural networks for relational
+structure—may combine the strengths of each paradigm.
+E. Synthesis
+Closing the gap between the attractive theoretical properties
+of liquid dynamics (continuity, adaptivity, stability) and reli-
+able large-scale deployment will likely hinge on three threads:
+scalable training and solver design (including solver-free ap-
+proaches [9]), principled robustness with calibrated uncertainty
+under shift (building on UA-LNN [17] and robustness studies
+[5]), and hardware–algorithm co-design for efficient inference
+at the edge. Consolidated theory (expressivity, identifiability,
+and stability under discretization) together with open, noise-
+aware benchmarks will provide the foundations for the next
+wave of liquid models [4], [7].
+F. Integrating CfC Models into Policy Optimization Frame-
+works
+Another important extension concerns bridging CfC-based
+patient trajectory models with policy optimization for clinical
+decision-making. Lejarza et al. [20] previously formulated ICU
+discharge planning as a finite Markov decision process (MDP),
+where policy iteration over handcrafted, discretized patient
+states yielded stable discharge policies. While effective, this
+approach was constrained by the need for a manually specified
+state space and limited flexibility in representing continuous
+physiological variables.
+Our case study suggests that replacing the fixed MDP
+transition dynamics with a learned CfC model could create
+a more adaptive simulation environment for reinforcement
+learning. In such a framework, the CfC serves as the generative
+dynamics model, providing realistic patient state transitions
+under clinical interventions. Policy iteration or other dynamic
+programming methods could then operate on this learned
+environment to identify discharge policies that balance patient
+safety and resource efficiency. This integration would merge
+the robustness and parameter efficiency of liquid neural net-
+works with established policy optimization techniques, poten-
+tially yielding more flexible and clinically relevant decision-
+support tools. Developing and validating this combined ap-
+proach represents a promising direction for future research.
+VI. CONCLUSION
+A comparative analysis of LNNs and RNNs reveals the
+advantages of LNNs in handling continuous-time dynamics,
+adaptability, and OOD generalization and specialized hardware
+efficiency, as confirmed by numerous studies. In contrast,
+while RNNs possess mature capabilities, they also have limi-
+tations such as the “memory curse” and challenges in handling
+truly continuous processes.
+LNN offers an intriguing avenue for overcoming several
+fundamental limitations of traditional RNNs. Its bio-inspired,
+ODE-based framework provides a richer foundation for mod-
+eling complex dynamic systems.
+The field is evolving rapidly, with a clear trend toward more
+adaptive, efficient, and robust neural architectures. LNN is at
+the forefront of this movement, particularly for applications
+that require continuous adaptation and interaction with the
+physical world. The synergies with neuromorphic computing
+are particularly noteworthy and may drive future innovations.
+The development of more specialized LNN variants indi-
+cates that the field is maturing, offering a diverse toolkit
+for sequence modeling. The rise of LNNs is not merely an
+incremental improvement over RNNs; it represents a potential
+paradigm shift toward neural architectures that are more inher-
+ently aligned with the continuous and dynamic characteristics
+of many real-world problems, offering a principled approach
+to building smarter and more adaptive systems.
+REFERENCES
+[1] M. Ławry´ nczuk, “Lstm and gru neural networks as
+models of dynamical processes used in predictive control:
+A comparison of models developed for two chemical
+reactors,” Sensors, vol. 21, no. 16, p. 5625, 2021.
+[2] H. Chen and H. Eldardiry, “Graph time-series model-
+ing in deep learning: A survey,” ACM Transactions on
+Knowledge Discovery from Data, 2024, in press.
+12
+[3] Z. Li, J. Han, W. E, and Q. Li, “On the curse of
+memory in recurrent neural networks: Approximation
+and optimization analysis,” in International Conference
+on Learning Representations (ICLR), 2021.
+[4] R. Hasani, M. Lechner, A. Amini, L. Nezami, R. Grosu,
+and D. Rus, “Liquid time-constant networks,” in Pro-
+ceedings of the AAAI Conference on Artificial Intelli-
+gence, vol. 35, no. 9, 2021, pp. 7657–7666.
+[5] M. Chahine, R. Hasani, A. Amini, M. Lechner, P. Kao,
+M. E. Gonzalez, and D. Rus, “Robust flight navigation
+out of distribution with liquid neural networks,” Science
+Robotics, vol. 8, no. 84, p. eadd6426, 2023.
+[6] S. Kaddoura, M. Al Husseini, A. Khattar, M. El Chamaa,
+I. Ardekani, and W. Abdulla, “Exploring liquid neural
+networks on loihi-2,” IEEE Access, vol. 12, pp. 60 118–
+60 133, 2024.
+[7] M. Lechner, R. Hasani, A. Amini, T. H. Hsieh, M. Zim-
+mer, D. Rus, and R. Grosu, “Neural circuit policies
+enabling auditable autonomy,” Nature Machine Intelli-
+gence, vol. 2, no. 10, pp. 642–652, 2020.
+[8] L. Treven, J. H¨ ubotter, B. Sukhija, F. Dorfler, and
+A. Krause, “Efficient exploration in continuous-time
+model-based reinforcement learning,” in Advances in
+Neural Information Processing Systems (NeurIPS), 2023.
+[9] R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu,
+“Closed-form continuous-time neural networks,” Nature
+Machine Intelligence, vol. 4, pp. 992–1003, 2022.
+[10] P. K. Karn, I. Ardekani, and W. Abdulla, “Generalized
+framework for liquid neural network upon sequential and
+non-sequential tasks,” Mathematics, vol. 12, no. 6, p. 865,
+2024.
+[11] R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and
+D. Duvenaud, “Neural ordinary differential equations,”
+in NeurIPS, 2018.
+[12] R. Hasani, M. Lechner, T.-H. Wang, M. Chahine,
+A. Amini, and D. Rus, “Liquid structural state-space
+models,” in International Conference on Learning Rep-
+resentations (ICLR), 2023.
+[13] M. Farsang, S. A. Neubauer, and R. Grosu, “Liquid resis-
+tance liquid capacitance networks,” 2024, arXiv preprint.
+[14] A. Gu, K. Goel, and C. R´ e, “Efficiently modeling long
+sequences with structured state spaces,” in ICLR, 2022.
+[15] A. Gu and T. Dao, “Mamba: Linear-time sequence
+modeling with selective state spaces,” arXiv:2312.00752,
+2023.
+[16] A. Gu, I. Johnson, A. Timalsina, A. Rudra, and C. R´
+e,
+“How to train your hippo: State space models with gener-
+alized orthogonal basis projections,” arXiv:2206.12037,
+2022.
+[17] M. H. Akpinar, O. Atila, A. Sengur, M. Salvi, and
+U. R. Acharya, “A novel uncertainty-aware liquid neural
+network for noise-resilient time series forecasting and
+classification,” Chaos, Solitons & Fractals, vol. 193, p.
+116130, 2025.
+[18] X. Wu, F. Teng, X. Li, J. Zhang, T. Li, and Q. Duan,
+“Out-of-distribution generalization in time series: A sur-
+vey,” 2025, arXiv preprint.
+[19] A. E. W. Johnson, T. J. Pollard, L. Shen, L.-W. H.
+Lehman, M. Feng, M. Ghassemi, B. Moody, P. Szolovits,
+L. A. Celi, and R. G. Mark, “Mimic-iii, a freely acces-
+sible critical care database,” Scientific Data, vol. 3, p.
+160035, 2016.
+[20] F. Lejarza, J. Calvert, M. M. Attwood, D. Evans, and
+Q. Mao, “Optimal discharge of patients from intensive
+care via a data-driven policy learning framework,” 2021,
+arXiv preprint.
+13

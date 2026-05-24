@@ -1,4 +1,15 @@
+---
+title: 液态神经网络 (Liquid Neural Networks) 最新论文及技术进展汇总 (2024-2026)
+tags:
+  - LNN
+  - paper-summary
+  - research
+date: 2026-05-24
+---
+
 # 液态神经网络 (Liquid Neural Networks) 最新论文及技术进展汇总 (2024-2026)
+
+> 💡 **关联阅读**：[[液态神经网络最新进展与开源项目调研]]
 
 ## 1. 技术概述
 液态神经网络（Liquid Neural Networks, LNN）是由 MIT CSAIL 实验室开发的新一代连续时间动态神经网络，其灵感来自于秀丽隐杆线虫（C. elegans）的神经系统。与 Transformer 或传统 RNN 等参数固定的静态模型不同，LNN 的参数随时间变化，由微分方程描述。这种网络能够根据实时输入数据不断调整自身的计算结构（即“液态”特性），表现出极高的环境适应性。
