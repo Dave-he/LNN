@@ -43,23 +43,19 @@ tags: [LNN, reading-report, papers]
 
 ## 2. 论文深度研读 (持续更新区)
 
-> ⚠️ **添加指南**：出现新论文时，请复制以下模板并追加在此部分。
-> `### [年份] 论文标题`
-> `- **核心问题**：...`
-> `- **方法论**：...`
-> `- **关键成果**：...`
+> ⚠️ **添加指南**：出现新论文时，请通过 `Summarization Agent` 生成独立报告到 `docs/reports/` 目录，并在此处追加精简版与链接。
 
 ### [2025] Accuracy, Memory Efficiency and Generalization: A Comparative Study on LNN and RNN
-- **论文背景**：系统性对比 LNN 与传统 RNN（LSTM/GRU）在准确率、内存效率及泛化能力上的差异。
+- **独立报告**：[[docs/reports/Comparative_Study_on_LNN_and_RNN_研读报告.md]]
 - **核心问题**：在序列建模中，传统 RNN 面临梯度消失、计算开销大及 OOD 泛化能力弱的问题。
-- **方法论**：全面剖析 LTC、CfC、Liquid-S4、UA-LNN 及 LRC 等 LNN 变体的底层 ODE 机制与优化策略。
-- **关键成果**：LNN 在处理噪声、非平稳数据及 OOD 泛化上具备显著优势；CfC 等变体在保持连续时间优势的同时避免了 ODE 求解的计算开销。
+- **方法论**：全面剖析 LTC、CfC、Liquid-S4 等 LNN 变体的底层 ODE 机制与优化策略。
+- **关键成果**：LNN 在处理噪声、非平稳数据及 OOD 泛化上具备显著优势。
 
 ### [2026] Liquid Neural Network Models for Natural Gas Spot Price Time-Series Forecasting
-- **论文背景**：探讨 LNN 在高波动性、受多重因素影响的金融时间序列预测中的应用。
-- **核心问题**：天然气价格受季节、地缘及宏观经济影响剧烈波动（Regime shifts），传统滚动窗口线性回归及 LSTM 无法持续适应市场机制的突变。
-- **方法论**：将 Henry Hub 价格预测建模为非平稳时序问题，使用 LTC、CfC 及 CT-LTC 等架构进行短期预测。
-- **关键成果**：LNN 的动态内部状态更新机制能够持续适应不断变化的市场环境，显著降低了高波动市场条件下的预测误差。
+- **独立报告**：[[docs/reports/LNN_for_Natural_Gas_Forecasting_研读报告.md]]
+- **核心问题**：天然气价格受多因素影响剧烈波动，传统模型无法持续适应市场机制的突变。
+- **方法论**：使用 LTC、CfC 等 LNN 架构预测非平稳时序，利用动态内部状态适应环境。
+- **关键成果**：LNN 的自适应时间尺度调制能显著降低高波动市场条件下的短期预测误差。
 
 ---
 
