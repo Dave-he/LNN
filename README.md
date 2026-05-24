@@ -42,6 +42,24 @@ LNN/
 - 想要了解最新的论文总结，请阅读：[[Liquid_Neural_Networks_Latest_Papers_Summary|LNN 最新论文总结]]
 - 关于本项目中自动化工具与工作流的规划，请参阅：[[AGENTS]]
 
+## 🌟 LNN 相关开源仓库 (Open Source Repositories)
+
+以下是 GitHub 上一些高价值的液态神经网络 (LNN) 及液态时间常数网络 (LTC) 的开源实现与应用案例：
+
+### 核心框架与实现
+- [raminmh/liquid_time_constant_networks](https://github.com/raminmh/liquid_time_constant_networks): Liquid Time-Constant Networks (LTCs) 的经典代码仓库。
+- [Ipsedo/LiquidNetworks](https://github.com/Ipsedo/LiquidNetworks): 使用 PyTorch 实现的 Liquid Time-Constant Networks。
+- [emilierp/exact_lnn](https://github.com/emilierp/exact_lnn): 闭式液态神经网络 (Closed-Form LNNs) 的精确实现。
+- [aygp-dr/liquid-neural-networks](https://github.com/aygp-dr/liquid-neural-networks): 混合 Clojure/Python 实现，参数高效的 LNN 架构（灵感来自秀丽隐杆线虫）。
+- [KPEKEP/LTCtutorial](https://github.com/KPEKEP/LTCtutorial): 从零开始实现 Liquid Time-Constant Neural Network 的详尽教程。
+
+### 实践与应用案例
+- [makramchahine/drone_causality](https://github.com/makramchahine/drone_causality): 论文《Robust Visual Flight Navigation with Liquid Neural Networks》（基于 LNN 的无人机视觉飞行导航）的官方复现代码。
+- [HusseinJammal/Liquid-Neural-Networks-in-Stock-Market-Prediction](https://github.com/HusseinJammal/Liquid-Neural-Networks-in-Stock-Market-Prediction): 使用 LNN 进行股市预测（如特斯拉和苹果）的数据驱动预测模型。
+- [safipatel/LNN-cancer-classification](https://github.com/safipatel/LNN-cancer-classification): 基于 LNN 的癌症图像分类项目。
+- [2ai-lab/LLNs-for-Early-Breast-Cancer-Detection](https://github.com/2ai-lab/LLNs-for-Early-Breast-Cancer-Detection): 利用 LNN 进行早期乳腺癌诊断的创新方法。
+- [SeyedMuhammadHosseinMousavi/Liquid-Neural-Networks-LNNs-Classification](https://github.com/SeyedMuhammadHosseinMousavi/Liquid-Neural-Networks-LNNs-Classification): LNN 在基础分类、聚类和回归任务中的应用探索。
+
 ## 📝 Obsidian 导入说明与使用规则
 
 本项目完全兼容并推荐作为 **Obsidian Vault (知识库)** 导入，以获得最佳的双向链接阅读与网状知识管理体验。
