@@ -69,32 +69,8 @@ LNN/
 
 ## 🤖 通用 Agents / Skills (基于 Vercel Skills)
 
-本项目使用 [Vercel Skills](https://github.com/vercel-labs/skills) 规范来管理专门用于**论文研读与分析**的 AI Agents。您可以将本项目 `skills/` 目录下的技能，通过软链接的方式一键导入到各种 AI 编码工具和终端中（如 Cursor, Windsurf, Trae, Claude Code 等），无需手动复制粘贴。
+本项目使用 [Vercel Skills](https://github.com/vercel-labs/skills) 规范来管理专门用于**论文研读与分析**的 AI Agents，支持跨平台和跨模型（Claude, Gemini, Qwen, Cursor, Trae 等）使用。
 
-### 安装与使用
-1. 确保您的环境中已安装 Node.js。
-2. 运行以下命令，使用 `skills` CLI 将项目内的技能以软链接方式安装到您首选的 AI 助手中：
-
-```bash
-# 进入项目根目录
-cd LNN
-
-# 交互式添加本地技能 (软链接到您的 AI 工具)
-npx skills add ./skills/paper-analyzer
-npx skills add ./skills/paper-translator
-
-# 此时，技能配置文件会软链接到工具的配置目录（如 .cursorrules 或 .trae/skills 等）
-```
-
-### 内置的论文研究 Skills
-
-- **`paper-analyzer` (论文分析专家)**
-  - **功能**：读取并分析学术论文，结构化提取论文的“核心问题”、“方法论”、“关键成果”及“局限性”。
-  - **触发场景**：快速了解论文核心贡献，或帮您总结长篇文献时使用。
-- **`paper-translator` (学术论文翻译专家)**
-  - **功能**：用于学术英语与中文的精准翻译，严格保留学术术语（如 *Liquid Neural Networks*）、数学公式及排版。
-  - **触发场景**：需要精准中英互译摘要、特定段落或通篇文献时使用。
-
-您不仅可以在编辑器中调用，也可以将 `SKILL.md` 的内容发给 Web 端的 Claude, Gemini, Qwen 等大模型进行日常论文研读。
+关于如何通过软链接一键安装 `skills/` 目录下的 `paper-analyzer` 和 `paper-translator` 工具，以及项目中其他自动化 Agent 的规划，**请详细参阅：[[AGENTS]]**。
 
 ## 🚀 后续计划
