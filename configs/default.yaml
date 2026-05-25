@@ -1,0 +1,28 @@
+model:
+  name: cfc
+  input_size: 1
+  hidden_size: 32
+  output_size: 1
+  num_layers: 1
+  ode_method: rk4
+
+data:
+  source: mackey_glass
+  seq_len: 32
+  horizon: 1
+  train_ratio: 0.7
+  val_ratio: 0.15
+  noise_std: 0.05
+
+training:
+  epochs: 100
+  batch_size: 32
+  learning_rate: 0.001
+  patience: 15
+  grad_clip: 1.0
+  optimizer: adam
+
+output:
+  dir: analysis/experiments
+  save_model: true
+  save_plots: true

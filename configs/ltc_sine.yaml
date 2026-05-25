@@ -1,0 +1,28 @@
+model:
+  name: ltc
+  input_size: 1
+  hidden_size: 16
+  output_size: 1
+  num_layers: 1
+  ode_method: rk4
+
+data:
+  source: sine
+  seq_len: 64
+  horizon: 1
+  train_ratio: 0.7
+  val_ratio: 0.15
+  noise_std: 0.1
+
+training:
+  epochs: 50
+  batch_size: 16
+  learning_rate: 0.0005
+  patience: 10
+  grad_clip: 1.0
+  optimizer: adam
+
+output:
+  dir: analysis/experiments
+  save_model: true
+  save_plots: true

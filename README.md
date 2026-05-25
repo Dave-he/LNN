@@ -118,3 +118,101 @@ RUN_BENCHMARK=1 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 关于如何通过软链接一键安装 `skills/` 目录下的 `paper-analyzer` 和 `paper-translator` 工具，以及项目中其他自动化 Agent 的规划，**请详细参阅：[[AGENTS]]**。
 
 ## 🚀 后续计划
+
+## 🛠️ 工程实践 (Engineering Practice)
+
+本项目已搭建完整的 LNN 工程实践代码框架，支持从零实现和 ncps 库集成两种路径。
+
+### 环境搭建
+
+```bash
+# 创建 conda 环境
+conda create -n lnn python=3.11 -y
+conda activate lnn
+
+# 安装项目（含核心依赖）
+pip install -e .
+
+# 开发依赖
+pip install -e ".[dev]"
+
+# LFM2 模型推理（可选）
+pip install -e ".[lfm]"
+```
+
+### 项目代码结构
+
+```text
+LNN/
+├── lnn/                          # 核心 Python 包
+│   ├── core/                     # LNN 核心实现（从零构建）
+│   │   ├── liquid_neuron.py      # LiquidNeuron / LiquidLayer / LiquidNN
+│   │   ├── ltc.py                # LTC (Liquid Time-Constant) 网络
+│   │   ├── cfc.py                # CfC (Closed-form Continuous-time) 网络
+│   │   └── trainer.py            # 通用训练引擎
+│   ├── ncps_integration/         # ncps 库集成封装
+│   │   └── ncps_models.py        # NCPSCfC / NCPSLTC / NCPSAutoNCP
+│   ├── lfm2/                     # LFM2 液态基础模型推理与部署
+│   │   └── inference.py          # LFM2Inference / LFM2EdgeDeployer
+│   ├── data/                     # 数据加载与生成
+│   │   └── timeseries.py         # TimeSeriesDataset / Mackey-Glass / Sine
+│   └── utils/                    # 工具函数
+│       ├── metrics.py            # MSE / RMSE / MAE / MAPE
+│       └── visualization.py      # 训练曲线 / 预测图 / 对比图
+├── scripts/                      # 实验脚本
+│   ├── experiment_timeseries.py  # 单模型时间序列预测实验
+│   └── benchmark_comparison.py   # LNN vs LSTM vs GRU 对比基准
+├── configs/                      # 实验配置文件
+│   ├── default.yaml
+│   ├── ltc_sine.yaml
+│   └── benchmark.yaml
+├── tests/                        # 单元测试
+│   └── test_core.py
+├── analysis/                     # 实验结果输出
+└── pyproject.toml                # 项目配置与依赖
+```
+
+### 快速运行实验
+
+```bash
+# CfC 模型 - 正弦波预测
+python scripts/experiment_timeseries.py --model cfc --data sine --epochs 50
+
+# LTC 模型 - Mackey-Glass 混沌时间序列
+python scripts/experiment_timeseries.py --model ltc --data mackey_glass --epochs 50
+
+# 模型对比基准测试（CfC vs LTC vs LSTM vs GRU）
+python scripts/benchmark_comparison.py --data mackey_glass --epochs 50
+```
+
+### 在代码中使用
+
+```python
+import torch
+from lnn.core.cfc import CfCNetwork
+from lnn.core.ltc import LTCNetwork
+from lnn.data.timeseries import generate_mackey_glass, create_dataloader
+from lnn.core.trainer import Trainer
+
+# 生成数据
+data = generate_mackey_glass(num_samples=2000, tau=17)
+train_loader = create_dataloader(data[:1400], seq_len=32, horizon=1)
+
+# 创建 CfC 模型
+model = CfCNetwork(input_size=1, hidden_size=32, output_size=1)
+
+# 训练
+trainer = Trainer(model, lr=1e-3, patience=15)
+history = trainer.fit(train_loader, num_epochs=50)
+```
+
+### Benchmark 结果示例 (Mackey-Glass, 50 epochs)
+
+| Model | RMSE | MAE | Params | Time |
+|-------|------|-----|--------|------|
+| CfC | 0.0267 | 0.0217 | 3,329 | 26.7s |
+| LTC | 0.0269 | 0.0214 | 2,273 | 117.7s |
+| LSTM | 0.0132 | 0.0107 | 4,513 | 9.2s |
+| GRU | 0.0236 | 0.0181 | 3,393 | 14.4s |
+
+> 💡 在简单平稳数据上，LSTM/GRU 可能表现更优；LNN 的核心优势体现在**非平稳数据**、**分布外泛化**和**极低参数量**场景。

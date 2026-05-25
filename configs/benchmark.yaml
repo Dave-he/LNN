@@ -1,0 +1,28 @@
+model:
+  name: cfc
+  input_size: 1
+  hidden_size: 64
+  output_size: 1
+  num_layers: 2
+  ode_method: euler
+
+data:
+  source: mackey_glass
+  seq_len: 64
+  horizon: 4
+  train_ratio: 0.7
+  val_ratio: 0.15
+  noise_std: 0.0
+
+training:
+  epochs: 200
+  batch_size: 64
+  learning_rate: 0.001
+  patience: 20
+  grad_clip: 1.0
+  optimizer: adamw
+
+output:
+  dir: analysis/experiments
+  save_model: true
+  save_plots: true
