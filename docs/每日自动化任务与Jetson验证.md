@@ -36,7 +36,7 @@ python3 scripts/daily_lnn_research.py --download-pdfs --max-pdf-downloads 5
 
 该脚本会依次执行：
 1. 拉取 LNN / LTC / CfC / NCP / LFM 相关资料。
-2. 如果当前机器是 Jetson，则自动运行 quick benchmark。
+2. 如果当前机器是 Jetson，则自动运行 benchmark。若本机已有 `ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin` 容器，会优先通过该容器使用 CUDA 12.6；否则回退到本机 Python。
 3. 将 `docs/`、`papers/`、`analysis/` 的变化提交并推送到 `origin`。
 
 本地安装 user systemd timer：
@@ -79,6 +79,16 @@ COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 python3 scripts/jetson_lnn_benchmark.py --quick
 ```
 
+使用本机已有 Jetson Orin CUDA 容器运行：
+
+```bash
+docker run --rm --runtime nvidia --gpus all \
+  -v "$PWD":/workspace/LNN \
+  -w /workspace/LNN \
+  ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin \
+  bash -lc 'python3 scripts/jetson_lnn_benchmark.py --samples 64 --seq-len 16 --hidden-size 8 --epochs 1 --batch-size 8 --inference-repeats 2'
+```
+
 本次已生成：
 - [[analysis/jetson/2026-05-25_lnn_benchmark.md]]
 - `analysis/jetson/2026-05-25_lnn_benchmark.json`
@@ -86,21 +96,28 @@ python3 scripts/jetson_lnn_benchmark.py --quick
 ### 2026-05-25 结果快照
 
 检测到的设备：
-- `NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super`
+- 宿主机：`NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super`
+- CUDA 容器设备名：`Orin`
 - Jetson BSP：R36.4.7
-- PyTorch：`2.11.0+cu130`
-- CUDA 可用状态：`False`
+- 宿主机 PyTorch：`2.11.0+cu130`，CUDA 不可用
+- CUDA 容器 PyTorch：`2.10.0`，CUDA 12.6 可用
 
 quick benchmark 结果：
 
 | 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
 |---|---:|---:|---:|---:|
-| CfCStyle | 2521 | 0.312890 | 39303.1 | 3.41 |
-| GRU | 1969 | 0.435523 | 136813.0 | 1.32 |
+| CfCStyle | 329 | 0.691654 | 10048.1 | 0.81 |
+| GRU | 273 | 0.671285 | 242200.0 | 0.10 |
 
 结论：
-- 在本次合成非平稳序列 smoke test 中，`CfCStyle` 的误差低于同隐藏维度 `GRU`，但 CPU 推理吞吐低于 GRU。
-- 当前 PyTorch/CUDA 组合未启用 CUDA；终端曾提示系统 NVIDIA driver 与 `torch 2.11.0+cu130` 不匹配。若要利用 60 TOPS 级别算力，应优先安装与 JetPack / L4T / CUDA 版本匹配的 PyTorch 轮子，或升级 JetPack 后再运行 full benchmark。
+- 本次 CUDA smoke test 已确认 Jetson Orin GPU 路径可用，`analysis/jetson/2026-05-25_lnn_benchmark.json` 中 `cuda_available=true`，峰值显存约 25.39 MB。
+- 宿主机默认 Python 仍是 pyenv Python 3.14 + `torch 2.11.0+cu130`，与 JetPack CUDA 12.6 不匹配；每日任务已优先使用 Jetson 容器规避该问题。
+- 当前系统内存碎片较高时，完整 quick 配置可能触发 cuBLAS 分配失败；正式 benchmark 前建议重启或释放长期运行容器，再提高样本数和隐藏维度。
+
+参考：
+- NVIDIA JetPack 6.2.1 Release Notes：https://docs.nvidia.com/jetson/jetpack/release-notes/index.html
+- NVIDIA PyTorch for Jetson Platform：https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html
+- NVIDIA PyTorch for Jetson 兼容矩阵：https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform-release-notes/pytorch-jetson-rel.html
 
 ## 5. 后续实验队列
 

@@ -11,19 +11,35 @@ PER_QUERY="${PER_QUERY:-8}"
 COMMIT_AND_PUSH="${COMMIT_AND_PUSH:-1}"
 RUN_BENCHMARK="${RUN_BENCHMARK:-auto}"
 DOWNLOAD_PDFS="${DOWNLOAD_PDFS:-0}"
+JETSON_USE_DOCKER="${JETSON_USE_DOCKER:-auto}"
+JETSON_DOCKER_IMAGE="${JETSON_DOCKER_IMAGE:-ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin}"
+JETSON_BENCHMARK_ARGS="${JETSON_BENCHMARK_ARGS:---samples 64 --seq-len 16 --hidden-size 8 --epochs 1 --batch-size 8 --inference-repeats 2}"
 
 research_args=(--date "$RUN_DATE" --max-results "$MAX_RESULTS" --per-query "$PER_QUERY")
 if [[ "$DOWNLOAD_PDFS" == "1" ]]; then
   research_args+=(--download-pdfs)
 fi
 
+run_jetson_benchmark() {
+  if [[ "$JETSON_USE_DOCKER" != "0" ]] && command -v docker >/dev/null 2>&1 && docker image inspect "$JETSON_DOCKER_IMAGE" >/dev/null 2>&1; then
+    docker run --rm --runtime nvidia --gpus all \
+      -v "$ROOT_DIR":/workspace/LNN \
+      -w /workspace/LNN \
+      "$JETSON_DOCKER_IMAGE" \
+      bash -lc "python3 scripts/jetson_lnn_benchmark.py --date '$RUN_DATE' $JETSON_BENCHMARK_ARGS"
+    chown "$(id -u):$(id -g)" analysis/jetson/"${RUN_DATE}"_lnn_benchmark.* 2>/dev/null || true
+  else
+    "$PYTHON_BIN" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" --quick
+  fi
+}
+
 "$PYTHON_BIN" scripts/daily_lnn_research.py "${research_args[@]}"
 
 if [[ "$RUN_BENCHMARK" == "1" ]]; then
-  "$PYTHON_BIN" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" --quick || true
+  run_jetson_benchmark || true
 elif [[ "$RUN_BENCHMARK" == "auto" ]]; then
   if [[ -r /proc/device-tree/model ]] && tr -d '\0' </proc/device-tree/model | grep -qiE 'jetson|nvidia'; then
-    "$PYTHON_BIN" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" --quick || true
+    run_jetson_benchmark || true
   fi
 fi
 

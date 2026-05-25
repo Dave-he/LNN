@@ -60,10 +60,10 @@ GitHub Actions 也已配置 `.github/workflows/daily-lnn-research.yml`，会每�
 
 ### Jetson 验证
 
-Jetson 本地 smoke benchmark：
+Jetson 本地 smoke benchmark（优先使用本机已有 Jetson Orin CUDA 容器）：
 
 ```bash
-python3 scripts/jetson_lnn_benchmark.py --quick
+RUN_BENCHMARK=1 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 ```
 
 当前结果见：[[analysis/jetson/2026-05-25_lnn_benchmark]]
