@@ -183,6 +183,15 @@ python scripts/experiment_timeseries.py --model ltc --data mackey_glass --epochs
 
 # 模型对比基准测试（CfC vs LTC vs LSTM vs GRU）
 python scripts/benchmark_comparison.py --data mackey_glass --epochs 50
+
+# OOD 泛化实验：验证 LNN 对分布偏移的鲁棒性
+python scripts/experiment_ood.py --epochs 50
+
+# 概念漂移实验：验证 LNN 对 Regime Change 的适应性
+python scripts/experiment_concept_drift.py --epochs 50
+
+# AutoNCP 稀疏神经电路实验
+python scripts/experiment_autoncp.py --epochs 50
 ```
 
 ### 在代码中使用
@@ -214,5 +223,23 @@ history = trainer.fit(train_loader, num_epochs=50)
 | LTC | 0.0269 | 0.0214 | 2,273 | 117.7s |
 | LSTM | 0.0132 | 0.0107 | 4,513 | 9.2s |
 | GRU | 0.0236 | 0.0181 | 3,393 | 14.4s |
+
+### OOD 泛化实验结果（LNN 核心优势验证）
+
+| Model | ID RMSE | OOD RMSE | 退化率 |
+|-------|---------|----------|--------|
+| **CfC** | 0.0538 | 0.9446 | **1654%** ✅ 最鲁棒 |
+| GRU | 0.0524 | 1.0118 | 1829% |
+| LTC | 0.0514 | 1.0922 | 2026% |
+| LSTM | 0.0524 | 1.1747 | **2141%** ❌ 最脆弱 |
+
+### 概念漂移实验结果（Regime Change 适应性）
+
+| Model | 全局 RMSE | Regime B RMSE |
+|-------|----------|---------------|
+| **LTC** | **0.3443** | **0.4783** ✅ 最强适应 |
+| GRU | 0.4143 | 0.5782 |
+| LSTM | 0.4288 | 0.5983 |
+| CfC | 0.4792 | 0.6696 |
 
 > 💡 在简单平稳数据上，LSTM/GRU 可能表现更优；LNN 的核心优势体现在**非平稳数据**、**分布外泛化**和**极低参数量**场景。

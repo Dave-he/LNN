@@ -10,12 +10,6 @@ class TimeSeriesDataset(Dataset):
     Creates (input, target) pairs using a sliding window approach:
         input  = x[t : t + seq_len]
         target = x[t + seq_len : t + seq_len + horizon]
-
-    Args:
-        data: Time series data of shape (T,) or (T, F)
-        seq_len: Input sequence length
-        horizon: Prediction horizon
-        stride: Step size between windows
     """
 
     def __init__(
@@ -35,9 +29,7 @@ class TimeSeriesDataset(Dataset):
         self.horizon = horizon
         self.stride = stride
 
-        self.indices = list(
-            range(0, len(data) - seq_len - horizon + 1, stride)
-        )
+        self.indices = list(range(0, len(data) - seq_len - horizon + 1, stride))
 
     def __len__(self) -> int:
         return len(self.indices)
@@ -69,18 +61,6 @@ def generate_sine_data(
     noise_std: float = 0.05,
     seed: int = 42,
 ) -> np.ndarray:
-    """
-    Generate a noisy sine wave for testing.
-
-    Args:
-        num_samples: Number of time steps
-        freq: Frequency of the sine wave
-        noise_std: Standard deviation of Gaussian noise
-        seed: Random seed
-
-    Returns:
-        1D numpy array of shape (num_samples,)
-    """
     rng = np.random.default_rng(seed)
     t = np.arange(num_samples)
     data = np.sin(2 * np.pi * freq * t) + rng.normal(0, noise_std, num_samples)
@@ -96,26 +76,6 @@ def generate_mackey_glass(
     dt: float = 1.0,
     seed: int = 42,
 ) -> np.ndarray:
-    """
-    Generate Mackey-Glass chaotic time series.
-
-    The Mackey-Glass equation is a classic benchmark for time series
-    prediction due to its chaotic dynamics:
-
-        dx/dt = beta * x(t-tau) / (1 + x(t-tau)^n) - gamma * x(t)
-
-    Args:
-        num_samples: Number of time steps to generate
-        tau: Delay parameter (larger = more chaotic)
-        beta: Nonlinearity strength
-        gamma: Decay rate
-        n: Nonlinearity exponent
-        dt: Integration time step
-        seed: Random seed for initial conditions
-
-    Returns:
-        1D numpy array of shape (num_samples,)
-    """
     rng = np.random.default_rng(seed)
     history_len = tau + 1
     total_len = num_samples + history_len
@@ -128,5 +88,122 @@ def generate_mackey_glass(
         x[i] = x[i - 1] + dxdt * dt
 
     data = x[history_len:]
+    data = (data - data.mean()) / (data.std() + 1e-8)
+    return data
+
+
+def generate_ood_sine(
+    num_train: int = 1000,
+    num_ood: int = 500,
+    train_freq: float = 0.05,
+    train_amp: float = 1.0,
+    train_noise: float = 0.05,
+    ood_freq_shift: float = 0.03,
+    ood_amp_shift: float = 0.5,
+    ood_noise_shift: float = 0.1,
+    seed: int = 42,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Generate in-distribution (train) and out-of-distribution (test) sine data.
+
+    OOD shift is applied by changing frequency, amplitude, and noise level,
+    simulating real-world distribution shift (e.g., different weather conditions,
+    different market regimes).
+
+    Returns:
+        (train_data, ood_data) tuple of 1D numpy arrays
+    """
+    rng = np.random.default_rng(seed)
+    t_train = np.arange(num_train)
+    train_data = train_amp * np.sin(2 * np.pi * train_freq * t_train) + rng.normal(
+        0, train_noise, num_train
+    )
+
+    t_ood = np.arange(num_ood)
+    ood_data = (train_amp + ood_amp_shift) * np.sin(
+        2 * np.pi * (train_freq + ood_freq_shift) * t_ood
+    ) + rng.normal(0, train_noise + ood_noise_shift, num_ood)
+
+    return train_data.astype(np.float32), ood_data.astype(np.float32)
+
+
+def generate_concept_drift(
+    num_samples: int = 2000,
+    drift_point: int = 1000,
+    freq_before: float = 0.05,
+    freq_after: float = 0.12,
+    amp_before: float = 1.0,
+    amp_after: float = 0.6,
+    noise_std: float = 0.05,
+    seed: int = 42,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Generate time series with concept drift (regime change).
+
+    Before drift_point: low frequency, high amplitude (regime A)
+    After drift_point:  high frequency, low amplitude (regime B)
+
+    This simulates real-world scenarios like:
+    - Market regime changes (bull -> bear)
+    - Sensor degradation
+    - Seasonal transitions
+
+    Returns:
+        (full_data, drift_labels) where drift_labels is 0 or 1 indicating regime
+    """
+    rng = np.random.default_rng(seed)
+    t = np.arange(num_samples)
+
+    data = np.zeros(num_samples, dtype=np.float32)
+    labels = np.zeros(num_samples, dtype=np.float32)
+
+    before = t < drift_point
+    after = ~before
+
+    data[before] = amp_before * np.sin(2 * np.pi * freq_before * t[before]) + rng.normal(
+        0, noise_std, before.sum()
+    )
+    data[after] = amp_after * np.sin(2 * np.pi * freq_after * t[after]) + rng.normal(
+        0, noise_std, after.sum()
+    )
+    labels[after] = 1.0
+
+    return data, labels
+
+
+def generate_lorenz(
+    num_samples: int = 2000,
+    sigma: float = 10.0,
+    rho: float = 28.0,
+    beta: float = 8.0 / 3.0,
+    dt: float = 0.01,
+    seed: int = 42,
+) -> np.ndarray:
+    """
+    Generate Lorenz attractor time series (x-component).
+
+    The Lorenz system is a classic chaotic system:
+        dx/dt = sigma * (y - x)
+        dy/dt = x * (rho - z) - y
+        dz/dt = x * y - beta * z
+
+    This provides a more challenging chaotic benchmark than Mackey-Glass.
+
+    Returns:
+        1D numpy array of shape (num_samples,) - normalized x-component
+    """
+    rng = np.random.default_rng(seed)
+    x, y, z = 1.0 + rng.standard_normal(3) * 0.1
+
+    data = np.zeros(num_samples, dtype=np.float32)
+    for i in range(num_samples):
+        dx = sigma * (y - x)
+        dy = x * (rho - z) - y
+        dz = x * y - beta * z
+        x += dx * dt
+        y += dy * dt
+        z += dz * dt
+        data[i] = x
+
     data = (data - data.mean()) / (data.std() + 1e-8)
     return data
