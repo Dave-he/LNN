@@ -56,6 +56,14 @@ date: 2026-05-24
 3. **实践落地阶段**：**Repo Analyzer Agent** 协助配置环境和解析源码，结合 **Experiment Agent** 进行测试并记录 Benchmark。
 4. **知识沉淀**：所有的产出自动汇总于 `docs/` 和 `analysis/` 文件夹中。可参考主页 [[README]] 了解完整项目结构。
 
+## ✅ 当前已落地的自动化能力
+
+- **每日追踪脚本**：`scripts/daily_lnn_research.py`，聚合 arXiv、GitHub 与 Hugging Face 的 LNN / LTC / CfC / NCP / LFM 相关更新。
+- **本机定时任务**：`scripts/install_daily_lnn_timer.sh`，安装 user systemd timer，默认每天 06:30 运行 `scripts/run_daily_lnn_task.sh`。
+- **GitHub Actions**：`.github/workflows/daily-lnn-research.yml`，每天自动生成研究摘要并推送回仓库。
+- **Jetson 验证脚本**：`scripts/jetson_lnn_benchmark.py`，在 Jetson 上执行 LNN/CfC 风格模型与 GRU 的 quick benchmark，输出到 `analysis/jetson/`。
+- **使用说明**：详见 [[每日自动化任务与Jetson验证]]。
+
 ---
 
 ## 🤖 通用 Agents / Skills (基于 Vercel Skills)

@@ -63,3 +63,10 @@ tags: [LNN, reading-report, papers]
 - **开源实现库**：`ncps` (Neural Circuit Policies)，提供 LTC、CfC 及其 Keras / PyTorch 的实现。
 - **工业界推动者**：MIT CSAIL 衍生公司 **Liquid AI**，已开源 LFM2 系列基础模型权重（HuggingFace / OpenCSG）。
 - **演进路线**：从早期的理论控制验证（LTC, 2020），到效率突破（CfC, 2022），再到如今的通用液态基础模型（LFM2, 2025）及自动化架构搜索（STAR）。
+
+
+<!-- daily-lnn-index:start -->
+## 4. 自动化追踪与待研读队列
+
+- **2026-05-25**：[[docs/daily/2026-05-25_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 33 个，模型 21 个。
+<!-- daily-lnn-index:end -->

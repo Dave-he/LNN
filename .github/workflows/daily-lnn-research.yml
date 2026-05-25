@@ -1,0 +1,79 @@
+name: Daily LNN Research
+
+on:
+  schedule:
+    - cron: "30 22 * * *"
+  workflow_dispatch:
+    inputs:
+      download_pdfs:
+        description: "Download PDFs for top arXiv hits"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+      run_jetson_benchmark:
+        description: "Run benchmark on a self-hosted Jetson runner"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+permissions:
+  contents: write
+
+jobs:
+  research-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate daily digest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          args=(--max-results 25 --per-query 8)
+          if [[ "${{ github.event.inputs.download_pdfs || 'false' }}" == "true" ]]; then
+            args+=(--download-pdfs)
+          fi
+          python scripts/daily_lnn_research.py "${args[@]}"
+
+      - name: Commit and push updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs papers analysis
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(daily): update LNN research digest $(date +%F)"
+            git push
+          else
+            echo "No changes to commit."
+          fi
+
+  jetson-benchmark:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_jetson_benchmark == 'true' }}
+    runs-on: [self-hosted, linux, ARM64, jetson]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Jetson LNN benchmark
+        run: python3 scripts/jetson_lnn_benchmark.py --quick
+
+      - name: Commit and push benchmark
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add analysis/jetson
+          if ! git diff --cached --quiet; then
+            git commit -m "bench(jetson): update LNN smoke benchmark $(date +%F)"
+            git push
+          else
+            echo "No benchmark changes to commit."
+          fi

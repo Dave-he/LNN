@@ -40,7 +40,33 @@ LNN/
 
 - 想要了解当前最新进展，请阅读：[[液态神经网络最新进展与开源项目调研]]
 - 想要了解最新的论文总结，请阅读：[[Liquid_Neural_Networks_Latest_Papers_Summary|LNN 最新论文总结]]
+- 想要查看每日自动化追踪结果，请阅读：[[docs/daily/2026-05-25_LNN_research_digest|2026-05-25 LNN 每日研究追踪]]
+- 想要配置本机每日任务或 Jetson 验证，请阅读：[[每日自动化任务与Jetson验证]]
 - 关于本项目中自动化工具与工作流的规划，请参阅：[[AGENTS]]
+
+### 自动化任务
+
+本仓库已提供可直接运行的每日追踪入口：
+
+```bash
+# 只生成资料追踪，不提交
+COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
+
+# 安装本机 user systemd timer，每天 06:30 自动运行并推送
+./scripts/install_daily_lnn_timer.sh
+```
+
+GitHub Actions 也已配置 `.github/workflows/daily-lnn-research.yml`，会每天生成 LNN 资料摘要并推送回仓库。
+
+### Jetson 验证
+
+Jetson 本地 smoke benchmark：
+
+```bash
+python3 scripts/jetson_lnn_benchmark.py --quick
+```
+
+当前结果见：[[analysis/jetson/2026-05-25_lnn_benchmark]]
 
 ## 🌟 LNN 相关开源仓库 (Open Source Repositories)
 

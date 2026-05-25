@@ -4,7 +4,7 @@ tags:
   - LNN
   - paper-summary
   - research
-date: 2026-05-24
+date: 2026-05-25
 ---
 
 # 液态神经网络 (Liquid Neural Networks) 最新论文及技术进展汇总 (2024-2026)
@@ -42,5 +42,36 @@ date: 2026-05-24
 - **主要内容**：针对受季节性、地缘政治和宏观经济影响而剧烈波动的天然气现货价格，研究使用 LNN 进行短期预测。
 - **核心成果**：相比传统的滚动窗口线性回归和 LSTM 基准模型，LNN（包括 LTC, CfC 等变体）通过动态内部状态更新，能够持续适应不断变化的市场机制（Regime shifts），在非平稳的高波动市场条件下显著降低了预测误差。
 
+### 2.5 物理建模连续时间网络
+**论文名称**：*Physics-Modeled Neural Networks* (arXiv:2605.08176, 2026年5月)
+- **主要内容**：提出 Dynamical Physics-Modeled Neural Networks，将隐藏层定义为 ODE 解，并与 Neural ODE、CfC 等连续时间模型对比。
+- **关注价值**：该工作不是标准 LNN，但与 CfC / Neural ODE 共享连续时间建模脉络，适合作为 LNN 数学表达能力与物理先验结合方向的对照阅读。
+- **链接**：https://arxiv.org/abs/2605.08176
+
+### 2.6 视频时序动作检测
+**论文名称**：*LiquidTAD: Efficient Temporal Action Detection via Parallel Liquid-Inspired Temporal Relaxation* (arXiv:2604.18274, 2026年4月)
+- **主要内容**：将液态神经动态中的指数松弛先验蒸馏为可并行的时间算子，避免完整 LNN ODE 求解过程。
+- **核心成果**：论文摘要报告在 THUMOS-14 上以 10.82M 参数、27.17G FLOPs 达到 69.46% average mAP，相比 ActionFormer 参数量减少超过 60%。
+- **链接**：https://arxiv.org/abs/2604.18274
+
+### 2.7 6G 子太赫兹波束成形
+**论文名称**：*Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks* (arXiv:2604.07219, 2026年4月)
+- **主要内容**：将液晶天线硬件和 LNN 数字波束成形结合，用于 sub-THz MU-MIMO 通信系统。
+- **核心成果**：论文摘要报告相较学习辅助梯度下降和 GRU 基线具备更高鲁棒性，并取得 88.6% spectral efficiency gain。
+- **链接**：https://arxiv.org/abs/2604.07219
+
+### 2.8 模仿学习策略头
+**论文名称**：*Liquid Networks with Mixture Density Heads for Efficient Imitation Learning* (arXiv:2603.27058, 2026年3月)
+- **主要内容**：比较液态网络 + mixture density heads 与 diffusion policies，在 Push-T、RoboMimic Can、PointMaze 等任务上进行共享骨干对照。
+- **关注价值**：该方向适合本项目后续在 Jetson 上验证低延迟机器人控制与策略头设计。
+- **链接**：https://arxiv.org/abs/2603.27058
+
 ## 3. 总结与未来展望
 截至 2026 年，液态神经网络（LNN）正逐步成为边缘计算（Edge AI）、自动驾驶、医疗实时监控（如心电图异常检测）及高频金融交易等时间敏感型领域的新标准。虽然大规模 Transformer 继续在云端主导静态大语言模型任务，但极其紧凑且高效的液态神经网络正在成为各类物联网及机器人等边缘设备的“数字神经系统”。
+
+
+<!-- daily-lnn-index:start -->
+## 4. 自动化每日追踪索引
+
+- **2026-05-25**：[[docs/daily/2026-05-25_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 33 个，模型 21 个。
+<!-- daily-lnn-index:end -->
