@@ -14,6 +14,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - Hugging Face 候选模型：21 个
 - 已下载 PDF：0 个
 
+## 数据源状态
+- `arXiv fetch failed: HTTP Error 429: Unknown Error`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
+
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
@@ -33,7 +37,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
-| 2026-05-25 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
+| 2026-05-26 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
 | 2026-05-25 | [karl4th/liquid-neural-network-delivery-robot](https://github.com/karl4th/liquid-neural-network-delivery-robot) | 0 | C++ |  |
 | 2026-05-25 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
 | 2026-05-24 | [aygp-dr/liquid-neural-networks](https://github.com/aygp-dr/liquid-neural-networks) | 20 | Python | Liquid Neural Networks (LNN) - Continuous-time neural dynamics inspired by C. elegans. Parameter-efficient AI with 19-302 neurons for complex tasks. Hybrid Clo… |
@@ -49,6 +53,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
+| 2026-05-26 | [LiberteEPFL/lfm25-1.2b-dpo-bigchat](https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-bigchat) | 0 | 0 |  |
 | 2026-05-25 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 615 | 0 | text-generation |
 | 2026-05-25 | [sh-024/LFM2.5-1.2B-Instruct-Korean](https://huggingface.co/sh-024/LFM2.5-1.2B-Instruct-Korean) | 30 | 1 | text-generation |
 | 2026-05-25 | [florianvoss/LiquidAI-LFM2-VL-450M-sima](https://huggingface.co/florianvoss/LiquidAI-LFM2-VL-450M-sima) | 0 | 0 |  |
@@ -56,7 +61,6 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-05-25 | [devendragovil/LFM2-24B-A2B](https://huggingface.co/devendragovil/LFM2-24B-A2B) | 0 | 0 | text-generation |
 | 2026-05-25 | [afkfatih/LFM2.5-350M-TEST](https://huggingface.co/afkfatih/LFM2.5-350M-TEST) | 0 | 0 | text-generation |
 | 2026-05-25 | [DavidAU/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Deck-Stud](https://huggingface.co/DavidAU/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Deck-Stud) | 0 | 0 |  |
-| 2026-05-25 | [tienanh2003/lfm25-1p2b-thinking-vi-expanded-base](https://huggingface.co/tienanh2003/lfm25-1p2b-thinking-vi-expanded-base) | 0 | 0 |  |
 | 2026-05-24 | [OrdenWills/LFM2.5-350M-home-assistant-sft](https://huggingface.co/OrdenWills/LFM2.5-350M-home-assistant-sft) | 5617 | 2 |  |
 | 2026-05-24 | [SrhKsn/LFM2.5-350M-MentalChat-ONNX](https://huggingface.co/SrhKsn/LFM2.5-350M-MentalChat-ONNX) | 9 | 0 |  |
 | 2026-05-23 | [FlameF0X/LFM2.5-1.2B-Thinking-CodeX](https://huggingface.co/FlameF0X/LFM2.5-1.2B-Thinking-CodeX) | 400 | 0 | text-generation |

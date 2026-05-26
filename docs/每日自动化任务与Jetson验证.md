@@ -36,7 +36,7 @@ python3 scripts/daily_lnn_research.py --download-pdfs --max-pdf-downloads 5
 
 该脚本会依次执行：
 1. 拉取 LNN / LTC / CfC / NCP / LFM 相关资料。
-2. 如果当前机器是 Jetson，则自动运行 benchmark。若本机已有 `ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin` 容器，会优先通过该容器使用 CUDA 12.6；否则回退到本机 Python。
+2. 如果当前机器是 Jetson，则自动运行 benchmark。若本机已有 `ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin` 容器，会优先通过该容器使用 CUDA 12.6，并默认独立尝试 2 次；若 CUDA 运行时因显存碎片、cuBLAS/NVML 分配或容器错误持续失败，会自动写入 CPU fallback smoke benchmark 报告，避免每日验证记录中断。
 3. 将 `docs/`、`papers/`、`analysis/` 的变化提交并推送到 `origin`。
 
 本地安装 user systemd timer：
@@ -57,6 +57,8 @@ ON_CALENDAR="*-*-* 08:00:00" ./scripts/install_daily_lnn_timer.sh
 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 ```
 
+可通过 `JETSON_CUDA_ATTEMPTS=3` 调整 CUDA 容器重试次数。
+
 ## 3. GitHub Actions 每日任务
 
 已新增 `.github/workflows/daily-lnn-research.yml`：
@@ -72,6 +74,7 @@ COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 当前 smoke benchmark 使用合成非平稳时间序列，对比：
 - `CfCStyle`：轻量闭式连续时间风格模型，用于近似验证 LNN/CfC 类动态门控。
 - `GRU`：传统循环网络基线。
+- 状态 `ok_cpu_fallback` 表示脚本已优先尝试 Jetson CUDA 路径，但 CUDA 内存/加速器错误导致本次退回 CPU；该状态仍可用于确认脚本、数据生成和模型对比流程有效，但不能替代正式 GPU 性能结果。
 
 手动运行：
 
@@ -89,9 +92,27 @@ docker run --rm --runtime nvidia --gpus all \
   bash -lc 'python3 scripts/jetson_lnn_benchmark.py --samples 64 --seq-len 16 --hidden-size 8 --epochs 1 --batch-size 8 --inference-repeats 2'
 ```
 
-本次已生成：
-- [[analysis/jetson/2026-05-25_lnn_benchmark.md]]
-- `analysis/jetson/2026-05-25_lnn_benchmark.json`
+最新已生成：
+- [[analysis/jetson/2026-05-26_lnn_benchmark.md]]
+- `analysis/jetson/2026-05-26_lnn_benchmark.json`
+
+### 2026-05-26 结果快照
+
+检测到的设备：
+- CUDA 容器设备名：`Orin`
+- Jetson BSP：R36.4.7
+- CUDA 容器 PyTorch：`2.10.0`，CUDA 12.6 可用
+
+quick benchmark 结果：
+
+| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
+|---|---:|---:|---:|---:|
+| CfCStyle | 329 | 0.691654 | 9610.1 | 0.79 |
+| GRU | 273 | 0.671285 | 168201.6 | 0.14 |
+
+结论：
+- 2026-05-26 完整每日入口已完成资料追踪与 Jetson CUDA smoke test，最终报告中 `device=cuda`、`cuda_available=true`，峰值显存约 25.39 MB。
+- 当前系统在连续运行时会偶发 cuBLAS/NVML 分配错误；每日入口已改为先独立重试 CUDA 容器，持续失败时再生成 CPU fallback 报告。
 
 ### 2026-05-25 结果快照
 

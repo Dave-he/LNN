@@ -280,6 +280,7 @@ def render_daily_digest(
     repos: list[dict[str, Any]],
     models: list[dict[str, Any]],
     downloaded: list[str],
+    errors: list[str],
 ) -> str:
     lines = [
         "---",
@@ -297,9 +298,13 @@ def render_daily_digest(
         f"- GitHub 候选仓库：{len(repos)} 个",
         f"- Hugging Face 候选模型：{len(models)} 个",
         f"- 已下载 PDF：{len(downloaded)} 个",
-        "",
-        "## arXiv 候选论文",
     ]
+    if errors:
+        lines.extend(["", "## 数据源状态"])
+        lines.extend(f"- `{error}`" for error in errors)
+        lines.append("- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。")
+
+    lines.extend(["", "## arXiv 候选论文"])
 
     if papers:
         lines.extend(["| 日期 | 论文 | 作者 | 摘要 |", "|---|---|---|---|"])
@@ -528,7 +533,7 @@ def main() -> int:
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     digest_path = ROOT / "docs" / "daily" / f"{run_date}_LNN_research_digest.md"
-    digest_path.write_text(render_daily_digest(run_date, papers, repos, models, downloaded), encoding="utf-8")
+    digest_path.write_text(render_daily_digest(run_date, papers, repos, models, downloaded, errors), encoding="utf-8")
 
     watchlist_path = ROOT / "analysis" / "repo_watchlist" / f"{run_date}_lnn_open_source_watchlist.md"
     watchlist_path.write_text(render_repo_watchlist(run_date, repos, models), encoding="utf-8")

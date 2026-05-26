@@ -66,7 +66,9 @@ Jetson 本地 smoke benchmark（优先使用本机已有 Jetson Orin CUDA 容器
 RUN_BENCHMARK=1 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 ```
 
-当前结果见：[[analysis/jetson/2026-05-25_lnn_benchmark]]
+如果 CUDA 容器因显存碎片或运行时内存分配失败退出，脚本会默认重试 2 次，再退回 CPU smoke benchmark 并在报告中标记 `ok_cpu_fallback`，便于保留当天验证记录。
+
+当前结果见：[[analysis/jetson/2026-05-26_lnn_benchmark]]
 
 ## 🌟 LNN 相关开源仓库 (Open Source Repositories)
 

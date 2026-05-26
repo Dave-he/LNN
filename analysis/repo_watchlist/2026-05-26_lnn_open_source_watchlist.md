@@ -8,7 +8,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
-- 更新：2026-05-25
+- 更新：2026-05-26
 - Star / Fork：1 / 0
 - 语言：C
 - Topics：未标注
@@ -148,6 +148,12 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Fine-tuning LiquidAI/LFM2.5-VL-450M to classify deforestation.
 
 ## Hugging Face 模型
+### [LiberteEPFL/lfm25-1.2b-dpo-bigchat](https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-bigchat)
+- 更新：2026-05-26
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
 ### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
 - 更新：2026-05-25
 - 下载 / Likes：615 / 0
@@ -189,12 +195,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：safetensors, lfm2_moe, region:us
-
-### [tienanh2003/lfm25-1p2b-thinking-vi-expanded-base](https://huggingface.co/tienanh2003/lfm25-1p2b-thinking-vi-expanded-base)
-- 更新：2026-05-25
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：safetensors, lfm2, region:us
 
 ### [OrdenWills/LFM2.5-350M-home-assistant-sft](https://huggingface.co/OrdenWills/LFM2.5-350M-home-assistant-sft)
 - 更新：2026-05-24

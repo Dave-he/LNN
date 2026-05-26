@@ -13,6 +13,7 @@ import platform
 import subprocess
 import sys
 import time
+import traceback
 from typing import Any
 
 
@@ -95,7 +96,7 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
         device = env["cuda_device"]
         lines.append(f"- CUDA 设备：{device.get('name')}，显存 {device.get('total_memory_mb')} MB")
 
-    if payload.get("status") != "ok":
+    if payload.get("status") not in {"ok", "ok_cpu_fallback"}:
         lines.extend(["", "## 状态", f"- {payload.get('status')}: {payload.get('reason')}"])
     else:
         config = payload.get("config", {})
@@ -117,6 +118,19 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
             lines.append(
                 f"| {result['name']} | {result['parameters']} | {result['test_mse']:.6f} | "
                 f"{result['inference_steps_per_sec']:.1f} | {result['train_seconds']:.2f} |"
+            )
+        if payload.get("status") == "ok_cpu_fallback":
+            lines.extend(
+                [
+                    "",
+                    "## CUDA 回退",
+                    "- 本次优先尝试 Jetson CUDA 路径，但 CUDA 运行时返回内存/加速器错误，已自动回退到 CPU smoke benchmark。",
+                    "- 回退原因：",
+                    "",
+                    "```text",
+                    str(payload.get("cuda_fallback_reason")),
+                    "```",
+                ]
             )
         lines.extend(
             [
@@ -275,11 +289,38 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     return payload
 
 
+def looks_like_cuda_runtime_error(exc: BaseException) -> bool:
+    text = f"{type(exc).__name__}: {exc}".lower()
+    return "cuda" in text and any(
+        marker in text
+        for marker in (
+            "out of memory",
+            "memory allocation",
+            "cublas",
+            "cudnn",
+            "cudacachingallocator",
+            "internal assert",
+            "accelerator",
+            "nvml",
+        )
+    )
+
+
+def exception_summary(exc: BaseException) -> str:
+    summary = "".join(traceback.format_exception_only(type(exc), exc)).strip()
+    return " ".join(summary.split())
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--date", default=dt.date.today().isoformat(), help="Run date in YYYY-MM-DD format.")
     parser.add_argument("--quick", action="store_true", help="Use a shorter smoke-test configuration.")
     parser.add_argument("--cpu", action="store_true", help="Force CPU even if CUDA is available.")
+    parser.add_argument(
+        "--no-cpu-fallback",
+        action="store_true",
+        help="Do not retry on CPU when the CUDA path fails with a runtime memory/accelerator error.",
+    )
     parser.add_argument("--samples", type=int, default=768)
     parser.add_argument("--seq-len", type=int, default=64)
     parser.add_argument("--hidden-size", type=int, default=32)
@@ -311,6 +352,15 @@ def main() -> int:
             "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
             "environment": detect_environment(None),
         }
+    except Exception as exc:
+        if args.cpu or args.no_cpu_fallback or not looks_like_cuda_runtime_error(exc):
+            raise
+        reason = exception_summary(exc)
+        print(f"[warn] Jetson CUDA benchmark failed; retrying on CPU: {reason}", file=sys.stderr)
+        args.cpu = True
+        payload = run_benchmark(args)
+        payload["status"] = "ok_cpu_fallback"
+        payload["cuda_fallback_reason"] = reason
 
     json_path, md_path = write_report(args.date, payload)
     print(f"Jetson LNN benchmark report written: {json_path.relative_to(ROOT)}")
