@@ -1,10 +1,26 @@
 {
   "date": "2026-05-26",
-  "generated_at": "2026-05-26T03:20:46.386776+00:00",
-  "errors": [
-    "arXiv fetch failed: HTTP Error 429: Unknown Error"
-  ],
+  "generated_at": "2026-05-26T23:42:48.869589+00:00",
+  "errors": [],
   "papers": [
+    {
+      "id": "2605.24047v1",
+      "title": "EMMA: Extracting Multiple physical parameters from Multimodal Data",
+      "authors": [
+        "Farhat Shaikh",
+        "Ayan Banerjee",
+        "Sandeep Gupta"
+      ],
+      "published": "2026-05-21",
+      "updated": "2026-05-21",
+      "summary": "We introduce EMMA, a physics-informed multimodal framework that recovers all identifiable dynamical parameters of a system directly from raw video, audio, and image-based time-series observations. Unlike prior video-only approaches that struggle with occluded states, hidden actuation inputs, or assumptions about known initial conditions and coordinate frames, EMMA performs joint inference of explicit parameters, implicit dynamical components, and calibration invariants within a unified continuous-time model. EMMA leverages a Liquid Time-Constant (LTC) network to learn latent dynamics from heterogeneous modalities while a physics-constrained loss enforces consistency with the governing differential equations. A unified feature pipeline enables consistent alignment across video trajectories, acoustic signatures, and chart-derived measurements, allowing EMMA to estimate parameters under forced, implicit, and multivariate dynamics without requiring segmentation masks, differentiable rendering, or specialized sensors. Across 100+ scenarios including five standard dynamical benchmarks (75 Delfys videos), real-world rover and quadrotor systems with hidden inputs, and simulation-chart case studies spanning biological and chaotic systems, EMMA delivers robust multi-parameter recovery and significantly outperforms existing single-modality and equation-discovery baselines. Our results establish EMMA as a general, scalable solution for physics-consistent model extraction from opportunistic multimodal data. Code and data are available at: https://github.com/ImpactLabASU/EMMA-CVPR2026",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2605.24047v1",
+      "pdf_url": "https://arxiv.org/pdf/2605.24047v1",
+      "keyword_score": 3
+    },
     {
       "id": "2605.08176v1",
       "title": "Physics-Modeled Neural Networks",
@@ -473,27 +489,32 @@
       "abs_url": "https://arxiv.org/abs/2510.07578v1",
       "pdf_url": "https://arxiv.org/pdf/2510.07578v1",
       "keyword_score": 2
-    },
-    {
-      "id": "2510.04187v1",
-      "title": "A Complement to Neural Networks for Anisotropic Inelasticity at Finite Strains",
-      "authors": [
-        "Hagen Holthusen",
-        "Ellen Kuhl"
-      ],
-      "published": "2025-10-05",
-      "updated": "2025-10-05",
-      "summary": "We propose a complement to constitutive modeling that augments neural networks with material principles to capture anisotropy and inelasticity at finite strains. The key element is a dual potential that governs dissipation, consistently incorporates anisotropy, and-unlike conventional convex formulations-satisfies the dissipation inequality without requiring convexity. Our neural network architecture employs invariant-based input representations in terms of mixed elastic, inelastic and structural tensors. It adapts Input Convex Neural Networks, and introduces Input Monotonic Neural Networks to broaden the admissible potential class. To bypass exponential-map time integration in the finite strain regime and stabilize the training of inelastic materials, we employ recurrent Liquid Neural Networks. The approach is evaluated at both material point and structural scales. We benchmark against recurrent models without physical constraints and validate predictions of deformation and reaction forces for unseen boundary value problems. In all cases, the method delivers accurate and stable performance beyond the training regime. The neural network and finite element implementations are available as open-source and are accessible to the public via https://doi.org/10.5281/zenodo.17199965.",
-      "categories": [
-        "cs.CE",
-        "cs.AI"
-      ],
-      "abs_url": "https://arxiv.org/abs/2510.04187v1",
-      "pdf_url": "https://arxiv.org/pdf/2510.04187v1",
-      "keyword_score": 1
     }
   ],
   "github_repos": [
+    {
+      "full_name": "everest-an/O1",
+      "description": "MT-LNN A Microtubule-Inspired Liquid Architecture with GWT Bottleneck and Anesthesia Validation Microtubule-Inspired Liquid Neural Network｜类脑液态大模型｜13 通道微管仿生｜麻醉验证｜长文本 SOTA｜替代 Transformer FFN｜有机 AI 新范式",
+      "html_url": "https://github.com/everest-an/O1",
+      "stars": 2,
+      "forks": 0,
+      "language": "Python",
+      "updated_at": "2026-05-26",
+      "pushed_at": "2026-05-26",
+      "topics": [
+        "anesthesia-validation",
+        "brain-inspired",
+        "deep-learning",
+        "liquid-neural-network",
+        "llm",
+        "long-context",
+        "microtubule",
+        "mt-lnn",
+        "organic-ai",
+        "transformer-replacement"
+      ],
+      "query": "\"liquid neural network\""
+    },
     {
       "full_name": "Sum-Outman/Self-LNN",
       "description": "Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。",
@@ -512,9 +533,9 @@
       "html_url": "https://github.com/karl4th/liquid-neural-network-delivery-robot",
       "stars": 0,
       "forks": 0,
-      "language": "C++",
-      "updated_at": "2026-05-25",
-      "pushed_at": "2026-05-25",
+      "language": "Python",
+      "updated_at": "2026-05-26",
+      "pushed_at": "2026-05-26",
       "topics": [],
       "query": "\"liquid neural network\""
     },
@@ -525,8 +546,8 @@
       "stars": 0,
       "forks": 0,
       "language": "Python",
-      "updated_at": "2026-05-25",
-      "pushed_at": "2026-05-25",
+      "updated_at": "2026-05-26",
+      "pushed_at": "2026-05-26",
       "topics": [],
       "query": "\"liquid time constant\""
     },
@@ -544,29 +565,6 @@
         "neural-networks",
         "python",
         "research"
-      ],
-      "query": "\"liquid neural network\""
-    },
-    {
-      "full_name": "everest-an/O1",
-      "description": "MT-LNN A Microtubule-Inspired Liquid Architecture with GWT Bottleneck and Anesthesia Validation Microtubule-Inspired Liquid Neural Network｜类脑液态大模型｜13 通道微管仿生｜麻醉验证｜长文本 SOTA｜替代 Transformer FFN｜有机 AI 新范式",
-      "html_url": "https://github.com/everest-an/O1",
-      "stars": 2,
-      "forks": 0,
-      "language": "Python",
-      "updated_at": "2026-05-24",
-      "pushed_at": "2026-05-24",
-      "topics": [
-        "anesthesia-validation",
-        "brain-inspired",
-        "deep-learning",
-        "liquid-neural-network",
-        "llm",
-        "long-context",
-        "microtubule",
-        "mt-lnn",
-        "organic-ai",
-        "transformer-replacement"
       ],
       "query": "\"liquid neural network\""
     },
@@ -1077,23 +1075,38 @@
   ],
   "huggingface_models": [
     {
-      "model_id": "LiberteEPFL/lfm25-1.2b-dpo-bigchat",
+      "model_id": "OrdenWills/LFM2.5-350M-home-assistant-sft",
       "author": null,
       "last_modified": "2026-05-26",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": null,
+      "downloads": 5480,
+      "likes": 2,
+      "pipeline_tag": "text-generation",
       "tags": [
-        "region:us"
+        "safetensors",
+        "gguf",
+        "lfm2",
+        "smart-home",
+        "home-automation",
+        "tool-calling",
+        "function-calling",
+        "iot",
+        "unsloth",
+        "lora",
+        "text-generation",
+        "conversational",
+        "en",
+        "base_model:LiquidAI/LFM2.5-350M",
+        "base_model:adapter:LiquidAI/LFM2.5-350M",
+        "license:apache-2.0"
       ],
-      "url": "https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-bigchat",
-      "query": "LFM2"
+      "url": "https://huggingface.co/OrdenWills/LFM2.5-350M-home-assistant-sft",
+      "query": "LFM2.5"
     },
     {
       "model_id": "reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT",
       "author": null,
-      "last_modified": "2026-05-25",
-      "downloads": 615,
+      "last_modified": "2026-05-26",
+      "downloads": 625,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -1115,13 +1128,193 @@
         "hybrid"
       ],
       "url": "https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT",
+      "query": "LFM2.5"
+    },
+    {
+      "model_id": "LiberteEPFL/lfm25-1.2b-sft-bigchat",
+      "author": null,
+      "last_modified": "2026-05-26",
+      "downloads": 35,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2",
+        "text-generation",
+        "generated_from_trainer",
+        "trl",
+        "sft",
+        "conversational",
+        "base_model:LiquidAI/LFM2.5-1.2B-Base",
+        "base_model:finetune:LiquidAI/LFM2.5-1.2B-Base",
+        "endpoints_compatible",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/LiberteEPFL/lfm25-1.2b-sft-bigchat",
       "query": "LFM2"
+    },
+    {
+      "model_id": "Carnot-EBM/per-token-ebm-lfm25-350m-nothink",
+      "author": null,
+      "last_modified": "2026-05-26",
+      "downloads": 4,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "safetensors",
+        "gibbs_ebm",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/Carnot-EBM/per-token-ebm-lfm25-350m-nothink",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "Carnot-EBM/per-token-ebm-lfm25-12b-nothink",
+      "author": null,
+      "last_modified": "2026-05-26",
+      "downloads": 3,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "safetensors",
+        "gibbs_ebm",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/Carnot-EBM/per-token-ebm-lfm25-12b-nothink",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "LiberteEPFL/lfm25-1.2b-sft-bigchat-v2",
+      "author": null,
+      "last_modified": "2026-05-26",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2",
+        "text-generation",
+        "generated_from_trainer",
+        "trl",
+        "sft",
+        "conversational",
+        "base_model:LiquidAI/LFM2.5-1.2B-Base",
+        "base_model:finetune:LiquidAI/LFM2.5-1.2B-Base",
+        "endpoints_compatible",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/LiberteEPFL/lfm25-1.2b-sft-bigchat-v2",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "LiberteEPFL/lfm25-1.2b-sft-bigchat-v2-narrative",
+      "author": null,
+      "last_modified": "2026-05-26",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2",
+        "text-generation",
+        "generated_from_trainer",
+        "trl",
+        "sft",
+        "conversational",
+        "base_model:LiquidAI/LFM2.5-1.2B-Base",
+        "base_model:finetune:LiquidAI/LFM2.5-1.2B-Base",
+        "endpoints_compatible",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/LiberteEPFL/lfm25-1.2b-sft-bigchat-v2-narrative",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "Burumbum/lfm2.5-350m-dolly-q4-onnx",
+      "author": null,
+      "last_modified": "2026-05-26",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "onnx",
+        "safetensors",
+        "lfm2",
+        "text-generation",
+        "unsloth",
+        "lora",
+        "fine-tuned",
+        "dolly",
+        "conversational",
+        "en",
+        "dataset:databricks/databricks-dolly-15k",
+        "base_model:LiquidAI/LFM2.5-350M",
+        "base_model:adapter:LiquidAI/LFM2.5-350M",
+        "license:apache-2.0",
+        "endpoints_compatible"
+      ],
+      "url": "https://huggingface.co/Burumbum/lfm2.5-350m-dolly-q4-onnx",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "LiberteEPFL/lfm25-1.2b-dpo-molora-all-linear-e8xr10-bigchat",
+      "author": null,
+      "last_modified": "2026-05-26",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "region:us"
+      ],
+      "url": "https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-molora-all-linear-e8xr10-bigchat",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "LiberteEPFL/lfm25-1.2b-dpo-lora-all-linear-r80-bigchat",
+      "author": null,
+      "last_modified": "2026-05-26",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "transformers",
+        "safetensors",
+        "generated_from_trainer",
+        "trl",
+        "dpo",
+        "arxiv:2305.18290",
+        "base_model:LiberteEPFL/lfm25-1.2b-sft-bigchat",
+        "base_model:finetune:LiberteEPFL/lfm25-1.2b-sft-bigchat",
+        "endpoints_compatible",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-lora-all-linear-r80-bigchat",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "Burumbum/lfm2.5-350m-dolly-colab-partial",
+      "author": null,
+      "last_modified": "2026-05-26",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "safetensors",
+        "lfm2",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/Burumbum/lfm2.5-350m-dolly-colab-partial",
+      "query": "LFM2.5"
     },
     {
       "model_id": "sh-024/LFM2.5-1.2B-Instruct-Korean",
       "author": null,
       "last_modified": "2026-05-25",
-      "downloads": 30,
+      "downloads": 51,
       "likes": 1,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -1143,78 +1336,13 @@
         "license:other"
       ],
       "url": "https://huggingface.co/sh-024/LFM2.5-1.2B-Instruct-Korean",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "florianvoss/LiquidAI-LFM2-VL-450M-sima",
-      "author": null,
-      "last_modified": "2026-05-25",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "region:us"
-      ],
-      "url": "https://huggingface.co/florianvoss/LiquidAI-LFM2-VL-450M-sima",
-      "query": "LiquidAI"
-    },
-    {
-      "model_id": "LiberteEPFL/lfm25-1.2b-sft-bigchat",
-      "author": null,
-      "last_modified": "2026-05-25",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2",
-        "text-generation",
-        "generated_from_trainer",
-        "trl",
-        "sft",
-        "conversational",
-        "base_model:LiquidAI/LFM2.5-1.2B-Base",
-        "base_model:finetune:LiquidAI/LFM2.5-1.2B-Base",
-        "endpoints_compatible",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/LiberteEPFL/lfm25-1.2b-sft-bigchat",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "devendragovil/LFM2-24B-A2B",
-      "author": null,
-      "last_modified": "2026-05-25",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2_moe",
-        "text-generation",
-        "liquid",
-        "lfm2",
-        "edge",
-        "conversational",
-        "en",
-        "ar",
-        "zh",
-        "fr",
-        "de",
-        "ja",
-        "ko",
-        "es"
-      ],
-      "url": "https://huggingface.co/devendragovil/LFM2-24B-A2B",
-      "query": "LFM2"
+      "query": "LFM2.5"
     },
     {
       "model_id": "afkfatih/LFM2.5-350M-TEST",
       "author": null,
       "last_modified": "2026-05-25",
-      "downloads": 0,
+      "downloads": 23,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -1233,48 +1361,26 @@
         "region:us"
       ],
       "url": "https://huggingface.co/afkfatih/LFM2.5-350M-TEST",
-      "query": "LFM2"
+      "query": "LFM2.5"
     },
     {
-      "model_id": "DavidAU/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Deck-Stud",
+      "model_id": "florianvoss/LiquidAI-LFM2-VL-450M-sima",
       "author": null,
       "last_modified": "2026-05-25",
       "downloads": 0,
       "likes": 0,
       "pipeline_tag": null,
       "tags": [
-        "safetensors",
-        "lfm2_moe",
         "region:us"
       ],
-      "url": "https://huggingface.co/DavidAU/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Deck-Stud",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "OrdenWills/LFM2.5-350M-home-assistant-sft",
-      "author": null,
-      "last_modified": "2026-05-24",
-      "downloads": 5617,
-      "likes": 2,
-      "pipeline_tag": null,
-      "tags": [
-        "safetensors",
-        "gguf",
-        "lfm2",
-        "llama.cpp",
-        "unsloth",
-        "endpoints_compatible",
-        "region:us",
-        "conversational"
-      ],
-      "url": "https://huggingface.co/OrdenWills/LFM2.5-350M-home-assistant-sft",
-      "query": "LFM2.5"
+      "url": "https://huggingface.co/florianvoss/LiquidAI-LFM2-VL-450M-sima",
+      "query": "LiquidAI"
     },
     {
       "model_id": "SrhKsn/LFM2.5-350M-MentalChat-ONNX",
       "author": null,
       "last_modified": "2026-05-24",
-      "downloads": 9,
+      "downloads": 25,
       "likes": 0,
       "pipeline_tag": null,
       "tags": [
@@ -1289,7 +1395,7 @@
       "model_id": "FlameF0X/LFM2.5-1.2B-Thinking-CodeX",
       "author": null,
       "last_modified": "2026-05-23",
-      "downloads": 400,
+      "downloads": 326,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -1310,60 +1416,6 @@
         "region:us"
       ],
       "url": "https://huggingface.co/FlameF0X/LFM2.5-1.2B-Thinking-CodeX",
-      "query": "LFM2.5"
-    },
-    {
-      "model_id": "tugot17/LFM2.5-1.2B-Instruct-yarn2x",
-      "author": null,
-      "last_modified": "2026-05-22",
-      "downloads": 64,
-      "likes": 0,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2",
-        "text-generation",
-        "liquid",
-        "lfm2.5",
-        "edge",
-        "conversational",
-        "en",
-        "ar",
-        "zh",
-        "fr",
-        "de",
-        "ja",
-        "ko",
-        "es"
-      ],
-      "url": "https://huggingface.co/tugot17/LFM2.5-1.2B-Instruct-yarn2x",
-      "query": "LFM2.5"
-    },
-    {
-      "model_id": "mosama/LFM2.5-350M-Tool-Calling-Merged-v3-chat-template-updated",
-      "author": null,
-      "last_modified": "2026-05-22",
-      "downloads": 27,
-      "likes": 0,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2",
-        "text-generation",
-        "text-generation-inference",
-        "unsloth",
-        "trl",
-        "conversational",
-        "en",
-        "base_model:mosama/LFM2.5-350M-Tool-Calling-Merged-v3",
-        "base_model:finetune:mosama/LFM2.5-350M-Tool-Calling-Merged-v3",
-        "license:apache-2.0",
-        "endpoints_compatible",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/mosama/LFM2.5-350M-Tool-Calling-Merged-v3-chat-template-updated",
       "query": "LFM2.5"
     },
     {
@@ -1406,7 +1458,7 @@
       "model_id": "LiquidAI/LFM2-ColBERT-350M",
       "author": null,
       "last_modified": "2026-05-05",
-      "downloads": 86587,
+      "downloads": 87521,
       "likes": 131,
       "pipeline_tag": "sentence-similarity",
       "tags": [
@@ -1434,7 +1486,7 @@
       "model_id": "IrieDinamik/LiquidAI-LFM2.5-Audio-1.5B-GGUF",
       "author": null,
       "last_modified": "2026-04-28",
-      "downloads": 289,
+      "downloads": 309,
       "likes": 0,
       "pipeline_tag": null,
       "tags": [
@@ -1460,7 +1512,7 @@
       "model_id": "IrieDinamik/LiquidAI-LFM2-1.2B-Tool-GGUF",
       "author": null,
       "last_modified": "2026-04-28",
-      "downloads": 190,
+      "downloads": 192,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -1502,7 +1554,7 @@
       "model_id": "LiquidAI/LFM2.5-VL-450M-ONNX",
       "author": null,
       "last_modified": "2026-04-09",
-      "downloads": 1508,
+      "downloads": 1504,
       "likes": 28,
       "pipeline_tag": "image-text-to-text",
       "tags": [
@@ -1530,7 +1582,7 @@
       "model_id": "LiquidAI/LFM2.5-VL-450M-MLX-bf16",
       "author": null,
       "last_modified": "2026-04-08",
-      "downloads": 214,
+      "downloads": 215,
       "likes": 2,
       "pipeline_tag": "image-text-to-text",
       "tags": [
