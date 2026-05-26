@@ -34,6 +34,55 @@ def command_output(command: list[str]) -> str | None:
         return None
 
 
+def write_benchmark_plot(run_date: str, payload: dict[str, Any], output_dir: pathlib.Path) -> pathlib.Path | None:
+    if payload.get("status") not in {"ok", "ok_cpu_fallback"} or not payload.get("results"):
+        return None
+
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return None
+
+    results = payload["results"]
+    names = [result["name"] for result in results]
+    mse = [result["test_mse"] for result in results]
+    throughput = [result["inference_steps_per_sec"] for result in results]
+    train_seconds = [result["train_seconds"] for result in results]
+
+    colors = ["#2563eb", "#16a34a", "#f97316", "#7c3aed"][: len(names)]
+    fig, axes = plt.subplots(1, 3, figsize=(12, 3.8))
+    fig.suptitle(f"Jetson LNN Benchmark - {run_date}", fontsize=13, fontweight="bold")
+
+    panels = [
+        (axes[0], mse, "Test MSE", "lower is better", "{:.4f}"),
+        (axes[1], throughput, "Inference steps/s", "higher is better", "{:.0f}"),
+        (axes[2], train_seconds, "Train seconds", "lower is better", "{:.2f}s"),
+    ]
+    for axis, values, title, subtitle, formatter in panels:
+        bars = axis.bar(names, values, color=colors)
+        axis.set_title(f"{title}\n{subtitle}", fontsize=10)
+        axis.grid(axis="y", alpha=0.25)
+        axis.tick_params(axis="x", rotation=12)
+        for bar, value in zip(bars, values, strict=False):
+            axis.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height(),
+                formatter.format(value),
+                ha="center",
+                va="bottom",
+                fontsize=9,
+            )
+
+    fig.tight_layout(rect=(0, 0, 1, 0.9))
+    plot_path = output_dir / f"{run_date}_lnn_benchmark.png"
+    fig.savefig(plot_path, dpi=160, bbox_inches="tight")
+    plt.close(fig)
+    return plot_path
+
+
 def detect_environment(torch_module: Any | None = None) -> dict[str, Any]:
     model = read_text("/proc/device-tree/model")
     nv_tegra = read_text("/etc/nv_tegra_release")
@@ -70,6 +119,7 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / f"{run_date}_lnn_benchmark.json"
     md_path = output_dir / f"{run_date}_lnn_benchmark.md"
+    plot_path = write_benchmark_plot(run_date, payload, output_dir)
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     env = payload.get("environment", {})
@@ -119,6 +169,8 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
                 f"| {result['name']} | {result['parameters']} | {result['test_mse']:.6f} | "
                 f"{result['inference_steps_per_sec']:.1f} | {result['train_seconds']:.2f} |"
             )
+        if plot_path is not None:
+            lines.extend(["", "## Benchmark 图", f"![Jetson LNN Benchmark]({plot_path.name})"])
         if payload.get("status") == "ok_cpu_fallback":
             lines.extend(
                 [

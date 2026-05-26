@@ -60,7 +60,7 @@ GitHub Actions 也已配置 `.github/workflows/daily-lnn-research.yml`，会每�
 
 ### Jetson 验证
 
-Jetson 本地 smoke benchmark（优先使用本机已有 Jetson Orin CUDA 容器）：
+Jetson 本地 smoke benchmark（当前归档数据来自 Jetson Orin Nano；CUDA 容器内设备名显示为 `Orin`）：
 
 ```bash
 RUN_BENCHMARK=1 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
@@ -68,7 +68,19 @@ RUN_BENCHMARK=1 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 
 如果 CUDA 容器因显存碎片或运行时内存分配失败退出，脚本会默认重试 2 次，再退回 CPU smoke benchmark 并在报告中标记 `ok_cpu_fallback`，便于保留当天验证记录。
 
-当前结果见：[[analysis/jetson/2026-05-26_lnn_benchmark]]
+当前真实 Jetson Orin Nano CUDA smoke benchmark（2026-05-26）：
+
+![Jetson LNN Benchmark](analysis/jetson/2026-05-26_lnn_benchmark.png)
+
+| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
+|---|---:|---:|---:|---:|
+| CfCStyle | 329 | 0.691654 | 9,610.1 | 0.79 |
+| GRU | 273 | 0.671285 | 168,201.6 | 0.14 |
+
+- 设备：Jetson Orin Nano / CUDA device `Orin`
+- 环境：Jetson Linux R36.4.7、PyTorch 2.10.0、CUDA 12.6
+- 配置：合成非平稳时间序列，一步预测；samples=64、seq_len=16、hidden_size=8、epochs=1
+- 完整记录：[[analysis/jetson/2026-05-26_lnn_benchmark]]
 
 ## 🌟 LNN 相关开源仓库 (Open Source Repositories)
 
@@ -233,31 +245,15 @@ trainer = Trainer(model, lr=1e-3, patience=15)
 history = trainer.fit(train_loader, num_epochs=50)
 ```
 
-### Benchmark 结果示例 (Mackey-Glass, 50 epochs)
+### Jetson Orin Nano 实测 Benchmark
 
-| Model | RMSE | MAE | Params | Time |
-|-------|------|-----|--------|------|
-| CfC | 0.0267 | 0.0217 | 3,329 | 26.7s |
-| LTC | 0.0269 | 0.0214 | 2,273 | 117.7s |
-| LSTM | 0.0132 | 0.0107 | 4,513 | 9.2s |
-| GRU | 0.0236 | 0.0181 | 3,393 | 14.4s |
+README 不再固化桌面/示例实验数值；下表与图来自 `analysis/jetson/2026-05-26_lnn_benchmark.json` 的真实 Jetson Orin Nano CUDA smoke test。
 
-### OOD 泛化实验结果（LNN 核心优势验证）
+![Jetson LNN Benchmark](analysis/jetson/2026-05-26_lnn_benchmark.png)
 
-| Model | ID RMSE | OOD RMSE | 退化率 |
-|-------|---------|----------|--------|
-| **CfC** | 0.0538 | 0.9446 | **1654%** ✅ 最鲁棒 |
-| GRU | 0.0524 | 1.0118 | 1829% |
-| LTC | 0.0514 | 1.0922 | 2026% |
-| LSTM | 0.0524 | 1.1747 | **2141%** ❌ 最脆弱 |
+| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
+|---|---:|---:|---:|---:|
+| CfCStyle | 329 | 0.691654 | 9,610.1 | 0.79 |
+| GRU | 273 | 0.671285 | 168,201.6 | 0.14 |
 
-### 概念漂移实验结果（Regime Change 适应性）
-
-| Model | 全局 RMSE | Regime B RMSE |
-|-------|----------|---------------|
-| **LTC** | **0.3443** | **0.4783** ✅ 最强适应 |
-| GRU | 0.4143 | 0.5782 |
-| LSTM | 0.4288 | 0.5983 |
-| CfC | 0.4792 | 0.6696 |
-
-> 💡 在简单平稳数据上，LSTM/GRU 可能表现更优；LNN 的核心优势体现在**非平稳数据**、**分布外泛化**和**极低参数量**场景。
+本次 benchmark 是 quick smoke test，用于验证 Jetson 上的数据生成、训练、推理和结果归档链路。正式性能结论应提高样本数、隐藏维度、epoch，并加入多次重复与置信区间。

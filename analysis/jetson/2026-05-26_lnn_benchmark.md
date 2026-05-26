@@ -33,6 +33,9 @@ TARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia
 | CfCStyle | 329 | 0.691654 | 9610.1 | 0.79 |
 | GRU | 273 | 0.671285 | 168201.6 | 0.14 |
 
+## Benchmark 图
+![Jetson LNN Benchmark](2026-05-26_lnn_benchmark.png)
+
 ## 解读
 - `CfCStyle` 是闭式连续时间思想的轻量实现，用于快速验证 LNN 类动态门控在边缘设备上的训练与推理成本。
 - `GRU` 是同等隐藏维度的传统循环网络基线，便于比较参数量、误差和吞吐。
