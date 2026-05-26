@@ -1,6 +1,7 @@
 from lnn.core.cfc import CfCCell, CfCNetwork
 from lnn.core.liquid_neuron import LiquidLayer, LiquidNeuron, LiquidNN
 from lnn.core.ltc import LTCCell, LTCNetwork
+from lnn.core.multimodal import MultimodalFusionLNN
 
 __all__ = [
     "LiquidNeuron",
@@ -10,4 +11,5 @@ __all__ = [
     "LTCNetwork",
     "CfCCell",
     "CfCNetwork",
+    "MultimodalFusionLNN",
 ]

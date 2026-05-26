@@ -157,12 +157,14 @@ LNN/
 │   ├── lfm2/                     # LFM2 液态基础模型推理与部署
 │   │   └── inference.py          # LFM2Inference / LFM2EdgeDeployer
 │   ├── data/                     # 数据加载与生成
-│   │   └── timeseries.py         # TimeSeriesDataset / Mackey-Glass / Sine
+│   │   ├── timeseries.py         # TimeSeriesDataset / Mackey-Glass / Sine
+│   │   └── multimodal.py         # SyntheticMultimodalDataset / 多模态本机验证数据
 │   └── utils/                    # 工具函数
 │       ├── metrics.py            # MSE / RMSE / MAE / MAPE
 │       └── visualization.py      # 训练曲线 / 预测图 / 对比图
 ├── scripts/                      # 实验脚本
 │   ├── experiment_timeseries.py  # 单模型时间序列预测实验
+│   ├── experiment_multimodal_lnn.py # 本机多模态 LNN 实验
 │   └── benchmark_comparison.py   # LNN vs LSTM vs GRU 对比基准
 ├── configs/                      # 实验配置文件
 │   ├── default.yaml
@@ -194,7 +196,21 @@ python scripts/experiment_concept_drift.py --epochs 50
 
 # AutoNCP 稀疏神经电路实验
 python scripts/experiment_autoncp.py --epochs 50
+
+# 本机多模态 LNN：传感器序列 + 图像 + 文本 token
+python scripts/experiment_multimodal_lnn.py --model cfc --samples 360 --epochs 8 --device cpu
 ```
+
+### 本机多模态 LNN 验证
+
+已新增 `scripts/experiment_multimodal_lnn.py`，用于在无外部数据下载的情况下验证 LNN 处理多模态输入：
+
+- `sensor`：时序传感器特征，作为 LNN 的时间主轴。
+- `image`：小尺寸灰度图像模式，经 CNN 编码为静态上下文。
+- `tokens`：短文本 token 序列，经 Embedding/mean pooling 编码为静态上下文。
+- 融合方式：将 image/text 上下文广播到每个时间步，与 sensor 编码拼接后输入 CfC 或 LTC。
+
+最近一次本机 CPU smoke run 输出见：[[analysis/multimodal/2026-05-26_115225_multimodal_lnn]]
 
 ### 在代码中使用
 

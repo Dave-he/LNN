@@ -1,3 +1,4 @@
+from lnn.data.multimodal import SyntheticMultimodalDataset, create_multimodal_dataloaders
 from lnn.data.timeseries import (
     TimeSeriesDataset,
     create_dataloader,
@@ -9,6 +10,8 @@ from lnn.data.timeseries import (
 )
 
 __all__ = [
+    "SyntheticMultimodalDataset",
+    "create_multimodal_dataloaders",
     "TimeSeriesDataset",
     "create_dataloader",
     "generate_sine_data",

@@ -4,6 +4,8 @@ import torch
 from lnn.core.cfc import CfCCell, CfCNetwork
 from lnn.core.liquid_neuron import LiquidLayer, LiquidNeuron, LiquidNN
 from lnn.core.ltc import LTCCell, LTCNetwork
+from lnn.core.multimodal import MultimodalFusionLNN
+from lnn.data.multimodal import SyntheticMultimodalDataset, create_multimodal_dataloaders
 from lnn.data.timeseries import TimeSeriesDataset, generate_mackey_glass, generate_sine_data
 from lnn.utils.metrics import compute_metrics
 
@@ -88,6 +90,55 @@ class TestCfCNetwork:
         assert out.shape == (2, 2)
 
 
+class TestMultimodalFusionLNN:
+    def test_forward_shape(self):
+        dataset = SyntheticMultimodalDataset(num_samples=8, seq_len=6, sensor_dim=3, image_size=8, text_len=5)
+        batch, _ = next(iter(create_multimodal_dataloaders(dataset, batch_size=4)[0]))
+        model = MultimodalFusionLNN(
+            sensor_dim=3,
+            image_channels=1,
+            vocab_size=48,
+            num_classes=3,
+            fusion_size=8,
+            hidden_size=12,
+        )
+        logits = model(batch)
+        assert logits.shape == (4, 3)
+
+    def test_training_step(self):
+        dataset = SyntheticMultimodalDataset(num_samples=12, seq_len=5, sensor_dim=2, image_size=8, text_len=4)
+        batch, labels = next(iter(create_multimodal_dataloaders(dataset, batch_size=6)[0]))
+        model = MultimodalFusionLNN(
+            sensor_dim=2,
+            image_channels=1,
+            vocab_size=48,
+            num_classes=3,
+            fusion_size=8,
+            hidden_size=10,
+        )
+        criterion = torch.nn.CrossEntropyLoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+        loss = criterion(model(batch), labels)
+        loss.backward()
+        optimizer.step()
+        assert torch.isfinite(loss)
+
+    def test_ltc_forward_shape(self):
+        dataset = SyntheticMultimodalDataset(num_samples=8, seq_len=3, sensor_dim=2, image_size=8, text_len=4)
+        batch, _ = next(iter(create_multimodal_dataloaders(dataset, batch_size=4)[0]))
+        model = MultimodalFusionLNN(
+            sensor_dim=2,
+            image_channels=1,
+            vocab_size=48,
+            num_classes=3,
+            fusion_size=6,
+            hidden_size=8,
+            recurrent_type="ltc",
+        )
+        logits = model(batch)
+        assert logits.shape == (4, 3)
+
+
 class TestDataGeneration:
     def test_sine_data(self):
         data = generate_sine_data(num_samples=100)
@@ -112,6 +163,25 @@ class TestTimeSeriesDataset:
         x, y = ds[0]
         assert x.shape == (32, 1)
         assert y.shape == (1,)
+
+
+class TestSyntheticMultimodalDataset:
+    def test_dataset_shapes(self):
+        ds = SyntheticMultimodalDataset(num_samples=10, seq_len=7, sensor_dim=3, image_size=8, text_len=5)
+        sample, label = ds[0]
+        assert sample["sensor"].shape == (7, 3)
+        assert sample["image"].shape == (1, 8, 8)
+        assert sample["tokens"].shape == (5,)
+        assert label.shape == ()
+
+    def test_dataloader_shapes(self):
+        ds = SyntheticMultimodalDataset(num_samples=20, seq_len=7, sensor_dim=3, image_size=8, text_len=5)
+        train_loader, _, _ = create_multimodal_dataloaders(ds, batch_size=4)
+        batch, labels = next(iter(train_loader))
+        assert batch["sensor"].shape == (4, 7, 3)
+        assert batch["image"].shape == (4, 1, 8, 8)
+        assert batch["tokens"].shape == (4, 5)
+        assert labels.shape == (4,)
 
 
 class TestMetrics:
