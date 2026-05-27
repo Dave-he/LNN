@@ -21,6 +21,7 @@ LNN/
 ├── papers/                     # 论文归档与每日追踪
 │   └── daily/                  # 每日/定期论文抓取记录
 ├── skills/                     # 符合 Vercel Skills 标准的 AI Agents 技能库
+│   ├── living-field-researcher/ # 领域持续研究与知识库沉淀工作流
 │   ├── paper-analyzer/
 │   │   └── SKILL.md
 │   └── paper-translator/
@@ -41,6 +42,7 @@ LNN/
 - 想要了解当前最新进展，请阅读：[[液态神经网络最新进展与开源项目调研]]
 - 想要了解最新的论文总结，请阅读：[[Liquid_Neural_Networks_Latest_Papers_Summary|LNN 最新论文总结]]
 - 想要系统学习 LNN 如何构建数据集、搭建架构、训练和调参，请阅读：[[LNN_训练方法与方向可行报告]]
+- 想要了解本仓库如何持续搜索、筛选和沉淀 LNN 领域知识，请阅读：[[LNN_持续研究协议]]
 - 想要查看每日自动化追踪结果，请阅读：[[docs/daily/2026-05-25_LNN_research_digest|2026-05-25 LNN 每日研究追踪]]
 - 想要配置本机每日任务或 Jetson 验证，请阅读：[[每日自动化任务与Jetson验证]]
 - 关于本项目中自动化工具与工作流的规划，请参阅：[[AGENTS]]
@@ -128,9 +130,13 @@ RUN_BENCHMARK=1 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 
 ## 🤖 通用 Agents / Skills (基于 Vercel Skills)
 
-本项目使用 [Vercel Skills](https://github.com/vercel-labs/skills) 规范来管理专门用于**论文研读与分析**的 AI Agents，支持跨平台和跨模型（Claude, Gemini, Qwen, Cursor, Trae 等）使用。
+本项目使用 [Vercel Skills](https://github.com/vercel-labs/skills) 规范来管理专门用于**领域持续研究、论文研读与分析**的 AI Agents，支持跨平台和跨模型（Claude, Gemini, Qwen, Cursor, Trae 等）使用。
 
-关于如何通过软链接一键安装 `skills/` 目录下的 `paper-analyzer` 和 `paper-translator` 工具，以及项目中其他自动化 Agent 的规划，**请详细参阅：[[AGENTS]]**。
+关于如何通过软链接一键安装 `skills/` 目录下的 `living-field-researcher`、`paper-analyzer` 和 `paper-translator` 工具，以及项目中其他自动化 Agent 的规划，**请详细参阅：[[AGENTS]]**。
+
+- `living-field-researcher`：面向任意研究领域的持续搜索、筛选、知识沉淀和实验队列维护；本仓库默认使用 LNN / LTC / CfC / NCP / LFM 研究画像。
+- `paper-analyzer`：单篇论文结构化研读报告。
+- `paper-translator`：学术论文与段落的中英互译。
 
 ## 🚀 后续计划
 
