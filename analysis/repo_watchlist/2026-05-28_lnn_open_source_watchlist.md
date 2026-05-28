@@ -8,11 +8,39 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [raminmh/CfC](https://github.com/raminmh/CfC)
-- 更新：2026-05-27
-- Star / Fork：1041 / 161
+- 更新：2026-05-28
+- Star / Fork：1043 / 161
 - 语言：Python
 - Topics：deep-learning, neural-ode, pytorch, recurrent-neural-networks, sequence-models, tensorflow
 - 说明：Closed-form Continuous-time Neural Networks
+
+### [RobVanProd/Liquid-neural-network](https://github.com/RobVanProd/Liquid-neural-network)
+- 更新：2026-05-28
+- Star / Fork：4 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：无
+
+### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
+- 更新：2026-05-28
+- Star / Fork：1 / 0
+- 语言：C
+- Topics：未标注
+- 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
+
+### [parhat1/cfdna-tau-repository](https://github.com/parhat1/cfdna-tau-repository)
+- 更新：2026-05-28
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Networks for cancer detection from cfDNA fragment time constants. Within-cohort AUC=0.91, cross-study LOSO AUC=0.40. Exploratory research.
+
+### [1922733078-lab/liquid-neural-networks-transparency](https://github.com/1922733078-lab/liquid-neural-networks-transparency)
+- 更新：2026-05-28
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Transparency archive for a liquid neural networks review: literature matrix, source verification, and reproducible synthetic benchmark.
 
 ### [aygp-dr/liquid-neural-networks](https://github.com/aygp-dr/liquid-neural-networks)
 - 更新：2026-05-27
@@ -27,20 +55,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：anesthesia-validation, brain-inspired, deep-learning, liquid-neural-network, llm, long-context, microtubule, mt-lnn
 - 说明：MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).
-
-### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
-- 更新：2026-05-27
-- Star / Fork：1 / 0
-- 语言：C
-- Topics：未标注
-- 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
-
-### [1922733078-lab/liquid-neural-networks-transparency](https://github.com/1922733078-lab/liquid-neural-networks-transparency)
-- 更新：2026-05-27
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Transparency archive for a liquid neural networks review: literature matrix, source verification, and reproducible synthetic benchmark.
 
 ### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
 - 更新：2026-05-27
@@ -77,13 +91,6 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Notebooks to train LTC, CTRNN, NODE and CTGRU on PTB Diagnostic and PTB-XL data.
 
-### [JTKSpectre/Adaptive-Liquid-Neural-Network](https://github.com/JTKSpectre/Adaptive-Liquid-Neural-Network)
-- 更新：2026-05-22
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：An adaptive LTC framework developed and expanded through repeated testing and documentation
-
 ### [R-Liebert/LOKI-G](https://github.com/R-Liebert/LOKI-G)
 - 更新：2026-05-21
 - Star / Fork：1 / 0
@@ -111,13 +118,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：unknown
 - Topics：未标注
 - 说明：Bearing fault diagnosis with a Transformer where multi-head attention is replaced by a bidirectional Closed-form Continuous-time (CfC) liquid neural network. PyTorch implementation, evaluated on CWRU / MFPT / SEU.
-
-### [RishabhSingh0907/BrainStateWithLNN](https://github.com/RishabhSingh0907/BrainStateWithLNN)
-- 更新：2026-05-15
-- Star / Fork：1 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：A local web application that can predict the brain state of a human i.e, 'negative', 'neutral', 'positive' using state of the art Liquid Neural Network (LNN). Currently, users can select any of the data points from the dataset, generate its graph for visualization and view the model prediction results.
 
 ### [anu-bhav-18/liquid_time_constant_model](https://github.com/anu-bhav-18/liquid_time_constant_model)
 - 更新：2026-05-13
