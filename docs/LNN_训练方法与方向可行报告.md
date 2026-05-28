@@ -41,7 +41,7 @@ tags: [LNN, training, dataset, architecture, feasibility]
    - 每条样本统一为 `x[t:t+seq_len] -> y[t+seq_len:t+seq_len+horizon]` 或 `episode -> action sequence`。
    - 只用训练集统计量做标准化，避免验证集和测试集信息泄漏。
    - 非平稳任务优先按时间切分，控制任务按场景/轨迹切分，医疗任务按 subject/patient 切分。
-   - 对不规则采样数据保留 `delta_t` 和 `mask`。如果使用本仓库当前 from-scratch `CfCNetwork`，先重采样为等间隔；若要保留真实时间间隔，应扩展 `forward(..., dt)` 或使用官方 `ncps`/`raminmh/CfC` 实现。
+   - 对不规则采样数据保留 `delta_t` 和 `mask`。本仓库 from-scratch `CfCNetwork` 已支持 `forward(..., dt, mask)`；`TimeSeriesDataset` 可返回 `{"dt", "mask"}` metadata 并由 `Trainer` 自动传入支持这些参数的模型。`LTCNetwork` 也支持共享 step `dt` 和 mask，但当前 ODE 批量积分路径要求同一 batch step 使用相同 `dt`，真实逐样本不规则采样仍建议优先用 CfC 或官方 `ncps`/`raminmh/CfC` 实现。
 
 3. **搭建架构**
    - 起步基线：`CfCNetwork(input_size, hidden_size=32/64, output_size)`，速度快，适合作为第一版。
@@ -76,13 +76,21 @@ tags: [LNN, training, dataset, architecture, feasibility]
 
 第一阶段：用本项目现有代码完成 `CfC/LTC vs LSTM/GRU` 的时间序列复现实验，重点验证窗口长度、OOD、概念漂移。入口：`scripts/benchmark_comparison.py`、`scripts/experiment_ood.py`、`scripts/experiment_concept_drift.py`。
 
-第二阶段：引入官方 `ncps` 的 `AutoNCP` 和 `CfC/LTC`，补齐稀疏接线和不规则时间间隔能力。入口：`lnn/ncps_integration/ncps_models.py`、`scripts/experiment_autoncp.py`。
+第二阶段：引入官方 `ncps` 的 `AutoNCP` 和 `CfC/LTC`，补齐稀疏接线，并把当前 from-scratch CfC 的 `dt/mask` 能力迁移到控制与真实数据实验。入口：`lnn/ncps_integration/ncps_models.py`、`scripts/experiment_autoncp.py`、`scripts/experiment_imitation_lnn.py`。当前已补 `MDNHead`、`LNNImitationPolicy` 和合成低维控制数据集，下一步接 RoboMimic/PointMaze。
 
 第三阶段：按应用方向新增数据加载器。时间序列优先接入 PhysioNet、UCI HAR 或能源价格数据；机器人方向优先接入 RoboMimic/PointMaze；边缘方向复用 Jetson benchmark 并加入量化。
 
 第四阶段：形成可比较的实验表，统一记录 `RMSE/MAE/Accuracy/mAP`、参数量、训练秒、推理延迟、OOD 退化率和硬件能耗。
 
 第五阶段：扩展 physics-informed LNN。先用 pendulum/spring-mass/Lorenz 等合成系统验证参数恢复、rollout 和物理残差，再接视频、音频、图表或设备传感器等多模态数据。
+
+当前第三阶段本机最小链路已建立：
+
+- `scripts/experiment_graph_lnn.py`：合成动态图，`GraphSnapshotEncoder + CfC/LTC/GRU` 图级预测。
+- `scripts/experiment_long_sequence.py`：Liquid-S4-style 并行 liquid relaxation block，支持长序列分类和 LiquidTAD-style frame-level smoke test。
+- `scripts/experiment_physics_lnn.py`：damped oscillator 参数恢复、rollout 预测和 physics residual loss，支持 CfC/LTC/GRU。
+
+这些入口用于验证数据格式、训练循环和指标记录，不等同于 RLSTG、官方 Liquid-S4、LiquidTAD 或 EMMA 的完整论文复现。
 
 ## 5. 本机 Jetson 最小代码验证
 

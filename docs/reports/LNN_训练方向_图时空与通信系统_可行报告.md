@@ -139,8 +139,8 @@ gradient_clip: 1.0
 
 短期：
 
-- 新增 `lnn/data/graph_timeseries.py` 的轻量数据结构。
-- 先用合成动态图或交通传感器数据做 `GNN encoder + CfC`。
+- 已新增 `lnn/data/graph_timeseries.py` 的轻量合成动态图数据结构。
+- 已新增 `lnn/core/graph.py` 与 `scripts/experiment_graph_lnn.py`，可运行 `GNN encoder + CfC/LTC/GRU` 图级预测 smoke 实验。
 - 通信方向先用模拟 channel matrix，不直接追求完整 6G pipeline。
 
 中期：

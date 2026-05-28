@@ -165,12 +165,13 @@ gradient_clip: 1.0
 短期：
 
 - 用 `scripts/experiment_autoncp.py` 跑通 AutoNCP 与 Dense-CfC 对比。
-- 新增 `lnn/data/robotics.py`，支持 RoboMimic HDF5 的 `obs/actions/dones`。
-- 写 `scripts/experiment_imitation_lnn.py`，先支持低维状态行为克隆。
+- 已新增 `lnn/data/robotics.py` 的合成低维模仿学习数据集，用于验证多峰动作分布。
+- 已新增 `scripts/experiment_imitation_lnn.py`，支持 `CfC/LTC/AutoNCP + MSE/MDN action head` 的本机 smoke 训练。
+- 下一步扩展 `lnn/data/robotics.py`，支持 RoboMimic HDF5 的 `obs/actions/dones`。
 
 中期：
 
-- 加 MDN action head。
+- 将 MDN action head 接入真实 Push-T / RoboMimic / PointMaze 数据。
 - 加闭环评估 wrapper。
 - 在 Jetson 上测试低维控制模型延迟。
 

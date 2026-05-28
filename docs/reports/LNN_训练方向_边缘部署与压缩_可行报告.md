@@ -153,8 +153,8 @@ quantization: int8 post-training 起步，必要时 QAT
 
 短期：
 
-- 扩展 `scripts/jetson_lnn_benchmark.py`，增加 hidden sweep、seq_len sweep 和多 seed。
-- 输出 `analysis/edge/`，记录 latency、params、MSE、device。
+- 使用 `scripts/jetson_lnn_benchmark.py --pareto` 运行 hidden sweep、seq_len sweep 和多 seed。
+- 输出 `analysis/jetson/`，记录 latency/throughput、params、MSE、device，并标记 Pareto front。
 - 增加 CPU 与 CUDA 分别测量。
 
 中期：

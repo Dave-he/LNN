@@ -82,6 +82,18 @@ COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 python3 scripts/jetson_lnn_benchmark.py --quick
 ```
 
+边缘 Pareto sweep（显式开启，不影响每日默认 smoke benchmark）：
+
+```bash
+python3 scripts/jetson_lnn_benchmark.py \
+  --quick --pareto \
+  --hidden-sizes 8,16,24 \
+  --seq-lens 16,32 \
+  --seeds 42,43
+```
+
+该模式会在同一份 `analysis/jetson/YYYY-MM-DD_lnn_benchmark.json` / `.md` 中写入所有配置，并标记没有被误差、参数量、训练时间和吞吐共同支配的 Pareto front。
+
 使用本机已有 Jetson Orin CUDA 容器运行：
 
 ```bash
@@ -144,6 +156,7 @@ quick benchmark 结果：
 
 建议按以下优先级推进：
 1. 修复 Jetson CUDA/PyTorch 版本匹配，让 benchmark 使用 GPU/NPU 可用路径。
-2. 将 `ncps` 的 LTC/CfC 官方实现纳入 `projects/` 或实验依赖，替换当前 smoke benchmark 的近似模型。
-3. 对 `docs/daily/` 中高相关论文生成独立研读报告，并追加到 [[LNN_深度研读报告]]。
-4. 对 Hugging Face 中 LFM2.5-350M、LFM2.5-VL-450M 等边缘模型做量化推理验证。
+2. 用 `--pareto` 在真实 Jetson CUDA 路径上跑 hidden/seq/seed sweep，补充功耗和导出后延迟。
+3. 将 `ncps` 的 LTC/CfC 官方实现纳入 `projects/` 或实验依赖，替换当前 smoke benchmark 的近似模型。
+4. 对 `docs/daily/` 中高相关论文生成独立研读报告，并追加到 [[LNN_深度研读报告]]。
+5. 对 Hugging Face 中 LFM2.5-350M、LFM2.5-VL-450M 等边缘模型做量化推理验证。

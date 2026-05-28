@@ -150,14 +150,14 @@ loss_weights: alpha/beta/gamma 先从 1.0/0.1/0.01 扫描
 
 短期：
 
-- 新增 `lnn/data/physics.py`，先生成 pendulum/spring-mass/Lorenz 参数化数据。
-- 新增 `scripts/experiment_physics_lnn.py`，比较 CfC/LTC/GRU 在参数恢复和 rollout 上的表现。
+- 已新增 `lnn/data/physics.py`，先生成 damped oscillator 参数化数据。
+- 已新增 `lnn/core/physics.py` 与 `scripts/experiment_physics_lnn.py`，比较 CfC/LTC/GRU 在参数恢复、rollout 和 physics residual 上的表现。
 - 输出到 `analysis/physics/`，记录参数误差、rollout 图和 OOD 退化率。
 
 中期：
 
 - 加入简化视频或图表特征，将 `lnn/core/multimodal.py` 的融合方式复用到物理任务。
-- 实现 physics residual loss，并把 loss weights 写入 `configs/physics_lnn.yaml`。
+- 将当前 damped oscillator residual 扩展到 pendulum/spring-mass/Lorenz，并把 loss weights 写入 `configs/physics_lnn.yaml`。
 - 选 EMMA 或 implicit physics paper 做一篇独立研读报告。
 
 ## 8. 可行结论
