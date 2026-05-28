@@ -1,6 +1,6 @@
 ---
 title: LNN 训练方向：图时空与通信系统可行报告
-date: 2026-05-26
+date: 2026-05-28
 tags: [LNN, graph, telecom, spatio-temporal, beamforming]
 ---
 
@@ -9,6 +9,8 @@ tags: [LNN, graph, telecom, spatio-temporal, beamforming]
 ## 1. 方向定位
 
 图时空与通信系统关注节点关系随时间变化的动态系统，如交通网络、传感器网络、多智能体系统、6G 信道、beamforming 和边缘网络调度。LNN 在这里主要承担“连续时间动态建模器”的角色，通常需要和 GNN、几何表示或优化算法结合。
+
+检索证据：本方向纳入/暂缓记录见 [[docs/LNN_训练论文检索矩阵_2026-05-28]]。
 
 ## 2. 代表论文
 

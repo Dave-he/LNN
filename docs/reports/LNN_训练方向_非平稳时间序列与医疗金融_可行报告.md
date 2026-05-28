@@ -1,6 +1,6 @@
 ---
 title: LNN 训练方向：非平稳时间序列与医疗金融可行报告
-date: 2026-05-26
+date: 2026-05-28
 tags: [LNN, time-series, medical, finance, dataset]
 ---
 
@@ -9,6 +9,8 @@ tags: [LNN, time-series, medical, finance, dataset]
 ## 1. 方向定位
 
 该方向是 LNN 最容易落地的方向。核心价值是处理非平稳、含噪、缺失、不规则采样或 regime change 的序列数据。金融价格、能源负载、医疗 ICU、EEG、生物信号和电池健康都属于这一类。
+
+检索证据：本方向纳入/暂缓记录见 [[docs/LNN_训练论文检索矩阵_2026-05-28]]。
 
 ## 2. 代表论文与数据源
 

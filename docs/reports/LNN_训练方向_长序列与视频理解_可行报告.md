@@ -1,6 +1,6 @@
 ---
 title: LNN 训练方向：长序列与视频理解可行报告
-date: 2026-05-26
+date: 2026-05-28
 tags: [LNN, Liquid-S4, video, long-sequence, temporal-action-detection]
 ---
 
@@ -9,6 +9,8 @@ tags: [LNN, Liquid-S4, video, long-sequence, temporal-action-detection]
 ## 1. 方向定位
 
 长序列与视频理解要求模型处理数千到数万步依赖。直接逐步求解 LTC 不适合该场景，优先路线是 Liquid-S4 或把 liquid 动态蒸馏为可并行 temporal operator。
+
+检索证据：本方向纳入/暂缓记录见 [[docs/LNN_训练论文检索矩阵_2026-05-28]]。
 
 ## 2. 代表论文与数据源
 

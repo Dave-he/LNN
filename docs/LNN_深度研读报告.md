@@ -71,6 +71,9 @@ tags: [LNN, reading-report, papers]
 | 边缘部署与压缩 | [[docs/reports/LNN_训练方向_边缘部署与压缩_可行报告]] | 第二优先级 |
 | 图时空与通信系统 | [[docs/reports/LNN_训练方向_图时空与通信系统_可行报告]] | 中期研究 |
 | 长序列与视频理解 | [[docs/reports/LNN_训练方向_长序列与视频理解_可行报告]] | 中期研究 |
+| 物理建模与多模态科学发现 | [[docs/reports/LNN_训练方向_物理建模与多模态科学发现_可行报告]] | 中期研究 |
+
+专题检索矩阵：[[docs/LNN_训练论文检索矩阵_2026-05-28]]
 
 ---
 
@@ -122,6 +125,20 @@ tags: [LNN, reading-report, papers]
 3. **概念漂移**：LTC 适应性最强，ODE 动力学使模型能在线调整响应特性
 4. **参数效率**：LTC 仅需 LSTM 50% 的参数即可达到可比精度
 5. **速度权衡**：CfC 是 LNN 的工程首选（比 LTC 快 4-5 倍，精度几乎相同）
+
+### 4.5 本机 Jetson 最小论文思路验证（2026-05-28）
+
+脚本：`scripts/minimal_lnn_paper_validation.py`
+
+结果：[[analysis/jetson/2026-05-28_minimal_lnn_paper_validation]]
+
+验证内容：
+
+- 构造非平稳、不规则采样的合成序列，显式传入每步 `dt`。
+- 对比 `CfC-DT`、`Euler-LTC-DT` 与 `GRU+dt`。
+- 记录 ID/OOD MSE、MAE、OOD 退化率、参数量、训练时间与推理吞吐。
+
+本机环境为 aarch64 Jetson/Tegra；当前 CUDA runtime 与 PyTorch wheel 不匹配，`torch.cuda.is_available()` 为 false，因此该次验证走 CPU 路径。结果表明代码链路已在本机实际跑通，`Euler-LTC-DT` 在该 smoke 配置下取得最低 ID/OOD MSE。
 
 ---
 

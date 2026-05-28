@@ -1,6 +1,6 @@
 ---
 title: LNN 训练方向：机器人控制与模仿学习可行报告
-date: 2026-05-26
+date: 2026-05-28
 tags: [LNN, robotics, imitation-learning, NCP, control]
 ---
 
@@ -9,6 +9,8 @@ tags: [LNN, robotics, imitation-learning, NCP, control]
 ## 1. 方向定位
 
 机器人控制是 LNN 的经典应用方向。优势在于低参数、连续时间、可解释和对环境扰动的潜在鲁棒性。典型任务包括自动驾驶 lane keeping、无人机导航、机械臂操作、移动机器人避障和 PointMaze 导航。
+
+检索证据：本方向纳入/暂缓记录见 [[docs/LNN_训练论文检索矩阵_2026-05-28]]。
 
 ## 2. 代表论文与资料
 

@@ -1,6 +1,6 @@
 ---
 title: LNN 训练方向：边缘部署与压缩可行报告
-date: 2026-05-26
+date: 2026-05-28
 tags: [LNN, edge-ai, compression, Jetson, Loihi]
 ---
 
@@ -9,6 +9,8 @@ tags: [LNN, edge-ai, compression, Jetson, Loihi]
 ## 1. 方向定位
 
 边缘部署关注模型大小、延迟、能耗和在线适应能力。LNN 的低参数和连续时间建模使其适合 Jetson、MCU、移动端和神经形态硬件，但需要把训练目标从“最高精度”改为“精度、延迟、能耗的 Pareto 最优”。
+
+检索证据：本方向纳入/暂缓记录见 [[docs/LNN_训练论文检索矩阵_2026-05-28]]。
 
 ## 2. 代表论文与资料
 

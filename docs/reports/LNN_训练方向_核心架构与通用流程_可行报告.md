@@ -1,6 +1,6 @@
 ---
 title: LNN 训练方向：核心架构与通用流程可行报告
-date: 2026-05-26
+date: 2026-05-28
 tags: [LNN, CfC, LTC, NCP, training]
 ---
 
@@ -9,6 +9,8 @@ tags: [LNN, CfC, LTC, NCP, training]
 ## 1. 方向定位
 
 该方向解决“先把 LNN 正确训练起来”的问题。推荐把 CfC 作为第一基线，把 LTC 作为动力学验证模型，把 AutoNCP 作为稀疏可解释控制模型。
+
+检索证据：本方向纳入/暂缓记录见 [[docs/LNN_训练论文检索矩阵_2026-05-28]]。
 
 ## 2. 代表论文
 

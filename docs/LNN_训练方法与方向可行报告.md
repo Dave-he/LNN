@@ -1,12 +1,21 @@
 ---
 title: LNN 训练方法与方向可行报告
-date: 2026-05-26
+date: 2026-05-28
 tags: [LNN, training, dataset, architecture, feasibility]
 ---
 
 # LNN 训练方法与方向可行报告
 
 本文回答三个落地问题：LNN 如何构建数据集、如何搭建神经网络架构、如何训练和调参。结论按研究方向拆分，详细方案见各方向报告。
+
+## 0. 检索记录与证据链
+
+本轮专题检索日期为 **2026-05-28**，范围覆盖 arXiv、Nature Machine Intelligence、`ncps` 文档、PhysioNet、UCI、RoboMimic、Minari、Liquid AI / Hugging Face 以及本仓库每日追踪输出。
+
+- 原始每日候选：[[papers/daily/2026-05-28_lnn_research.json]]
+- 每日摘要：[[docs/daily/2026-05-28_LNN_research_digest]]
+- 训练专题筛选记录：[[papers/daily/2026-05-28_lnn_training_methods_search.json]]
+- 方向化检索矩阵：[[docs/LNN_训练论文检索矩阵_2026-05-28]]
 
 ## 1. 方向总览
 
@@ -18,6 +27,7 @@ tags: [LNN, training, dataset, architecture, feasibility]
 | 边缘部署与压缩 | Jetson、MCU、Loihi、低功耗设备 | 小型 CfC、Euler-LTC、蒸馏学生模型 | 校准集、延迟/能耗标注、硬件约束 | 中高，已有 Jetson smoke benchmark |
 | 图时空与通信系统 | 交通、6G beamforming、多智能体 | LNN + GNN、RLSTG、LNN + 优化器 | 图快照、信道矩阵、场景级 OOD 切分 | 中，需要补图数据管线 |
 | 长序列与视频理解 | 视频动作检测、长文本/音频 | Liquid-S4、并行 liquid relaxation | 预提取特征、长序列 chunk、边界标签 | 中，需要外部模型实现 |
+| 物理建模与多模态科学发现 | 参数反演、物理系统识别、医学边界 refine | Encoder + LTC/CfC + physics loss | 多模态时间对齐、物理参数、残差约束、场景 OOD | 中，建议先合成物理系统 |
 
 ## 2. 通用训练流程
 
@@ -60,6 +70,7 @@ tags: [LNN, training, dataset, architecture, feasibility]
 - [[docs/reports/LNN_训练方向_边缘部署与压缩_可行报告|边缘部署与压缩]]
 - [[docs/reports/LNN_训练方向_图时空与通信系统_可行报告|图时空与通信系统]]
 - [[docs/reports/LNN_训练方向_长序列与视频理解_可行报告|长序列与视频理解]]
+- [[docs/reports/LNN_训练方向_物理建模与多模态科学发现_可行报告|物理建模与多模态科学发现]]
 
 ## 4. 推荐落地路线
 
@@ -71,12 +82,32 @@ tags: [LNN, training, dataset, architecture, feasibility]
 
 第四阶段：形成可比较的实验表，统一记录 `RMSE/MAE/Accuracy/mAP`、参数量、训练秒、推理延迟、OOD 退化率和硬件能耗。
 
-## 5. 关键论文与资料
+第五阶段：扩展 physics-informed LNN。先用 pendulum/spring-mass/Lorenz 等合成系统验证参数恢复、rollout 和物理残差，再接视频、音频、图表或设备传感器等多模态数据。
+
+## 5. 本机 Jetson 最小代码验证
+
+已将核心论文思路压缩为一个可在 Jetson 上运行的最小模拟：
+
+- 脚本：`scripts/minimal_lnn_paper_validation.py`
+- 本机结果：[[analysis/jetson/2026-05-28_minimal_lnn_paper_validation]]
+- 验证内容：不规则 `dt`、非平稳序列、ID/OOD 切分、`CfC-DT`、`Euler-LTC-DT` 与 `GRU+dt` 对比。
+- 本机环境：aarch64 Jetson/Tegra；当前 PyTorch 能看到 CUDA 设备，但 `torch.cuda.is_available()` 为 false，因此本次使用 CPU 路径完成验证。
+
+复现命令：
+
+```bash
+python scripts/minimal_lnn_paper_validation.py --cpu --samples 384 --seq-len 40 --hidden-size 16 --epochs 5 --batch-size 64 --lr 0.003 --weight-decay 0.0001 --grad-clip 1.0 --seed 42 --inference-repeats 6
+```
+
+本次结果显示，`Euler-LTC-DT` 在该最小模拟上以 625 个参数取得最低 ID/OOD MSE；`CfC-DT` 也跑通了闭式连续时间 `dt` 输入，但该配置下 OOD 退化率高于 `Euler-LTC-DT`。这说明最小验证链路已经建立，下一步应做多 seed、CUDA 修复、真实数据和超参 sweep，而不是把单次 smoke run 当作论文级结论。
+
+## 6. 关键论文与资料
 
 - Ramin Hasani 等，*Liquid Time-constant Networks*，arXiv:2006.04439，https://arxiv.org/abs/2006.04439
 - Ramin Hasani 等，*Closed-form continuous-time neural networks*，Nature Machine Intelligence 2022，https://www.nature.com/articles/s42256-022-00556-7
 - Mathias Lechner 等，*Neural circuit policies enabling auditable autonomy*，Nature Machine Intelligence 2020，https://www.nature.com/articles/s42256-020-00237-3
 - Ramin Hasani 等，*Liquid Structural State-Space Models*，arXiv:2209.12951，https://arxiv.org/abs/2209.12951
+- Farhat Shaikh 等，*EMMA: Extracting Multiple physical parameters from Multimodal Data*，arXiv:2605.24047，https://arxiv.org/abs/2605.24047v1
 - `ncps` 官方文档，https://ncps.readthedocs.io/
 - `raminmh/CfC` 官方实现，https://github.com/raminmh/CfC
-- 本仓库每日追踪：[[docs/daily/2026-05-26_LNN_research_digest]]
+- 本仓库每日追踪：[[docs/daily/2026-05-28_LNN_research_digest]]

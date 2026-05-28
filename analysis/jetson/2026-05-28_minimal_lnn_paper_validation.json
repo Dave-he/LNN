@@ -1,0 +1,82 @@
+{
+  "status": "ok",
+  "generated_at": "2026-05-28T05:03:29.876402+00:00",
+  "experiment": "minimal_lnn_paper_validation",
+  "paper_ideas": [
+    "LTC: input-dependent continuous-time decay/time constants for non-stationary dynamics.",
+    "CfC: closed-form continuous-time recurrence avoids expensive numerical ODE solving.",
+    "Edge validation: compare parameter count, training time, inference throughput, ID/OOD error."
+  ],
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.14.4",
+    "device_tree_model": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
+    "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "tegrastats_available": true,
+    "jetson_clocks_available": true,
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda_device_count": 1,
+    "cuda_version": "13.0",
+    "cudnn_version": 91900,
+    "cuda_probe_error": null,
+    "cuda_note": "CUDA device is visible, but torch.cuda.is_available() is false."
+  },
+  "device": "cpu",
+  "config": {
+    "samples": 384,
+    "seq_len": 40,
+    "hidden_size": 16,
+    "epochs": 5,
+    "batch_size": 64,
+    "lr": 0.003,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "seed": 42,
+    "inference_repeats": 6
+  },
+  "normalization": {
+    "value_mean": 0.007102575618773699,
+    "value_std": 0.7573486566543579,
+    "dt_mean": 0.05000121891498566
+  },
+  "results": [
+    {
+      "name": "CfC-DT",
+      "parameters": 1169,
+      "last_train_loss": 0.29771706461906433,
+      "id_mse": 0.2914902865886688,
+      "id_mae": 0.4381602108478546,
+      "ood_mse": 1.1554756164550781,
+      "ood_mae": 0.8877490758895874,
+      "ood_degradation_pct": 296.40278582785385,
+      "train_seconds": 4.278817622922361,
+      "inference_steps_per_sec": 59148.15428403982
+    },
+    {
+      "name": "Euler-LTC-DT",
+      "parameters": 625,
+      "last_train_loss": 0.29413190484046936,
+      "id_mse": 0.283694326877594,
+      "id_mae": 0.43162786960601807,
+      "ood_mse": 0.863879382610321,
+      "ood_mae": 0.7532885074615479,
+      "ood_degradation_pct": 204.5106301977834,
+      "train_seconds": 3.025112244999036,
+      "inference_steps_per_sec": 82867.23869160969
+    },
+    {
+      "name": "GRU+dt",
+      "parameters": 977,
+      "last_train_loss": 0.41252484917640686,
+      "id_mse": 0.39778226613998413,
+      "id_mae": 0.5306092500686646,
+      "ood_mse": 1.2827720642089844,
+      "ood_mae": 0.9490781426429749,
+      "ood_degradation_pct": 222.48095840390286,
+      "train_seconds": 1.3215223220176995,
+      "inference_steps_per_sec": 321832.4600758786
+    }
+  ]
+}
