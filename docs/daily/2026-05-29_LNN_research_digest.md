@@ -9,17 +9,26 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 > 自动生成：聚合 arXiv、GitHub 与 Hugging Face 的 LNN / LTC / CfC / NCP / LFM 相关更新，供人工筛选后进入深度研读。
 
 ## 摘要
-- arXiv 候选论文：0 篇
+- arXiv 候选论文：25 篇
 - GitHub 候选仓库：43 个
-- Hugging Face 候选模型：17 个
+- Hugging Face 候选模型：18 个
 - 已下载 PDF：0 个
 
-## 数据源状态
-- `arXiv fetch failed: The read operation timed out`
-- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
-
 ## arXiv 候选论文
-- 本次未发现通过关键词过滤的新候选论文。
+| 日期 | 论文 | 作者 | 摘要 |
+|---|---|---|---|
+| 2026-05-26 | [Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition: Robustness, Efficiency, and Clinical Utility](https://arxiv.org/abs/2605.27467v1) | Ye Kyaw Thu, Thazin Myint Oo, Thepchai Supnithi | Traditional Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) units operate on discrete time steps, often failing to capture the fluid temporal dynamics of real-world physical processes. Liquid Neural Networks (LNNs), specifically Closed-form Continuous-time (Cf… |
+| 2026-05-21 | [EMMA: Extracting Multiple physical parameters from Multimodal Data](https://arxiv.org/abs/2605.24047v1) | Farhat Shaikh, Ayan Banerjee, Sandeep Gupta | We introduce EMMA, a physics-informed multimodal framework that recovers all identifiable dynamical parameters of a system directly from raw video, audio, and image-based time-series observations. Unlike prior video-only approaches that struggle with occluded states, hidden actu… |
+| 2026-05-05 | [Physics-Modeled Neural Networks](https://arxiv.org/abs/2605.08176v1) | Raul Felipe-Sosa, Angel Martin del Rey, Maria Flores Ceballos | We introduce \emph{Dynamical Physics-Modeled Neural Networks} (DynPMNNs), a continuous-time deep learning architecture in which each hidden layer is defined as the solution of an ordinary differential equation. Unlike classical feed-forward networks, this approach replaces stati… |
+| 2026-04-24 | [Liquid Neural Network Models for Natural Gas Spot Price Time-Series Forecasting](https://arxiv.org/abs/2604.24788v1) | Yiqian Liu, Jiayi Niu, Adam Kelleher 等 | Natural gas is undoubtedly an essential component of the global energy system. Accurate short-term forecasting of natural gas price is challenging due to pronounced volatility driven by seasonal demand patterns, geopolitical developments, and shifting macroeconomic conditions. T… |
+| 2026-04-20 | [LiquidTAD: Efficient Temporal Action Detection via Parallel Liquid-Inspired Temporal Relaxation](https://arxiv.org/abs/2604.18274v2) | Zepeng Sun, Naichuan Zheng, Hailun Xia 等 | Temporal Action Detection (TAD) requires precise localization of action boundaries within long, untrimmed video sequences. While current high-performing methods achieve strong accuracy, they are often characterized by excessive parameter counts, substantial computational overhea… |
+| 2026-04-15 | [A Nonasymptotic Theory of Gain-Dependent Error Dynamics in Behavior Cloning](https://arxiv.org/abs/2604.14484v2) | Junghoon Seo | Behavior cloning (BC) policies on position-controlled robots inherit the closed-loop response of the underlying PD controller, yet the nonasymptotic finite-horizon consequences of controller gains for BC failure remain open. We show that independent sub-Gaussian action errors pr… |
+| 2026-04-12 | [MeloTune: On-Device Arousal Learning and Peer-to-Peer Mood Coupling for Proactive Music Curation](https://arxiv.org/abs/2604.10815v2) | Hongwei Xu | MeloTune is an iPhone-deployed music agent that instantiates the Mesh Memory Protocol (MMP) and Symbolic-Vector Attention Fusion (SVAF) as a production system for affect-aware music curation with peer-to-peer mood coupling. Each device runs two closed-form continuous-time (CfC)… |
+| 2026-04-08 | [Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks](https://arxiv.org/abs/2604.07219v1) | Xinquan Wang, Mingjun Ying, Hongren Chen 等 | Sub-terahertz (sub-THz) multi-user multiple-input multiple-output (MU-MIMO) systems unlock immense bandwidth for 6G wireless communications. However, practical deployment of wireless systems in sub-THz bands faces critical challenges such as increased atmospheric absorption, red… |
+| 2026-04-05 | [Symbolic-Vector Attention Fusion for Collective Intelligence](https://arxiv.org/abs/2604.03955v1) | Hongwei Xu | When autonomous agents observe different domains of a shared environment, each signal they exchange mixes relevant and irrelevant dimensions. No existing mechanism lets the receiver evaluate which dimensions to absorb. We introduce Symbolic-Vector Attention Fusion (SVAF), the co… |
+| 2026-04-02 | [AEGIS: Adversarial Entropy-Guided Immune System -- Thermodynamic State Space Models for Zero-Day Network Evasion Detection](https://arxiv.org/abs/2604.02149v1) | Vickson Ferrel | As TLS 1.3 encryption limits traditional Deep Packet Inspection (DPI), the security community has pivoted to Euclidean Transformer-based classifiers (e.g., ET-BERT) for encrypted traffic analysis. However, these models remain vulnerable to byte-level adversarial morphing -- rece… |
+| 2026-03-28 | [Liquid Networks with Mixture Density Heads for Efficient Imitation Learning](https://arxiv.org/abs/2603.27058v1) | Nikolaus Correll | We compare liquid neural networks with mixture density heads against diffusion policies on Push-T, RoboMimic Can, and PointMaze under a shared-backbone comparison protocol that isolates policy-head effects under matched inputs, training budgets, and evaluation settings. Across t… |
+| 2026-02-28 | [Explainable Continuous-Time Mask Refinement with Local Self-Similarity Priors for Medical Image Segmentation](https://arxiv.org/abs/2603.00459v1) | Rajdeep Chatterjee, Sudip Chakrabarty, Trishaani Acharjee | Accurate semantic segmentation of foot ulcers is essential for automated wound monitoring, yet boundary delineation remains challenging due to tissue heterogeneity and poor contrast with surrounding skin. To overcome the limitations of standard intensity-based networks, we prese… |
 
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
@@ -40,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-05-28 | [LiquidAI/LFM2.5-8B-A1B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF) | 42 | 55 | text-generation |
-| 2026-05-28 | [LiquidAI/LFM2.5-8B-A1B-ONNX](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-ONNX) | 5 | 1 | text-generation |
-| 2026-05-28 | [LiquidAI/LFM2.5-8B-A1B-Base](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-Base) | 0 | 6 | text-generation |
-| 2026-05-28 | [LiquidAI/LFM2.5-8B-A1B-MLX-4bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-4bit) | 0 | 0 | text-generation |
-| 2026-05-28 | [LiquidAI/LFM2.5-8B-A1B-MLX-5bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-5bit) | 0 | 0 | text-generation |
-| 2026-05-28 | [LiquidAI/LFM2.5-8B-A1B-MLX-6bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-6bit) | 0 | 0 | text-generation |
-| 2026-05-28 | [LiquidAI/LFM2.5-8B-A1B-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit) | 0 | 2 | text-generation |
-| 2026-05-28 | [LiquidAI/LFM2.5-8B-A1B-MLX-bf16](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-bf16) | 0 | 0 | text-generation |
-| 2026-05-28 | [nathanrchn/LFM2.5-8B-A1B-GGUF-fixed-v2](https://huggingface.co/nathanrchn/LFM2.5-8B-A1B-GGUF-fixed-v2) | 0 | 0 |  |
-| 2026-05-28 | [RemySkye/LFM2.5-8B-A1B-i1-GGUF](https://huggingface.co/RemySkye/LFM2.5-8B-A1B-i1-GGUF) | 0 | 0 | text-generation |
-| 2026-05-28 | [damienlusson/LFM2.5-350M-jobs-extraction-GGUF_q8_0](https://huggingface.co/damienlusson/LFM2.5-350M-jobs-extraction-GGUF_q8_0) | 0 | 0 |  |
-| 2026-05-28 | [damienlusson/LFM2.5-350M-jobs-extraction-GGUF](https://huggingface.co/damienlusson/LFM2.5-350M-jobs-extraction-GGUF) | 0 | 0 |  |
+| 2026-05-29 | [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B) | 49438 | 364 | text-generation |
+| 2026-05-29 | [LiquidAI/LFM2-350M](https://huggingface.co/LiquidAI/LFM2-350M) | 17650 | 249 | text-generation |
+| 2026-05-29 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 8854 | 212 | text-generation |
+| 2026-05-29 | [LiquidAI/LFM2.5-8B-A1B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF) | 5293 | 105 | text-generation |
+| 2026-05-29 | [LiquidAI/LFM2.5-8B-A1B-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit) | 400 | 5 | text-generation |
+| 2026-05-29 | [LiquidAI/LFM2.5-8B-A1B-MLX-4bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-4bit) | 234 | 0 | text-generation |
+| 2026-05-29 | [LiquidAI/LFM2.5-8B-A1B-MLX-6bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-6bit) | 120 | 0 | text-generation |
+| 2026-05-29 | [LiquidAI/LFM2.5-8B-A1B-MLX-5bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-5bit) | 73 | 0 | text-generation |
+| 2026-05-29 | [blockblockblock/LFM2.5-8B-A1B-exl3-8.0bpw](https://huggingface.co/blockblockblock/LFM2.5-8B-A1B-exl3-8.0bpw) | 0 | 0 | text-generation |
+| 2026-05-29 | [blockblockblock/LFM2.5-8B-A1B-exl3-4.0bpw](https://huggingface.co/blockblockblock/LFM2.5-8B-A1B-exl3-4.0bpw) | 0 | 0 | text-generation |
+| 2026-05-29 | [AlexWortega/lfm25-8b-soyuz-merged](https://huggingface.co/AlexWortega/lfm25-8b-soyuz-merged) | 0 | 0 |  |
+| 2026-05-29 | [JANGQ-AI/LFM2.5-8B-A1B-JANG_2L](https://huggingface.co/JANGQ-AI/LFM2.5-8B-A1B-JANG_2L) | 0 | 0 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
