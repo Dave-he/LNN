@@ -81,6 +81,7 @@ class LTCNetwork(nn.Module):
         output_size: Dimension of output
         num_layers: Number of stacked LTC layers
         ode_method: ODE solver method ('euler', 'rk4', 'dopri5')
+        return_sequences: Whether to return full sequence or last step
     """
 
     def __init__(
@@ -90,6 +91,7 @@ class LTCNetwork(nn.Module):
         output_size: int,
         num_layers: int = 1,
         ode_method: str = "rk4",
+        return_sequences: bool = True,
     ):
         super().__init__()
         self.input_size = input_size
@@ -97,6 +99,7 @@ class LTCNetwork(nn.Module):
         self.output_size = output_size
         self.num_layers = num_layers
         self.ode_method = ode_method
+        self.return_sequences = return_sequences
 
         self.cells = nn.ModuleList()
         for i in range(num_layers):
@@ -124,4 +127,7 @@ class LTCNetwork(nn.Module):
                 dim=0,
             )
 
-        return self.output_proj(layer_input)
+        if self.return_sequences:
+            return self.output_proj(layer_input)
+        else:
+            return self.output_proj(layer_input[:, -1, :])
