@@ -56,7 +56,7 @@ class RealTimeSeriesDataset(Dataset):
         # 分割数据
         n = len(self.data)
         n_train = int(n * train_split)
-        n_val = int(n * (train_split + (1 - train_split) / 2)
+        n_val = int(n * (train_split + (1 - train_split) / 2))
 
         if mode == "train":
             self.slice = slice(0, n_train)
@@ -125,4 +125,59 @@ def load_yahoo_finance(
     if use_cache and os.path.exists(cache_file):
         return pd.read_csv(cache_file, parse_dates=[0], index_col=0)
     
-    # 模拟股票数据
+    # 模拟股票数据（用于演示
+    print(f"生成模拟股票数据（无真实 API")
+    np.random.seed(42)
+    dates = pd.date_range(start=start_date, end=end_date, freq="D")
+    n = len(dates)
+    
+    # 生成随机游走
+    np.random.seed(42)
+    base = 100.0
+    log_returns = np.random.normal(0.0005, 0.02, n-1)
+    prices = base * np.exp(np.cumsum(log_returns))
+    prices = np.insert(prices, 0, base)
+    
+    df = pd.DataFrame({
+        "Open": prices,
+        "High": prices * (1 + np.random.uniform(0, 0.02, n)),
+        "Low": prices * (1 - np.random.uniform(0, 0.02, n)),
+        "Close": prices,
+        "Volume": np.random.randint(1000000, 10000000, n),
+    }, index=dates)
+    
+    if use_cache:
+        df.to_csv(cache_file)
+    
+    return df
+
+
+def create_real_data_loaders(
+    data: Union[pd.DataFrame, np.ndarray],
+    target_col: str = "Close",
+    seq_len: int = 32,
+    horizon: int = 1,
+    batch_size: int = 32,
+    normalize: bool = True,
+) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    """
+    创建 train/val/test 数据加载器
+    """
+    train_dataset = RealTimeSeriesDataset(
+        data, target_col=target_col, seq_len=seq_len, horizon=horizon,
+        normalize=normalize, mode="train"
+    )
+    val_dataset = RealTimeSeriesDataset(
+        data, target_col=target_col, seq_len=seq_len, horizon=horizon,
+        normalize=normalize, mode="val"
+    )
+    test_dataset = RealTimeSeriesDataset(
+        data, target_col=target_col, seq_len=seq_len, horizon=horizon,
+        normalize=normalize, mode="test"
+    )
+    
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    
+    return train_loader, val_loader, test_loader

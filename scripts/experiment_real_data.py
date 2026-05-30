@@ -1,25 +1,34 @@
 """
-Experiment script to train LNN models on real-world or realistic datasets.
+真实数据上的 LNN 训练实验
+使用股票和能源价格数据
 """
 
 import argparse
 import os
 import sys
-import time
+import json
+import csv
+from datetime import datetime
+from typing import Dict, Any
 
-import torch
+import matplotlib
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+import torch
+import torch.nn as nn
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from lnn.core.cfc import CfCNetwork
 from lnn.core.ltc import LTCNetwork
 from lnn.core.trainer import Trainer
-from lnn.data.datasets import (
+from lnn.data.real_data import (
+    RealTimeSeriesDataset,
+    create_real_data_loaders,
     generate_stock_like_data,
-    prepare_univariate_data,
-    create_real_dataloader,
+    load_yahoo_finance
 )
 from lnn.utils.metrics import compute_metrics
 from lnn.utils.visualization import plot_predictions, plot_training_curve
@@ -31,175 +40,183 @@ def get_model(model_name: str, input_size: int, hidden_size: int, output_size: i
     elif model_name == "ltc":
         return LTCNetwork(input_size, hidden_size, output_size, num_layers=1, ode_method="rk4")
     elif model_name == "gru":
-        return torch.nn.GRU(input_size, hidden_size, batch_first=True)
+        class GRUPredictor(nn.Module):
+            def __init__(self, input_size, hidden_size, output_size):
+                super().__init__()
+                self.gru = nn.GRU(input_size, hidden_size, batch_first=True)
+                self.fc = nn.Linear(hidden_size, output_size)
+            
+            def forward(self, x):
+                out, _ = self.gru(x)
+                out = self.fc(out[:, -1, :])
+                return out
+        return GRUPredictor(input_size, hidden_size, output_size)
     else:
         raise ValueError(f"Unknown model: {model_name}")
 
 
-class GRUWrapper(torch.nn.Module):
-    """Wrapper to make GRU have same interface as our LNN models."""
+def save_results_to_csv(
+    results: Dict[str, Any],
+    filename: str = "analysis/real_data/cfc_stock_results.csv"
+):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     
-    def __init__(self, input_size: int, hidden_size: int, output_size: int):
-        super().__init__()
-        self.gru = torch.nn.GRU(input_size, hidden_size, batch_first=True)
-        self.fc = torch.nn.Linear(hidden_size, output_size)
+    file_exists = os.path.exists(filename)
     
-    def forward(self, x):
-        output, _ = self.gru(x)
-        return self.fc(output[:, -1, :])
+    with open(filename, "a" if file_exists else "w") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow([
+                "timestamp", "model", "dataset", "hidden_size", "seq_len",
+                "train_loss", "val_loss", "test_mse", "test_rmse", "test_mae", "test_mape"
+            ])
+        
+        writer.writerow([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            results["model"],
+            results["dataset"],
+            results["hidden_size"],
+            results["seq_len"],
+            results["history"]["train_losses"][-1],
+            results["best_val_loss"],
+            results["metrics"]["mse"],
+            results["metrics"]["rmse"],
+            results["metrics"]["mae"],
+            results["metrics"]["mape"],
+        ])
 
 
 def main():
-    parser = argparse.ArgumentParser(description="LNN Real Data Experiment")
+    parser = argparse.ArgumentParser(description="真实数据 LNN 训练实验")
     parser.add_argument("--model", type=str, default="cfc", choices=["cfc", "ltc", "gru"])
-    parser.add_argument("--data", type=str, default="stock", choices=["stock", "electricity", "air_quality"])
-    parser.add_argument("--hidden_size", type=int, default=64)
-    parser.add_argument("--seq_len", type=int, default=64)
+    parser.add_argument("--dataset", type=str, default="stock", choices=["stock", "energy"])
+    parser.add_argument("--hidden_size", type=int, default=32)
+    parser.add_argument("--seq_len", type=int, default=32)
     parser.add_argument("--horizon", type=int, default=1)
-    parser.add_argument("--epochs", type=int, default=50)
-    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--patience", type=int, default=10)
+    parser.add_argument("--patience", type=int, default=20)
+    parser.add_argument("--use_scheduler", action="store_true")
     parser.add_argument("--output_dir", type=str, default="analysis/real_data")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    print("=" * 60)
-    print("=== LNN Real-World Data Experiment ===")
-    print("=" * 60)
-    print(f"Model: {args.model.upper()}")
-    print(f"Data: {args.data}")
-    print(f"Hidden Size: {args.hidden_size}")
-    print(f"Sequence Length: {args.seq_len}")
-    print(f"Prediction Horizon: {args.horizon}")
-    print(f"Epochs: {args.epochs}")
-    print(f"Batch Size: {args.batch_size}")
-    print(f"Learning Rate: {args.lr}")
-    print()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_id = f"{args.model}_{args.dataset}_{timestamp}"
+    run_dir = os.path.join(args.output_dir, run_id)
+    os.makedirs(run_dir, exist_ok=True)
 
-    # Load/generate data
-    print(f"Loading {args.data} data...")
-    if args.data == "stock":
-        data = generate_stock_like_data(num_samples=5000, num_features=1)
-        df = pd.DataFrame(data, columns=["value"])
-        column = "value"
-    elif args.data == "electricity":
-        df = download_electricity_data()
-        column = df.columns[0]  # Use first client's data
-    elif args.data == "air_quality":
-        df = download_air_quality_data()
-        column = "PM2.5"  # Use PM2.5 as target
+    print("=" * 70)
+    print(f"真实数据 LNN 训练实验 - {timestamp}")
+    print("=" * 70)
+    print(f"Model: {args.model} | Dataset: {args.dataset} | Hidden: {args.hidden_size}")
+    print(f"SeqLen: {args.seq_len} | Horizon: {args.horizon} | Epochs: {args.epochs}")
+    print(f"LR: {args.lr} | Scheduler: {args.use_scheduler}")
+    print("=" * 70)
+
+    # 加载数据
+    if args.dataset == "stock":
+        data = generate_stock_like_data(num_samples=2500, seed=42)
+        target_col = None
+    elif args.dataset == "energy":
+        from lnn.data.timeseries import generate_energy_price
+        data = generate_energy_price(num_samples=2500, seed=42)
+        target_col = None
     else:
-        raise ValueError(f"Unknown data type: {args.data}")
+        data = generate_stock_like_data(num_samples=2500, seed=42)
+        target_col = None
 
-    print(f"Data shape: {df.shape}")
-    print(f"Using column: {column}")
+    print(f"数据加载完成，共 {len(data)} 个样本")
 
-    # Prepare data
-    train_data, val_data, test_data = prepare_univariate_data(
-        df, column, seq_len=args.seq_len, horizon=args.horizon
+    train_loader, val_loader, test_loader = create_real_data_loaders(
+        data,
+        target_col=target_col,
+        seq_len=args.seq_len,
+        horizon=args.horizon,
+        batch_size=args.batch_size
     )
 
-    print(f"Train samples: {len(train_data)}")
-    print(f"Val samples: {len(val_data)}")
-    print(f"Test samples: {len(test_data)}")
-
-    # Create dataloaders
-    train_loader = create_real_dataloader(
-        train_data, seq_len=args.seq_len, horizon=args.horizon, 
-        batch_size=args.batch_size, shuffle=True
-    )
-    val_loader = create_real_dataloader(
-        val_data, seq_len=args.seq_len, horizon=args.horizon, 
-        batch_size=args.batch_size, shuffle=False
-    )
-    test_loader = create_real_dataloader(
-        test_data, seq_len=args.seq_len, horizon=args.horizon, 
-        batch_size=args.batch_size, shuffle=False
-    )
-
-    # Create model
     input_size = 1
     output_size = 1 if args.horizon == 1 else args.horizon
 
-    if args.model == "gru":
-        model = GRUWrapper(input_size, args.hidden_size, output_size)
-    else:
-        model = get_model(args.model, input_size, args.hidden_size, output_size)
-
+    model = get_model(args.model, input_size, args.hidden_size, output_size)
     param_count = sum(p.numel() for p in model.parameters())
-    print(f"\nModel created with {param_count:,} parameters")
+    print(f"模型参数: {param_count:,}")
 
-    # Train
-    print("\nStarting training...")
-    trainer = Trainer(model, lr=args.lr, patience=args.patience)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     
-    start_time = time.time()
-    history = trainer.fit(train_loader, val_loader, num_epochs=args.epochs)
-    train_time = time.time() - start_time
-    
-    print(f"\nTraining completed in {train_time:.2f} seconds")
+    lr_scheduler = None
 
-    # Evaluate speed
-    print("\nMeasuring inference speed...")
-    model.eval()
-    with torch.no_grad():
-        test_batch = next(iter(test_loader))[0]
-        start_time = time.time()
-        for _ in range(100):
-            _ = model(test_batch)
-        inference_time = (time.time() - start_time) / 100
-        samples_per_sec = test_batch.shape[0] / inference_time
-        print(f"Inference time per batch: {inference_time*1000:.2f} ms")
-        print(f"Samples per second: {samples_per_sec:.2f}")
+    trainer = Trainer(
+        model,
+        optimizer=optimizer,
+        lr_scheduler=lr_scheduler,
+        lr=args.lr,
+        patience=args.patience,
+        checkpoint_dir=os.path.join("checkpoints", run_id),
+    )
 
-    # Evaluate
-    print("\nEvaluating on test set...")
+    history = trainer.fit(
+        train_loader,
+        val_loader,
+        num_epochs=args.epochs,
+        save_best_only=True,
+    )
+
     preds, targets = trainer.predict(test_loader)
     metrics = compute_metrics(targets, preds)
-
-    print("\n" + "=" * 40)
-    print("Test Results:")
-    print("=" * 40)
+    
+    print("\n" + "=" * 70)
+    print("测试集结果")
+    print("=" * 70)
     for k, v in metrics.items():
         print(f"  {k.upper()}: {v:.6f}")
-    print(f"\nTraining Time: {train_time:.2f}s")
-    print(f"Inference Speed: {samples_per_sec:.2f} samples/s")
+    
+    # 保存结果
+    results = {
+        "model": args.model,
+        "dataset": args.dataset,
+        "hidden_size": args.hidden_size,
+        "seq_len": args.seq_len,
+        "epochs": history["total_epochs"],
+        "best_epoch": history["best_epoch"],
+        "best_val_loss": float(history["best_val_loss"]) if history["best_val_loss"] is not None else None,
+        "parameters": param_count,
+        "training_time": history["elapsed_seconds"],
+        "metrics": {k: float(v) for k, v in metrics.items()},
+        "history": {
+            "train_losses": [float(x) for x in history["train_losses"]],
+            "val_losses": [float(x) for x in history["val_losses"]],
+            "lrs": [float(x) for x in history.get("lrs", [])],
+        }
+    }
+    
+    with open(os.path.join(run_dir, "results.json"), "w") as f:
+        json.dump(results, f, indent=2)
+    
+    save_results_to_csv(results, os.path.join(args.output_dir, f"{args.model}_{args.dataset}_results.csv"))
 
-    # Save results
-    prefix = f"{args.model}_{args.data}"
     plot_training_curve(
         history["train_losses"],
         history["val_losses"],
-        title=f"{args.model.upper()} Training Curve ({args.data})",
-        save_path=os.path.join(args.output_dir, f"{prefix}_training.png"),
+        lrs=history.get("lrs"),
+        title=f"{args.model.upper()} 训练曲线 - {args.dataset}",
+        save_path=os.path.join(run_dir, "training.png"),
     )
 
     pred_np = preds.numpy().flatten()
     target_np = targets.numpy().flatten()
     plot_predictions(
-        target_np[:200],
-        pred_np[:200],
-        title=f"{args.model.upper()} Prediction ({args.data})",
-        save_path=os.path.join(args.output_dir, f"{prefix}_prediction.png"),
+        target_np[:300],
+        pred_np[:300],
+        title=f"{args.model.upper()} 预测对比 - {args.dataset}",
+        save_path=os.path.join(run_dir, "predictions.png"),
     )
 
-    # Save metrics
-    results = {
-        "model": args.model,
-        "data": args.data,
-        "params": param_count,
-        "train_time": train_time,
-        "samples_per_sec": samples_per_sec,
-        **metrics,
-    }
-    results_df = pd.DataFrame([results])
-    results_path = os.path.join(args.output_dir, f"{prefix}_results.csv")
-    results_df.to_csv(results_path, index=False)
-
-    print(f"\nAll results saved to {args.output_dir}/")
-    print("=" * 60)
+    print(f"\n结果保存至: {run_dir}/")
+    print(f"汇总表格: {args.output_dir}/{args.model}_{args.dataset}_results.csv")
 
 
 if __name__ == "__main__":
