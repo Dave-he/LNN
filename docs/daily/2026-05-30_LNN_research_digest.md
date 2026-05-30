@@ -10,9 +10,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：25 篇
-- GitHub 候选仓库：8 个
+- GitHub 候选仓库：42 个
 - Hugging Face 候选模型：21 个
-- 已下载 PDF：0 个
+- 已下载 PDF：2 个
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
@@ -33,14 +33,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-05-30 | [parhat1/cfdna-tau-repository](https://github.com/parhat1/cfdna-tau-repository) | 1 | Python | Liquid Neural Networks for cancer detection from cfDNA fragment time constants. Within-cohort AUC=0.91, cross-study LOSO AUC=0.40. Exploratory research. |
 | 2026-05-29 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
 | 2026-05-29 | [2841649220/LSHN](https://github.com/2841649220/LSHN) | 0 | Python | About A bionic neural network that combines liquid neural networks, spiking neural networks, and hypergraph neural networks |
 | 2026-05-29 | [karl4th/liquid-neural-network-delivery-robot](https://github.com/karl4th/liquid-neural-network-delivery-robot) | 0 | Python |  |
 | 2026-05-29 | [JuneDylan/LNN_Github](https://github.com/JuneDylan/LNN_Github) | 0 | Python | liquid-neural-networks, neural-ode, pytorch, tutorial |
+| 2026-05-29 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
+| 2026-05-28 | [raminmh/CfC](https://github.com/raminmh/CfC) | 1043 | Python | Closed-form Continuous-time Neural Networks |
 | 2026-05-28 | [RobVanProd/Liquid-neural-network](https://github.com/RobVanProd/Liquid-neural-network) | 4 | Python |  |
-| 2026-05-28 | [parhat1/cfdna-tau-repository](https://github.com/parhat1/cfdna-tau-repository) | 0 | Python | Liquid Neural Networks for cancer detection from cfDNA fragment time constants. Within-cohort AUC=0.91, cross-study LOSO AUC=0.40. Exploratory research. |
 | 2026-05-28 | [1922733078-lab/liquid-neural-networks-transparency](https://github.com/1922733078-lab/liquid-neural-networks-transparency) | 0 | Python | Transparency archive for a liquid neural networks review: literature matrix, source verification, and reproducible synthetic benchmark. |
+| 2026-05-27 | [aygp-dr/liquid-neural-networks](https://github.com/aygp-dr/liquid-neural-networks) | 21 | Python | Liquid Neural Networks (LNN) - Continuous-time neural dynamics inspired by C. elegans. Parameter-efficient AI with 19-302 neurons for complex tasks. Hybrid Clo… |
 | 2026-05-27 | [everest-an/O1](https://github.com/everest-an/O1) | 2 | Python | MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development… |
+| 2026-05-23 | [rohitsalesforce132/lfm-finetune-suite](https://github.com/rohitsalesforce132/lfm-finetune-suite) | 1 | Python | Fine-tune LiquidAI/LFM2.5-350M for 7 use cases — Medical QA, Code Gen, Telecom SRE, Financial Literacy, Education, Sentiment, Summarization. LoRA/QLoRA pipelin… |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
@@ -57,6 +61,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-05-29 | [LiquidAI/LFM2.5-8B-A1B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF) | 23685 | 115 | text-generation |
 | 2026-05-29 | [LiquidAI/LFM2-350M](https://huggingface.co/LiquidAI/LFM2-350M) | 17280 | 249 | text-generation |
 | 2026-05-29 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 17084 | 238 | text-generation |
+
+## PDF 归档
+- `papers/daily/2026-05-30/2026-05-26_Comparative_Analysis_of_Liquid_Neural_Networks_and_LSTM_for_Sequential_Pattern_Recognition_Robus_2605.27467v1.pdf`
+- `papers/daily/2026-05-30/2026-05-21_EMMA_Extracting_Multiple_physical_parameters_from_Multimodal_Data_2605.24047v1.pdf`
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

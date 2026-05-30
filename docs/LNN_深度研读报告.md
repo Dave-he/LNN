@@ -69,6 +69,13 @@ tags: [LNN, reading-report, papers]
 - **方法论**：自第一性原理（线虫动力学）引入 LTC、CfC 及 NCP，详细探索其在通感一体化（ISAC）与自组织网络（SON）中的应用。
 - **关键成果**：在信道预测（Channel Prediction）与 MIMO 动态波束成形（Beamforming）中，性能全面优于经典循环神经网络与传统 WMMSE 算法。
 
+### [2026] Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition
+- **独立报告**：[[docs/reports/Comparative_Analysis_of_LNN_and_LSTM_研读报告.md]]
+- **核心问题**：评估离散时间步模型 (LSTM) 与连续时间步模型 (LNN/CfC) 在面对抗噪声、高频神经拟态事件、笔画序列以及极度不平衡且不规则采样的临床 ICU 时序数据时的鲁棒性、能效与真实应用表现。
+- **方法论**：控制核心单元以外的所有模块与特征，头对头对比 128/256 单元 LSTM 与 CfC 在 N-MNIST、IAM 手写文本、QuickDraw 笔迹和 PhysioNet Sepsis-3 上的分类表现及 Temporal Dropout 抗丢失能力。
+- **关键成果**：LNN 在 N-MNIST 上以 99.38% 胜出，并在 30% 帧丢失测试中保持 91.84% 准确度 (LSTM 坠至 77.48%)；败血症预测中将离散 LSTM 的 151 例临床假告警骤降至仅 2 例，取得 0.94 的高精确率，极佳地抑制了告警疲劳。
+
+
 ---
 
 ## 3. LNN 训练方法与方向可行报告
@@ -146,7 +153,7 @@ tags: [LNN, reading-report, papers]
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-05-30**：[[docs/daily/2026-05-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 8 个，模型 21 个。
+- **2026-05-30**：[[docs/daily/2026-05-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 21 个。
 - **2026-05-26**：[[docs/daily/2026-05-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 24 个。
 - **2026-05-27**：[[docs/daily/2026-05-27_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 44 个，模型 24 个。
 - **2026-05-25**：[[docs/daily/2026-05-25_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 21 个。

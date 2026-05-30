@@ -78,14 +78,21 @@ date: 2026-05-25
 - **关注价值**：该方向适合本项目后续在 Jetson 上验证低延迟机器人控制与策略头设计。
 - **链接**：https://arxiv.org/abs/2603.27058
 
+### 2.9 离散 LSTM 与连续 LNN 在事件/手写/笔画/临床 ICU 时序的对比研究
+**论文名称**：*Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition: Robustness, Efficiency, and Clinical Utility* (arXiv:2605.27467, 2026年5月)
+- **主要内容**：在相同的主干与特征下头对头深入比较离散时间 LSTM 与连续时间 LNN (CfC)。
+- **核心成果**：在神经拟态 N-MNIST 上以 99.38% 表现更佳，且在 30% 帧丢失时能保持 91.84% 精度 (LSTM 坠至 77.48%)；败血症预测中将误报率从 151 降至 2 (Wide CfC-256)，取得 0.94 超高精确率，极佳地抑制了告警疲劳。
+- **链接**：https://arxiv.org/abs/2605.27467
+
 ## 3. 总结与未来展望
+
 截至 2026 年，液态神经网络（LNN）正逐步成为边缘计算（Edge AI）、自动驾驶、医疗实时监控（如心电图异常检测）及高频金融交易等时间敏感型领域的新标准。虽然大规模 Transformer 继续在云端主导静态大语言模型任务，但极其紧凑且高效的液态神经网络正在成为各类物联网及机器人等边缘设备的“数字神经系统”。
 
 
 <!-- daily-lnn-index:start -->
 ## 4. 自动化每日追踪索引
 
-- **2026-05-30**：[[docs/daily/2026-05-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 8 个，模型 21 个。
+- **2026-05-30**：[[docs/daily/2026-05-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 21 个。
 - **2026-05-26**：[[docs/daily/2026-05-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 24 个。
 - **2026-05-27**：[[docs/daily/2026-05-27_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 44 个，模型 24 个。
 - **2026-05-25**：[[docs/daily/2026-05-25_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 21 个。
