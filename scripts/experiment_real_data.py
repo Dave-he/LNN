@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import csv
+import time
 from datetime import datetime
 from typing import Dict, Any
 
@@ -68,7 +69,8 @@ def save_results_to_csv(
         if not file_exists:
             writer.writerow([
                 "timestamp", "model", "dataset", "hidden_size", "seq_len",
-                "train_loss", "val_loss", "test_mse", "test_rmse", "test_mae", "test_mape"
+                "train_loss", "val_loss", "mse", "rmse", "mae", "mape",
+                "train_time", "samples_per_sec"
             ])
         
         writer.writerow([
@@ -83,6 +85,8 @@ def save_results_to_csv(
             results["metrics"]["rmse"],
             results["metrics"]["mae"],
             results["metrics"]["mape"],
+            results["training_time"],
+            results["samples_per_sec"]
         ])
 
 
@@ -121,8 +125,21 @@ def main():
         data = generate_stock_like_data(num_samples=2500, seed=42)
         target_col = None
     elif args.dataset == "energy":
-        from lnn.data.timeseries import generate_energy_price
-        data = generate_energy_price(num_samples=2500, seed=42)
+        # 生成能源价格数据
+        import numpy as np
+        np.random.seed(42)
+        t = np.arange(2500)
+        # 日周期、周周期、趋势、噪声、尖峰
+        daily_season = 0.2 * np.sin(2 * np.pi * 0.04 * t)
+        weekly_season = 0.1 * np.sin(2 * np.pi * 0.006 * t + np.pi/4)
+        trend = 0.00005 * t
+        noise = 0.08 * np.random.randn(2500)
+        # 加入尖峰（模拟价格波动
+        spike_indices = np.random.choice(2500, size=12, replace=False)
+        data = 1.0 + trend + daily_season + weekly_season + noise
+        data[spike_indices] *= np.random.uniform(1.5, 2.0, size=12)
+        # 归一化
+        data = (data - data.mean()) / (data.std() + 1e-8)
         target_col = None
     else:
         data = generate_stock_like_data(num_samples=2500, seed=42)
@@ -165,7 +182,13 @@ def main():
         save_best_only=True,
     )
 
+    # 测试推理速度
+    start_time = time.time()
     preds, targets = trainer.predict(test_loader)
+    inference_time = time.time() - start_time
+    num_samples = len(targets)
+    samples_per_sec = num_samples / inference_time if inference_time > 0 else 0
+    
     metrics = compute_metrics(targets, preds)
     
     print("\n" + "=" * 70)
@@ -173,6 +196,7 @@ def main():
     print("=" * 70)
     for k, v in metrics.items():
         print(f"  {k.upper()}: {v:.6f}")
+    print(f"  Inference Speed: {samples_per_sec:.0f} samples/sec")
     
     # 保存结果
     results = {
@@ -185,6 +209,7 @@ def main():
         "best_val_loss": float(history["best_val_loss"]) if history["best_val_loss"] is not None else None,
         "parameters": param_count,
         "training_time": history["elapsed_seconds"],
+        "samples_per_sec": samples_per_sec,
         "metrics": {k: float(v) for k, v in metrics.items()},
         "history": {
             "train_losses": [float(x) for x in history["train_losses"]],
