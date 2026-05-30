@@ -45,6 +45,12 @@ tags: [LNN, reading-report, papers]
 
 > ⚠️ **添加指南**：出现新论文时，请通过 `Summarization Agent` 生成独立报告到 `docs/reports/` 目录，并在此处追加精简版与链接。
 
+### [2024] Exploring Liquid Neural Networks on Loihi-2
+- **独立报告**：[[docs/reports/Exploring_Liquid_Neural_Networks_on_Loihi-2_研读报告.md]]
+- **核心问题**：将基于连续常微分方程（ODE）的 LNN 算法高效部署在运行离散时间步、资源极其受限的神经拟态芯片（Loihi-2）上面临的软硬件协同适配难题。
+- **方法论**：利用级联卷积层提取 CIFAR-10 空间特征，集成至 NCP 驱动 LNN，离线训练后进行参数量化，并基于 LAVA 框架部署于 Loihi-2 上运行。
+- **关键成果**：实现了 91.3% 的分类准确度，单帧功耗仅 213 $\mu$J，推理延迟低至 15.2 ms，能效高达 25.3 GOP/s/W。
+
 ### [2025] Accuracy, Memory Efficiency and Generalization: A Comparative Study on LNN and RNN
 - **独立报告**：[[docs/reports/Comparative_Study_on_LNN_and_RNN_研读报告.md]]
 - **核心问题**：在序列建模中，传统 RNN 面临梯度消失、计算开销大及 OOD 泛化能力弱的问题。
@@ -56,6 +62,12 @@ tags: [LNN, reading-report, papers]
 - **核心问题**：天然气价格受多因素影响剧烈波动，传统模型无法持续适应市场机制的突变。
 - **方法论**：使用 LTC、CfC 等 LNN 架构预测非平稳时序，利用动态内部状态适应环境。
 - **关键成果**：LNN 的自适应时间尺度调制能显著降低高波动市场条件下的短期预测误差。
+
+### [2026] Liquid Neural Networks: Next-Generation AI for Telecom from First Principles
+- **独立报告**：[[docs/reports/LNN_Next-Generation_AI_for_Telecom_研读报告.md]]
+- **核心问题**：传统黑盒深度学习模型在高速时变和多径干扰剧烈的 6G 移动通信中鲁棒性差、不可解释且计算开销极高。
+- **方法论**：自第一性原理（线虫动力学）引入 LTC、CfC 及 NCP，详细探索其在通感一体化（ISAC）与自组织网络（SON）中的应用。
+- **关键成果**：在信道预测（Channel Prediction）与 MIMO 动态波束成形（Beamforming）中，性能全面优于经典循环神经网络与传统 WMMSE 算法。
 
 ---
 
@@ -134,6 +146,7 @@ tags: [LNN, reading-report, papers]
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-05-30**：[[docs/daily/2026-05-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 8 个，模型 21 个。
 - **2026-05-26**：[[docs/daily/2026-05-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 24 个。
 - **2026-05-27**：[[docs/daily/2026-05-27_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 44 个，模型 24 个。
 - **2026-05-25**：[[docs/daily/2026-05-25_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 21 个。
