@@ -164,24 +164,25 @@ def create_real_dataloader(
 ) -> torch.utils.data.DataLoader:
     """
     Create PyTorch DataLoader from numpy array.
-    
+
     Args:
         data: Input time series data
         seq_len: Sequence length
         horizon: Prediction horizon
         batch_size: Batch size
         shuffle: Whether to shuffle
-        
+
     Returns:
         PyTorch DataLoader
     """
     X, y = [], []
     for i in range(len(data) - seq_len - horizon + 1):
         X.append(data[i:i + seq_len, np.newaxis])
-        y.append(data[i + seq_len:i + seq_len + horizon, np.newaxis])
-    
+        target = data[i + seq_len:i + seq_len + horizon]
+        y.append(target)
+
     X = torch.tensor(np.array(X), dtype=torch.float32)
     y = torch.tensor(np.array(y), dtype=torch.float32)
-    
+
     dataset = torch.utils.data.TensorDataset(X, y)
     return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)

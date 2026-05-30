@@ -28,19 +28,33 @@ def plot_predictions(
 def plot_training_curve(
     train_losses: list[float],
     val_losses: list[float] | None = None,
+    lrs: list[float] | None = None,
     title: str = "Training Curve",
     save_path: str | None = None,
 ):
-    fig, ax = plt.subplots(figsize=(10, 4))
-    ax.plot(train_losses, label="Train Loss")
+    if lrs is not None:
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True, gridspec_kw={"height_ratios": [3, 1]})
+    else:
+        fig, ax1 = plt.subplots(figsize=(10, 4))
+
+    ax1.plot(train_losses, label="Train Loss", color="#2196F3")
     if val_losses is not None:
-        ax.plot(val_losses, label="Val Loss")
-    ax.set_title(title)
-    ax.set_xlabel("Epoch")
-    ax.set_ylabel("Loss")
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    ax.set_yscale("log")
+        ax1.plot(val_losses, label="Val Loss", color="#4CAF50")
+    ax1.set_title(title)
+    ax1.set_ylabel("Loss")
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    ax1.set_yscale("log")
+
+    if lrs is not None:
+        ax2.plot(lrs, color="#FF9800", marker="o", markersize=3, linewidth=1)
+        ax2.set_xlabel("Epoch")
+        ax2.set_ylabel("Learning Rate")
+        ax2.set_yscale("log")
+        ax2.grid(True, alpha=0.3)
+    else:
+        ax1.set_xlabel("Epoch")
+
     plt.tight_layout()
     if save_path:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
