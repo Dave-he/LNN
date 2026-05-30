@@ -1,0 +1,300 @@
+{
+  "date": "2026-05-28",
+  "timezone": "Asia/Shanghai",
+  "scope": "Search and triage LNN training methods, datasets, architectures, optimization strategies, and application directions.",
+  "raw_inputs": [
+    {
+      "type": "existing_daily_capture",
+      "path": "papers/daily/2026-05-28_lnn_research.json",
+      "notes": "Repository daily script output with arXiv, GitHub, and Hugging Face candidates."
+    },
+    {
+      "type": "human_digest",
+      "path": "docs/daily/2026-05-28_LNN_research_digest.md",
+      "notes": "Human-readable daily digest generated from the raw capture."
+    }
+  ],
+  "search_queries": [
+    {
+      "source": "web/arXiv/Nature/ncps",
+      "query": "Liquid Time-constant Networks; Closed-form continuous-time neural networks; Neural circuit policies; ncps AutoNCP CfC LTC",
+      "purpose": "Core LNN architecture and training path."
+    },
+    {
+      "source": "web/arXiv/PhysioNet/UCI",
+      "query": "LNN natural gas forecasting; LNN emotion recognition EEG; retinal neural differential equations; PhysioNet 2012; UCI HAR",
+      "purpose": "Non-stationary time-series, medical, finance, and sensor datasets."
+    },
+    {
+      "source": "web/arXiv/RoboMimic/Minari",
+      "query": "Liquid networks mixture density imitation learning; NCP auditable autonomy; RoboMimic HDF5; PointMaze Minari",
+      "purpose": "Robotics control, behavior cloning, and episode dataset construction."
+    },
+    {
+      "source": "web/arXiv/LiquidAI/HuggingFace",
+      "query": "Loihi-2 liquid neural networks; LNN edge battery prognostics; LTC-SE embedded; LFM2 edge models",
+      "purpose": "Edge deployment, compression, distillation, and hardware evaluation."
+    },
+    {
+      "source": "web/arXiv",
+      "query": "Riemannian Liquid Spatio-Temporal Graph Network; robust hybrid beamforming LNN; Liquid-Graph Time-Constant Network; FUSION edge scheduling",
+      "purpose": "Graph, multi-agent, and communication-system directions."
+    },
+    {
+      "source": "web/arXiv/Hugging Face papers",
+      "query": "Liquid Structural State-Space Models; LiquidTAD; Long Range Arena; temporal action detection datasets",
+      "purpose": "Long sequence and video understanding directions."
+    },
+    {
+      "source": "web/arXiv/CVPR",
+      "query": "EMMA Extracting Multiple physical parameters from Multimodal Data; Physics-Modeled Neural Networks; LSS-LTCNet",
+      "purpose": "Physics-informed, multimodal, and scientific-modeling directions."
+    }
+  ],
+  "directions": [
+    {
+      "id": "core_architecture",
+      "name": "核心架构与通用流程",
+      "report": "docs/reports/LNN_训练方向_核心架构与通用流程_可行报告.md",
+      "triage": [
+        {
+          "title": "Liquid Time-constant Networks",
+          "year": 2020,
+          "url": "https://arxiv.org/abs/2006.04439",
+          "status": "read_now",
+          "reason": "Original LTC formulation; defines ODE-solver training cost, stability, and time-series use cases."
+        },
+        {
+          "title": "Closed-form continuous-time neural networks",
+          "year": 2022,
+          "url": "https://www.nature.com/articles/s42256-022-00556-7",
+          "status": "read_now",
+          "reason": "Core CfC paper; removes numerical ODE solver and is the first practical baseline for training."
+        },
+        {
+          "title": "Neural circuit policies enabling auditable autonomy",
+          "year": 2020,
+          "url": "https://www.nature.com/articles/s42256-020-00237-3",
+          "status": "read_now",
+          "reason": "Sparse NCP wiring and auditable controller design; informs AutoNCP architecture search."
+        },
+        {
+          "title": "Neural Controlled Differential Equations for Irregular Time Series",
+          "year": 2020,
+          "url": "https://arxiv.org/abs/2005.08926",
+          "status": "watch",
+          "reason": "Adjacent continuous-time baseline for irregular time series; useful for fair comparisons."
+        }
+      ]
+    },
+    {
+      "id": "nonstationary_timeseries",
+      "name": "非平稳时间序列、医疗与金融",
+      "report": "docs/reports/LNN_训练方向_非平稳时间序列与医疗金融_可行报告.md",
+      "triage": [
+        {
+          "title": "Liquid Neural Network Models for Natural Gas Spot Price Time-Series Forecasting",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2604.24788",
+          "status": "read_now",
+          "reason": "Direct LNN forecasting case for volatile market data and regime changes."
+        },
+        {
+          "title": "Adaptive Temporal Dynamics for Personalized Emotion Recognition",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2602.06997",
+          "status": "read_now",
+          "reason": "EEG/physiological multimodal classification with learnable fast/slow time constants."
+        },
+        {
+          "title": "Modeling Retinal Ganglion Cells with Neural Differential Equations",
+          "year": 2025,
+          "url": "https://arxiv.org/abs/2511.18014",
+          "status": "watch",
+          "reason": "Small-data biological sequence modeling; useful for scientific time-series baselines."
+        },
+        {
+          "title": "EntroLnn",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2601.06195",
+          "status": "experiment",
+          "reason": "Battery capacity-fade trajectory refinement; good testbed for online adaptation and lightweight inference."
+        }
+      ]
+    },
+    {
+      "id": "robotics_imitation",
+      "name": "机器人控制与模仿学习",
+      "report": "docs/reports/LNN_训练方向_机器人控制与模仿学习_可行报告.md",
+      "triage": [
+        {
+          "title": "Neural circuit policies enabling auditable autonomy",
+          "year": 2020,
+          "url": "https://www.nature.com/articles/s42256-020-00237-3",
+          "status": "read_now",
+          "reason": "Canonical LNN/NCP control example with compact steering controller."
+        },
+        {
+          "title": "Liquid Networks with Mixture Density Heads for Efficient Imitation Learning",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2603.27058",
+          "status": "read_now",
+          "reason": "Direct recipe for multimodal action distributions, low-data imitation, and closed-loop evaluation."
+        },
+        {
+          "title": "A Nonasymptotic Theory of Gain-Dependent Error Dynamics in Behavior Cloning",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2604.14484",
+          "status": "watch",
+          "reason": "Not an LNN paper, but clarifies why offline loss alone is insufficient for closed-loop control."
+        }
+      ]
+    },
+    {
+      "id": "edge_compression",
+      "name": "边缘部署与压缩",
+      "report": "docs/reports/LNN_训练方向_边缘部署与压缩_可行报告.md",
+      "triage": [
+        {
+          "title": "Exploring Liquid Neural Networks on Loihi-2",
+          "year": 2024,
+          "url": "https://arxiv.org/abs/2407.20590",
+          "status": "read_now",
+          "reason": "Neuromorphic hardware evidence for accuracy/energy tradeoffs."
+        },
+        {
+          "title": "When Smaller Wins",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2601.06227",
+          "status": "experiment",
+          "reason": "Distillation, int8, and Pareto compression route for edge battery prognostics."
+        },
+        {
+          "title": "LTC-SE",
+          "year": 2023,
+          "url": "https://arxiv.org/abs/2304.08691",
+          "status": "watch",
+          "reason": "Embedded-system implementation direction and TensorFlow compatibility notes."
+        },
+        {
+          "title": "LFM2 Technical Report",
+          "year": 2025,
+          "url": "https://arxiv.org/abs/2511.23404",
+          "status": "watch",
+          "reason": "Liquid foundation model family; relevant for edge inference but not a small LNN cell training recipe."
+        }
+      ]
+    },
+    {
+      "id": "graph_telecom",
+      "name": "图时空与通信系统",
+      "report": "docs/reports/LNN_训练方向_图时空与通信系统_可行报告.md",
+      "triage": [
+        {
+          "title": "Riemannian Liquid Spatio-Temporal Graph Network",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2601.14115",
+          "status": "read_now",
+          "reason": "Combines liquid ODE dynamics and Riemannian graph representation."
+        },
+        {
+          "title": "Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2604.07219",
+          "status": "read_now",
+          "reason": "Direct LNN application to temporal channel dynamics and constrained communication optimization."
+        },
+        {
+          "title": "Liquid-Graph Time-Constant Network for Multi-Agent Systems Control",
+          "year": 2024,
+          "url": "https://arxiv.org/abs/2404.13982",
+          "status": "watch",
+          "reason": "Good baseline for graph liquid dynamics and distributed control."
+        }
+      ]
+    },
+    {
+      "id": "long_sequence_video",
+      "name": "长序列与视频理解",
+      "report": "docs/reports/LNN_训练方向_长序列与视频理解_可行报告.md",
+      "triage": [
+        {
+          "title": "Liquid Structural State-Space Models",
+          "year": 2022,
+          "url": "https://arxiv.org/abs/2209.12951",
+          "status": "read_now",
+          "reason": "Liquid-S4 route for long-range sequence modeling."
+        },
+        {
+          "title": "LiquidTAD",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2604.18274",
+          "status": "read_now",
+          "reason": "Parallel liquid-inspired temporal operator for long untrimmed video action detection."
+        },
+        {
+          "title": "Long Range Arena",
+          "year": 2020,
+          "url": "https://arxiv.org/abs/2011.04006",
+          "status": "watch",
+          "reason": "Benchmark rather than LNN paper; needed for long-sequence comparisons."
+        }
+      ]
+    },
+    {
+      "id": "physics_multimodal",
+      "name": "物理建模与多模态科学发现",
+      "report": "docs/reports/LNN_训练方向_物理建模与多模态科学发现_可行报告.md",
+      "triage": [
+        {
+          "title": "EMMA: Extracting Multiple physical parameters from Multimodal Data",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2605.24047v1",
+          "status": "read_now",
+          "reason": "Uses LTC latent dynamics plus physics-constrained loss for multimodal parameter recovery."
+        },
+        {
+          "title": "Physics-Modeled Neural Networks",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2605.08176",
+          "status": "watch",
+          "reason": "Continuous-time ODE layers compared with CfC; useful adjacent baseline."
+        },
+        {
+          "title": "Recovering implicit physics model under real-world constraints",
+          "year": 2024,
+          "url": "https://arxiv.org/abs/2412.02215",
+          "status": "experiment",
+          "reason": "LTC-NN for recovering physical dynamics; directly informs physics-informed loss design."
+        },
+        {
+          "title": "LSS-LTCNet",
+          "year": 2026,
+          "url": "https://arxiv.org/abs/2603.00459",
+          "status": "watch",
+          "reason": "Uses LTC as an iterative continuous-time refinement module in medical image segmentation."
+        }
+      ]
+    }
+  ],
+  "excluded_or_watch": [
+    {
+      "title": "MeloTune",
+      "url": "https://arxiv.org/abs/2604.10815",
+      "status": "watch",
+      "reason": "Contains CfC on-device affect modeling, but public training data and reproducibility path are unclear."
+    },
+    {
+      "title": "Symbolic-Vector Attention Fusion",
+      "url": "https://arxiv.org/abs/2604.03955",
+      "status": "watch",
+      "reason": "Mentions CfC as system component; less direct for LNN training methodology."
+    },
+    {
+      "title": "AEGIS",
+      "url": "https://arxiv.org/abs/2604.02149",
+      "status": "watch",
+      "reason": "Security application with liquid state-space terminology; verify implementation before using as training evidence."
+    }
+  ]
+}

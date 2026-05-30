@@ -62,13 +62,14 @@ date: 2026-05-24
 - **本机定时任务**：`scripts/install_daily_lnn_timer.sh`，安装 user systemd timer，默认每天 06:30 运行 `scripts/run_daily_lnn_task.sh`。
 - **GitHub Actions**：`.github/workflows/daily-lnn-research.yml`，每天自动生成研究摘要并推送回仓库。
 - **Jetson 验证脚本**：`scripts/jetson_lnn_benchmark.py`，在 Jetson 上执行 LNN/CfC 风格模型与 GRU 的 quick benchmark，输出到 `analysis/jetson/`。
+- **领域持续研究 Skill**：`skills/living-field-researcher`，将每日搜索、PRISMA-lite 追踪、雪球法扩展、研读报告、全局索引与实验队列维护沉淀为可复用流程；LNN 画像见 [[LNN_持续研究协议]]。
 - **使用说明**：详见 [[每日自动化任务与Jetson验证]]。
 
 ---
 
 ## 🤖 通用 Agents / Skills (基于 Vercel Skills)
 
-本项目使用 [Vercel Skills](https://github.com/vercel-labs/skills) 规范来管理专门用于**论文研读与分析**的 AI Agents。您可以将本项目 `skills/` 目录下的技能，通过软链接的方式一键导入到各种 AI 编码工具和终端中（如 Cursor, Windsurf, Trae, Claude Code 等），全面兼容 Claude, Gemini, Codex, Qwen, ChatGPT 等各类主流 AI 大模型工具，无需手动复制粘贴。
+本项目使用 [Vercel Skills](https://github.com/vercel-labs/skills) 规范来管理专门用于**领域持续研究、论文研读与分析**的 AI Agents。您可以将本项目 `skills/` 目录下的技能，通过软链接的方式一键导入到各种 AI 编码工具和终端中（如 Cursor, Windsurf, Trae, Claude Code 等），全面兼容 Claude, Gemini, Codex, Qwen, ChatGPT 等各类主流 AI 大模型工具，无需手动复制粘贴。
 
 ### 安装与使用
 1. 确保您的环境中已安装 Node.js。
@@ -81,11 +82,12 @@ cd LNN
 # 交互式添加本地技能 (软链接到您的 AI 工具)
 npx skills add ./skills/paper-analyzer
 npx skills add ./skills/paper-translator
+npx skills add ./skills/living-field-researcher
 
 # 此时，技能配置文件会软链接到工具的配置目录（如 .cursorrules 或 .trae/skills 等）
 ```
 
-### 已实现的论文研究 Skills
+### 已实现的研究自动化 Skills
 
 - **`paper-analyzer` (论文分析专家)**
   - **功能**：读取并分析学术论文，结构化提取论文的“核心问题”、“方法论”、“关键成果”及“局限性”。（对应上述 Summarization Agent 职责）
@@ -93,5 +95,8 @@ npx skills add ./skills/paper-translator
 - **`paper-translator` (学术论文翻译专家)**
   - **功能**：用于学术英语与中文的精准翻译，严格保留学术术语（如 *Liquid Neural Networks*）、数学公式及排版。
   - **触发场景**：需要精准中英互译摘要、特定段落或通篇文献时使用。
+- **`living-field-researcher` (领域持续研究专家)**
+  - **功能**：将“每日/定期搜索某一领域论文、代码、模型与前沿动态”的方法沉淀为可审计的 GitHub 知识库工作流，结合 Living Review、PRISMA-lite、雪球法、Zettelkasten 与 Progressive Summarization，持续更新检索协议、日更摘要、研读报告、全局索引和实验队列。
+  - **触发场景**：需要为 LNN 或其他研究主题搭建/改进持续追踪、知识沉淀、开源生态观察和复现实验闭环时使用。
 
 您不仅可以在编辑器中调用，也可以将 `SKILL.md` 的内容发给 Web 端的 Claude, Gemini, Qwen 等大模型进行日常论文研读。

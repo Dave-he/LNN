@@ -1,6 +1,6 @@
 ---
 title: LNN 训练方向：机器人控制与模仿学习可行报告
-date: 2026-05-26
+date: 2026-05-28
 tags: [LNN, robotics, imitation-learning, NCP, control]
 ---
 
@@ -9,6 +9,8 @@ tags: [LNN, robotics, imitation-learning, NCP, control]
 ## 1. 方向定位
 
 机器人控制是 LNN 的经典应用方向。优势在于低参数、连续时间、可解释和对环境扰动的潜在鲁棒性。典型任务包括自动驾驶 lane keeping、无人机导航、机械臂操作、移动机器人避障和 PointMaze 导航。
+
+检索证据：本方向纳入/暂缓记录见 [[docs/LNN_训练论文检索矩阵_2026-05-28]]。
 
 ## 2. 代表论文与资料
 
@@ -163,12 +165,13 @@ gradient_clip: 1.0
 短期：
 
 - 用 `scripts/experiment_autoncp.py` 跑通 AutoNCP 与 Dense-CfC 对比。
-- 新增 `lnn/data/robotics.py`，支持 RoboMimic HDF5 的 `obs/actions/dones`。
-- 写 `scripts/experiment_imitation_lnn.py`，先支持低维状态行为克隆。
+- 已新增 `lnn/data/robotics.py` 的合成低维模仿学习数据集，用于验证多峰动作分布。
+- 已新增 `scripts/experiment_imitation_lnn.py`，支持 `CfC/LTC/AutoNCP + MSE/MDN action head` 的本机 smoke 训练。
+- 下一步扩展 `lnn/data/robotics.py`，支持 RoboMimic HDF5 的 `obs/actions/dones`。
 
 中期：
 
-- 加 MDN action head。
+- 将 MDN action head 接入真实 Push-T / RoboMimic / PointMaze 数据。
 - 加闭环评估 wrapper。
 - 在 Jetson 上测试低维控制模型延迟。
 

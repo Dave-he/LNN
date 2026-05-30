@@ -1,6 +1,6 @@
 ---
 title: LNN 训练方向：长序列与视频理解可行报告
-date: 2026-05-26
+date: 2026-05-28
 tags: [LNN, Liquid-S4, video, long-sequence, temporal-action-detection]
 ---
 
@@ -9,6 +9,8 @@ tags: [LNN, Liquid-S4, video, long-sequence, temporal-action-detection]
 ## 1. 方向定位
 
 长序列与视频理解要求模型处理数千到数万步依赖。直接逐步求解 LTC 不适合该场景，优先路线是 Liquid-S4 或把 liquid 动态蒸馏为可并行 temporal operator。
+
+检索证据：本方向纳入/暂缓记录见 [[docs/LNN_训练论文检索矩阵_2026-05-28]]。
 
 ## 2. 代表论文与数据源
 
@@ -73,8 +75,8 @@ input sequence
 
 工程状态：
 
-- 本项目尚未实现 Liquid-S4。
-- 可先把该方向作为外部 repo 复现，再决定是否迁入 `lnn/core/`。
+- 本项目已新增 `lnn/core/long_sequence.py` 的轻量 Liquid-S4-style block，用于本机 smoke run。
+- 该实现不是官方完整 Liquid-S4；正式复现仍应对接外部 repo 或论文实现。
 
 ### 4.2 LiquidTAD 路线
 
@@ -162,14 +164,15 @@ mixed_precision: 可开启
 短期：
 
 - 不建议从零实现完整 Liquid-S4。
-- 先新增一个 `scripts/experiment_long_sequence.py`，用现有 CfC/GRU/LSTM 在长合成序列上做 sanity check。
+- 已新增 `scripts/experiment_long_sequence.py`，支持长序列分类和 LiquidTAD-style frame-level smoke test。
+- 已新增 `SyntheticLongSequenceDataset`，用于验证 chunk/mask、frame label 和 boundary target 的数据格式。
 - 每日追踪中把 LiquidTAD、Liquid-S4 相关论文标为中期复现。
 
 中期：
 
 - 克隆或子模块化 Liquid-S4 官方实现。
 - 加入 LRA 小任务或预提取视频特征数据。
-- 复现一个小型 LiquidTAD block，先验证并行 relaxation 的速度。
+- 将当前轻量 LiquidTAD-style head 扩展到真实预提取视频特征，并补 mAP/IoU 指标。
 
 ## 8. 可行结论
 
