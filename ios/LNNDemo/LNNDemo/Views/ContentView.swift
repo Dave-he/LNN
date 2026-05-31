@@ -151,7 +151,7 @@ struct ContentView: View {
 struct DataButton: View {
     let title: String
     let color: Color
-    let action: () -&gt; Void
+    let action: () -> Void
     
     var body: some View {
         Button(action: action) {
@@ -223,3 +223,4 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
     }
 }
+

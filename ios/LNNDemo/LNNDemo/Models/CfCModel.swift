@@ -49,12 +49,9 @@ class CfCModel {
         self.outputBias = outputBias
     }
     
-    static func createPreTrained() -&gt; CfCModel {
-        // Default pre-trained weights for sine wave prediction
+    static func createPreTrained() -> CfCModel {
         let hiddenSize = 8
         
-        // These are placeholder weights - in a real app, you would load your trained weights
-        // For now, we'll use a simple working set of weights
         let fGateWeight = [[Float]](repeating: [Float](repeating: 0.1, count: hiddenSize), count: 1 + hiddenSize)
         let fGateBias = [Float](repeating: 0.0, count: hiddenSize)
         
@@ -83,20 +80,20 @@ class CfCModel {
         )
     }
     
-    private func sigmoid(_ x: Float) -&gt; Float {
+    private func sigmoid(_ x: Float) -> Float {
         return 1.0 / (1.0 + exp(-x))
     }
     
-    private func tanh(_ x: Float) -&gt; Float {
+    private func tanh(_ x: Float) -> Float {
         return Foundation.tanh(x)
     }
     
-    private func linear(_ x: [Float], weight: [[Float]], bias: [Float]) -&gt; [Float] {
+    private func linear(_ x: [Float], weight: [[Float]], bias: [Float]) -> [Float] {
         var result = [Float](repeating: 0.0, count: bias.count)
         
-        for i in 0..&lt;bias.count {
+        for i in 0..<bias.count {
             var sum: Float = 0.0
-            for j in 0..&lt;x.count {
+            for j in 0..<x.count {
                 sum += x[j] * weight[j][i]
             }
             result[i] = sum + bias[i]
@@ -105,15 +102,15 @@ class CfCModel {
         return result
     }
     
-    private func applySigmoid(_ x: [Float]) -&gt; [Float] {
+    private func applySigmoid(_ x: [Float]) -> [Float] {
         return x.map { sigmoid($0) }
     }
     
-    private func applyTanh(_ x: [Float]) -&gt; [Float] {
+    private func applyTanh(_ x: [Float]) -> [Float] {
         return x.map { tanh($0) }
     }
     
-    func forward(_ x: [Float], hiddenState: [Float]) -&gt; (output: Float, newHidden: [Float]) {
+    func forward(_ x: [Float], hiddenState: [Float]) -> (output: Float, newHidden: [Float]) {
         let combinedInput = x + hiddenState
         
         let f = applySigmoid(linear(combinedInput, weight: fGateWeight, bias: fGateBias))
@@ -121,7 +118,7 @@ class CfCModel {
         let hOut = applyTanh(linear(combinedInput, weight: hBranchWeight, bias: hBranchBias))
         
         var newHidden = [Float](repeating: 0.0, count: hiddenSize)
-        for i in 0..&lt;hiddenSize {
+        for i in 0..<hiddenSize {
             let decay = sigmoid(-f[i] * timeScale[i] * 1.0)
             newHidden[i] = decay * g[i] + (1.0 - decay) * hOut[i]
         }
@@ -131,7 +128,7 @@ class CfCModel {
         return (output, newHidden)
     }
     
-    func predictSequence(_ sequence: [[Float]]) -&gt; [Float] {
+    func predictSequence(_ sequence: [[Float]]) -> [Float] {
         var hiddenState = [Float](repeating: 0.0, count: hiddenSize)
         var outputs: [Float] = []
         
@@ -145,7 +142,6 @@ class CfCModel {
     }
 }
 
-// MARK: - Simple Sine Wave Predictor
 class SimpleSinePredictor {
     private var history: [Float] = []
     private let historyLength: Int = 16
@@ -154,7 +150,7 @@ class SimpleSinePredictor {
         history = [Float](repeating: 0.0, count: historyLength)
     }
     
-    func updateAndPredict(_ newValue: Float) -&gt; Float {
+    func updateAndPredict(_ newValue: Float) -> Float {
         history.removeFirst()
         history.append(newValue)
         
@@ -168,3 +164,4 @@ class SimpleSinePredictor {
         history = [Float](repeating: 0.0, count: historyLength)
     }
 }
+

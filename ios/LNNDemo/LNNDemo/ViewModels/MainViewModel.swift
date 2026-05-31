@@ -31,7 +31,7 @@ class MainViewModel: ObservableObject {
         currentPrediction = 0.0
         predictor.reset()
         
-        for i in 0..&lt;20 {
+        for i in 0..<20 {
             let t = Double(i) * 0.1
             let value = sin(2.0 * Double.pi * 0.1 * t)
             timeSeriesData.append((t, value))
@@ -66,7 +66,7 @@ class MainViewModel: ObservableObject {
         timeSeriesData.append((timeStep, trueValue))
         predictions.append((timeStep, currentPrediction))
         
-        if timeSeriesData.count &gt; maxDataPoints {
+        if timeSeriesData.count > maxDataPoints {
             timeSeriesData.removeFirst()
             predictions.removeFirst()
         }
@@ -78,7 +78,7 @@ class MainViewModel: ObservableObject {
         timeSeriesData.removeAll()
         
         let count = 100
-        for i in 0..&lt;count {
+        for i in 0..<count {
             let t = Double(i) * 0.1
             let value: Double
             
@@ -90,7 +90,7 @@ class MainViewModel: ObservableObject {
             case .noisySine:
                 value = sin(2.0 * Double.pi * 0.1 * t) + Double.random(in: -0.1...0.1)
             case .step:
-                value = t &lt; 5.0 ? 0.0 : 1.0
+                value = t < 5.0 ? 0.0 : 1.0
             }
             
             timeSeriesData.append((t, value))
@@ -105,3 +105,4 @@ enum DataGeneratorType {
     case noisySine
     case step
 }
+
