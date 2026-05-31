@@ -92,7 +92,7 @@ date: 2026-05-25
 <!-- daily-lnn-index:start -->
 ## 4. 自动化每日追踪索引
 
-- **2026-05-31**：[[docs/daily/2026-05-31_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 20 个。
+- **2026-05-31**：[[docs/daily/2026-05-31_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 22 个。
 - **2026-05-30**：[[docs/daily/2026-05-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 21 个。
 - **2026-05-26**：[[docs/daily/2026-05-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 24 个。
 - **2026-05-27**：[[docs/daily/2026-05-27_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 44 个，模型 24 个。
