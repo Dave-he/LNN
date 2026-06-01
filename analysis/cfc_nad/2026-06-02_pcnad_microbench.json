@@ -1,0 +1,31 @@
+{
+  "config": {
+    "batch": 32,
+    "seq": 64,
+    "input_size": 4,
+    "hidden": 16,
+    "output": 1,
+    "num_layers": 1,
+    "repeat": 80,
+    "seed": 42
+  },
+  "results_ms": {
+    "cfc": {
+      "mean": 6.457132816314697,
+      "std": 0.14105330407619476
+    },
+    "cfc_nad_parallel": {
+      "mean": 10.084859848022461,
+      "std": 1.3140639066696167
+    },
+    "cfc_nad_streaming": {
+      "mean": 13.263223648071289,
+      "std": 1.5571330785751343
+    }
+  },
+  "summary": {
+    "parallel_overhead_vs_cfc_pct": 56.181700685200234,
+    "streaming_overhead_vs_cfc_pct": 105.40422545685,
+    "parallel_speedup_vs_streaming_pct": 23.96373524554884
+  }
+}

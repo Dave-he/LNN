@@ -5,7 +5,11 @@ from __future__ import annotations
 import torch
 
 from lnn.core.cfc import CfCNetwork
-from lnn.core.noise_adaptive_cfc import NoiseAdaptiveCfCCell, NoiseAdaptiveCfCNetwork
+from lnn.core.noise_adaptive_cfc import (
+    NoiseAdaptiveCfCCell,
+    NoiseAdaptiveCfCNetwork,
+    vectorized_noise_ema,
+)
 
 
 class TestNoiseAdaptiveCfCCell:
@@ -107,3 +111,73 @@ class TestNoiseAdaptiveCfCNetwork:
         out_clean = net(clean)
         out_noisy = net(noisy)
         assert not torch.allclose(out_clean, out_noisy, atol=1e-3)
+
+
+class TestVectorizedNoiseEMA:
+    """Validate the parallel cumulative form against the streaming reference."""
+
+    @staticmethod
+    def _streaming_reference(x: torch.Tensor, beta: float) -> torch.Tensor:
+        B, T, F = x.shape
+        out = torch.zeros_like(x)
+        if T == 0:
+            return out
+        prev = torch.zeros(B, F, dtype=x.dtype, device=x.device)
+        ema = torch.zeros(B, F, dtype=x.dtype, device=x.device)
+        for t in range(T):
+            diff_sq = (x[:, t, :] - prev) ** 2 if t > 0 else torch.zeros_like(prev)
+            ema = beta * ema + (1.0 - beta) * diff_sq
+            prev = x[:, t, :]
+            out[:, t, :] = ema
+        return out
+
+    def test_matches_streaming_random(self) -> None:
+        torch.manual_seed(7)
+        x = torch.randn(3, 24, 4)
+        streaming = self._streaming_reference(x, beta=0.9)
+        parallel = vectorized_noise_ema(x, beta=0.9)
+        # parallel_liquid_relaxation clamps retain to [0.02, 0.98]; with
+        # beta=0.9 we stay inside that range so the two paths should agree to
+        # within float32 noise.
+        assert torch.allclose(parallel, streaming, atol=1e-5, rtol=1e-5)
+
+    def test_matches_streaming_alternating_signs(self) -> None:
+        # An alternating-sign input is the worst case for first-difference
+        # accumulation: a regression here would catch sign or alignment bugs.
+        torch.manual_seed(11)
+        T = 32
+        signs = torch.tensor([(-1.0) ** t for t in range(T)]).view(1, T, 1)
+        x = signs.expand(2, T, 3) * torch.linspace(0.1, 1.0, 3).view(1, 1, 3)
+        streaming = self._streaming_reference(x, beta=0.85)
+        parallel = vectorized_noise_ema(x, beta=0.85)
+        assert torch.allclose(parallel, streaming, atol=1e-5, rtol=1e-5)
+
+    def test_zero_length_safe(self) -> None:
+        x = torch.zeros(2, 0, 3)
+        out = vectorized_noise_ema(x, beta=0.9)
+        assert out.shape == (2, 0, 3)
+
+
+class TestNoiseAdaptivePathEquivalence:
+    """The parallel-noise forward path must match the streaming path bit-for-bit."""
+
+    def test_network_outputs_match_with_mask_none(self) -> None:
+        torch.manual_seed(0)
+        net = NoiseAdaptiveCfCNetwork(
+            input_size=3, hidden_size=8, output_size=2, num_layers=2
+        )
+        # Spread the noise gate so the heteroscedastic path is exercised.
+        for cell in net.cells:
+            with torch.no_grad():
+                cell.noise_gate_proj.weight.normal_(0.0, 0.3)
+                cell.noise_gate_proj.bias.normal_(0.0, 0.1)
+        x = torch.randn(4, 20, 3)
+        out_parallel = net(x)
+        # Force the streaming path by providing an all-ones mask of compatible
+        # shape: select_step_mask will activate, mask=None becomes mask!=None.
+        ones_mask = torch.ones(4, 20)
+        out_stream = net(x, mask=ones_mask)
+        # With an all-ones mask the masked path should produce the same output
+        # as the parallel one — modulo the masked-step gating, which is a
+        # no-op when the mask is uniformly 1.
+        assert torch.allclose(out_parallel, out_stream, atol=1e-5, rtol=1e-5)

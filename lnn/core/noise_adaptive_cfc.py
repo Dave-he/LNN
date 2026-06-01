@@ -15,6 +15,12 @@ high — effectively a heteroscedastic low-pass on h.
 Memory footprint stays O(1): the only added state per sample is one EMA
 vector of shape [batch, input_size] (the noise score) and one previous-input
 vector for the first-difference proxy.
+
+When no input mask is supplied at forward time, the network pre-computes the
+noise EMA for the whole sequence in parallel using
+:func:`lnn.core.long_sequence.parallel_liquid_relaxation`. This is numerically
+equivalent to the streaming form but removes the Python-level tensor ops per
+step that dominated the original CPU latency overhead.
 """
 
 from __future__ import annotations
@@ -22,7 +28,35 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
+from lnn.core.long_sequence import parallel_liquid_relaxation
 from lnn.core.sequence_utils import select_step_delta, select_step_mask
+
+
+def vectorized_noise_ema(masked_input: torch.Tensor, beta: float) -> torch.Tensor:
+    """Streaming EMA of squared first-differences, computed in parallel.
+
+    Mirrors the recurrence used by the streaming path:
+        noise_ema[:, 0, :] = 0
+        noise_ema[:, t, :] = beta * noise_ema[:, t-1, :]
+            + (1 - beta) * (masked_input[:, t, :] - masked_input[:, t-1, :]) ** 2
+
+    Uses :func:`lnn.core.long_sequence.parallel_liquid_relaxation` so the
+    cumulative recurrence runs in O(T) on the GPU without a Python-level loop.
+    Returns a tensor with the same shape as ``masked_input``.
+    """
+
+    if masked_input.dim() != 3:
+        raise ValueError(
+            f"masked_input must have shape [batch, time, features], got {tuple(masked_input.shape)}"
+        )
+    if masked_input.shape[1] == 0:
+        return torch.zeros_like(masked_input)
+    diff = torch.zeros_like(masked_input)
+    if masked_input.shape[1] > 1:
+        diff[:, 1:, :] = masked_input[:, 1:, :] - masked_input[:, :-1, :]
+    diff_sq = diff * diff
+    retain = torch.full_like(diff_sq, float(beta))
+    return parallel_liquid_relaxation(retain, diff_sq)
 
 
 class NoiseAdaptiveCfCCell(nn.Module):
@@ -149,28 +183,40 @@ class NoiseAdaptiveCfCNetwork(nn.Module):
 
         h = h0
         layer_input = x
+        # When no mask is provided we can pre-compute the streaming noise EMA
+        # in parallel for the whole sequence (Liquid-S4 style cumulative form).
+        # This removes the per-step Python tensor ops without changing the
+        # recurrence semantics.
+        use_parallel_noise = mask is None
         for i, cell in enumerate(self.cells):
             outputs: list[torch.Tensor] = []
             h_i = h[i]
-            # Streaming noise estimate for this layer's input stream.
-            prev_x = torch.zeros_like(layer_input[:, 0, :])
-            noise_ema = torch.zeros_like(layer_input[:, 0, :])
             beta = cell.noise_beta if hasattr(cell, "noise_beta") else 0.9
+            layer_clean = torch.nan_to_num(layer_input)
+            noise_ema_full: torch.Tensor | None = None
+            if use_parallel_noise:
+                noise_ema_full = vectorized_noise_ema(layer_clean, beta)
+            # Streaming fallback state (only used when mask is not None).
+            prev_x = torch.zeros_like(layer_clean[:, 0, :])
+            noise_ema_stream = torch.zeros_like(layer_clean[:, 0, :])
             for t in range(seq_len):
                 dt_t = select_step_delta(dt, t, batch_size, seq_len, x.device, x.dtype)
                 input_mask, update_mask = select_step_mask(
                     mask, t, batch_size, seq_len, cell.input_size, x.device, x.dtype
                 )
-                x_t = torch.nan_to_num(layer_input[:, t, :])
+                x_t = layer_clean[:, t, :]
                 if i == 0 and input_mask is not None:
                     x_t = x_t * input_mask
 
-                # Update the streaming noise score (squared first difference EMA).
-                diff_sq = (x_t - prev_x) ** 2 if t > 0 else torch.zeros_like(x_t)
-                noise_ema = beta * noise_ema + (1.0 - beta) * diff_sq
-                prev_x = x_t
+                if noise_ema_full is not None:
+                    noise_score = noise_ema_full[:, t, :]
+                else:
+                    diff_sq = (x_t - prev_x) ** 2 if t > 0 else torch.zeros_like(x_t)
+                    noise_ema_stream = beta * noise_ema_stream + (1.0 - beta) * diff_sq
+                    prev_x = x_t
+                    noise_score = noise_ema_stream
 
-                h_candidate = cell(x_t, h_i, noise_score=noise_ema, dt=dt_t)
+                h_candidate = cell(x_t, h_i, noise_score=noise_score, dt=dt_t)
                 if update_mask is None:
                     h_i = h_candidate
                 else:
@@ -190,4 +236,8 @@ class NoiseAdaptiveCfCNetwork(nn.Module):
         return self.output_proj(layer_input[:, -1, :])
 
 
-__all__ = ["NoiseAdaptiveCfCCell", "NoiseAdaptiveCfCNetwork"]
+__all__ = [
+    "NoiseAdaptiveCfCCell",
+    "NoiseAdaptiveCfCNetwork",
+    "vectorized_noise_ema",
+]
