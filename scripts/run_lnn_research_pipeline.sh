@@ -31,6 +31,15 @@ DRY_RUN="${DRY_RUN:-0}"                # 1 = 只 print 不真跑
 LOG_DIR="$ROOT_DIR/logs/pipeline"
 LOG_FILE="$LOG_DIR/${RUN_DATE}_pipeline.log"
 
+# SSH key 推送: 显式指定私钥 + IdentitiesOnly, 避免 cron / 非交互 shell 找不到 key
+SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
+if [[ -r "$SSH_KEY" ]]; then
+  export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+  log "ssh key: $SSH_KEY"
+else
+  log "[warn] SSH key 不可读 ($SSH_KEY), git push 可能失败"
+fi
+
 mkdir -p "$LOG_DIR"
 
 log() {
