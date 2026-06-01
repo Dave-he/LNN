@@ -1,0 +1,69 @@
+{
+  "run_date": "2026-06-01",
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.14.4",
+    "llama_cli_on_path": null,
+    "torch": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda": "13.0"
+  },
+  "gguf": {
+    "model_path": "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+    "llama_cli": "/mnt/ssd/codespace/LNN/projects/llama.cpp/build/bin/llama-cli",
+    "expected_size_bytes": 695751488,
+    "status": "ok",
+    "size_bytes": 695751488,
+    "sha256": "2ea801949d760cdf1a2cc04a54262c22c3c0c54f0769d57760c9adeb0e59233f",
+    "llama_cli_version": "version: 1 (a511424)\nbuilt with GNU 11.4.0 for Linux aarch64",
+    "size_matches_expected": true,
+    "run": {
+      "command": [
+        "/mnt/ssd/codespace/LNN/projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+        "-p",
+        "Write one short sentence about liquid neural networks.",
+        "-n",
+        "24",
+        "-c",
+        "512",
+        "-t",
+        "4",
+        "--temp",
+        "0.1",
+        "--top-k",
+        "40",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io"
+      ],
+      "returncode": 0,
+      "seconds": 3.376,
+      "stdout": "\nLoading model... \n\n\n▄▄ ▄▄\n██ ██\n██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄\n██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██\n██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀\n                                    ██    ██\n                                    ▀▀    ▀▀\n\nbuild      : b1-a511424\nmodel      : LFM2.5-1.2B-Instruct-Q4_0.gguf\nmodalities : text\n\navailable commands:\n  /exit or Ctrl+C     stop or exit\n  /regen              regenerate the last response\n  /clear              clear the chat history\n  /read <file>        add a text file\n  /glob <pattern>     add text files using globbing pattern\n\n\n> Write one short sentence about liquid neural networks.\n\nLiquid neural networks are adaptive AI models that dynamically adjust their structure in response to data.\n\n[ Prompt: 58.8 t/s | Generation: 19.0 t/s ]\n\nExiting...\n",
+      "stderr": ""
+    },
+    "response": "Liquid neural networks are adaptive AI models that dynamically adjust their structure in response to data.",
+    "timing": {
+      "prompt_tps": 58.8,
+      "generation_tps": 19.0
+    }
+  },
+  "dpo": {
+    "model": "/mnt/ssd/codespace/LNN/models/lfm25-dpo-s1",
+    "model_path": "/mnt/ssd/codespace/LNN/models/lfm25-dpo-s1",
+    "model_safetensors_size_bytes": 2340697936,
+    "model_safetensors_sha256": "22a288f17e8ced897bbd2bd35ceea5528fc0c0b4c2805e780afde5675c927fe6",
+    "status": "ok",
+    "response": "Liquid neural networks are a type of artificial neural network that uses a continuous, flowing representation of data, allowing for",
+    "load_seconds": 1.863,
+    "generation_seconds": 13.716,
+    "total_seconds": 16.649,
+    "input_tokens": 19,
+    "output_tokens": 24
+  }
+}

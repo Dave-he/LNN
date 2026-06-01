@@ -1,0 +1,427 @@
+{
+  "run_date": "2026-06-01",
+  "image": "ghcr.io/nvidia-ai-iot/llama_cpp:gemma4-jetson-orin",
+  "workspace": "/mnt/ssd/codespace/LNN",
+  "host": {
+    "jetson_model": {
+      "command": [
+        "bash",
+        "-lc",
+        "tr -d '\\0' < /proc/device-tree/model 2>/dev/null || true"
+      ],
+      "returncode": 0,
+      "seconds": 0.087,
+      "stdout": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
+      "stderr": ""
+    },
+    "l4t_release": {
+      "command": [
+        "bash",
+        "-lc",
+        "head -n 1 /etc/nv_tegra_release 2>/dev/null || true"
+      ],
+      "returncode": 0,
+      "seconds": 0.01,
+      "stdout": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n",
+      "stderr": ""
+    },
+    "cuda_version": {
+      "command": [
+        "bash",
+        "-lc",
+        "cat /usr/local/cuda/version.json 2>/dev/null || nvcc --version 2>/dev/null || true"
+      ],
+      "returncode": 0,
+      "seconds": 0.018,
+      "stdout": "{\n   \"cuda\" : {\n      \"name\" : \"CUDA SDK\",\n      \"version\" : \"12.6.11\"\n   },\n   \"cuda_cccl\" : {\n      \"name\" : \"CUDA C++ Core Compute Libraries\",\n      \"version\" : \"12.6.37\"\n   },\n   \"cuda_compat\" : {\n      \"name\" : \"CUDA Specific Libraries\",\n      \"version\" : \"12.6.36890662\"\n   },\n   \"cuda_cudart\" : {\n      \"name\" : \"CUDA Runtime (cudart)\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_cuobjdump\" : {\n      \"name\" : \"cuobjdump\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_cupti\" : {\n      \"name\" : \"CUPTI\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_cuxxfilt\" : {\n      \"name\" : \"CUDA cu++ filt\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_gdb\" : {\n      \"name\" : \"CUDA GDB\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_nvcc\" : {\n      \"name\" : \"CUDA NVCC\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_nvdisasm\" : {\n      \"name\" : \"CUDA nvdisasm\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_nvml_dev\" : {\n      \"name\" : \"CUDA NVML Headers\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_nvprune\" : {\n      \"name\" : \"CUDA nvprune\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_nvrtc\" : {\n      \"name\" : \"CUDA NVRTC\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_nvtx\" : {\n      \"name\" : \"CUDA NVTX\",\n      \"version\" : \"12.6.68\"\n   },\n   \"cuda_sanitizer_api\" : {\n      \"name\" : \"CUDA Compute Sanitizer API\",\n      \"version\" : \"12.6.68\"\n   },\n   \"libcublas\" : {\n      \"name\" : \"CUDA cuBLAS\",\n      \"version\" : \"12.6.1.4\"\n   },\n   \"libcudla\" : {\n      \"name\" : \"CUDA cuDLA\",\n      \"version\" : \"12.6.68\"\n   },\n   \"libcufft\" : {\n      \"name\" : \"CUDA cuFFT\",\n      \"version\" : \"11.2.6.59\"\n   },\n   \"libcufile\" : {\n      \"name\" : \"GPUDirect Storage (cufile)\",\n      \"version\" : \"1.11.1.6\"\n   },\n   \"libcurand\" : {\n      \"name\" : \"CUDA cuRAND\",\n      \"version\" : \"10.3.7.68\"\n   },\n   \"libcusolver\" : {\n      \"name\" : \"CUDA cuSOLVER\",\n      \"version\" : \"11.6.4.69\"\n   },\n   \"libcusparse\" : {\n      \"name\" : \"CUDA cuSPARSE\",\n      \"version\" : \"12.5.3.3\"\n   },\n   \"libnpp\" : {\n      \"name\" : \"CUDA NPP\",\n      \"version\" : \"12.3.1.54\"\n   },\n   \"libnvfatbin\" : {\n      \"name\" : \"Fatbin interaction library\",\n      \"version\" : \"12.6.68\"\n   },\n   \"libnvjitlink\" : {\n      \"name\" : \"JIT Linker Library\",\n      \"version\" : \"12.6.68\"\n   },\n   \"libnvjpeg\" : {\n      \"name\" : \"CUDA nvJPEG\",\n      \"version\" : \"12.3.3.54\"\n   },\n   \"nsight_compute\" : {\n      \"name\" : \"Nsight Compute\",\n      \"version\" : \"2024.3.1.2\"\n   },\n   \"nvidia_fs\" : {\n      \"name\" : \"NVIDIA file-system\",\n      \"version\" : \"2.22.3\"\n   }\n}\n",
+      "stderr": ""
+    },
+    "nvidia_smi": {
+      "command": [
+        "bash",
+        "-lc",
+        "nvidia-smi 2>/dev/null || true"
+      ],
+      "returncode": 0,
+      "seconds": 0.037,
+      "stdout": "Mon Jun  1 17:15:30 2026       \n+---------------------------------------------------------------------------------------+\n| NVIDIA-SMI 540.4.0                Driver Version: 540.4.0      CUDA Version: 12.6     |\n|-----------------------------------------+----------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |\n|                                         |                      |               MIG M. |\n|=========================================+======================+======================|\n|   0  Orin (nvgpu)                  N/A  | N/A              N/A |                  N/A |\n| N/A   N/A  N/A               N/A /  N/A | Not Supported        |     N/A          N/A |\n|                                         |                      |                  N/A |\n+-----------------------------------------+----------------------+----------------------+\n                                                                                         \n+---------------------------------------------------------------------------------------+\n| Processes:                                                                            |\n|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |\n|        ID   ID                                                             Usage      |\n|=======================================================================================|\n|  No running processes found                                                           |\n+---------------------------------------------------------------------------------------+\n",
+      "stderr": ""
+    },
+    "memory": {
+      "command": [
+        "free",
+        "-h"
+      ],
+      "returncode": 0,
+      "seconds": 0.006,
+      "stdout": "               total        used        free      shared  buff/cache   available\nMem:           7.4Gi       4.0Gi       218Mi        59Mi       3.2Gi       3.1Gi\nSwap:           19Gi       4.1Gi        15Gi\n",
+      "stderr": ""
+    }
+  },
+  "container_probe": {
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--runtime",
+      "nvidia",
+      "--network",
+      "host",
+      "--ipc",
+      "host",
+      "-e",
+      "CUDA_MODULE_LOADING=LAZY",
+      "ghcr.io/nvidia-ai-iot/llama_cpp:gemma4-jetson-orin",
+      "bash",
+      "-lc",
+      "bash -lc 'nvidia-smi || true; echo '\"'\"'--- llama-cli ---'\"'\"'; llama-cli --version'"
+    ],
+    "returncode": 0,
+    "seconds": 1.337,
+    "stdout": "Mon Jun  1 09:15:31 2026       \n+---------------------------------------------------------------------------------------+\n| NVIDIA-SMI 540.4.0                Driver Version: 540.4.0      CUDA Version: 12.6     |\n|-----------------------------------------+----------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |\n|                                         |                      |               MIG M. |\n|=========================================+======================+======================|\n|   0  Orin (nvgpu)                  N/A  | N/A              N/A |                  N/A |\n| N/A   N/A  N/A               N/A /  N/A | Not Supported        |     N/A          N/A |\n|                                         |                      |                  N/A |\n+-----------------------------------------+----------------------+----------------------+\n                                                                                         \n+---------------------------------------------------------------------------------------+\n| Processes:                                                                            |\n|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |\n|        ID   ID                                                             Usage      |\n|=======================================================================================|\n|  No running processes found                                                           |\n+---------------------------------------------------------------------------------------+\n--- llama-cli ---\n",
+    "stderr": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):\n  Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nversion: 8638 (5803c8d11)\nbuilt with GNU 11.4.0 for Linux aarch64\n"
+  },
+  "cases": [
+    {
+      "name": "official_instruct_q4_0",
+      "model": "models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+      "model_exists": true,
+      "candidates": [
+        {
+          "gpu_layers": 4,
+          "ctx_size": 256,
+          "max_new_tokens": 8
+        },
+        {
+          "gpu_layers": 3,
+          "ctx_size": 256,
+          "max_new_tokens": 8
+        },
+        {
+          "gpu_layers": 2,
+          "ctx_size": 256,
+          "max_new_tokens": 8
+        },
+        {
+          "gpu_layers": 1,
+          "ctx_size": 256,
+          "max_new_tokens": 8
+        },
+        {
+          "gpu_layers": 4,
+          "ctx_size": 128,
+          "max_new_tokens": 8
+        },
+        {
+          "gpu_layers": 3,
+          "ctx_size": 128,
+          "max_new_tokens": 8
+        },
+        {
+          "gpu_layers": 2,
+          "ctx_size": 128,
+          "max_new_tokens": 8
+        },
+        {
+          "gpu_layers": 1,
+          "ctx_size": 128,
+          "max_new_tokens": 8
+        }
+      ],
+      "status": "ok",
+      "selected": {
+        "gpu_layers": 1,
+        "ctx_size": 256,
+        "max_new_tokens": 8
+      },
+      "attempts": [
+        {
+          "status": "cuda_oom",
+          "gpu_layers": 4,
+          "ctx_size": 256,
+          "max_new_tokens": 8,
+          "run": {
+            "command": [
+              "docker",
+              "run",
+              "--rm",
+              "--runtime",
+              "nvidia",
+              "--network",
+              "host",
+              "--ipc",
+              "host",
+              "-e",
+              "CUDA_MODULE_LOADING=LAZY",
+              "-v",
+              "/mnt/ssd/codespace/LNN:/workspace/LNN",
+              "-w",
+              "/workspace/LNN",
+              "ghcr.io/nvidia-ai-iot/llama_cpp:gemma4-jetson-orin",
+              "bash",
+              "-lc",
+              "timeout 90 llama-cli -m models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf -p 'Say CUDA works.' -n 8 -c 256 -t 4 --temp 0.1 --top-k 40 --repeat-penalty 1.05 --no-display-prompt --no-warmup --single-turn --simple-io --n-gpu-layers 4"
+            ],
+            "returncode": 1,
+            "seconds": 2.223,
+            "stdout": "\nLoading model... \nFailed to load the model\n",
+            "stderr": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):\n  Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nggml_backend_cuda_buffer_type_alloc_buffer: allocating 209.73 MiB on device 0: cudaMalloc failed: out of memory\nalloc_tensor_range: failed to allocate CUDA0 buffer of size 219914752\nllama_model_load: error loading model: unable to allocate CUDA0 buffer\nllama_model_load_from_file_impl: failed to load model\ncommon_init_from_params: failed to load model 'models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf'\nsrv    load_model: failed to load model, 'models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf'\n"
+          },
+          "cuda_detected": true,
+          "cuda_line": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):",
+          "cuda_memory_line": "",
+          "response": "Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nalloc_tensor_range: failed to allocate CUDA0 buffer of size 219914752",
+          "timing": {}
+        },
+        {
+          "status": "cuda_oom",
+          "gpu_layers": 3,
+          "ctx_size": 256,
+          "max_new_tokens": 8,
+          "run": {
+            "command": [
+              "docker",
+              "run",
+              "--rm",
+              "--runtime",
+              "nvidia",
+              "--network",
+              "host",
+              "--ipc",
+              "host",
+              "-e",
+              "CUDA_MODULE_LOADING=LAZY",
+              "-v",
+              "/mnt/ssd/codespace/LNN:/workspace/LNN",
+              "-w",
+              "/workspace/LNN",
+              "ghcr.io/nvidia-ai-iot/llama_cpp:gemma4-jetson-orin",
+              "bash",
+              "-lc",
+              "timeout 90 llama-cli -m models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf -p 'Say CUDA works.' -n 8 -c 256 -t 4 --temp 0.1 --top-k 40 --repeat-penalty 1.05 --no-display-prompt --no-warmup --single-turn --simple-io --n-gpu-layers 3"
+            ],
+            "returncode": 1,
+            "seconds": 2.113,
+            "stdout": "\nLoading model... \nFailed to load the model\n",
+            "stderr": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):\n  Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nggml_backend_cuda_buffer_type_alloc_buffer: allocating 173.69 MiB on device 0: cudaMalloc failed: out of memory\nalloc_tensor_range: failed to allocate CUDA0 buffer of size 182125056\nllama_model_load: error loading model: unable to allocate CUDA0 buffer\nllama_model_load_from_file_impl: failed to load model\ncommon_init_from_params: failed to load model 'models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf'\nsrv    load_model: failed to load model, 'models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf'\n"
+          },
+          "cuda_detected": true,
+          "cuda_line": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):",
+          "cuda_memory_line": "",
+          "response": "Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nalloc_tensor_range: failed to allocate CUDA0 buffer of size 182125056",
+          "timing": {}
+        },
+        {
+          "status": "cuda_oom",
+          "gpu_layers": 2,
+          "ctx_size": 256,
+          "max_new_tokens": 8,
+          "run": {
+            "command": [
+              "docker",
+              "run",
+              "--rm",
+              "--runtime",
+              "nvidia",
+              "--network",
+              "host",
+              "--ipc",
+              "host",
+              "-e",
+              "CUDA_MODULE_LOADING=LAZY",
+              "-v",
+              "/mnt/ssd/codespace/LNN:/workspace/LNN",
+              "-w",
+              "/workspace/LNN",
+              "ghcr.io/nvidia-ai-iot/llama_cpp:gemma4-jetson-orin",
+              "bash",
+              "-lc",
+              "timeout 90 llama-cli -m models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf -p 'Say CUDA works.' -n 8 -c 256 -t 4 --temp 0.1 --top-k 40 --repeat-penalty 1.05 --no-display-prompt --no-warmup --single-turn --simple-io --n-gpu-layers 2"
+            ],
+            "returncode": 139,
+            "seconds": 1.904,
+            "stdout": "",
+            "stderr": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):\n  Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nggml_backend_cuda_buffer_type_alloc_buffer: allocating 98.00 MiB on device 0: cudaMalloc failed: out of memory\nggml_gallocr_reserve_n_impl: failed to allocate CUDA0 buffer of size 102760576\ngraph_reserve: failed to allocate compute buffers\nllama_init_from_model: failed to initialize the context: failed to allocate compute pp buffers\ncommon_init_result: failed to create context with model 'models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf'\ncommon_init_from_params: failed to create context with model 'models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf'\ntimeout: the monitored command dumped core\nbash: line 1:    30 Segmentation fault      timeout 90 llama-cli -m models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf -p 'Say CUDA works.' -n 8 -c 256 -t 4 --temp 0.1 --top-k 40 --repeat-penalty 1.05 --no-display-prompt --no-warmup --single-turn --simple-io --n-gpu-layers 2\n"
+          },
+          "cuda_detected": true,
+          "cuda_line": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):",
+          "cuda_memory_line": "",
+          "response": "Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\nNvMapMemAllocInternalTagged: 1075072515 error 12\nNvMapMemHandleAlloc: error 0\ngraph_reserve: failed to allocate compute buffers\ntimeout: the monitored command dumped core\nbash: line 1:    30 Segmentation fault      timeout 90 llama-cli -m models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf -p 'Say CUDA works.' -n 8 -c 256 -t 4 --temp 0.1 --top-k 40 --repeat-penalty 1.05 --no-display-prompt --no-warmup --single-turn --simple-io --n-gpu-layers 2",
+          "timing": {}
+        },
+        {
+          "status": "ok",
+          "gpu_layers": 1,
+          "ctx_size": 256,
+          "max_new_tokens": 8,
+          "run": {
+            "command": [
+              "docker",
+              "run",
+              "--rm",
+              "--runtime",
+              "nvidia",
+              "--network",
+              "host",
+              "--ipc",
+              "host",
+              "-e",
+              "CUDA_MODULE_LOADING=LAZY",
+              "-v",
+              "/mnt/ssd/codespace/LNN:/workspace/LNN",
+              "-w",
+              "/workspace/LNN",
+              "ghcr.io/nvidia-ai-iot/llama_cpp:gemma4-jetson-orin",
+              "bash",
+              "-lc",
+              "timeout 90 llama-cli -m models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf -p 'Say CUDA works.' -n 8 -c 256 -t 4 --temp 0.1 --top-k 40 --repeat-penalty 1.05 --no-display-prompt --no-warmup --single-turn --simple-io --n-gpu-layers 1"
+            ],
+            "returncode": 0,
+            "seconds": 3.124,
+            "stdout": "\nLoading model... \n\n\n▄▄ ▄▄\n██ ██\n██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄\n██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██\n██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀\n                                    ██    ██\n                                    ▀▀    ▀▀\n\nbuild      : b8638-5803c8d11\nmodel      : LFM2.5-1.2B-Instruct-Q4_0.gguf\nmodalities : text\n\navailable commands:\n  /exit or Ctrl+C     stop or exit\n  /regen              regenerate the last response\n  /clear              clear the chat history\n  /read <file>        add a text file\n  /glob <pattern>     add text files using globbing pattern\n\n\n> Say CUDA works.\n\nYes, **CUDA works**\n\n[ Prompt: 23.7 t/s | Generation: 15.6 t/s ]\n\nExiting...\n",
+            "stderr": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):\n  Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nllama_memory_breakdown_print: | memory breakdown [MiB] | total   free    self   model   context   compute    unaccounted |\nllama_memory_breakdown_print: |   - CUDA0 (Orin)       |  7619 = 2912 + ( 177 =   105 +       0 +      72) +        4530 |\nllama_memory_breakdown_print: |   - Host               |                  671 =   661 +       3 +       7                |\n"
+          },
+          "cuda_detected": true,
+          "cuda_line": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):",
+          "cuda_memory_line": "llama_memory_breakdown_print: |   - CUDA0 (Orin)       |  7619 = 2912 + ( 177 =   105 +       0 +      72) +        4530 |",
+          "response": "Yes, **CUDA works**",
+          "timing": {
+            "prompt_tps": 23.7,
+            "generation_tps": 15.6
+          }
+        }
+      ],
+      "run": {
+        "command": [
+          "docker",
+          "run",
+          "--rm",
+          "--runtime",
+          "nvidia",
+          "--network",
+          "host",
+          "--ipc",
+          "host",
+          "-e",
+          "CUDA_MODULE_LOADING=LAZY",
+          "-v",
+          "/mnt/ssd/codespace/LNN:/workspace/LNN",
+          "-w",
+          "/workspace/LNN",
+          "ghcr.io/nvidia-ai-iot/llama_cpp:gemma4-jetson-orin",
+          "bash",
+          "-lc",
+          "timeout 90 llama-cli -m models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf -p 'Say CUDA works.' -n 8 -c 256 -t 4 --temp 0.1 --top-k 40 --repeat-penalty 1.05 --no-display-prompt --no-warmup --single-turn --simple-io --n-gpu-layers 1"
+        ],
+        "returncode": 0,
+        "seconds": 3.124,
+        "stdout": "\nLoading model... \n\n\n▄▄ ▄▄\n██ ██\n██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄\n██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██\n██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀\n                                    ██    ██\n                                    ▀▀    ▀▀\n\nbuild      : b8638-5803c8d11\nmodel      : LFM2.5-1.2B-Instruct-Q4_0.gguf\nmodalities : text\n\navailable commands:\n  /exit or Ctrl+C     stop or exit\n  /regen              regenerate the last response\n  /clear              clear the chat history\n  /read <file>        add a text file\n  /glob <pattern>     add text files using globbing pattern\n\n\n> Say CUDA works.\n\nYes, **CUDA works**\n\n[ Prompt: 23.7 t/s | Generation: 15.6 t/s ]\n\nExiting...\n",
+        "stderr": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):\n  Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nllama_memory_breakdown_print: | memory breakdown [MiB] | total   free    self   model   context   compute    unaccounted |\nllama_memory_breakdown_print: |   - CUDA0 (Orin)       |  7619 = 2912 + ( 177 =   105 +       0 +      72) +        4530 |\nllama_memory_breakdown_print: |   - Host               |                  671 =   661 +       3 +       7                |\n"
+      },
+      "cuda_detected": true,
+      "cuda_line": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):",
+      "cuda_memory_line": "llama_memory_breakdown_print: |   - CUDA0 (Orin)       |  7619 = 2912 + ( 177 =   105 +       0 +      72) +        4530 |",
+      "response": "Yes, **CUDA works**",
+      "timing": {
+        "prompt_tps": 23.7,
+        "generation_tps": 15.6
+      }
+    },
+    {
+      "name": "dpo_q4_0",
+      "model": "models/lfm25-dpo-s1/LFM25-DPO-Q4_0.gguf",
+      "model_exists": true,
+      "candidates": [
+        {
+          "gpu_layers": 1,
+          "ctx_size": 128,
+          "max_new_tokens": 8
+        }
+      ],
+      "status": "ok",
+      "selected": {
+        "gpu_layers": 1,
+        "ctx_size": 128,
+        "max_new_tokens": 8
+      },
+      "attempts": [
+        {
+          "status": "ok",
+          "gpu_layers": 1,
+          "ctx_size": 128,
+          "max_new_tokens": 8,
+          "run": {
+            "command": [
+              "docker",
+              "run",
+              "--rm",
+              "--runtime",
+              "nvidia",
+              "--network",
+              "host",
+              "--ipc",
+              "host",
+              "-e",
+              "CUDA_MODULE_LOADING=LAZY",
+              "-v",
+              "/mnt/ssd/codespace/LNN:/workspace/LNN",
+              "-w",
+              "/workspace/LNN",
+              "ghcr.io/nvidia-ai-iot/llama_cpp:gemma4-jetson-orin",
+              "bash",
+              "-lc",
+              "timeout 90 llama-cli -m models/lfm25-dpo-s1/LFM25-DPO-Q4_0.gguf -p 'Say CUDA works.' -n 8 -c 128 -t 4 --temp 0.1 --top-k 40 --repeat-penalty 1.05 --no-display-prompt --no-warmup --single-turn --simple-io --n-gpu-layers 1"
+            ],
+            "returncode": 0,
+            "seconds": 3.511,
+            "stdout": "\nLoading model... \n\n\n▄▄ ▄▄\n██ ██\n██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄\n██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██\n██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀\n                                    ██    ██\n                                    ▀▀    ▀▀\n\nbuild      : b8638-5803c8d11\nmodel      : LFM25-DPO-Q4_0.gguf\nmodalities : text\n\navailable commands:\n  /exit or Ctrl+C     stop or exit\n  /regen              regenerate the last response\n  /clear              clear the chat history\n  /read <file>        add a text file\n  /glob <pattern>     add text files using globbing pattern\n\n\n> Say CUDA works.\n\nAh, I see what you mean,\n\n[ Prompt: 23.2 t/s | Generation: 10.1 t/s ]\n\nExiting...\n",
+            "stderr": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):\n  Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nllama_memory_breakdown_print: | memory breakdown [MiB] | total   free    self   model   context   compute    unaccounted |\nllama_memory_breakdown_print: |   - CUDA0 (Orin)       |  7619 = 2910 + ( 141 =   105 +       0 +      36) +        4568 |\nllama_memory_breakdown_print: |   - Host               |                  668 =   661 +       3 +       3                |\n"
+          },
+          "cuda_detected": true,
+          "cuda_line": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):",
+          "cuda_memory_line": "llama_memory_breakdown_print: |   - CUDA0 (Orin)       |  7619 = 2910 + ( 141 =   105 +       0 +      36) +        4568 |",
+          "response": "Ah, I see what you mean,",
+          "timing": {
+            "prompt_tps": 23.2,
+            "generation_tps": 10.1
+          }
+        }
+      ],
+      "run": {
+        "command": [
+          "docker",
+          "run",
+          "--rm",
+          "--runtime",
+          "nvidia",
+          "--network",
+          "host",
+          "--ipc",
+          "host",
+          "-e",
+          "CUDA_MODULE_LOADING=LAZY",
+          "-v",
+          "/mnt/ssd/codespace/LNN:/workspace/LNN",
+          "-w",
+          "/workspace/LNN",
+          "ghcr.io/nvidia-ai-iot/llama_cpp:gemma4-jetson-orin",
+          "bash",
+          "-lc",
+          "timeout 90 llama-cli -m models/lfm25-dpo-s1/LFM25-DPO-Q4_0.gguf -p 'Say CUDA works.' -n 8 -c 128 -t 4 --temp 0.1 --top-k 40 --repeat-penalty 1.05 --no-display-prompt --no-warmup --single-turn --simple-io --n-gpu-layers 1"
+        ],
+        "returncode": 0,
+        "seconds": 3.511,
+        "stdout": "\nLoading model... \n\n\n▄▄ ▄▄\n██ ██\n██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄\n██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██\n██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀\n                                    ██    ██\n                                    ▀▀    ▀▀\n\nbuild      : b8638-5803c8d11\nmodel      : LFM25-DPO-Q4_0.gguf\nmodalities : text\n\navailable commands:\n  /exit or Ctrl+C     stop or exit\n  /regen              regenerate the last response\n  /clear              clear the chat history\n  /read <file>        add a text file\n  /glob <pattern>     add text files using globbing pattern\n\n\n> Say CUDA works.\n\nAh, I see what you mean,\n\n[ Prompt: 23.2 t/s | Generation: 10.1 t/s ]\n\nExiting...\n",
+        "stderr": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):\n  Device 0: Orin, compute capability 8.7, VMM: yes, VRAM: 7619 MiB\nllama_memory_breakdown_print: | memory breakdown [MiB] | total   free    self   model   context   compute    unaccounted |\nllama_memory_breakdown_print: |   - CUDA0 (Orin)       |  7619 = 2910 + ( 141 =   105 +       0 +      36) +        4568 |\nllama_memory_breakdown_print: |   - Host               |                  668 =   661 +       3 +       3                |\n"
+      },
+      "cuda_detected": true,
+      "cuda_line": "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 7619 MiB):",
+      "cuda_memory_line": "llama_memory_breakdown_print: |   - CUDA0 (Orin)       |  7619 = 2910 + ( 141 =   105 +       0 +      36) +        4568 |",
+      "response": "Ah, I see what you mean,",
+      "timing": {
+        "prompt_tps": 23.2,
+        "generation_tps": 10.1
+      }
+    }
+  ]
+}
