@@ -1,6 +1,7 @@
 from lnn.core.cfc import CfCCell, CfCNetwork
 from lnn.core.control import LNNImitationPolicy
 from lnn.core.noise_adaptive_cfc import (
+    BidirectionalNoiseAdaptiveCfC,
     NoiseAdaptiveCfCCell,
     NoiseAdaptiveCfCNetwork,
     vectorized_noise_ema,
@@ -44,6 +45,7 @@ __all__ = [
     "CfCNetwork",
     "NoiseAdaptiveCfCCell",
     "NoiseAdaptiveCfCNetwork",
+    "BidirectionalNoiseAdaptiveCfC",
     "vectorized_noise_ema",
     "MultimodalFusionLNN",
     "MDNHead",

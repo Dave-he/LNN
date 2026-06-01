@@ -121,3 +121,56 @@ def vectorized_noise_ema(masked_input, beta):
 
 ---
 *本报告由 `/loop` 5h 计划任务驱动；下次自动触发：约 6 小时后（cron `7 */6 * * *`，任务 ID `7131cb00`）。*
+
+## 附录 A — 2026-06-02 第二轮迭代：Bidirectional CfC-NAD
+
+(同日第二次 /loop 触发；接续上文 §3.1 W+1 待办，把 bidirectional CfC-NAD 提前到本日完成。)
+
+### A.1 动机
+- 今日 digest 中的 `sxlxbo/CTDFormer` (2026-05-17) 把 Transformer 的多头注意力替换为 **bidirectional CfC**，用于轴承故障诊断；这是 CfC 在工业含噪信号上取代 attention 的第一例公开实现。
+- 昨日 + 今日上文已得到带噪声鲁棒性的 **Uni-CfC-NAD**（CfC-NAD parallel）；自然下一步是补上 *bidirectional* 维度，将其与 CTDFormer 的设计原语对齐。
+
+### A.2 实现：`BidirectionalNoiseAdaptiveCfC`
+
+```text
+forward_net : NoiseAdaptiveCfCNetwork(x)       -> [B, T, H]
+backward_net: NoiseAdaptiveCfCNetwork(flip(x)) -> [B, T, H]  (再 flip 回来对齐时间轴)
+output_proj : Linear(2H -> output_size)        -> [B, T, output_size]
+```
+
+- 内部使用昨日和今日完成的 `NoiseAdaptiveCfCNetwork`（return_sequences=True，自动走 parallel noise EMA 路径）。
+- `dt` / `mask` 的时间维度通过 `_flip_temporal` 在反向路径上同样翻转，覆盖 1-D `[T]`、2-D `[B,T]`、3-D `[B,T,F]` 等常见形状。
+- 总参数 = 2 × Uni-CfC-NAD + 1 个 `Linear(2H -> output_size)`；在本基准设置下约为 Uni 的 2.57×（945 → 2 433）。
+
+### A.3 可证伪验证 — Windowed-Median Regression
+
+**任务**：给定 Mackey-Glass 时间序列 x，预测每步 y[t] = median(x[t-k : t+k+1])，k=3。
+**关键**：y[t] 依赖于 x 的未来 k 步，单向模型理论上不可能完美。
+
+`scripts/benchmark_bi_cfc_nad.py --epochs 8 --hidden 16 --num-samples 400`：
+
+| 模型 | 参数量 | val MSE | train (s) | infer (µs/step) |
+|---|---:|---:|---:|---:|
+| Uni-CfC-NAD | 945 | 0.01828 | 1.16 | 6.40 |
+| **Bi-CfC-NAD** | **2 433** | **0.00524** | 2.30 | 12.73 |
+
+- **Bi 相对 Uni 的 val MSE 降幅：71.3%**（claim 阈值 ≥25%，**PASS**）。
+- 训练/推理时间增加约 2×（与"两个内层网络"一致，符合预期）。
+- 数据 / 配置 / 完整结果：`analysis/cfc_nad/2026-06-02_bi_cfc_nad_benchmark.json`。
+
+### A.4 单元测试 — `TestBidirectionalNoiseAdaptiveCfC`（6 项）
+
+- 形状（return_sequences / 仅最后一步）
+- 反传可达性：前向和反向两个内部网络都收到非零梯度
+- 与 Uni 在非对称输入上输出显著不同
+- `dt` 1-D `[T]` 自动翻转适配
+- 参数预算上限（< 3× Uni）
+
+全套 `pytest tests/` 65 项通过、零回归（昨日 55 + 今日上轮 +4 + 本附录 +6）。
+
+### A.5 复盘 + 下一轮
+
+- **可证伪假设通过**：在显式需要未来上下文的合成任务上 Bi-CfC-NAD 大幅领先；与 CTDFormer 的工业经验定性一致。
+- **延迟成本**：约 2× Uni；下一步可尝试两边权重共享（受限 RNN BiRNN 风格）或前向并行噪声 EMA 与后向并行噪声 EMA 共用一个 cumprod 中间结果。
+- **真实数据验证**：合成中位数任务证明了"双向有用"；下一轮应换到 `parhat1/cfdna-tau-repository` 或 LiquidTAD 风格的真实工业振动 / 视频数据上复测。
+- 下一轮路线图条目升级：原 W+2 "EMMA-style multimodal + physics" 仍保持；新增 **Bi-CfC-NAD on bearing fault diagnosis** 作为 W+1 优先级。

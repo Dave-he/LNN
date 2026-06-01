@@ -239,5 +239,113 @@ class NoiseAdaptiveCfCNetwork(nn.Module):
 __all__ = [
     "NoiseAdaptiveCfCCell",
     "NoiseAdaptiveCfCNetwork",
+    "BidirectionalNoiseAdaptiveCfC",
     "vectorized_noise_ema",
 ]
+
+
+def _flip_temporal(
+    t: torch.Tensor | float | int | None, seq_len: int
+) -> torch.Tensor | float | int | None:
+    """Flip the time axis of a dt/mask argument so it lines up with a reversed
+    input sequence. Returns the input unchanged for shapes where the time axis
+    cannot be identified (e.g. scalar, [B], [B, 1])."""
+
+    if t is None or isinstance(t, int | float):
+        return t
+    if not torch.is_tensor(t):
+        return t
+    if t.dim() == 0:
+        return t
+    if t.dim() == 1:
+        # Only flip if the first dim matches seq_len (i.e. it is a per-step
+        # schedule). [B] arguments stay the same.
+        if t.shape[0] == seq_len:
+            return torch.flip(t, dims=[0])
+        return t
+    if t.dim() == 2:
+        if t.shape[1] == seq_len:  # [B, T]
+            return torch.flip(t, dims=[1])
+        if t.shape[0] == seq_len:  # [T, F] or [T, 1]
+            return torch.flip(t, dims=[0])
+        return t
+    if t.dim() == 3:
+        if t.shape[1] == seq_len:  # [B, T, F]
+            return torch.flip(t, dims=[1])
+        return t
+    return t
+
+
+class BidirectionalNoiseAdaptiveCfC(nn.Module):
+    """Bidirectional Noise-Adaptive CfC.
+
+    Stacks two independent :class:`NoiseAdaptiveCfCNetwork` instances. The
+    forward instance reads ``x`` left-to-right; the backward instance reads
+    ``flip(x)`` and the resulting per-step features are flipped back so they
+    line up with the original time axis. Per-step features are concatenated
+    along the feature axis and fed through a single output projection.
+
+    Motivated by sxlxbo/CTDFormer (2026-05-17) which replaces multi-head
+    attention with a bidirectional CfC for bearing fault diagnosis. The
+    falsifiable claim verified in :mod:`scripts.benchmark_bi_cfc_nad` is that
+    bi-CfC-NAD should beat uni-CfC-NAD on a windowed-median regression task
+    whose targets depend on both past and future context.
+    """
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        output_size: int,
+        num_layers: int = 1,
+        return_sequences: bool = True,
+        noise_beta: float = 0.9,
+    ) -> None:
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_layers = num_layers
+        self.return_sequences = return_sequences
+
+        # Inner networks emit per-step features of width ``hidden_size``.
+        self.forward_net = NoiseAdaptiveCfCNetwork(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            output_size=hidden_size,
+            num_layers=num_layers,
+            return_sequences=True,
+            noise_beta=noise_beta,
+        )
+        self.backward_net = NoiseAdaptiveCfCNetwork(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            output_size=hidden_size,
+            num_layers=num_layers,
+            return_sequences=True,
+            noise_beta=noise_beta,
+        )
+        # Concatenate forward + backward features then project.
+        self.output_proj = nn.Linear(2 * hidden_size, output_size)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        h0: torch.Tensor | None = None,  # noqa: ARG002 — kept for API parity
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        if x.dim() != 3:
+            raise ValueError(f"x must have shape [batch, time, features], got {tuple(x.shape)}")
+        seq_len = x.shape[1]
+
+        fwd_features = self.forward_net(x, dt=dt, mask=mask)
+        x_rev = torch.flip(x, dims=[1])
+        dt_rev = _flip_temporal(dt, seq_len)
+        mask_rev = _flip_temporal(mask, seq_len)
+        bwd_features_rev = self.backward_net(x_rev, dt=dt_rev, mask=mask_rev)
+        bwd_features = torch.flip(bwd_features_rev, dims=[1])
+        combined = torch.cat([fwd_features, bwd_features], dim=-1)
+        if self.return_sequences:
+            return self.output_proj(combined)
+        return self.output_proj(combined[:, -1, :])

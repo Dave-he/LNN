@@ -1,0 +1,30 @@
+{
+  "config": {
+    "num_samples": 400,
+    "seq_len": 32,
+    "window_half": 3,
+    "hidden": 16,
+    "batch_size": 32,
+    "epochs": 8,
+    "lr": 0.005,
+    "seed": 42,
+    "device": "cpu"
+  },
+  "uni": {
+    "params": 945,
+    "val_mse": 0.018276362866163253,
+    "train_s": 1.1597182750701904,
+    "infer_us_per_step": 6.396882236003876
+  },
+  "bi": {
+    "params": 2433,
+    "val_mse": 0.0052431849762797356,
+    "train_s": 2.304386854171753,
+    "infer_us_per_step": 12.728478759527206
+  },
+  "summary": {
+    "mse_drop_pct": 71.31166077914257,
+    "claim_threshold_pct": 25.0,
+    "claim_passed": true
+  }
+}

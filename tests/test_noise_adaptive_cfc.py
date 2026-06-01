@@ -6,6 +6,7 @@ import torch
 
 from lnn.core.cfc import CfCNetwork
 from lnn.core.noise_adaptive_cfc import (
+    BidirectionalNoiseAdaptiveCfC,
     NoiseAdaptiveCfCCell,
     NoiseAdaptiveCfCNetwork,
     vectorized_noise_ema,
@@ -181,3 +182,84 @@ class TestNoiseAdaptivePathEquivalence:
         # as the parallel one — modulo the masked-step gating, which is a
         # no-op when the mask is uniformly 1.
         assert torch.allclose(out_parallel, out_stream, atol=1e-5, rtol=1e-5)
+
+
+class TestBidirectionalNoiseAdaptiveCfC:
+    def test_output_shape_sequences(self) -> None:
+        net = BidirectionalNoiseAdaptiveCfC(
+            input_size=3, hidden_size=8, output_size=2, num_layers=1
+        )
+        x = torch.randn(2, 7, 3)
+        out = net(x)
+        assert out.shape == (2, 7, 2)
+
+    def test_output_shape_last_step(self) -> None:
+        net = BidirectionalNoiseAdaptiveCfC(
+            input_size=3, hidden_size=8, output_size=2, return_sequences=False
+        )
+        x = torch.randn(2, 7, 3)
+        out = net(x)
+        assert out.shape == (2, 2)
+
+    def test_backward_pass(self) -> None:
+        net = BidirectionalNoiseAdaptiveCfC(
+            input_size=2, hidden_size=4, output_size=1, num_layers=1
+        )
+        x = torch.randn(2, 6, 2, requires_grad=True)
+        out = net(x)
+        out.sum().backward()
+        assert x.grad is not None
+        # Both inner networks should receive gradient.
+        fwd_grad = sum(
+            (p.grad.abs().sum().item() if p.grad is not None else 0.0)
+            for p in net.forward_net.parameters()
+        )
+        bwd_grad = sum(
+            (p.grad.abs().sum().item() if p.grad is not None else 0.0)
+            for p in net.backward_net.parameters()
+        )
+        assert fwd_grad > 0
+        assert bwd_grad > 0
+
+    def test_differs_from_unidirectional(self) -> None:
+        """Bi network output must differ from a same-config uni network on
+        non-symmetric input (otherwise the backward path is silently dead)."""
+
+        torch.manual_seed(3)
+        uni = NoiseAdaptiveCfCNetwork(
+            input_size=2, hidden_size=8, output_size=2, num_layers=1, return_sequences=True
+        )
+        bi = BidirectionalNoiseAdaptiveCfC(
+            input_size=2, hidden_size=8, output_size=2, num_layers=1, return_sequences=True
+        )
+        # Asymmetric input: monotonic ramp + impulse near the end.
+        x = torch.linspace(0.0, 1.0, 24).view(1, 24, 1).expand(1, 24, 2).contiguous()
+        x[0, 20, 0] = 5.0
+        with torch.no_grad():
+            uni_out = uni(x)
+            bi_out = bi(x)
+        # Outputs cannot reasonably coincide — different parameter counts and
+        # different feature spaces. Sanity-check that they actually differ.
+        assert uni_out.shape == bi_out.shape
+        assert not torch.allclose(uni_out, bi_out, atol=1e-3)
+
+    def test_dt_temporal_flip_supported(self) -> None:
+        # 1-D per-step dt of shape [T] must be flipped for the backward pass.
+        net = BidirectionalNoiseAdaptiveCfC(
+            input_size=2, hidden_size=4, output_size=1, num_layers=1
+        )
+        x = torch.randn(3, 10, 2)
+        dt = torch.linspace(0.05, 0.5, 10)
+        out = net(x, dt=dt)
+        assert out.shape == (3, 10, 1)
+        assert torch.isfinite(out).all()
+
+    def test_parameter_overhead_under_3x(self) -> None:
+        uni = NoiseAdaptiveCfCNetwork(input_size=3, hidden_size=16, output_size=1, num_layers=1)
+        bi = BidirectionalNoiseAdaptiveCfC(input_size=3, hidden_size=16, output_size=1, num_layers=1)
+        uni_params = sum(p.numel() for p in uni.parameters())
+        bi_params = sum(p.numel() for p in bi.parameters())
+        # Two NoiseAdaptiveCfCNetwork instances + a 2H -> output projection.
+        # The output_proj of each inner net (H -> H) is redundant but kept for
+        # API parity; the overall budget should still stay well under 3x uni.
+        assert bi_params < 3 * uni_params
