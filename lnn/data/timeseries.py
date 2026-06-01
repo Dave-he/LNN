@@ -3,6 +3,18 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 
+def _as_float_tensor(values: np.ndarray | torch.Tensor, name: str) -> torch.Tensor:
+    if isinstance(values, np.ndarray):
+        values = torch.tensor(values, dtype=torch.float32)
+    elif not torch.is_tensor(values):
+        values = torch.tensor(values, dtype=torch.float32)
+    else:
+        values = values.to(dtype=torch.float32)
+    if values.dim() == 0:
+        raise ValueError(f"{name} must contain at least one time step")
+    return values
+
+
 class TimeSeriesDataset(Dataset):
     """
     Sliding-window dataset for time series prediction.
@@ -18,28 +30,78 @@ class TimeSeriesDataset(Dataset):
         seq_len: int = 32,
         horizon: int = 1,
         stride: int = 1,
+        delta_t: np.ndarray | torch.Tensor | None = None,
+        mask: np.ndarray | torch.Tensor | None = None,
+        return_metadata: bool = False,
     ):
-        if isinstance(data, np.ndarray):
-            data = torch.tensor(data, dtype=torch.float32)
+        data = _as_float_tensor(data, "data")
         if data.dim() == 1:
             data = data.unsqueeze(-1)
+        if data.dim() != 2:
+            raise ValueError(f"data must have shape [time] or [time, features], got {tuple(data.shape)}")
+
+        inferred_mask = torch.isfinite(data).to(dtype=torch.float32)
+        data = torch.nan_to_num(data)
+
+        if mask is None:
+            mask_tensor = inferred_mask
+        else:
+            mask_tensor = _as_float_tensor(mask, "mask")
+            if mask_tensor.dim() == 1:
+                mask_tensor = mask_tensor.unsqueeze(-1)
+            if mask_tensor.shape[0] != data.shape[0]:
+                raise ValueError(
+                    f"mask time dimension must match data; got {tuple(mask_tensor.shape)} and {tuple(data.shape)}"
+                )
+            if mask_tensor.shape[1] == 1 and data.shape[1] != 1:
+                mask_tensor = mask_tensor.expand(-1, data.shape[1])
+            if mask_tensor.shape != data.shape:
+                raise ValueError(
+                    f"mask must have shape {tuple(data.shape)} or [time, 1], got {tuple(mask_tensor.shape)}"
+                )
+            mask_tensor = (mask_tensor > 0).to(dtype=torch.float32)
+
+        if delta_t is None:
+            delta_t_tensor = torch.ones(data.shape[0], 1, dtype=torch.float32)
+        else:
+            delta_t_tensor = _as_float_tensor(delta_t, "delta_t")
+            if delta_t_tensor.dim() == 1:
+                delta_t_tensor = delta_t_tensor.unsqueeze(-1)
+            if delta_t_tensor.shape[0] != data.shape[0]:
+                raise ValueError(
+                    f"delta_t time dimension must match data; got {tuple(delta_t_tensor.shape)} and {tuple(data.shape)}"
+                )
+            if delta_t_tensor.shape[1] != 1:
+                raise ValueError(f"delta_t must have shape [time] or [time, 1], got {tuple(delta_t_tensor.shape)}")
+            delta_t_tensor = delta_t_tensor.clamp_min(0.0)
 
         self.data = data
+        self.delta_t = delta_t_tensor
+        self.mask = mask_tensor
         self.seq_len = seq_len
         self.horizon = horizon
         self.stride = stride
+        self.return_metadata = return_metadata
 
         self.indices = list(range(0, len(data) - seq_len - horizon + 1, stride))
 
     def __len__(self) -> int:
         return len(self.indices)
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(
+        self, idx: int
+    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
         start = self.indices[idx]
         x = self.data[start : start + self.seq_len]
         y = self.data[start + self.seq_len : start + self.seq_len + self.horizon]
         if self.horizon == 1:
             y = y.squeeze(0)
+        if self.return_metadata:
+            metadata = {
+                "dt": self.delta_t[start : start + self.seq_len],
+                "mask": self.mask[start : start + self.seq_len],
+            }
+            return x, y, metadata
         return x, y
 
 
@@ -50,8 +112,21 @@ def create_dataloader(
     stride: int = 1,
     batch_size: int = 32,
     shuffle: bool = True,
+    delta_t: np.ndarray | torch.Tensor | None = None,
+    mask: np.ndarray | torch.Tensor | None = None,
+    return_metadata: bool | None = None,
 ) -> DataLoader:
-    dataset = TimeSeriesDataset(data, seq_len=seq_len, horizon=horizon, stride=stride)
+    if return_metadata is None:
+        return_metadata = delta_t is not None or mask is not None
+    dataset = TimeSeriesDataset(
+        data,
+        seq_len=seq_len,
+        horizon=horizon,
+        stride=stride,
+        delta_t=delta_t,
+        mask=mask,
+        return_metadata=return_metadata,
+    )
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
 

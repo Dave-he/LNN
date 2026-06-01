@@ -71,6 +71,12 @@ RUN_BENCHMARK=1 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 
 如果 CUDA 容器因显存碎片或运行时内存分配失败退出，脚本会默认重试 2 次，再退回 CPU smoke benchmark 并在报告中标记 `ok_cpu_fallback`，便于保留当天验证记录。
 
+需要做边缘 Pareto 筛选时，可显式开启 sweep：
+
+```bash
+python scripts/jetson_lnn_benchmark.py --quick --pareto --hidden-sizes 8,16,24 --seq-lens 16,32 --seeds 42,43
+```
+
 当前真实 Jetson Orin Nano CUDA smoke benchmark（2026-05-26）：
 
 ![Jetson LNN Benchmark](analysis/jetson/2026-05-26_lnn_benchmark.png)
@@ -216,6 +222,19 @@ python scripts/experiment_concept_drift.py --epochs 50
 # AutoNCP 稀疏神经电路实验
 python scripts/experiment_autoncp.py --epochs 50
 
+# LNN 控制模仿学习：CfC/LTC/AutoNCP + MSE/MDN action head
+python scripts/experiment_imitation_lnn.py --recurrent cfc --head mdn --epochs 12
+
+# GNN + LNN 动态图预测
+python scripts/experiment_graph_lnn.py --recurrent cfc --epochs 12
+
+# Liquid-S4/LiquidTAD 风格长序列 smoke 实验
+python scripts/experiment_long_sequence.py --mode classification --epochs 10
+python scripts/experiment_long_sequence.py --mode tad --epochs 10
+
+# Physics-informed LNN：damped oscillator 参数恢复与 rollout
+python scripts/experiment_physics_lnn.py --recurrent ltc --epochs 12
+
 # 本机多模态 LNN：传感器序列 + 图像 + 文本 token
 python scripts/experiment_multimodal_lnn.py --model cfc --samples 360 --epochs 8 --device cpu
 ```
@@ -250,6 +269,24 @@ model = CfCNetwork(input_size=1, hidden_size=32, output_size=1)
 # 训练
 trainer = Trainer(model, lr=1e-3, patience=15)
 history = trainer.fit(train_loader, num_epochs=50)
+```
+
+不规则采样或缺失值序列可以把 `delta_t` 和 `mask` 交给同一个 DataLoader；`Trainer` 会自动把 metadata 传给支持 `dt`、`mask` 的模型：
+
+```python
+delta_t = torch.ones(len(data)) * 0.5
+mask = torch.ones(len(data))
+mask[100:120] = 0.0
+
+train_loader = create_dataloader(
+    data[:1400],
+    seq_len=32,
+    horizon=1,
+    delta_t=delta_t[:1400],
+    mask=mask[:1400],
+)
+model = CfCNetwork(input_size=1, hidden_size=32, output_size=1, return_sequences=False)
+history = Trainer(model, lr=1e-3, patience=15).fit(train_loader, num_epochs=50)
 ```
 
 ### Jetson Orin Nano 实测 Benchmark

@@ -37,6 +37,8 @@ def command_output(command: list[str]) -> str | None:
 def write_benchmark_plot(run_date: str, payload: dict[str, Any], output_dir: pathlib.Path) -> pathlib.Path | None:
     if payload.get("status") not in {"ok", "ok_cpu_fallback"} or not payload.get("results"):
         return None
+    if payload.get("experiment") == "jetson_lnn_pareto_sweep":
+        return write_pareto_plot(run_date, payload, output_dir)
 
     try:
         import matplotlib
@@ -78,6 +80,55 @@ def write_benchmark_plot(run_date: str, payload: dict[str, Any], output_dir: pat
 
     fig.tight_layout(rect=(0, 0, 1, 0.9))
     plot_path = output_dir / f"{run_date}_lnn_benchmark.png"
+    fig.savefig(plot_path, dpi=160, bbox_inches="tight")
+    plt.close(fig)
+    return plot_path
+
+
+def write_pareto_plot(run_date: str, payload: dict[str, Any], output_dir: pathlib.Path) -> pathlib.Path | None:
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return None
+
+    results = payload["results"]
+    pareto_results = [result for result in results if result.get("pareto_front")]
+    fig, ax = plt.subplots(figsize=(7.2, 4.8))
+    markers = {"CfCStyle": "o", "GRU": "s"}
+
+    for name in sorted({result["name"] for result in results}):
+        model_rows = [result for result in results if result["name"] == name]
+        ax.scatter(
+            [row["inference_steps_per_sec"] for row in model_rows],
+            [row["test_mse"] for row in model_rows],
+            s=[max(row["parameters"] / 3.0, 24.0) for row in model_rows],
+            alpha=0.45,
+            marker=markers.get(name, "o"),
+            label=name,
+        )
+
+    if pareto_results:
+        ax.scatter(
+            [row["inference_steps_per_sec"] for row in pareto_results],
+            [row["test_mse"] for row in pareto_results],
+            s=[max(row["parameters"] / 2.2, 36.0) for row in pareto_results],
+            facecolors="none",
+            edgecolors="#dc2626",
+            linewidths=1.7,
+            label="Pareto front",
+        )
+
+    ax.set_xscale("log")
+    ax.set_xlabel("Inference steps/s (higher is better)")
+    ax.set_ylabel("Test MSE (lower is better)")
+    ax.set_title(f"Jetson LNN Pareto Sweep - {run_date}")
+    ax.grid(alpha=0.25)
+    ax.legend()
+    fig.tight_layout()
+    plot_path = output_dir / f"{run_date}_lnn_pareto.png"
     fig.savefig(plot_path, dpi=160, bbox_inches="tight")
     plt.close(fig)
     return plot_path
@@ -148,6 +199,47 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
 
     if payload.get("status") not in {"ok", "ok_cpu_fallback"}:
         lines.extend(["", "## 状态", f"- {payload.get('status')}: {payload.get('reason')}"])
+    elif payload.get("experiment") == "jetson_lnn_pareto_sweep":
+        config = payload.get("config", {})
+        lines.extend(
+            [
+                "",
+                "## 任务配置",
+                "- 数据：合成非平稳时间序列，一步预测",
+                f"- Samples / Epoch：{config.get('samples')} / {config.get('epochs')}",
+                f"- Hidden sweep：{config.get('hidden_sizes')}",
+                f"- SeqLen sweep：{config.get('seq_lens')}",
+                f"- Seeds：{config.get('seeds')}",
+                f"- 设备：{payload.get('device')}",
+                "",
+                "## Pareto 结果",
+                "| Front | 模型 | Hidden | SeqLen | Seed | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |",
+                "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+            ]
+        )
+        sorted_results = sorted(
+            payload.get("results", []),
+            key=lambda result: (not result.get("pareto_front"), result["test_mse"]),
+        )
+        for result in sorted_results:
+            marker = "yes" if result.get("pareto_front") else ""
+            lines.append(
+                f"| {marker} | {result['name']} | {result['hidden_size']} | {result['seq_len']} | "
+                f"{result['seed']} | {result['parameters']} | {result['test_mse']:.6f} | "
+                f"{result['inference_steps_per_sec']:.1f} | {result['train_seconds']:.2f} |"
+            )
+        if plot_path is not None:
+            lines.extend(["", "## Pareto 图", f"![Jetson LNN Pareto]({plot_path.name})"])
+        lines.extend(
+            [
+                "",
+                "## 解读",
+                "- Pareto front 表示没有其他配置能同时做到更低误差、更少参数、"
+                "更短训练时间和更高吞吐。",
+                "- 该 sweep 是边缘筛选入口，正式实验应在真实 Jetson CUDA 路径上增加多 seed、"
+                "能耗和导出后延迟。",
+            ]
+        )
     else:
         config = payload.get("config", {})
         lines.extend(
@@ -176,7 +268,8 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
                 [
                     "",
                     "## CUDA 回退",
-                    "- 本次优先尝试 Jetson CUDA 路径，但 CUDA 运行时返回内存/加速器错误，已自动回退到 CPU smoke benchmark。",
+                    "- 本次优先尝试 Jetson CUDA 路径，但 CUDA 运行时返回内存/加速器错误，"
+                    "已自动回退到 CPU smoke benchmark。",
                     "- 回退原因：",
                     "",
                     "```text",
@@ -188,14 +281,54 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
             [
                 "",
                 "## 解读",
-                "- `CfCStyle` 是闭式连续时间思想的轻量实现，用于快速验证 LNN 类动态门控在边缘设备上的训练与推理成本。",
+                "- `CfCStyle` 是闭式连续时间思想的轻量实现，"
+                "用于快速验证 LNN 类动态门控在边缘设备上的训练与推理成本。",
                 "- `GRU` 是同等隐藏维度的传统循环网络基线，便于比较参数量、误差和吞吐。",
-                "- 该脚本是 smoke benchmark；正式论文复现应替换为论文数据集、固定随机种子、多次重复和置信区间。",
+                "- 该脚本是 smoke benchmark；正式论文复现应替换为论文数据集、"
+                "固定随机种子、多次重复和置信区间。",
             ]
         )
 
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return json_path, md_path
+
+
+def parse_int_list(raw: str | None, default: list[int]) -> list[int]:
+    if not raw:
+        return default
+    values = [int(part.strip()) for part in raw.split(",") if part.strip()]
+    if not values:
+        raise ValueError(f"Expected at least one integer in '{raw}'")
+    return values
+
+
+def dominates(candidate: dict[str, Any], other: dict[str, Any]) -> bool:
+    no_worse = (
+        candidate["test_mse"] <= other["test_mse"]
+        and candidate["parameters"] <= other["parameters"]
+        and candidate["train_seconds"] <= other["train_seconds"]
+        and candidate["inference_steps_per_sec"] >= other["inference_steps_per_sec"]
+    )
+    strictly_better = (
+        candidate["test_mse"] < other["test_mse"]
+        or candidate["parameters"] < other["parameters"]
+        or candidate["train_seconds"] < other["train_seconds"]
+        or candidate["inference_steps_per_sec"] > other["inference_steps_per_sec"]
+    )
+    return no_worse and strictly_better
+
+
+def mark_pareto_front(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    marked = []
+    for index, result in enumerate(results):
+        dominated = any(
+            other_index != index and dominates(other, result)
+            for other_index, other in enumerate(results)
+        )
+        result = dict(result)
+        result["pareto_front"] = not dominated
+        marked.append(result)
+    return marked
 
 
 def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
@@ -263,7 +396,14 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     def count_params(model: nn.Module) -> int:
         return sum(parameter.numel() for parameter in model.parameters() if parameter.requires_grad)
 
-    def train_and_eval(name: str, model: nn.Module, train_x: torch.Tensor, train_y: torch.Tensor, test_x: torch.Tensor, test_y: torch.Tensor) -> dict[str, Any]:
+    def train_and_eval(
+        name: str,
+        model: nn.Module,
+        train_x: torch.Tensor,
+        train_y: torch.Tensor,
+        test_x: torch.Tensor,
+        test_y: torch.Tensor,
+    ) -> dict[str, Any]:
         model.train()
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         criterion = nn.MSELoss()
@@ -341,6 +481,57 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     return payload
 
 
+def run_pareto_benchmark(args: argparse.Namespace) -> dict[str, Any]:
+    hidden_default = [8, 16] if args.quick else [8, 16, 32]
+    seq_default = [16, 32] if args.quick else [32, 64]
+    hidden_sizes = parse_int_list(args.hidden_sizes, hidden_default)
+    seq_lens = parse_int_list(args.seq_lens, seq_default)
+    seeds = parse_int_list(args.seeds, [args.seed])
+
+    flat_results: list[dict[str, Any]] = []
+    environment: dict[str, Any] = {}
+    device = "unknown"
+
+    for hidden_size in hidden_sizes:
+        for seq_len in seq_lens:
+            for seed in seeds:
+                run_args = argparse.Namespace(**vars(args))
+                run_args.hidden_size = hidden_size
+                run_args.seq_len = seq_len
+                run_args.seed = seed
+                payload = run_benchmark(run_args)
+                environment = payload.get("environment", environment)
+                device = payload.get("device", device)
+                for result in payload["results"]:
+                    flat_results.append(
+                        {
+                            **result,
+                            "hidden_size": hidden_size,
+                            "seq_len": seq_len,
+                            "seed": seed,
+                        }
+                    )
+
+    return {
+        "status": "ok",
+        "experiment": "jetson_lnn_pareto_sweep",
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "environment": environment,
+        "device": device,
+        "config": {
+            "samples": args.samples,
+            "epochs": args.epochs,
+            "batch_size": args.batch_size,
+            "lr": args.lr,
+            "hidden_sizes": hidden_sizes,
+            "seq_lens": seq_lens,
+            "seeds": seeds,
+            "inference_repeats": args.inference_repeats,
+        },
+        "results": mark_pareto_front(flat_results),
+    }
+
+
 def looks_like_cuda_runtime_error(exc: BaseException) -> bool:
     text = f"{type(exc).__name__}: {exc}".lower()
     return "cuda" in text and any(
@@ -381,6 +572,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lr", type=float, default=0.003)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--inference-repeats", type=int, default=8)
+    parser.add_argument("--pareto", action="store_true", help="Run a hidden/sequence/seed sweep and mark Pareto front.")
+    parser.add_argument("--hidden-sizes", default=None, help="Comma-separated hidden sizes for --pareto.")
+    parser.add_argument("--seq-lens", default=None, help="Comma-separated sequence lengths for --pareto.")
+    parser.add_argument("--seeds", default=None, help="Comma-separated seeds for --pareto.")
     return parser.parse_args()
 
 
@@ -394,7 +589,7 @@ def main() -> int:
         args.inference_repeats = min(args.inference_repeats, 4)
 
     try:
-        payload = run_benchmark(args)
+        payload = run_pareto_benchmark(args) if args.pareto else run_benchmark(args)
     except ModuleNotFoundError as exc:
         if exc.name != "torch":
             raise
@@ -410,7 +605,7 @@ def main() -> int:
         reason = exception_summary(exc)
         print(f"[warn] Jetson CUDA benchmark failed; retrying on CPU: {reason}", file=sys.stderr)
         args.cpu = True
-        payload = run_benchmark(args)
+        payload = run_pareto_benchmark(args) if args.pareto else run_benchmark(args)
         payload["status"] = "ok_cpu_fallback"
         payload["cuda_fallback_reason"] = reason
 

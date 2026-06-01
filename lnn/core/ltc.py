@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torchdiffeq import odeint
 
+from lnn.core.sequence_utils import select_step_delta, select_step_mask
+
 
 class LTCODEFunc(nn.Module):
     """
@@ -57,8 +59,17 @@ class LTCCell(nn.Module):
         self.ode_method = ode_method
         self.ode_func = LTCODEFunc(input_size, hidden_size)
 
-    def forward(self, x_t: torch.Tensor, h: torch.Tensor, dt: float = 1.0) -> torch.Tensor:
-        t_span = torch.tensor([0.0, dt], device=x_t.device, dtype=x_t.dtype)
+    def forward(self, x_t: torch.Tensor, h: torch.Tensor, dt: float | torch.Tensor = 1.0) -> torch.Tensor:
+        if torch.is_tensor(dt):
+            if dt.dim() > 0 and dt.shape[-1] != 1:
+                raise ValueError(f"LTC dt must be scalar or have trailing dimension 1, got {tuple(dt.shape)}")
+            dt_flat = dt.reshape(-1)
+            if dt_flat.numel() > 1 and not torch.allclose(dt_flat, dt_flat[0].expand_as(dt_flat)):
+                raise ValueError("This LTC implementation requires one shared dt value per batch step")
+            dt_value = dt_flat[0].to(device=x_t.device, dtype=x_t.dtype)
+        else:
+            dt_value = x_t.new_tensor(float(dt))
+        t_span = torch.stack([x_t.new_tensor(0.0), dt_value])
         h_new = odeint(
             lambda t, state: self.ode_func(t, state, x_t),
             h,
@@ -105,7 +116,25 @@ class LTCNetwork(nn.Module):
 
         self.output_proj = nn.Linear(hidden_size, output_size)
 
-    def forward(self, x: torch.Tensor, h0: torch.Tensor | None = None) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        h0: torch.Tensor | None = None,
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """
+        Process a batch of sequences.
+
+        Args:
+            x: Input tensor with shape [batch, time, features].
+            h0: Optional initial hidden state [layers, batch, hidden].
+            dt: Optional scalar or shared per-step deltas. This from-scratch LTC
+                integrates one shared time span per batch step, so [B, T] dt is
+                accepted only when all samples in the step use the same value.
+            mask: Optional observed-feature or sequence mask. Missing input
+                values are zeroed and fully masked steps keep the previous state.
+        """
         batch_size, seq_len, _ = x.shape
         if h0 is None:
             h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size, device=x.device, dtype=x.dtype)
@@ -116,7 +145,15 @@ class LTCNetwork(nn.Module):
             outputs = []
             h_i = h[i]
             for t in range(seq_len):
-                h_i = cell(layer_input[:, t, :], h_i)
+                dt_t = select_step_delta(dt, t, batch_size, seq_len, x.device, x.dtype)
+                input_mask, update_mask = select_step_mask(
+                    mask, t, batch_size, seq_len, self.input_size, x.device, x.dtype
+                )
+                x_t = torch.nan_to_num(layer_input[:, t, :])
+                if i == 0 and input_mask is not None:
+                    x_t = x_t * input_mask
+                h_candidate = cell(x_t, h_i, dt=dt_t)
+                h_i = h_candidate if update_mask is None else update_mask * h_candidate + (1.0 - update_mask) * h_i
                 outputs.append(h_i)
             layer_input = torch.stack(outputs, dim=1)
             h = torch.cat(

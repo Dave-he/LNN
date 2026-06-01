@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from lnn.core.sequence_utils import select_step_delta, select_step_mask
+
 
 class CfCCell(nn.Module):
     """
@@ -33,7 +35,7 @@ class CfCCell(nn.Module):
         )
         self.time_scale = nn.Parameter(torch.ones(hidden_size))
 
-    def forward(self, x_t: torch.Tensor, h: torch.Tensor, dt: float = 1.0) -> torch.Tensor:
+    def forward(self, x_t: torch.Tensor, h: torch.Tensor, dt: float | torch.Tensor = 1.0) -> torch.Tensor:
         combined = torch.cat([x_t, h], dim=-1)
         f = self.f_gate(combined)
         g = self.g_branch(combined)
@@ -81,7 +83,25 @@ class CfCNetwork(nn.Module):
 
         self.output_proj = nn.Linear(hidden_size, output_size)
 
-    def forward(self, x: torch.Tensor, h0: torch.Tensor | None = None) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        h0: torch.Tensor | None = None,
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """
+        Process a batch of sequences.
+
+        Args:
+            x: Input tensor with shape [batch, time, features].
+            h0: Optional initial hidden state [layers, batch, hidden].
+            dt: Optional per-step time deltas. Supports scalar, [T], [B],
+                [B, T], or [B, T, 1] shapes.
+            mask: Optional observed-feature or sequence mask. Supports [B, T],
+                [B, T, features], [T], or [T, features]. Missing input values
+                are zeroed and fully masked steps keep the previous hidden state.
+        """
         batch_size, seq_len, _ = x.shape
         if h0 is None:
             h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size, device=x.device, dtype=x.dtype)
@@ -92,7 +112,15 @@ class CfCNetwork(nn.Module):
             outputs = []
             h_i = h[i]
             for t in range(seq_len):
-                h_i = cell(layer_input[:, t, :], h_i)
+                dt_t = select_step_delta(dt, t, batch_size, seq_len, x.device, x.dtype)
+                input_mask, update_mask = select_step_mask(
+                    mask, t, batch_size, seq_len, self.input_size, x.device, x.dtype
+                )
+                x_t = torch.nan_to_num(layer_input[:, t, :])
+                if i == 0 and input_mask is not None:
+                    x_t = x_t * input_mask
+                h_candidate = cell(x_t, h_i, dt=dt_t)
+                h_i = h_candidate if update_mask is None else update_mask * h_candidate + (1.0 - update_mask) * h_i
                 outputs.append(h_i)
             layer_input = torch.stack(outputs, dim=1)
             h = torch.cat(
