@@ -1,5 +1,6 @@
 from lnn.core.cfc import CfCCell, CfCNetwork
 from lnn.core.control import LNNImitationPolicy
+from lnn.core.noise_adaptive_cfc import NoiseAdaptiveCfCCell, NoiseAdaptiveCfCNetwork
 from lnn.core.graph import GraphLNNPredictor, GraphSnapshotEncoder
 from lnn.core.liquid_neuron import LiquidLayer, LiquidNeuron, LiquidNN
 from lnn.core.long_sequence import (
@@ -37,6 +38,8 @@ __all__ = [
     "LTCNetwork",
     "CfCCell",
     "CfCNetwork",
+    "NoiseAdaptiveCfCCell",
+    "NoiseAdaptiveCfCNetwork",
     "MultimodalFusionLNN",
     "MDNHead",
     "mdn_negative_log_likelihood",

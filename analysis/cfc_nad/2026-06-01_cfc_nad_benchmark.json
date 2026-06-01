@@ -1,0 +1,142 @@
+{
+  "config": {
+    "samples": 1500,
+    "seq_len": 24,
+    "hidden": 16,
+    "batch_size": 32,
+    "epochs": 6,
+    "lr": 0.005,
+    "seed": 42,
+    "device": "cpu",
+    "output": null
+  },
+  "snr_bands": [
+    null,
+    30.0,
+    20.0,
+    10.0,
+    5.0
+  ],
+  "results": {
+    "clean": {
+      "cfc": {
+        "params": 897,
+        "val_mse_noisy": 0.0034343581106783686,
+        "val_mse_clean_target": 0.0034343581106783686,
+        "train_s": 2.066141128540039,
+        "infer_us_per_step": 5.180853000585584
+      },
+      "cfc_nad": {
+        "params": 945,
+        "val_mse_noisy": 0.002828371778562449,
+        "val_mse_clean_target": 0.002828371778562449,
+        "train_s": 2.758694887161255,
+        "infer_us_per_step": 5.9059348659238955
+      },
+      "lstm": {
+        "params": 1233,
+        "val_mse_noisy": 0.00227321265940217,
+        "val_mse_clean_target": 0.00227321265940217,
+        "train_s": 0.8085751533508301,
+        "infer_us_per_step": 3.941609087773567
+      }
+    },
+    "30dB": {
+      "cfc": {
+        "params": 897,
+        "val_mse_noisy": 0.007122249531465164,
+        "val_mse_clean_target": 0.0038616425236282143,
+        "train_s": 2.1837308406829834,
+        "infer_us_per_step": 7.247255332228066
+      },
+      "cfc_nad": {
+        "params": 945,
+        "val_mse_noisy": 0.00565071258208026,
+        "val_mse_clean_target": 0.003334489812993485,
+        "train_s": 2.864198923110962,
+        "infer_us_per_step": 6.381980174981453
+      },
+      "lstm": {
+        "params": 1233,
+        "val_mse_noisy": 0.005319495563921721,
+        "val_mse_clean_target": 0.002646397745263749,
+        "train_s": 0.7374429702758789,
+        "infer_us_per_step": 2.8506569240404214
+      }
+    },
+    "20dB": {
+      "cfc": {
+        "params": 897,
+        "val_mse_noisy": 0.03029390608055004,
+        "val_mse_clean_target": 0.008050506016698437,
+        "train_s": 2.007791042327881,
+        "infer_us_per_step": 4.213609269275758
+      },
+      "cfc_nad": {
+        "params": 945,
+        "val_mse_noisy": 0.023109077543452167,
+        "val_mse_clean_target": 0.006160713219340297,
+        "train_s": 2.829345703125,
+        "infer_us_per_step": 6.922273244258863
+      },
+      "lstm": {
+        "params": 1233,
+        "val_mse_noisy": 0.02502284900865693,
+        "val_mse_clean_target": 0.006071043700195741,
+        "train_s": 0.8555748462677002,
+        "infer_us_per_step": 2.6988378469494805
+      }
+    },
+    "10dB": {
+      "cfc": {
+        "params": 897,
+        "val_mse_noisy": 0.16742565234502158,
+        "val_mse_clean_target": 0.029340804810973183,
+        "train_s": 2.104119062423706,
+        "infer_us_per_step": 4.591789222569857
+      },
+      "cfc_nad": {
+        "params": 945,
+        "val_mse_noisy": 0.15900320851284525,
+        "val_mse_clean_target": 0.04231020192737165,
+        "train_s": 2.881221055984497,
+        "infer_us_per_step": 6.3864793178539925
+      },
+      "lstm": {
+        "params": 1233,
+        "val_mse_noisy": 0.14357944156812585,
+        "val_mse_clean_target": 0.02306645331175431,
+        "train_s": 0.7060801982879639,
+        "infer_us_per_step": 2.4373476631975404
+      }
+    },
+    "5dB": {
+      "cfc": {
+        "params": 897,
+        "val_mse_noisy": 0.44274403046870575,
+        "val_mse_clean_target": 0.05006461504144945,
+        "train_s": 1.9751160144805908,
+        "infer_us_per_step": 4.50227427597783
+      },
+      "cfc_nad": {
+        "params": 945,
+        "val_mse_noisy": 0.42972810372062353,
+        "val_mse_clean_target": 0.05602891030518905,
+        "train_s": 2.990009069442749,
+        "infer_us_per_step": 7.052244483560756
+      },
+      "lstm": {
+        "params": 1233,
+        "val_mse_noisy": 0.4515158680902011,
+        "val_mse_clean_target": 0.060633602781572205,
+        "train_s": 0.7039108276367188,
+        "infer_us_per_step": 1.9732520776094449
+      }
+    }
+  },
+  "summary": {
+    "nad_wins_vs_cfc": 5,
+    "nad_total_bands": 5,
+    "claim_passed": true
+  }
+}
