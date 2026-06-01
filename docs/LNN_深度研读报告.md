@@ -45,6 +45,12 @@ tags: [LNN, reading-report, papers]
 
 > ⚠️ **添加指南**：出现新论文时，请通过 `Summarization Agent` 生成独立报告到 `docs/reports/` 目录，并在此处追加精简版与链接。
 
+### [2024] Exploring Liquid Neural Networks on Loihi-2
+- **独立报告**：[[docs/reports/Exploring_Liquid_Neural_Networks_on_Loihi-2_研读报告.md]]
+- **核心问题**：将基于连续常微分方程（ODE）的 LNN 算法高效部署在运行离散时间步、资源极其受限的神经拟态芯片（Loihi-2）上面临的软硬件协同适配难题。
+- **方法论**：利用级联卷积层提取 CIFAR-10 空间特征，集成至 NCP 驱动 LNN，离线训练后进行参数量化，并基于 LAVA 框架部署于 Loihi-2 上运行。
+- **关键成果**：实现了 91.3% 的分类准确度，单帧功耗仅 213 $\mu$J，推理延迟低至 15.2 ms，能效高达 25.3 GOP/s/W。
+
 ### [2025] Accuracy, Memory Efficiency and Generalization: A Comparative Study on LNN and RNN
 - **独立报告**：[[docs/reports/Comparative_Study_on_LNN_and_RNN_研读报告.md]]
 - **核心问题**：在序列建模中，传统 RNN 面临梯度消失、计算开销大及 OOD 泛化能力弱的问题。
@@ -56,6 +62,19 @@ tags: [LNN, reading-report, papers]
 - **核心问题**：天然气价格受多因素影响剧烈波动，传统模型无法持续适应市场机制的突变。
 - **方法论**：使用 LTC、CfC 等 LNN 架构预测非平稳时序，利用动态内部状态适应环境。
 - **关键成果**：LNN 的自适应时间尺度调制能显著降低高波动市场条件下的短期预测误差。
+
+### [2026] Liquid Neural Networks: Next-Generation AI for Telecom from First Principles
+- **独立报告**：[[docs/reports/LNN_Next-Generation_AI_for_Telecom_研读报告.md]]
+- **核心问题**：传统黑盒深度学习模型在高速时变和多径干扰剧烈的 6G 移动通信中鲁棒性差、不可解释且计算开销极高。
+- **方法论**：自第一性原理（线虫动力学）引入 LTC、CfC 及 NCP，详细探索其在通感一体化（ISAC）与自组织网络（SON）中的应用。
+- **关键成果**：在信道预测（Channel Prediction）与 MIMO 动态波束成形（Beamforming）中，性能全面优于经典循环神经网络与传统 WMMSE 算法。
+
+### [2026] Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition
+- **独立报告**：[[docs/reports/Comparative_Analysis_of_LNN_and_LSTM_研读报告.md]]
+- **核心问题**：评估离散时间步模型 (LSTM) 与连续时间步模型 (LNN/CfC) 在面对抗噪声、高频神经拟态事件、笔画序列以及极度不平衡且不规则采样的临床 ICU 时序数据时的鲁棒性、能效与真实应用表现。
+- **方法论**：控制核心单元以外的所有模块与特征，头对头对比 128/256 单元 LSTM 与 CfC 在 N-MNIST、IAM 手写文本、QuickDraw 笔迹和 PhysioNet Sepsis-3 上的分类表现及 Temporal Dropout 抗丢失能力。
+- **关键成果**：LNN 在 N-MNIST 上以 99.38% 胜出，并在 30% 帧丢失测试中保持 91.84% 准确度 (LSTM 坠至 77.48%)；败血症预测中将离散 LSTM 的 151 例临床假告警骤降至仅 2 例，取得 0.94 的高精确率，极佳地抑制了告警疲劳。
+
 
 ---
 
@@ -71,9 +90,6 @@ tags: [LNN, reading-report, papers]
 | 边缘部署与压缩 | [[docs/reports/LNN_训练方向_边缘部署与压缩_可行报告]] | 第二优先级 |
 | 图时空与通信系统 | [[docs/reports/LNN_训练方向_图时空与通信系统_可行报告]] | 中期研究 |
 | 长序列与视频理解 | [[docs/reports/LNN_训练方向_长序列与视频理解_可行报告]] | 中期研究 |
-| 物理建模与多模态科学发现 | [[docs/reports/LNN_训练方向_物理建模与多模态科学发现_可行报告]] | 中期研究 |
-
-专题检索矩阵：[[docs/LNN_训练论文检索矩阵_2026-05-28]]
 
 ---
 
@@ -126,20 +142,6 @@ tags: [LNN, reading-report, papers]
 4. **参数效率**：LTC 仅需 LSTM 50% 的参数即可达到可比精度
 5. **速度权衡**：CfC 是 LNN 的工程首选（比 LTC 快 4-5 倍，精度几乎相同）
 
-### 4.5 本机 Jetson 最小论文思路验证（2026-05-28）
-
-脚本：`scripts/minimal_lnn_paper_validation.py`
-
-结果：[[analysis/jetson/2026-05-28_minimal_lnn_paper_validation]]
-
-验证内容：
-
-- 构造非平稳、不规则采样的合成序列，显式传入每步 `dt`。
-- 对比 `CfC-DT`、`Euler-LTC-DT` 与 `GRU+dt`。
-- 记录 ID/OOD MSE、MAE、OOD 退化率、参数量、训练时间与推理吞吐。
-
-本机环境为 aarch64 Jetson/Tegra；当前 CUDA runtime 与 PyTorch wheel 不匹配，`torch.cuda.is_available()` 为 false，因此该次验证走 CPU 路径。结果表明代码链路已在本机实际跑通，`Euler-LTC-DT` 在该 smoke 配置下取得最低 ID/OOD MSE。
-
 ---
 
 ## 5. 相关资料与开源生态
@@ -153,10 +155,10 @@ tags: [LNN, reading-report, papers]
 
 - **2026-06-01**：[[docs/daily/2026-06-01_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 22 个。
 - **2026-05-31**：[[docs/daily/2026-05-31_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 22 个。
-- **2026-05-30**：[[docs/daily/2026-05-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 18 个。
-- **2026-05-29**：[[docs/daily/2026-05-29_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 43 个，模型 17 个。
-- **2026-05-27**：[[docs/daily/2026-05-27_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 24 个。
+- **2026-05-30**：[[docs/daily/2026-05-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 21 个。
+- **2026-05-29**：[[docs/daily/2026-05-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 43 个，模型 18 个。
 - **2026-05-28**：[[docs/daily/2026-05-28_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 43 个，模型 19 个。
+- **2026-05-27**：[[docs/daily/2026-05-27_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 24 个。
 - **2026-05-26**：[[docs/daily/2026-05-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 24 个。
 - **2026-05-25**：[[docs/daily/2026-05-25_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 44 个，模型 21 个。
 <!-- daily-lnn-index:end -->

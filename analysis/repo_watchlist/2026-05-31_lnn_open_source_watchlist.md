@@ -7,6 +7,13 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-05-31
 
 ## GitHub 仓库
+### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
+- 更新：2026-05-31
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
+
 ### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
 - 更新：2026-05-30
 - Star / Fork：1 / 0
@@ -20,13 +27,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：未标注
 - 说明：Liquid Neural Networks for cancer detection from cfDNA fragment time constants. Within-cohort AUC=0.91, cross-study LOSO AUC=0.40. Exploratory research.
-
-### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-05-30
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
 
 ### [2841649220/LSHN](https://github.com/2841649220/LSHN)
 - 更新：2026-05-29
@@ -149,121 +149,121 @@ tags: [LNN, repo-watchlist, automation]
 
 ## Hugging Face 模型
 ### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
-- 更新：2026-05-30
-- 下载 / Likes：17084 / 269
+- 更新：2026-05-31
+- 下载 / Likes：27677 / 318
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [OrdenWills/LFM2.5-350M-home-assistant-sft](https://huggingface.co/OrdenWills/LFM2.5-350M-home-assistant-sft)
-- 更新：2026-05-30
-- 下载 / Likes：5016 / 4
+- 更新：2026-05-31
+- 下载 / Likes：5280 / 4
 - 任务：text-generation
 - Tags：safetensors, gguf, lfm2, smart-home, home-automation, tool-calling, function-calling, iot
 
-### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
-- 更新：2026-05-30
-- 下载 / Likes：473 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
-
-### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
-- 更新：2026-05-30
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
-
-### [blockblockblock/LFM2.5-8B-A1B-uncensored-abliterated](https://huggingface.co/blockblockblock/LFM2.5-8B-A1B-uncensored-abliterated)
-- 更新：2026-05-30
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, lfm2.5, liquid, conversational, abliterated
-
-### [mradermacher/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Qwen3.6-35B-A3B-DISTILL-GGUF](https://huggingface.co/mradermacher/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Qwen3.6-35B-A3B-DISTILL-GGUF)
-- 更新：2026-05-30
-- 下载 / Likes：0 / 0
+### [Brunobkr/OFFELLIA_f16_LFM2.5-8B-A1B.gguf](https://huggingface.co/Brunobkr/OFFELLIA_f16_LFM2.5-8B-A1B.gguf)
+- 更新：2026-05-31
+- 下载 / Likes：240 / 0
 - 任务：unknown
 - Tags：gguf, endpoints_compatible, region:us, conversational
-
-### [owenqwenllmwine/lfm25-8b-a1b-kimi-chat-sft-1k-lora](https://huggingface.co/owenqwenllmwine/lfm25-8b-a1b-kimi-chat-sft-1k-lora)
-- 更新：2026-05-30
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
-
-### [mradermacher/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Qwen3.6-35B-A3B-DISTILL2-i1-GGUF](https://huggingface.co/mradermacher/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Qwen3.6-35B-A3B-DISTILL2-i1-GGUF)
-- 更新：2026-05-30
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, distill, finetune, unsloth, moe, mixture of experts, en
-
-### [mradermacher/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Qwen3.6-35B-A3B-DISTILL2-GGUF](https://huggingface.co/mradermacher/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Qwen3.6-35B-A3B-DISTILL2-GGUF)
-- 更新：2026-05-30
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, distill, finetune, unsloth, moe, mixture of experts, en
-
-### [Tivaphraen/LFM2-8B-A1B-Instruct-QwenDistill](https://huggingface.co/Tivaphraen/LFM2-8B-A1B-Instruct-QwenDistill)
-- 更新：2026-05-30
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：gguf, llama-cpp, quantization, moe, text-generation, en, fr, base_model:DavidAU/LFM2-8B-A1B-Instruct-Quantum-IQ1C-Qwen3.6-35B-A3B-DISTILL
-
-### [batiai/LFM2.5-8B-A1B-GGUF](https://huggingface.co/batiai/LFM2.5-8B-A1B-GGUF)
-- 更新：2026-05-30
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
 
 ### [Brunobkr/OFFELLIA_MXFP4_MOE_LFM2.5-8B-A1B.gguf](https://huggingface.co/Brunobkr/OFFELLIA_MXFP4_MOE_LFM2.5-8B-A1B.gguf)
-- 更新：2026-05-30
-- 下载 / Likes：0 / 0
+- 更新：2026-05-31
+- 下载 / Likes：239 / 0
 - 任务：unknown
 - Tags：gguf, endpoints_compatible, region:us, conversational
 
-### [dealignai/LFM2.5-8B-A1B-MXFP8-CRACK](https://huggingface.co/dealignai/LFM2.5-8B-A1B-MXFP8-CRACK)
-- 更新：2026-05-30
+### [LiberteEPFL/lfm25-1.2b-dpo-molora-all-linear-e8xr10-bigchat-v2-s1](https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-molora-all-linear-e8xr10-bigchat-v2-s1)
+- 更新：2026-05-31
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
+### [LiberteEPFL/lfm25-1.2b-dpo-lora-all-linear-r80-bigchat-v2-s2](https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-lora-all-linear-r80-bigchat-v2-s2)
+- 更新：2026-05-31
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
+### [LiberteEPFL/lfm25-1.2b-dpo-lora-all-linear-r80-bigchat-v2-s1](https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-lora-all-linear-r80-bigchat-v2-s1)
+- 更新：2026-05-31
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
+### [LiberteEPFL/lfm25-1.2b-dpo-bigchat-v2-s1](https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-bigchat-v2-s1)
+- 更新：2026-05-31
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
+### [LiberteEPFL/lfm25-1.2b-dpo-bigchat-v2-s2](https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-bigchat-v2-s2)
+- 更新：2026-05-31
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
+### [developerjeremylive/LFM2.5-8B-A1B-GGUF-etheroi](https://huggingface.co/developerjeremylive/LFM2.5-8B-A1B-GGUF-etheroi)
+- 更新：2026-05-31
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：mlx, safetensors, lfm2_moe, apple-silicon, abliterated, uncensored, crack, reasoning
+- Tags：gguf, liquid, lfm2, edge, llama.cpp, text-generation, en, ar
 
-### [Brunobkr/OFFELLIA_f16_LFM2.5-8B-A1B.gguf](https://huggingface.co/Brunobkr/OFFELLIA_f16_LFM2.5-8B-A1B.gguf)
-- 更新：2026-05-30
+### [developerjeremylive/LFM2.5-8B-A1B-etheroi](https://huggingface.co/developerjeremylive/LFM2.5-8B-A1B-etheroi)
+- 更新：2026-05-31
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
+
+### [LiberteEPFL/lfm25-1.2b-dpo-molora-all-linear-e8xr10-bigchat-v2-pc](https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-molora-all-linear-e8xr10-bigchat-v2-pc)
+- 更新：2026-05-31
 - 下载 / Likes：0 / 0
 - 任务：unknown
-- Tags：gguf, endpoints_compatible, region:us, conversational
+- Tags：transformers, safetensors, generated_from_trainer, dpo, trl, arxiv:2305.18290, base_model:LiberteEPFL/lfm25-1.2b-sft-bigchat-v2, base_model:finetune:LiberteEPFL/lfm25-1.2b-sft-bigchat-v2
+
+### [sjakek/LFM-2.5-8B-1B-hermes-ft](https://huggingface.co/sjakek/LFM-2.5-8B-1B-hermes-ft)
+- 更新：2026-05-31
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：mlx, safetensors, gguf, lfm2_moe, lfm2, hermes, tool-calling, llama.cpp
+
+### [Echo9Zulu/LFM2.5-8B-A1B-int4_sym-awq-ov](https://huggingface.co/Echo9Zulu/LFM2.5-8B-A1B-int4_sym-awq-ov)
+- 更新：2026-05-31
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：openvino, lfm2_moe, OpenArc, OpenVINO, Optimum-Intel, base_model:LiquidAI/LFM2.5-8B-A1B, base_model:finetune:LiquidAI/LFM2.5-8B-A1B, license:apache-2.0
 
 ### [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)
 - 更新：2026-05-29
-- 下载 / Likes：49259 / 365
+- 下载 / Likes：48843 / 366
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2, edge, moe
 
 ### [LiquidAI/LFM2.5-8B-A1B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF)
 - 更新：2026-05-29
-- 下载 / Likes：23685 / 122
+- 下载 / Likes：41828 / 133
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2, edge, llama.cpp, text-generation, en, ar
 
 ### [LiquidAI/LFM2-350M](https://huggingface.co/LiquidAI/LFM2-350M)
 - 更新：2026-05-29
-- 下载 / Likes：17280 / 249
+- 下载 / Likes：16923 / 249
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, edge, conversational, en
 
 ### [LiquidAI/LFM2.5-8B-A1B-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit)
 - 更新：2026-05-29
-- 下载 / Likes：2025 / 8
+- 下载 / Likes：2805 / 10
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
 
 ### [LiquidAI/LFM2.5-8B-A1B-MLX-4bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-4bit)
 - 更新：2026-05-29
-- 下载 / Likes：1072 / 1
+- 下载 / Likes：1375 / 2
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
 
 ### [LiquidAI/LFM2.5-8B-A1B-MLX-6bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-6bit)
 - 更新：2026-05-29
-- 下载 / Likes：448 / 1
+- 下载 / Likes：545 / 1
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation

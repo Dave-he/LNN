@@ -1,10 +1,495 @@
 {
   "date": "2026-05-29",
-  "generated_at": "2026-05-28T22:39:44.312726+00:00",
-  "errors": [
-    "arXiv fetch failed: The read operation timed out"
+  "generated_at": "2026-05-29T23:51:04.517066+00:00",
+  "errors": [],
+  "papers": [
+    {
+      "id": "2605.27467v1",
+      "title": "Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition: Robustness, Efficiency, and Clinical Utility",
+      "authors": [
+        "Ye Kyaw Thu",
+        "Thazin Myint Oo",
+        "Thepchai Supnithi"
+      ],
+      "published": "2026-05-26",
+      "updated": "2026-05-26",
+      "summary": "Traditional Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) units operate on discrete time steps, often failing to capture the fluid temporal dynamics of real-world physical processes. Liquid Neural Networks (LNNs), specifically Closed-form Continuous-time (CfC) networks, address this by modeling the hidden state evolution as a continuous differential equation. In this paper, we conduct a comprehensive benchmarking study across four distinct sequential modalities: neuromorphic event-based data (N-MNIST), stroke-based drawing (QuickDraw), visual handwriting (IAM), and physiological time-series (PhysioNet Sepsis-3). Furthermore, we perform a rigorous stress test using temporal dropout to evaluate model robustness against missing data. Our findings reveal that LNNs consistently provide superior parameter efficiency and significantly higher robustness in natively temporal domains and clinical environments where data sparsity is prevalent. This extended preprint provides additional background on related datasets and the LNN theoretical lineage, supplemented with a detailed appendix documenting our full implementation and experimental settings.",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2605.27467v1",
+      "pdf_url": "https://arxiv.org/pdf/2605.27467v1",
+      "keyword_score": 6
+    },
+    {
+      "id": "2605.24047v1",
+      "title": "EMMA: Extracting Multiple physical parameters from Multimodal Data",
+      "authors": [
+        "Farhat Shaikh",
+        "Ayan Banerjee",
+        "Sandeep Gupta"
+      ],
+      "published": "2026-05-21",
+      "updated": "2026-05-21",
+      "summary": "We introduce EMMA, a physics-informed multimodal framework that recovers all identifiable dynamical parameters of a system directly from raw video, audio, and image-based time-series observations. Unlike prior video-only approaches that struggle with occluded states, hidden actuation inputs, or assumptions about known initial conditions and coordinate frames, EMMA performs joint inference of explicit parameters, implicit dynamical components, and calibration invariants within a unified continuous-time model. EMMA leverages a Liquid Time-Constant (LTC) network to learn latent dynamics from heterogeneous modalities while a physics-constrained loss enforces consistency with the governing differential equations. A unified feature pipeline enables consistent alignment across video trajectories, acoustic signatures, and chart-derived measurements, allowing EMMA to estimate parameters under forced, implicit, and multivariate dynamics without requiring segmentation masks, differentiable rendering, or specialized sensors. Across 100+ scenarios including five standard dynamical benchmarks (75 Delfys videos), real-world rover and quadrotor systems with hidden inputs, and simulation-chart case studies spanning biological and chaotic systems, EMMA delivers robust multi-parameter recovery and significantly outperforms existing single-modality and equation-discovery baselines. Our results establish EMMA as a general, scalable solution for physics-consistent model extraction from opportunistic multimodal data. Code and data are available at: https://github.com/ImpactLabASU/EMMA-CVPR2026",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2605.24047v1",
+      "pdf_url": "https://arxiv.org/pdf/2605.24047v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2605.08176v1",
+      "title": "Physics-Modeled Neural Networks",
+      "authors": [
+        "Raul Felipe-Sosa",
+        "Angel Martin del Rey",
+        "Maria Flores Ceballos"
+      ],
+      "published": "2026-05-05",
+      "updated": "2026-05-05",
+      "summary": "We introduce \\emph{Dynamical Physics-Modeled Neural Networks} (DynPMNNs), a continuous-time deep learning architecture in which each hidden layer is defined as the solution of an ordinary differential equation. Unlike classical feed-forward networks, this approach replaces static activation functions with time-evolving dynamical systems, providing a biologically inspired interpretation of hidden-layer behavior and enabling the integration of physically meaningful models. The framework is rigorously grounded in Reproducing Kernel Banach Spaces (RKBSs), allowing DynPMNNs to be characterized as finite-dimensional solutions of an abstract training problem and revealing structural connections with standard neural networks. We present a concrete implementation based on the FitzHugh--Nagumo model for neuronal activation, where numerical ODE solvers are embedded into the computational graph via Euler-type schemes. Both network weights and dynamical parameters are trained jointly. Through experiments on the California Housing dataset, we compare DynPMNNs with Neural ODEs (NODEs) and Closed-form Continuous-Time Networks (CfCs). Despite using fewer trainable parameters, DynPMNNs achieve competitive performance. These results position DynPMNNs as a principled bridge between dynamical systems and deep learning, with promising directions for further research in expressivity, stability, and physics-based modeling.",
+      "categories": [
+        "cs.LG",
+        "cs.NE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2605.08176v1",
+      "pdf_url": "https://arxiv.org/pdf/2605.08176v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2604.24788v1",
+      "title": "Liquid Neural Network Models for Natural Gas Spot Price Time-Series Forecasting",
+      "authors": [
+        "Yiqian Liu",
+        "Jiayi Niu",
+        "Adam Kelleher",
+        "Subhabrata Das"
+      ],
+      "published": "2026-04-24",
+      "updated": "2026-04-24",
+      "summary": "Natural gas is undoubtedly an essential component of the global energy system. Accurate short-term forecasting of natural gas price is challenging due to pronounced volatility driven by seasonal demand patterns, geopolitical developments, and shifting macroeconomic conditions. The nonlinear dynamics and frequent regime changes can limit the effectiveness of traditional time-series models. In this study, we explore the use of Liquid Neural Networks (LNNs) for short-horizon forecasting of the Henry Hub spot price, a primary benchmark for pricing. LNNs are designed to adapt continuously to evolving temporal patterns through dynamic internal state updates, making them well suited for nonstationary price behavior. By improving forecast accuracy in volatile market conditions, this work aims to reduce uncertainty and enhance decision support across energy trading and power market applications.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.24788v1",
+      "pdf_url": "https://arxiv.org/pdf/2604.24788v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2604.18274v2",
+      "title": "LiquidTAD: Efficient Temporal Action Detection via Parallel Liquid-Inspired Temporal Relaxation",
+      "authors": [
+        "Zepeng Sun",
+        "Naichuan Zheng",
+        "Hailun Xia",
+        "Junjie Wu",
+        "Liwei Bao",
+        "Xiaotai Zhang"
+      ],
+      "published": "2026-04-20",
+      "updated": "2026-04-27",
+      "summary": "Temporal Action Detection (TAD) requires precise localization of action boundaries within long, untrimmed video sequences. While current high-performing methods achieve strong accuracy, they are often characterized by excessive parameter counts, substantial computational overhead, and a reliance on specialized operators that hinder deployment across diverse hardware platforms. This paper presents LiquidTAD, a framework that distills the exponential relaxation prior of liquid neural dynamics into a parallel temporal operator, rather than reproducing full Liquid Neural Network (LNN) dynamics. By introducing a Parallel Liquid-inspired Relaxation mechanism, sequential ODE solving is avoided through a fully vectorized, non-recursive formulation built entirely upon standard neural operations, enabling hardware-agnostic deployment with linear complexity with respect to the temporal length. A complementary Hierarchical Decay-Rate Sharing Strategy further adapts this relaxation prior across feature pyramid levels, stabilizing optimization and implicitly compensating for temporal compression in deeper layers. Experimental evaluations on THUMOS-14 and ActivityNet-1.3 demonstrate that LiquidTAD achieves accuracy competitive with strong baselines while substantially lowering the model footprint. Specifically, on THUMOS-14, LiquidTAD achieves 69.46\\% average mAP with only 10.82M parameters and 27.17G FLOPs, reducing the parameter count by over 60\\% compared with ActionFormer.",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.18274v2",
+      "pdf_url": "https://arxiv.org/pdf/2604.18274v2",
+      "keyword_score": 2
+    },
+    {
+      "id": "2604.14484v2",
+      "title": "A Nonasymptotic Theory of Gain-Dependent Error Dynamics in Behavior Cloning",
+      "authors": [
+        "Junghoon Seo"
+      ],
+      "published": "2026-04-15",
+      "updated": "2026-05-11",
+      "summary": "Behavior cloning (BC) policies on position-controlled robots inherit the closed-loop response of the underlying PD controller, yet the nonasymptotic finite-horizon consequences of controller gains for BC failure remain open. We show that independent sub-Gaussian action errors propagate through the gain-dependent closed-loop dynamics to yield sub-Gaussian position errors whose proxy matrix $X_\\infty(K)$ governs the failure tail. The probability of horizon-$T$ task failure factorizes into a gain-dependent amplification index $Γ_T(K)$ and the validation loss plus a generalization slack, so training loss alone cannot predict closed-loop performance. Under shape-preserving upper-bound structural assumptions, the proxy admits the scalar bound $X_\\infty(K)\\preceqΨ(K)\\bar X$, with $Ψ(K)$ decomposed into label difficulty, injection strength, and contraction. This ranks the four canonical regimes with compliant-overdamped (CO) tightest, stiff-underdamped (SU) loosest, and the stiff-overdamped versus compliant-underdamped ordering system-dependent. For the canonical scalar second-order PD system, the closed-form continuous-time stationary variance $X_\\infty^{\\mathrm{c}}(α,β)=σ^2α/(2β)$ is strictly monotone in stiffness and damping over the entire stable orthant, covering both underdamped and overdamped regimes, and the exact zero-order-hold (ZOH) discretization inherits this monotonicity. The analysis gives a nonasymptotic finite-horizon extension of the gain-dependent error-attenuation explanation of Bronars et al.",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "math.OC"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.14484v2",
+      "pdf_url": "https://arxiv.org/pdf/2604.14484v2",
+      "keyword_score": 1
+    },
+    {
+      "id": "2604.10815v2",
+      "title": "MeloTune: On-Device Arousal Learning and Peer-to-Peer Mood Coupling for Proactive Music Curation",
+      "authors": [
+        "Hongwei Xu"
+      ],
+      "published": "2026-04-12",
+      "updated": "2026-04-14",
+      "summary": "MeloTune is an iPhone-deployed music agent that instantiates the Mesh Memory Protocol (MMP) and Symbolic-Vector Attention Fusion (SVAF) as a production system for affect-aware music curation with peer-to-peer mood coupling. Each device runs two closed-form continuous-time (CfC) networks: a private listener-level CfC that predicts a short-horizon affective trajectory on Russell's circumplex and drives proactive curation, and a shared mesh-runtime CfC at MMP Layer 6 that integrates Cognitive Memory Blocks (CMBs) from co-listening peers. CfC hidden states never cross the wire; only structured CMBs do. A Personal Arousal Function (PAF) replaces the standard linear mapping from audio intensity to psychological arousal with a per-listener learned adjustment, trained from behavioral signals (skip, completion, favorite, volume) and from drift between user-declared mood and machine inference. The same track receives different arousal predictions for different listeners. The model (94,552 parameters) achieves trajectory MAE 0.414, pattern accuracy 96.6%, and intent accuracy 69.4% on held-out validation. PAF evidence from a live deployment session (46 observations across 11 genres) demonstrates that the learning loop operates end-to-end, with pop reaching full confidence after 22 observations. All inference runs on-device via CoreML. To our knowledge, this is the first production deployment of MMP/SVAF on consumer mobile hardware. The accompanying SDK (sym-swift v0.3.78, SYMCore v0.3.7) enforces strict protocol conformance. Music is the case study; the substrate is the contribution.",
+      "categories": [
+        "cs.SD",
+        "cs.AI",
+        "cs.MA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.10815v2",
+      "pdf_url": "https://arxiv.org/pdf/2604.10815v2",
+      "keyword_score": 7
+    },
+    {
+      "id": "2604.07219v1",
+      "title": "Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks",
+      "authors": [
+        "Xinquan Wang",
+        "Mingjun Ying",
+        "Hongren Chen",
+        "Guanyue Qian",
+        "Xingchen Liu",
+        "Peijie Ma",
+        "Dipankar Shakya",
+        "Christos Argyropoulos",
+        "Theodore S. Rappaport"
+      ],
+      "published": "2026-04-08",
+      "updated": "2026-04-08",
+      "summary": "Sub-terahertz (sub-THz) multi-user multiple-input multiple-output (MU-MIMO) systems unlock immense bandwidth for 6G wireless communications. However, practical deployment of wireless systems in sub-THz bands faces critical challenges such as increased atmospheric absorption, reduced channel coherence time due to increased Doppler spread at higher carrier frequencies, and hardware bottlenecks as low-loss sub-THz phase shifters are difficult to realize. To overcome the hardware and channel estimation challenges of sub-THz systems, this paper proposes a hybrid beamforming (BF) framework that integrates reconfigurable liquid crystal (LC) antennas with a liquid neural network (LNN) for transmitter. Specifically, we employ an LC antenna as the analog BF stage of a hybrid BF architecture, exploiting its voltage-driven permittivity tunability to achieve high-gain beam steering without the need for lossy phase shifters. For digital BF, we utilize an ordinary differential equations-defined LNN to learn temporal channel dynamics, and use a manifold optimization technique to compress the search space. We validated the proposed method on simulated site-specific 108 GHz ray-tracing channels in an urban scenario using NYURay, a ray-tracing simulator validated against 142 GHz propagation measurements. The 108 GHz carrier frequency matches the operating band of the LC antenna hardware. The proposed method achieves an 88.6\\% spectral efficiency (SE) gain and higher robustness to imperfect channel estimation compared to the learning-aided gradient descent and gated recurrent unit machine learning baselines, and 1.9 times higher SE than the 3GPP TR~38.901 standard antenna model, highlighting the potential of LC-based hardware for sub-THz communications.",
+      "categories": [
+        "cs.IT",
+        "eess.SP"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.07219v1",
+      "pdf_url": "https://arxiv.org/pdf/2604.07219v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2604.03955v1",
+      "title": "Symbolic-Vector Attention Fusion for Collective Intelligence",
+      "authors": [
+        "Hongwei Xu"
+      ],
+      "published": "2026-04-05",
+      "updated": "2026-04-05",
+      "summary": "When autonomous agents observe different domains of a shared environment, each signal they exchange mixes relevant and irrelevant dimensions. No existing mechanism lets the receiver evaluate which dimensions to absorb. We introduce Symbolic-Vector Attention Fusion (SVAF), the content-evaluation half of a two-level coupling engine for collective intelligence. SVAF decomposes each inter-agent signal into 7 typed semantic fields, evaluates each through a learned fusion gate, and produces a remix -- new knowledge from the intersection of two domains. A band-pass model yields four outcomes (redundant, aligned, guarded, rejected), solving both selectivity and redundancy. The fusion gate independently discovers a cross-domain relevance hierarchy: mood emerges as the highest-weight field by epoch 1, before accuracy plateaus -- consistent with independent mechanistic evidence that LLM emotion representations are structurally embedded along valence-arousal axes. SVAF forms Layer 4 of the Mesh Memory Protocol (MMP); the other half of the coupling engine is a per-agent Closed-form Continuous-time (CfC) neural network at Layer 6, whose learned per-neuron time constants (tau) create the temporal dynamics from which collective intelligence emerges: fast neurons synchronise affect across agents in seconds, while slow neurons preserve domain expertise indefinitely. SVAF determines what enters each agent's cognitive state; CfC determines how that state evolves. Trained on 237K samples from 273 narrative scenarios, SVAF achieves 78.7% three-class accuracy. We verify the complete mesh cognition loop -- from per-field evaluation through remix, CfC state evolution, tau-modulated peer blending, and autonomous action -- in a live deployment with 7 nodes across macOS, iOS, and web.",
+      "categories": [
+        "cs.MA",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.03955v1",
+      "pdf_url": "https://arxiv.org/pdf/2604.03955v1",
+      "keyword_score": 6
+    },
+    {
+      "id": "2604.02149v1",
+      "title": "AEGIS: Adversarial Entropy-Guided Immune System -- Thermodynamic State Space Models for Zero-Day Network Evasion Detection",
+      "authors": [
+        "Vickson Ferrel"
+      ],
+      "published": "2026-04-02",
+      "updated": "2026-04-02",
+      "summary": "As TLS 1.3 encryption limits traditional Deep Packet Inspection (DPI), the security community has pivoted to Euclidean Transformer-based classifiers (e.g., ET-BERT) for encrypted traffic analysis. However, these models remain vulnerable to byte-level adversarial morphing -- recent pre-padding attacks reduced ET-BERT accuracy to 25.68%, while VLESS Reality bypasses certificate-based detection entirely. We introduce AEGIS: an Adversarial Entropy-Guided Immune System powered by a Thermodynamic Variance-Guided Hyperbolic Liquid State Space Model (TVD-HL-SSM). Rather than competing in the Euclidean payload-reading domain, AEGIS discards payload bytes in favor of 6-dimensional continuous-time flow physics projected into a non-Euclidean Poincare manifold. Liquid Time-Constants measure microsecond IAT decay, and a Thermodynamic Variance Detector computes sequence-wide Shannon Entropy to expose automated C2 tunnel anomalies. A pure C++ eBPF Harvester with zero-copy IPC bypasses the Python GIL, enabling a linear-time O(N) Mamba-3 core to process 64,000-packet swarms at line-rate. Evaluated on a 400GB, 4-tier adversarial corpus spanning backbone traffic, IoT botnets, zero-days, and proprietary VLESS Reality tunnels, AEGIS achieves an F1-score of 0.9952 and 99.50% True Positive Rate at 262 us inference latency on an RTX 4090, establishing a new state-of-the-art for physics-based adversarial network defense.",
+      "categories": [
+        "cs.CR",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.02149v1",
+      "pdf_url": "https://arxiv.org/pdf/2604.02149v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2603.27058v1",
+      "title": "Liquid Networks with Mixture Density Heads for Efficient Imitation Learning",
+      "authors": [
+        "Nikolaus Correll"
+      ],
+      "published": "2026-03-28",
+      "updated": "2026-03-28",
+      "summary": "We compare liquid neural networks with mixture density heads against diffusion policies on Push-T, RoboMimic Can, and PointMaze under a shared-backbone comparison protocol that isolates policy-head effects under matched inputs, training budgets, and evaluation settings. Across tasks, liquid policies use roughly half the parameters (4.3M vs. 8.6M), achieve 2.4x lower offline prediction error, and run 1.8 faster at inference. In sample-efficiency experiments spanning 1% to 46.42% of training data, liquid models remain consistently more robust, with especially large gains in low-data and medium-data regimes. Closed-loop results on Push-T and PointMaze are directionally consistent with offline rankings but noisier, indicating that strong offline density modeling helps deployment while not fully determining closed-loop success. Overall, liquid recurrent multimodal policies provide a compact and practical alternative to iterative denoising for imitation learning.",
+      "categories": [
+        "cs.LG",
+        "cs.RO"
+      ],
+      "abs_url": "https://arxiv.org/abs/2603.27058v1",
+      "pdf_url": "https://arxiv.org/pdf/2603.27058v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2603.00459v1",
+      "title": "Explainable Continuous-Time Mask Refinement with Local Self-Similarity Priors for Medical Image Segmentation",
+      "authors": [
+        "Rajdeep Chatterjee",
+        "Sudip Chakrabarty",
+        "Trishaani Acharjee"
+      ],
+      "published": "2026-02-28",
+      "updated": "2026-02-28",
+      "summary": "Accurate semantic segmentation of foot ulcers is essential for automated wound monitoring, yet boundary delineation remains challenging due to tissue heterogeneity and poor contrast with surrounding skin. To overcome the limitations of standard intensity-based networks, we present LSS-LTCNet:an ante-hoc explainable framework synergizing deterministic structural priors with continuous-time neural dynamics. Our architecture departs from traditional black-box models by employing a Local Self-Similarity (LSS) mechanism that extracts dense, illumination-invariant texture descriptors to explicitly disentangle necrotic tissue from background artifacts. To enforce topological precision, we introduce a Liquid Time-Constant (LTC) refinement module that treats boundary evolution as an ODEgoverned dynamic system, iteratively refining masks over continuous time-steps. Comprehensive evaluation on the MICCAI FUSeg dataset demonstrates that LSS-LTCNet achieves state-of-the-art boundary alignment, securing a peak Dice score of 86.96% and an exceptional 95th percentile Hausdorff Distance (HD95) of 8.91 pixels. Requiring merely 25.70M parameters, the model significantly outperforms heavier U-Net and transformer baselines in efficiency. By providing inherent visual audit trails alongside high-fidelity predictions, LSS-LTCNet offers a robust and transparent solution for computer-aided diagnosis in mobile healthcare (mHealth) settings.",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2603.00459v1",
+      "pdf_url": "https://arxiv.org/pdf/2603.00459v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2603.00153v1",
+      "title": "Pulse-Driven Neural Architecture: Learnable Oscillatory Dynamics for Robust Continuous-Time Sequence Processing",
+      "authors": [
+        "Paras Sharma"
+      ],
+      "published": "2026-02-25",
+      "updated": "2026-02-25",
+      "summary": "We introduce PDNA (Pulse-Driven Neural Architecture), a method for augmenting continuous-time recurrent networks with learnable oscillatory dynamics that maintain internal state evolution independently of external input. Built on Closed-form Continuous-time (CfC) networks, PDNA adds two components: (1) a pulse module that generates structured oscillations $A \\cdot \\sin(ωt + \\varphi(h))$ with learnable frequencies and state-dependent phase, and (2) a self-attend module that applies recurrent self-attention to the hidden state. Through a controlled ablation study on sequential MNIST (sMNIST) with five random seeds, we evaluate gap robustness -- the ability to maintain performance when portions of the input sequence are removed at test time. Our key finding is that structured oscillatory dynamics significantly improve robustness to input interruptions: the self-attend variant achieves a statistically significant 2.78 percentage point multi-gap advantage over baseline ($p = 0.041$), while the pulse variant shows a 4.62 pp advantage with large effect size (Cohen's $d = 0.87$). A noise control (random perturbation of equal magnitude) provides no benefit, confirming that the advantage is structural rather than merely dynamic. These results provide evidence that continuous-time models can benefit from biologically-inspired internal oscillatory mechanisms for temporal robustness.",
+      "categories": [
+        "cs.NE",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2603.00153v1",
+      "pdf_url": "https://arxiv.org/pdf/2603.00153v1",
+      "keyword_score": 4
+    },
+    {
+      "id": "2602.06997v1",
+      "title": "Adaptive Temporal Dynamics for Personalized Emotion Recognition: A Liquid Neural Network Approach",
+      "authors": [
+        "Anindya Bhattacharjee",
+        "Nittya Ananda Biswas",
+        "K. A. Shahriar",
+        "Adib Rahman"
+      ],
+      "published": "2026-01-28",
+      "updated": "2026-01-28",
+      "summary": "Emotion recognition from physiological signals remains challenging due to their non-stationary, noisy, and subject-dependent characteristics. This work presents, to the best of our knowledge, the first comprehensive application of liquid neural networks for EEG-based emotion recognition. The proposed multimodal framework combines convolutional feature extraction, liquid neural networks with learnable time constants, and attention-guided fusion to model temporal EEG dynamics with complementary peripheral physiological and personality features. Dedicated subnetworks are used to process EEG features and auxiliary modalities, and a shared autoencoder-based fusion module is used to learn discriminative latent representations before classification. Subject-dependent experiments conducted on the PhyMER dataset across seven emotional classes achieve an accuracy of 95.45%, surpassing previously reported results. Furthermore, temporal attention analysis provides interpretable insights into emotion-specific temporal relevance, and t-SNE visualizations demonstrate enhanced class separability, highlighting the effectiveness of the proposed approach. Finally, statistical analysis of temporal dynamics confirms that the network self-organizes into distinct functional groups with specialized fast and slow neurons, proving it independently tunes learnable time constants and memory dominance to effectively capture complex emotion artifacts.",
+      "categories": [
+        "eess.SP",
+        "cs.AI",
+        "cs.LG",
+        "cs.NE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2602.06997v1",
+      "pdf_url": "https://arxiv.org/pdf/2602.06997v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2601.14115v1",
+      "title": "Riemannian Liquid Spatio-Temporal Graph Network",
+      "authors": [
+        "Liangsi Lu",
+        "Jingchao Wang",
+        "Zhaorong Dai",
+        "Hanqian Liu",
+        "Yang Shi"
+      ],
+      "published": "2026-01-20",
+      "updated": "2026-01-20",
+      "summary": "Liquid Time-Constant networks (LTCs), a type of continuous-time graph neural network, excel at modeling irregularly-sampled dynamics but are fundamentally confined to Euclidean space. This limitation introduces significant geometric distortion when representing real-world graphs with inherent non-Euclidean structures (e.g., hierarchies and cycles), degrading representation quality. To overcome this limitation, we introduce the Riemannian Liquid Spatio-Temporal Graph Network (RLSTG), a framework that unifies continuous-time liquid dynamics with the geometric inductive biases of Riemannian manifolds. RLSTG models graph evolution through an Ordinary Differential Equation (ODE) formulated directly on a curved manifold, enabling it to faithfully capture the intrinsic geometry of both structurally static and dynamic spatio-temporal graphs. Moreover, we provide rigorous theoretical guarantees for RLSTG, extending stability theorems of LTCs to the Riemannian domain and quantifying its expressive power via state trajectory analysis. Extensive experiments on real-world benchmarks demonstrate that, by combining advanced temporal dynamics with a Riemannian spatial representation, RLSTG achieves superior performance on graphs with complex structures. Project Page: https://rlstg.github.io",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2601.14115v1",
+      "pdf_url": "https://arxiv.org/pdf/2601.14115v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2601.06227v2",
+      "title": "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics",
+      "authors": [
+        "Dhivya Dharshini Kannan",
+        "Wei Li",
+        "Wei Zhang",
+        "Jianbiao Wang",
+        "Zhi Wei Seh",
+        "Man-Fai Ng"
+      ],
+      "published": "2026-01-09",
+      "updated": "2026-01-13",
+      "summary": "Battery management systems increasingly require accurate battery health prognostics under strict on-device constraints. This paper presents DLNet, a practical framework with dual-stage distillation of liquid neural networks that turns a high-capacity model into compact and edge-deployable models for battery health prediction. DLNet first applies Euler discretization to reformulate liquid dynamics for embedded compatibility. It then performs dual-stage knowledge distillation to transfer the teacher model's temporal behavior and recover it after further compression. Pareto-guided selection under joint error-cost objectives retains student models that balance accuracy and efficiency. We evaluate DLNet on a widely used dataset and validate real-device feasibility on an Arduino Nano 33 BLE Sense using int8 deployment. The final deployed student achieves a low error of 0.0066 when predicting battery health over the next 100 cycles, which is 15.4% lower than the teacher model. It reduces the model size from 616 kB to 94 kB with 84.7% reduction and takes 21 ms per inference on the device. These results support a practical smaller wins observation that a small model can match or exceed a large teacher for edge-based prognostics with proper supervision and selection. Beyond batteries, the DLNet framework can extend to other industrial analytics tasks with strict hardware constraints.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2601.06227v2",
+      "pdf_url": "https://arxiv.org/pdf/2601.06227v2",
+      "keyword_score": 2
+    },
+    {
+      "id": "2601.06195v1",
+      "title": "EntroLnn: Entropy-Guided Liquid Neural Networks for Operando Refinement of Battery Capacity Fade Trajectories",
+      "authors": [
+        "Wei Li",
+        "Wei Zhang",
+        "Qingyu Yan"
+      ],
+      "published": "2026-01-08",
+      "updated": "2026-01-08",
+      "summary": "Battery capacity degradation prediction has long been a central topic in battery health analytics, and most studies focus on state of health (SoH) estimation and end of life (EoL) prediction. This study extends the scope to online refinement of the entire capacity fade trajectory (CFT) through EntroLnn, a framework based on entropy-guided transformable liquid neural networks (LNNs). EntroLnn treats CFT refinement as an integrated process rather than two independent tasks for pointwise SoH and EoL. We introduce entropy-based features derived from online temperature fields, applied for the first time in battery analytics, and combine them with customized LNNs that model temporal battery dynamics effectively. The framework enhances both static and dynamic adaptability of LNNs and achieves robust and generalizable CFT refinement across different batteries and operating conditions. The approach provides a high fidelity battery health model with lightweight computation, achieving mean absolute errors of only 0.004577 for CFT and 18 cycles for EoL prediction. This work establishes a foundation for entropy-informed learning in battery analytics and enables self-adaptive, lightweight, and interpretable battery health prediction in practical battery management systems.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2601.06195v1",
+      "pdf_url": "https://arxiv.org/pdf/2601.06195v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2512.22500v3",
+      "title": "Bidirectional Neural Networks for Global Nucleon-Nucleus Optical Model Calculations",
+      "authors": [
+        "Jin Lei"
+      ],
+      "published": "2025-12-27",
+      "updated": "2026-05-27",
+      "summary": "Modern nuclear data evaluation increasingly requires not only accurate scattering calculations, but also efficient methods for uncertainty quantification and parameter optimization, tasks that benefit from differentiable solvers amenable to gradient-based algorithms. I present a neural network emulator based on Bidirectional Liquid Neural Networks (BiLNN) that provides a fully differentiable mapping from optical potential parameters to scattering wave functions. The key innovation enabling generalization across the parameter space is the use of phase-space coordinates $ρ= kr$ that normalize the oscillation wavelength regardless of projectile energy, allowing a single network to span 1 to 200~MeV. Trained on Numerov solutions for twelve target nuclei (\\nuc{12}{C} to \\nuc{208}{Pb}), both protons and neutrons, and partial waves up to $l=30$, the network achieves an overall relative error of 1.2\\%. The predicted wave functions yield accurate $S$-matrix elements and elastic scattering cross sections, reproducing diffraction patterns spanning four orders of magnitude. Importantly, the model extrapolates successfully to nuclei not included in training (\\nuc{24}{Mg}, \\nuc{63}{Cu}, \\nuc{184}{W}) with comparable accuracy, demonstrating that it has learned the physics of the optical model rather than memorizing specific targets. The differentiable nature of the trained model opens the door to gradient-based optimization of optical model parameters and efficient uncertainty quantification.",
+      "categories": [
+        "nucl-th"
+      ],
+      "abs_url": "https://arxiv.org/abs/2512.22500v3",
+      "pdf_url": "https://arxiv.org/pdf/2512.22500v3",
+      "keyword_score": 1
+    },
+    {
+      "id": "2512.14323v3",
+      "title": "FUSION: Forecast-Embedded Agent Scheduling with Service Incentive Optimization over Distributed Air-Ground Edge Networks",
+      "authors": [
+        "Houyi Qi",
+        "Minghui Liwang",
+        "Seyyedali Hosseinalipour",
+        "Liqun Fu",
+        "Sai Zou",
+        "Xianbin Wang",
+        "Wei Ni",
+        "Yiguang Hong"
+      ],
+      "published": "2025-12-16",
+      "updated": "2026-01-07",
+      "summary": "In this paper, we introduce a first-of-its-kind forecasting-driven, incentive-inherent service provisioning framework for distributed air-ground integrated networks that explicitly accounts for human-machine coexistence. In our framework, vehicular-UAV agent pairs (APs) are proactively dispatched to overloaded hotspots to augment the computing capacity of edge servers (ESs), which in turn gives rise to a set of challenges that we jointly address: highly uncertain spatio-temporal workloads, spatio-temporal coupling between road traffic and UAV capacity, forecast-driven contracting risks, and heterogeneous quality-of-service (QoS) requirements of human users (HUs) and machine users (MUs). To address these challenges, we propose FUSION, a two-stage optimization framework, consisting of an offline stage and an online stage. In the offline stage, a liquid neural network-powered module performs multi-step spatio-temporal demand forecasting at distributed ESs, whose outputs are exploited by an enhanced ant colony optimization-based routing scheme and an auction-based incentive-compatible contracting mechanism, to jointly determine ES-AP contracts and pre-planned service routes. In the online stage, we formulate the congestion-aware task scheduling as a potential game among HUs, MUs, and heterogeneous ES/UAVs, and devise a potential-guided best-response dynamics algorithm that provably converges to a pure-strategy Nash equilibrium. Experiments on both synthetic and real-world datasets show that FUSION consistently achieves higher social welfare and improved resource utilization, while maintaining latency and energy costs comparable to state-of-the-art baselines and preserving individual rationality, budget balance, and near-truthfulness.",
+      "categories": [
+        "cs.NI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2512.14323v3",
+      "pdf_url": "https://arxiv.org/pdf/2512.14323v3",
+      "keyword_score": 1
+    },
+    {
+      "id": "2512.14112v1",
+      "title": "Optimizing Multi-Tier Supply Chain Ordering with a Hybrid Liquid Neural Network and Extreme Gradient Boosting Model",
+      "authors": [
+        "Chunan Tong"
+      ],
+      "published": "2025-12-16",
+      "updated": "2025-12-16",
+      "summary": "Supply chain management (SCM) faces significant challenges like demand fluctuations and the bullwhip effect. Traditional methods and even state-of-the-art LLMs struggle with benchmarks like the Vending Machine Test, failing to handle SCM's complex continuous time-series data. While ML approaches like LSTM and XGBoost offer solutions, they are often limited by computational inefficiency. Liquid Neural Networks (LNN), known for their adaptability and efficiency in robotics, remain untapped in SCM. This study proposes a hybrid LNN+XGBoost model for multi-tier supply chains. By combining LNN's dynamic feature extraction with XGBoost's global optimization, the model aims to minimize the bullwhip effect and increase profitability. This innovative approach addresses the need for efficiency and adaptability, filling a critical gap in intelligent SCM.",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2512.14112v1",
+      "pdf_url": "https://arxiv.org/pdf/2512.14112v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2512.05158v1",
+      "title": "Continuous-Time Homeostatic Dynamics for Reentrant Inference Models",
+      "authors": [
+        "Byung Gyu Chae"
+      ],
+      "published": "2025-12-04",
+      "updated": "2025-12-04",
+      "summary": "We formulate the Fast-Weights Homeostatic Reentry Network (FHRN) as a continuous-time neural-ODE system, revealing its role as a norm-regulated reentrant dynamical process. Starting from the discrete reentry rule $x_t = x_t^{(\\mathrm{ex})} + γ\\, W_r\\, g(\\|y_{t-1}\\|)\\, y_{t-1}$, we derive the coupled system $\\dot{y}=-y+f(W_ry;\\,x,\\,A)+g_{\\mathrm{h}}(y)$ showing that the network couples fast associative memory with global radial homeostasis. The dynamics admit bounded attractors governed by an energy functional, yielding a ring-like manifold. A Jacobian spectral analysis identifies a \\emph{reflective regime} in which reentry induces stable oscillatory trajectories rather than divergence or collapse. Unlike continuous-time recurrent neural networks or liquid neural networks, FHRN achieves stability through population-level gain modulation rather than fixed recurrence or neuron-local time adaptation. These results establish the reentry network as a distinct class of self-referential neural dynamics supporting recursive yet bounded computation.",
+      "categories": [
+        "math.DS",
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2512.05158v1",
+      "pdf_url": "https://arxiv.org/pdf/2512.05158v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2511.18014v1",
+      "title": "Modeling Retinal Ganglion Cells with Neural Differential Equations",
+      "authors": [
+        "Kacper Dobek",
+        "Daniel Jankowski",
+        "Krzysztof Krawiec"
+      ],
+      "published": "2025-11-22",
+      "updated": "2025-11-22",
+      "summary": "This work explores Liquid Time-Constant Networks (LTCs) and Closed-form Continuous-time Networks (CfCs) for modeling retinal ganglion cell activity in tiger salamanders across three datasets. Compared to a convolutional baseline and an LSTM, both architectures achieved lower MAE, faster convergence, smaller model sizes, and favorable query times, though with slightly lower Pearson correlation. Their efficiency and adaptability make them well suited for scenarios with limited data and frequent retraining, such as edge deployments in vision prosthetics.",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2511.18014v1",
+      "pdf_url": "https://arxiv.org/pdf/2511.18014v1",
+      "keyword_score": 5
+    },
+    {
+      "id": "2511.09909v1",
+      "title": "Simulating Distribution Dynamics: Liquid Temporal Feature Evolution for Single-Domain Generalized Object Detection",
+      "authors": [
+        "Zihao Zhang",
+        "Yang Li",
+        "Aming Wu",
+        "Yahong Han"
+      ],
+      "published": "2025-11-13",
+      "updated": "2025-11-13",
+      "summary": "In this paper, we focus on Single-Domain Generalized Object Detection (Single-DGOD), aiming to transfer a detector trained on one source domain to multiple unknown domains. Existing methods for Single-DGOD typically rely on discrete data augmentation or static perturbation methods to expand data diversity, thereby mitigating the lack of access to target domain data. However, in real-world scenarios such as changes in weather or lighting conditions, domain shifts often occur continuously and gradually. Discrete augmentations and static perturbations fail to effectively capture the dynamic variation of feature distributions, thereby limiting the model's ability to perceive fine-grained cross-domain differences. To this end, we propose a new method, Liquid Temporal Feature Evolution, which simulates the progressive evolution of features from the source domain to simulated latent distributions by incorporating temporal modeling and liquid neural network-driven parameter adjustment. Specifically, we introduce controllable Gaussian noise injection and multi-scale Gaussian blurring to simulate initial feature perturbations, followed by temporal modeling and a liquid parameter adjustment mechanism to generate adaptive modulation parameters, enabling a smooth and continuous adaptation across domains. By capturing progressive cross-domain feature evolution and dynamically regulating adaptation paths, our method bridges the source-unknown domain distribution gap, significantly boosting generalization and robustness to unseen shifts. Significant performance improvements on the Diverse Weather dataset and Real-to-Art benchmark demonstrate the superiority of our method. Our code is available at https://github.com/2490o/LTFE.",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2511.09909v1",
+      "pdf_url": "https://arxiv.org/pdf/2511.09909v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2510.25020v1",
+      "title": "Hybrid Liquid Neural Network-Random Finite Set Filtering for Robust Maneuvering Object Tracking",
+      "authors": [
+        "Minti Liu",
+        "Qinghua Guo",
+        "Cao Zeng",
+        "Yanguang Yu",
+        "Jun Li",
+        "Ming Jin"
+      ],
+      "published": "2025-10-28",
+      "updated": "2025-10-28",
+      "summary": "This work addresses the problem of tracking maneuvering objects with complex motion patterns, a task in which conventional methods often struggle due to their reliance on predefined motion models. We integrate a data-driven liquid neural network (LNN) into the random finite set (RFS) framework, leading to two LNN-RFS filters. By learning continuous-time dynamics directly from data, the LNN enables the filters to adapt to complex, nonlinear motion and achieve accurate tracking of highly maneuvering objects in clutter. This hybrid approach preserves the inherent multi-object tracking strengths of the RFS framework while improving flexibility and robustness. Simulation results on challenging maneuvering scenarios demonstrate substantial gains of the proposed hybrid approach in tracking accuracy.",
+      "categories": [
+        "eess.SP"
+      ],
+      "abs_url": "https://arxiv.org/abs/2510.25020v1",
+      "pdf_url": "https://arxiv.org/pdf/2510.25020v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2510.09207v2",
+      "title": "Operator-Consistent Physics-Informed Learning for Wafer Thermal Reconstruction in Lithography",
+      "authors": [
+        "Ze Tao",
+        "Fujun Liu",
+        "Yuxi Jin",
+        "Ke Xu",
+        "Minghui Sun",
+        "Xiangsheng Hu",
+        "Qi Cao",
+        "Haoran Xu",
+        "Hanxuan Wang"
+      ],
+      "published": "2025-10-10",
+      "updated": "2025-10-27",
+      "summary": "Thermal field reconstruction in post-exposure bake (PEB) is critical for advanced lithography, yet current physics-informed neural networks (PINNs) suffer from inconsistent accuracy due to a misalignment between geometric coordinates, physical fields, and differential operators. To resolve this, we introduce a novel architecture that unifies these elements on a single computation graph by integrating LSTM-gated mechanisms within a Liquid Neural Network (LNN) backbone. This specific combination of gated liquid layers is necessary to dynamically regulate the network's spectral behavior and enforce operator-level consistency, which ensures stable training and high-fidelity predictions. Applied to a 2D PEB scenario with internal heat generation and convective boundaries, our model formulates residuals via differential forms and a composite loss functional. The results demonstrate rapid convergence, uniformly low errors, strong agreement with FEM benchmarks, and stable training without late-stage oscillations, outperforming existing baselines in accuracy and robustness. Our framework thus establishes a reliable foundation for high-fidelity thermal modeling and offers a transferable strategy for operator-consistent neural surrogates in other physical domains.",
+      "categories": [
+        "math-ph"
+      ],
+      "abs_url": "https://arxiv.org/abs/2510.09207v2",
+      "pdf_url": "https://arxiv.org/pdf/2510.09207v2",
+      "keyword_score": 1
+    }
   ],
-  "papers": [],
   "github_repos": [
     {
       "full_name": "raminmh/CfC",
@@ -578,11 +1063,95 @@
   ],
   "huggingface_models": [
     {
+      "model_id": "LiquidAI/LFM2-8B-A1B",
+      "author": null,
+      "last_modified": "2026-05-29",
+      "downloads": 49438,
+      "likes": 364,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2_moe",
+        "text-generation",
+        "liquid",
+        "lfm2",
+        "edge",
+        "moe",
+        "conversational",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko"
+      ],
+      "url": "https://huggingface.co/LiquidAI/LFM2-8B-A1B",
+      "query": "LiquidAI"
+    },
+    {
+      "model_id": "LiquidAI/LFM2-350M",
+      "author": null,
+      "last_modified": "2026-05-29",
+      "downloads": 17650,
+      "likes": 249,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2",
+        "text-generation",
+        "liquid",
+        "edge",
+        "conversational",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko",
+        "es",
+        "arxiv:2511.23404"
+      ],
+      "url": "https://huggingface.co/LiquidAI/LFM2-350M",
+      "query": "LiquidAI"
+    },
+    {
+      "model_id": "LiquidAI/LFM2.5-8B-A1B",
+      "author": null,
+      "last_modified": "2026-05-29",
+      "downloads": 8854,
+      "likes": 212,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2_moe",
+        "text-generation",
+        "liquid",
+        "lfm2.5",
+        "edge",
+        "conversational",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko",
+        "es"
+      ],
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B",
+      "query": "LiquidAI"
+    },
+    {
       "model_id": "LiquidAI/LFM2.5-8B-A1B-GGUF",
       "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 42,
-      "likes": 55,
+      "last_modified": "2026-05-29",
+      "downloads": 5293,
+      "likes": 105,
       "pipeline_tag": "text-generation",
       "tags": [
         "gguf",
@@ -606,48 +1175,21 @@
       "query": "LiquidAI"
     },
     {
-      "model_id": "LiquidAI/LFM2.5-8B-A1B-ONNX",
+      "model_id": "LiquidAI/LFM2.5-8B-A1B-MLX-8bit",
       "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 5,
-      "likes": 1,
+      "last_modified": "2026-05-29",
+      "downloads": 400,
+      "likes": 5,
       "pipeline_tag": "text-generation",
       "tags": [
-        "onnx",
-        "lfm2_moe",
-        "liquid",
-        "edge",
-        "lfm2",
-        "lfm2.5",
-        "moe",
-        "mixture-of-experts",
-        "onnxruntime",
-        "text-generation",
-        "conversational",
-        "en",
-        "base_model:LiquidAI/LFM2.5-8B-A1B",
-        "base_model:quantized:LiquidAI/LFM2.5-8B-A1B",
-        "license:other",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-ONNX",
-      "query": "LiquidAI"
-    },
-    {
-      "model_id": "LiquidAI/LFM2.5-8B-A1B-Base",
-      "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
-      "likes": 6,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
+        "mlx",
         "safetensors",
         "lfm2_moe",
-        "text-generation",
         "liquid",
         "lfm2.5",
         "edge",
+        "moe",
+        "text-generation",
         "conversational",
         "en",
         "ar",
@@ -655,17 +1197,16 @@
         "fr",
         "de",
         "ja",
-        "ko",
-        "es"
+        "ko"
       ],
-      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-Base",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit",
       "query": "LiquidAI"
     },
     {
       "model_id": "LiquidAI/LFM2.5-8B-A1B-MLX-4bit",
       "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
+      "last_modified": "2026-05-29",
+      "downloads": 234,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -690,38 +1231,10 @@
       "query": "LiquidAI"
     },
     {
-      "model_id": "LiquidAI/LFM2.5-8B-A1B-MLX-5bit",
-      "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "mlx",
-        "safetensors",
-        "lfm2_moe",
-        "liquid",
-        "lfm2.5",
-        "edge",
-        "moe",
-        "text-generation",
-        "conversational",
-        "en",
-        "ar",
-        "zh",
-        "fr",
-        "de",
-        "ja",
-        "ko"
-      ],
-      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-5bit",
-      "query": "LiquidAI"
-    },
-    {
       "model_id": "LiquidAI/LFM2.5-8B-A1B-MLX-6bit",
       "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
+      "last_modified": "2026-05-29",
+      "downloads": 120,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -746,38 +1259,10 @@
       "query": "LiquidAI"
     },
     {
-      "model_id": "LiquidAI/LFM2.5-8B-A1B-MLX-8bit",
+      "model_id": "LiquidAI/LFM2.5-8B-A1B-MLX-5bit",
       "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
-      "likes": 2,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "mlx",
-        "safetensors",
-        "lfm2_moe",
-        "liquid",
-        "lfm2.5",
-        "edge",
-        "moe",
-        "text-generation",
-        "conversational",
-        "en",
-        "ar",
-        "zh",
-        "fr",
-        "de",
-        "ja",
-        "ko"
-      ],
-      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit",
-      "query": "LiquidAI"
-    },
-    {
-      "model_id": "LiquidAI/LFM2.5-8B-A1B-MLX-bf16",
-      "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
+      "last_modified": "2026-05-29",
+      "downloads": 73,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -798,39 +1283,131 @@
         "ja",
         "ko"
       ],
-      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-bf16",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-5bit",
       "query": "LiquidAI"
     },
     {
-      "model_id": "nathanrchn/LFM2.5-8B-A1B-GGUF-fixed-v2",
+      "model_id": "blockblockblock/LFM2.5-8B-A1B-exl3-8.0bpw",
       "author": null,
-      "last_modified": "2026-05-28",
+      "last_modified": "2026-05-29",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "exllamav3",
+        "safetensors",
+        "lfm2_moe",
+        "exl3",
+        "quantized",
+        "mixture-of-experts",
+        "text-generation",
+        "conversational",
+        "base_model:LiquidAI/LFM2.5-8B-A1B",
+        "base_model:quantized:LiquidAI/LFM2.5-8B-A1B",
+        "license:other",
+        "8-bit",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/blockblockblock/LFM2.5-8B-A1B-exl3-8.0bpw",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "blockblockblock/LFM2.5-8B-A1B-exl3-4.0bpw",
+      "author": null,
+      "last_modified": "2026-05-29",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "exllamav3",
+        "safetensors",
+        "lfm2_moe",
+        "exl3",
+        "quantized",
+        "mixture-of-experts",
+        "text-generation",
+        "conversational",
+        "base_model:LiquidAI/LFM2.5-8B-A1B",
+        "base_model:quantized:LiquidAI/LFM2.5-8B-A1B",
+        "license:other",
+        "4-bit",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/blockblockblock/LFM2.5-8B-A1B-exl3-4.0bpw",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "AlexWortega/lfm25-8b-soyuz-merged",
+      "author": null,
+      "last_modified": "2026-05-29",
       "downloads": 0,
       "likes": 0,
       "pipeline_tag": null,
       "tags": [
-        "gguf",
-        "endpoints_compatible",
-        "region:us",
-        "conversational"
+        "safetensors",
+        "lfm2_moe",
+        "region:us"
       ],
-      "url": "https://huggingface.co/nathanrchn/LFM2.5-8B-A1B-GGUF-fixed-v2",
+      "url": "https://huggingface.co/AlexWortega/lfm25-8b-soyuz-merged",
       "query": "LFM2"
     },
     {
-      "model_id": "RemySkye/LFM2.5-8B-A1B-i1-GGUF",
+      "model_id": "JANGQ-AI/LFM2.5-8B-A1B-JANG_2L",
       "author": null,
-      "last_modified": "2026-05-28",
+      "last_modified": "2026-05-29",
       "downloads": 0,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
-        "gguf",
-        "liquid",
+        "mlx",
+        "safetensors",
+        "lfm2_moe",
+        "jang",
+        "jang-2l",
         "lfm2.5",
-        "edge",
-        "llama",
+        "liquid",
         "text-generation",
+        "conversational",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko"
+      ],
+      "url": "https://huggingface.co/JANGQ-AI/LFM2.5-8B-A1B-JANG_2L",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "AlexWortega/lfm25-8b-soyuz-lora-r128-16k",
+      "author": null,
+      "last_modified": "2026-05-29",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "safetensors",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/AlexWortega/lfm25-8b-soyuz-lora-r128-16k",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "LemOneLabs/LFM2-1.2B-ONNX",
+      "author": null,
+      "last_modified": "2026-05-29",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers.js",
+        "onnx",
+        "lfm2",
+        "text-generation",
+        "liquid",
+        "edge",
+        "conversational",
         "en",
         "ar",
         "zh",
@@ -839,127 +1416,81 @@
         "ja",
         "ko",
         "es",
-        "pt",
-        "base_model:LiquidAI/LFM2.5-8B-A1B"
+        "base_model:LiquidAI/LFM2-1.2B"
       ],
-      "url": "https://huggingface.co/RemySkye/LFM2.5-8B-A1B-i1-GGUF",
+      "url": "https://huggingface.co/LemOneLabs/LFM2-1.2B-ONNX",
       "query": "LFM2"
     },
     {
-      "model_id": "damienlusson/LFM2.5-350M-jobs-extraction-GGUF_q8_0",
+      "model_id": "mlx-community/LFM2.5-8B-A1B-MLX-8bit",
       "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "gguf",
-        "lfm2",
-        "llama.cpp",
-        "unsloth",
-        "endpoints_compatible",
-        "region:us",
-        "conversational"
-      ],
-      "url": "https://huggingface.co/damienlusson/LFM2.5-350M-jobs-extraction-GGUF_q8_0",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "damienlusson/LFM2.5-350M-jobs-extraction-GGUF",
-      "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "gguf",
-        "lfm2",
-        "llama.cpp",
-        "unsloth",
-        "endpoints_compatible",
-        "region:us",
-        "conversational"
-      ],
-      "url": "https://huggingface.co/damienlusson/LFM2.5-350M-jobs-extraction-GGUF",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "nathanrchn/LFM2.5-8B-A1B-GGUF-fixed",
-      "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "gguf",
-        "endpoints_compatible",
-        "region:us",
-        "conversational"
-      ],
-      "url": "https://huggingface.co/nathanrchn/LFM2.5-8B-A1B-GGUF-fixed",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "sahilchachra/lfm2-5-8b-a1b-mxfp4-mlx",
-      "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "region:us"
-      ],
-      "url": "https://huggingface.co/sahilchachra/lfm2-5-8b-a1b-mxfp4-mlx",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "LiberteEPFL/lfm25-1.2b-dpo-molora-all-linear-e8xr10-H0.05-re0.1-bigchat-v2",
-      "author": null,
-      "last_modified": "2026-05-28",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "transformers",
-        "safetensors",
-        "generated_from_trainer",
-        "dpo",
-        "trl",
-        "arxiv:2305.18290",
-        "base_model:LiberteEPFL/lfm25-1.2b-sft-bigchat-v2",
-        "base_model:finetune:LiberteEPFL/lfm25-1.2b-sft-bigchat-v2",
-        "endpoints_compatible",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/LiberteEPFL/lfm25-1.2b-dpo-molora-all-linear-e8xr10-H0.05-re0.1-bigchat-v2",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "McG-221/LFM2.5-8B-A1B-mlx-8Bit",
-      "author": null,
-      "last_modified": "2026-05-28",
+      "last_modified": "2026-05-29",
       "downloads": 0,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
-        "transformers",
+        "mlx",
         "safetensors",
         "lfm2_moe",
+        "lfm2",
+        "moe",
         "text-generation",
-        "liquid",
-        "lfm2.5",
-        "edge",
-        "mlx",
-        "mlx-my-repo",
         "conversational",
         "en",
         "ar",
         "zh",
         "fr",
         "de",
-        "ja"
+        "ja",
+        "ko",
+        "pt",
+        "es"
       ],
-      "url": "https://huggingface.co/McG-221/LFM2.5-8B-A1B-mlx-8Bit",
+      "url": "https://huggingface.co/mlx-community/LFM2.5-8B-A1B-MLX-8bit",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "mlx-community/LFM2.5-8B-A1B-MLX-4bit",
+      "author": null,
+      "last_modified": "2026-05-29",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "mlx",
+        "safetensors",
+        "lfm2_moe",
+        "lfm2",
+        "moe",
+        "text-generation",
+        "conversational",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko",
+        "pt",
+        "es"
+      ],
+      "url": "https://huggingface.co/mlx-community/LFM2.5-8B-A1B-MLX-4bit",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "sliderforthewin/lfm2.5-8b-a1b-ft-GGUF",
+      "author": null,
+      "last_modified": "2026-05-29",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "gguf",
+        "endpoints_compatible",
+        "region:us",
+        "conversational"
+      ],
+      "url": "https://huggingface.co/sliderforthewin/lfm2.5-8b-a1b-ft-GGUF",
       "query": "LFM2.5"
     },
     {

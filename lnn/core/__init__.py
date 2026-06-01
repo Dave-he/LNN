@@ -12,6 +12,22 @@ from lnn.core.ltc import LTCCell, LTCNetwork
 from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sample
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.physics import PhysicsInformedLNN, damped_oscillator_residual, physics_informed_loss
+from lnn.core.variants import (
+    CfCDTCell,
+    CfCDTNetwork,
+    CTLTCCell,
+    CTLTCNetwork,
+    EulerLTCDTCell,
+    EulerLTCDTNetwork,
+    HybridCfCCell,
+    HybridCfCNetwork,
+    LiquidS4Cell,
+    LiquidS4Network,
+    LRCCell,
+    LRCNetwork,
+    StrictCfCCell,
+    StrictCfCNetwork,
+)
 
 __all__ = [
     "LiquidNeuron",
@@ -36,4 +52,18 @@ __all__ = [
     "PhysicsInformedLNN",
     "damped_oscillator_residual",
     "physics_informed_loss",
+    "StrictCfCCell",
+    "StrictCfCNetwork",
+    "HybridCfCCell",
+    "HybridCfCNetwork",
+    "CTLTCCell",
+    "CTLTCNetwork",
+    "LiquidS4Cell",
+    "LiquidS4Network",
+    "LRCCell",
+    "LRCNetwork",
+    "CfCDTCell",
+    "CfCDTNetwork",
+    "EulerLTCDTCell",
+    "EulerLTCDTNetwork",
 ]
