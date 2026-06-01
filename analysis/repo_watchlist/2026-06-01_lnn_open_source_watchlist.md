@@ -14,19 +14,26 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：无
 
+### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
+- 更新：2026-06-01
+- Star / Fork：1 / 0
+- 语言：C
+- Topics：未标注
+- 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
+
 ### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-05-31
+- 更新：2026-06-01
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
 
-### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
-- 更新：2026-05-30
-- Star / Fork：1 / 0
-- 语言：C
+### [Alexng2024/EDSSM](https://github.com/Alexng2024/EDSSM)
+- 更新：2026-06-01
+- Star / Fork：0 / 0
+- 语言：unknown
 - Topics：未标注
-- 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
+- 说明：We introduce Event-Driven State Space Models (EDSSM), a framework that propagates latent state through exact closed-form continuous-time linear dynamics—implemented via the matrix exponential e^AΔt—and applies updates only at informative event times.
 
 ### [parhat1/cfdna-tau-repository](https://github.com/parhat1/cfdna-tau-repository)
 - 更新：2026-05-30
@@ -139,13 +146,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Dart
 - Topics：未标注
 - 说明：NeuralQR Scanner – Offline AI neural networks encoded in QR codes using Liquid AI’s LFM2.5-VL-450M + flutter_js (Liquid AI Hackathon submission)
-
-### [Xia12121/SCFC-UQ](https://github.com/Xia12121/SCFC-UQ)
-- 更新：2026-05-06
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：SCfC: Stochastic Closed-form Continuous-time Networks for UQ — experimental code + results showing the approach falls short of original claims (architectural limit of hidden-state noise injection)
 
 ## Hugging Face 模型
 ### [w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ](https://huggingface.co/w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ)
