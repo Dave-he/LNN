@@ -178,7 +178,7 @@ def fetch_github_repos(per_query: int) -> list[dict[str, Any]]:
         url = f"https://api.github.com/search/repositories?{params}"
         try:
             payload = request_json(url, headers=headers)
-        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as exc:
+        except Exception as exc:
             print(f"[warn] GitHub query failed for {query!r}: {exc}", file=sys.stderr)
             continue
 
@@ -213,7 +213,7 @@ def fetch_huggingface_models(per_query: int) -> list[dict[str, Any]]:
         url = f"https://huggingface.co/api/models?{params}"
         try:
             payload = request_json(url)
-        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as exc:
+        except Exception as exc:
             print(f"[warn] Hugging Face query failed for {query!r}: {exc}", file=sys.stderr)
             continue
 
@@ -258,7 +258,7 @@ def download_pdfs(papers: list[dict[str, Any]], output_dir: pathlib.Path, max_do
                 target.write_bytes(response.read())
             downloaded.append(str(target.relative_to(ROOT)))
             time.sleep(1)
-        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as exc:
+        except Exception as exc:
             print(f"[warn] PDF download failed for {paper['id']}: {exc}", file=sys.stderr)
     return downloaded
 
@@ -490,7 +490,7 @@ def main() -> int:
     errors: list[str] = []
     try:
         papers = fetch_arxiv(args.max_results)
-    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, ET.ParseError) as exc:
+    except Exception as exc:
         papers = []
         errors.append(f"arXiv fetch failed: {exc}")
         print(f"[warn] {errors[-1]}", file=sys.stderr)
