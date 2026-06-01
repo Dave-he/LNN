@@ -28,6 +28,13 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
 
+### [Alexng2024/EDSSM](https://github.com/Alexng2024/EDSSM)
+- 更新：2026-06-01
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：We introduce Event-Driven State Space Models (EDSSM), a framework that propagates latent state through exact closed-form continuous-time linear dynamics—implemented via the matrix exponential e^AΔt—and applies updates only at informative event times.
+
 ### [parhat1/cfdna-tau-repository](https://github.com/parhat1/cfdna-tau-repository)
 - 更新：2026-05-30
 - Star / Fork：1 / 0
@@ -56,12 +63,26 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：liquid-neural-networks, neural-ode, pytorch, tutorial
 
+### [raminmh/CfC](https://github.com/raminmh/CfC)
+- 更新：2026-05-28
+- Star / Fork：1043 / 161
+- 语言：Python
+- Topics：deep-learning, neural-ode, pytorch, recurrent-neural-networks, sequence-models, tensorflow
+- 说明：Closed-form Continuous-time Neural Networks
+
 ### [1922733078-lab/liquid-neural-networks-transparency](https://github.com/1922733078-lab/liquid-neural-networks-transparency)
 - 更新：2026-05-28
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：Transparency archive for a liquid neural networks review: literature matrix, source verification, and reproducible synthetic benchmark.
+
+### [aygp-dr/liquid-neural-networks](https://github.com/aygp-dr/liquid-neural-networks)
+- 更新：2026-05-27
+- Star / Fork：21 / 2
+- 语言：Python
+- Topics：clojure, neural-networks, python, research
+- 说明：Liquid Neural Networks (LNN) - Continuous-time neural dynamics inspired by C. elegans. Parameter-efficient AI with 19-302 neurons for complex tasks. Hybrid Clojure/Python implementation.
 
 ### [everest-an/O1](https://github.com/everest-an/O1)
 - 更新：2026-05-27
@@ -76,6 +97,13 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：未标注
 - 说明：Fine-tune LiquidAI/LFM2.5-350M for 7 use cases — Medical QA, Code Gen, Telecom SRE, Financial Literacy, Education, Sentiment, Summarization. LoRA/QLoRA pipeline with GGUF/ONNX export.
+
+### [madhulikavikraman/Liquid-Neural-Networks](https://github.com/madhulikavikraman/Liquid-Neural-Networks)
+- 更新：2026-05-22
+- Star / Fork：1 / 0
+- 语言：Jupyter Notebook
+- Topics：未标注
+- 说明：Notebooks to train LTC, CTRNN, NODE and CTGRU on PTB Diagnostic and PTB-XL data.
 
 ### [R-Liebert/LOKI-G](https://github.com/R-Liebert/LOKI-G)
 - 更新：2026-05-21
@@ -119,38 +147,10 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：NeuralQR Scanner – Offline AI neural networks encoded in QR codes using Liquid AI’s LFM2.5-VL-450M + flutter_js (Liquid AI Hackathon submission)
 
-### [Xia12121/SCFC-UQ](https://github.com/Xia12121/SCFC-UQ)
-- 更新：2026-05-06
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：SCfC: Stochastic Closed-form Continuous-time Networks for UQ — experimental code + results showing the approach falls short of original claims (architectural limit of hidden-state noise injection)
-
-### [middesurya/daily-webapp-2026-05-04-liquidlab](https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab)
-- 更新：2026-05-05
-- Star / Fork：1 / 0
-- 语言：HTML
-- Topics：ai-built, claude-code, daily-webapp, liquid-neural-networks, mit-csail, neural-ode
-- 说明：LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, adaptive inference, efficiency arena. Zero dependencies.
-
-### [boliu-ee/LTC](https://github.com/boliu-ee/LTC)
-- 更新：2026-04-29
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Liquid Time-Constant Networks.
-
-### [Riksev/gnn_lab1_finetuning](https://github.com/Riksev/gnn_lab1_finetuning)
-- 更新：2026-04-28
-- Star / Fork：0 / 0
-- 语言：Jupyter Notebook
-- Topics：adapter, batch, fine-tuning, finetuning, finetuning-llms, gnn, gnn-model, lora
-- 说明：Fine-tuning of model LiquidAI/LFM2-1.2B. The goal was to achieve Yoda-style text. Based on MIT Lab 3 with changes from KhNURE.
-
 ## Hugging Face 模型
 ### [LiquidAI/LFM2.5-8B-A1B-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit)
 - 更新：2026-06-01
-- 下载 / Likes：3238 / 10
+- 下载 / Likes：3238 / 11
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
 
@@ -162,7 +162,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-8B-A1B-MLX-bf16](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-bf16)
 - 更新：2026-06-01
-- 下载 / Likes：853 / 1
+- 下载 / Likes：853 / 2
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
 
@@ -172,17 +172,17 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
 
-### [FlameF0X/LFM2.5-1.2B-Distilled-Claude-4.6](https://huggingface.co/FlameF0X/LFM2.5-1.2B-Distilled-Claude-4.6)
-- 更新：2026-06-01
-- 下载 / Likes：522 / 2
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, reasoning, cot, distillate
-
 ### [FlameF0X/LFM2.5-1.2B-Thinking-CodeX](https://huggingface.co/FlameF0X/LFM2.5-1.2B-Thinking-CodeX)
 - 更新：2026-06-01
 - 下载 / Likes：421 / 1
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, generated_from_trainer, sft, trl, conversational
+
+### [Brunobkr/OFFELLIA_f16_LFM2.5-8B-A1B.gguf](https://huggingface.co/Brunobkr/OFFELLIA_f16_LFM2.5-8B-A1B.gguf)
+- 更新：2026-06-01
+- 下载 / Likes：350 / 0
+- 任务：unknown
+- Tags：gguf, endpoints_compatible, region:us, conversational
 
 ### [LiquidAI/LFM2.5-8B-A1B-MLX-5bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-5bit)
 - 更新：2026-06-01
@@ -190,17 +190,59 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
 
+### [dealignai/LFM2.5-8B-A1B-MXFP8-CRACK](https://huggingface.co/dealignai/LFM2.5-8B-A1B-MXFP8-CRACK)
+- 更新：2026-06-01
+- 下载 / Likes：207 / 1
+- 任务：text-generation
+- Tags：mlx, safetensors, lfm2_moe, apple-silicon, abliterated, uncensored, crack, reasoning
+
+### [dealignai/LFM2.5-8B-A1B-MXFP4-CRACK](https://huggingface.co/dealignai/LFM2.5-8B-A1B-MXFP4-CRACK)
+- 更新：2026-06-01
+- 下载 / Likes：144 / 1
+- 任务：text-generation
+- Tags：mlx, safetensors, lfm2_moe, apple-silicon, abliterated, uncensored, crack, reasoning
+
 ### [w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ](https://huggingface.co/w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ)
 - 更新：2026-06-01
 - 下载 / Likes：72 / 0
 - 任务：unknown
 - Tags：gguf, endpoints_compatible, region:us, conversational
 
+### [zaakirio/LFM2.5-1.2B-Instruct-Uncensored](https://huggingface.co/zaakirio/LFM2.5-1.2B-Instruct-Uncensored)
+- 更新：2026-06-01
+- 下载 / Likes：0 / 1
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, heretic, abliterated, decensored, uncensored
+
+### [zaakirio/LFM2.5-1.2B-Instruct-Uncensored-GGUF](https://huggingface.co/zaakirio/LFM2.5-1.2B-Instruct-Uncensored-GGUF)
+- 更新：2026-06-01
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：gguf, heretic, abliterated, decensored, uncensored, liquid, lfm2, lfm2.5
+
+### [mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-GGUF](https://huggingface.co/mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-GGUF)
+- 更新：2026-06-01
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
 ### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
 - 更新：2026-05-31
-- 下载 / Likes：37893 / 360
+- 下载 / Likes：37893 / 383
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
+
+### [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)
+- 更新：2026-05-29
+- 下载 / Likes：48583 / 366
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2, edge, moe
+
+### [LiquidAI/LFM2-350M](https://huggingface.co/LiquidAI/LFM2-350M)
+- 更新：2026-05-29
+- 下载 / Likes：16211 / 249
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, edge, conversational, en
 
 ### [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE)
 - 更新：2026-05-06
