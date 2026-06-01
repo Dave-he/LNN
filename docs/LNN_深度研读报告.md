@@ -75,6 +75,18 @@ tags: [LNN, reading-report, papers]
 - **方法论**：控制核心单元以外的所有模块与特征，头对头对比 128/256 单元 LSTM 与 CfC 在 N-MNIST、IAM 手写文本、QuickDraw 笔迹和 PhysioNet Sepsis-3 上的分类表现及 Temporal Dropout 抗丢失能力。
 - **关键成果**：LNN 在 N-MNIST 上以 99.38% 胜出，并在 30% 帧丢失测试中保持 91.84% 准确度 (LSTM 坠至 77.48%)；败血症预测中将离散 LSTM 的 151 例临床假告警骤降至仅 2 例，取得 0.94 的高精确率，极佳地抑制了告警疲劳。
 
+### [2026] MeloTune: On-Device Arousal Learning and Peer-to-Peer Mood Coupling for Proactive Music Curation
+- **独立报告**：[[docs/reports/MeloTune_CfC_Proactive_Music_Curation_研读报告.md]]
+- **核心问题**：主流 sequential recommender 把"聆听"建模为离散曲目序列，仅在 skip / play 等粗粒度事件后做反应式调整，忽略"听众状态在连续变化"这一根本事实，导致反应式滞后、社交失明与个性化鸿沟。
+- **方法论**：在 Russell 圆周上建模听者情感轨迹；用 CfC (闭式连续时间网络) 在 iPhone 端侧做 < 1ms 推理与 4 个 head 输出 (trajectory/pattern/prediction/intent)；提出"双 CfC 两层认知"架构 (私有 listener CfC + 共享 mesh-runtime CfC)，通过 MMP/SVAF 协议与 CAT7 字段 CMB 在多设备间传递结构化心情信号；引入 Personal Arousal Function (PAF) 以 EMA 方式从行为信号做无梯度个性化。
+- **关键成果**：首个 MMP/SVAF 在消费级移动硬件 (iOS) 的端到端生产部署；listener-level CfC 94,552 参数；离线 trajectory MAE=0.414, pattern acc=96.6%, intent acc=69.4%；单 listener 实测 46 obs × 11 genres × 2 时段后 PAF 在 pop 桶达到 conf=1.0 并对全库做 batch 回填；organic mood 约束已被纳入 MMP 规范 (§8.2 / §15.8)，用于任意 affect-coupled mesh 防回声环。
+
+### [2026] Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks
+- **独立报告**：[[docs/reports/Liquid_Crystal_Antennas_LNN_6G_Beamforming_研读报告.md]]
+- **核心问题**：6G sub-THz (>100 GHz) 通信受半导体移相器损耗 + 高 Doppler / 低 coherence time + 不完美 CSI 三重夹击，传统 BF 算法鲁棒性差、缺乏对连续时变信道的归纳偏置。
+- **方法论**：模拟 BF 段用 48 单元液晶 (GT3-23001 LC) 阵列做 holographic 模式选择 (5° 波束 / 6.87 dB 增益 / 19 模式码本)，无需半导体移相器；数字 BF 段用 ODE 闭式 LNN (sigmoid-gated 闭式更新) 配合流形优化把 M×K 搜索空间压到 N×K，用 log-sum SE loss 训；用 NYURay 108 GHz 城市射线追踪信道做端到端评估。
+- **关键成果**：在 P=30 dBm / CEE=-10 dB 下 LNN+LC 相对 LAGD+LC 取得 +88.6% SE；CEE 从 -20 dB → 0 dB 时 LNN 仅 -31.7% SE (LAGD -55.4%)，验证 ODE 闭式 LNN 对信道不完美估计的鲁棒性；LC 天线相对 3GPP TR 38.901 标准阵列取得 1.9× SE。
+
 
 ---
 
@@ -153,7 +165,7 @@ tags: [LNN, reading-report, papers]
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-06-02**：[[docs/daily/2026-06-02_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 33 个，模型 10 个。
+- **2026-06-02**：[[docs/daily/2026-06-02_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 17 个。
 - **2026-06-01**：[[docs/daily/2026-06-01_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 22 个。
 - **2026-05-31**：[[docs/daily/2026-05-31_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 22 个。
 - **2026-05-30**：[[docs/daily/2026-05-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 21 个。
