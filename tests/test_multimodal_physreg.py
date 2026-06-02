@@ -691,3 +691,69 @@ def test_mixed_stream_intermediate_alpha_monotonic_cos_sim() -> None:
         assert cs_values[i] <= cs_values[i + 1] + 0.1, (
             f"cos sim should be ~monotonic increasing with alpha, got {cs_values}"
         )
+
+
+# ---------- SinusoidalTimeStreamSelfXAttnWithMDN tests (round 19 follow-up) ----------
+
+
+def test_sinusoidal_stream_self_xattn_output_shape() -> None:
+    from lnn.core.multimodal_physreg import SinusoidalTimeStreamSelfXAttnWithMDN
+    model = SinusoidalTimeStreamSelfXAttnWithMDN(
+        video_dim=3, audio_dim=1, hidden_size=8, output_size=5,
+        num_mixtures=2, max_seq_len=32,
+    )
+    video = torch.randn(2, 16, 3)
+    out = model(video)
+    assert out["logits"].shape == (2, 16, 2)
+    assert out["loc"].shape == (2, 16, 2, 5)
+
+
+def test_sinusoidal_stream_rejects_invalid_max_seq_len() -> None:
+    import pytest
+    from lnn.core.multimodal_physreg import SinusoidalTimeStreamSelfXAttnWithMDN
+    with pytest.raises(ValueError):
+        SinusoidalTimeStreamSelfXAttnWithMDN(
+            video_dim=1, audio_dim=1, hidden_size=4, output_size=2, max_seq_len=0,
+        )
+
+
+def test_sinusoidal_stream_exceeds_max_seq_len_raises() -> None:
+    import pytest
+    from lnn.core.multimodal_physreg import SinusoidalTimeStreamSelfXAttnWithMDN
+    model = SinusoidalTimeStreamSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2, max_seq_len=8,
+    )
+    video = torch.randn(1, 12, 1)  # 12 > 8
+    with pytest.raises(ValueError):
+        model(video)
+
+
+def test_sinusoidal_stream_audio_argument_ignored() -> None:
+    """Two different audio inputs must yield bit-identical outputs."""
+    from lnn.core.multimodal_physreg import SinusoidalTimeStreamSelfXAttnWithMDN
+    torch.manual_seed(0)
+    model = SinusoidalTimeStreamSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, max_seq_len=16,
+    )
+    model.eval()
+    video = torch.randn(1, 8, 1)
+    audio_a = torch.randn(1, 8, 1)
+    audio_b = torch.randn(1, 8, 1) * 100
+    with torch.no_grad():
+        out_a = mdn_mean(model(video, audio_a))
+        out_b = mdn_mean(model(video, audio_b))
+    assert torch.allclose(out_a, out_b, atol=1e-6)
+
+
+def test_sinusoidal_table_per_step_variation() -> None:
+    """Different time steps must produce different rows of the table."""
+    from lnn.core.multimodal_physreg import SinusoidalTimeStreamSelfXAttnWithMDN
+    model = SinusoidalTimeStreamSelfXAttnWithMDN(
+        video_dim=4, audio_dim=1, hidden_size=8, output_size=2, max_seq_len=16,
+    )
+    table = model._sinusoidal_table  # [16, 4]
+    assert table.shape == (16, 4)
+    # Adjacent rows should differ.
+    for t in range(15):
+        diff = (table[t + 1] - table[t]).abs().max().item()
+        assert diff > 1e-6, f"sinusoidal table rows {t} and {t+1} are too similar"

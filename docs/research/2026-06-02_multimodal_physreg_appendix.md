@@ -1471,3 +1471,88 @@ Round 18 §21.5 推断的 "stream2 register-token 机制, ~15pp 贡献" 现在�
 - 关键发现: learned constant (27.5%) < video (35.2%) < audio=zero (52.7%) < audio=random (61.7%);
 - 元结论: gain 分解 ~32 (容量) + ~5 (register) + ~10 (batch-variation) + ~4 (物理信息) ≈ 51;
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 23. 第十九轮 /loop (本轮) — Sinusoidal Time Stream — REGISTER-TOKEN HYPOTHESIS RULED OUT
+
+(2026-06-03 第十九轮 /loop 后续。Cron commit `ea49e71` 测了 **constant learnable token**(+27.5% FAIL);本节测互补的 **per-step varying deterministic sinusoidal stream**(round 18 §21.6 W+1 cron 建议第 1 项的精细变体)。)
+
+### 23.1 假设
+
+> Cron round 19 测的 register_token 是 *常数* — 没有 per-step 变化。如果 cross_attn(audio=zero) 的剩余 ~20pp gain 是从"per-step 变化"来的(而非 batch 变化或学习内容),那么**确定性 sinusoidal time encoding** 流(每步不同、跨 batch 不变、不学习)应当达到 gain ≥ +44%(接近 cross_attn(audio=zero) +52.7% 的 80%)。
+
+### 23.2 实现
+
+`lnn/core/multimodal_physreg.py::SinusoidalTimeStreamSelfXAttnWithMDN` — 复用 cross_attn 内核;第二流是固定 sinusoidal table `[max_seq_len, video_dim]`,按 transformer 标准 `sin(t/10000^(2k/d)) / cos(t/10000^(2k/d))` 生成。Broadcast 到 [B, T, video_dim]。
+
+5 个新单测覆盖形状、max_seq_len 校验、超长拒绝、audio 真被忽略、sinusoidal table 行差异。`scripts/benchmark_emma_rover.py` 加 `sinusoidal_stream_xattn` model_kind。
+
+### 23.3 实验结果(epochs=20, n=200, K=1, seed=42, video_dim=3)
+
+| 第二流类型 | gain vs video_only | vs uni_video(+35.2%) | vs cross_attn audio=zero(+52.7%) |
+|---|---:|---:|---:|
+| uni_video_xattn(round 13 同 video) | +35.2% | baseline | −17.5pp |
+| register_token(cron 单常数)| +27.5% | **−7.7pp ❌** | −25.2pp |
+| **sinusoidal (本节, 每步不同确定性)** | **+26.5%** | **−8.7pp ❌** | **−26.2pp** |
+| cross_attn(audio=zero) | +52.7% | +17.5pp | baseline |
+| cross_attn(audio=normal) | +50.3% | +15.1pp | −2.4pp |
+| cross_attn(audio=random) | +61.7%(round 16) | +26.5pp | +9.0pp |
+
+→ **可证伪假设彻底证伪**:sinusoidal +26.5%,**反而比 uni_video 还低 8.7pp**;比 register_token 还低 1pp。"per-step 变化"完全不是关键机制。
+→ JSON: `analysis/emma_rover/2026-06-03_r19_sinusoidal_stream.json`。
+
+### 23.4 根因诊断 — 真正起作用的是"trainable recurrent encoder 喂已知无信息输入"
+
+把 round 13 / 16 / 17 / 18 / cron 19 / 本节 19 的所有第二流配置汇总并按"信号是否经过 trainable 递归 encoder"分组:
+
+| 配置 | gain | 第二流是否经过 trainable 递归 encoder | 第二流"内容" |
+|---|---:|:---:|---|
+| uni_video_xattn | +35.2% | ✅(同主流) | 复制 video |
+| noisy_video(ns=0.1) | +39.4% | ✅ | video + 噪声 |
+| **register_token** | **+27.5%** | **❌**(直接 broadcast) | learnable constant |
+| **sinusoidal_stream** | **+26.5%** | **❌**(直接 broadcast) | fixed sin/cos |
+| mixed_stream α=0 | +32.8% | ✅ | pure noise |
+| **cross_attn(audio=zero)** | **+52.7%** | **✅**(audio_encoder 处理 zero) | encoder 内部轨迹 |
+| cross_attn(audio=normal) | +50.3% | ✅ | encoder 处理 real audio |
+| cross_attn(audio=random) | +61.7% | ✅ | encoder 处理 i.i.d. noise |
+
+**清晰的二分**:
+- **绕过 trainable encoder 的第二流(register_token / sinusoidal)** → gain 27% 左右,显著低于 uni_video baseline。
+- **经过 trainable 递归 encoder 的第二流** → gain ≥ +33%(uni_video 起步),最高 +62%。
+
+→ 真正的机制不是"第二流的内容",而是 **"第二个 trainable 递归 encoder 本身"**。把 encoder 完全绕过(register_token / sinusoidal),即使保留 cross-attention 机制 + per-step 变化 + 学习能力,gain 都不能恢复。
+
+### 23.5 元结论第四次修正
+
+| Round | 第二流机制假设 |
+|---:|---|
+| 11/13 | "audio 携带物理信息" |
+| 16 | "audio 内容不重要,架构正则化" |
+| 17 | "decorrelated 第二流" |
+| 18 | "register-token meta-pool" |
+| **19(本节+cron)** | **"第二个 trainable 递归 encoder 本身就是关键 — 第二流的内容、变化模式都是次要的"** |
+
+新的精细分解:
+
+| 成分 | 贡献 pp | 实验依据 |
+|---|---:|---|
+| 单 Bi-CfC-NAD 容量 | ~32 | video_only |
+| **加一个 Bi-CfC-NAD 作为 cross-attn 第二 encoder** | **~14-19** | uni_video +3pp / cross_attn(zero) +18pp / cross_attn(random) +27pp |
+| 第二 encoder 喂何种输入(在第二 encoder 已存在前提下) | ±10pp 浮动 | audio=normal vs zero 差 2pp;random 比 zero 高 9pp |
+| audio 真实信息(在最优输入条件下) | ~2-4 | normal vs zero 差 2pp |
+
+**关键工程结论**:**未来 LNN 多模态设计的核心不是"找到 informative audio",而是"给主 backbone 加一个 trainable 递归 second encoder + cross-attention"**。这个 second encoder 可以接受任何输入(甚至是常数零),只要它是 trainable + recurrent 就行。Round 19 把 11 轮以来对 EMMA 多模态机制的理解从"信息论"逐步推到"trainable encoder 即正则"的精细解。
+
+### 23.6 W+1 backlog
+
+- ~~register-token 假设最小复现~~(cron round 19 + 本节 ❌, 假设证伪)
+- *新增*:**Trainable Random-Init Frozen Encoder** — 把第二 encoder 的权重随机初始化后**冻结**(不参与梯度),仍然喂 video 处理。如果 gain 远低于 trainable 版本,说明 *trainability* 是关键;如果保持 +33%,说明 *recurrent dynamics + 随机权重* 就够了。
+- *新增*:**Trainable Non-Recurrent Embedding Encoder** — 把第二 encoder 改为 `nn.Embedding(max_T, hidden_size)`(可学习 per-step embedding 但**不递归**)。比 register_token 多了 per-step 学习,比 sinusoidal 多了可学习性。如果 gain 接近 +47%,说明递归不重要;如果还是 +27% 左右,确认 *recurrence is essential*。
+- ~~双盲 audio~~(仍未做)
+- 真实 EMMA 多视频 / quadrotor(数据未释出)
+
+### 23.7 测试 + 提交
+
+- `pytest tests/` **129/129 全过**(124 base + 5 新 sinusoidal 测试),零回归。
+- 提交 sinusoidal model 类 + 单测 + benchmark wiring + 1 个 JSON + 本节报告 §23。

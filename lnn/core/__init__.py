@@ -25,6 +25,7 @@ from lnn.core.multimodal_physreg import (
     MixedStreamSelfXAttnWithMDN,
     MultimodalBiCfCNADWithMDN,
     NoisyVideoSelfXAttnWithMDN,
+    SinusoidalTimeStreamSelfXAttnWithMDN,
     UniVideoSelfXAttnWithMDN,
 )
 from lnn.core.physics import PhysicsInformedLNN, damped_oscillator_residual, physics_informed_loss
@@ -66,6 +67,7 @@ __all__ = [
     "UniVideoSelfXAttnWithMDN",
     "NoisyVideoSelfXAttnWithMDN",
     "MixedStreamSelfXAttnWithMDN",
+    "SinusoidalTimeStreamSelfXAttnWithMDN",
     "MDNHead",
     "mdn_negative_log_likelihood",
     "mdn_mean",

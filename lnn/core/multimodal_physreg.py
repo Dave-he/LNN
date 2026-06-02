@@ -18,6 +18,8 @@ benchmark that fits within CPU-friendly training budgets.
 
 from __future__ import annotations
 
+import math
+
 import torch
 import torch.nn as nn
 
@@ -698,6 +700,125 @@ class RegisterTokenSelfXAttnWithMDN(nn.Module):
         return self._inner(
             video=video,
             audio=second_input,
+            dt=dt,
+            mask=mask,
+            return_attention=return_attention,
+        )
+
+
+class SinusoidalTimeStreamSelfXAttnWithMDN(nn.Module):
+    """Round-19 follow-up: replace stream2 with FIXED sinusoidal time encoding.
+
+    Round-18 §21 ruled out input-space decorrelation as the regularization
+    mechanism. Cron round-19 (commit ``ea49e71``) tested a CONSTANT
+    learnable token (no per-step variation) and got only +27.5%, falling
+    short of cross_attn(audio=zero)'s +47.1% by ~20pp.
+
+    This class isolates the **per-step variation** hypothesis: the second
+    stream is a deterministic sinusoidal time encoding (same for every
+    batch, but varying per step). If this reproduces +47.1% within a few
+    pp, the mechanism is *per-step structure*, not learnable content nor
+    batch variation. If it fails to close the gap, the audio_encoder's
+    learned recurrent dynamics (even with zero input) are themselves the
+    mechanism.
+
+    The sinusoidal pattern follows the transformer / NeRF convention:
+
+        token[t, 2k]   = sin(t / 10000^(2k / hidden_size))
+        token[t, 2k+1] = cos(t / 10000^(2k / hidden_size))
+
+    Both encoders are kept (architectural parity with cross_attn) but the
+    audio_encoder receives a *projection of the sinusoidal stream into
+    video_dim shape* so its Bi-CfC-NAD machinery is exercised in the same
+    way it would be for normal audio input.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 — kept for API parity; ignored
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        noise_beta: float = 0.9,
+        noise_aggregation: str = "independent",
+        max_seq_len: int = 64,
+    ) -> None:
+        super().__init__()
+        if max_seq_len < 1:
+            raise ValueError("max_seq_len must be >= 1")
+        self._inner = CrossModalAttnBiCfCNADWithMDN(
+            video_dim=video_dim,
+            audio_dim=video_dim,
+            hidden_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+            num_layers=num_layers,
+            noise_beta=noise_beta,
+            noise_aggregation=noise_aggregation,
+            modality_dropout=0.0,
+        )
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+        self.max_seq_len = max_seq_len
+        # Precompute the sinusoidal table at the input dimension (video_dim)
+        # so the audio_encoder receives a stream of the shape it expects.
+        # Shape: [max_seq_len, video_dim].
+        self.register_buffer(
+            "_sinusoidal_table",
+            self._build_sinusoidal_table(max_seq_len, video_dim),
+            persistent=False,
+        )
+
+    @staticmethod
+    def _build_sinusoidal_table(max_seq_len: int, dim: int) -> torch.Tensor:
+        positions = torch.arange(max_seq_len, dtype=torch.float32).unsqueeze(-1)
+        div_term = torch.exp(
+            torch.arange(0, dim, 2, dtype=torch.float32)
+            * (-math.log(10000.0) / max(dim, 1))
+        )
+        table = torch.zeros(max_seq_len, dim, dtype=torch.float32)
+        table[:, 0::2] = torch.sin(positions * div_term[: (dim + 1) // 2])
+        # Some hidden dims have an odd dim-2 index count; guard the cos slice.
+        cos_div = div_term[: dim // 2]
+        if cos_div.numel() > 0:
+            table[:, 1::2] = torch.cos(positions * cos_div)
+        return table
+
+    @property
+    def video_encoder(self) -> nn.Module:
+        return self._inner.video_encoder
+
+    @property
+    def audio_encoder(self) -> nn.Module:
+        return self._inner.audio_encoder
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 — intentionally ignored
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+        return_attention: bool = False,
+    ) -> dict[str, torch.Tensor]:
+        B, T, _ = video.shape
+        if T > self.max_seq_len:
+            raise ValueError(
+                f"sequence length {T} exceeds configured max_seq_len {self.max_seq_len}"
+            )
+        # Broadcast the sinusoidal table to [B, T, video_dim].
+        sin_stream = (
+            self._sinusoidal_table[:T]
+            .unsqueeze(0)
+            .expand(B, -1, -1)
+            .to(device=video.device, dtype=video.dtype)
+        )
+        return self._inner(
+            video=video,
+            audio=sin_stream,
             dt=dt,
             mask=mask,
             return_attention=return_attention,
