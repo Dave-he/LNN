@@ -1,6 +1,7 @@
 from lnn.data.graph_timeseries import SyntheticGraphTimeSeriesDataset, create_graph_dataloaders
 from lnn.data.long_sequence import SyntheticLongSequenceDataset, create_long_sequence_dataloaders
 from lnn.data.multimodal import SyntheticMultimodalDataset, create_multimodal_dataloaders
+from lnn.data.multimodal_physreg import MultimodalPhysicsDataset, create_multimodal_physics_dataloaders
 from lnn.data.physics import DampedOscillatorDataset, create_physics_dataloaders
 from lnn.data.robotics import SyntheticImitationDataset, create_imitation_dataloaders
 from lnn.data.timeseries import (
@@ -23,6 +24,8 @@ from lnn.data.datasets import (
 __all__ = [
     "SyntheticMultimodalDataset",
     "create_multimodal_dataloaders",
+    "MultimodalPhysicsDataset",
+    "create_multimodal_physics_dataloaders",
     "SyntheticGraphTimeSeriesDataset",
     "create_graph_dataloaders",
     "SyntheticLongSequenceDataset",
