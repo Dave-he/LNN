@@ -40,6 +40,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from lnn.core.mdn import mdn_mean, mdn_negative_log_likelihood
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
+    NonRecurrentSelfXAttnWithMDN,
     RegisterTokenSelfXAttnWithMDN,
     UniVideoSelfXAttnWithMDN,
 )
@@ -60,7 +61,7 @@ def _move(b, d):
 def _forward(model, kind, batch, dataset_audio_mode="normal"):
     if kind == "video_only":
         return model(torch.cat([batch["video"], batch["audio"]], dim=-1))
-    if kind == "register_token":
+    if kind == "register_token" or kind == "non_recurrent_xattn":
         return model(batch["video"])
     if kind == "uni_video_xattn":
         return model(batch["video"])
@@ -110,6 +111,8 @@ def _build_model(kind, hidden_size, num_mixtures):
         return UniVideoSelfXAttnWithMDN(video_dim=3, audio_dim=3, hidden_size=hidden_size, output_size=5, num_mixtures=num_mixtures)
     if kind == "register_token":
         return RegisterTokenSelfXAttnWithMDN(video_dim=3, audio_dim=3, hidden_size=hidden_size, output_size=5, num_mixtures=num_mixtures)
+    if kind == "non_recurrent_xattn":
+        return NonRecurrentSelfXAttnWithMDN(video_dim=3, audio_dim=3, hidden_size=hidden_size, output_size=5, num_mixtures=num_mixtures)
     if kind == "cross_attn":
         return CrossModalAttnBiCfCNADWithMDN(video_dim=3, audio_dim=1, hidden_size=hidden_size, output_size=5, num_mixtures=num_mixtures)
     raise ValueError(kind)
@@ -145,6 +148,7 @@ def main():
         ("video_only", "normal"),
         ("uni_video_xattn", "normal"),
         ("register_token", "normal"),
+        ("non_recurrent_xattn", "normal"),
         ("cross_attn", "normal"),
         ("cross_attn", "zero"),
     ]:

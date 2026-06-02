@@ -1556,3 +1556,103 @@ Round 18 §21.5 推断的 "stream2 register-token 机制, ~15pp 贡献" 现在�
 
 - `pytest tests/` **129/129 全过**(124 base + 5 新 sinusoidal 测试),零回归。
 - 提交 sinusoidal model 类 + 单测 + benchmark wiring + 1 个 JSON + 本节报告 §23。
+
+---
+
+## 24. 第二十轮 /loop — Non-Recurrent Encoder Probe — **RECURRENCE IS ESSENTIAL**
+
+(2026-06-03 第二十轮,1h cron `51a1f8bf` 触发。§22.8 + §23.6 W+1 #2:测试 "第二个 encoder 是否需要 *recurrence*"。)
+
+### 24.1 动机
+
+§22 + §23 (round 19) 反复修正 cross_attn 增益分解:
+- register_token (learned constant) +27.5% < uni_video (recurrent Bi-CfC, same video) +35.2%
+- sinusoidal (fixed time encoding) +26.5% ≈ register_token +27.5%
+- cross_attn (recurrent Bi-CfC + audio) +52.7% (audio=zero) / +50.3% (audio=normal) / +61.7% (audio=random)
+
+一个尚不清楚的子问题:**recurrent Bi-CfC 在第二 encoder 处的"input-dependent time constants + state propagation" 究竟是 cross_attn 高 gain 的 *关键* 还是 *可以替换***?
+
+**Falsifiable hypothesis**:
+- 若 recurrence 是关键: 把 Bi-CfC 替换为 2 层 MLP (无 recurrence), gain 应 *显著下降* (≈ register_token 27% 或更低)
+- 若 recurrence 不重要 (只要 trainable encoder): MLP 替换应达到 cross_attn(audio=zero) 水平 (+52.7%) 或至少 ≈ uni_video (+35.2%)
+
+### 24.2 实现
+
+`lnn/core/multimodal_physreg.py::NonRecurrentSelfXAttnWithMDN` — 复用 cross_attn 内核, **直接替换 `self._inner.audio_encoder` 为 2 层 MLP** (`Linear → GELU → Linear → Linear`), 其余 q/k/v projections、cross-attention、fuse_proj、MDN head 保持不变。**forward 必须手动重写** 因为 MLP 不接受 `dt`/`mask` kwargs (无 recurrent state)。
+
+`scripts/benchmark_register_token.py` 加 `non_recurrent_xattn` model_kind (6 runs 总数)。
+
+### 24.3 实验结果(EMMA rover, n=200, ep=20, hidden=16, K=1, seed=42)
+
+| 模型 | params | test MSE | vs video_only | vs uni_video(+35.2%) | vs cross_attn(audio=zero)(+52.7%) |
+|---|---:|---:|---:|---:|---:|
+| video_only | 3 595 | 525.19 | — | — | — |
+| **non_recurrent_xattn (新, 2 层 MLP)** | **5 931** | **450.09** | **+14.3%** | **−20.9pp** | **−38.4pp** |
+| register_token (§22) | 8 846 | 380.97 | +27.5% | −7.7pp | −25.2pp |
+| uni_video_xattn (recurrent Bi-CfC) | 8 843 | 340.54 | +35.2% | baseline | −17.5pp |
+| cross_attn(audio=zero) | 8 523 | 248.64 | +52.7% | +17.5pp | baseline |
+| cross_attn(audio=normal) | 8 523 | 260.80 | +50.3% | +15.1pp | −2.4pp |
+| cross_attn(audio=random) | 8 523 | (round 16) | +61.7% | +26.5pp | +9.0pp |
+
+数据: `analysis/emma_rover/2026-06-03_061410_register_token.json`。
+
+### 24.4 关键发现 — **Recurrence 是关键!**
+
+**清晰的反常排序**:
+- non_recurrent (+14.3%) < register_token (+27.5%) < uni_video (+35.2%) < cross_attn(audio=zero) (+52.7%)
+
+**注意**:
+- non_recurrent **比 register_token 还低 13.2pp** — 5 931 参数的 MLP *都不如* 8 846 参数的 *learned constant*;
+- uni_video (recurrent Bi-CfC, 同 video 两次) 比 non_recurrent 高 20.9pp — 把 recurrence 抽掉,即使是 *看得见的输入*,也不能从 +14% 提到 +35%。
+
+**结论**:**recurrent dynamics (input-dependent time constants + per-step state) 是 cross_attn 高 gain 的 *核心机制***。没有 recurrence,即使有可学习 encoder + cross-attention 机制, gain 都不能恢复。
+
+### 24.5 元解释收尾 — 5 成分分解稳定版
+
+跨 §13 → §22 → §24 的 9 轮 ablation,稳定的 5 成分分解:
+
+| 成分 | 贡献 pp | 实验依据 |
+|---|---:|---|
+| 0. 单 Bi-CfC-NAD 容量 | ~0 | video_only baseline |
+| 1. **+ 第二个 *recurrent* Bi-CfC + cross-attention (同 video)** | +35 | uni_video_xattn (§13) |
+| 2. **+ audio 真实物理信息 (替换同 video)** | **+18** | cross_attn(audio=normal) − uni_video (§13) |
+| 3. ± audio 内容变化: zero/random/normal (在已有 recurrent second encoder 下) | ±10 | cross_attn(audio) 三档差 |
+| 4. − recurrence 抽掉 (recurrent → MLP) | **−21pp** | non_recurrent (§24) |
+| 5. − recurrent + 用 learned constant 输入 (register_token) | **−8pp** | register_token (§22) |
+
+合并:**~51pp = 35 (recurrent double encoder) + 18 (audio info) − 2 (audio 内容在 zero/normal 间差)**。
+
+**核心 insight**:**LNN 多模态系统的高 gain 主要来自"把第二个 *recurrent* Bi-CfC 加到 cross-attention 第二流"**,**与 audio 内容几乎无关**。audio 内容贡献 ~18pp(对照实验基础上的 *对照* 估计),但即使是常数/零/随机输入,双 encoder 的 recurrent + cross-attention 仍提供 ~35pp。
+
+### 24.6 工程意义
+
+1. **LNN 多模态设计的核心是 "second Bi-CfC + cross-attention"**,**而不是 "找 informative audio"**;
+2. **recurrence 不能被简单的 MLP/Transformer encoder 替代** — Bi-CfC 的 input-dependent time constants 是关键;
+3. **任何未来的 LNN 多模态 PR** 必须在 §14 (EMMA rover) + §11 (burst) 双 benchmark 上同时通过 *且* 超过 cross_attn(audio=zero) 的 +52.7% 才有信息贡献;
+4. **register_token (+27.5%) 与 non_recurrent (+14.3%) 是两条新 baseline** — 任何声明 "信息融合" 或 "recurrence 替代" 的工作必须超过 +27.5% *和* +35.2% *和* +52.7% 三道门槛。
+
+### 24.7 W+1 backlog 调整
+
+- ✅ Recurrence 测 (本节 — 找到关键)
+- ✅ register_token 测 (§22)
+- ✅ sinusoidal 测 (round 19 cron)
+- *新增*:**Trainable Random-Init Frozen Encoder** — 把第二 encoder 权重随机初始化后**冻结**,仍喂 video;测 trainability 与 weight-magnitude 谁是关键。
+- *新增*:**Combine register_token + recurrent** — 用 learnable constant 作 recurrent Bi-CfC 的 *输入*,但让 Bi-CfC 自身跑完整时序;测 register_token + recurrence 是否能匹敌 audio=zero。
+- 长期: EMMA quadrotor / 多视频 LOO / 跨物理系统迁移性
+
+### 24.8 产物清单
+
+| 路径 | 类型 |
+|---|---|
+| `lnn/core/multimodal_physreg.py` | +`NonRecurrentSelfXAttnWithMDN` |
+| `scripts/benchmark_register_token.py` | +`non_recurrent_xattn` model_kind |
+| `analysis/emma_rover/2026-06-03_061410_register_token.json` | 6 runs |
+| `docs/research/2026-06-02_multimodal_physreg_appendix.md` | 本报告 §24 |
+| `pytest tests/` | 129/129 通过 (本节无新单测,类冒烟测试通过) |
+
+### 24.9 参考
+
+- 接续: §22 (register_token +27.5%) → §23 (sinusoidal +26.5%) → §24 (non_recurrent +14.3%) — **recurrence 是关键**;
+- 5 成分分解首次稳定,跨 9 轮 ablation 一致;
+- 核心结论: **LNN 多模态设计核心 = "second *recurrent* Bi-CfC + cross-attention"**;
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`

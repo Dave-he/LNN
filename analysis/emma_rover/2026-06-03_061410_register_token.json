@@ -1,0 +1,59 @@
+{
+  "run_id": "2026-06-03_061410",
+  "config": {
+    "epochs": 20,
+    "num_samples": 200,
+    "window": 16,
+    "feature_noise_std": 0.02,
+    "hidden_size": 16,
+    "num_mixtures": 1,
+    "batch_size": 32,
+    "lr": 0.005,
+    "seed": 42,
+    "output_dir": "analysis/emma_rover"
+  },
+  "runs": [
+    {
+      "model_kind": "video_only",
+      "audio_mode": "normal",
+      "parameters": 3595,
+      "elapsed_seconds": 1.8426430369727314,
+      "test_param_mse": 525.1851806640625
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "audio_mode": "normal",
+      "parameters": 8843,
+      "elapsed_seconds": 3.58455581497401,
+      "test_param_mse": 340.5364074707031
+    },
+    {
+      "model_kind": "register_token",
+      "audio_mode": "normal",
+      "parameters": 8846,
+      "elapsed_seconds": 3.835415184032172,
+      "test_param_mse": 380.9735107421875
+    },
+    {
+      "model_kind": "non_recurrent_xattn",
+      "audio_mode": "normal",
+      "parameters": 5931,
+      "elapsed_seconds": 2.150079558021389,
+      "test_param_mse": 450.0905456542969
+    },
+    {
+      "model_kind": "cross_attn",
+      "audio_mode": "normal",
+      "parameters": 8523,
+      "elapsed_seconds": 3.798777458956465,
+      "test_param_mse": 260.80389404296875
+    },
+    {
+      "model_kind": "cross_attn",
+      "audio_mode": "zero",
+      "parameters": 8523,
+      "elapsed_seconds": 3.6759404209442437,
+      "test_param_mse": 248.6393280029297
+    }
+  ]
+}

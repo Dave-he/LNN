@@ -823,3 +823,104 @@ class SinusoidalTimeStreamSelfXAttnWithMDN(nn.Module):
             mask=mask,
             return_attention=return_attention,
         )
+
+
+class NonRecurrentSelfXAttnWithMDN(nn.Module):
+    """Round-20 trainable-encoder probe.
+
+    Identical architecture to :class:`UniVideoSelfXAttnWithMDN` /
+    :class:`RegisterTokenSelfXAttnWithMDN` / etc., but the second
+    *encoder* is replaced with a *purely feedforward MLP* (no
+    recurrent dynamics).  This tests whether the +52.7% gain of
+    cross_attn(audio=zero) comes from the *recurrent* nature of
+    Bi-CfC-NAD or simply from *any trainable encoder* being on
+    the second stream.
+
+    Hypothesis (falsifiable):
+      * If the +52.7% gain comes from the *recurrent* dynamics
+        of Bi-CfC-NAD (i.e. its input-dependent time constants
+        and per-step state), then a non-recurrent MLP second
+        encoder should fall back to roughly the uni_video level
+        (+35.2%) or lower.
+      * If the gain is just "having any trainable encoder", then
+        the MLP variant should match the cross_attn(audio=zero)
+        level (+52.7%).
+
+    Implementation note: the *audio* slot still goes through the
+    cross-attention machinery, so the cross-attn parameters are
+    identical to the recurrent variants - only the encoder at the
+    audio side changes.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 - kept for API parity; ignored
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        noise_beta: float = 0.9,
+        noise_aggregation: str = "independent",
+    ) -> None:
+        super().__init__()
+        self._inner = CrossModalAttnBiCfCNADWithMDN(
+            video_dim=video_dim,
+            audio_dim=video_dim,
+            hidden_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+            num_layers=num_layers,
+            noise_beta=noise_beta,
+            noise_aggregation=noise_aggregation,
+            modality_dropout=0.0,
+        )
+        # Replace the *audio* encoder (the recurrent Bi-CfC-NAD) with
+        # a 2-layer feedforward MLP.  This is a per-step transformation
+        # of identical arity, so the rest of the harness is unchanged.
+        self._inner.audio_encoder = nn.Sequential(
+            nn.Linear(video_dim, hidden_size),
+            nn.GELU(),
+            nn.Linear(hidden_size, hidden_size),
+        )
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+
+    @property
+    def video_encoder(self) -> nn.Module:
+        return self._inner.video_encoder
+
+    @property
+    def audio_encoder(self) -> nn.Module:
+        return self._inner.audio_encoder
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 - intentionally ignored
+        dt: float | torch.Tensor | None = None,  # noqa: ARG002 - MLP has no time-constants
+        mask: torch.Tensor | None = None,  # noqa: ARG002 - MLP is per-step
+        return_attention: bool = False,  # noqa: ARG002 - MLP has no attention to expose
+    ) -> dict[str, torch.Tensor]:
+        # Re-implement the cross-attention forward manually because the
+        # MLP audio encoder does not accept ``dt``/``mask`` kwargs (no
+        # recurrent state).  This still re-uses the q/k/v projections,
+        # the cross-attention, the fuse projection, and the MDN head.
+        v_feat = self._inner.video_encoder(video)  # [B, T, H]
+        a_feat = self._inner.audio_encoder(video)  # MLP per-step, [B, T, H]
+        if v_feat.shape[0] != a_feat.shape[0]:
+            raise ValueError("video and audio must share the batch dimension")
+        if v_feat.shape[1] != a_feat.shape[1]:
+            raise ValueError("video and audio must share the time dimension")
+        v_from_a, _ = self._inner._attend(
+            self._inner.q_v(v_feat), self._inner.k_a(a_feat), self._inner.v_a(a_feat),
+        )
+        a_from_v, _ = self._inner._attend(
+            self._inner.q_a(a_feat), self._inner.k_v(v_feat), self._inner.v_v(v_feat),
+        )
+        v_refined = v_feat + v_from_a
+        a_refined = a_feat + a_from_v
+        fused = self._inner.fuse_proj(torch.cat([v_refined, a_refined], dim=-1))
+        return self._inner.mdn(fused)
