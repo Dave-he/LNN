@@ -529,3 +529,83 @@ def test_uni_video_self_xattn_differs_from_cross_attn() -> None:
     assert cross_loc.shape == uni_loc.shape
     assert not torch.allclose(cross_loc, uni_loc, atol=1e-4), \
         "uni-video-self-xattn output identical to cross_attn — audio path is silently still active"
+
+
+# ---------- NoisyVideoSelfXAttnWithMDN tests (round 17) ----------
+
+
+def test_noisy_video_self_xattn_output_shape() -> None:
+    from lnn.core.multimodal_physreg import NoisyVideoSelfXAttnWithMDN
+    model = NoisyVideoSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2,
+        num_mixtures=2, noise_std=0.5,
+    )
+    video = torch.randn(2, 12, 1)
+    audio = torch.randn(2, 12, 1)  # supplied but ignored
+    out = model(video, audio)
+    assert out["logits"].shape == (2, 12, 2)
+    assert out["loc"].shape == (2, 12, 2, 2)
+
+
+def test_noisy_video_self_xattn_rejects_negative_noise() -> None:
+    import pytest
+    from lnn.core.multimodal_physreg import NoisyVideoSelfXAttnWithMDN
+    with pytest.raises(ValueError):
+        NoisyVideoSelfXAttnWithMDN(
+            video_dim=1, audio_dim=1, hidden_size=4, output_size=2,
+            noise_std=-0.1,
+        )
+
+
+def test_noisy_video_self_xattn_ignores_audio_argument() -> None:
+    """Audio path is dead — output depends only on video + injected noise.
+
+    With noise_std=0 the model reduces to uni_video_xattn so the audio
+    argument is doubly ignored. Two different audio inputs must yield
+    bit-identical outputs.
+    """
+    from lnn.core.multimodal_physreg import NoisyVideoSelfXAttnWithMDN
+    torch.manual_seed(0)
+    model = NoisyVideoSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, noise_std=0.0,
+    )
+    model.eval()
+    video = torch.randn(1, 10, 1)
+    audio_a = torch.randn(1, 10, 1)
+    audio_b = torch.randn(1, 10, 1) * 100
+    with torch.no_grad():
+        out_a = mdn_mean(model(video, audio_a))
+        out_b = mdn_mean(model(video, audio_b))
+    assert torch.allclose(out_a, out_b, atol=1e-6)
+
+
+def test_noisy_video_self_xattn_differs_from_uni_video() -> None:
+    """noise_std > 0 must produce different outputs than uni_video_xattn."""
+    from lnn.core.multimodal_physreg import (
+        NoisyVideoSelfXAttnWithMDN,
+        UniVideoSelfXAttnWithMDN,
+    )
+    torch.manual_seed(17)
+    uni = UniVideoSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2,
+    )
+    torch.manual_seed(17)
+    noisy = NoisyVideoSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, noise_std=0.5,
+    )
+    # Match all weights so the only difference is the noise injection.
+    noisy._inner.video_encoder.load_state_dict(uni._inner.video_encoder.state_dict())
+    noisy._inner.audio_encoder.load_state_dict(uni._inner.audio_encoder.state_dict())
+    for proj_name in ("q_v", "k_a", "v_a", "q_a", "k_v", "v_v", "fuse_proj"):
+        getattr(noisy._inner, proj_name).load_state_dict(getattr(uni._inner, proj_name).state_dict())
+    noisy._inner.mdn.load_state_dict(uni._inner.mdn.state_dict())
+    video = torch.randn(1, 14, 1)
+    with torch.no_grad():
+        torch.manual_seed(123)  # noise stream sample
+        uni_loc = mdn_mean(uni(video))
+        torch.manual_seed(123)
+        noisy_loc = mdn_mean(noisy(video))
+    assert uni_loc.shape == noisy_loc.shape
+    assert not torch.allclose(uni_loc, noisy_loc, atol=1e-4), (
+        "noisy_video output identical to uni_video — noise injection is dead"
+    )

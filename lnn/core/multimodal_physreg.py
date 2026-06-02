@@ -412,3 +412,95 @@ class UniVideoSelfXAttnWithMDN(nn.Module):
             mask=mask,
             return_attention=return_attention,
         )
+
+
+class NoisyVideoSelfXAttnWithMDN(nn.Module):
+    """Round-17 minimal reproduction of the cross-attention regularization
+    mechanism: same architecture as :class:`CrossModalAttnBiCfCNADWithMDN`
+    but **the second encoder receives the same video plus Gaussian noise**.
+
+    This isolates the "decorrelated second stream" hypothesis from round 16.
+    If round 16's interpretation (cross_attn's +14.9pp over uni_video_xattn
+    is structural regularisation from any decorrelated stream, not from
+    audio content) is correct, this model should:
+
+    * BEAT :class:`UniVideoSelfXAttnWithMDN` (which feeds identical video to
+      both encoders).
+    * Approach the +47.1% gain :class:`CrossModalAttnBiCfCNADWithMDN`
+      achieved with ``audio_mode='zero'`` (no audio content, only a
+      structurally distinct second input).
+
+    Conversely, if noisy-video matches the uni-video baseline, the
+    regularisation is not just decorrelation — it needs a genuinely
+    out-of-distribution second stream (e.g. an audio-like source).
+
+    The ``noise_std`` parameter controls how decorrelated the second stream
+    is from the first. The audio input slot of the underlying cross-attn is
+    re-purposed as the noisy-video stream; ``audio`` argument at forward
+    time is **ignored**.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 — kept for API parity; ignored
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        noise_beta: float = 0.9,
+        noise_aggregation: str = "independent",
+        noise_std: float = 0.5,
+    ) -> None:
+        super().__init__()
+        if noise_std < 0.0:
+            raise ValueError("noise_std must be >= 0")
+        self._inner = CrossModalAttnBiCfCNADWithMDN(
+            video_dim=video_dim,
+            audio_dim=video_dim,  # second encoder also takes video shape
+            hidden_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+            num_layers=num_layers,
+            noise_beta=noise_beta,
+            noise_aggregation=noise_aggregation,
+            modality_dropout=0.0,
+        )
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+        self.noise_std = float(noise_std)
+
+    @property
+    def video_encoder(self) -> nn.Module:
+        return self._inner.video_encoder
+
+    @property
+    def audio_encoder(self) -> nn.Module:
+        """Second video+noise encoder. Named ``audio_encoder`` for harness reuse."""
+        return self._inner.audio_encoder
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 — intentionally ignored
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+        return_attention: bool = False,
+    ) -> dict[str, torch.Tensor]:
+        # In training mode, sample fresh noise per forward; in eval mode, also
+        # sample fresh noise (the regularisation effect is the input itself,
+        # not a frozen perturbation).
+        if self.noise_std > 0.0:
+            noise = torch.randn_like(video) * self.noise_std
+            second_input = video + noise
+        else:
+            second_input = video.clone()
+        return self._inner(
+            video=video,
+            audio=second_input,
+            dt=dt,
+            mask=mask,
+            return_attention=return_attention,
+        )

@@ -23,6 +23,7 @@ from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
     MultimodalBiCfCNADWithMDN,
+    NoisyVideoSelfXAttnWithMDN,
     UniVideoSelfXAttnWithMDN,
 )
 from lnn.core.physics import PhysicsInformedLNN, damped_oscillator_residual, physics_informed_loss
@@ -62,6 +63,7 @@ __all__ = [
     "MultimodalBiCfCNADWithMDN",
     "CrossModalAttnBiCfCNADWithMDN",
     "UniVideoSelfXAttnWithMDN",
+    "NoisyVideoSelfXAttnWithMDN",
     "MDNHead",
     "mdn_negative_log_likelihood",
     "mdn_mean",
