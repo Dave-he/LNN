@@ -106,14 +106,24 @@ class EmmaRoverRegressionDataset(Dataset):
         video_path: str = "/tmp/RoverVideo.mp4",
         cache_dir: str = "/tmp/emma_features",
         cache_file: str = "/tmp/emma_features/features.npz",
+        video_channels: tuple[int, ...] | None = None,
     ) -> None:
         if window < 4:
             raise ValueError("window must be >= 4")
         if num_samples < 1:
             raise ValueError("num_samples must be >= 1")
+        if video_channels is not None:
+            video_channels = tuple(int(c) for c in video_channels)
+            if not all(0 <= c < 3 for c in video_channels):
+                raise ValueError(
+                    f"video_channels must be a subset of {{0,1,2}}, got {video_channels}"
+                )
+            if len(video_channels) == 0:
+                raise ValueError("video_channels must be non-empty")
         self.num_samples = num_samples
         self.window = window
         self.video_path = video_path
+        self.video_channels = video_channels
         self.video, self.audio, self.params = _build_augmented_features(
             video_path=video_path,
             cache_dir=cache_dir,
@@ -123,6 +133,13 @@ class EmmaRoverRegressionDataset(Dataset):
             feature_noise_std=feature_noise_std,
             seed=seed,
         )
+        if video_channels is not None:
+            # Slice along the channel axis ([N, W, 3] -> [N, W, len(video_channels)]).
+            self.video = self.video[:, :, list(video_channels)]
+
+    @property
+    def video_dim(self) -> int:
+        return self.video.shape[-1]
 
     def __len__(self) -> int:
         return self.num_samples

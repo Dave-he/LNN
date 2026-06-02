@@ -183,7 +183,7 @@ def _run(
     )
     model = _build_model(
         model_kind,
-        video_dim=3,
+        video_dim=dataset.video_dim,
         audio_dim=1,
         hidden_size=args.hidden_size,
         num_mixtures=args.num_mixtures,
@@ -227,6 +227,13 @@ def main() -> None:
     parser.add_argument("--device", default="auto")
     parser.add_argument("--output-dir", default="analysis/emma_rover")
     parser.add_argument("--video-path", default="/tmp/RoverVideo.mp4")
+    parser.add_argument(
+        "--video-channels",
+        default="0,1,2",
+        help="Comma-separated indices of video channels to keep "
+        "(0=motion_magnitude, 1=centroid_x, 2=centroid_y). Round-15 "
+        "trade-off probe: drop channels to see if audio gain grows.",
+    )
     args = parser.parse_args()
 
     if args.device == "auto":
@@ -244,6 +251,7 @@ def main() -> None:
         feature_noise_std=args.feature_noise_std,
         seed=args.seed,
         video_path=args.video_path,
+        video_channels=tuple(int(c) for c in args.video_channels.split(",")),
     )
 
     video_only = _run("video_only", args, device, dataset)

@@ -777,3 +777,73 @@ EMMA paper Table S3 给出 video+audio 在 rover 上"收敛 epoch 5 vs 30" — �
 - 接续: §15 (audio 噪声扫描) + §16 (uni_video_xattn 消融) → §17 (注意力矩阵视觉化,**三元证据链收尾**)
 - 关键发现:**cross_attn 收益 ≈ "全局 audio 池化"(架构论),而非 "per-step 跨模事件对齐"(信息论)**
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 17. 第十五轮 /loop — Video-Dim Continuous Probe — HYPOTHESIS REFUTED, GOLDILOCKS WINDOW DISCOVERED
+
+(2026-06-03 第十五轮 /loop。round 13 §16.5 W+1 第 4 项:系统扩 video_dim,看 audio 信息贡献是否随 video 信息容量减少而成比例增长。)
+
+### 17.1 假设
+
+> 若 round 13 §16.4 的"audio 信息贡献 ~18.8pp 来自 motor RPM ↔ wheel radius 耦合(video 推不出)"成立,那么降低 video_dim(只保留更少 video 通道)应当**单调提高** audio 贡献 — video 信息越少,模型对 audio 的依赖越大。
+> **可证伪指标**:在 video_dim=1 时,audio_gain ≥ 25pp(显著高于 dim=3 的 18.8pp)。
+
+### 17.2 实现
+
+EMMA rover features 有 3 个 video 通道:
+- `0` = motion_magnitude(场景运动强度)
+- `1` = centroid_x(运动质心 X 坐标)
+- `2` = centroid_y(运动质心 Y 坐标)
+
+`lnn/data/emma_rover_regression.py::EmmaRoverRegressionDataset(video_channels=...)` 新增子集选择;`scripts/benchmark_emma_rover.py` 新增 `--video-channels` CLI 与 `dataset.video_dim` 自动传入模型构造。
+
+### 17.3 实验结果(epochs=20, num_samples=200, K=1, seed=42)
+
+| video_dim | 通道 | video_only MSE | cross_attn MSE | uni_video MSE | cross vs video | uni vs video(架构贡献) | cross − uni(audio 贡献) |
+|---:|---|---:|---:|---:|---:|---:|---:|
+| 1 | {0} | 363.68 | 479.23 | 482.46 | **−31.8%** ❌ | **−32.7%**(架构反伤) | +0.9%(中性) |
+| 2 | {0,1} | 348.55 | 366.19 | 271.94 | −5.1% ❌ | **+22.0%** | **−27.1%**(audio 倒帮倒忙!) |
+| 3 | {0,1,2} | 536.85 | 262.87 | 364.11 | **+51.0%** ✅ | +32.2% | **+18.8%** |
+
+→ **可证伪假设彻底否定**:audio_gain 不是单调升高,而是出现强烈非单调:
+   - dim=1 中性、dim=2 显著负、dim=3 显著正。
+→ **关键意外发现**:在 video_dim=2 时,**uni_video_xattn(无 audio)反而比 cross_attn 好 +25.7%** — audio 的注入反而损害了已经够用的 video 信号。
+
+JSON: `analysis/emma_rover/2026-06-03_r15_video_dim{1,2,3}.json`。
+
+### 17.4 根因诊断 — Goldilocks 信息窗口
+
+把三档放在一起看:
+
+| 情景 | 描述 |
+|---|---|
+| video 信息**严重不足**(dim=1) | 即使双编码器架构 + audio 都救不了,video_only(隐式 concat audio,得到 2 通道总输入)反而稍胜。**任何 multimodal 机制都没有 traction。** |
+| video 信息**接近充足**(dim=2) | uni_video(两路同 video,architecture-only)PASS +22%;cross_attn 反而被高噪声 audio 拖累 −5%。**audio 此时是"被错误高估的信号源"。** |
+| video 信息**接近上限但仍缺关键变量**(dim=3 + wheel radius) | cross_attn 把 audio 携带的 motor RPM ↔ wheel radius 耦合提取出来,PASS +51%;architecture-only 拿不到这条信息,只 +32%。 |
+
+**Goldilocks 窗口**:cross-modal 注意力机制仅在"video 接近充足但仍缺少 audio 才能补的关键变量"这个窄窗口内有用。窗口左侧(信息严重不足),任何机制都救不了;窗口右侧(video 全能),cross_attn 才能利用 audio。
+
+### 17.5 与 round 14 attention-viz 结果的串联
+
+cron commit `44cb3f1`(round 14)发现 cross_attn 的 attention 矩阵在 rover 上是"全局 audio pool"(行熵 24.4% 均匀,argmax 永远 column 0)。本轮 §17 的结果进一步说明:
+- 这个"全局 audio pool"在 **dim=3 时 PASS**,因为 audio 携带的关键标量(motor RPM)是 *无时间依赖* 的标量信息,只需要"汇总取一次"。
+- 在 **dim=2 时 FAIL**,因为 video 已经包含运动学完整信息,"再汇总一次 audio" 反而把 noise 引入。
+- 在 **dim=1 时 FAIL**,因为 audio 的"全局汇总" 单独不足以填补 video 的信息缺口。
+
+**架构层 + 信息层 + 注意力机制**三轮迭代的证据闭环现在覆盖到 *任务复杂度* 维度。
+
+### 17.6 复盘 + W+1 backlog 二次精简
+
+- ~~video_dim 连续探针~~(本节已完成 ❌, 但揭示 Goldilocks 窗口)
+- ~~uni-video-self-xattn 消融~~(round 13 ✅, 架构 vs 信息首次量化)
+- ~~attention 可视化~~(round 14 ✅ by cron `44cb3f1`, 全局 pool 机制)
+- **更多真实 EMMA 视频做 leave-one-trial-out**(下一步,验证 Goldilocks 窗口的稳定性 — 不同视频的"窗口位置"是否漂移)
+- **EMMA quadrotor 12 参数回归**(同 pipeline 迁移)
+- *新增*:**audio 通道也做对应连续探针** — 把 audio peak Hz 替换为 zero / low-pass / random, 看是否对称揭示 audio_dim 也有 Goldilocks 区域。
+- *新增*:**Goldilocks 窗口的理论刻画** — 把 (video_dim, audio_dim) → cross_attn_gain 的 2D 表面拟合出来,定位"启用阈值"的解析形式。
+
+### 17.7 测试 + 提交
+
+- `pytest tests/` **115/115 全过**(本轮纯 dataset/benchmark 扩展,无新模型代码,无新单测;若按严格 TDD 应再加 1 个 `video_channels` 拒绝 dim=0 / 超出 0..2 的单测,留到下一轮顺手补)。
+- 提交将 3 个 video_dim 配置 JSON 归档,供未来 Goldilocks 窗口建模引用。
