@@ -1656,3 +1656,86 @@ Round 18 §21.5 推断的 "stream2 register-token 机制, ~15pp 贡献" 现在�
 - 5 成分分解首次稳定,跨 9 轮 ablation 一致;
 - 核心结论: **LNN 多模态设计核心 = "second *recurrent* Bi-CfC + cross-attention"**;
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 24. 第二十轮 /loop (本节) — Frozen Random Encoder — TRAINABILITY IS ALSO ESSENTIAL
+
+(2026-06-03 第二十轮 /loop 后续。Cron commit `f7eb592` 已测了 **non-recurrent MLP**(+14.3% FAIL,证明 recurrence 必要);本节测互补的 **frozen random recurrent encoder** — 保留递归动态但权重冻结,证明 trainability 是否也必要。)
+
+### 24.1 假设
+
+> Cross_attn(audio=zero) +52.7% 的机制需要"trainable + recurrent + uninformative input"三条件。Cron 已证 recurrence 必要(non_recurrent MLP +14.3%)。本节测 **trainability** 的必要性:把第二个 Bi-CfC-NAD 的权重随机初始化后冻结(`requires_grad=False`),其余 cross-attention 机器全部 trainable。
+> - 如果 gain ≈ uni_video +35% → 递归动态本身足够,trainability 可有可无(echo-state-network 风格)
+> - 如果 gain << +35% → trainability 必要,frozen 随机递归不足以提供正则化
+
+### 24.2 实现
+
+`lnn/core/multimodal_physreg.py::FrozenRandomEncoderXAttnWithMDN` — 复用 cross_attn 内核,构造后调 `for p in audio_encoder.parameters(): p.requires_grad = False`。喂同 video(等价 uni_video 设置),唯一变量是 gradient 是否流入第二 encoder。4 个新单测覆盖参数冻结、形状、frozen 参数无梯度、audio 真被忽略。
+
+### 24.3 实验结果(epochs=20, n=200, K=1, seed=42, hidden=16, video_dim=3)
+
+| 第二 encoder 配置 | trainable | recurrent | gain vs video_only | vs uni_video(+35.2%) |
+|---|:---:|:---:|---:|---:|
+| 无 encoder(register_token, cron r19) | n/a | n/a | +27.5% | −7.7pp |
+| 无 encoder(sinusoidal, mine r19) | n/a | n/a | +26.5% | −8.7pp |
+| **frozen random Bi-CfC(NEW r20)** | **❌** | ✅ | **+24.5%** | **−10.7pp ❌** |
+| MLP(non_recurrent, cron r20) | ✅ | ❌ | +14.3% | −20.9pp ❌ |
+| Bi-CfC(uni_video, r13) | ✅ | ✅ | +35.2% | baseline |
+| Bi-CfC(cross_attn audio=zero, r19) | ✅ | ✅ | +52.7% | +17.5pp |
+
+→ **可证伪假设否定**:frozen random +24.5% **远低于** uni_video +35.2%,差距 10.7pp。**Trainability 是必要的**。
+→ JSON: `analysis/emma_rover/2026-06-03_r20_frozen_random_encoder.json`。
+
+### 24.4 完整的三条件 ablation 矩阵
+
+20 轮跨度后,trainability/recurrence 二维 ablation 完整闭合:
+
+|    | non-recurrent | recurrent |
+|---|---:|---:|
+| **frozen** | n/a(没意义) | **+24.5%(本节 NEW)** |
+| **trainable** | +14.3%(cron MLP) | +35%~+53%(Bi-CfC) |
+
+观察:
+- (trainable, recurrent)→ +35~53%:**正常工作区**
+- (trainable, non-recurrent)→ +14.3%:recurrence 必要
+- (frozen, recurrent)→ +24.5%:**trainability 必要,且 frozen 随机递归 < no encoder!**
+- frozen random Bi-CfC(+24.5%)甚至比 register_token(+27.5%)、sinusoidal(+26.5%)更低 — 这是个意外发现。**随机递归动态产生的"结构化噪声"反而干扰 cross-attention**,比简单 broadcast 一个常数/固定模式更差。
+
+### 24.5 元结论第五次精化 — Cross-Attn 正则化的最小必要条件
+
+跨 20 轮所有第二流配置的"启用条件"汇总:
+
+**Cross_attn 正则化机制完整生效需同时满足**:
+1. ✅ **第二 encoder 存在**(否则只是 register_token 风格的可学习 broadcast,~+27%)
+2. ✅ **第二 encoder 是 recurrent**(非 MLP,否则 +14%)
+3. ✅ **第二 encoder 参数 trainable**(否则即使 recurrent,只有 +24.5%,反而比无 encoder 还差)
+4. 第二 encoder 的输入可以是常数/零/随机 — **输入内容次要**
+
+| Round | 元结论 |
+|---:|---|
+| 11/13 | "audio 携带物理信息" |
+| 16 | "audio 内容不重要,架构正则化" |
+| 17 | "decorrelated 第二流" |
+| 18 | "register-token meta-pool" |
+| 19 | "trainable recurrent encoder" |
+| **20** | **"trainable + recurrent BOTH 必要;input 内容次要"** |
+
+经过 20 轮 ablation,机制已经被三条件 fully characterized,**未来 LNN cross-modal 设计的最小必要条件清单**给出。
+
+### 24.6 W+1 backlog 状态
+
+- ~~trainability 必要性测试~~(本节 ✅ 完成)
+- ~~recurrence 必要性测试~~(cron round 20 ✅)
+- ~~trainable non-recurrent embedding 测试~~(被 cron MLP 测试覆盖 ✅)
+- ~~register-token / sinusoidal~~(round 19 ✅)
+- 真实 EMMA 多视频 LOO(数据未释出)
+- EMMA quadrotor 12 参数(数据未释出)
+- 稀疏注意力 T=256+(只有真实长视频迁移后才有意义)
+- *新增*:**用其他 RNN 类型替换 Bi-CfC-NAD 作第二 encoder**(LSTM / GRU / vanilla RNN)看是否"trainable + recurrent" 充分条件,与 Bi-CfC 特性无关
+- *新增*:**第二 encoder 加 trainable noise injection 看 +24.5% → +35% 之间的过渡曲线**
+
+### 24.7 测试 + 提交
+
+- `pytest tests/` **133/133 全过**(129 base + 4 新 frozen_random 测试),零回归。
+- 提交 frozen_random 模型类 + 4 单测 + benchmark wiring + JSON + 本节报告 §24。

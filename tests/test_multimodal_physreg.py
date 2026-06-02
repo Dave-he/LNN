@@ -757,3 +757,68 @@ def test_sinusoidal_table_per_step_variation() -> None:
     for t in range(15):
         diff = (table[t + 1] - table[t]).abs().max().item()
         assert diff > 1e-6, f"sinusoidal table rows {t} and {t+1} are too similar"
+
+
+# ---------- FrozenRandomEncoderXAttnWithMDN tests (round 20) ----------
+
+
+def test_frozen_random_encoder_audio_encoder_frozen() -> None:
+    from lnn.core.multimodal_physreg import FrozenRandomEncoderXAttnWithMDN
+    model = FrozenRandomEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2,
+    )
+    # All audio_encoder params must have requires_grad=False.
+    for name, p in model.audio_encoder.named_parameters():
+        assert not p.requires_grad, f"audio_encoder param {name} should be frozen"
+    # video_encoder + cross-attn + MDN must remain trainable.
+    for name, p in model.video_encoder.named_parameters():
+        assert p.requires_grad, f"video_encoder param {name} should be trainable"
+    for proj in (model._inner.q_v, model._inner.k_a, model._inner.fuse_proj):
+        for p in proj.parameters():
+            assert p.requires_grad
+
+
+def test_frozen_random_encoder_output_shape() -> None:
+    from lnn.core.multimodal_physreg import FrozenRandomEncoderXAttnWithMDN
+    model = FrozenRandomEncoderXAttnWithMDN(
+        video_dim=3, audio_dim=1, hidden_size=8, output_size=5,
+        num_mixtures=2,
+    )
+    video = torch.randn(2, 16, 3)
+    out = model(video)
+    assert out["logits"].shape == (2, 16, 2)
+    assert out["loc"].shape == (2, 16, 2, 5)
+
+
+def test_frozen_random_encoder_gradient_not_into_audio_encoder() -> None:
+    from lnn.core.multimodal_physreg import FrozenRandomEncoderXAttnWithMDN
+    model = FrozenRandomEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2,
+    )
+    video = torch.randn(2, 6, 1, requires_grad=True)
+    out = model(video)
+    out["loc"].sum().backward()
+    # No gradient was assigned to the frozen audio_encoder params.
+    for name, p in model.audio_encoder.named_parameters():
+        assert p.grad is None, (
+            f"audio_encoder param {name} unexpectedly has grad (got {p.grad})"
+        )
+    # Trainable params elsewhere DID receive grad.
+    v_grad = sum(p.grad.abs().sum().item() for p in model.video_encoder.parameters() if p.grad is not None)
+    assert v_grad > 0
+
+
+def test_frozen_random_encoder_audio_argument_ignored() -> None:
+    from lnn.core.multimodal_physreg import FrozenRandomEncoderXAttnWithMDN
+    torch.manual_seed(0)
+    model = FrozenRandomEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2,
+    )
+    model.eval()
+    video = torch.randn(1, 8, 1)
+    audio_a = torch.randn(1, 8, 1)
+    audio_b = torch.randn(1, 8, 1) * 100
+    with torch.no_grad():
+        out_a = mdn_mean(model(video, audio_a))
+        out_b = mdn_mean(model(video, audio_b))
+    assert torch.allclose(out_a, out_b, atol=1e-6)

@@ -924,3 +924,88 @@ class NonRecurrentSelfXAttnWithMDN(nn.Module):
         a_refined = a_feat + a_from_v
         fused = self._inner.fuse_proj(torch.cat([v_refined, a_refined], dim=-1))
         return self._inner.mdn(fused)
+
+
+class FrozenRandomEncoderXAttnWithMDN(nn.Module):
+    """Round-20 ablation: second encoder = Bi-CfC-NAD with RANDOM-INIT FROZEN weights.
+
+    Cross-attention machinery, q/k/v projections, fuse_proj, MDN head are all
+    trainable. Only the second encoder (``audio_encoder``) has its parameters
+    frozen at their random initialisation values; gradients never flow into
+    it.
+
+    Background: cron round 20 (commit ``f7eb592``) proved that *recurrence*
+    in the second encoder is essential — replacing Bi-CfC-NAD with an MLP
+    drops the gain from +35% (uni_video) to +14%. This class isolates the
+    complementary axis: **trainability**.
+
+    Falsifiable prediction:
+
+    * If frozen-random encoder gain << +35% (uni_video baseline), then
+      trainability of the second encoder is required.
+    * If frozen-random encoder gain ≈ +35%, the recurrent *dynamics* alone
+      (with random weights) suffice and trainability is dispensable —
+      surprising but possible (Echo-State-Network-style reservoir).
+
+    Input to the frozen encoder is video (same as :class:`UniVideoSelfXAttnWithMDN`)
+    so the only difference from uni_video is the gradient flow into the
+    second encoder.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 — kept for API parity; ignored
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        noise_beta: float = 0.9,
+        noise_aggregation: str = "independent",
+    ) -> None:
+        super().__init__()
+        self._inner = CrossModalAttnBiCfCNADWithMDN(
+            video_dim=video_dim,
+            audio_dim=video_dim,
+            hidden_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+            num_layers=num_layers,
+            noise_beta=noise_beta,
+            noise_aggregation=noise_aggregation,
+            modality_dropout=0.0,
+        )
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+        # Freeze the second encoder. Random init is preserved; gradients
+        # are blocked. The cross-attention q/k/v + MDN head still train.
+        for p in self._inner.audio_encoder.parameters():
+            p.requires_grad = False
+
+    @property
+    def video_encoder(self) -> nn.Module:
+        return self._inner.video_encoder
+
+    @property
+    def audio_encoder(self) -> nn.Module:
+        return self._inner.audio_encoder
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 — intentionally ignored
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+        return_attention: bool = False,
+    ) -> dict[str, torch.Tensor]:
+        # Feed the SAME video to both encoders (analogous to uni_video) so
+        # the only delta vs uni_video_xattn is the frozen-encoder gradient.
+        return self._inner(
+            video=video,
+            audio=video,
+            dt=dt,
+            mask=mask,
+            return_attention=return_attention,
+        )

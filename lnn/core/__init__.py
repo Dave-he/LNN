@@ -22,6 +22,7 @@ from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sam
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
+    FrozenRandomEncoderXAttnWithMDN,
     MixedStreamSelfXAttnWithMDN,
     MultimodalBiCfCNADWithMDN,
     NoisyVideoSelfXAttnWithMDN,
@@ -68,6 +69,7 @@ __all__ = [
     "NoisyVideoSelfXAttnWithMDN",
     "MixedStreamSelfXAttnWithMDN",
     "SinusoidalTimeStreamSelfXAttnWithMDN",
+    "FrozenRandomEncoderXAttnWithMDN",
     "MDNHead",
     "mdn_negative_log_likelihood",
     "mdn_mean",
