@@ -1009,3 +1009,117 @@ class FrozenRandomEncoderXAttnWithMDN(nn.Module):
             mask=mask,
             return_attention=return_attention,
         )
+
+
+class GRUEncoderXAttnWithMDN(nn.Module):
+    """Round-21 ablation: second encoder = vanilla ``nn.GRU`` (no NAD).
+
+    Closes the trainability x recurrence matrix from round 24 by testing
+    whether the cross-attn +52.7% gain is specific to the Bi-CfC-NAD
+    architecture (noise-adaptive decay, bidirectional, parallel-EMA) or
+    whether any trainable + recurrent encoder suffices.
+
+    Architecture: video encoder remains :class:`BidirectionalNoiseAdaptiveCfC`
+    (unchanged). Second encoder is replaced with a 1-layer bidirectional
+    :class:`torch.nn.GRU` projecting to ``hidden_size``. Cross-attention,
+    fusion, MDN head identical to :class:`CrossModalAttnBiCfCNADWithMDN`.
+
+    Falsifiable prediction (round 24 §24.6 follow-up):
+
+    * If gain ≈ uni_video_xattn +35.2% → "trainable + recurrent" alone is
+      sufficient; Bi-CfC-NAD specific machinery contributes nothing.
+    * If gain << +35% → Bi-CfC-NAD's noise-adaptive or bidirectional
+      mechanism delivers extra value beyond plain GRU recurrence.
+
+    The audio argument at forward is **ignored**: the second encoder
+    consumes ``video`` (same setup as
+    :class:`UniVideoSelfXAttnWithMDN`) so the ONLY delta vs uni_video is
+    the encoder family swap.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 — kept for API parity; ignored
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        noise_beta: float = 0.9,  # kept for parity, only used by video encoder
+        noise_aggregation: str = "independent",
+    ) -> None:
+        super().__init__()
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+
+        # Video encoder: keep the noise-adaptive Bi-CfC-NAD as before so the
+        # comparison isolates the SECOND encoder swap, not both.
+        self.video_encoder = BidirectionalNoiseAdaptiveCfC(
+            input_size=video_dim,
+            hidden_size=hidden_size,
+            output_size=hidden_size,
+            num_layers=num_layers,
+            return_sequences=True,
+            noise_beta=noise_beta,
+            noise_aggregation=noise_aggregation,
+        )
+        # Second encoder: vanilla bidirectional GRU projecting to hidden_size.
+        # Wrapper handles the *2 from bidirectional via a linear projection.
+        self._gru = nn.GRU(
+            input_size=video_dim,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            bidirectional=True,
+        )
+        self._gru_proj = nn.Linear(2 * hidden_size, hidden_size)
+
+        # Cross-attention projections (mirror CrossModalAttnBiCfCNADWithMDN).
+        self.q_v = nn.Linear(hidden_size, hidden_size)
+        self.k_a = nn.Linear(hidden_size, hidden_size)
+        self.v_a = nn.Linear(hidden_size, hidden_size)
+        self.q_a = nn.Linear(hidden_size, hidden_size)
+        self.k_v = nn.Linear(hidden_size, hidden_size)
+        self.v_v = nn.Linear(hidden_size, hidden_size)
+        self.fuse_proj = nn.Linear(2 * hidden_size, hidden_size)
+        self.mdn = MDNHead(
+            input_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+        )
+
+    def _gru_encode(self, x: torch.Tensor) -> torch.Tensor:
+        """Run video through the GRU and project to ``hidden_size``."""
+        out, _ = self._gru(x)  # [B, T, 2*H]
+        return self._gru_proj(out)  # [B, T, H]
+
+    @staticmethod
+    def _attend(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        scale = query.shape[-1] ** 0.5
+        scores = query @ key.transpose(-1, -2) / scale
+        weights = torch.softmax(scores, dim=-1)
+        return weights @ value, weights
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 — intentionally ignored
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+        return_attention: bool = False,
+    ) -> dict[str, torch.Tensor]:
+        v_feat = self.video_encoder(video, dt=dt, mask=mask)  # [B, T, H]
+        a_feat = self._gru_encode(video)  # [B, T, H]; same input as v_feat
+
+        v_from_a, attn_va = self._attend(self.q_v(v_feat), self.k_a(a_feat), self.v_a(a_feat))
+        a_from_v, attn_av = self._attend(self.q_a(a_feat), self.k_v(v_feat), self.v_v(v_feat))
+        v_refined = v_feat + v_from_a
+        a_refined = a_feat + a_from_v
+        fused = self.fuse_proj(torch.cat([v_refined, a_refined], dim=-1))
+        out = self.mdn(fused)
+        if return_attention:
+            out["_attn_video_queries_gru"] = attn_va
+            out["_attn_gru_queries_video"] = attn_av
+        return out

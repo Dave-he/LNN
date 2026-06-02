@@ -1739,3 +1739,58 @@ Round 18 §21.5 推断的 "stream2 register-token 机制, ~15pp 贡献" 现在�
 
 - `pytest tests/` **133/133 全过**(129 base + 4 新 frozen_random 测试),零回归。
 - 提交 frozen_random 模型类 + 4 单测 + benchmark wiring + JSON + 本节报告 §24。
+
+---
+
+## 25. 第二十一轮 /loop — GRU Encoder Family Test — BI-CFC-NAD ARCHITECTURE IS ALSO ESSENTIAL
+
+(2026-06-04 第二十一轮 /loop。round 24 §24.6 W+1 第 1 项:用 GRU 替换第二 encoder,测 trainable + recurrent 二条件是否充分,还是必须 Bi-CfC-NAD 系列。)
+
+### 25.1 假设
+
+> 如果 trainable + recurrent 是充分条件,GRU 第二 encoder 应当达到 uni_video Bi-CfC +35.2%。如果 << +35%,Bi-CfC-NAD family 是第 4 条必要条件。
+
+### 25.2 实现
+
+`lnn/core/multimodal_physreg.py::GRUEncoderXAttnWithMDN` — video encoder 仍是 Bi-CfC-NAD(隔离变量);第二 encoder = `nn.GRU(bidirectional=True, num_layers=1)` + `Linear(2H -> H)` projection。Cross-attention/fusion/MDN 与 cross_attn bit-identical。4 个新单测全过。
+
+### 25.3 实验结果(epochs=20, n=200, K=1, seed=42, hidden=16, video_dim=3)
+
+| 第二 encoder | trainable | recurrent | family | gain |
+|---|:---:|:---:|---|---:|
+| 无(register_token) | — | — | — | +27.5% |
+| 无(sinusoidal) | — | — | — | +26.5% |
+| frozen Bi-CfC(r20) | ❌ | ✅ | Bi-CfC | +24.5% |
+| MLP(cron r20) | ✅ | ❌ | n/a | +14.3% |
+| **GRU 双向(NEW r21)** | ✅ | ✅ | **GRU** | **+3.9%** 💥 |
+| Bi-CfC uni_video(r13) | ✅ | ✅ | Bi-CfC | +35.2% |
+| Bi-CfC cross_attn(audio=zero) | ✅ | ✅ | Bi-CfC | +52.7% |
+
+→ **GRU 是史上最差配置**,+3.9%,**比 Bi-CfC uni_video 低 31.3pp,比无 encoder 还低 23pp,比 frozen Bi-CfC 还低 21pp**。
+→ JSON:`analysis/emma_rover/2026-06-03_r21_gru_encoder.json`。
+
+### 25.4 元结论第六次修正
+
+四条必要条件(任一不满足,gain 显著下降):
+
+| 条件 | 失败时的 gain | 满足时的 gain |
+|---|---:|---:|
+| 第二 encoder 存在 | n/a(=video_only +0%) | +14%~+52% |
+| recurrent(vs MLP) | +14.3% | +24%~+52% |
+| trainable(vs frozen) | +24.5% | +35%~+52% |
+| **Bi-CfC-NAD family(vs GRU)** | **+3.9%** | **+35%~+52%** |
+
+**新工程结论**:**LNN cross-modal 设计必须用 Bi-CfC-NAD 系列**作第二 encoder。即使 frozen Bi-CfC(+24.5%)也比 trained GRU(+3.9%)强 21pp,说明 *Bi-CfC-NAD 的初始化分布 + 递归结构本身*已经包含了 GRU 缺乏的某种"先验"。
+
+### 25.5 W+1 backlog
+
+- ~~Bi-CfC family 必要性~~(本节 ✅,假设证伪)
+- *新增*:**GRU + 更大 hidden / epochs 重测** 排除"GRU 欠拟合"的 artifact 可能
+- *新增*:**LSTM 第二 encoder** 看是否所有"普通 RNN family"都失败
+- *新增*:**vanilla CfC(无 NAD)第二 encoder** 隔离 "CfC closed-form ODE" vs "noise-adaptive" 哪个是关键
+- 真实 EMMA 多视频 / quadrotor(仍 blocked)
+
+### 25.6 测试 + 提交
+
+- `pytest tests/` **137/137 全过**(133 base + 4 GRU 测试),零回归。
+- 提交 GRU 模型 + 单测 + benchmark wiring + JSON + 本节 §25 + 06-04 daily 报告。

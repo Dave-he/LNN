@@ -81,7 +81,7 @@ def _train_one_epoch(
             assert isinstance(model, BiCfCNADWithMDN)
             mdn_params = _video_only_forward(model, batch)
         else:
-            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ in ("UniVideoSelfXAttnWithMDN", "NoisyVideoSelfXAttnWithMDN", "MixedStreamSelfXAttnWithMDN", "SinusoidalTimeStreamSelfXAttnWithMDN", "FrozenRandomEncoderXAttnWithMDN")
+            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ in ("UniVideoSelfXAttnWithMDN", "NoisyVideoSelfXAttnWithMDN", "MixedStreamSelfXAttnWithMDN", "SinusoidalTimeStreamSelfXAttnWithMDN", "FrozenRandomEncoderXAttnWithMDN", "GRUEncoderXAttnWithMDN")
             mdn_params = model(batch["video"], batch["audio"])
         final = {k: v[:, -1] for k, v in mdn_params.items()}
         loss = mdn_negative_log_likelihood(final, params)
@@ -111,7 +111,7 @@ def _evaluate(
             assert isinstance(model, BiCfCNADWithMDN)
             mdn_params = _video_only_forward(model, batch)
         else:
-            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ in ("UniVideoSelfXAttnWithMDN", "NoisyVideoSelfXAttnWithMDN", "MixedStreamSelfXAttnWithMDN", "SinusoidalTimeStreamSelfXAttnWithMDN", "FrozenRandomEncoderXAttnWithMDN")
+            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ in ("UniVideoSelfXAttnWithMDN", "NoisyVideoSelfXAttnWithMDN", "MixedStreamSelfXAttnWithMDN", "SinusoidalTimeStreamSelfXAttnWithMDN", "FrozenRandomEncoderXAttnWithMDN", "GRUEncoderXAttnWithMDN")
             mdn_params = model(batch["video"], batch["audio"])
         final = {k: v[:, -1] for k, v in mdn_params.items()}
         mean = mdn_mean(final)
@@ -199,6 +199,15 @@ def _build_model(
     if model_kind == "frozen_random_xattn":
         from lnn.core.multimodal_physreg import FrozenRandomEncoderXAttnWithMDN
         return FrozenRandomEncoderXAttnWithMDN(
+            video_dim=video_dim,
+            audio_dim=audio_dim,  # ignored
+            hidden_size=hidden_size,
+            output_size=5,
+            num_mixtures=num_mixtures,
+        )
+    if model_kind == "gru_encoder_xattn":
+        from lnn.core.multimodal_physreg import GRUEncoderXAttnWithMDN
+        return GRUEncoderXAttnWithMDN(
             video_dim=video_dim,
             audio_dim=audio_dim,  # ignored
             hidden_size=hidden_size,

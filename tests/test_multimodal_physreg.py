@@ -822,3 +822,70 @@ def test_frozen_random_encoder_audio_argument_ignored() -> None:
         out_a = mdn_mean(model(video, audio_a))
         out_b = mdn_mean(model(video, audio_b))
     assert torch.allclose(out_a, out_b, atol=1e-6)
+
+
+# ---------- GRUEncoderXAttnWithMDN tests (round 21) ----------
+
+
+def test_gru_encoder_output_shape() -> None:
+    from lnn.core.multimodal_physreg import GRUEncoderXAttnWithMDN
+    model = GRUEncoderXAttnWithMDN(
+        video_dim=3, audio_dim=1, hidden_size=8, output_size=5, num_mixtures=2,
+    )
+    video = torch.randn(2, 16, 3)
+    out = model(video)
+    assert out["logits"].shape == (2, 16, 2)
+    assert out["loc"].shape == (2, 16, 2, 5)
+
+
+def test_gru_encoder_audio_argument_ignored() -> None:
+    from lnn.core.multimodal_physreg import GRUEncoderXAttnWithMDN
+    torch.manual_seed(0)
+    model = GRUEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2,
+    )
+    model.eval()
+    video = torch.randn(1, 8, 1)
+    audio_a = torch.randn(1, 8, 1)
+    audio_b = torch.randn(1, 8, 1) * 100
+    with torch.no_grad():
+        out_a = mdn_mean(model(video, audio_a))
+        out_b = mdn_mean(model(video, audio_b))
+    assert torch.allclose(out_a, out_b, atol=1e-6)
+
+
+def test_gru_encoder_gradients_flow_into_gru() -> None:
+    from lnn.core.multimodal_physreg import GRUEncoderXAttnWithMDN
+    model = GRUEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2,
+    )
+    video = torch.randn(2, 6, 1, requires_grad=True)
+    out = model(video)
+    out["loc"].sum().backward()
+    gru_grad = sum(
+        p.grad.abs().sum().item()
+        for p in model._gru.parameters()
+        if p.grad is not None
+    )
+    assert gru_grad > 0, "GRU parameters did not receive gradient"
+    v_grad = sum(p.grad.abs().sum().item() for p in model.video_encoder.parameters() if p.grad is not None)
+    assert v_grad > 0
+
+
+def test_gru_encoder_differs_from_uni_video() -> None:
+    """GRU second encoder must produce different outputs than two-Bi-CfC uni_video."""
+    from lnn.core.multimodal_physreg import GRUEncoderXAttnWithMDN, UniVideoSelfXAttnWithMDN
+    torch.manual_seed(21)
+    gru = GRUEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2,
+    )
+    torch.manual_seed(21)
+    uni = UniVideoSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2,
+    )
+    video = torch.randn(1, 14, 1)
+    with torch.no_grad():
+        gru_loc = mdn_mean(gru(video))
+        uni_loc = mdn_mean(uni(video))
+    assert gru_loc.shape == uni_loc.shape
+    assert not torch.allclose(gru_loc, uni_loc, atol=1e-3)
