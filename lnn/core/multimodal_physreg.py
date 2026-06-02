@@ -609,3 +609,96 @@ class MixedStreamSelfXAttnWithMDN(nn.Module):
             mask=mask,
             return_attention=return_attention,
         )
+
+
+class RegisterTokenSelfXAttnWithMDN(nn.Module):
+    """Round-19 register-token mechanism probe.
+
+    Same architecture as :class:`UniVideoSelfXAttnWithMDN` and
+    :class:`NoisyVideoSelfXAttnWithMDN`, but the second encoder
+    receives an *input-independent learnable tensor* (a "register
+    token" in the transformer sense) - completely decoupled from the
+    actual video input.  This is the *minimal* model that could still
+    give a "second encoder" effect: the second Bi-CfC-NAD has its own
+    input projection but the projected input is *constant across the
+    batch*.
+
+    Hypothesis (falsifiable):  if cross_attn(audio=zero) and
+    cross_attn(audio=random) are giving their +14.9pp / +29.5pp
+    gains over uni_video_xattn by virtue of *stream2 being a free
+    pool the encoder can specialise to a register-token-like
+    representation*, then RegisterTokenSelfXAttnWithMDN (which makes
+    the input literally independent of the data) should reproduce
+    the gain.  If it does not, the gain requires the second stream
+    to *interact with* the data, ruling out the register-token
+    explanation.
+
+    Notes:
+    - The input shape is ``[B, T, video_dim]``, matching the second
+      encoder's expected input.  We broadcast a single learnable
+      parameter across the batch.
+    - The learnable parameter is small (one tensor of shape
+      ``[1, 1, video_dim]`` broadcast over B and T) so this model
+      has *fewer* parameters than the uni_video variant - if it
+      matches uni_video's gain, it must be from the architecture,
+      not from extra capacity.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 - kept for API parity; ignored
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        noise_beta: float = 0.9,
+        noise_aggregation: str = "independent",
+    ) -> None:
+        super().__init__()
+        self._inner = CrossModalAttnBiCfCNADWithMDN(
+            video_dim=video_dim,
+            audio_dim=video_dim,
+            hidden_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+            num_layers=num_layers,
+            noise_beta=noise_beta,
+            noise_aggregation=noise_aggregation,
+            modality_dropout=0.0,
+        )
+        # The single learnable "register token" - broadcast over (B, T).
+        # Initialised to small random values so the input projection
+        # has non-zero gradient from step 0.
+        self.register_token = nn.Parameter(torch.randn(1, 1, video_dim) * 0.1)
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+
+    @property
+    def video_encoder(self) -> nn.Module:
+        return self._inner.video_encoder
+
+    @property
+    def audio_encoder(self) -> nn.Module:
+        return self._inner.audio_encoder
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 - intentionally ignored
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+        return_attention: bool = False,
+    ) -> dict[str, torch.Tensor]:
+        # Broadcast the learnable token to [B, T, video_dim].
+        B, T, _ = video.shape
+        second_input = self.register_token.expand(B, T, -1).contiguous()
+        return self._inner(
+            video=video,
+            audio=second_input,
+            dt=dt,
+            mask=mask,
+            return_attention=return_attention,
+        )
