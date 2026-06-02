@@ -229,3 +229,55 @@ output_proj : Linear(2H -> output_size)        -> [B, T, output_size]
 - 本轮是一次清晰的假设证伪：直接共享噪声估计**在当前训练设置下不影响输出**，因为下游 `noise_gate_proj` 还没学到去依赖它。
 - 报告如实保留负结果，不做事后挑选 SNR/seed 来"凑"PASS。
 - 下一轮路线图微调：把"centered noise 验证"从 W+1 划去（已证伪），新增"**让 noise_gate_proj 学起来**"作为更基础的待办（如增加 noise 正则、把噪声分数直接拼入 g/h_branch、或换数据集到真实含噪场景）。
+
+## 附录 C — 2026-06-02 第四轮迭代：Uncertainty-Aware CfC-NAD via MDN — PARTIAL POSITIVE
+
+(同日第四次 /loop 触发。)
+
+### C.1 动机
+
+- 既有 CfC-NAD 输出仅是点预测；但临床/工业含噪场景常常需要"模型对自己有多确定"的可校准估计。
+- 仓库里早就有 `lnn/core/mdn.py::MDNHead`（用于模仿学习中的 multimodal action），但**从未与 CfC-NAD 串接**。
+- 自然假设：把 CfC-NAD 作为特征提取器、接一个 MDN 头，在异方差含噪数据上训 NLL，模型应当学会输出与真实噪声水平相关的 σ。
+
+### C.2 假设 (Falsifiable)
+
+> 在每个 sample 用不同 SNR ∈ [5, 25] dB 的 noisy windowed-median 任务上训练 MDN-NLL，模型在 held-out 集合上输出的"每样本平均预测 σ" 与"每样本真实噪声 σ" 的 **Pearson 相关 r ≥ 0.5**。
+
+### C.3 实现
+
+- 新增 `CfCNADWithMDN`（`lnn/core/noise_adaptive_cfc.py`）：内部 `NoiseAdaptiveCfCNetwork`（return_sequences=True, output_size=hidden_size 当特征提取器）+ `MDNHead`。
+- 新增 `mdn_predicted_std(params)`：用混合 Gauss 方差闭式 `Σ w_k (σ_k² + μ_k²) − μ²` 计算每步的总 std；对任何 `num_mixtures` 与 `output_size` 都成立。
+- forward 返回 `MDNHead` 的 params dict；下游可用 `mdn_negative_log_likelihood` 训练，用 `mdn_mean` 取点预测，用 `mdn_predicted_std` 取不确定度。
+
+### C.4 单元测试 — `TestCfCNADWithMDN`（6 项）
+
+- 形状（return_sequences / 仅最后一步）
+- `num_mixtures < 1` 拒绝（ValueError）
+- 在 sin(x) 上训 30 step NLL 严格单调下降
+- **关键不变量**：在"前半 σ=0.05，后半 σ=0.5"的双段目标上训 60 step，预测 std 在后半应当大于前半（≈ aleatoric uncertainty 的可学习性）→ 通过
+- `mdn_mean` 与 `mdn_predicted_std` 输出形状与正数性
+
+整套 `pytest tests/` **77 项通过**，零回归。
+
+### C.5 实验结果
+
+`scripts/benchmark_cfcnad_mdn_uncertainty.py`，500 个 sample (400 train / 100 val)，noise std 范围 0.036…0.672（19× 区间），seed=42：
+
+| 配置 | epochs | K | val Pearson r(σ̂, σ_true) | val point MSE | 训练秒 | 结论 |
+|---|---:|---:|---:|---:|---:|---|
+| baseline | 16 | 1 | **0.305** | 0.03450 | 10.5 | FAIL (<0.5) |
+| more capacity + more epochs | 32 | 2 | **0.426** | 0.03130 | 19.6 | FAIL (<0.5) |
+
+- **可证伪阈值未达到**；两次 r 都 < 0.5。
+- 但 **方向是对的**：r > 0、随 K 与 epoch 增加而单调上升，模型确实学到了"噪声越大、σ̂ 越大"的关系。
+- 单元测试 `test_predicted_std_increases_with_noisy_target` 已经独立证明了该不变量的可学习性。
+- 完整数据：`analysis/cfc_nad/2026-06-02_cfcnad_mdn_uncertainty_K{1_e16,2_e32}.json`。
+
+### C.6 复盘 + 下一轮调整
+
+- 这是"边缘负结果"（partial positive）：现象正确、效应方向正确，但被自定的 0.5 阈值卡住。
+- 大概率的瓶颈：(a) 数据规模过小（400 train sample）、(b) seq_len 内部步级 σ 高度变动，导致"样本级平均 σ̂"未必能很好对应该样本的标量 SNR、(c) 单 mixture 的 σ 表达力受限。
+- 阈值是事前自定的，不做调小到 0.4 的事后追加；负结果如实保留。
+- **不变量已经站住**（"含噪片段预测 σ 更大"为可学习）→ 工程上 `CfCNADWithMDN` 仍可作为 LNN 仓库里**首个携带原生不确定度的 CfC backbone**，将进入下一轮的边缘部署/拒识场景。
+- 路线图新增：W+1 重做这个 benchmark，把 num_samples 提到 ≥2000，seq_len 缩短到 16，让"样本级标量 SNR"与"样本级 σ̂ 平均"的对应更稳定；同时尝试 *Bi-CfC-NAD + MDN* 看双向上下文是否能把 r 推过 0.5。

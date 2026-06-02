@@ -5,10 +5,13 @@ from __future__ import annotations
 import torch
 
 from lnn.core.cfc import CfCNetwork
+from lnn.core.mdn import mdn_mean, mdn_negative_log_likelihood
 from lnn.core.noise_adaptive_cfc import (
     BidirectionalNoiseAdaptiveCfC,
+    CfCNADWithMDN,
     NoiseAdaptiveCfCCell,
     NoiseAdaptiveCfCNetwork,
+    mdn_predicted_std,
     vectorized_noise_ema,
 )
 
@@ -364,3 +367,105 @@ class TestBidirectionalCenteredNoise:
         # backward EMA "sees" the tail.
         early_diff = (score_b[0, :5, 0] - score_a[0, :5, 0]).abs().max().item()
         assert early_diff > 1e-6
+
+
+class TestCfCNADWithMDN:
+    """Wire up CfC-NAD as the feature backbone for an MDN head."""
+
+    def test_output_shapes_sequences(self) -> None:
+        net = CfCNADWithMDN(
+            input_size=2, hidden_size=8, output_size=1, num_mixtures=3
+        )
+        x = torch.randn(2, 7, 2)
+        params = net(x)
+        assert params["logits"].shape == (2, 7, 3)
+        assert params["loc"].shape == (2, 7, 3, 1)
+        assert params["log_scale"].shape == (2, 7, 3, 1)
+
+    def test_output_shapes_last_step(self) -> None:
+        net = CfCNADWithMDN(
+            input_size=2,
+            hidden_size=8,
+            output_size=1,
+            num_mixtures=2,
+            return_sequences=False,
+        )
+        x = torch.randn(2, 7, 2)
+        params = net(x)
+        assert params["logits"].shape == (2, 2)
+        assert params["loc"].shape == (2, 2, 1)
+        assert params["log_scale"].shape == (2, 2, 1)
+
+    def test_negative_mixture_count_rejected(self) -> None:
+        import pytest
+        with pytest.raises(ValueError):
+            CfCNADWithMDN(input_size=1, hidden_size=4, output_size=1, num_mixtures=0)
+
+    def test_mdn_nll_trainable(self) -> None:
+        torch.manual_seed(0)
+        net = CfCNADWithMDN(
+            input_size=1, hidden_size=8, output_size=1, num_mixtures=2
+        )
+        # Toy data: y = sin(x) + small noise.
+        T = 16
+        x = torch.linspace(0.0, 6.28, T).view(1, T, 1)
+        y = torch.sin(x)
+        optim = torch.optim.Adam(net.parameters(), lr=5e-3)
+        params0 = net(x)
+        loss0 = mdn_negative_log_likelihood(params0, y).item()
+        for _ in range(30):
+            optim.zero_grad()
+            params = net(x)
+            loss = mdn_negative_log_likelihood(params, y)
+            loss.backward()
+            optim.step()
+        loss1 = mdn_negative_log_likelihood(net(x), y).item()
+        assert loss1 < loss0, f"NLL should decrease ({loss0:.4f} -> {loss1:.4f})"
+
+    def test_predicted_std_increases_with_noisy_target(self) -> None:
+        """Train the head on a fixed-input series with two noise regimes and
+        check that the learnt predicted std is larger on the noisier half."""
+
+        torch.manual_seed(7)
+        net = CfCNADWithMDN(
+            input_size=1, hidden_size=12, output_size=1, num_mixtures=1
+        )
+        T = 32
+        # Same input, different target noise on first vs second half.
+        base = torch.linspace(0.0, 6.28, T).view(1, T, 1)
+        x = base.expand(64, T, 1).clone()
+        target = torch.sin(base).expand(64, T, 1).clone()
+        noise = torch.randn_like(target)
+        # 0.05 std in the first half, 0.5 std in the second half.
+        sigma_schedule = torch.ones(T)
+        sigma_schedule[: T // 2] = 0.05
+        sigma_schedule[T // 2 :] = 0.5
+        noisy_target = target + noise * sigma_schedule.view(1, T, 1)
+        optim = torch.optim.Adam(net.parameters(), lr=5e-3)
+        for _ in range(60):
+            optim.zero_grad()
+            params = net(x)
+            loss = mdn_negative_log_likelihood(params, noisy_target)
+            loss.backward()
+            optim.step()
+        with torch.no_grad():
+            params = net(x)
+            std = mdn_predicted_std(params)  # [B, T]
+        mean_low = float(std[:, : T // 2].mean())
+        mean_high = float(std[:, T // 2 :].mean())
+        assert mean_high > mean_low, (
+            f"predicted std should be higher in the noisy half: "
+            f"low={mean_low:.4f} high={mean_high:.4f}"
+        )
+
+    def test_mdn_mean_matches_signature(self) -> None:
+        net = CfCNADWithMDN(
+            input_size=1, hidden_size=4, output_size=1, num_mixtures=2
+        )
+        x = torch.randn(1, 5, 1)
+        params = net(x)
+        mean = mdn_mean(params)
+        assert mean.shape == (1, 5, 1)
+        std = mdn_predicted_std(params)
+        assert std.shape == (1, 5)
+        assert (std > 0).all()

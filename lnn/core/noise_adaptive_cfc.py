@@ -29,6 +29,7 @@ import torch
 import torch.nn as nn
 
 from lnn.core.long_sequence import parallel_liquid_relaxation
+from lnn.core.mdn import MDNHead
 from lnn.core.sequence_utils import select_step_delta, select_step_mask
 
 
@@ -240,6 +241,8 @@ __all__ = [
     "NoiseAdaptiveCfCCell",
     "NoiseAdaptiveCfCNetwork",
     "BidirectionalNoiseAdaptiveCfC",
+    "CfCNADWithMDN",
+    "mdn_predicted_std",
     "vectorized_noise_ema",
 ]
 
@@ -443,3 +446,86 @@ class BidirectionalNoiseAdaptiveCfC(nn.Module):
         if self.return_sequences:
             return self.output_proj(combined)
         return self.output_proj(combined[:, -1, :])
+
+
+def mdn_predicted_std(params: dict[str, torch.Tensor]) -> torch.Tensor:
+    """Total predicted standard deviation under a diagonal Gaussian mixture.
+
+    Computes the mixture-variance closed form ``Var = Σ w_k (σ_k² + μ_k²) - μ²``
+    then returns its square root. Works for any ``num_mixtures`` and any
+    ``output_size`` — the per-output stds are aggregated into a scalar by
+    averaging across the output dimension (handy for 1-D regression where the
+    consumer just wants a single uncertainty per step).
+    """
+
+    logits = params["logits"]
+    loc = params["loc"]  # [..., K, D]
+    scale = torch.exp(params["log_scale"])  # [..., K, D]
+    weights = torch.softmax(logits, dim=-1).unsqueeze(-1)  # [..., K, 1]
+    mean = (weights * loc).sum(dim=-2)  # [..., D]
+    second_moment = (weights * (scale.pow(2) + loc.pow(2))).sum(dim=-2)  # [..., D]
+    var = (second_moment - mean.pow(2)).clamp_min(0.0)
+    return var.mean(dim=-1).sqrt()  # [...] scalar per step
+
+
+class CfCNADWithMDN(nn.Module):
+    """CfC-NAD feature extractor wired into an MDN head for heteroscedastic
+    regression. Each time step produces a Gaussian-mixture distribution over
+    the target, so the model emits both a point prediction (``mdn_mean``) and
+    an aleatoric uncertainty estimate (:func:`mdn_predicted_std`).
+
+    Falsifiable test in :mod:`scripts.benchmark_cfcnad_mdn_uncertainty`:
+    when trained on a heteroscedastic per-sample SNR schedule, the predicted
+    standard deviation should correlate (Pearson r) with the actual per-sample
+    noise standard deviation on a held-out set (claim threshold r ≥ 0.5).
+    """
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        output_size: int,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        return_sequences: bool = True,
+        noise_beta: float = 0.9,
+    ) -> None:
+        super().__init__()
+        if num_mixtures < 1:
+            raise ValueError("num_mixtures must be >= 1")
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+        self.return_sequences = return_sequences
+
+        self.encoder = NoiseAdaptiveCfCNetwork(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            output_size=hidden_size,
+            num_layers=num_layers,
+            return_sequences=True,
+            noise_beta=noise_beta,
+        )
+        self.mdn = MDNHead(
+            input_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+        )
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        h0: torch.Tensor | None = None,
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        features = self.encoder(x, h0=h0, dt=dt, mask=mask)
+        params = self.mdn(features)
+        if not self.return_sequences:
+            params = {
+                "logits": params["logits"][:, -1],
+                "loc": params["loc"][:, -1],
+                "log_scale": params["log_scale"][:, -1],
+            }
+        return params

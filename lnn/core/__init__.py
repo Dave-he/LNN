@@ -2,8 +2,10 @@ from lnn.core.cfc import CfCCell, CfCNetwork
 from lnn.core.control import LNNImitationPolicy
 from lnn.core.noise_adaptive_cfc import (
     BidirectionalNoiseAdaptiveCfC,
+    CfCNADWithMDN,
     NoiseAdaptiveCfCCell,
     NoiseAdaptiveCfCNetwork,
+    mdn_predicted_std,
     vectorized_noise_ema,
 )
 from lnn.core.graph import GraphLNNPredictor, GraphSnapshotEncoder
@@ -46,6 +48,8 @@ __all__ = [
     "NoiseAdaptiveCfCCell",
     "NoiseAdaptiveCfCNetwork",
     "BidirectionalNoiseAdaptiveCfC",
+    "CfCNADWithMDN",
+    "mdn_predicted_std",
     "vectorized_noise_ema",
     "MultimodalFusionLNN",
     "MDNHead",
