@@ -234,6 +234,14 @@ def main() -> None:
         "(0=motion_magnitude, 1=centroid_x, 2=centroid_y). Round-15 "
         "trade-off probe: drop channels to see if audio gain grows.",
     )
+    parser.add_argument(
+        "--audio-mode",
+        choices=["normal", "zero", "random", "lowpass"],
+        default="normal",
+        help="Round-16 symmetric audio ablation. normal=peak Hz, "
+        "zero=all-zero, random=same-power Gaussian, lowpass=per-sample "
+        "mean (DC carrier only).",
+    )
     args = parser.parse_args()
 
     if args.device == "auto":
@@ -252,6 +260,7 @@ def main() -> None:
         seed=args.seed,
         video_path=args.video_path,
         video_channels=tuple(int(c) for c in args.video_channels.split(",")),
+        audio_mode=args.audio_mode,
     )
 
     video_only = _run("video_only", args, device, dataset)

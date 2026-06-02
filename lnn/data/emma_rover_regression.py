@@ -107,6 +107,7 @@ class EmmaRoverRegressionDataset(Dataset):
         cache_dir: str = "/tmp/emma_features",
         cache_file: str = "/tmp/emma_features/features.npz",
         video_channels: tuple[int, ...] | None = None,
+        audio_mode: str = "normal",
     ) -> None:
         if window < 4:
             raise ValueError("window must be >= 4")
@@ -120,10 +121,16 @@ class EmmaRoverRegressionDataset(Dataset):
                 )
             if len(video_channels) == 0:
                 raise ValueError("video_channels must be non-empty")
+        if audio_mode not in {"normal", "zero", "random", "lowpass"}:
+            raise ValueError(
+                f"audio_mode must be one of {{normal, zero, random, lowpass}}, "
+                f"got {audio_mode!r}"
+            )
         self.num_samples = num_samples
         self.window = window
         self.video_path = video_path
         self.video_channels = video_channels
+        self.audio_mode = audio_mode
         self.video, self.audio, self.params = _build_augmented_features(
             video_path=video_path,
             cache_dir=cache_dir,
@@ -136,6 +143,36 @@ class EmmaRoverRegressionDataset(Dataset):
         if video_channels is not None:
             # Slice along the channel axis ([N, W, 3] -> [N, W, len(video_channels)]).
             self.video = self.video[:, :, list(video_channels)]
+        if audio_mode != "normal":
+            self.audio = self._transform_audio(self.audio, audio_mode, seed)
+
+    @staticmethod
+    def _transform_audio(audio: np.ndarray, mode: str, seed: int) -> np.ndarray:
+        """Round-16 symmetric audio ablation. Preserves shape; replaces content.
+
+        - ``zero``    : replace with all zeros → no signal at all.
+        - ``random``  : replace with i.i.d. Gaussian noise of the original
+                        per-sample variance → preserves bandwidth and power
+                        but destroys content correlation with motor RPM.
+        - ``lowpass`` : keep only the per-sample mean (rolling DC) → preserves
+                        the global scalar (mean motor RPM) the round-14
+                        attention-viz analysis identified as the dominant
+                        usable signal; destroys time-step variation.
+        """
+        rng = np.random.default_rng(seed + 1)
+        if mode == "zero":
+            return np.zeros_like(audio)
+        if mode == "random":
+            # Match per-sample std so the model can't trivially detect that
+            # the random stream has different power than the normal one.
+            std = audio.std(axis=-1, keepdims=True) + 1e-8
+            return (rng.standard_normal(audio.shape).astype(np.float32) * std)
+        if mode == "lowpass":
+            # Per-sample mean broadcast — keeps the "global motor RPM scalar"
+            # the round-14 attention visualization identified as the key.
+            mean = audio.mean(axis=-1, keepdims=True)
+            return np.broadcast_to(mean, audio.shape).astype(np.float32).copy()
+        raise ValueError(f"unhandled audio_mode {mode!r}")
 
     @property
     def video_dim(self) -> int:
