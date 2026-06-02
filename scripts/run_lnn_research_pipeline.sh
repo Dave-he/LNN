@@ -31,42 +31,43 @@ DRY_RUN="${DRY_RUN:-0}"                # 1 = 只 print 不真跑
 LOG_DIR="$ROOT_DIR/logs/pipeline"
 LOG_FILE="$LOG_DIR/${RUN_DATE}_pipeline.log"
 
-# SSH key 推送: 显式指定私钥 + IdentitiesOnly, 避免 cron / 非交互 shell 找不到 key
-SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
-if [[ -r "$SSH_KEY" ]]; then
-  export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
-  log "ssh key: $SSH_KEY"
-else
-  log "[warn] SSH key 不可读 ($SSH_KEY), git push 可能失败"
-fi
-
-mkdir -p "$LOG_DIR"
-
-log() {
+# Helper: 把脚本里 log/run 改名为 plog/prun, 避免与 macOS 系统命令 /usr/bin/log 冲突.
+plog() {
   local ts; ts="$(date '+%F %T')"
   printf '[%s] %s\n' "$ts" "$*" | tee -a "$LOG_FILE"
 }
 
-run() {
+prun() {
   if [[ "$DRY_RUN" == "1" ]]; then
-    log "[dry-run] $*"
+    plog "[dry-run] $*"
   else
-    log "exec: $*"
+    plog "exec: $*"
     eval "$@"
   fi
 }
 
+# SSH key 推送: 显式指定私钥 + IdentitiesOnly, 避免 cron / 非交互 shell 找不到 key
+SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
+if [[ -r "$SSH_KEY" ]]; then
+  export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+  plog "ssh key: $SSH_KEY"
+else
+  plog "[warn] SSH key 不可读 ($SSH_KEY), git push 可能失败"
+fi
+
+mkdir -p "$LOG_DIR"
+
 # -----------------------------------------------------------------------------
 # 0. 前置: 拉取最新代码, 避免落后 origin
 # -----------------------------------------------------------------------------
-log "===== LNN daily pipeline for $RUN_DATE ====="
-log "repo: $ROOT_DIR"
-log "skip: digest=$SKIP_DIGEST report=$SKIP_REPORT commit=$SKIP_COMMIT repro=$SKIP_REPRO"
+plog "===== LNN daily pipeline for $RUN_DATE ====="
+plog "repo: $ROOT_DIR"
+plog "skip: digest=$SKIP_DIGEST report=$SKIP_REPORT commit=$SKIP_COMMIT repro=$SKIP_REPRO"
 
 if [[ "$SKIP_COMMIT" != "1" ]]; then
   if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
-    run "git fetch --no-tags origin"
-    run "git pull --ff-only origin HEAD || true"
+    prun "git fetch --no-tags origin"
+    prun "git pull --ff-only origin HEAD || true"
   fi
 fi
 
@@ -74,13 +75,13 @@ fi
 # 1. digest: 抓取 LNN 相关更新 -> docs/daily/${DATE}_LNN_research_digest.md
 # -----------------------------------------------------------------------------
 if [[ "$SKIP_DIGEST" != "1" ]]; then
-  log "[1/4] digest: 抓取 arXiv / GitHub / Hugging Face 更新"
-  run "$PYTHON_BIN scripts/daily_lnn_research.py \
+  plog "[1/4] digest: 抓取 arXiv / GitHub / Hugging Face 更新"
+  prun "$PYTHON_BIN scripts/daily_lnn_research.py \
         --date '$RUN_DATE' \
         --max-results '$MAX_RESULTS' \
         --per-query '$PER_QUERY'"
 else
-  log "[1/4] digest: SKIPPED"
+  plog "[1/4] digest: SKIPPED"
 fi
 
 # -----------------------------------------------------------------------------
@@ -89,39 +90,39 @@ fi
 #    - 本地烟测可用 --llm none 让脚本仅打印待研读清单
 # -----------------------------------------------------------------------------
 if [[ "$SKIP_REPORT" != "1" ]]; then
-  log "[2/4] report: 列出待研读候选 (cron 由 LLM 接管生成研读报告)"
-  run "$PYTHON_BIN scripts/select_papers_for_report.py \
+  plog "[2/4] report: 列出待研读候选 (cron 由 LLM 接管生成研读报告)"
+  prun "$PYTHON_BIN scripts/select_papers_for_report.py \
         --date '$RUN_DATE' \
         --top 3"
 else
-  log "[2/4] report: SKIPPED"
+  plog "[2/4] report: SKIPPED"
 fi
 
 # -----------------------------------------------------------------------------
 # 3. commit + push: docs/ papers/ analysis/ 的当日变更
 # -----------------------------------------------------------------------------
 if [[ "$SKIP_COMMIT" != "1" ]]; then
-  log "[3/4] commit: 提交当日 docs/ papers/ 变更"
-  run "git add docs papers"
+  plog "[3/4] commit: 提交当日 docs/ papers/ 变更"
+  prun "git add docs papers"
   if git diff --cached --quiet; then
     log "  无 staged 变更, 跳过 commit"
   else
-    run "git commit -m 'chore(daily): LNN digest + 研读报告 ${RUN_DATE}'"
-    run "git push origin HEAD"
+    prun "git commit -m 'chore(daily): LNN digest + 研读报告 ${RUN_DATE}'"
+    prun "git push origin HEAD"
   fi
 else
-  log "[3/4] commit: SKIPPED"
+  plog "[3/4] commit: SKIPPED"
 fi
 
 # -----------------------------------------------------------------------------
 # 4. reproduce: 推送成功后, 依据 digest 挑选可复现论文, 跑对应 reproduce 脚本
 # -----------------------------------------------------------------------------
 if [[ "$SKIP_REPRO" != "1" ]]; then
-  log "[4/4] reproduce: 按 digest 挑选并跑论文复现"
-  run "$PYTHON_BIN scripts/replicate_paper_dispatch.py \
+  plog "[4/4] reproduce: 按 digest 挑选并跑论文复现"
+  prun "$PYTHON_BIN scripts/replicate_paper_dispatch.py \
         --date '$RUN_DATE'"
 else
-  log "[4/4] reproduce: SKIPPED"
+  plog "[4/4] reproduce: SKIPPED"
 fi
 
-log "===== pipeline done ====="
+plog "===== pipeline done ====="
