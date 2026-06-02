@@ -81,7 +81,7 @@ def _train_one_epoch(
             assert isinstance(model, BiCfCNADWithMDN)
             mdn_params = _video_only_forward(model, batch)
         else:
-            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN))
+            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ == "UniVideoSelfXAttnWithMDN"
             mdn_params = model(batch["video"], batch["audio"])
         final = {k: v[:, -1] for k, v in mdn_params.items()}
         loss = mdn_negative_log_likelihood(final, params)
@@ -111,7 +111,7 @@ def _evaluate(
             assert isinstance(model, BiCfCNADWithMDN)
             mdn_params = _video_only_forward(model, batch)
         else:
-            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN))
+            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ == "UniVideoSelfXAttnWithMDN"
             mdn_params = model(batch["video"], batch["audio"])
         final = {k: v[:, -1] for k, v in mdn_params.items()}
         mean = mdn_mean(final)
@@ -153,6 +153,15 @@ def _build_model(
         return CrossModalAttnBiCfCNADWithMDN(
             video_dim=video_dim,
             audio_dim=audio_dim,
+            hidden_size=hidden_size,
+            output_size=5,
+            num_mixtures=num_mixtures,
+        )
+    if model_kind == "uni_video_xattn":
+        from lnn.core.multimodal_physreg import UniVideoSelfXAttnWithMDN
+        return UniVideoSelfXAttnWithMDN(
+            video_dim=video_dim,
+            audio_dim=audio_dim,  # ignored at forward time
             hidden_size=hidden_size,
             output_size=5,
             num_mixtures=num_mixtures,
@@ -240,25 +249,35 @@ def main() -> None:
     video_only = _run("video_only", args, device, dataset)
     multimodal = _run("multimodal", args, device, dataset)
     cross_attn = _run("cross_attn", args, device, dataset)
+    uni_video = _run("uni_video_xattn", args, device, dataset)
 
     v_mse = video_only["test"]["param_mse"]
     m_mse = multimodal["test"]["param_mse"]
     c_mse = cross_attn["test"]["param_mse"]
+    u_mse = uni_video["test"]["param_mse"]
     claim_threshold = 0.20
     cross_attn_vs_videoonly = (v_mse - c_mse) / v_mse if v_mse > 0 else 0.0
     cross_attn_vs_multimodal = (m_mse - c_mse) / m_mse if m_mse > 0 else 0.0
+    uni_video_vs_videoonly = (v_mse - u_mse) / v_mse if v_mse > 0 else 0.0
+    uni_video_vs_crossattn = (c_mse - u_mse) / c_mse if c_mse > 0 else 0.0
     claim_passed = cross_attn_vs_videoonly >= claim_threshold
 
     print("\n=== Test Results (5-dim param MSE) ===")
-    print(f"video_only  | params {video_only['parameters']:>5d} | test MSE {v_mse:.4f}")
-    print(f"multimodal  | params {multimodal['parameters']:>5d} | test MSE {m_mse:.4f}")
-    print(f"cross_attn  | params {cross_attn['parameters']:>5d} | test MSE {c_mse:.4f}")
+    print(f"video_only      | params {video_only['parameters']:>5d} | test MSE {v_mse:.4f}")
+    print(f"multimodal      | params {multimodal['parameters']:>5d} | test MSE {m_mse:.4f}")
+    print(f"cross_attn      | params {cross_attn['parameters']:>5d} | test MSE {c_mse:.4f}")
+    print(f"uni_video_xattn | params {uni_video['parameters']:>5d} | test MSE {u_mse:.4f}")
     print(
-        f"cross_attn vs video_only      : {cross_attn_vs_videoonly * 100:+.1f}% "
+        f"cross_attn      vs video_only : {cross_attn_vs_videoonly * 100:+.1f}% "
         f"(claim >= {claim_threshold * 100:.0f}%) → "
         f"{'PASS' if claim_passed else 'FAIL'}"
     )
-    print(f"cross_attn vs multimodal       : {cross_attn_vs_multimodal * 100:+.1f}%")
+    print(f"cross_attn      vs multimodal : {cross_attn_vs_multimodal * 100:+.1f}%")
+    print(
+        f"uni_video_xattn vs video_only : {uni_video_vs_videoonly * 100:+.1f}% "
+        "(architecture-only ablation: large gap below cross_attn ⇒ audio carries unique info)"
+    )
+    print(f"uni_video_xattn vs cross_attn : {uni_video_vs_crossattn * 100:+.1f}%")
 
     now = dt.datetime.now()
     run_id = now.strftime("%Y-%m-%d_%H%M%S")
@@ -273,12 +292,16 @@ def main() -> None:
         "video_only": video_only,
         "multimodal": multimodal,
         "cross_attn": cross_attn,
+        "uni_video_xattn": uni_video,
         "summary": {
             "video_only_param_mse": v_mse,
             "multimodal_param_mse": m_mse,
             "cross_attn_param_mse": c_mse,
+            "uni_video_xattn_param_mse": u_mse,
             "cross_attn_vs_videoonly_rel": cross_attn_vs_videoonly,
             "cross_attn_vs_multimodal_rel": cross_attn_vs_multimodal,
+            "uni_video_vs_videoonly_rel": uni_video_vs_videoonly,
+            "uni_video_vs_crossattn_rel": uni_video_vs_crossattn,
             "claim_threshold": claim_threshold,
             "claim_passed": bool(claim_passed),
         },

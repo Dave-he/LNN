@@ -446,3 +446,86 @@ def test_emma_rover_features_returns_aligned_streams() -> None:
     )
     # Audio peak frequency must be non-negative.
     assert (out["audio"] >= 0).all(), "audio peak Hz should be non-negative"
+
+
+# ---------- UniVideoSelfXAttnWithMDN tests (round 13 ablation) ----------
+
+
+def test_uni_video_self_xattn_output_shape() -> None:
+    from lnn.core.multimodal_physreg import UniVideoSelfXAttnWithMDN
+    model = UniVideoSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, num_mixtures=2
+    )
+    video = torch.randn(2, 12, 1)
+    audio = torch.randn(2, 12, 1)  # supplied but ignored
+    out = model(video, audio)
+    assert out["logits"].shape == (2, 12, 2)
+    assert out["loc"].shape == (2, 12, 2, 2)
+
+
+def test_uni_video_self_xattn_ignores_audio_argument() -> None:
+    """Two different audio inputs with the same video must yield identical
+    outputs — proving the audio path is genuinely dead."""
+    from lnn.core.multimodal_physreg import UniVideoSelfXAttnWithMDN
+    torch.manual_seed(0)
+    model = UniVideoSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2
+    )
+    model.eval()
+    video = torch.randn(1, 10, 1)
+    audio_a = torch.randn(1, 10, 1)
+    audio_b = torch.randn(1, 10, 1) * 100  # very different audio
+    with torch.no_grad():
+        out_a = mdn_mean(model(video, audio_a))
+        out_b = mdn_mean(model(video, audio_b))
+    assert torch.allclose(out_a, out_b, atol=1e-6), \
+        "uni-video-self-xattn must produce identical output regardless of audio input"
+
+
+def test_uni_video_self_xattn_gradients_flow_to_both_encoders() -> None:
+    from lnn.core.multimodal_physreg import UniVideoSelfXAttnWithMDN
+    model = UniVideoSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2
+    )
+    video = torch.randn(2, 6, 1, requires_grad=True)
+    out = model(video, audio=None)
+    out["loc"].sum().backward()
+    v_grad = sum(p.grad.abs().sum().item() for p in model.video_encoder.parameters() if p.grad is not None)
+    a_grad = sum(p.grad.abs().sum().item() for p in model.audio_encoder.parameters() if p.grad is not None)
+    assert v_grad > 0
+    assert a_grad > 0, "second video encoder (named audio_encoder) must also be updated"
+    assert video.grad is not None and video.grad.abs().sum().item() > 0
+
+
+def test_uni_video_self_xattn_differs_from_cross_attn() -> None:
+    """Same architecture but no audio → output must differ from cross_attn
+    when audio is informative."""
+    from lnn.core.multimodal_physreg import (
+        CrossModalAttnBiCfCNADWithMDN,
+        UniVideoSelfXAttnWithMDN,
+    )
+    torch.manual_seed(13)
+    cross = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2
+    )
+    torch.manual_seed(13)
+    uni = UniVideoSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2
+    )
+    # Match the encoder weights so the only difference is what feeds the
+    # audio slot of the cross-attention.
+    uni._inner.video_encoder.load_state_dict(cross.video_encoder.state_dict())
+    uni._inner.audio_encoder.load_state_dict(cross.audio_encoder.state_dict())
+    # Match the attention / fusion / MDN heads too.
+    for proj_name in ("q_v", "k_a", "v_a", "q_a", "k_v", "v_v", "fuse_proj"):
+        getattr(uni._inner, proj_name).load_state_dict(getattr(cross, proj_name).state_dict())
+    uni._inner.mdn.load_state_dict(cross.mdn.state_dict())
+    video = torch.randn(1, 14, 1)
+    audio = torch.randn(1, 14, 1) * 3.0  # high-amplitude audio so the
+    # cross-attn output really depends on it.
+    with torch.no_grad():
+        cross_loc = mdn_mean(cross(video, audio))
+        uni_loc = mdn_mean(uni(video, audio))
+    assert cross_loc.shape == uni_loc.shape
+    assert not torch.allclose(cross_loc, uni_loc, atol=1e-4), \
+        "uni-video-self-xattn output identical to cross_attn — audio path is silently still active"

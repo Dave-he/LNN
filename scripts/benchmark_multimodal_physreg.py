@@ -34,6 +34,7 @@ from lnn.core.mdn import mdn_mean, mdn_negative_log_likelihood
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
     MultimodalBiCfCNADWithMDN,
+    UniVideoSelfXAttnWithMDN,
 )
 from lnn.core.noise_adaptive_cfc import BiCfCNADWithMDN, mdn_predicted_std
 from lnn.data.multimodal_physreg import (
@@ -160,7 +161,12 @@ def _train_one_epoch(
             mdn_params = _video_only_forward(model, batch)
         else:
             assert isinstance(
-                model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)
+                model,
+                (
+                    MultimodalBiCfCNADWithMDN,
+                    CrossModalAttnBiCfCNADWithMDN,
+                    UniVideoSelfXAttnWithMDN,
+                ),
             )
             mdn_params = model(batch["video"], batch["audio"])
         # Train against the final-step parameter (sequence-to-sequence → final).
@@ -197,7 +203,12 @@ def _evaluate(
             mdn_params = _video_only_forward(model, batch)
         else:
             assert isinstance(
-                model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)
+                model,
+                (
+                    MultimodalBiCfCNADWithMDN,
+                    CrossModalAttnBiCfCNADWithMDN,
+                    UniVideoSelfXAttnWithMDN,
+                ),
             )
             mdn_params = model(batch["video"], batch["audio"])
         final = {k: v[:, -1] for k, v in mdn_params.items()}
@@ -245,6 +256,14 @@ def _build_model(
             output_size=2,
             num_mixtures=num_mixtures,
             modality_dropout=modality_dropout,
+        )
+    if model_kind == "uni_video_xattn":
+        return UniVideoSelfXAttnWithMDN(
+            video_dim=1,
+            audio_dim=1,  # ignored, kept for API parity
+            hidden_size=hidden_size,
+            output_size=2,
+            num_mixtures=num_mixtures,
         )
     raise ValueError(f"unknown model_kind {model_kind!r}")
 

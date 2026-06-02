@@ -321,3 +321,94 @@ class CrossModalAttnBiCfCNADWithMDN(nn.Module):
             out["_attn_video_queries_audio"] = attn_va
             out["_attn_audio_queries_video"] = attn_av
         return out
+
+
+class UniVideoSelfXAttnWithMDN(nn.Module):
+    """Architecture-only ablation of :class:`CrossModalAttnBiCfCNADWithMDN`.
+
+    Same dual-encoder + cross-attention machinery, **but both encoders are
+    fed the video stream** — there is no audio input. The two
+    :class:`BidirectionalNoiseAdaptiveCfC` backbones are initialised
+    independently and the cross-attention now performs a "self-cross" pass:
+    each video copy queries the other.
+
+    Falsifiable diagnostic for the round 12 §15 "architecture vs information"
+    meta-conclusion:
+
+    * On the round 8 synthetic burst task the gain was attributed mostly to
+      the dual-encoder architecture (cross_attn beats video_only by +27.6%
+      even when audio is decimated to pure noise). If that holds, this
+      audio-free variant should also PASS ≥+20% on synthetic burst.
+    * On round 11's real EMMA rover data the gain was attributed to audio's
+      genuine motor-RPM information (cross_attn +51% vs video_only). If that
+      holds, this audio-free variant should FAIL on rover — it has lost the
+      information path that made cross_attn win there.
+
+    A "synthetic PASS + rover FAIL" outcome fully confirms the task-
+    dependency meta-conclusion; any other combination refines or refutes it.
+
+    The forward signature matches :class:`CrossModalAttnBiCfCNADWithMDN` so
+    the existing benchmark harness can swap models without other changes;
+    the ``audio`` argument is *required* (for API parity) but is **ignored**
+    inside the forward pass — the model only consumes ``video``.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 — kept for API parity with cross_attn
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        noise_beta: float = 0.9,
+        noise_aggregation: str = "independent",
+    ) -> None:
+        super().__init__()
+        # Reuse the cross-attention model unchanged; we just always feed it
+        # video twice. That keeps the parameter shapes, attention machinery,
+        # and MDN head bit-identical to cross_attn, which is exactly the
+        # architecture-only ablation we want.
+        self._inner = CrossModalAttnBiCfCNADWithMDN(
+            video_dim=video_dim,
+            audio_dim=video_dim,  # both encoders receive video
+            hidden_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+            num_layers=num_layers,
+            noise_beta=noise_beta,
+            noise_aggregation=noise_aggregation,
+            modality_dropout=0.0,
+        )
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+
+    @property
+    def video_encoder(self) -> nn.Module:
+        return self._inner.video_encoder
+
+    @property
+    def audio_encoder(self) -> nn.Module:
+        """Second video encoder. Named ``audio_encoder`` for harness reuse."""
+        return self._inner.audio_encoder
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 — intentionally ignored
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+        return_attention: bool = False,
+    ) -> dict[str, torch.Tensor]:
+        # Discard `audio` if provided; feed `video` to both encoder slots so
+        # the cross-attention runs as a self-cross over two independent video
+        # representations.
+        return self._inner(
+            video=video,
+            audio=video,
+            dt=dt,
+            mask=mask,
+            return_attention=return_attention,
+        )

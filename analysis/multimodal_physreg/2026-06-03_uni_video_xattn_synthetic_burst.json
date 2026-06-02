@@ -1,0 +1,47 @@
+{
+  "run_date": "2026-06-03",
+  "task": "synthetic burst, audio_noise=0.05, n=800, ep=20, K=2, seed=42",
+  "config": {
+    "epochs": 20,
+    "num_samples": 800,
+    "seq_len": 32,
+    "dt": 0.05,
+    "video_noise_std": 0.05,
+    "audio_noise_std": 0.05,
+    "hidden_size": 16,
+    "num_mixtures": 2,
+    "fusion": "concat",
+    "batch_size": 32,
+    "lr": 0.005,
+    "seed": 42,
+    "video_mask_second_half": false,
+    "audio_mask_first_half": false,
+    "heterogeneous": true,
+    "force_kind": "burst",
+    "modality_dropout": 0.0,
+    "eval_only_occlusion": false,
+    "train_partial_occlusion_prob": 0.0,
+    "device": "cpu",
+    "output_dir": "analysis/multimodal_physreg"
+  },
+  "results": {
+    "video_only": {
+      "params": 3258,
+      "val_mse": 1.0351719856262207
+    },
+    "cross_attn": {
+      "params": 8186,
+      "val_mse": 0.7497256398200989
+    },
+    "uni_video_xattn": {
+      "params": 8186,
+      "val_mse": 0.7598108649253845
+    }
+  },
+  "summary": {
+    "cross_attn_vs_videoonly_pct": 27.57477499098306,
+    "uni_video_vs_videoonly_pct": 26.600518998227933,
+    "uni_video_vs_crossattn_pct": -1.3451887690149764,
+    "meta_conclusion": "On synthetic burst, uni_video_xattn (no audio) matches cross_attn within 1.5%, confirming +27.6% gain is architectural."
+  }
+}
