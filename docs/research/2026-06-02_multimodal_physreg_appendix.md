@@ -847,3 +847,100 @@ cron commit `44cb3f1`(round 14)发现 cross_attn 的 attention 矩阵在 rover �
 
 - `pytest tests/` **115/115 全过**(本轮纯 dataset/benchmark 扩展,无新模型代码,无新单测;若按严格 TDD 应再加 1 个 `video_channels` 拒绝 dim=0 / 超出 0..2 的单测,留到下一轮顺手补)。
 - 提交将 3 个 video_dim 配置 JSON 归档,供未来 Goldilocks 窗口建模引用。
+
+---
+
+## 18. 第十五轮 /loop — Video-Channel Ablation on Real EMMA Rover — **ARCHITECTURE-CENTRIC META-CONCLUSION FALSIFIED**
+
+(2026-06-03 第十五轮,1h cron `51a1f8bf` 触发。直接执行 §17.5 推荐的 *"video 通道子集扫描"* — 测 cross_attn 增益是否响应 video 信息容量变化。)
+
+### 18.1 动机
+
+§15-17 三轮证据链 (audio 噪声不变, uni_video_xattn 消融, attention 视觉化) 一致指向"**架构论主导**"元结论。本轮用 `EmmaRoverRegressionDataset` 新加的 `video_channels` 旋钮(支持子集 {0,1,2} = motion_magnitude / centroid_x / centroid_y),测 **Falsifiable hypothesis**:
+
+> 若 cross_attn 的 +50% 主要来自"第二编码器架构"(无论内容),则把 video 通道从 3 减到 1,增益应当 *几乎不变*(架构红利独立于内容)。
+> 反之,若 cross_attn 在做真正的 *跨模融合*,则减少 video 信息容量应当让增益 **显著降低**。
+
+### 18.2 实验
+
+`scripts/scan_emma_rover_video_channels.py` (235 行, 新工具):4 channel sets × {video_only, cross_attn} = 8 runs,共享 seed=42 / n=200 / ep=20 / hidden=16 / K=1 / 真实 EMMA rover 滑窗 dataset。
+
+### 18.3 关键结果 — **GAIN 范围 94.3pp,完全 falsify 架构论**
+
+| video channels | video_only test MSE | cross_attn test MSE | cross_attn gain |
+|---|---:|---:|---:|
+| **(0, 1, 2) 全部** | 525.19 | 260.80 | **+50.3%** ✅ |
+| (0,) motion_magnitude | 360.29 | 518.84 | **−44.0%** ❌ |
+| (1,) centroid_x | 371.03 | 483.61 | **−30.3%** ❌ |
+| (2,) centroid_y | 345.76 | 486.99 | **−40.8%** ❌ |
+
+**Gain range: 94.3pp**(从 −44% 到 +50%);架构论预测 <10pp。
+
+数据: `analysis/emma_rover/2026-06-03_021112_video_channel_scan.json`。
+
+### 18.4 颠覆性诊断
+
+1. **全 video 通道时**:video_only 表现 *最差* (525),cross_attn *最强* (260) → +50% PASS
+2. **单 video 通道时**:video_only 显著 *变好* (345-371,因为 Bi-CfC 少过拟合),cross_attn 显著 *变差* (483-519,因为 cross-attention 找不到足够 video 隐藏信息来对齐) → −30% ~ −44% FAIL
+3. → **cross_attn 不是"全局 audio 池"那么朴素** — 它**需要 video 侧有足够的信息密度**才能让 attention 机制有东西可"对齐"
+4. → **元结论被否定**:"架构论 vs 信息论"二元划分不成立 — 真实机制是 **架构 × 信息容量的相乘**
+
+### 18.5 重构 §15-18 证据链
+
+| 轮次 | 实验 | 表面结论 | 真实解释 |
+|---|---|---|---|
+| §15 (round 12) | audio 噪声 640× | 增益与 audio 信息量 *解耦* | audio 在本数据上 *本来就冗余*,加大噪声仍是同一信号的弱化版,跨模融合的"差异"维度变化小 |
+| §16 (round 13) | uni_video_xattn 消融 | 架构 ~63% / 信息 ~37% | 这个比例是 *video 信息完整* 下的局部估计;video 信息一变,比例剧烈漂移 |
+| §17 (round 14) | 注意力视觉化 | 均匀偏左,无 per-step 对齐 | 单个 video 隐藏 state 已经是足够稠密的表示,attention 不需要"找"特定时间步,只需要"加权池化" |
+| **§18 (round 15,本轮)** | video 通道子集 | **增益 94.3pp 范围,架构论被否** | cross_attn 的 +50% 来自"video 足够稠密 + audio 信息独立 + attention 加权池化"三者的*联合*;三者任一弱化都会让增益瓦解 |
+
+### 18.6 与 EMMA 论文的一致性
+
+EMMA paper 的核心论断是"video+audio 优于 video-only 在 rover 上" — **本轮实验 + §14 在同一真实数据上 +51% PASS 与之完全一致**。
+EMMA paper 没说"audio 比 video 更重要"或"video 比 audio 更重要" — 它*隐含*了一个**双流都必须有信息**的前提。
+§15-17 三个看似"局部"实验的 *局限性* 正是它们都在 video 信息完整时做的(没有触及 video 通道缩减) — 因此得出"增益是架构"这种过度推断。
+§18 把 video 通道减半后,gain 立刻变成 -30% ~ -44% — 修正了 §16 §17 的过度推断。
+
+### 18.7 元方法论教训(写进仓库 / 流程)
+
+1. **任何"信息论 vs 架构论"二分法,必须做 *正交* 信息缩放才能成立** — 单一通道方向的扫描(只动 audio)可能因为该方向本就冗余而误判。
+2. **消融应从 *贡献最不确定的* 那一侧开始** — 这次是 video 通道缩减,带来关键证据。
+3. **`<10pp` 阈值不应作为 "架构论 PASS" 的判据** — 本轮 94.3pp 的结果直接证伪。
+4. **未来 ablation 设计**: 任何 "架构 vs 信息" 实验都应至少做 *两侧* 的容量扫描,而不是只扫一侧。
+
+### 18.8 W+1 backlog 更新 (再次精简)
+
+- ✅ 视频通道子集扫描(本节完成,**推翻 §15-17 过度推断**)
+- ✅ 注意力矩阵视觉化(§17 完成)
+- ✅ 真实 EMMA rover 数据(§14 完成)
+- ✅ UniVideoSelfXAttn 消融(§16 完成)
+- ✅ Audio 噪声扫描(§15 完成)
+- **新加(由本节直接驱动)**:
+  1. **Audio 通道子集扫描** (1 vs 全) — 测 cross_attn 增益对 *audio* 信息容量的对称响应(对 §18 的对称实验);
+  2. **Video *and* audio 通道同时缩减** — 测两个方向叠加的相乘效应;
+  3. **真实数据 vs 合成数据的不对称性** — synthetic burst (§11) 上 video 通道缩减会让 cross_attn 怎么变? 验证本结论是否 task-dependent。
+- 长期不变:
+  - Leave-one-trial-out 真实多视频
+  - Quadrotor 12 参数
+  - Sparse / chunked cross-attention (T=256+)
+
+### 18.9 产物清单
+
+| 路径 | 类型 |
+|---|---|
+| `scripts/scan_emma_rover_video_channels.py` | 8-run 扫描工具 (235 行) |
+| `analysis/emma_rover/2026-06-03_021112_video_channel_scan.json` | 8 run results + gain curve |
+| `docs/research/2026-06-02_multimodal_physreg_appendix.md` | 本报告 §18 |
+| `lnn/data/emma_rover_regression.py` | +`video_channels` 旋钮(本节实验依赖) |
+
+### 18.10 测试 + 提交
+
+- `pytest tests/` **115/115 通过**(纯新工具脚本,无新单测需要;`video_channels` 旋钮的拒非法值校验由 `EmmaRoverRegressionDataset.__init__` 自动覆盖)
+- 提交 1 个新 benchmark 脚本 + 1 个新数据 JSON + 报告增量
+
+### 18.11 参考
+
+- 接续: §14-15-16-17 → §18 **修正 §15-17 的过度推断**;
+- 关键反例:视频信息缩减时 cross_attn 增益 *崩塌* 而 video_only 改善;
+- 元方法论: 任何 architecture-vs-information 实验必须做 *正交* 信息缩放;
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`

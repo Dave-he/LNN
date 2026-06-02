@@ -1,0 +1,125 @@
+{
+  "run_id": "2026-06-03_021112",
+  "config": {
+    "epochs": 20,
+    "num_samples": 200,
+    "window": 16,
+    "feature_noise_std": 0.02,
+    "hidden_size": 16,
+    "num_mixtures": 1,
+    "batch_size": 32,
+    "lr": 0.005,
+    "seed": 42,
+    "output_dir": "analysis/emma_rover"
+  },
+  "results": [
+    {
+      "model_kind": "video_only",
+      "video_channels": [
+        0,
+        1,
+        2
+      ],
+      "video_dim": 3,
+      "parameters": 3595,
+      "elapsed_seconds": 1.7363637250382453,
+      "test": {
+        "param_mse": 525.1851806640625
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "video_channels": [
+        0,
+        1,
+        2
+      ],
+      "video_dim": 3,
+      "parameters": 8523,
+      "elapsed_seconds": 3.424608030007221,
+      "test": {
+        "param_mse": 260.80389404296875
+      }
+    },
+    {
+      "model_kind": "video_only",
+      "video_channels": [
+        0
+      ],
+      "video_dim": 1,
+      "parameters": 3275,
+      "elapsed_seconds": 1.688234105007723,
+      "test": {
+        "param_mse": 360.2880859375
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "video_channels": [
+        0
+      ],
+      "video_dim": 1,
+      "parameters": 8203,
+      "elapsed_seconds": 3.4923596660373732,
+      "test": {
+        "param_mse": 518.840576171875
+      }
+    },
+    {
+      "model_kind": "video_only",
+      "video_channels": [
+        1
+      ],
+      "video_dim": 1,
+      "parameters": 3275,
+      "elapsed_seconds": 1.730194337083958,
+      "test": {
+        "param_mse": 371.02752685546875
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "video_channels": [
+        1
+      ],
+      "video_dim": 1,
+      "parameters": 8203,
+      "elapsed_seconds": 3.385842166026123,
+      "test": {
+        "param_mse": 483.6084289550781
+      }
+    },
+    {
+      "model_kind": "video_only",
+      "video_channels": [
+        2
+      ],
+      "video_dim": 1,
+      "parameters": 3275,
+      "elapsed_seconds": 1.6893793010385707,
+      "test": {
+        "param_mse": 345.7627868652344
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "video_channels": [
+        2
+      ],
+      "video_dim": 1,
+      "parameters": 8203,
+      "elapsed_seconds": 3.575315317022614,
+      "test": {
+        "param_mse": 486.9867248535156
+      }
+    }
+  ],
+  "gain_curve": [
+    {
+      "video_channels": "(0, 1, 2)",
+      "video_only_mse": 525.1851806640625,
+      "cross_attn_mse": 260.80389404296875,
+      "gain": 0.5034058392257009
+    }
+  ]
+}
