@@ -7,6 +7,7 @@ import torch
 from lnn.core.cfc import CfCNetwork
 from lnn.core.mdn import mdn_mean, mdn_negative_log_likelihood
 from lnn.core.noise_adaptive_cfc import (
+    BiCfCNADWithMDN,
     BidirectionalNoiseAdaptiveCfC,
     CfCNADWithMDN,
     NoiseAdaptiveCfCCell,
@@ -468,4 +469,85 @@ class TestCfCNADWithMDN:
         assert mean.shape == (1, 5, 1)
         std = mdn_predicted_std(params)
         assert std.shape == (1, 5)
+        assert (std > 0).all()
+
+
+class TestBiCfCNADWithMDN:
+    """Bidirectional CfC-NAD backbone + MDN head."""
+
+    def test_output_shapes_sequences(self) -> None:
+        net = BiCfCNADWithMDN(
+            input_size=2, hidden_size=8, output_size=1, num_mixtures=2
+        )
+        x = torch.randn(3, 9, 2)
+        params = net(x)
+        assert params["logits"].shape == (3, 9, 2)
+        assert params["loc"].shape == (3, 9, 2, 1)
+        assert params["log_scale"].shape == (3, 9, 2, 1)
+
+    def test_output_shapes_last_step(self) -> None:
+        net = BiCfCNADWithMDN(
+            input_size=2,
+            hidden_size=8,
+            output_size=1,
+            num_mixtures=3,
+            return_sequences=False,
+        )
+        x = torch.randn(2, 5, 2)
+        params = net(x)
+        assert params["logits"].shape == (2, 3)
+        assert params["loc"].shape == (2, 3, 1)
+        assert params["log_scale"].shape == (2, 3, 1)
+
+    def test_backward_into_both_directions(self) -> None:
+        net = BiCfCNADWithMDN(
+            input_size=2, hidden_size=4, output_size=1, num_mixtures=1
+        )
+        x = torch.randn(2, 6, 2, requires_grad=True)
+        y = torch.randn(2, 6, 1)
+        params = net(x)
+        loss = mdn_negative_log_likelihood(params, y)
+        loss.backward()
+        # Both halves of the bidirectional backbone must receive gradient.
+        fwd_grad = sum(
+            (p.grad.abs().sum().item() if p.grad is not None else 0.0)
+            for p in net.encoder.forward_net.parameters()
+        )
+        bwd_grad = sum(
+            (p.grad.abs().sum().item() if p.grad is not None else 0.0)
+            for p in net.encoder.backward_net.parameters()
+        )
+        assert fwd_grad > 0
+        assert bwd_grad > 0
+
+    def test_differs_from_uni_mdn(self) -> None:
+        torch.manual_seed(2)
+        uni = CfCNADWithMDN(
+            input_size=1, hidden_size=8, output_size=1, num_mixtures=1
+        )
+        bi = BiCfCNADWithMDN(
+            input_size=1, hidden_size=8, output_size=1, num_mixtures=1
+        )
+        x = torch.randn(1, 12, 1)
+        with torch.no_grad():
+            std_uni = mdn_predicted_std(uni(x))
+            std_bi = mdn_predicted_std(bi(x))
+        assert std_uni.shape == std_bi.shape
+        # Different architecture → different uncertainty stream.
+        assert not torch.allclose(std_uni, std_bi, atol=1e-4)
+
+    def test_centered_aggregation_supported(self) -> None:
+        # The bi backbone supports noise_aggregation="centered"; forwarding it
+        # through the MDN-wrapped class must not raise on mask=None input.
+        net = BiCfCNADWithMDN(
+            input_size=1,
+            hidden_size=4,
+            output_size=1,
+            num_mixtures=1,
+            noise_aggregation="centered",
+        )
+        x = torch.randn(1, 8, 1)
+        params = net(x)
+        std = mdn_predicted_std(params)
+        assert std.shape == (1, 8)
         assert (std > 0).all()

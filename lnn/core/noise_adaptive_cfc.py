@@ -242,6 +242,7 @@ __all__ = [
     "NoiseAdaptiveCfCNetwork",
     "BidirectionalNoiseAdaptiveCfC",
     "CfCNADWithMDN",
+    "BiCfCNADWithMDN",
     "mdn_predicted_std",
     "vectorized_noise_ema",
 ]
@@ -506,6 +507,74 @@ class CfCNADWithMDN(nn.Module):
             num_layers=num_layers,
             return_sequences=True,
             noise_beta=noise_beta,
+        )
+        self.mdn = MDNHead(
+            input_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+        )
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        h0: torch.Tensor | None = None,
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        features = self.encoder(x, h0=h0, dt=dt, mask=mask)
+        params = self.mdn(features)
+        if not self.return_sequences:
+            params = {
+                "logits": params["logits"][:, -1],
+                "loc": params["loc"][:, -1],
+                "log_scale": params["log_scale"][:, -1],
+            }
+        return params
+
+
+class BiCfCNADWithMDN(nn.Module):
+    """Bidirectional CfC-NAD feature extractor wired into an MDN head.
+
+    Same heteroscedastic-uncertainty interface as :class:`CfCNADWithMDN`, but
+    the backbone is :class:`BidirectionalNoiseAdaptiveCfC` so each step sees
+    both past and future context. The two-sided context should help the model
+    calibrate the noise score more accurately than the unidirectional variant
+    (round 4's hypothesis bumped to W+1).
+
+    Concretely this is a drop-in for ``CfCNADWithMDN`` with one additional
+    knob: ``noise_aggregation`` is forwarded to the bidirectional backbone.
+    """
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        output_size: int,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        return_sequences: bool = True,
+        noise_beta: float = 0.9,
+        noise_aggregation: str = "independent",
+    ) -> None:
+        super().__init__()
+        if num_mixtures < 1:
+            raise ValueError("num_mixtures must be >= 1")
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+        self.return_sequences = return_sequences
+
+        # Configure the bidirectional backbone so its output is a per-step
+        # feature stream of width ``hidden_size``.
+        self.encoder = BidirectionalNoiseAdaptiveCfC(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            output_size=hidden_size,
+            num_layers=num_layers,
+            return_sequences=True,
+            noise_beta=noise_beta,
+            noise_aggregation=noise_aggregation,
         )
         self.mdn = MDNHead(
             input_size=hidden_size,

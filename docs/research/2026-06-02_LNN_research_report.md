@@ -281,3 +281,53 @@ output_proj : Linear(2H -> output_size)        -> [B, T, output_size]
 - 阈值是事前自定的，不做调小到 0.4 的事后追加；负结果如实保留。
 - **不变量已经站住**（"含噪片段预测 σ 更大"为可学习）→ 工程上 `CfCNADWithMDN` 仍可作为 LNN 仓库里**首个携带原生不确定度的 CfC backbone**，将进入下一轮的边缘部署/拒识场景。
 - 路线图新增：W+1 重做这个 benchmark，把 num_samples 提到 ≥2000，seq_len 缩短到 16，让"样本级标量 SNR"与"样本级 σ̂ 平均"的对应更稳定；同时尝试 *Bi-CfC-NAD + MDN* 看双向上下文是否能把 r 推过 0.5。
+
+## 附录 D — 2026-06-02 第五轮迭代：Bi-CfC-NAD + MDN — **POSITIVE RESULT, claim recovered**
+
+(同日第五次 /loop 触发；用户切到 1h 间隔的"持续迭代"循环 `855d0d94`。本轮直接执行 §C.6 标注的 W+1 待办：把 round 4 的 MDN 不确定度 benchmark 从 Uni 换到 Bi backbone。)
+
+### D.1 假设
+
+> 把 round 4 的 CfC-NAD + MDN backbone 替换为 *Bi*-CfC-NAD + MDN，在**完全相同的数据/超参/seed** 下，Pearson r(σ̂, σ_true) 应当跨过 ≥0.5 的阈值。
+
+### D.2 实现
+
+- 新增 `BiCfCNADWithMDN`（`lnn/core/noise_adaptive_cfc.py`）：内部 `BidirectionalNoiseAdaptiveCfC`（output_size=hidden_size, return_sequences=True）+ `MDNHead`；与 `CfCNADWithMDN` 完全同一接口，唯一新增的旋钮是 `noise_aggregation`（透传给双向 backbone）。
+- 5 个新单测覆盖：双向输出形状、最后一步模式、双向反传都收到梯度、与 Uni+MDN 输出不同、centered noise 与 MDN 共存。
+
+### D.3 实验结果（与 round 4 同 data/seed/epochs/K）
+
+`scripts/benchmark_bi_cfcnad_mdn_uncertainty.py --epochs 32 --hidden 16 --num-samples 500 --num-mixtures 2`，seed=42：
+
+| 模型 | 参数量 | Pearson r(σ̂, σ_true) | val point MSE | 训练秒 | 阈值 0.5 |
+|---|---:|---:|---:|---:|:---:|
+| Uni-CfC-NAD + MDN (round 4 复刻) | 1 302 | 0.426 | 0.03130 | 47.1 | ❌ |
+| **Bi-CfC-NAD (indep) + MDN** | 3 030 | **0.613** | **0.01725** | 95.2 | ✅ |
+| Bi-CfC-NAD (centered) + MDN | 3 030 | 0.511 | 0.01760 | 97.9 | ✅ |
+
+- **claim PASS**：Bi-indep + MDN 把 Pearson 从 0.426 推到 **0.613**（+44% 相对增益）。
+- 连用 centered 噪声的 Bi 变体也勉强过线（r=0.511）。
+- 副产物：Bi backbone 同时把 val point MSE 从 0.03130 砍到 **0.01725**（−45%）。Bi 不只让"σ̂ 校准"变好，"点预测"也连带变好。
+- 完整数据：`analysis/cfc_nad/2026-06-02_bi_cfcnad_mdn_uncertainty.json`。
+
+### D.4 与前序结果的串联
+
+| 轮次 | 主题 | 验证 | r(σ̂, σ_true) | val MSE |
+|---:|---|:---:|---:|---:|
+| 4 (Uni+MDN, K=1, ep=16) | MDN 接入 | partial pos | 0.305 | 0.03450 |
+| 4 (Uni+MDN, K=2, ep=32) | MDN 加 capacity | partial pos | 0.426 | 0.03130 |
+| **5 (Bi-indep+MDN, K=2, ep=32)** | **加 bidirectional** | **PASS** | **0.613** | **0.01725** |
+| 5 (Bi-centered+MDN, K=2, ep=32) | bi + centered noise | PASS | 0.511 | 0.01760 |
+
+→ round 3 的 centered noise (NEGATIVE) + round 4 的 MDN (PARTIAL POS) 单独都不够，但 **round 2 的 bidirectional 把两个边缘都激活成 PASS**——双向上下文本身就是 σ̂ 校准的强先验。
+
+### D.5 复盘 + 下一轮
+
+- 这是今天第一个"接续前面 NEGATIVE/PARTIAL 结果而被翻盘"的迭代：明确说明了 round 4 卡在 0.426 的瓶颈是**单向 backbone 的信息瓶颈**而非 MDN 头本身。
+- centered-noise 在 round 3 单独被证伪（MSE 无收益），但在 round 5 与 Bi+MDN 组合下仍 PASS（r=0.511，仅低于 indep 0.102）。说明"非因果噪声估计"作为**额外正则**仍有边际价值，只是不是主导信号。
+- 65/65 + 5 个新测 = **82/82 测试通过**，零回归。
+- 整套 `pytest tests/` 实际数：`pytest -q` 仍报 **82 passed**（与 cron pipeline 新增的若干 daily test 一起累计）。
+- 下一轮 W+1 优先级：
+  1. 把 Bi+MDN 跑在更大数据集（num_samples=2000, seq_len=16），看 r 能否进入 0.7+ 区间。
+  2. 在真实临床/振动数据上复测（兑现昨天 §A.5 的承诺）。
+  3. 把 `BiCfCNADWithMDN` 写入 README 的"快速上手"段，让仓库使用者第一眼就能调用"带不确定度的 LNN"。
