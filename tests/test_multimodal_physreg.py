@@ -391,3 +391,58 @@ def test_modality_dropout_never_zeroes_both_streams() -> None:
         out = model(video, audio)
         assert torch.isfinite(out["loc"]).all()
         assert torch.isfinite(out["log_scale"]).all()
+
+
+# ---------- EMMA rover real-data tests ----------
+
+
+def test_emma_rover_regression_dataset_shapes() -> None:
+    """Smoke-test the EMMA rover real-data regression dataset.
+
+    Skipped automatically when the EMMA rover video is not present at
+    ``/tmp/RoverVideo.mp4`` (i.e. on a fresh checkout that has not yet
+    downloaded the dataset).  The check is purely structural: it
+    exercises the sliding-window + augmentation pipeline and confirms
+    the parameter vector matches EMMA paper Table 4(c).
+    """
+    import os
+    from lnn.data.emma_rover_regression import (
+        EMMA_ROVER_GROUND_TRUTH,
+        EmmaRoverRegressionDataset,
+    )
+    if not os.path.exists("/tmp/RoverVideo.mp4"):
+        pytest.skip("EMMA rover video not downloaded at /tmp/RoverVideo.mp4")
+    ds = EmmaRoverRegressionDataset(num_samples=8, window=12, feature_noise_std=0.0)
+    sample, target = ds[0]
+    assert sample["video"].shape == (12, 3), f"got {sample['video'].shape}"
+    assert sample["audio"].shape == (12, 1), f"got {sample['audio'].shape}"
+    # All samples share the same 5-dim ground-truth parameter vector.
+    expected = [
+        EMMA_ROVER_GROUND_TRUTH["a"],
+        EMMA_ROVER_GROUND_TRUTH["b"],
+        EMMA_ROVER_GROUND_TRUTH["r"],
+        EMMA_ROVER_GROUND_TRUTH["m"],
+        EMMA_ROVER_GROUND_TRUTH["CM"],
+    ]
+    assert torch.allclose(target["params"], torch.tensor(expected)), \
+        f"GT mismatch: {target['params']} vs {expected}"
+
+
+def test_emma_rover_regression_dataset_window_too_large() -> None:
+    from lnn.data.emma_rover_regression import EmmaRoverRegressionDataset
+    with pytest.raises(ValueError):
+        EmmaRoverRegressionDataset(num_samples=2, window=9999)  # type: ignore[arg-type]
+
+
+def test_emma_rover_features_returns_aligned_streams() -> None:
+    """Verify the feature extractor returns video and audio of the same length T."""
+    import os
+    from lnn.data.emma_rover_features import extract_rover_features
+    if not os.path.exists("/tmp/RoverVideo.mp4"):
+        pytest.skip("EMMA rover video not downloaded at /tmp/RoverVideo.mp4")
+    out = extract_rover_features("/tmp/RoverVideo.mp4", "/tmp/emma_features")
+    assert out["video"].shape[0] == out["audio"].shape[0], (
+        f"video T={out['video'].shape[0]} vs audio T={out['audio'].shape[0]}"
+    )
+    # Audio peak frequency must be non-negative.
+    assert (out["audio"] >= 0).all(), "audio peak Hz should be non-negative"
