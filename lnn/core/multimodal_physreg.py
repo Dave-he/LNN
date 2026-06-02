@@ -212,16 +212,20 @@ class CrossModalAttnBiCfCNADWithMDN(nn.Module):
         num_layers: int = 1,
         noise_beta: float = 0.9,
         noise_aggregation: str = "independent",
+        modality_dropout: float = 0.0,
     ) -> None:
         super().__init__()
         if num_mixtures < 1:
             raise ValueError("num_mixtures must be >= 1")
+        if not 0.0 <= modality_dropout < 1.0:
+            raise ValueError("modality_dropout must be in [0, 1)")
 
         self.video_dim = video_dim
         self.audio_dim = audio_dim
         self.hidden_size = hidden_size
         self.output_size = output_size
         self.num_mixtures = num_mixtures
+        self.modality_dropout = float(modality_dropout)
 
         self.video_encoder = _SingleStreamEncoder(
             input_size=video_dim,
@@ -262,6 +266,31 @@ class CrossModalAttnBiCfCNADWithMDN(nn.Module):
         weights = torch.softmax(scores, dim=-1)
         return weights @ value, weights
 
+    def _apply_modality_dropout(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Training-time regularizer: with prob ``modality_dropout`` zero each
+        stream independently. Guards against zeroing both — if both draws hit,
+        one stream (audio, by convention) is retained so the model always sees
+        at least one source. Returns (video, audio) — original tensors when
+        the model is in eval mode or ``modality_dropout == 0``.
+        """
+
+        if not self.training or self.modality_dropout <= 0.0:
+            return video, audio
+        drop_video = torch.rand((), device=video.device).item() < self.modality_dropout
+        drop_audio = torch.rand((), device=audio.device).item() < self.modality_dropout
+        if drop_video and drop_audio:
+            # Never silence both — pick one to keep so the loss is well-defined.
+            drop_audio = False
+        if drop_video:
+            video = torch.zeros_like(video)
+        if drop_audio:
+            audio = torch.zeros_like(audio)
+        return video, audio
+
     def forward(
         self,
         video: torch.Tensor,
@@ -275,6 +304,7 @@ class CrossModalAttnBiCfCNADWithMDN(nn.Module):
         if video.shape[1] != audio.shape[1]:
             raise ValueError("video and audio must share the time dimension")
 
+        video, audio = self._apply_modality_dropout(video, audio)
         v_feat = self.video_encoder(video, dt=dt, mask=mask)  # [B, T, H]
         a_feat = self.audio_encoder(audio, dt=dt, mask=mask)  # [B, T, H]
 

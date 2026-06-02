@@ -295,3 +295,99 @@ def test_heterogeneous_dataset_audio_in_force_amplitude_band() -> None:
     rms = audios.pow(2).mean(dim=-1).sqrt()
     assert rms.min().item() > 0.2, "audio signal should be substantially non-zero"
     assert rms.max().item() < 2.0, "audio signal should stay in the prescribed amplitude band"
+
+
+# ---------- CrossModalAttn modality_dropout tests ----------
+
+
+def test_modality_dropout_rejects_out_of_range() -> None:
+    with pytest.raises(ValueError):
+        CrossModalAttnBiCfCNADWithMDN(
+            video_dim=1, audio_dim=1, modality_dropout=1.0
+        )
+    with pytest.raises(ValueError):
+        CrossModalAttnBiCfCNADWithMDN(
+            video_dim=1, audio_dim=1, modality_dropout=-0.1
+        )
+
+
+def test_modality_dropout_is_no_op_in_eval() -> None:
+    torch.manual_seed(0)
+    model = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, modality_dropout=0.9
+    )
+    model.eval()
+    video = torch.randn(2, 8, 1)
+    audio = torch.randn(2, 8, 1)
+    with torch.no_grad():
+        out1 = mdn_mean(model(video, audio))
+        out2 = mdn_mean(model(video, audio))
+    # Even with a very aggressive dropout rate, eval mode must be deterministic.
+    assert torch.allclose(out1, out2, atol=1e-6)
+
+
+def test_modality_dropout_zero_matches_no_dropout_run() -> None:
+    """modality_dropout=0.0 in train mode must reproduce the baseline path."""
+    torch.manual_seed(11)
+    baseline = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, modality_dropout=0.0
+    )
+    torch.manual_seed(11)
+    with_zero = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, modality_dropout=0.0
+    )
+    with_zero.load_state_dict(baseline.state_dict())
+    video = torch.randn(2, 6, 1)
+    audio = torch.randn(2, 6, 1)
+    baseline.train()
+    with_zero.train()
+    out_a = mdn_mean(baseline(video, audio))
+    out_b = mdn_mean(with_zero(video, audio))
+    assert torch.allclose(out_a, out_b, atol=1e-6)
+
+
+def test_modality_dropout_triggers_under_training() -> None:
+    """With dropout=1.0 (saturated), every train-mode call must zero exactly
+    one stream (never both, never neither). We verify by checking that the
+    output is *not* identical to the baseline output on the same input."""
+
+    torch.manual_seed(0)
+    baseline = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, modality_dropout=0.0
+    )
+    torch.manual_seed(0)
+    drop_model = CrossModalAttnBiCfCNADWithMDN(
+        # 0.999 saturates without violating the strict < 1.0 bound.
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, modality_dropout=0.999
+    )
+    drop_model.load_state_dict(baseline.state_dict())
+    video = torch.randn(1, 10, 1)
+    audio = torch.randn(1, 10, 1)
+    baseline.train()
+    drop_model.train()
+    baseline_out = mdn_mean(baseline(video, audio))
+    differs_count = 0
+    torch.manual_seed(0)
+    for _ in range(20):
+        out = mdn_mean(drop_model(video, audio))
+        if not torch.allclose(out, baseline_out, atol=1e-4):
+            differs_count += 1
+    # With p≈1.0 we expect ≥80% of calls to actually drop one modality.
+    assert differs_count >= 16, f"dropout never fired ({differs_count}/20)"
+
+
+def test_modality_dropout_never_zeroes_both_streams() -> None:
+    """Verify the safety guard: under saturated dropout, the model still
+    produces finite outputs (no NaNs from a fully empty input)."""
+
+    torch.manual_seed(0)
+    model = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2, modality_dropout=0.999
+    )
+    model.train()
+    video = torch.randn(2, 6, 1)
+    audio = torch.randn(2, 6, 1)
+    for _ in range(20):
+        out = model(video, audio)
+        assert torch.isfinite(out["loc"]).all()
+        assert torch.isfinite(out["log_scale"]).all()

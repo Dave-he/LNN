@@ -315,3 +315,61 @@ m·x''(t) + c·x'(t) + k·x(t) = F(t)
 - 接续: §10 Cross-Modal Attention Fusion (PARTIAL POSITIVE) → §11 异构数据 (POSITIVE on burst);
 - 仓库资产: `CrossModalAttnBiCfCNADWithMDN` (§10), `BidirectionalNoiseAdaptiveCfC` (§A), `MDNHead` (§C);
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`。
+
+---
+
+## 12. 第九轮 /loop — Cross-Modal Modality Dropout — NEGATIVE RESULT
+
+(2026-06-02 第九轮 /loop,1h cron `855d0d94` 触发。round 8 W+1 backlog 第 2 项:cross-modal dropout 训练正则。)
+
+### 12.1 假设
+
+> 在 `CrossModalAttnBiCfCNADWithMDN` 训练时,以概率 `p=0.3` 独立把整条 video 或 audio 流置零(永远保证至少一条存活),应当让两个编码器各自学到独立可用的特征,显著改善 EMMA-style 半遮挡评测下的表现。
+> **可证伪指标**:在异构 burst 数据 + 半遮挡评测下,modality_dropout=0.3 训练得到的 cross-attn val MSE 应当比 modality_dropout=0.0 至少低 10%。
+
+### 12.2 实现
+
+`CrossModalAttnBiCfCNADWithMDN` 新增 `modality_dropout: float = 0.0` 构造参数:
+
+- `_apply_modality_dropout(video, audio)`:仅在 `self.training=True` 且 `p>0` 时启用;对 video 和 audio 各以 p 概率独立 Bernoulli 抽样;若两次都命中,保留 audio(防止 forward 看到全零输入);eval mode 严格 no-op。
+- `pytest` 5 个新测覆盖:边界值拒绝、eval no-op、`p=0` 与无 dropout 路径 bit-for-bit 一致、`p~1` 触发率 >=80%、`p~1` 永不全零(`isfinite(loc)`)。
+- benchmark 新增 `--modality-dropout`(传给 cross_attn 模型)与 `--eval-only-occlusion`(让训练看清洁数据,只在评测时遮挡 - 这是真正能验证 dropout 的部署场景)。
+
+### 12.3 实验结果(异构 burst,seed=42,n=800,K=2,epochs=20)
+
+#### v7/v8:训练 + 评测都遮挡
+
+| 配置 | cross_attn val MSE | vs video_only |
+|---|---:|---:|
+| v7 dropout=0.0 | **0.749** | +27.7% PASS |
+| v8 dropout=0.3 | 0.759 | +26.7% PASS |
+
+→ 两组都通过 >=20% 阈值,但 dropout 让 cross-attn val MSE **升高 1.4%**(0.749->0.759)。
+
+#### v9/v10:训练清洁、评测遮挡(deployment-style)
+
+| 配置 | cross_attn val MSE | vs video_only |
+|---|---:|---:|
+| v9 dropout=0.0 | **0.823** | +20.6% PASS |
+| v10 dropout=0.3 | 0.960 | +7.4% FAIL |
+
+→ dropout 让 cross-attn val MSE **升高 16.6%**(0.823->0.960),把 +20.6% 的胜出直接打到 FAIL 区(+7.4%)。
+
+完整 JSON:`analysis/multimodal_physreg/2026-06-02_v{7,8,9,10}_*.json`。
+
+### 12.4 根因分析
+
+- **假设被双向证伪**:无论训练数据是否遮挡,加 modality_dropout 都让结果更差。
+- 在异构 burst 任务上,**bi-CfC-NAD + cross-attention 本身已经具备"流失感知"能力**:bidirectional 编码器对每一步都同时拉取前后上下文,cross-attention 让 video 可以借 audio 的任意时间步信息(round 8 验证 +27.6%)。这个组合本身就是"软 dropout"。
+- 在 v9/v10 的 deployment 场景下,dropout 教会模型一种 *与评测分布不匹配* 的鲁棒性 - 训练时是"整条流失",评测时是"半段流失";结果训练目标与评测目标错位,导致欠拟合。
+- 阈值是事前自定的,不做事后调小;NEGATIVE 如实保留。
+
+### 12.5 复盘 + 下一轮
+
+- 第九轮的价值:**否定了一个看似合理的工程实践**(EMMA 风格 SpecAugment 直接迁移到 cross-attn LNN),并定位了 cross-attn + Bi-CfC-NAD 在这个任务粒度上的 *夸大的鲁棒性* 已经足够。
+- W+1 backlog 调整:
+  1. ~~modality_dropout 训练正则~~(已证伪,移出 backlog)
+  2. **真实 EMMA rover/quadrotor 数据**(最优先 - 论文已 release,合成 toy task 的天花板可能已到)
+  3. 稀疏注意力(用于 T=256+ 的真实视频长度)
+  4. *新增*:**部分流失训练**(training-time partial occlusion,只遮第一半/最后 ¼ 的窗口而非整条流)- 与 v9 评测分布匹配,可能比"整条 modality drop"更对症。
+- 测试套件:`pytest tests/` 现共 **108 项通过**,零回归(94 round-8 base + 5 cross-attn round-7 + 5 dropout round-9 + 4 round-8 hetero data)。

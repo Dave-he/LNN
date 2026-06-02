@@ -175,6 +175,7 @@ def _build_model(
     hidden_size: int,
     num_mixtures: int,
     fusion: str,
+    modality_dropout: float = 0.0,
 ) -> nn.Module:
     if model_kind == "multimodal":
         return MultimodalBiCfCNADWithMDN(
@@ -199,6 +200,7 @@ def _build_model(
             hidden_size=hidden_size,
             output_size=2,
             num_mixtures=num_mixtures,
+            modality_dropout=modality_dropout,
         )
     raise ValueError(f"unknown model_kind {model_kind!r}")
 
@@ -238,15 +240,24 @@ def _run(
             batch_size=args.batch_size,
             seed=args.seed,
         )
-    model = _build_model(model_kind, args.hidden_size, args.num_mixtures, args.fusion).to(device)
+    model = _build_model(
+        model_kind, args.hidden_size, args.num_mixtures, args.fusion,
+        modality_dropout=args.modality_dropout,
+    ).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     use_video_only_branch = model_kind == "video_only"
     history = {"train_loss": [], "val_param_mse": []}
     start = time.perf_counter()
     for epoch in range(1, args.epochs + 1):
+        # When --eval-only-occlusion is set, training sees clean data so the
+        # model never observes the masked split during fit; only evaluation
+        # applies the occlusion masks. This is the deployment-time scenario
+        # the modality_dropout regularizer is designed to handle.
+        train_video_mask = args.video_mask_second_half and not args.eval_only_occlusion
+        train_audio_mask = args.audio_mask_first_half and not args.eval_only_occlusion
         train_loss = _train_one_epoch(
             model, train_loader, optimizer, device, use_video_only_branch,
-            args.seq_len, args.video_mask_second_half, args.audio_mask_first_half,
+            args.seq_len, train_video_mask, train_audio_mask,
         )
         val_metrics = _evaluate(
             model, val_loader, device, use_video_only_branch,
@@ -293,12 +304,22 @@ def main() -> None:
     parser.add_argument("--audio-mask-first-half", action="store_true",
                         help="If set, zero out the first half of the audio stream "
                              "(only meaningful with --video-mask-second-half).")
+    parser.add_argument("--eval-only-occlusion", action="store_true",
+                        help="If set, apply --video-mask-second-half / "
+                             "--audio-mask-first-half only during evaluation. "
+                             "Training sees clean data — the realistic "
+                             "deployment-time scenario the modality_dropout "
+                             "regularizer is designed for.")
     parser.add_argument("--heterogeneous", action="store_true",
                         help="Use the HeterogeneousForcedDataset (forced damped "
                              "oscillator: video=x(t), audio=F(t)) instead of the "
                              "round-6 multimodal dataset.")
     parser.add_argument("--force-kind", choices=["chirp", "burst"], default="chirp",
                         help="Kind of forcing input for the heterogeneous dataset.")
+    parser.add_argument("--modality-dropout", type=float, default=0.0,
+                        help="Cross-modal stream dropout rate for the cross_attn "
+                             "model. Each forward pass independently zeros video "
+                             "or audio with this probability (never both).")
     parser.add_argument("--device", default="auto")
     parser.add_argument("--output-dir", default="analysis/multimodal_physreg")
     args = parser.parse_args()
