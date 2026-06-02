@@ -1,0 +1,130 @@
+{
+  "run_id": "2026-06-03_031347",
+  "config": {
+    "epochs": 20,
+    "num_samples": 200,
+    "window": 16,
+    "feature_noise_std": 0.02,
+    "num_mixtures": 1,
+    "batch_size": 32,
+    "lr": 0.005,
+    "seed": 42,
+    "hidden_sizes": [
+      4,
+      8,
+      16,
+      32
+    ],
+    "output_dir": "analysis/emma_rover"
+  },
+  "results": [
+    {
+      "model_kind": "video_only",
+      "hidden_size": 4,
+      "parameters": 427,
+      "elapsed_seconds": 1.6164285669801757,
+      "test": {
+        "param_mse": 531.9702758789062
+      }
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "hidden_size": 4,
+      "parameters": 875,
+      "elapsed_seconds": 3.3305016139056534,
+      "test": {
+        "param_mse": 642.1610717773438
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "hidden_size": 4,
+      "parameters": 795,
+      "elapsed_seconds": 3.580669871997088,
+      "test": {
+        "param_mse": 514.9691772460938
+      }
+    },
+    {
+      "model_kind": "video_only",
+      "hidden_size": 8,
+      "parameters": 1163,
+      "elapsed_seconds": 1.6178698430303484,
+      "test": {
+        "param_mse": 605.839599609375
+      }
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "hidden_size": 8,
+      "parameters": 2635,
+      "elapsed_seconds": 3.365753246936947,
+      "test": {
+        "param_mse": 325.3359069824219
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "hidden_size": 8,
+      "parameters": 2475,
+      "elapsed_seconds": 3.5189956430112943,
+      "test": {
+        "param_mse": 532.0606079101562
+      }
+    },
+    {
+      "model_kind": "video_only",
+      "hidden_size": 16,
+      "parameters": 3595,
+      "elapsed_seconds": 1.9339746750192717,
+      "test": {
+        "param_mse": 525.1851806640625
+      }
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "hidden_size": 16,
+      "parameters": 8843,
+      "elapsed_seconds": 3.488217302947305,
+      "test": {
+        "param_mse": 340.5364074707031
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "hidden_size": 16,
+      "parameters": 8523,
+      "elapsed_seconds": 3.520413596997969,
+      "test": {
+        "param_mse": 260.80389404296875
+      }
+    },
+    {
+      "model_kind": "video_only",
+      "hidden_size": 32,
+      "parameters": 12299,
+      "elapsed_seconds": 1.922160423011519,
+      "test": {
+        "param_mse": 268.55010986328125
+      }
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "hidden_size": 32,
+      "parameters": 32011,
+      "elapsed_seconds": 3.8820301110390574,
+      "test": {
+        "param_mse": 139.6239471435547
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "hidden_size": 32,
+      "parameters": 31371,
+      "elapsed_seconds": 3.7413233019178733,
+      "test": {
+        "param_mse": 121.74747467041016
+      }
+    }
+  ]
+}
