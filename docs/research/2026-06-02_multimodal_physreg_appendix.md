@@ -542,3 +542,105 @@ EMMA rover 只 *一个* 4 秒视频 → 扩成机器学习样本: `EmmaRoverRegr
 - 接续: §11 (burst 合成 PASS) → §13 (synthetic augment NEGATIVE) → §14 (real PASS +51%)
 - 仓库资产复用: `CrossModalAttnBiCfCNADWithMDN` (round 7), `MDNHead` (round 4)
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 15. 第十二轮 /loop — Audio Information Upper-Bound Probe — HYPOTHESIS REFUTED, ARCHITECTURE-ROBUSTNESS DISCOVERED
+
+(2026-06-03 第十二轮 /loop。round 10 §13.5 第 3 项:用 audio 噪声扫描诊断信息上界。**同一会话与 §14 (EMMA rover real-data PASS) 并行触发**;§14 的真实数据结果与本节的合成数据诊断互为反例,共同构成最重要的元结论 — 见 §15.5。)
+
+### 15.1 假设
+
+> 若 round 9/10 的"模型已饱和信息容量"诊断成立,系统提高 audio 噪声应当让 cross-attn 相对 video_only 的增益**单调衰减**,在高噪声极限下逼近 0。
+> **可证伪指标**:在 audio_noise_std=2.0(40× 默认)时,增益 ≤ +5%。
+
+### 15.2 扫描:大预算下 audio 噪声 640× 变化 (n=800, ep=20, K=2, seed=42, burst)
+
+| audio_noise_std | video_only val MSE | cross_attn val MSE | cross_attn vs video_only |
+|---:|---:|---:|---:|
+| 0.05 (默认) | 1.035 | 0.750 | **+27.6%** PASS |
+| 1.0 (×20) | 1.010 | 0.755 | +25.3% PASS |
+| 2.0 (×40) | 1.027 | 0.753 | +26.7% PASS |
+| 4.0 (×80) | 1.072 | 0.732 | +31.7% PASS |
+| 8.0 (×160) | 1.086 | 0.796 | +26.7% PASS |
+| 16.0 (×320) | 1.089 | 0.773 | +29.0% PASS |
+| 32.0 (×640) | 1.103 | 0.797 | **+27.7%** PASS |
+
+→ **可证伪假设彻底否定**:cross_attn 在 audio 噪声放大 640× 后,绝对 val MSE 仅从 0.750 漂移到 0.797(+6.3%),相对增益保持在 +25~+32% 区间,**全部 PASS** ≥20% 阈值。
+
+### 15.3 关键诊断实验:cross_attn 的增益来自架构,不来自合成 audio 信息内容
+
+把 video_only 的 hidden_size 从 16 升到 32(参数 3258 → 11626,**3.6× 容量**),audio_noise=0.05:
+
+| 模型 | params | val MSE | vs original video_only |
+|---|---:|---:|---:|
+| video_only (hidden=16,原) | 3258 | 1.035 | — |
+| video_only (hidden=32,3.6× 容量) | **11626** | **1.047** | −1.2%(略差,无显著改善) |
+| cross_attn (hidden=16,原) | 8186 | 0.750 | **+27.6%** |
+| cross_attn (hidden=32) | 30698 | 0.840 | +18.8% |
+
+→ video_only 即使升 3.6× 容量也无法逼近 cross_attn 的 0.75 MSE;**在合成 burst 任务上,cross_attn 的优势是 cross-attention 双编码器架构本身,不是参数容量,也不是 audio 信息内容**。
+   完整 JSON:`analysis/multimodal_physreg/2026-06-03_r11_{fullbudget,capacitymatched}_*.json`。
+
+### 15.4 小预算下的反常曲线 — 诊断价值次要发现
+
+n=400, ep=16 重跑 audio 噪声扫描:
+
+| audio_noise_std | cross_attn val MSE | vs video_only |
+|---:|---:|---:|
+| 0.05 | 1.039 | **−20.0%** ❌ |
+| 0.2 | 0.764 | +10.4% |
+| 0.5 | 0.728 | +14.4% |
+| 1.0 | 0.670 | **+21.8%** PASS |
+| 2.0 | 0.832 | +3.4% |
+
+→ 小预算下曲线呈**倒 U 形**,在 noise=1.0 处达到峰值。低噪声(0.05)反而 cross_attn 大败 video_only(−20%)。
+→ 推断:n=400 的训练集对完全干净 audio 容易过拟合;中等噪声起到 SpecAugment-style 正则化作用。
+→ 这又一次否定了 round 9 modality_dropout 假设 — **"audio 中适度噪声 = 自然正则"** 已经存在于数据中,人为额外 dropout 反而打破这个平衡。
+
+### 15.5 关键反例(同会话 §14): 真实 EMMA rover 数据上 cross_attn 增益是真实的跨模互补
+
+本会话另一个 cron tick(commit `5e8023d`,见 §14)在真实 EMMA rover 视频上跑了同一个 cross_attn 架构:
+
+| 模型 | val MSE | vs video_only |
+|---|---:|---:|
+| video_only | 536.85 | — |
+| multimodal (concat) | 397.11 | +26.0% |
+| **cross_attn** | **262.87** | **+51.0% PASS** |
+
+→ 真实数据上 cross_attn 增益是合成 burst 任务的 **~2×**(+51% vs +27.6%),且 multimodal-concat 也终于跑过 video_only(+26.0%,而合成任务上是 −0.4%)。
+→ 这证伪了 §15.3 中"架构论 = 唯一解释"的过度推断:在真实数据上,audio 携带 video 真正推不出的信息(motor RPM 与 wheel radius 的耦合),cross-attn 利用了这种**真正异构**的互补性。
+→ 合成 burst 任务上的 audio 信息冗余度高(audio 仅是 F(t) 的另一观测,而 video 已含 ζω 衰减包络),所以架构机制喧宾夺主;真实数据反过来。
+
+### 15.6 三重根因诊断 — 综合 round 8-12
+
+| 现象 | 原解释 | 第十二轮修正后的解释 |
+|---|---|---|
+| round 8 burst +27.6% PASS | "audio 携带 video 推不出的 F(t),cross-attn 提取" | **在合成数据上**,大部分增益来自 cross-attention 架构本身;audio 内容只是 marginal 贡献 |
+| round 9 modality_dropout NEGATIVE | "训练-评测分布不匹配" | **合成任务上 audio 内容本就不是关键信号**,dropout 又破坏了"audio 作为软正则"的平衡 |
+| round 10 partial-occ NEGATIVE | "模型已饱和信息容量" | **合成任务上架构容量饱和**(不是 audio 信息饱和),无法通过 audio 端的训练增强进一步推动 |
+| round 11 EMMA rover +51% PASS | (cron 同会话发现) | **真实数据上 audio 是不可替代的信息源**(motor RPM ↔ wheel radius 耦合),cross-attn 利用真正异构性 |
+| round 12 noise 扫描全 PASS | (本节新发现) | **合成数据上 cross-attn 架构对 audio 噪声极其 robust**;在 640× 噪声变化下增益几乎不变 |
+
+### 15.7 复盘 + W+1 backlog 大调整(精炼后的两重诊断)
+
+1. **合成 burst 任务上**:audio 信息冗余 → cross-attn 的 +27.6% 主要是架构红利 → 任何在 audio 端的优化都触顶。
+2. **真实 EMMA rover 上**:audio 不可被 video 推出(motor RPM ↔ wheel radius 耦合) → cross-attn 的 +51% 是真实跨模互补 → 这才是 EMMA 设计原意。
+
+**架构论 vs 信息论 = 任务依赖性**。重要的元结论:**未来 LNN 多模态实验必须在真实数据上做最终验证**,合成任务只能用于工程 sanity check,不能作为研究结论的最终判据。
+
+**W+1 backlog 再次精简**(结合 §14 cron 已完成的项):
+- ~~modality_dropout~~(round 9 ❌)
+- ~~partial-window occlusion~~(round 10 ❌)
+- ~~audio noise upper bound 扫描~~(round 12 ❌,本节已完成)
+- ~~真实 EMMA rover 数据~~(round 11 ✅ by cron `5e8023d`,+51% PASS)
+- **真实 EMMA 多视频 leave-one-trial-out**(下一步,等 EMMA paper 释出更多 rover clips)
+- **真实 EMMA quadrotor 12 参数回归**(同 pipeline 迁移)
+- 稀疏/分块 cross-attention(T=256+ 长视频,只在真实数据扩展后才需要)
+- *新增*:**video noise upper bound 扫描**(对称实验)— 测试架构论在 video 端是否对称鲁棒
+- *新增*:**uni-modal cross-attention 消融** — 拆掉 audio 编码器,只用 video 喂两路 self-attention,看在合成 + 真实两种数据上分别是什么结果。如果合成任务上 PASS、真实数据上 FAIL,**完全证实"架构论 vs 信息论 = 任务依赖性"**。
+
+### 15.8 测试 + 提交
+
+- `pytest tests/` **109/111 通过**;失败的 2 项(`test_autoncp_policy_shape`, `test_emma_rover_regression_dataset_shapes`)均因 `ncps` 库内部 `RuntimeError: Numpy is not available` 触发,是 numpy/torch 版本冲突,与本轮代码无关(本轮纯 benchmark 扫描,无新模型代码)。新增的 `test_emma_rover_regression_dataset_shapes` 来自 cron `5e8023d`,需要 ncps 才能跑;在没有 numpy/ncps 冲突的环境里应自动 pass。
+- 提交将 13 个新 JSON 配置归档(7 大预算 + 5 小预算 + 1 容量匹配),供未来引用。
