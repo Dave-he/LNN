@@ -1,0 +1,445 @@
+
+
+===== PAGE 1 =====
+EXPLAINABLE CONTINUOUS-TIME MASK REFINEMENT WITH
+LOCAL SELF-SIMILARITY PRIORS FOR MEDICAL IMAGE
+SEGMENTATION
+Rajdeep Chatterjee*,
+Sudip Chakrabarty∗,
+Trishaani Acharjee*
+School of Computer Engineering, Kalinga Institute of Industrial Technology, Bhubaneswar, India
+AmygdalaAI-India Lab, Bhubaneswar, India
+March 3, 2026
+ABSTRACT
+Accurate semantic segmentation of foot ulcers is essential for automated wound monitoring, yet
+boundary delineation remains challenging due to tissue heterogeneity and poor contrast with surround-
+ing skin. To overcome the limitations of standard intensity-based networks, we present LSS-LTCNet:
+an ante-hoc explainable framework synergizing deterministic structural priors with continuous-time
+neural dynamics. Our architecture departs from traditional black-box models by employing a Local
+Self-Similarity (LSS) mechanism that extracts dense, illumination-invariant texture descriptors to
+explicitly disentangle necrotic tissue from background artifacts. To enforce topological precision, we
+introduce a Liquid Time-Constant (LTC) refinement module that treats boundary evolution as an ODE-
+governed dynamic system, iteratively refining masks over continuous time-steps. Comprehensive
+evaluation on the MICCAI FUSeg dataset demonstrates that LSS-LTCNet achieves state-of-the-art
+boundary alignment, securing a peak Dice score of 86.96% and an exceptional 95th percentile Haus-
+dorff Distance (HD95) of 8.91 pixels. Requiring merely 25.70M parameters, the model significantly
+outperforms heavier U-Net and transformer baselines in efficiency. By providing inherent visual audit
+trails alongside high-fidelity predictions, LSS-LTCNet offers a robust and transparent solution for
+computer-aided diagnosis in mobile healthcare (mHealth) settings.
+Keywords Medical Image Segmentation · Explainable Deep Learning · Liquid Time-Constant
+Networks · Local Structural Similarity · Foot Ulcer · Wound Image Analysis
+1
+Introduction
+Foot ulcers represent a severe clinical complication, serving as a primary catalyst for non-traumatic lower extremity
+amputations worldwide [3]. Accurate assessment of ulcer morphology, specifically the precise delineation of the wound
+bed, is a critical clinical prerequisite for evaluating healing trajectories and tailoring targeted therapeutic interventions
+[7]. While manual planimetry remains the clinical gold standard, it is intrinsically subjective, highly time-consuming,
+and prone to significant inter-observer variability. Consequently, developing robust, automated foot ulcer segmentation
+algorithms has emerged as a high-priority objective in medical image analysis.
+Despite recent advances [2, 6, 22], automated foot ulcer segmentation remains a formid-able challenge. Ulcers exhibit
+extreme variance in scale, illumination, and texture. More critically, the transition zones between necrotic tissue,
+granulation tissue, and healthy surrounding epidermis are often highly ambiguous, characterized by low contrast
+and diffuse gradients [12]. Existing state-of-the-art architectures, mainly based on U-Net variants [16] and Vision
+Transformers (ViTs) [9], perform well in general medical segmentation but often struggle with precise wound boundary
+delineation due to irregular shapes and low contrast. Purely convolutional networks lack long-range contextual
+∗Equal Contribution, (Corresponding Author: Sudip Chakrabarty, Email: sudipchakrabarty6@gmail.com)
+arXiv:2603.00459v1  [cs.CV]  28 Feb 2026
+
+
+===== PAGE 2 =====
+EXPLAINABLE MEDICAL IMAGE SEGMENTATION
+dependencies, while ViT patchification mechanisms often degrade high-frequency structural details, leading to overly
+smoothed predictions [14].Furthermore, current standard architectures employ a static, single-pass forward mapping.
+This heavily contrasts with the human cognitive approach to boundary tracing, which is inherently iterative and
+continuously refined based on local and global contextual cues.
+To address these distinct limitations, we propose the LSS-LTCNet, a novel, boundary-aware architecture designed
+specifically for high-fidelity foot ulcer segmentation. First, we compute a Local Structural Similarity (LSS) map directly
+from the input image, fusing it into a pretrained ResNet-34 backbone to enrich early layers with explicit local texture
+awareness. Second, we integrate a Liquid Time-Constant (LTC) continuous-depth recurrent network [13] into the
+bottleneck, acting as an iterative spatial refinement loop to resolve boundary ambiguities. Finally, we establish clinical
+trust by designing the architecture to be inherently transparent. Explainable AI (XAI) paradigms are now increasingly
+deployed across clinical modalities, ranging from medical audio analysis [1, 8] to complex visual lesion mapping [20],
+to ensure model decisions are interpretable. By explicitly extracting the LSS intermediate feature map, our model
+provides a transparent visual explanation of the structural priors driving its predictions.
+Our contributions can be summarized as follows:
+• Additive Local Structural Similarity (LSS) Fusion: We introduce a module that explicitly injects local
+patch-correlation statistics into early encoder features, heavily anchoring the network to true tissue boundaries
+without disrupting pretrained weights.
+• LTC-Driven Bottleneck Refinement Loop: We propose a novel recurrent mechanism at the network
+bottleneck that leverages continuous-time dynamics to iteratively refine a global spatial token, which in turn
+guides the highest-resolution stage of the U-Net decoder.
+• Boundary Alignment Loss & Ante-Hoc XAI: We deploy a custom Boundary Alignment Loss paired
+with an inherent Explainable AI (XAI) feature-mapping paradigm. This yields state-of-the-art segmentation
+performance and exceptional boundary precision on complex wound topologies while maintaining a highly
+efficient computational footprint.
+2
+Methodology
+2.1
+Overall Architecture
+The proposed LSS-LTCNet is an end-to-end, boundary-aware segmentation framework designed to process high-
+resolution clinical images. As illustrated in Figure 1, the architecture comprises four primary modules: a ResNet-34
+Encoder, an Additive LSS Fusion block, a Liquid Time-Constant (LTC) Refinement Loop, and a Deep Supervision
+Decoder. To preserve high-frequency boundary details, the input is routed through an LSS Extractor to generate a
+deterministic structural map while simultaneously passing through the initial ResNet layers to produce feature map C1.
+These pathways are merged via Additive Fusion to create the boundary-conditioned feature map F1. At the bottleneck,
+the LTC loop iteratively updates the latent state over T = 4 steps to produce a Refinement Token. Finally, the decoder
+fuses this token with spatial skip connections to predict the final mask, supported by two auxiliary heads.
+2.2
+Local Structural Similarity (LSS) Fusion
+To explicitly inject topological priors into the network, we introduce the LSS Extractor. Given an input image I, we
+extract densely overlapping local patches pi ∈RK×K×3, where K denotes the patch size. To ensure invariance to local
+illumination variance—a common artifact in clinical wound photography—each patch is zero-centered and normalized,
+as shown in Equation 1:
+ˆpi =
+pi −µ(pi)
+∥pi −µ(pi)∥2 + ϵ
+(1)
+where µ(pi) represents the patch mean and ϵ is a small constant for numerical stability. We then compute the patch-wise
+cosine similarity S between a central patch ˆpc and N spatial neighbors ˆpn within a defined search radius R, calculated
+via Equation 2:
+S(ˆpc, ˆpn) = ˆpc · ˆpn
+(2)
+These similarity scores form a set Sc = {S1, S2, . . . , SN} for each spatial location. To construct the 3-channel LSS
+Map MLSS ∈R3×512×512, we aggregate these local correlations across the neighborhood as defined in Equation 3:
+MLSS(x, y) =
+h
+µ(Sc), max(Sc), σ(Sc)
+iT
+(3)
+2
+
+
+===== PAGE 3 =====
+EXPLAINABLE MEDICAL IMAGE SEGMENTATION
+Figure 1: The proposed LSS-LTCNet, illustrating the integration of the ResNet-34 encoder, Additive LSS Fusion, LTC
+Refinement Loop, and Deep Supervision Decoder.
+To align with the encoder’s latent space, a 3 × 3 convolution and bilinear interpolation project MLSS into FLSS ∈
+R64×256×256. Finally, element-wise additive fusion with the initial feature map C1 produces the boundary-conditioned
+feature map F1 (F1 = C1 ⊕FLSS), which guides all subsequent encoder layers using these deterministic tissue
+boundaries.
+2.3
+Continuous-Time Latent Refinement (LTC)
+To capture global dependencies, the bottleneck LTC loop ingests the high-level semantic feature map F5 ∈R512×16×16
+alongside a dual-mask input consisting of the initial coarse mask and the evolving current mask. Both features and
+masks are globally average-pooled (GAP) and concatenated into a 514-D input vector x = [GAP(F5); GAP(Ymasks)].
+The hidden state h evolves via the continuous-time ODE shown in Equation 4:
+dh
+dt = [−h + σrel(Whh + Winx + b)] ⊙
+1
+τ(x)
+(4)
+where σrel is the ReLU activation and τ(x) = softplus(Wτx) + ϵ is the input-dependent time constant modulating the
+cell’s memory. This system is solved via Euler discretization (ht+1 = ht + ∆t dh
+dt ) over T = 4 steps. The final state is
+projected into a Refinement Token and broadcast to the decoder, explicitly guiding the iterative "shrink-wrapping" of
+segmentation boundaries.
+2.4
+Optimization and Deep Supervision
+To ensure stable gradient flow, we employ a multi-scale deep supervision strategy. As shown in Fig. 1, the network
+generates the final mask ˆY and two auxiliary predictions, Aux1 ∈R32×32 and Aux2 ∈R64×64. The total objective
+Ltotal is a weighted sum of Binary Cross-Entropy (BCE), Dice, and a geometric Boundary Alignment Loss (BAL):
+Ltotal =
+X
+k∈{m,a1,a2}
+λk
+
+L(k)
+BCE + L(k)
+Dice
+
++ λbLBAL
+(5)
+where weights are set to λm = 1.0, λa1 = 0.4, λa2 = 0.2, and λb = 0.5. To ground the network in biological structures,
+LBAL computes the Mean Squared Error (MSE) between the Sobel gradients ∇(·) of the predicted probability map
+and the deterministic LSS Mean channel Mµ
+LSS:
+LBAL = MSE(∇(σ( ˆY)), ∇(Mµ
+LSS))
+(6)
+This functions as a structural regularizer, penalizing predictions that deviate from the local tissue transitions identified
+by the LSS extractor.
+3
+
+
+===== PAGE 4 =====
+EXPLAINABLE MEDICAL IMAGE SEGMENTATION
+2.5
+Intrinsic Architectural Explainability
+A distinctive advantage of the proposed architecture is its inherent, ante-hoc explainability, which emerges directly from
+the deterministic nature of the Additive LSS Fusion module. Traditional deep learning approaches in medical imaging
+rely heavily on post-hoc attribution methods, such as Grad-CAM or SHAP [15, 19], which attempt to approximate the
+reasoning of opaque black-box models. These non-deterministic approximations often yield misleading saliency maps
+that fail to align with true anatomical structures [5, 18]. In contrast, our framework bypasses this limitation by explicitly
+anchoring its early feature representations to three physiologically meaningful, deterministic tissue statistics:
+• LSS Mean (µ) quantifies local tissue homogeneity. By capturing average patch correlations, it effectively
+identifies stable, uniform regions within the wound bed, such as continuous granulation tissue. This allows the
+network to maintain consistent regional classification and prevents the fragmentation of the predicted mask
+often caused by clinical lighting artifacts or specular highlights.
+• LSS Max preserves structural continuity by isolating the strongest local directional correlations within the
+search radius. While standard convolutional downsampling often blurs fine-grained morphological details,
+LSS Max actively protects critical micro-structures—such as subtle epithelial bridging or delicate vascular
+patterns—ensuring they remain prominent in the latent feature space.
+• LSS Std (σ) acts as a highly precise, deterministic boundary detector. It highlights areas of extreme neigh-
+borhood variance, which clinically correlate with the sharp transition zones between necrotic ulcers and
+surrounding healthy skin. By explicitly mapping these high-variance edges, the network is forced to recognize
+complex wound topologies, directly driving the exceptional improvements observed in our HD95 boundary
+precision metrics.
+By fusing these inherently interpretable, mathematically transparent maps into the initial layers of the encoder, the
+network’s spatial reasoning is fundamentally grounded in measurable biological transitions rather than abstract,
+unconstrained weights. This ante-hoc visual audit trail not only guides the downstream continuous-time bottleneck but
+also provides clinicians with a verifiable, transparent diagnostic tool that significantly enhances trust.
+3
+Experiments
+3.1
+Dataset and Implementation Details
+We evaluated LSS-LTCNet using the publicly available dataset from the MICCAI Foot Ulcer Segmentation (FUSeg)
+Challenge [21], which comprises 1,210 sample images (810 training, 200 validation, and 200 testing). Because the
+ground truth annotations for the testing split are kept private by the challenge organizers for independent benchmarking,
+all quantitative performance metrics reported in this study are derived from the official validation set. This dataset
+includes images from 889 patients collected under varying clinical illumination and background conditions. Sample
+images from the dataset are shown in Figure 2.
+To ensure high-fidelity boundary extraction, images and masks were processed at their native 512 × 512 resolution,
+allowing the LSS module to compute local topological statistics without interpolation-induced smoothing artifacts. The
+proposed LSS-LTCNet was implemented using PyTorch 2.5.1 and trained on an NVIDIA A100 Tensor Core GPU
+via Google Colab. To ensure a rigorous and unbiased comparison, all state-of-the-art (SOTA) baseline models were
+re-evaluated under the same 100-epoch training schedule and hardware configuration with a batch size of 2. While the
+ResNet-34 encoder utilized ImageNet-pretrained weights, the LSS Extractor and LTC Refinement Loop were trained de
+novo. Model performance was quantitatively assessed using the Dice Similarity Coefficient (DSC) and Intersection
+over Union (IoU) for regional overlap, alongside the 95th percentile Hausdorff Distance (HD95) to measure boundary
+precision.
+3.2
+Comparison with State-of-the-art Methods
+Table 1 summarizes a comprehensive performance comparison, where the proposed LSS-LTCNet establishes a new
+benchmark for foot ulcer segmentation. Our model consistently outperforms both classic CNN architectures like U-Net
+[17] and SegNet [4], as well as modern self-attention baselines such as ViT-UNet [10], achieving the highest overall
+regional accuracy with a mean Dice score of 86.96% and an IoU of 79.54%. Most notably, our model demonstrates a
+significant breakthrough in boundary delineation, yielding an HD95 of 8.91 pixels—a 30% improvement compared to
+the next best score of 12.71 (SegNet). Furthermore, we achieve these state-of-the-art results with significantly fewer
+parameters (25.70 M), representing a 10× reduction compared to heavy architectures like ResNet101-UNet [11]. This
+superior performance and efficiency stem from extracting inherent spatial priors via the early-fusion LSS module,
+4
+
+
+===== PAGE 5 =====
+EXPLAINABLE MEDICAL IMAGE SEGMENTATION
+Figure 2: Clinical samples and corresponding ground truth masks from the dataset.
+Table 1: Quantitative comparison of the proposed LSS-LTCNet against state-of-the-art (SOTA) methods.
+Method
+Params
+(M)
+FLOPs
+(G)
+Dice (%)
+(↑)
+IoU (%)
+(↑)
+HD95 (↓)
+VGG16-UNet
+69.31
+42.19
+84.88
+77.29
+14.72
+ViT-UNet
+130.22
+102.00
+80.16
+71.32
+15.32
+UNet
+31.78
+374.34
+84.04
+76.23
+13.31
+Mask R-CNN
+90.44
+67.13
+83.97
+76.42
+12.89
+ResNet101-UNet
+267.62
+112.79
+84.92
+77.73
+13.03
+U2Seg
+86.47
+88.46
+75.85
+70.13
+16.07
+SegNet
+69.21
+42.19
+85.32
+78.11
+12.71
+LSS-LTCNet
+25.70
+82.45
+86.96
+79.54
+8.91
+enforcing exact topological precision with our Boundary Alignment Loss, and confining complex continuous-time
+dynamics (LTC) strictly to the network bottleneck. Beyond raw accuracy, this drastic reduction in computational
+complexity is vital for real-world deployment, positioning LSS-LTCNet as a highly viable candidate for integration into
+resource-constrained mobile health (mHealth) platforms and real-time clinical diagnostic tools.
+3.3
+Ablation Studies
+Table 2 details the ablation of our proposed components. Interestingly, adding the Local Structural Similarity (LSS)
+module and Liquid Time-Constant (LTC) bottleneck to the ResNet-34 baseline without our Boundary Alignment Loss
+(BAL) degrades the Dice score from 85.22% to 76.18%. This indicates standard pixel-wise losses struggle to jointly
+optimize high-frequency spatial priors and continuous-time dynamics. However, BAL acts as a crucial synergizer.
+By explicitly aligning predictions with LSS edge maps, the full LSS-LTCNet leaps to an 86.96% Dice and 79.54%
+IoU. This confirms our modules are highly interdependent, requiring boundary-aware optimization to unlock their
+representational capacity while adding a marginal 0.83 M parameters to the baseline.
+3.4
+Qualitative Visual Analysis
+To visually validate our quantitative achievements, Figure 3 presents the segmentation masks generated by our framework
+compared to expert annotations. The model successfully isolates exceptionally small, early-stage ulcerations without
+yielding false positives—a recognized difficulty within the FUSeg dataset where small isolated wound areas often go
+5
+
+
+===== PAGE 6 =====
+EXPLAINABLE MEDICAL IMAGE SEGMENTATION
+Table 2: Ablation study progressively adding LSS, LTC, and BAL to the baseline.
+Model Variation
+LSS
+LTC
+BAL
+Dice
+(%)(↑)
+IoU
+(%)(↑)
+Params
+(M)
+Baseline (ResNet-34 + U-Net)
+85.22
+77.56
+24.87
+Baseline + LSS
+✓
+83.51
+75.51
+25.12
+Baseline + LTC
+✓
+83.29
+75.22
+25.45
+LSS-LTCNet (w/o BAL)
+✓
+✓
+76.18
+69.74
+25.70
+LSS-LTCNet (Proposed)
+✓
+✓
+✓
+86.96
+79.54
+25.70
+undetected [21]. Furthermore, the model overcomes the primary clinical challenge of distinguishing the ambiguous
+boundary between active granulation tissue and the similarly colored surrounding erythema (inflammation).
+In morphologically complex cases with jagged, irregular edges (demonstrated in rows 2 and 4), the model exhibits
+remarkable boundary adherence. While standard convolutional networks often over-smooth these irregular contours,
+the combination of our Additive LSS Fusion and continuous-time LTC refinement loop preserves fine structural details.
+The tight predicted margins shown in the red overlays directly corroborate our exceptional 8.91 pixel HD95 score,
+demonstrating the framework’s reliability for high-fidelity clinical wound delineation.
+Figure 3: Qualitative segmentation results of LSS-LTCNet on the FUSeg validation set. Left to right: input image,
+ground truth, predicted mask, and prediction overlay (red). The model demonstrates precise boundary delineation
+across diverse skin tones, lighting conditions, and wound morphologies.
+6
+
+
+===== PAGE 7 =====
+EXPLAINABLE MEDICAL IMAGE SEGMENTATION
+Figure 4: Visualizing inherent explainability: LSS Mean, Max, and Boundary (Std) maps demonstrate how the network
+identifies tissue homogeneity and sharp perimeter transitions.
+3.5
+Inherent Explainability via Local Structural Similarity
+A primary advantage of LSS-LTCNet is the bridging of abstract deep feature extraction with clinical interpretability.
+Unlike post-hoc methods that provide non-deterministic approximations, our LSS module introduces inherent (ante-hoc)
+explainability by visualizing the deterministic structural priors driving the network’s decisions. As illustrated in Figure
+4, the LSS module outputs human-interpretable spatial representations before deep encoding begins. The Boundary
+(LSS Std) map functions as a precise localized edge detector, effectively filtering uniform background noise while
+illuminating the complex perimeter of the ulcer. By explicitly surfacing these biological markers, the framework shifts
+the paradigm from "black-box" prediction to a verifiable diagnostic process. Grounding the network in these maps
+ensures that downstream LTC and decoder predictions remain robust to lighting artifacts and are anchored in actual
+tissue morphology. Ultimately, this transparency fosters clinical adoption by providing practitioners with a "visual audit
+trail" that mathematically guarantees the model’s reasoning is based on measurable pathological structures rather than
+arbitrary dataset biases.
+4
+Conclusion
+In this paper, we introduced LSS-LTCNet, a novel boundary-aware framework that integrates Local Structural Similarity
+(LSS) spatial priors with Liquid Time-Constant (LTC) continuous-time dynamics for robust foot ulcer segmentation.
+By anchoring the network in deterministic LSS maps and enforcing topological precision via our Boundary Alignment
+Loss, we achieve a new state-of-the-art benchmark, including a significant 30% improvement in HD95 (8.91 pixels)
+over existing baselines. Furthermore, our architecture provides inherent (ante-hoc) explainability through a verifiable
+visual audit trail, ensuring that diagnostic decisions are grounded in actual tissue morphology rather than dataset biases.
+With its high performance and low computational footprint (25.70 M parameters), LSS-LTCNet is uniquely positioned
+as a reliable and transparent diagnostic tool for real-world clinical deployment in resource-constrained environments.
+Future work will explore leveraging the inherent temporal capabilities of the LTC module for longitudinal wound
+healing analysis across video sequences. Additionally, we aim to validate the framework’s generalizability on other
+complex medical boundary delineation tasks, extending its utility beyond dermatological applications.
+7
+
+
+===== PAGE 8 =====
+EXPLAINABLE MEDICAL IMAGE SEGMENTATION
+References
+[1] Akman, A., Schuller, B.W.: Audio explainable artificial intelligence: A review. Intelligent Computing 3, 0074
+(2024)
+[2] Alkhalefah, S., AlTuraiki, I., Altwaijry, N.: Advancing diabetic foot ulcer care: Ai and generative ai approaches
+for classification, prediction, segmentation, and detection. In: Healthcare. vol. 13, p. 648. MDPI (2025)
+[3] Armstrong, D.G., Boulton, A.J., Bus, S.A.: Diabetic foot ulcers and their recurrence. New England Journal of
+Medicine 376(24), 2367–2375 (2017)
+[4] Badrinarayanan, V., Kendall, A., Cipolla, R.: Segnet: A deep convolutional encoder-decoder architecture for
+image segmentation. IEEE TPAMI 39(12), 2481–2495 (2017)
+[5] Bhalla, U., Srinivas, S., Lakkaraju, H.: Discriminative feature attributions: Bridging post hoc explainability and
+inherent interpretability. Advances in neural information processing systems 36, 44105–44122 (2023)
+[6] Butoi, V.I., Ortiz, J.J.G., Ma, T., Sabuncu, M.R., Guttag, J., Dalca, A.V.: Universeg: Universal medical image
+segmentation. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 21438–21451
+(2023)
+[7] Cassidy, B., Reeves, N.D., Pappachan, J.M., Gillespie, D., O’Shea, C., Rajbhandari, S., Maiya, A.G., Frank, E.,
+Boulton, A.J., Yap, M.H.: The dfuc 2020 dataset: Analysis towards diabetic foot ulcer detection. IEEE Journal of
+Biomedical and Health Informatics 26(1), 346–356 (2021)
+[8] Chakrabarty, S., Bishwas, P., Bandyopadhyay, M., Sublime, J.: Can we trust ai with our ears?
+a cross-
+domain comparative analysis of explainability in audio intelligence. IEEE Access 13, 179733–179758 (2025).
+doi:10.1109/ACCESS.2025.3622161
+[9] Chen, J., Lu, Y., Yu, Q., Luo, X., Adeli, E., Wang, Y., Lu, L., Yuille, A.L., Zhou, Y.: Transunet: Transformers
+make strong encoders for medical image segmentation. arXiv preprint arXiv:2102.04306 (2021)
+[10] Chen, J., Lu, Y., Yu, Q., Luo, X., Adeli, E., Wang, Y., Retrouvey, L., Yuille, A.L., Zhou, Y.: Transunet:
+Transformers make strong encoders for medical image segmentation. arXiv preprint arXiv:2102.04306 (2021)
+[11] Diakogiannis, F.I., Waldner, F., Caccetta, P., Wu, C.: Resunet-a: A deep learning framework for semantic
+segmentation of remote sensing data. vol. 162, pp. 94–114 (2020)
+[12] Goyal, M., Reeves, N.D., Davison, A.K., Rajbhandari, S., Sprague, J., Yap, M.H.: Recognition of ischemia and
+infection in diabetic foot ulcers: Dataset and techniques. Computers in Biology and Medicine 117, 103616 (2020)
+[13] Hasani, R., Lechner, M., Amini, A., Rus, D., Grosu, R.: Liquid time-constant networks. In: Proceedings of the
+AAAI Conference on Artificial Intelligence. vol. 35, pp. 7657–7666 (2021)
+[14] Hatamizadeh, A., Tang, Y., Nath, V., Tseng, D., Idrees, J., Li, A., Roth, H., Xu, D.: Unetr: Transformers for 3d
+medical image segmentation. Proceedings of the IEEE/CVF Winter Conference on Applications of Computer
+Vision pp. 574–584 (2022)
+[15] Lundberg, S.M., Lee, S.I.: A unified approach to interpreting model predictions. In: Advances in Neural
+Information Processing Systems, vol. 30 (2017)
+[16] Ronneberger, O., Fischer, P., Brox, T.: U-net: Convolutional networks for biomedical image segmentation. In:
+Medical Image Computing and Computer-Assisted Intervention–MICCAI 2015. pp. 234–241. Springer (2015)
+[17] Ronneberger, O., Fischer, P., Brox, T.: U-net: Convolutional networks for biomedical image segmentation. In:
+MICCAI. pp. 234–241. Springer (2015)
+[18] Rudin, C.: Stop explaining black box machine learning models for high stakes decisions and use interpretable
+models instead. Nature Machine Intelligence 1(5), 206–215 (2019)
+[19] Selvaraju, R.R., Cogswell, M., Das, A., Vedantam, R., Parikh, D., Batra, D.: Grad-cam: Visual explanations from
+deep networks via gradient-based localization. In: Proceedings of the IEEE international conference on computer
+vision. pp. 618–626 (2017)
+[20] Van der Velden, B.H., Kuijf, H.J., Gilhuijs, K.G., Viergever, M.A.: Explainable artificial intelligence (xai) in deep
+learning-based medical image analysis. Medical image analysis 79, 102470 (2022)
+[21] Wang, C., Mahbod, A., Ellinger, I., Galdran, A., Gopalakrishnan, S., Niezgoda, J., Yu, Z.: Fuseg: The foot ulcer
+segmentation challenge. Information 15(3), 140 (2024)
+[22] Wang, R., Lei, T., Cui, R., Zhang, B., Meng, H., Nandi, A.K.: Medical image segmentation using deep learning:
+A survey. IET image processing 16(5), 1243–1267 (2022)
+8

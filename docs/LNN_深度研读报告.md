@@ -87,6 +87,18 @@ tags: [LNN, reading-report, papers]
 - **方法论**：模拟 BF 段用 48 单元液晶 (GT3-23001 LC) 阵列做 holographic 模式选择 (5° 波束 / 6.87 dB 增益 / 19 模式码本)，无需半导体移相器；数字 BF 段用 ODE 闭式 LNN (sigmoid-gated 闭式更新) 配合流形优化把 M×K 搜索空间压到 N×K，用 log-sum SE loss 训；用 NYURay 108 GHz 城市射线追踪信道做端到端评估。
 - **关键成果**：在 P=30 dBm / CEE=-10 dB 下 LNN+LC 相对 LAGD+LC 取得 +88.6% SE；CEE 从 -20 dB → 0 dB 时 LNN 仅 -31.7% SE (LAGD -55.4%)，验证 ODE 闭式 LNN 对信道不完美估计的鲁棒性；LC 天线相对 3GPP TR 38.901 标准阵列取得 1.9× SE。
 
+### [2026] Liquid Networks with Mixture Density Heads for Efficient Imitation Learning
+- **独立报告**：[[docs/reports/Liquid_Networks_MDH_Imitation_Learning_研读报告.md]]
+- **核心问题**：Diffusion Policy 当前是模仿学习主流范式，但 50 步 DDPM 推理耗时 380–448 ms、参数量 8.6M；M 维多模态动作分布上 MSE 会坍缩到均值。需要一个更紧凑、能显式建模多模态的 policy head 替代方案。
+- **方法论**：设计 fair shared-backbone 协议 (perception + transformer backbone 完全共享，只换 policy head)；liquid head = 5 层 CfC encoder (0.5× scale) + 自回归 GRU decoder + 5-分量 Gaussian MDN；用 free-running validation 选 checkpoint；用 best-of-K (K=1,2,5,10) MSE + NLL + 闭环 success / reward 评测。
+- **关键成果**：在 Push-T / RoboMimic Can / PointMaze 上 liquid (4.3M) 相对 diffusion (8.6M) 取得 1.8–2× 加速、2.4–2.5× 更低 NLL、RoboMimic Can 上 MSE 低 18×、PointMaze 上低 10×；闭环 Push-T 91% vs 88% success、PointMaze 20% vs 9.5% success；样本效率在 1%–46.42% 全数据区间领先，低/中数据区差距最大。
+
+### [2026] Explainable Continuous-Time Mask Refinement (LSS-LTCNet) for Medical Image Segmentation
+- **独立报告**：[[docs/reports/LSS-LTCNet_Foot_Ulcer_Segmentation_研读报告.md]]
+- **核心问题**：糖尿病足溃疡分割受组织异质 + 低对比度 + 不规则形状影响，U-Net / ViT-UNet 边界精度不足；且依赖 Grad-CAM / SHAP 等 post-hoc 解释，临床信任度受限。需要**边界精度 + 可解释性 + 轻量**同时成立的方案。
+- **方法论**：ResNet-34 encoder 早期以加性融合方式注入 3 通道 LSS 图 (μ/max/σ 表征组织均匀性、结构连续性、确定性边)；bottleneck 部署 LTC 连续时间循环 (T=4 Euler 步) 迭代式精炼全局 spatial token；提出 Boundary Alignment Loss (BAL) 用 Sobel 梯度对齐预测概率图与 LSS Mean 通道；提供 ante-hoc XAI 三通道可视化。
+- **关键成果**：在 MICCAI FUSeg 上取得 **Dice 86.96% / IoU 79.54% / HD95 8.91 px** 的 SOTA (HD95 相对次优 SegNet 提升 30%)；参数量 25.70M，相对 ResNet101-UNet 减少 10×；消融显示 BAL 是 LSS 与 LTC 协同关键——缺 BAL 时 Dice 从 85.22% 退化到 76.18%。
+
 
 ---
 
