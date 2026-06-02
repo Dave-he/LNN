@@ -1,0 +1,129 @@
+{
+  "run_id": "2026-06-03_041530",
+  "config": {
+    "epochs": 20,
+    "num_samples": 800,
+    "seq_len": 32,
+    "num_mixtures": 2,
+    "batch_size": 32,
+    "lr": 0.005,
+    "seed": 42,
+    "hidden_sizes": [
+      4,
+      8,
+      16,
+      32
+    ],
+    "output_dir": "analysis/multimodal_physreg"
+  },
+  "results": [
+    {
+      "model_kind": "video_only",
+      "hidden_size": 4,
+      "parameters": 342,
+      "elapsed_seconds": 10.648400823934935,
+      "test": {
+        "param_mse": 1.0400995016098022
+      }
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "hidden_size": 4,
+      "parameters": 710,
+      "elapsed_seconds": 22.3658852429362,
+      "test": {
+        "param_mse": 1.0304275751113892
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "hidden_size": 4,
+      "parameters": 710,
+      "elapsed_seconds": 22.550165122025646,
+      "test": {
+        "param_mse": 1.031619668006897
+      }
+    },
+    {
+      "model_kind": "video_only",
+      "hidden_size": 8,
+      "parameters": 994,
+      "elapsed_seconds": 11.389695493038744,
+      "test": {
+        "param_mse": 1.0424906015396118
+      }
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "hidden_size": 8,
+      "parameters": 2306,
+      "elapsed_seconds": 22.80735441891011,
+      "test": {
+        "param_mse": 0.9688627123832703
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "hidden_size": 8,
+      "parameters": 2306,
+      "elapsed_seconds": 22.31364350800868,
+      "test": {
+        "param_mse": 0.968572199344635
+      }
+    },
+    {
+      "model_kind": "video_only",
+      "hidden_size": 16,
+      "parameters": 3258,
+      "elapsed_seconds": 11.56973620899953,
+      "test": {
+        "param_mse": 1.0447322130203247
+      }
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "hidden_size": 16,
+      "parameters": 8186,
+      "elapsed_seconds": 23.613983933930285,
+      "test": {
+        "param_mse": 0.8095409870147705
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "hidden_size": 16,
+      "parameters": 8186,
+      "elapsed_seconds": 26.72746028797701,
+      "test": {
+        "param_mse": 0.802878201007843
+      }
+    },
+    {
+      "model_kind": "video_only",
+      "hidden_size": 32,
+      "parameters": 11626,
+      "elapsed_seconds": 13.380785282002762,
+      "test": {
+        "param_mse": 1.0998456478118896
+      }
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "hidden_size": 32,
+      "parameters": 30698,
+      "elapsed_seconds": 27.603296414949,
+      "test": {
+        "param_mse": 0.7628333568572998
+      }
+    },
+    {
+      "model_kind": "cross_attn",
+      "hidden_size": 32,
+      "parameters": 30698,
+      "elapsed_seconds": 30.42247258394491,
+      "test": {
+        "param_mse": 0.7197456955909729
+      }
+    }
+  ]
+}
