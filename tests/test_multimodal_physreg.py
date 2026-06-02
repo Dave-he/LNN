@@ -12,7 +12,10 @@ from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
     MultimodalBiCfCNADWithMDN,
 )
-from lnn.data.multimodal_physreg import MultimodalPhysicsDataset
+from lnn.data.multimodal_physreg import (
+    HeterogeneousForcedDataset,
+    MultimodalPhysicsDataset,
+)
 
 
 # ---------- Dataset tests ----------
@@ -250,3 +253,45 @@ def test_cross_modal_attn_training_reduces_nll() -> None:
         optimizer.step()
         losses.append(loss.item())
     assert losses[-1] < losses[0], f"NLL did not decrease: {losses}"
+
+
+# ---------- Heterogeneous forced dataset tests ----------
+
+
+def test_heterogeneous_dataset_shapes() -> None:
+    ds = HeterogeneousForcedDataset(num_samples=4, seq_len=12, num_steps_per_dt=3)
+    assert len(ds) == 4
+    sample, target = ds[0]
+    assert sample["video"].shape == (12, 1)
+    assert sample["audio"].shape == (12, 1)
+    assert target["params"].shape == (2,)
+
+
+def test_heterogeneous_dataset_chirp_and_burst() -> None:
+    for kind in ("chirp", "burst"):
+        ds = HeterogeneousForcedDataset(
+            num_samples=2, seq_len=8, force_kind=kind, num_steps_per_dt=2
+        )
+        sample, _ = ds[0]
+        assert sample["video"].shape == (8, 1)
+        assert sample["audio"].shape == (8, 1)
+
+
+def test_heterogeneous_dataset_rejects_invalid_force_kind() -> None:
+    with pytest.raises(ValueError):
+        HeterogeneousForcedDataset(num_samples=2, force_kind="bogus")  # type: ignore[arg-type]
+
+
+def test_heterogeneous_dataset_audio_in_force_amplitude_band() -> None:
+    """Sanity that the audio forcing is the prescribed amplitude band.
+
+    Audio RMS per sample should vary widely because amplitude is sampled
+    uniformly from [0.4, 1.2].  If audio were a derived stat of the
+    position (as in the round 6 dataset) the RMS would be tied to the
+    oscillator's ω_d instead.
+    """
+    ds = HeterogeneousForcedDataset(num_samples=32, seq_len=24, seed=1)
+    audios = torch.stack([ds[i][0]["audio"] for i in range(16)]).squeeze(-1)
+    rms = audios.pow(2).mean(dim=-1).sqrt()
+    assert rms.min().item() > 0.2, "audio signal should be substantially non-zero"
+    assert rms.max().item() < 2.0, "audio signal should stay in the prescribed amplitude band"

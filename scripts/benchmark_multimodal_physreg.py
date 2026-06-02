@@ -37,7 +37,9 @@ from lnn.core.multimodal_physreg import (
 )
 from lnn.core.noise_adaptive_cfc import BiCfCNADWithMDN, mdn_predicted_std
 from lnn.data.multimodal_physreg import (
+    HeterogeneousForcedDataset,
     MultimodalPhysicsDataset,
+    create_heterogeneous_forced_dataloaders,
     create_multimodal_physics_dataloaders,
 )
 
@@ -207,19 +209,35 @@ def _run(
     device: torch.device,
 ) -> dict[str, Any]:
     torch.manual_seed(args.seed)
-    dataset = MultimodalPhysicsDataset(
-        num_samples=args.num_samples,
-        seq_len=args.seq_len,
-        dt=args.dt,
-        video_noise_std=args.video_noise_std,
-        audio_noise_std=args.audio_noise_std,
-        seed=args.seed,
-    )
-    train_loader, val_loader, test_loader = create_multimodal_physics_dataloaders(
-        dataset,
-        batch_size=args.batch_size,
-        seed=args.seed,
-    )
+    if args.heterogeneous:
+        dataset = HeterogeneousForcedDataset(
+            num_samples=args.num_samples,
+            seq_len=args.seq_len,
+            dt=args.dt,
+            video_noise_std=args.video_noise_std,
+            audio_noise_std=args.audio_noise_std,
+            force_kind=args.force_kind,
+            seed=args.seed,
+        )
+        train_loader, val_loader, test_loader = create_heterogeneous_forced_dataloaders(
+            dataset,
+            batch_size=args.batch_size,
+            seed=args.seed,
+        )
+    else:
+        dataset = MultimodalPhysicsDataset(
+            num_samples=args.num_samples,
+            seq_len=args.seq_len,
+            dt=args.dt,
+            video_noise_std=args.video_noise_std,
+            audio_noise_std=args.audio_noise_std,
+            seed=args.seed,
+        )
+        train_loader, val_loader, test_loader = create_multimodal_physics_dataloaders(
+            dataset,
+            batch_size=args.batch_size,
+            seed=args.seed,
+        )
     model = _build_model(model_kind, args.hidden_size, args.num_mixtures, args.fusion).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     use_video_only_branch = model_kind == "video_only"
@@ -275,6 +293,12 @@ def main() -> None:
     parser.add_argument("--audio-mask-first-half", action="store_true",
                         help="If set, zero out the first half of the audio stream "
                              "(only meaningful with --video-mask-second-half).")
+    parser.add_argument("--heterogeneous", action="store_true",
+                        help="Use the HeterogeneousForcedDataset (forced damped "
+                             "oscillator: video=x(t), audio=F(t)) instead of the "
+                             "round-6 multimodal dataset.")
+    parser.add_argument("--force-kind", choices=["chirp", "burst"], default="chirp",
+                        help="Kind of forcing input for the heterogeneous dataset.")
     parser.add_argument("--device", default="auto")
     parser.add_argument("--output-dir", default="analysis/multimodal_physreg")
     args = parser.parse_args()
@@ -287,6 +311,10 @@ def main() -> None:
     print("=== Multimodal Physics Parameter Regression Benchmark ===")
     print(f"Device: {device} | seq_len: {args.seq_len} | samples: {args.num_samples}")
     print(f"Hidden: {args.hidden_size} | mixtures: {args.num_mixtures} | fusion: {args.fusion}")
+    if args.heterogeneous:
+        print(f"Dataset: HeterogeneousForcedDataset (force={args.force_kind})")
+    else:
+        print("Dataset: MultimodalPhysicsDataset (round-6 style)")
 
     video_only = _run("video_only", args, device)
     multimodal = _run("multimodal", args, device)
