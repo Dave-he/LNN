@@ -92,6 +92,41 @@ def _video_only_forward(model: BiCfCNADWithMDN, batch: dict[str, torch.Tensor]) 
     return model(fused)
 
 
+def _apply_train_partial_occlusion(
+    batch: dict[str, torch.Tensor],
+    seq_len: int,
+    prob: float,
+    video_mask_second_half: bool,
+    audio_mask_first_half: bool,
+) -> dict[str, torch.Tensor]:
+    """Per-sample stochastic half-half occlusion mirroring the eval pattern.
+
+    This is the round-10 follow-up to round-9 modality_dropout (which masked
+    *entire* streams, mismatching the half-half eval distribution). When
+    ``prob > 0`` and the matching mask flag is set, each sample independently
+    receives the same half-half mask the evaluator would apply, with
+    probability ``prob``. The remaining samples stay clean. Result: training
+    distribution interpolates between clean and fully-occluded, while staying
+    inside the eval support.
+    """
+
+    if prob <= 0.0:
+        return batch
+    if not (video_mask_second_half or audio_mask_first_half):
+        return batch
+    batch_size = batch["video"].shape[0]
+    apply = torch.rand(batch_size, device=batch["video"].device) < prob
+    if not apply.any():
+        return batch
+    out = {k: v.clone() for k, v in batch.items()}
+    half = seq_len // 2
+    if video_mask_second_half:
+        out["video"][apply, half:, :] = 0.0
+    if audio_mask_first_half:
+        out["audio"][apply, :half, :] = 0.0
+    return out
+
+
 def _train_one_epoch(
     model: nn.Module,
     dataloader: torch.utils.data.DataLoader,
@@ -101,12 +136,21 @@ def _train_one_epoch(
     seq_len: int,
     video_mask_second_half: bool,
     audio_mask_first_half: bool,
+    train_partial_occlusion_prob: float = 0.0,
+    train_partial_eval_mask: tuple[bool, bool] | None = None,
 ) -> float:
     model.train()
     total_loss = 0.0
     batches = 0
     for batch, target in dataloader:
         batch = _apply_occlusion(batch, seq_len, video_mask_second_half, audio_mask_first_half)
+        # Per-sample stochastic partial-window occlusion (round 10). Uses the
+        # eval-time mask pattern so the train distribution overlaps eval.
+        if train_partial_occlusion_prob > 0.0 and train_partial_eval_mask is not None:
+            eval_vmask, eval_amask = train_partial_eval_mask
+            batch = _apply_train_partial_occlusion(
+                batch, seq_len, train_partial_occlusion_prob, eval_vmask, eval_amask
+            )
         batch = _move(batch, device)
         target = {k: v.to(device) for k, v in target.items()}
         params = target["params"]
@@ -258,6 +302,8 @@ def _run(
         train_loss = _train_one_epoch(
             model, train_loader, optimizer, device, use_video_only_branch,
             args.seq_len, train_video_mask, train_audio_mask,
+            train_partial_occlusion_prob=args.train_partial_occlusion_prob,
+            train_partial_eval_mask=(args.video_mask_second_half, args.audio_mask_first_half),
         )
         val_metrics = _evaluate(
             model, val_loader, device, use_video_only_branch,
@@ -310,6 +356,13 @@ def main() -> None:
                              "Training sees clean data — the realistic "
                              "deployment-time scenario the modality_dropout "
                              "regularizer is designed for.")
+    parser.add_argument("--train-partial-occlusion-prob", type=float, default=0.0,
+                        help="Per-sample probability that training applies the "
+                             "same half-half occlusion pattern as evaluation. "
+                             "Round-10 distribution-matching alternative to "
+                             "modality_dropout (round 9). Only takes effect "
+                             "when at least one of --video-mask-second-half / "
+                             "--audio-mask-first-half is set.")
     parser.add_argument("--heterogeneous", action="store_true",
                         help="Use the HeterogeneousForcedDataset (forced damped "
                              "oscillator: video=x(t), audio=F(t)) instead of the "

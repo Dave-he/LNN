@@ -373,3 +373,65 @@ m·x''(t) + c·x'(t) + k·x(t) = F(t)
   3. 稀疏注意力(用于 T=256+ 的真实视频长度)
   4. *新增*:**部分流失训练**(training-time partial occlusion,只遮第一半/最后 ¼ 的窗口而非整条流)- 与 v9 评测分布匹配,可能比"整条 modality drop"更对症。
 - 测试套件:`pytest tests/` 现共 **108 项通过**,零回归(94 round-8 base + 5 cross-attn round-7 + 5 dropout round-9 + 4 round-8 hetero data)。
+
+---
+
+## 13. 第十轮 /loop — Partial-Window Occlusion Training — NEGATIVE RESULT
+
+(2026-06-02 第十轮 /loop,1h cron `855d0d94` 触发。round 9 §12.5 W+1 backlog 第 4 项:与 eval 分布匹配的部分窗口流失训练。)
+
+### 13.1 假设
+
+> round 9 否定了 modality_dropout 因为 *训练-评测分布不匹配*(训练时整条流失,评测时半-半流失)。
+> **本轮修正**:让训练时以 per-sample 概率 `p` 应用与 evaluator 完全相同的"video 后半 + audio 前半"掩码模式。
+> 可证伪指标:在异构 burst 数据 + train clean / eval occluded 设置下,cross-attn `--train-partial-occlusion-prob` 应当使 val MSE 比 round 9 v9 的 0.823 基线至少低 10% (即 ≤ 0.741)。
+
+### 13.2 实现
+
+`scripts/benchmark_multimodal_physreg.py` 新增:
+
+- `_apply_train_partial_occlusion(batch, seq_len, prob, video_mask_second_half, audio_mask_first_half)`:per-sample Bernoulli 抽样,被抽中的样本应用与 eval 完全相同的半-半掩码(`video[i, half:, :] = 0`, `audio[i, :half, :] = 0`)。
+- `--train-partial-occlusion-prob` CLI 参数,默认 0.0(关闭)。通过 `_train_one_epoch` 的两个新关键字参数传入。
+- eval 路径不变,仍走 `_apply_occlusion` 的确定性半-半掩码。
+
+不修改 `lnn/core/*`,纯 benchmark 层增强。
+
+### 13.3 实验结果(异构 burst,seed=42,n=800,K=2,epochs=20,train_clean+eval_occluded)
+
+| 配置 | cross_attn val MSE | vs video_only | vs v9 (0.823) | claim ≥10% better than v9 |
+|---|---:|---:|---:|:---:|
+| v9 (round 9, no aug, baseline) | **0.823** | +20.6% PASS | — | — |
+| v11 partial-occ p=0.5 | 0.837 | +19.6% FAIL | **−1.7%(略差)** | FAIL |
+| v12 partial-occ p=0.25 | 0.844 | +19.0% FAIL | **−2.6%(略差)** | FAIL |
+
+→ 两种 p 值下,与 eval 分布匹配的训练增强都**没有改善**结果,甚至略微变差。
+   完整 JSON:`analysis/multimodal_physreg/2026-06-02_v{11,12}_*.json`。
+
+### 13.4 根因诊断 — 三轮收敛观察
+
+把 round 9 + round 10 的三种"训练时增强"放一起看(都在异构 burst + train clean / eval occluded 上):
+
+| 训练增强 | cross_attn val MSE | vs v9 baseline (0.823) |
+|---|---:|---:|
+| 无(v9) | **0.823** | — |
+| partial-occ p=0.25 (v12) | 0.844 | −2.6% |
+| partial-occ p=0.5 (v11) | 0.837 | −1.7% |
+| modality_dropout p=0.3 (v10) | 0.960 | −16.6% |
+
+**收敛诊断**:
+- 任何训练时"流失"增强(无论是整条流还是半窗口,无论温和还是激进)在这个任务上**都不改善 deployment-time 表现**。
+- modality_dropout 显著伤害(−16.6%),partial-occ 仅微弱伤害(−1.7~−2.6%) — 后者的伤害与"无增强"基本在 seed 噪声范围内,说明分布匹配确实让训练 augmentation 的代价降下来了,**但没有提供任何额外正向信号**。
+- 推断:cross-attn + Bi-CfC-NAD 在此合成 burst 任务上已经吃满了"audio 携带 video 推不出的信息"的额外熵;eval 时的半-半遮挡并不打破训练时见过的归纳偏置,因此训练增强无新东西可教。
+
+### 13.5 复盘 + W+1 backlog 进一步精简
+
+- ~~modality_dropout~~(round 9 证伪,移出 backlog)
+- ~~partial-window occlusion 训练增强~~(round 10 证伪,移出 backlog)
+- **真实 EMMA rover/quadrotor 数据**(最优先 — 合成任务的训练增强空间已经被三轮 NEGATIVE 排除完毕,**下一步必须换数据**)
+- 稀疏注意力(T=256+ 真实视频长度准备)
+- *新增*:**信息上界探针** — 系统地变化 video/audio 互信息(对 audio 加白噪声、降采样、移除高频),拟合"信息上限"曲线,从理论侧解释为什么训练增强无用,并定位"真正能进一步推进 cross-attn"的任务维度。
+
+### 13.6 测试 + 推送
+
+- `pytest tests/` **108/108 全过**(本轮纯 benchmark 增强,没有新模型代码,因此无新单测)。
+- 提交将 `_apply_train_partial_occlusion` + `--train-partial-occlusion-prob` 引入 benchmark 工具链,即使 NEGATIVE 也保留作为未来对比基线。
