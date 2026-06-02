@@ -1288,3 +1288,83 @@ EMMA paper 没有公开 *容量扫描*,所以没有发现 hidden=8 这种非单�
 - 关键反例: hidden=8 反常 *不* 复现 → 反常是 EMMA-specific;
 - 元元结论: 真实 vs 合成 = *两种完全不同的可学习性地形*;
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 21. 第十八轮 /loop — Mixed-Stream Cosine-Similarity Probe — DECORRELATION ALONE INSUFFICIENT
+
+(2026-06-03 第十八轮 /loop。round 17 §20.6 W+1 第 2 项:用 `α·video + (1−α)·noise` 系统化扫 5 档 α,画 cos_similarity → gain 曲线,解析地区分"decorrelation"与"不同源"两个贡献。)
+
+### 21.1 假设
+
+> 若 round 17 的"流间 decorrelation 贡献 ~7pp"解释完整,那么 mixed_stream 的 gain vs 输入空间 cos similarity 应**单调递减**,且 cross_attn(audio=zero) 的 +14.9pp 应能落在曲线上对应的 cos sim 处。
+> **可证伪指标**:5 档 α 中至少 4 档单调,且峰值 gain ≥ +12pp(达到 +14.9pp 的 80%)。
+
+### 21.2 实现
+
+`lnn/core/multimodal_physreg.py::MixedStreamSelfXAttnWithMDN` — 复用 cross_attn 内核;第二流 = `α·video + (1−α)·matched_power_noise`;`last_cos_sim` 属性记录实测均值 cos sim。5 个新单测覆盖形状、α 越界拒绝、α=1 等价 uni_video、α=0 cos sim ≈ 0、α 单调 → cos sim 单调。
+
+`scripts/benchmark_emma_rover.py` 加 `mixed_stream_xattn` model_kind,环境变量 `MIX_ALPHA` 控制 α。
+
+### 21.3 实验结果(epochs=20, n=200, K=1, seed=42, video_dim=3)
+
+| α | 实测 cos_sim | test MSE | vs video_only(536.85) | vs uni_video(+32.2%) |
+|---:|---:|---:|---:|---:|
+| 1.00 | 1.000 | 364.11 | +32.2% | baseline (uni_video) |
+| 0.75 | 0.969 | 372.59 | +30.6% | −1.6pp |
+| **0.50** | **0.799** | **337.35** | **+37.2%** | **+5.0pp ✅ 峰值** |
+| 0.25 | 0.403 | 398.09 | +25.8% | **−6.4pp ❌ 谷底** |
+| 0.00 | −0.039 | 360.55 | +32.8% | +0.6pp |
+
+**参考**(round 16/17):
+- cross_attn(audio=zero): cos sim 未定义(常零),gain +14.9pp
+- cross_attn(audio=random): cos sim ≈ 0(独立分布),gain +29.5pp
+- cross_attn(audio=normal): real audio,gain +18.8pp
+
+→ **可证伪假设彻底否定**:
+   1. 曲线**非单调**:在 α=0.5 处出现峰值,α=0.25 处出现谷底,α=0.0(完全 decorrelated)反弹回 baseline 附近。
+   2. 峰值 gain 仅 +5pp,**远低于 cross_attn(audio=zero) 的 +14.9pp 阈值**。
+   3. cross_attn(audio=zero/random/normal) 的 +14.9 ~ +29.5pp gain **不能从 mixed_stream 曲线上推导出来** — 即使在 α=0 (cos sim ≈ 0) 也达不到。
+
+完整 JSON:`analysis/emma_rover/2026-06-03_r18_mixed_stream_alpha{1p0,0p75,0p5,0p25,0p0}.json`。
+
+### 21.4 根因诊断 — 输入空间 cos sim 不是正确的控制变量
+
+**核心发现**:输入空间 cos similarity 与 cross-attention 的正则收益**没有直接因果关系**。两个证据:
+
+1. **mixed_stream(α=0.0) cos sim ≈ 0,gain 仅 +0.6pp**;但 cross_attn(audio=random) cos sim 同样 ≈ 0,gain 是 +29.5pp。两者在输入空间都是高度 decorrelated,但 gain 差 28.9pp。
+2. **mixed_stream 曲线非单调**,在 α=0.25 处的谷底比 α=1.0 还低 6.4pp — 部分 decorrelation 反而**有害**(可能是"半信号半噪声"让 encoder 困惑)。
+
+**真正起作用的可能是**:
+- 第二个 encoder 学到的"register-token 行为" — 当第二流是 *已知无信息* 的输入(如 audio=zero 或 audio=random)时,该 encoder 会自由地把权重分配为最佳的"meta-token 池";
+- 当第二流是 *部分有信息部分噪声* 的混合时(mixed_stream 中等 α),encoder 既要提取真信号又要忽略噪声,反而做不好任何一件。
+
+### 21.5 元结论再次修正 — Round 17 的加法分解被推翻
+
+Round 17 §20.4 给出的 +51% 分解:
+- 32pp 双 encoder 容量 + **7pp 流 decorrelation** + 8pp "不同源" + 4pp audio 信息 = 51pp
+
+经过本轮 round 18 修正,**"7pp decorrelation"实际最多 5pp 且非单调,且根本机制不是 cos similarity**。新的分解:
+
+| 成分 | 贡献 pp | 实验依据 |
+|---|---:|---|
+| 双 encoder 容量 | ~32 | round 13 uni_video |
+| **stream2 "register-token"机制** | ~15 | round 16 audio=zero 比 uni_video +14.9pp;round 18 排除输入 decorrelation 解释 |
+| audio 真实物理信息 | ~4 | round 16 normal vs zero |
+| **总和** | **~51** | 匹配实测 |
+
+最大变化:把原来的"7pp decorrelation + 8pp 不同源"两条合并为一条 **"stream2 作为可学习 register-token 的机制"**,贡献 ~15pp。这条机制目前没有更细的解析,但 round 18 已经排除"输入空间 decorrelation"作为充分解释。
+
+### 21.6 复盘 + W+1 backlog
+
+- ~~mixed_stream cos sim 探针~~(本节已完成 ❌, 但揭示 register-token 假设)
+- *新增*:**Register-token 机制最小复现** — 把第二个 encoder 改成"看不到输入,只接受一个 learnable token"(类似 transformer register tokens),看是否能复现 +15pp 收益。如果 PASS,完全证实 register-token 解释。
+- *新增*:**直接测量第二个 encoder 输出的 entropy / sparsity** — 在 cross_attn(audio=zero) vs cross_attn(audio=normal) vs uni_video 下对比,看 audio=zero 是否真的让 encoder 学到了一个 "free pool"。
+- ~~双盲 audio 控制~~(仍未做)
+- **真实 EMMA 多视频 LOO**(数据未释出)
+- **EMMA quadrotor 12 参数**(数据未释出)
+
+### 21.7 测试 + 提交
+
+- `pytest tests/` **124/124 全过**,零回归(119 base + 5 新 mixed_stream 测试)。
+- 提交 5 个 α 配置 JSON + 新模型类 + 单测 + 报告 §21。

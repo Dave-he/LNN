@@ -609,3 +609,85 @@ def test_noisy_video_self_xattn_differs_from_uni_video() -> None:
     assert not torch.allclose(uni_loc, noisy_loc, atol=1e-4), (
         "noisy_video output identical to uni_video — noise injection is dead"
     )
+
+
+# ---------- MixedStreamSelfXAttnWithMDN tests (round 18) ----------
+
+
+def test_mixed_stream_self_xattn_output_shape() -> None:
+    from lnn.core.multimodal_physreg import MixedStreamSelfXAttnWithMDN
+    model = MixedStreamSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2,
+        num_mixtures=2, mix_alpha=0.5,
+    )
+    video = torch.randn(2, 12, 1)
+    out = model(video, audio=None)
+    assert out["logits"].shape == (2, 12, 2)
+    assert out["loc"].shape == (2, 12, 2, 2)
+
+
+def test_mixed_stream_rejects_alpha_out_of_range() -> None:
+    import pytest
+    from lnn.core.multimodal_physreg import MixedStreamSelfXAttnWithMDN
+    for bad in (-0.1, 1.1):
+        with pytest.raises(ValueError):
+            MixedStreamSelfXAttnWithMDN(
+                video_dim=1, audio_dim=1, hidden_size=4, output_size=2, mix_alpha=bad,
+            )
+
+
+def test_mixed_stream_alpha1_matches_uni_video_pattern() -> None:
+    """alpha=1.0 must feed the same video to both encoders."""
+    from lnn.core.multimodal_physreg import MixedStreamSelfXAttnWithMDN
+    torch.manual_seed(0)
+    model = MixedStreamSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, mix_alpha=1.0,
+    )
+    model.eval()
+    video = torch.randn(2, 8, 1)
+    with torch.no_grad():
+        out = model(video)
+    # last_cos_sim should be ~1.0 since stream2 == video.
+    assert abs(model.last_cos_sim - 1.0) < 1e-6
+
+
+def test_mixed_stream_alpha0_low_cos_sim() -> None:
+    """alpha=0 must produce pure noise — cos sim should be near 0."""
+    from lnn.core.multimodal_physreg import MixedStreamSelfXAttnWithMDN
+    torch.manual_seed(0)
+    model = MixedStreamSelfXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, mix_alpha=0.0,
+    )
+    model.eval()
+    # Use a long sequence so the mean cos sim of two random vectors concentrates.
+    video = torch.randn(4, 64, 1)
+    with torch.no_grad():
+        model(video)
+    # Two zero-mean random vectors of length 64 — cosine similarity is small.
+    assert abs(model.last_cos_sim) < 0.3, (
+        f"cos sim should be near 0 at alpha=0, got {model.last_cos_sim:.3f}"
+    )
+
+
+def test_mixed_stream_intermediate_alpha_monotonic_cos_sim() -> None:
+    """Higher alpha must give higher cos sim (within reasonable noise)."""
+    from lnn.core.multimodal_physreg import MixedStreamSelfXAttnWithMDN
+    torch.manual_seed(0)
+    cs_values = []
+    for alpha in (0.0, 0.25, 0.5, 0.75, 1.0):
+        model = MixedStreamSelfXAttnWithMDN(
+            video_dim=1, audio_dim=1, hidden_size=4, output_size=2,
+            mix_alpha=alpha,
+        )
+        model.eval()
+        # Same video and same seed for noise sampling for fair comparison.
+        torch.manual_seed(42)
+        video = torch.randn(8, 64, 1)
+        with torch.no_grad():
+            model(video)
+        cs_values.append(model.last_cos_sim)
+    # Should be roughly monotonic increasing.
+    for i in range(len(cs_values) - 1):
+        assert cs_values[i] <= cs_values[i + 1] + 0.1, (
+            f"cos sim should be ~monotonic increasing with alpha, got {cs_values}"
+        )

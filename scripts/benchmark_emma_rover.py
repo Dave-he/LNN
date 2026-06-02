@@ -81,7 +81,7 @@ def _train_one_epoch(
             assert isinstance(model, BiCfCNADWithMDN)
             mdn_params = _video_only_forward(model, batch)
         else:
-            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ in ("UniVideoSelfXAttnWithMDN", "NoisyVideoSelfXAttnWithMDN")
+            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ in ("UniVideoSelfXAttnWithMDN", "NoisyVideoSelfXAttnWithMDN", "MixedStreamSelfXAttnWithMDN")
             mdn_params = model(batch["video"], batch["audio"])
         final = {k: v[:, -1] for k, v in mdn_params.items()}
         loss = mdn_negative_log_likelihood(final, params)
@@ -111,7 +111,7 @@ def _evaluate(
             assert isinstance(model, BiCfCNADWithMDN)
             mdn_params = _video_only_forward(model, batch)
         else:
-            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ in ("UniVideoSelfXAttnWithMDN", "NoisyVideoSelfXAttnWithMDN")
+            assert isinstance(model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)) or model.__class__.__name__ in ("UniVideoSelfXAttnWithMDN", "NoisyVideoSelfXAttnWithMDN", "MixedStreamSelfXAttnWithMDN")
             mdn_params = model(batch["video"], batch["audio"])
         final = {k: v[:, -1] for k, v in mdn_params.items()}
         mean = mdn_mean(final)
@@ -175,6 +175,16 @@ def _build_model(
             output_size=5,
             num_mixtures=num_mixtures,
             noise_std=float(os.environ.get("NOISY_VIDEO_STD", "0.5")),
+        )
+    if model_kind == "mixed_stream_xattn":
+        from lnn.core.multimodal_physreg import MixedStreamSelfXAttnWithMDN
+        return MixedStreamSelfXAttnWithMDN(
+            video_dim=video_dim,
+            audio_dim=audio_dim,  # ignored at forward time
+            hidden_size=hidden_size,
+            output_size=5,
+            num_mixtures=num_mixtures,
+            mix_alpha=float(os.environ.get("MIX_ALPHA", "0.5")),
         )
     raise ValueError(f"unknown model_kind {model_kind!r}")
 

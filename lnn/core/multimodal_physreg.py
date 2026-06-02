@@ -504,3 +504,108 @@ class NoisyVideoSelfXAttnWithMDN(nn.Module):
             mask=mask,
             return_attention=return_attention,
         )
+
+
+class MixedStreamSelfXAttnWithMDN(nn.Module):
+    """Round-18 cosine-similarity probe.
+
+    Same architecture as :class:`UniVideoSelfXAttnWithMDN` / 
+    :class:`NoisyVideoSelfXAttnWithMDN`, but the second encoder receives a
+    *mixture* of video and matched-power Gaussian noise:
+
+        stream2 = mix_alpha * video + (1 - mix_alpha) * noise
+
+    where ``noise`` is sampled fresh per forward with ``std = video.std()``
+    so the mixture has stable power across alpha values.
+
+    * ``mix_alpha = 1.0`` -> stream2 == video, reduces to uni_video_xattn.
+    * ``mix_alpha = 0.0`` -> stream2 is pure matched-power noise, analogous
+      to cross_attn(audio=random).
+    * intermediate alphas trace out a continuous interpolation in
+      cosine-similarity space, exactly the curve needed to disentangle the
+      round-17 'decorrelation' contribution from the round-16
+      'structurally different source' contribution.
+
+    The forward pass also exposes a ``last_cos_sim`` attribute (a float)
+    holding the mean cosine similarity between stream1 and stream2 across
+    the most recent batch — handy for the benchmark to log the actual
+    decorrelation amount per alpha.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 — kept for API parity; ignored
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+        noise_beta: float = 0.9,
+        noise_aggregation: str = "independent",
+        mix_alpha: float = 0.5,
+    ) -> None:
+        super().__init__()
+        if not 0.0 <= mix_alpha <= 1.0:
+            raise ValueError("mix_alpha must be in [0, 1]")
+        self._inner = CrossModalAttnBiCfCNADWithMDN(
+            video_dim=video_dim,
+            audio_dim=video_dim,
+            hidden_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+            num_layers=num_layers,
+            noise_beta=noise_beta,
+            noise_aggregation=noise_aggregation,
+            modality_dropout=0.0,
+        )
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+        self.mix_alpha = float(mix_alpha)
+        self.last_cos_sim: float = float("nan")
+
+    @property
+    def video_encoder(self) -> nn.Module:
+        return self._inner.video_encoder
+
+    @property
+    def audio_encoder(self) -> nn.Module:
+        return self._inner.audio_encoder
+
+    @staticmethod
+    def _mean_cosine_similarity(a: torch.Tensor, b: torch.Tensor) -> float:
+        """Flatten each [B, T, F] tensor to per-sample vectors and average
+        the cosine similarity across the batch. Returns a Python float."""
+
+        flat_a = a.reshape(a.shape[0], -1)
+        flat_b = b.reshape(b.shape[0], -1)
+        num = (flat_a * flat_b).sum(dim=-1)
+        denom = (flat_a.norm(dim=-1) * flat_b.norm(dim=-1)).clamp_min(1e-12)
+        return float((num / denom).mean().item())
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 — intentionally ignored
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+        return_attention: bool = False,
+    ) -> dict[str, torch.Tensor]:
+        if self.mix_alpha >= 1.0:
+            second_input = video.clone()
+        elif self.mix_alpha <= 0.0:
+            noise = torch.randn_like(video) * video.std().clamp_min(1e-6)
+            second_input = noise
+        else:
+            noise = torch.randn_like(video) * video.std().clamp_min(1e-6)
+            second_input = self.mix_alpha * video + (1.0 - self.mix_alpha) * noise
+        # Log the realised cosine similarity so the benchmark can report it.
+        self.last_cos_sim = self._mean_cosine_similarity(video, second_input)
+        return self._inner(
+            video=video,
+            audio=second_input,
+            dt=dt,
+            mask=mask,
+            return_attention=return_attention,
+        )
