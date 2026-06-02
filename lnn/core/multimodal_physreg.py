@@ -1123,3 +1123,103 @@ class GRUEncoderXAttnWithMDN(nn.Module):
             out["_attn_video_queries_gru"] = attn_va
             out["_attn_gru_queries_video"] = attn_av
         return out
+
+
+class VanillaCfCXAttnWithMDN(nn.Module):
+    """Round-22 Bi-CfC-NAD-family probe (vanilla CfC baseline).
+
+    Identical architecture to :class:`UniVideoSelfXAttnWithMDN` etc.,
+    but the second encoder is a *vanilla* (non-noise-adaptive,
+    unidirectional) :class:`CfCNetwork`.  This isolates whether the
+    +52.7% gain of cross_attn(audio=zero) requires the *specific
+    Bi-CfC-NAD* family (closed-form ODE + noise-adaptive EMA gate)
+    or whether any recurrent ODE-style encoder works.
+
+    Hypothesis (falsifiable):  if the +52.7% gain is *family-specific*
+    to Bi-CfC-NAD, then a vanilla CfC should *fail* the same way GRU
+    did - we should see a sharp drop in gain.  Conversely, if the
+    gain is just "any recurrent ODE encoder", vanilla CfC should
+    reach roughly the Bi-CfC-NAD level.
+
+    Background:
+      Round 21 (cron, §25) showed GRU (+3.9%) catastrophically
+      fails where Bi-CfC-NAD (+52.7%) succeeds, ruling out "any
+      recurrent encoder".  This class tests whether the failure is
+      GRU-specific (architecture quirk) or ODE-specific (CfC family
+      is essential).
+
+    The first encoder stays Bi-CfC-NAD to isolate the second-encoder
+    effect.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 - kept for API parity; ignored
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+    ) -> None:
+        super().__init__()
+        from lnn.core.cfc import CfCNetwork
+        self._inner = CrossModalAttnBiCfCNADWithMDN(
+            video_dim=video_dim,
+            audio_dim=video_dim,
+            hidden_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+            num_layers=num_layers,
+            noise_beta=0.9,
+            noise_aggregation="independent",
+            modality_dropout=0.0,
+        )
+        # Replace audio encoder with a vanilla (no NAD, single direction)
+        # CfCNetwork - same input/output arity, no dt/mask kwargs needed
+        # at the call site because CfCNetwork.forward takes (x) directly.
+        self._inner.audio_encoder = CfCNetwork(
+            input_size=video_dim,
+            hidden_size=hidden_size,
+            output_size=hidden_size,
+            num_layers=num_layers,
+            return_sequences=True,
+        )
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+
+    @property
+    def video_encoder(self) -> nn.Module:
+        return self._inner.video_encoder
+
+    @property
+    def audio_encoder(self) -> nn.Module:
+        return self._inner.audio_encoder
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 - intentionally ignored
+        dt: float | torch.Tensor | None = None,  # noqa: ARG002
+        mask: torch.Tensor | None = None,  # noqa: ARG002
+        return_attention: bool = False,  # noqa: ARG002
+    ) -> dict[str, torch.Tensor]:
+        # CfCNetwork.forward(x) does not accept dt/mask - replicate
+        # the manual cross-attention forward from NonRecurrent.
+        v_feat = self._inner.video_encoder(video)
+        a_feat = self._inner.audio_encoder(video)
+        if v_feat.shape[0] != a_feat.shape[0]:
+            raise ValueError("video and audio must share the batch dimension")
+        if v_feat.shape[1] != a_feat.shape[1]:
+            raise ValueError("video and audio must share the time dimension")
+        v_from_a, _ = self._inner._attend(
+            self._inner.q_v(v_feat), self._inner.k_a(a_feat), self._inner.v_a(a_feat),
+        )
+        a_from_v, _ = self._inner._attend(
+            self._inner.q_a(a_feat), self._inner.k_v(v_feat), self._inner.v_v(v_feat),
+        )
+        v_refined = v_feat + v_from_a
+        a_refined = a_feat + a_from_v
+        fused = self._inner.fuse_proj(torch.cat([v_refined, a_refined], dim=-1))
+        return self._inner.mdn(fused)
