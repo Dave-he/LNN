@@ -20,7 +20,7 @@ from lnn.core.long_sequence import (
 from lnn.core.ltc import LTCCell, LTCNetwork
 from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sample
 from lnn.core.multimodal import MultimodalFusionLNN
-from lnn.core.multimodal_physreg import MultimodalBiCfCNADWithMDN
+from lnn.core.multimodal_physreg import CrossModalAttnBiCfCNADWithMDN, MultimodalBiCfCNADWithMDN
 from lnn.core.physics import PhysicsInformedLNN, damped_oscillator_residual, physics_informed_loss
 from lnn.core.variants import (
     CfCDTCell,
@@ -56,6 +56,7 @@ __all__ = [
     "vectorized_noise_ema",
     "MultimodalFusionLNN",
     "MultimodalBiCfCNADWithMDN",
+    "CrossModalAttnBiCfCNADWithMDN",
     "MDNHead",
     "mdn_negative_log_likelihood",
     "mdn_mean",

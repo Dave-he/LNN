@@ -8,7 +8,10 @@ import pytest
 import torch
 
 from lnn.core.mdn import mdn_mean
-from lnn.core.multimodal_physreg import MultimodalBiCfCNADWithMDN
+from lnn.core.multimodal_physreg import (
+    CrossModalAttnBiCfCNADWithMDN,
+    MultimodalBiCfCNADWithMDN,
+)
 from lnn.data.multimodal_physreg import MultimodalPhysicsDataset
 
 
@@ -131,6 +134,105 @@ def test_multimodal_model_trains_below_random_init() -> None:
     """Sanity: a few gradient steps should reduce NLL on a small batch."""
     torch.manual_seed(0)
     model = MultimodalBiCfCNADWithMDN(video_dim=1, audio_dim=1, hidden_size=8, output_size=2)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
+    from lnn.core.mdn import mdn_negative_log_likelihood
+    dataset = MultimodalPhysicsDataset(num_samples=16, seq_len=10, seed=0)
+    items = [dataset[i] for i in range(8)]
+    video = torch.stack([it[0]["video"] for it in items])
+    audio = torch.stack([it[0]["audio"] for it in items])
+    params = torch.stack([it[1]["params"] for it in items])
+    losses = []
+    for _ in range(8):
+        optimizer.zero_grad()
+        out = model(video, audio)
+        final = {k: v[:, -1] for k, v in out.items()}
+        loss = mdn_negative_log_likelihood(final, params)
+        loss.backward()
+        optimizer.step()
+        losses.append(loss.item())
+    assert losses[-1] < losses[0], f"NLL did not decrease: {losses}"
+
+
+# ---------- CrossModalAttnBiCfCNADWithMDN tests ----------
+
+
+def test_cross_modal_attn_output_shape() -> None:
+    model = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, num_mixtures=2
+    )
+    video = torch.randn(2, 12, 1)
+    audio = torch.randn(2, 12, 1)
+    out = model(video, audio)
+    assert out["logits"].shape == (2, 12, 2)
+    assert out["loc"].shape == (2, 12, 2, 2)
+    assert out["log_scale"].shape == (2, 12, 2, 2)
+
+
+def test_cross_modal_attn_returns_attention_weights() -> None:
+    model = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2
+    )
+    video = torch.randn(1, 6, 1)
+    audio = torch.randn(1, 6, 1)
+    out = model(video, audio, return_attention=True)
+    assert "_attn_video_queries_audio" in out
+    assert "_attn_audio_queries_video" in out
+    assert out["_attn_video_queries_audio"].shape == (1, 6, 6)
+    assert out["_attn_audio_queries_video"].shape == (1, 6, 6)
+    # Attention rows must sum to 1 (softmax invariant).
+    row_sums = out["_attn_video_queries_audio"].sum(dim=-1)
+    assert torch.allclose(row_sums, torch.ones_like(row_sums), atol=1e-5)
+
+
+def test_cross_modal_attn_backward_into_all_modules() -> None:
+    model = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2, num_mixtures=1
+    )
+    video = torch.randn(2, 8, 1, requires_grad=True)
+    audio = torch.randn(2, 8, 1, requires_grad=True)
+    out = model(video, audio)
+    out["loc"].sum().backward()
+    # Both encoders must receive gradient.
+    v_grad = sum(p.grad.abs().sum().item() for p in model.video_encoder.parameters() if p.grad is not None)
+    a_grad = sum(p.grad.abs().sum().item() for p in model.audio_encoder.parameters() if p.grad is not None)
+    # All six attention projections must receive gradient.
+    for proj in (model.q_v, model.k_a, model.v_a, model.q_a, model.k_v, model.v_v, model.fuse_proj):
+        g = sum(p.grad.abs().sum().item() for p in proj.parameters() if p.grad is not None)
+        assert g > 0, "attention projection has zero gradient"
+    assert v_grad > 0 and a_grad > 0
+
+
+def test_cross_modal_attn_differs_from_concat_baseline() -> None:
+    """Cross-attention fusion must produce different outputs than vanilla
+    concat fusion on the same encoder weights — otherwise the attention
+    machinery is silently doing nothing."""
+    torch.manual_seed(7)
+    concat_model = MultimodalBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, num_mixtures=1, fusion="concat"
+    )
+    torch.manual_seed(7)  # match encoder init
+    attn_model = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2, num_mixtures=1
+    )
+    # Copy encoders so the only difference is the fusion path.
+    attn_model.video_encoder.load_state_dict(concat_model.video_encoder.state_dict())
+    attn_model.audio_encoder.load_state_dict(concat_model.audio_encoder.state_dict())
+    video = torch.randn(1, 14, 1)
+    audio = torch.randn(1, 14, 1)
+    with torch.no_grad():
+        concat_loc = mdn_mean(concat_model(video, audio))
+        attn_loc = mdn_mean(attn_model(video, audio))
+    assert concat_loc.shape == attn_loc.shape
+    assert not torch.allclose(concat_loc, attn_loc, atol=1e-3), (
+        "cross-attn output identical to concat output — attention path is dead"
+    )
+
+
+def test_cross_modal_attn_training_reduces_nll() -> None:
+    torch.manual_seed(0)
+    model = CrossModalAttnBiCfCNADWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2
+    )
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
     from lnn.core.mdn import mdn_negative_log_likelihood
     dataset = MultimodalPhysicsDataset(num_samples=16, seq_len=10, seed=0)

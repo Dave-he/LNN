@@ -31,7 +31,10 @@ import torch.nn as nn
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from lnn.core.mdn import mdn_mean, mdn_negative_log_likelihood
-from lnn.core.multimodal_physreg import MultimodalBiCfCNADWithMDN
+from lnn.core.multimodal_physreg import (
+    CrossModalAttnBiCfCNADWithMDN,
+    MultimodalBiCfCNADWithMDN,
+)
 from lnn.core.noise_adaptive_cfc import BiCfCNADWithMDN, mdn_predicted_std
 from lnn.data.multimodal_physreg import (
     MultimodalPhysicsDataset,
@@ -110,7 +113,9 @@ def _train_one_epoch(
             assert isinstance(model, BiCfCNADWithMDN)
             mdn_params = _video_only_forward(model, batch)
         else:
-            assert isinstance(model, MultimodalBiCfCNADWithMDN)
+            assert isinstance(
+                model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)
+            )
             mdn_params = model(batch["video"], batch["audio"])
         # Train against the final-step parameter (sequence-to-sequence → final).
         final = {k: v[:, -1] for k, v in mdn_params.items()}
@@ -145,7 +150,9 @@ def _evaluate(
             assert isinstance(model, BiCfCNADWithMDN)
             mdn_params = _video_only_forward(model, batch)
         else:
-            assert isinstance(model, MultimodalBiCfCNADWithMDN)
+            assert isinstance(
+                model, (MultimodalBiCfCNADWithMDN, CrossModalAttnBiCfCNADWithMDN)
+            )
             mdn_params = model(batch["video"], batch["audio"])
         final = {k: v[:, -1] for k, v in mdn_params.items()}
         mean = mdn_mean(final)
@@ -179,6 +186,14 @@ def _build_model(
     if model_kind == "video_only":
         return BiCfCNADWithMDN(
             input_size=2,  # video + audio concatenated as a single channel
+            hidden_size=hidden_size,
+            output_size=2,
+            num_mixtures=num_mixtures,
+        )
+    if model_kind == "cross_attn":
+        return CrossModalAttnBiCfCNADWithMDN(
+            video_dim=1,
+            audio_dim=1,
             hidden_size=hidden_size,
             output_size=2,
             num_mixtures=num_mixtures,
@@ -275,20 +290,34 @@ def main() -> None:
 
     video_only = _run("video_only", args, device)
     multimodal = _run("multimodal", args, device)
+    cross_attn = _run("cross_attn", args, device)
 
     v_mse = video_only["test"]["param_mse"]
     m_mse = multimodal["test"]["param_mse"]
-    relative_improvement = (v_mse - m_mse) / v_mse if v_mse > 0 else 0.0
+    c_mse = cross_attn["test"]["param_mse"]
+    # Headline claim is now whether the CROSS-ATTENTION model beats the
+    # video_only concat baseline by >= 20%.  We also report the round-6
+    # multimodal-concat number for reference.
+    multimodal_vs_videoonly = (v_mse - m_mse) / v_mse if v_mse > 0 else 0.0
+    cross_attn_vs_videoonly = (v_mse - c_mse) / v_mse if v_mse > 0 else 0.0
+    cross_attn_vs_multimodal = (m_mse - c_mse) / m_mse if m_mse > 0 else 0.0
     claim_threshold = 0.20
-    claim_passed = relative_improvement >= claim_threshold
+    claim_passed = cross_attn_vs_videoonly >= claim_threshold
 
     print("\n=== Test Results ===")
     print(f"video_only  | params {video_only['parameters']:>5d} | val MSE {v_mse:.6f}")
     print(f"multimodal  | params {multimodal['parameters']:>5d} | val MSE {m_mse:.6f}")
+    print(f"cross_attn  | params {cross_attn['parameters']:>5d} | val MSE {c_mse:.6f}")
     print(
-        f"multimodal improvement over video-only: {relative_improvement * 100:.1f}% "
+        f"multimodal (concat) vs video-only      : {multimodal_vs_videoonly * 100:+.1f}%"
+    )
+    print(
+        f"cross_attn          vs video-only      : {cross_attn_vs_videoonly * 100:+.1f}% "
         f"(claim threshold >= {claim_threshold * 100:.0f}%) → "
         f"{'PASS' if claim_passed else 'FAIL'}"
+    )
+    print(
+        f"cross_attn          vs multimodal (concat): {cross_attn_vs_multimodal * 100:+.1f}%"
     )
 
     now = dt.datetime.now()
@@ -303,10 +332,14 @@ def main() -> None:
         "config": vars(args),
         "video_only": video_only,
         "multimodal": multimodal,
+        "cross_attn": cross_attn,
         "summary": {
             "video_only_param_mse": v_mse,
             "multimodal_param_mse": m_mse,
-            "relative_improvement": relative_improvement,
+            "cross_attn_param_mse": c_mse,
+            "multimodal_vs_videoonly_rel": multimodal_vs_videoonly,
+            "cross_attn_vs_videoonly_rel": cross_attn_vs_videoonly,
+            "cross_attn_vs_multimodal_rel": cross_attn_vs_multimodal,
             "claim_threshold": claim_threshold,
             "claim_passed": bool(claim_passed),
         },

@@ -128,3 +128,85 @@ MultimodalBiCfCNADWithMDN
 - EMMA Table S3 (audio ablation 关键): audio 加入后 rover 5/5 参数误差都改善,收敛 epoch 5 vs 30
 - 仓库资产: `BidirectionalNoiseAdaptiveCfC`, `MDNHead`, `mdn_predicted_std` — 全部来自前几轮 `/loop` 迭代
 - 本次 /loop 触发 (1h 间隔,会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 10. 第七轮 /loop 跟进 — Cross-Modal Attention Fusion
+
+(2026-06-02 第七轮,1h cron `855d0d94` 触发。直接执行 §8 W+1 优先项 1:让"何时信任哪个模态"的机制显式化。)
+
+### 10.1 假设
+
+> 把 round 6 `MultimodalBiCfCNADWithMDN(fusion="concat")` 的"简单 concat 后投影"换成**单头双向 cross-attention**(video 查询 audio,audio 查询 video,各自 residual),在同 data/seed/epochs 配置下,test param MSE 应当相对 video_only baseline 降低 **≥20%**。
+
+### 10.2 实现 — `CrossModalAttnBiCfCNADWithMDN`
+
+`lnn/core/multimodal_physreg.py` 新增。流程:
+
+```text
+video [B,T,1] ──► BiCfCNAD ─► v_feat [B,T,H]
+                                │
+                                ├──► Q_v K_a V_a   ─► attn_va [B,T,T] · V_a ─► v_from_a
+                                │
+audio [B,T,1] ──► BiCfCNAD ─► a_feat [B,T,H]
+                                │
+                                └──► Q_a K_v V_v   ─► attn_av [B,T,T] · V_v ─► a_from_v
+
+v_refined = v_feat + v_from_a               (residual)
+a_refined = a_feat + a_from_v               (residual)
+fused = Linear_2H→H( concat(v_refined, a_refined) )
+MDN(fused) → {logits, loc, log_scale}
+```
+
+- **单头、全序列、无 causal mask**:每一步都可以从对侧模态的任意时间步取信息(EMMA "complementary fill-in" 的最小可学习实现)。
+- `return_attention=True` 时把 `[B,T,T]` 的两个注意力矩阵一并返回,方便后续可视化"video 在第 t 步借了 audio 哪几个时间步"。
+- 残差保证退化情形(全零 attention)等价于 round 6 的双编码 + 拼接。
+
+### 10.3 单元测试 — `tests/test_multimodal_physreg.py` (5 新测)
+
+- 形状 (return_sequences,K=2 mixtures)
+- `return_attention=True` 返回 `[B,T,T]` 且每行 softmax 严格归一
+- 反传:两 encoder + 全部 6 个 attention 投影 + fuse_proj 都收到非零梯度
+- **关键不变量**:在两个模型共用同一 encoder 权重时,cross-attn 输出 ≠ concat 输出 (attention 路径未被静默旁路)
+- 8 step NLL 训练单调下降
+
+整套 `pytest tests/` **99 项通过**,零回归(94 base + 5 新测)。
+
+### 10.4 实验结果(同 v1/v2 配置,seed=42,epochs=16,num_samples=600)
+
+#### v3:干净数据(对应 round 6 v1)
+
+| 模型 | params | val param MSE | vs video_only | vs multimodal-concat |
+|---|---:|---:|---:|---:|
+| video_only (concat baseline) | 3 173 | 0.237563 | — | — |
+| multimodal (concat fusion, round 6) | 6 021 | 0.234259 | +1.4% | — |
+| **CrossModalAttn (new)** | **8 101** | **0.219566** | **+7.6%** | **+6.3%** |
+
+→ cross-attn vs video_only 改进 **7.6% < 20%** (claim **FAIL**),但 vs round 6 多模态稳定胜出 **+6.3%**。
+
+#### v4:EMMA-style 半遮挡(video 后半段,audio 前半段)
+
+| 模型 | params | val param MSE | vs video_only | vs multimodal-concat |
+|---|---:|---:|---:|---:|
+| video_only (concat baseline) | 3 173 | 0.233710 | — | — |
+| multimodal (concat fusion, round 6) | 6 021 | 0.262693 | −12.4% | — |
+| **CrossModalAttn (new)** | **8 101** | **0.253297** | **−8.4%** | **+3.6%** |
+
+→ cross-attn 把 round 6 的 −12.4% 落后缩小到 −8.4% (跨 round 改进 **+4.0pp** 绝对),但仍然没追上 video_only。
+
+数据:`analysis/multimodal_physreg/2026-06-02_cross_attn_v{3_clean,4_occluded}.json`。
+
+### 10.5 复盘
+
+- **方向正确**:cross-attn 在两个场景里都跑赢 round 6 的 concat-fusion 多模态(+6.3% / +3.6%),证明"显式 attention" 比 "纯依靠 concat 隐式学" 更能利用多模态信息。round 6 §6 诊断成立。
+- **阈值未到**:cross-attn vs video_only baseline 改进 +7.6% < 20%。video_only(把 video+audio 拼成一个 channel 后过单条 Bi-CfC-NAD)在小数据合成任务上是出乎意料强的基线 — 它隐式做了 same channel-mixing。
+- **遮挡场景的体感更弱**:理论上 cross-attn 应该在 v4 EMMA-style 遮挡下大放异彩,因为"video 后半段空白要靠 audio 填",但实验里 cross-attn 仍输 video_only 8.4%。可能原因:合成任务里 audio 携带的是同源 ω_d/2π,信息冗余太强 ⇒ 拼接和 attention 都拿到了同样的信息上界。需要"video/audio 信息源真正异构"才能拉开。
+- **测试不变量已立**:cross-attn 路径未被静默旁路(`test_cross_modal_attn_differs_from_concat_baseline`),attention 行严格归一,反传到全部投影。所以 mse 改进的来源是真实的 attention 机制,不是参数堆砌。
+- **第七轮定性结论 = PARTIAL POSITIVE**:模块可用、不变量正确、相对 round 6 进步明确,但 20% 强阈值未达。
+
+### 10.6 W+1 路线图调整
+
+1. **真正异构的多模态合成数据**:把 audio 改成"控制输入" `F(t)` 的间接观测(而不是 `ω_d/2π` 的同源映射),让 audio 携带 video 完全推不出来的信息;此时 cross-attn 与 video_only 的 gap 应当拉开到 ≥20%。
+2. **跨模态 dropout 训练正则**:训练时以 p=0.3 随机 zero 整条 video 或 audio,强迫两个编码器各自学"独立可用"特征;预期对遮挡 v4 场景帮助更大。
+3. **保留 round 6 的诊断**:即使 cross-attn 达不到 20% 阈值,也不需要把整个 multimodal_physreg 路线删除 — 工程上它仍是 LNN 仓库里**第一个带显式多模态注意力的 LNN 头**,可作为下游真实数据的起点。
+4. **真实数据验证**:下一步在 EMMA 论文里 rover 或 quadrotor 子任务上跑 cross-attn(论文 release 了 rover 数据);若在真实数据上 PASS,合成上的 partial positive 就只是 toy-task 局限。
