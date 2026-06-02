@@ -290,7 +290,17 @@ class BidirectionalNoiseAdaptiveCfC(nn.Module):
     falsifiable claim verified in :mod:`scripts.benchmark_bi_cfc_nad` is that
     bi-CfC-NAD should beat uni-CfC-NAD on a windowed-median regression task
     whose targets depend on both past and future context.
+
+    Args:
+        noise_aggregation: ``"independent"`` (default, each branch keeps its
+            own causal/anti-causal noise EMA) or ``"centered"`` (both branches
+            share a non-causal noise score computed as the average of the
+            forward and backward EMAs). ``"centered"`` exploits the fact that
+            a bidirectional model has already broken causality and can use
+            future information to improve the local noise estimate.
     """
+
+    _SUPPORTED_AGGREGATIONS = ("independent", "centered")
 
     def __init__(
         self,
@@ -300,13 +310,21 @@ class BidirectionalNoiseAdaptiveCfC(nn.Module):
         num_layers: int = 1,
         return_sequences: bool = True,
         noise_beta: float = 0.9,
+        noise_aggregation: str = "independent",
     ) -> None:
         super().__init__()
+        if noise_aggregation not in self._SUPPORTED_AGGREGATIONS:
+            raise ValueError(
+                f"noise_aggregation must be one of {self._SUPPORTED_AGGREGATIONS}, "
+                f"got {noise_aggregation!r}"
+            )
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
         self.num_layers = num_layers
         self.return_sequences = return_sequences
+        self.noise_beta = float(noise_beta)
+        self.noise_aggregation = noise_aggregation
 
         # Inner networks emit per-step features of width ``hidden_size``.
         self.forward_net = NoiseAdaptiveCfCNetwork(
@@ -328,6 +346,60 @@ class BidirectionalNoiseAdaptiveCfC(nn.Module):
         # Concatenate forward + backward features then project.
         self.output_proj = nn.Linear(2 * hidden_size, output_size)
 
+    @staticmethod
+    def _centered_noise_score(x: torch.Tensor, beta: float) -> torch.Tensor:
+        """Non-causal noise score: the average of the forward and time-flipped
+        backward EMAs. Both halves are computed in parallel via
+        :func:`vectorized_noise_ema`."""
+
+        forward_ema = vectorized_noise_ema(x, beta)
+        backward_ema_rev = vectorized_noise_ema(torch.flip(x, dims=[1]), beta)
+        backward_ema = torch.flip(backward_ema_rev, dims=[1])
+        return 0.5 * (forward_ema + backward_ema)
+
+    def _run_with_external_noise(
+        self,
+        net: NoiseAdaptiveCfCNetwork,
+        x: torch.Tensor,
+        noise: torch.Tensor,
+        dt: float | torch.Tensor | None,
+    ) -> torch.Tensor:
+        """Run a NoiseAdaptiveCfCNetwork with an externally supplied per-step
+        noise score (shape ``[B, T, F_in]``). Only used by the centered path;
+        kept here so the data flow stays in one place and the inner network
+        does not need to grow new public arguments."""
+
+        batch_size, seq_len, _ = x.shape
+        h_state = torch.zeros(
+            net.num_layers, batch_size, net.hidden_size, device=x.device, dtype=x.dtype
+        )
+        layer_input = x
+        for i, cell in enumerate(net.cells):
+            outputs: list[torch.Tensor] = []
+            h_i = h_state[i]
+            # External noise is only meaningful for the first layer (input
+            # space); deeper layers fall back to their own parallel EMA.
+            if i == 0:
+                noise_for_layer = noise
+            else:
+                beta = cell.noise_beta if hasattr(cell, "noise_beta") else 0.9
+                noise_for_layer = vectorized_noise_ema(layer_input, beta)
+            for t in range(seq_len):
+                dt_t = select_step_delta(dt, t, batch_size, seq_len, x.device, x.dtype)
+                x_t = layer_input[:, t, :]
+                noise_t = noise_for_layer[:, t, :]
+                h_i = cell(x_t, h_i, noise_score=noise_t, dt=dt_t)
+                outputs.append(h_i)
+            layer_input = torch.stack(outputs, dim=1)
+            h_state = torch.cat(
+                [
+                    h_i.unsqueeze(0) if j == i else h_state[j].unsqueeze(0)
+                    for j in range(net.num_layers)
+                ],
+                dim=0,
+            )
+        return net.output_proj(layer_input)
+
     def forward(
         self,
         x: torch.Tensor,
@@ -339,12 +411,34 @@ class BidirectionalNoiseAdaptiveCfC(nn.Module):
             raise ValueError(f"x must have shape [batch, time, features], got {tuple(x.shape)}")
         seq_len = x.shape[1]
 
-        fwd_features = self.forward_net(x, dt=dt, mask=mask)
-        x_rev = torch.flip(x, dims=[1])
-        dt_rev = _flip_temporal(dt, seq_len)
-        mask_rev = _flip_temporal(mask, seq_len)
-        bwd_features_rev = self.backward_net(x_rev, dt=dt_rev, mask=mask_rev)
-        bwd_features = torch.flip(bwd_features_rev, dims=[1])
+        if self.noise_aggregation == "centered":
+            if mask is not None:
+                # Centered EMA assumes parallel computation; bail out gracefully
+                # so masked inputs still produce a well-defined result.
+                raise ValueError(
+                    "noise_aggregation='centered' does not support a mask "
+                    "argument; use 'independent' or supply mask=None."
+                )
+            x_clean = torch.nan_to_num(x)
+            centered = self._centered_noise_score(x_clean, self.noise_beta)
+            fwd_features = self._run_with_external_noise(
+                self.forward_net, x_clean, centered, dt
+            )
+            dt_rev = _flip_temporal(dt, seq_len)
+            bwd_features_rev = self._run_with_external_noise(
+                self.backward_net,
+                torch.flip(x_clean, dims=[1]),
+                torch.flip(centered, dims=[1]),
+                dt_rev,
+            )
+            bwd_features = torch.flip(bwd_features_rev, dims=[1])
+        else:
+            fwd_features = self.forward_net(x, dt=dt, mask=mask)
+            x_rev = torch.flip(x, dims=[1])
+            dt_rev = _flip_temporal(dt, seq_len)
+            mask_rev = _flip_temporal(mask, seq_len)
+            bwd_features_rev = self.backward_net(x_rev, dt=dt_rev, mask=mask_rev)
+            bwd_features = torch.flip(bwd_features_rev, dims=[1])
         combined = torch.cat([fwd_features, bwd_features], dim=-1)
         if self.return_sequences:
             return self.output_proj(combined)

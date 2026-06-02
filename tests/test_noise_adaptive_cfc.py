@@ -263,3 +263,104 @@ class TestBidirectionalNoiseAdaptiveCfC:
         # The output_proj of each inner net (H -> H) is redundant but kept for
         # API parity; the overall budget should still stay well under 3x uni.
         assert bi_params < 3 * uni_params
+
+
+class TestBidirectionalCenteredNoise:
+    """Verify the non-causal centered noise aggregation path."""
+
+    def test_rejects_unknown_aggregation(self) -> None:
+        import pytest
+        with pytest.raises(ValueError):
+            BidirectionalNoiseAdaptiveCfC(
+                input_size=2, hidden_size=4, output_size=1, noise_aggregation="bogus"
+            )
+
+    def test_centered_output_shape(self) -> None:
+        net = BidirectionalNoiseAdaptiveCfC(
+            input_size=2,
+            hidden_size=4,
+            output_size=1,
+            noise_aggregation="centered",
+        )
+        x = torch.randn(2, 9, 2)
+        out = net(x)
+        assert out.shape == (2, 9, 1)
+        assert torch.isfinite(out).all()
+
+    def test_centered_backward_pass(self) -> None:
+        net = BidirectionalNoiseAdaptiveCfC(
+            input_size=2,
+            hidden_size=4,
+            output_size=1,
+            noise_aggregation="centered",
+        )
+        x = torch.randn(2, 8, 2, requires_grad=True)
+        out = net(x)
+        out.sum().backward()
+        assert x.grad is not None
+        assert x.grad.abs().sum().item() > 0
+
+    def test_centered_rejects_mask(self) -> None:
+        import pytest
+        net = BidirectionalNoiseAdaptiveCfC(
+            input_size=2,
+            hidden_size=4,
+            output_size=1,
+            noise_aggregation="centered",
+        )
+        x = torch.randn(1, 5, 2)
+        mask = torch.ones(1, 5)
+        with pytest.raises(ValueError):
+            net(x, mask=mask)
+
+    def test_centered_differs_from_independent_under_noise(self) -> None:
+        """The centered and independent paths must produce different outputs on
+        a noisy input — otherwise the centered aggregation is silently no-op."""
+
+        torch.manual_seed(0)
+        # Same weights for both networks.
+        indep = BidirectionalNoiseAdaptiveCfC(
+            input_size=2, hidden_size=8, output_size=1, noise_aggregation="independent"
+        )
+        torch.manual_seed(0)
+        centered = BidirectionalNoiseAdaptiveCfC(
+            input_size=2, hidden_size=8, output_size=1, noise_aggregation="centered"
+        )
+        # Force the noise gate slightly off the zero init so the difference
+        # in noise_score actually flows through to the cell outputs.
+        for net in (indep, centered):
+            for inner in (net.forward_net, net.backward_net):
+                for cell in inner.cells:
+                    with torch.no_grad():
+                        cell.noise_gate_proj.weight.normal_(0.0, 0.3)
+                        cell.noise_gate_proj.bias.normal_(0.0, 0.1)
+        # Mirror the trained weights so the only difference is the noise path.
+        centered.load_state_dict(indep.state_dict())
+        x = torch.randn(1, 16, 2)
+        with torch.no_grad():
+            out_indep = indep(x)
+            out_centered = centered(x)
+        assert out_indep.shape == out_centered.shape
+        assert not torch.allclose(out_indep, out_centered, atol=1e-4)
+
+    def test_centered_uses_future_information(self) -> None:
+        """Centered noise must depend on the *future* tail of the input. We
+        check by perturbing the last few steps and verifying the centred
+        noise score at the *start* of the sequence changes — a property that
+        the causal-only independent path cannot have."""
+
+        torch.manual_seed(0)
+        net = BidirectionalNoiseAdaptiveCfC(
+            input_size=1, hidden_size=4, output_size=1, noise_aggregation="centered"
+        )
+        x_a = torch.zeros(1, 20, 1)
+        x_a[0, :10, 0] = torch.linspace(0.0, 1.0, 10)  # quiet tail
+        x_b = x_a.clone()
+        x_b[0, 15:, 0] = torch.tensor([2.0, -2.0, 2.0, -2.0, 2.0])  # noisy tail
+        with torch.no_grad():
+            score_a = net._centered_noise_score(x_a, net.noise_beta)
+            score_b = net._centered_noise_score(x_b, net.noise_beta)
+        # Score at the early steps must differ between x_a and x_b because the
+        # backward EMA "sees" the tail.
+        early_diff = (score_b[0, :5, 0] - score_a[0, :5, 0]).abs().max().item()
+        assert early_diff > 1e-6

@@ -174,3 +174,58 @@ output_proj : Linear(2H -> output_size)        -> [B, T, output_size]
 - **延迟成本**：约 2× Uni；下一步可尝试两边权重共享（受限 RNN BiRNN 风格）或前向并行噪声 EMA 与后向并行噪声 EMA 共用一个 cumprod 中间结果。
 - **真实数据验证**：合成中位数任务证明了"双向有用"；下一轮应换到 `parhat1/cfdna-tau-repository` 或 LiquidTAD 风格的真实工业振动 / 视频数据上复测。
 - 下一轮路线图条目升级：原 W+2 "EMMA-style multimodal + physics" 仍保持；新增 **Bi-CfC-NAD on bearing fault diagnosis** 作为 W+1 优先级。
+
+## 附录 B — 2026-06-02 第三轮迭代：Centered (Non-causal) Noise EMA — NEGATIVE RESULT
+
+(同日第三次 /loop 触发。本轮假设：既然 bi-CfC-NAD 已经非因果，让两个分支共享一个用前向+反向 EMA 平均的"中心化噪声估计"，对含噪输入理应进一步降噪。)
+
+### B.1 假设 (Falsifiable)
+
+> 在 windowed-median 任务上施加 AWGN，bi-CfC-NAD `noise_aggregation="centered"` 的 val MSE 应比 `"independent"` 低 **≥ 10%**。
+
+### B.2 实现
+
+- `BidirectionalNoiseAdaptiveCfC.__init__(..., noise_aggregation="independent" | "centered")`，默认 `"independent"`（向后兼容）。
+- `_centered_noise_score(x, beta) = 0.5 * (forward_ema + backward_ema)`，两个 EMA 都用 `vectorized_noise_ema` 并行算（不引入新的 Python 循环）。
+- 通过 `_run_with_external_noise` 把同一份噪声分数注入两个内层网络的第一层；更深层仍走各层自己的并行 EMA（避免跨层错位）。
+- `noise_aggregation="centered"` 与 `mask != None` 不兼容（mask 会破坏并行假设）；运行时显式 ValueError。
+
+### B.3 单元测试 — `TestBidirectionalCenteredNoise`（6 项）
+
+- 拒绝未知 aggregation；输出形状；反传可达；mask + centered 抛 ValueError；centered 与 independent 在含噪输入下输出确实不同（前提是 `noise_gate_proj` 已偏离零）；centered 用到未来信息的不变量（在 t=15..20 注入异常脉冲后，t=0..5 的 centered 噪声分数会变化）。
+- 整套 `pytest tests/` **71 项通过**，零回归。
+
+### B.4 实验结果（两档 SNR，800/120 训练/验证步，8 epoch）
+
+`scripts/benchmark_bi_cfc_nad_centered.py --epochs 8 --hidden 16 --num-samples 400`
+
+| SNR | Uni val MSE | Bi-indep val MSE | Bi-centered val MSE | centered vs indep |
+|---|---:|---:|---:|---:|
+| 20 dB | 0.02286 | 0.00891 | 0.00890 | +0.1% ❌ |
+| 10 dB | 0.05455 | 0.02927 | 0.02932 | −0.2% ❌ |
+
+- **两档 SNR 都未达到 ≥10% 的可证伪阈值**。假设被双重证伪。
+- 完整数据：`analysis/cfc_nad/2026-06-02_bi_centered_noise_snr{10,20}.json`。
+
+### B.5 根因分析（为什么 centered 没赢）
+
+1. `noise_gate_proj` 默认零初始化 → `sigmoid(0)=0.5` → 训练早期，噪声分数即使不同也只通过一个几乎不可分辨的门控通道流入网络。
+2. 8 epoch 训练预算下，`noise_gate_proj` 还未学到充分依赖噪声分数；centered vs indep 的噪声分数差异在 forward 输出层面被门控压缩到接近 0。
+3. 在合成 windowed-median 任务上，目标完全由清洁信号决定；模型对噪声分数的依赖性本身就较弱（不像临床/振动那种"噪声本身携带信号"的场景）。
+
+**结论**：centered noise 在"有显式噪声门控但门控尚未充分训练"的体制下不会带来 MSE 收益。要让它生效，可能需要：a) 主动正则 `noise_gate_proj` 远离零；b) 把噪声分数直接拼入 `g_branch`/`h_branch`（不只 `f_gate`）；c) 换到真实工业振动数据，让噪声本身携带信号。这些都不在本轮范围内。
+
+### B.6 意外副产物：≈20% 推理延迟降低
+
+| 路径 | infer µs/step (CPU, batch=32, seq=32) |
+|---|---:|
+| Bi-CfC-NAD independent | 16.93 |
+| Bi-CfC-NAD centered | **13.49** (−20.3%) |
+
+因为 centered 路径只计算一份共享 EMA 而 independent 需要在每个内层网络里独立算一次。即使 MSE 上没拿到收益，centered 仍可作为**仅追求推理延迟**的工程选项保留。
+
+### B.7 复盘 + 下一轮调整
+
+- 本轮是一次清晰的假设证伪：直接共享噪声估计**在当前训练设置下不影响输出**，因为下游 `noise_gate_proj` 还没学到去依赖它。
+- 报告如实保留负结果，不做事后挑选 SNR/seed 来"凑"PASS。
+- 下一轮路线图微调：把"centered noise 验证"从 W+1 划去（已证伪），新增"**让 noise_gate_proj 学起来**"作为更基础的待办（如增加 noise 正则、把噪声分数直接拼入 g/h_branch、或换数据集到真实含噪场景）。
