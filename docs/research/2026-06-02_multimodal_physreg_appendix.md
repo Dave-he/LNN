@@ -2332,3 +2332,73 @@ LSTM (经典门控 RNN family) 与 CfC (闭式 ODE family) 在 cross-modal secon
 
 - `pytest tests/` **137/137 全过**(纯 benchmark,无新模型代码,无新单测),零回归。
 - 提交 `scripts/benchmark_adaptive_cross_to_video.py` + 4 个 JSON + 本节 §28。
+
+---
+
+## 29. 第二十五轮 /loop — LNN Multimodal Design Guideline Document — **15 轮 ablation 总结定稿**
+
+(2026-06-03 第二十五轮,1h cron `51a1f8bf` 触发。W+1 收尾:把 §6-§28 + cron round 17/18/19/22/24/25 全部发现写成 `docs/guides/LNN_MULTIMODAL_DESIGN.md` 显式设计指南,供未来 PR 作者参考。)
+
+### 29.1 动机
+
+15 轮 ablation 后,本仓库对 LNN 多模态参数回归已有 5 个核心结论:
+- regime 决定一切 (cross_attn 小预算赢,大预算输)
+- recurrent + trainable + 输入有变化 是必要三条件
+- family 选 LSTM / CfC / Bi-CfC-NAD 均可 (avoid GRU + MLP)
+- audio 信息内容 ≤ 5pp 贡献
+- Bi-CfC-NAD vs vanilla CfC 仅 +2.7pp
+
+但这些发现散落在 §6-§28 28 个 sections 里,新 PR 作者难以快速吸收。**本轮把 15 轮全部发现汇总成单文档**, 包含:
+- 三句话总结
+- 决策树
+- 必要条件表
+- family 排序
+- regime-conditional 推荐
+- 失败模式 (反模式)
+- 仓库资产 reference
+- 实验设计 checklist
+- "不应做"清单
+- W+1 候选
+
+### 29.2 产物
+
+`docs/guides/LNN_MULTIMODAL_DESIGN.md` (190 行):
+- 3 句话总结
+- 决策树 (3 路分支)
+- 必要条件表 (5 行)
+- family 排序表 (9 行, 小预算 regime)
+- regime-conditional 推荐 (6 行, hidden_size × epochs 二维表)
+- 失败模式 (7 行)
+- EMMA 论文隐含对应
+- 仓库资产 reference (按设计阶段分 5 节)
+- 实验设计 checklist (8 条)
+- "不应做"清单 (6 条)
+- W+1 候选 (5 项)
+- 一句话备忘
+
+### 29.3 文档使用场景
+
+- **新 PR 作者**: 提交前必读 §3 (必要条件) + §9 (checklist) + §10 (反模式)
+- **未来 ablation 实验设计**: 读 §5 (regime-conditional) + §4 (family 排序) 找 baseline
+- **新场景的 architecture 选择**: 直接看 §2 (决策树)
+- **§27 重要发现 ("regime 决定一切") 浓缩到一句话备忘 (§12)**
+
+### 29.4 文档暂不含的内容 (避免范围蔓延)
+
+- 完整实验数据 (在 `analysis/` 各 JSON 里,本指南只 link)
+- 模型架构图 (在 `lnn/core/multimodal_physreg.py` docstring 里)
+- 完整 ablation 历史 (在本附录 §6-§28 里,本指南只 link)
+
+### 29.5 测试 + 提交
+
+- `pytest tests/` **137/137 通过** (本轮纯文档,无新单测)
+- 提交文档到 `docs/guides/`,并在本报告加 §29 锚点
+- 未来 PR 作者: 任何新 LNN 多模态工作 *应* 在 PR description 里 link `LNN_MULTIMODAL_DESIGN.md` 并逐项 confirm checklist
+
+### 29.6 参考
+
+- `docs/guides/LNN_MULTIMODAL_DESIGN.md` — 完整设计指南
+- `docs/research/2026-06-02_multimodal_physreg_appendix.md` §6-§28 — 完整 ablation 历史
+- `analysis/emma_rover/` — 真实数据所有 JSON
+- `analysis/multimodal_physreg/` — 合成数据所有 JSON
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
