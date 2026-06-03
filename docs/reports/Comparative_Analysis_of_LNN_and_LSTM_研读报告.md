@@ -225,3 +225,68 @@
 
 输出: `analysis/timeseries_ablation/2026-06-04_054135_lnn_vs_lstm.{json,md}` +
 [[2026-06-04_loop_iteration10_gradual_warmup_cfc_wins]] iter summary。
+
+---
+
+## ⚠️ v5 — Phase-C 8-seed 把 v4 "CfC 赢 LSTM" 撤回 (2026-06-04 loop#11)
+
+> v4 用 **N=3 seed** 拿到 CfC MSE −29.1% vs LSTM 的"庆祝信号";
+> 本次用 **N=8 seed** 完全一致协议复测,**结论翻转**:
+> CfC 实际 mean MSE +15.1% / **median +116%** vs LSTM。
+> v4 的 "CfC 赢" 是 small-N seed lucky,撤回庆祝,**保留工程产物**
+> (生成器 + warmup flag 仍然有用)。
+
+### v5 关键数字 (8 seeds × 4 backbones, 32 trials)
+
+| Backbone | params | mean MSE | **median MSE** | std | Δmedian vs LSTM |
+|---|---:|---:|---:|---:|---:|
+| **`lstm`** | 2,617 | **0.18346** | **0.02376** ⭐ | 0.383 | baseline |
+| `gru` | 1,969 | 0.19937 | 0.03474 | 0.413 | +46.2% |
+| `cfc` | 1,921 | 0.21116 | 0.05136 | 0.316 | **+116.2%** |
+| `ltc` | 1,321 | 0.53163 | 0.19437 | 0.991 | +718.0% |
+
+### v5 关键观察
+
+- **mean 和 median 都是 LSTM 第一,LTC 最后** — 一致 ranking,不是单一统计量
+  问题;
+- **CfC std (0.316) 最低** — 一致性比 LSTM (0.383) 好,但 central tendency
+  不够;
+- **Seed 7 / 777 是数据集硬点**(所有 backbone 都跑到平时 10–100× 的 MSE),
+  不是 backbone 自身坏 — phase-C 必须用 N≥5 seeds 才能把它们的影响平均掉。
+- v4 (N=3) 时 seed 7 的 LSTM MSE 1.12 强烈拖累 LSTM 均值;
+  加进 seed 777 后 CfC 也被同样拉到 0.71,平衡回来 → "CfC 赢"消失。
+
+### v5 任务条件性 ranking 终态(11 轮 loop 累计)
+
+仓库 **没有任何 LNN backbone 在合成时序回归任务上 跨 8 seed 稳定赢 LSTM**:
+
+| 任务 | LR | N seed | 赢家 |
+|---|---|---:|---|
+| iter#6 静态分子图 | fixed | 3 | CfC=LTC=GRU 并列 |
+| iter#7 Mackey-Glass | fixed | 3 | **GRU** |
+| iter#9 concept_drift 硬切 | fixed | 3 | **LSTM** |
+| iter#10 gradual + warmup | cosine | 3 | CfC (**N=3 lucky**) |
+| **iter#11 gradual + warmup** | cosine | **8** | **LSTM** ⭐ |
+
+### v5 工程教训 → PRD §6 验证指标
+
+- 任何 "Δ vs baseline" N=3 seed 都不可信,默认 N≥5;
+- Δ% 必须同时报告 mean 和 median;
+- std/mean > 1 的结果自动加 "⚠️ high variance" 标记;
+- 数据集 generation seed 必须固定,模型 seed 多个,才能区分 data noise 与
+  model variance。
+
+### v5 复现命令
+
+```bash
+/home/hyx/.pyenv/versions/3.14.4/bin/python3 \
+  scripts/ablation_lnn_vs_lstm_timeseries.py \
+  --dataset gradual_multi_regime --num-regimes 4 --transition-frac 0.15 \
+  --samples 1200 --seq-len 32 --hidden-size 24 --epochs 8 \
+  --warmup-frac 0.1 \
+  --seeds 42,7,123,2026,11,313,777,1337 \
+  --backbones cfc,ltc,gru,lstm --device cpu
+```
+
+输出: `analysis/timeseries_ablation/2026-06-04_065730_lnn_vs_lstm.{json,md}` +
+[[2026-06-04_loop_iteration11_phaseC_8seed_retraction]] iter summary。

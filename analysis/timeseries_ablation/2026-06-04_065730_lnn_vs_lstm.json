@@ -1,0 +1,450 @@
+{
+  "run_id": "2026-06-04_065730",
+  "experiment": "lnn_vs_lstm_timeseries_ablation",
+  "generated_at": "2026-06-04T06:57:30.525779",
+  "config": {
+    "dataset": "gradual_multi_regime",
+    "num_regimes": 4,
+    "transition_frac": 0.15,
+    "warmup_frac": 0.1,
+    "samples": 1200,
+    "seq_len": 32,
+    "hidden_size": 24,
+    "epochs": 8,
+    "batch_size": 32,
+    "lr": 0.003,
+    "seeds": [
+      42,
+      7,
+      123,
+      2026,
+      11,
+      313,
+      777,
+      1337
+    ],
+    "backbones": [
+      "cfc",
+      "ltc",
+      "gru",
+      "lstm"
+    ],
+    "inference_repeats": 3,
+    "device": "cpu",
+    "output_dir": "analysis/timeseries_ablation"
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "device": "cpu"
+  },
+  "per_run": [
+    {
+      "backbone": "cfc",
+      "seed": 42,
+      "parameters": 1921,
+      "test_mse": 0.01919627229909639,
+      "test_mae": 0.11356432051272006,
+      "val_mse": 0.018188881712990837,
+      "train_seconds": 43.53221321804449,
+      "inference_samples_per_sec": 389.69364575015186
+    },
+    {
+      "backbone": "cfc",
+      "seed": 7,
+      "parameters": 1921,
+      "test_mse": 0.7340801084363783,
+      "test_mae": 0.7593703205521042,
+      "val_mse": 0.5341085533838015,
+      "train_seconds": 42.411993843037635,
+      "inference_samples_per_sec": 362.70949677582206
+    },
+    {
+      "backbone": "cfc",
+      "seed": 123,
+      "parameters": 1921,
+      "test_mse": 0.060973170641306286,
+      "test_mae": 0.22091706056852597,
+      "val_mse": 0.04318775639340684,
+      "train_seconds": 48.43565695104189,
+      "inference_samples_per_sec": 515.6366464942282
+    },
+    {
+      "backbone": "cfc",
+      "seed": 2026,
+      "parameters": 1921,
+      "test_mse": 0.04175542899080225,
+      "test_mae": 0.17620139347540364,
+      "val_mse": 0.05685632736296267,
+      "train_seconds": 39.31285781995393,
+      "inference_samples_per_sec": 529.826462709496
+    },
+    {
+      "backbone": "cfc",
+      "seed": 11,
+      "parameters": 1921,
+      "test_mse": 0.03944604501530931,
+      "test_mae": 0.17018848335420764,
+      "val_mse": 0.034668556339031945,
+      "train_seconds": 37.29303853516467,
+      "inference_samples_per_sec": 550.4513520768004
+    },
+    {
+      "backbone": "cfc",
+      "seed": 313,
+      "parameters": 1921,
+      "test_mse": 0.0610275518249821,
+      "test_mae": 0.214566124452127,
+      "val_mse": 0.04397177273357237,
+      "train_seconds": 37.65714081283659,
+      "inference_samples_per_sec": 391.1021346493383
+    },
+    {
+      "backbone": "cfc",
+      "seed": 777,
+      "parameters": 1921,
+      "test_mse": 0.7094339680027317,
+      "test_mae": 0.7617417670585014,
+      "val_mse": 0.5248122086396089,
+      "train_seconds": 37.58250437513925,
+      "inference_samples_per_sec": 491.274144067899
+    },
+    {
+      "backbone": "cfc",
+      "seed": 1337,
+      "parameters": 1921,
+      "test_mse": 0.023349639531728382,
+      "test_mae": 0.13249681608096972,
+      "val_mse": 0.031509834769609814,
+      "train_seconds": 37.42581470287405,
+      "inference_samples_per_sec": 488.51247247626526
+    },
+    {
+      "backbone": "ltc",
+      "seed": 42,
+      "parameters": 1321,
+      "test_mse": 0.09338362394152461,
+      "test_mae": 0.2593922679488723,
+      "val_mse": 0.0927685684448964,
+      "train_seconds": 116.01956126000732,
+      "inference_samples_per_sec": 163.35174962950404
+    },
+    {
+      "backbone": "ltc",
+      "seed": 7,
+      "parameters": 1321,
+      "test_mse": 2.952857996966388,
+      "test_mae": 1.5704188733487516,
+      "val_mse": 2.4047205641462996,
+      "train_seconds": 116.08663254906423,
+      "inference_samples_per_sec": 144.93500788421613
+    },
+    {
+      "backbone": "ltc",
+      "seed": 123,
+      "parameters": 1321,
+      "test_mse": 0.037353026705819206,
+      "test_mae": 0.1691247675869916,
+      "val_mse": 0.031218493306958996,
+      "train_seconds": 116.22918247804046,
+      "inference_samples_per_sec": 143.77666341575062
+    },
+    {
+      "backbone": "ltc",
+      "seed": 2026,
+      "parameters": 1321,
+      "test_mse": 0.30628838410248627,
+      "test_mae": 0.503561393634693,
+      "val_mse": 0.2621351528812099,
+      "train_seconds": 115.35181880695745,
+      "inference_samples_per_sec": 162.15340161702105
+    },
+    {
+      "backbone": "ltc",
+      "seed": 11,
+      "parameters": 1321,
+      "test_mse": 0.46645201863469304,
+      "test_mae": 0.6174716691713076,
+      "val_mse": 0.3329307710802233,
+      "train_seconds": 117.37818165495992,
+      "inference_samples_per_sec": 145.69754915631043
+    },
+    {
+      "backbone": "ltc",
+      "seed": 313,
+      "parameters": 1321,
+      "test_mse": 0.09499251359217875,
+      "test_mae": 0.27508001714139374,
+      "val_mse": 0.08292126736125431,
+      "train_seconds": 116.39118628297001,
+      "inference_samples_per_sec": 136.56472422747385
+    },
+    {
+      "backbone": "ltc",
+      "seed": 777,
+      "parameters": 1321,
+      "test_mse": 0.2937416837022111,
+      "test_mae": 0.4806585698514371,
+      "val_mse": 0.21649004881446426,
+      "train_seconds": 115.5547447130084,
+      "inference_samples_per_sec": 151.52658214425696
+    },
+    {
+      "backbone": "ltc",
+      "seed": 1337,
+      "parameters": 1321,
+      "test_mse": 0.00794940280753213,
+      "test_mae": 0.07137424881393845,
+      "val_mse": 0.011036381830234785,
+      "train_seconds": 115.59241501614451,
+      "inference_samples_per_sec": 160.32770102870342
+    },
+    {
+      "backbone": "gru",
+      "seed": 42,
+      "parameters": 1969,
+      "test_mse": 0.026555070603216015,
+      "test_mae": 0.13577855599893107,
+      "val_mse": 0.02857808003554473,
+      "train_seconds": 18.035674400860444,
+      "inference_samples_per_sec": 912.5283963862894
+    },
+    {
+      "backbone": "gru",
+      "seed": 7,
+      "parameters": 1969,
+      "test_mse": 1.2072903787767566,
+      "test_mae": 0.9789271870174924,
+      "val_mse": 0.8899713529122842,
+      "train_seconds": 17.913018558872864,
+      "inference_samples_per_sec": 708.5928862357505
+    },
+    {
+      "backbone": "gru",
+      "seed": 123,
+      "parameters": 1969,
+      "test_mse": 0.009082346349149137,
+      "test_mae": 0.07501690210522832,
+      "val_mse": 0.00976620231931274,
+      "train_seconds": 18.0677116739098,
+      "inference_samples_per_sec": 694.4616073630359
+    },
+    {
+      "backbone": "gru",
+      "seed": 2026,
+      "parameters": 1969,
+      "test_mse": 0.011989879849794749,
+      "test_mae": 0.09227332070067122,
+      "val_mse": 0.012990048809631451,
+      "train_seconds": 17.939064871985465,
+      "inference_samples_per_sec": 739.3770944712062
+    },
+    {
+      "backbone": "gru",
+      "seed": 11,
+      "parameters": 1969,
+      "test_mse": 0.04291557057483776,
+      "test_mae": 0.18339358793722615,
+      "val_mse": 0.03659176705656825,
+      "train_seconds": 17.53247303608805,
+      "inference_samples_per_sec": 900.3714711569439
+    },
+    {
+      "backbone": "gru",
+      "seed": 313,
+      "parameters": 1969,
+      "test_mse": 0.07554239195746344,
+      "test_mae": 0.24212132273493586,
+      "val_mse": 0.058958169979018135,
+      "train_seconds": 17.347277384018525,
+      "inference_samples_per_sec": 840.092735345686
+    },
+    {
+      "backbone": "gru",
+      "seed": 777,
+      "parameters": 1969,
+      "test_mse": 0.2121264547915072,
+      "test_mae": 0.4114130348772616,
+      "val_mse": 0.1553942383946599,
+      "train_seconds": 17.668669319013134,
+      "inference_samples_per_sec": 829.3864671703761
+    },
+    {
+      "backbone": "gru",
+      "seed": 1337,
+      "parameters": 1969,
+      "test_mse": 0.009418360486223892,
+      "test_mae": 0.0812107872318577,
+      "val_mse": 0.00917643983219121,
+      "train_seconds": 18.162962660891935,
+      "inference_samples_per_sec": 886.095348817674
+    },
+    {
+      "backbone": "lstm",
+      "seed": 42,
+      "parameters": 2617,
+      "test_mse": 0.0169526485575212,
+      "test_mae": 0.10714118706213462,
+      "val_mse": 0.016588586407738762,
+      "train_seconds": 19.347181434975937,
+      "inference_samples_per_sec": 844.5014353053268
+    },
+    {
+      "backbone": "lstm",
+      "seed": 7,
+      "parameters": 2617,
+      "test_mse": 1.1188369957176414,
+      "test_mae": 0.9304015829756453,
+      "val_mse": 0.8553078239028519,
+      "train_seconds": 18.583687582984567,
+      "inference_samples_per_sec": 701.9367563550563
+    },
+    {
+      "backbone": "lstm",
+      "seed": 123,
+      "parameters": 2617,
+      "test_mse": 0.012318694611658921,
+      "test_mae": 0.09260725330662083,
+      "val_mse": 0.010786622661996531,
+      "train_seconds": 18.64230618579313,
+      "inference_samples_per_sec": 949.3165921738424
+    },
+    {
+      "backbone": "lstm",
+      "seed": 2026,
+      "parameters": 2617,
+      "test_mse": 0.030567833197277947,
+      "test_mae": 0.14833194178503914,
+      "val_mse": 0.02773393489219047,
+      "train_seconds": 19.155863323016092,
+      "inference_samples_per_sec": 866.7218248470342
+    },
+    {
+      "backbone": "lstm",
+      "seed": 11,
+      "parameters": 2617,
+      "test_mse": 0.016540725086186384,
+      "test_mae": 0.10941525246645953,
+      "val_mse": 0.01612944357298516,
+      "train_seconds": 18.498793073929846,
+      "inference_samples_per_sec": 881.4368932321192
+    },
+    {
+      "backbone": "lstm",
+      "seed": 313,
+      "parameters": 2617,
+      "test_mse": 0.06439418647740339,
+      "test_mae": 0.2244702062091312,
+      "val_mse": 0.050345337874180565,
+      "train_seconds": 19.3713314011693,
+      "inference_samples_per_sec": 800.0246998668425
+    },
+    {
+      "backbone": "lstm",
+      "seed": 777,
+      "parameters": 2617,
+      "test_mse": 0.19992973192318067,
+      "test_mae": 0.39893402924408783,
+      "val_mse": 0.147254508894843,
+      "train_seconds": 18.640413380926475,
+      "inference_samples_per_sec": 795.8940314115395
+    },
+    {
+      "backbone": "lstm",
+      "seed": 1337,
+      "parameters": 2617,
+      "test_mse": 0.008158406293069994,
+      "test_mae": 0.07471259300773209,
+      "val_mse": 0.011843381801972518,
+      "train_seconds": 19.16012196498923,
+      "inference_samples_per_sec": 999.1424051060042
+    }
+  ],
+  "summary": {
+    "cfc": {
+      "parameters": 1921,
+      "test_mse_mean": 0.21115777309279185,
+      "test_mse_std": 0.31557761506975773,
+      "test_mae_mean": 0.31863078575681997,
+      "test_mae_std": 0.2751611122512925,
+      "train_seconds_mean": 40.45640253226156,
+      "train_seconds_std": 4.027541531209847,
+      "inference_samples_per_sec_mean": 464.90079437500015,
+      "inference_samples_per_sec_std": 72.611343688163,
+      "seeds": [
+        42,
+        7,
+        123,
+        2026,
+        11,
+        313,
+        777,
+        1337
+      ]
+    },
+    "ltc": {
+      "parameters": 1321,
+      "test_mse_mean": 0.5316273313066041,
+      "test_mse_std": 0.9910475087536484,
+      "test_mae_mean": 0.49338522593717316,
+      "test_mae_std": 0.4722760124353403,
+      "train_seconds_mean": 116.07546534514404,
+      "train_seconds_std": 0.6382767350870834,
+      "inference_samples_per_sec_mean": 151.04167238790455,
+      "inference_samples_per_sec_std": 9.92606512043085,
+      "seeds": [
+        42,
+        7,
+        123,
+        2026,
+        11,
+        313,
+        777,
+        1337
+      ]
+    },
+    "gru": {
+      "parameters": 1969,
+      "test_mse_mean": 0.1993650566736186,
+      "test_mse_std": 0.4128550087297968,
+      "test_mae_mean": 0.2750168373254505,
+      "test_mae_std": 0.30564075289578685,
+      "train_seconds_mean": 17.833356488205027,
+      "train_seconds_std": 0.286840184176001,
+      "inference_samples_per_sec_mean": 813.8632508683703,
+      "inference_samples_per_sec_std": 88.03546755104155,
+      "seeds": [
+        42,
+        7,
+        123,
+        2026,
+        11,
+        313,
+        777,
+        1337
+      ]
+    },
+    "lstm": {
+      "parameters": 2617,
+      "test_mse_mean": 0.1834624027329925,
+      "test_mse_std": 0.3832866879930895,
+      "test_mae_mean": 0.2607517557571063,
+      "test_mae_std": 0.2905319960335838,
+      "train_seconds_mean": 18.924962293473072,
+      "train_seconds_std": 0.3674391943581331,
+      "inference_samples_per_sec_mean": 854.8718297872207,
+      "inference_samples_per_sec_std": 93.0155187919769,
+      "seeds": [
+        42,
+        7,
+        123,
+        2026,
+        11,
+        313,
+        777,
+        1337
+      ]
+    }
+  },
+  "json_path": "analysis/timeseries_ablation/2026-06-04_065730_lnn_vs_lstm.json"
+}
