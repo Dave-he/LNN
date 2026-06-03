@@ -184,12 +184,6 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：unknown
 - Tags：gguf, endpoints_compatible, region:us, imatrix, conversational
 
-### [FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF](https://huggingface.co/FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF)
-- 更新：2026-06-02
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：gguf, llama-cpp, neurosymbolic, vitalis, quadruflow, text-generation, license:gpl-3.0, endpoints_compatible
-
 ### [sahilchachra/LFM2.5-8B-A1B-Uncensored](https://huggingface.co/sahilchachra/LFM2.5-8B-A1B-Uncensored)
 - 更新：2026-06-02
 - 下载 / Likes：0 / 0
@@ -207,6 +201,12 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 1
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2, lfm2-vl, edge
+
+### [coder3101/LFM2.5-350M-heretic](https://huggingface.co/coder3101/LFM2.5-350M-heretic)
+- 更新：2026-06-02
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, heretic
 
 ### [LiquidAI/LFM2.5-8B-A1B-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit)
 - 更新：2026-06-01
@@ -240,7 +240,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
 - 更新：2026-05-31
-- 下载 / Likes：47742 / 440
+- 下载 / Likes：47742 / 438
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
 

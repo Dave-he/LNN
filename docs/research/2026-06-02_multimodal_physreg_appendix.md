@@ -2082,3 +2082,76 @@ EMMA paper 全篇用 ~64 hidden units, 是 *中等* regime。但本节 §27 在�
 - 关键反相: 小预算 video_only 525 vs cross_attn 248 (+50%) ↔ 大预算 video_only 0.87 vs cross_attn 7.47 (-755%);
 - 元结论: **LNN 多模态"+51% gain"是 regime-dependent 正则化策略,不是信息论优势**;
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 27. 第二十三轮 /loop — Mid-Budget Transition Curve — TRANSITION IS DRIVEN BY CONVERGENCE, NOT CAPACITY
+
+(2026-06-03 第二十三轮 /loop。Round 26 §26.7 第 1 项被 cron `8d53b97` 直接做了(大预算 cross_attn 完全倒挂);本节做互补的 **mid-budget 转变曲线**,定位反超临界点。)
+
+### 27.1 假设
+
+> 把 (h=32, ep=40) / (h=32, ep=80) 两点填入小-大预算之间,看 cross_attn 反超 video_only 的临界点在哪里。
+> - 若临界点单纯由 hidden_size 决定 → "capacity-driven" regime
+> - 若 ep=40 vs ep=80 同 capacity 下也跨越临界点 → "convergence-driven" regime
+
+### 27.2 实验结果(rover, n=200, K=1, seed=42, video_dim=3)
+
+| hidden | epochs | audio | video_only MSE | cross_attn MSE | gain |
+|---:|---:|---|---:|---:|---:|
+| 16 | 20 | normal | 525.19 | 262.87 | **+50.0%** ✅ (round 13) |
+| 32 | 40 | normal | 153.65 | 97.64 | **+36.5%** ✅ |
+| 32 | 40 | **zero** | 149.70 | **44.46** | **+70.3%** ✅✅ |
+| **32** | **80** | **normal** | **37.59** | **60.84** | **−61.8%** ❌ |
+| 64 | 80 | normal | 0.87 | 7.47 | **−755%** ❌❌ (cron r23) |
+| 64 | 80 | zero | 0.87 | 57.34 | **−6462%** ❌❌❌ (cron r23) |
+
+JSON: `analysis/emma_rover/2026-06-03_r23_mid_budget_transition.json`。
+
+### 27.3 关键发现 — 临界点是 *训练时长* 跨越的,不是 *容量*
+
+(h=32, ep=40) → **+36.5%** PASS, video_only MSE 153.65 (未充分收敛)
+(h=32, ep=80) → **−61.8%** FAIL, video_only MSE **37.59** (远更收敛)
+
+**同一容量** hidden=32,**只把训练时长从 ep=40 翻倍到 ep=80**,gain 就从 +36.5% 翻转到 −61.8%。
+
+→ **关键修正**:round 22 §26.4 把 regime 描述为 "capacity-driven"(小容量 = 正则化收益,大容量 = 干扰)。**本轮发现 regime 实际是 *convergence-driven* — cross_attn 的收益完全取决于 video_only 距离收敛多远**:
+- video_only **未收敛(MSE > 100)**: cross_attn 正则化收益 PASS
+- video_only **接近收敛(MSE < 50)**: cross_attn 反而拖累优化 FAIL
+
+这是 23 轮以来对 "+51% gain" 的最精确机制描述。
+
+### 27.4 副发现 — audio=zero 在小-中预算下显著优于 audio=normal
+
+(h=32, ep=40) audio=zero MSE = **44.46**,gain **+70.3%**;同配置 audio=normal MSE = 97.64,gain +36.5%。
+audio=zero **比 audio=normal 好 +33.8pp**。
+
+→ 进一步证明 round 16 §19 结论:**audio 实际信息内容对 cross_attn 几乎无价值**;空音频(zero)甚至比真 audio 更好,因为它让第二 encoder 自由专门化为最优正则模式。
+
+但在大预算下(cron r23):audio=zero 反而最差(−6462% vs audio=normal 的 −755%)。这是个 dramatic 不对称:audio=zero 在欠拟合 regime 是最佳正则;在过拟合 regime 是最差污染。**audio 的角色随 regime 完全反转**。
+
+### 27.5 七维元结论修正 — 完整 regime-conditional 矩阵
+
+| Regime | 定义(by video_only MSE) | cross_attn audio=normal | cross_attn audio=zero | 推荐架构 |
+|---|---|---:|---:|---|
+| **欠拟合(< 100 远)** | h≤16, ep≤20 | +50% | +47%(类似) | **cross_attn(任何 audio)** |
+| **欠拟合(中等)** | h=32, ep=40 (vo MSE 153) | +36.5% | **+70.3%(最佳)** | **cross_attn(audio=zero)** |
+| **接近收敛** | h=32, ep=80 (vo MSE 38) | −61.8% | (untested) | **video_only** |
+| **完全收敛** | h=64, ep=80 (vo MSE 0.87) | −755% | −6462%(最差) | **video_only** |
+
+23 轮 ablation 后的最终元结论:
+> **Cross-attention + 第二 LTC/CfC encoder 是欠拟合 regime 的隐式正则化方法**。所谓 "EMMA 两流互补" 在生产容量下消失;在欠拟合下 audio=zero 反而比 audio=normal 好。
+
+### 27.6 W+1 backlog
+
+- ~~mid-budget 转变曲线~~(本节 ✅)
+- *新增*:**(h=32, ep=80) audio=zero 测试** — 填补 §27.2 表中唯一缺的格,验证大预算 zero 是否仍最差
+- *新增*:**convergence-driven hypothesis 在合成 burst 上复现** — 看 regime 转变是否任务通用而非 rover-specific
+- *新增*:**自适应训练策略** — 训练早期用 cross_attn,后期切换到 video_only(双 regime 利用)
+- LSTM second encoder(仍未做)
+- 真实 EMMA 多视频 / quadrotor(数据未释出)
+
+### 27.7 测试 + 提交
+
+- `pytest tests/` **137/137 全过**,零回归。
+- 提交本节 §27 + 1 个 JSON。

@@ -28,12 +28,12 @@ REPRO_RULES: list[tuple[list[str], str, list[str]]] = [
     (
         ["natural gas", "henry hub", "gas price", "gas spot price", "energy forecasting"],
         "scripts/replicate_paper_experiment.py",
-        ["--output-dir", "analysis/replication/natural_gas"],
+        ["--output_dir", "analysis/replication/natural_gas"],
     ),
     (
         ["temporal dropout", "robust", "robustness", "noise injection", "clinical utility"],
         "scripts/replicate_temporal_dropout.py",
-        ["--output-dir", "analysis/replication/temporal_dropout"],
+        ["--output_dir", "analysis/replication/temporal_dropout"],
     ),
     (
         ["imitation", "mixture density", "mdn", "push-t", "robomimic", "behavior cloning"],
