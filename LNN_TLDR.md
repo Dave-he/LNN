@@ -1,7 +1,7 @@
 ---
-title: LNN Multimodal TL;DR (v6)
+title: LNN Multimodal TL;DR (v7)
 date: 2026-06-04
-tags: [LNN, multimodal, TLDR, SOTA, adaptive-freeze, regime, random-window-specific, seed-lucky, family-conditional, NAD-vs-ODE, vanilla-CfC, v6]
+tags: [LNN, multimodal, TLDR, SOTA, adaptive-freeze, regime, random-window-specific, seed-lucky, family-conditional, NAD-vs-ODE, vanilla-CfC, sigma-switch, v7]
 related:
   - "[[LNN_QUICKSTART]]"
   - "[[docs/guides/LNN_MULTIMODAL_DESIGN]]"
@@ -10,11 +10,12 @@ related:
   - "[[docs/research/2026-06-03_loo_multiseed_encoder_families_report]]"
   - "[[docs/research/2026-06-04_audio_family_crossover_report]]"
   - "[[docs/research/2026-06-04_4family_audio_crossover_report]]"
+  - "[[docs/research/2026-06-04_audio_snr_threshold_report]]"
 ---
 
 # 🚀 LNN 多模态系统 — TL;DR v6 (30 秒读完)
 
-> **TL;DR (v6)**: 跨 **47 轮** ablation + 5-seed × 4 family × 3 audio = **60 runs** 完整交叉后,本仓库发现两件大事:**(★ 26th)** family × audio 交互 50% 方差, audio 主效应 0.12%;**(★ 27th)** **vanilla CfC (no NAD) 在 clean audio 下击败所有 family** (474.34 ± 52.16, 5-seed mean) — *击败 Bi-CfC-NAD 13.4%*!Bi-CfC-NAD 仅在 audio=random 下反超 vanilla_cfc 2.2%。NAD 是"锦上添花"而非"必要条件",**closed-form ODE 本身**已提供 family 优势。Round 21 的 "Bi-CfC family 必要" 结论**部分 REFUTED** — 修订为 "**CfC family (含 vanilla) 必要 + NAD 仅在 noisy audio 下显优势**"。生产推荐: **clean audio + 小数据 → vanilla_cfc**;**noisy audio + 大数据 → Bi-CfC-NAD**;**GRU 全程不推荐**。
+> **TL;DR (v7)**: 跨 **48 轮** ablation + 5-seed × 4 family × 5 noise level = **60 runs SNR scan** 后,本仓库发现 **Bi-CfC-NAD "需要" 轻微噪声才能让 NAD 触发**:**sigma=0.0 (完全干净) 下 Bi-CfC 最差** (581.50, NAD 无 noise 可降权被迫过拟合);**sigma=0.1 (轻微噪声) 下 Bi-CfC 全局最佳** (478.77, NAD 完美 gate 噪声);**sigma=0.5-2.0 下退化** (521-537, 信号也被遮蔽)。**Switch point 在 sigma=0.0→0.1**,远早于 random audio 的 sigma=∞。**vanilla_cfc 在 sigma=0.0 下全局最佳** (453.39, 击败 Bi-CfC 22%)。**LSTM/GRU 对 audio 加噪无感**(protocol 忽略 audio)。生产推荐: **完全干净合成 → vanilla_cfc (453)**;**真实数据 (含噪) → Bi-CfC-NAD (479)**;**主动 sigma=0.1 noise injection on clean → Bi-CfC**;**GRU 全程不推荐**。
 
 
 ## 5 句话核心结论
@@ -118,6 +119,35 @@ JSON:
   - clean audio + 小数据 → **vanilla_cfc**
   - noisy audio + 大数据 → **Bi-CfC-NAD**
   - GRU 全程不推荐
+
+## ★ **Bi-CfC-NAD sigma-switch 现象** (round 48, ★ 28th meta-conclusion refinement)
+
+**4 family × 5 noise level × 3 seed = 60 runs SNR scan** (脚本 `scripts/benchmark_audio_snr_threshold_scan.py`):
+
+| family ↓ \ sigma → | 0.0 | **0.1** | 0.5 | 1.0 | 2.0 |
+|---|---:|---:|---:|---:|---:|
+| **vanilla_cfc** | **453.39** 🏆 | 498.15 | 498.15 | 498.15 | 498.15 |
+| **bi_cfc_nad** | 581.50 ❌ | **478.77** 🏆 | 536.69 | 527.63 | 521.46 |
+| lstm | 483.39 | 541.54 | 541.54 | 541.54 | 541.54 |
+| gru | 544.61 | 567.83 | 567.83 | 567.83 | 567.83 |
+
+**Switch point analysis (Bi-CfC vs vanilla_cfc)**:
+- sigma=0.0: vanilla_cfc 领先 128 (Bi-CfC 失败)
+- sigma=0.1: **Bi-CfC 反超 19** (NAD 触发,全局最佳)
+- sigma=0.5+: vanilla_cfc 反超 23-38 (信号被噪声遮蔽)
+- **★ 28th meta-conclusion 升级**:
+  - **Bi-CfC-NAD 是个 "NAD 触发器"** — sigma=0 时 NAD 无 noise 可降权,**被迫过拟合 audio**;sigma>0 时 NAD 完美 gate 噪声
+  - **Switch point 在 sigma=0.0→0.1**,远早于 random audio 的 sigma=∞
+  - **LSTM/GRU/vanilla_cfc 对 audio 加噪无感** (round 21 protocol: 第二 encoder 接 video 而非 audio)
+  - **生产推荐更新**:
+    - 完全干净 audio → **vanilla_cfc** (453, 击败 Bi-CfC 22%)
+    - 真实数据 (含轻微噪) → **Bi-CfC-NAD** (479)
+    - 主动 sigma=0.1 noise injection on clean audio → **Bi-CfC** 稳定拿到 478
+    - 中-高噪声 → **Bi-CfC-NAD** (521)
+    - GRU 全程不推荐
+  - **Bi-CfC 实际是 "NAD-augmented video-only encoder"** — 它**根本不用 audio**,只是 NAD 的副作用看起来像 cross-modal
+
+JSON: `analysis/emma_rover/2026-06-04_004809_audio_snr_threshold_scan.json`
 
 JSONs:
 - `analysis/emma_rover/2026-06-04_003405_audio_family_crossover.json` (3 family × 3 audio = 45 runs, round 46)

@@ -15,7 +15,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - 已下载 PDF：0 个
 
 ## 数据源状态
-- `arXiv fetch failed: HTTP Error 429: Unknown Error`
+- `arXiv fetch failed: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>`
 - 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
 
 ## arXiv 候选论文
