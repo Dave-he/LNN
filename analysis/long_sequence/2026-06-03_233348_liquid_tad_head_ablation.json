@@ -1,0 +1,60 @@
+{
+  "run_id": "2026-06-03_233348",
+  "experiment": "liquid_tad_head_ablation",
+  "generated_at": "2026-06-03T23:33:48.635394",
+  "environment": {
+    "device": "cpu",
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "python": "3.14.4"
+  },
+  "config": {
+    "samples": 192,
+    "seq_len": 96,
+    "feature_size": 6,
+    "num_classes": 3,
+    "hidden_size": 32,
+    "num_blocks": 3,
+    "epochs": 8,
+    "batch_size": 16,
+    "lr": 0.0003,
+    "seed": 42,
+    "init_decay": 0.8,
+    "decay_growth": 1.05,
+    "device": "cpu",
+    "output_dir": "analysis/long_sequence"
+  },
+  "results": [
+    {
+      "name": "data_dependent",
+      "parameters": 22730,
+      "train_loss_final": 0.4498874545097351,
+      "val_loss_final": 0.3982137441635132,
+      "test_loss": 0.4142236262559891,
+      "test_frame_accuracy": 0.9201388888888888,
+      "test_boundary_mae": 0.23149894177913666,
+      "elapsed_seconds": 15.623393669025972
+    },
+    {
+      "name": "hierarchical_decay",
+      "parameters": 19526,
+      "train_loss_final": 0.23561198181576198,
+      "val_loss_final": 0.21904604136943817,
+      "test_loss": 0.22235003113746643,
+      "test_frame_accuracy": 0.9934027777777777,
+      "test_boundary_mae": 0.1943894773721695,
+      "elapsed_seconds": 14.151446821168065
+    },
+    {
+      "name": "hierarchical_shared",
+      "parameters": 19462,
+      "train_loss_final": 0.23182684679826102,
+      "val_loss_final": 0.21646051853895187,
+      "test_loss": 0.21924155950546265,
+      "test_frame_accuracy": 0.9913194444444444,
+      "test_boundary_mae": 0.1933135837316513,
+      "elapsed_seconds": 14.718144386075437
+    }
+  ],
+  "json_path": "analysis/long_sequence/2026-06-03_233348_liquid_tad_head_ablation.json"
+}
