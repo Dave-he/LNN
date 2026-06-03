@@ -1,0 +1,38 @@
+{
+  "config": {
+    "epochs": 80,
+    "num_samples": 800,
+    "seq_len": 32,
+    "hidden_size": 32,
+    "num_mixtures": 2,
+    "batch_size": 32,
+    "lr": 0.005,
+    "seed": 42,
+    "device": "cpu",
+    "force_kind": "burst",
+    "warmup_epochs": [
+      20,
+      40,
+      60
+    ]
+  },
+  "pure_xattn_test_mse": 0.7116691470146179,
+  "pure_vo_test_mse": 0.6409543752670288,
+  "adaptive": {
+    "K20": {
+      "test_mse": 0.7429278492927551,
+      "elapsed_s": 78.16051120497286
+    },
+    "K40": {
+      "test_mse": 0.7267481088638306,
+      "elapsed_s": 83.89533879503142
+    },
+    "K60": {
+      "test_mse": 0.7229244112968445,
+      "elapsed_s": 91.24464359798003
+    }
+  },
+  "best_label": "pure video_only",
+  "best_test_mse": 0.6409543752670288,
+  "claim_passed": false
+}

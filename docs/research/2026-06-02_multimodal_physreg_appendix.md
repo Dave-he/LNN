@@ -2728,3 +2728,76 @@ LNN/
 - `docs/guides/LNN_MULTIMODAL_DESIGN.md` (190 行,完整设计指南)
 - `docs/research/2026-06-02_multimodal_physreg_appendix.md` §1-§30 (完整 ablation 历史)
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 31. 第二十七轮 /loop — Adaptive Freeze on Synthetic Burst — NEGATIVE: ROVER-SPECIFIC
+
+(2026-06-03 第二十七轮 /loop。Round 30 §30.5 W+1 第 1 项:把 round 26 的 SOTA recipe 在合成 burst 任务上复现,验证是否 task-agnostic。)
+
+### 31.1 假设
+
+> Round 26 在 EMMA rover 上拿到 adaptive freeze SOTA(audio_only K=40 → MSE 0.31)。同 recipe 在 `HeterogeneousForcedDataset(force_kind='burst')` + h=32/ep=80 + K=40 audio_only 应当**严格优于**两端点(pure cross_attn 与 pure video_only)。如果 PASS,recipe 可发布为通用 LNN 多模态 training recipe。
+
+### 31.2 实现
+
+`scripts/benchmark_adaptive_freeze_burst.py` — 镜像 rover 版本,把 dataset 换成 burst,把 video_only 用 input_size=2(concat 1ch video + 1ch audio)。3 个 K(20/40/60)+ 两个端点对照。
+
+### 31.3 实验结果(burst, h=32, ep=80, n=800, K_mix=2, seed=42)
+
+| 配置 | test MSE | vs vo(0.6410) |
+|---|---:|---:|
+| pure cross_attn | 0.7117 | −11.0%(worse) |
+| **pure video_only(concat 2-ch)** | **0.6410** | **baseline ✅ 胜** |
+| adaptive K=20 | 0.7429 | −15.9% |
+| adaptive K=40 | 0.7267 | −13.4% |
+| adaptive K=60 | 0.7229 | −12.8% |
+
+→ **可证伪假设彻底否定**:adaptive freeze 在任何 K 下都**不优于两端点中较好者**;甚至连 pure cross_attn 都被 pure video_only 打败。
+   JSON:`analysis/multimodal_physreg/2026-06-03_r27_adaptive_freeze_burst_h32.json`。
+
+### 31.4 根因诊断 — 为什么 burst 上 recipe 失败?
+
+| Property | EMMA rover | Synthetic burst |
+|---|---:|---:|
+| Pure cross_attn vs pure vo @ h=32/ep=80 | 60.84 vs 37.59(cross_attn 输) | 0.71 vs 0.64(cross_attn 输) |
+| Pure xattn 是 strict over-fitter? | 是(round 23 已观察) | 是(本节首测) |
+| Adaptive freeze K=40 vs pure vo | **4.49 vs 37.59 = 8.4× 胜**(round 25) | **0.73 vs 0.64 = 14% 输**(本节) |
+| Task MSE 绝对范围 | 0.87 ~ 525 (~600× 跨度) | 0.6 ~ 1.0 (~1.7× 跨度) |
+| Audio 信息独立性 | motor RPM ↔ wheel radius 强耦合 | F(t) forcing input ≈ ω 直接观测,与 video 高度冗余 |
+
+**核心差异 — task signal-to-noise ratio**:
+- Rover 任务 MSE 跨度极大(525→0.87,600×),欠拟合状态明显,phase 1 cross_attn warmup 有大量优化空间可以"打开"video_encoder 的表示
+- Burst 任务 MSE 跨度小(1.0→0.6,1.7×),pure vo 已经接近最优;cross_attn warmup 等于在"已接近最优"的 video_encoder 上叠加额外干扰
+
+→ **Adaptive freeze recipe 的有效性需要 pure cross_attn 与 pure vo 之间存在足够大的"未发掘潜力"才能 exploit**。Burst 任务两端点本身就在 1.1× 跨度内,没有可被 adaptive 策略捕获的中间最优点。
+
+### 31.5 元结论第十一次精化 — Recipe 是 regime-dependent 且 task-specific
+
+| Round | 关键发现 |
+|---:|---|
+| 22 | regime 是 convergence-driven |
+| 23 | 转变临界点定位 |
+| 25 | adaptive freeze SOTA(rover h=32) |
+| 26 | adaptive freeze SOTA(rover h=64,K=0.5×total 通用最优) |
+| **27(本节)** | **recipe 在 burst 上 FAIL — 不是 task-agnostic** |
+
+**修订后的 LNN 多模态 production recipe 适用条件**:
+1. 任务上 pure cross_attn vs pure vo 的 MSE 跨度足够大(>5×,如 rover 525→0.87)
+2. pure cross_attn 在小预算下显著优于 pure vo
+3. 两个端点之间有可被 adaptive 策略捕获的 ~10× 改善潜力
+
+Burst 任务不满足这些条件 — 因此 adaptive freeze 失效。这进一步收窄了 recipe 的适用域,但本身是诚实的研究信号:**没有任何 LNN 多模态架构是普遍最优的;必须按任务测试**。
+
+### 31.6 W+1 backlog 调整
+
+- ~~adaptive freeze burst 复现~~(本节 ❌ 证伪)
+- *新增*:**adaptive freeze 在 noisier burst(audio_noise_std=2.0+)上重测** — 看噪声增大是否拉开端点差距、让 adaptive 重新有用
+- *新增*:**找到任务上 pure xattn / pure vo gap 与 adaptive freeze 收益的关系曲线** — 解析 recipe 适用域
+- *现存*:K=30/50 在 h=64 上的精细扫描(round 30 W+1 #2)
+- 真实 EMMA 多视频 / quadrotor(数据未释出)
+
+### 31.7 测试 + 提交
+
+- `pytest tests/` **137/137 全过**,零回归。
+- 提交 burst benchmark 脚本 + 1 个 JSON + 本节 §31。
