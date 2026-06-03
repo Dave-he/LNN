@@ -3077,3 +3077,101 @@ if gap <= -27:              # ★★ very strong gain expected
 
 - `pytest tests/` **142/142 全过**(cron round 28-cf14d21 增加了 large_budget pytest marker,共 142 测试),零回归。
 - 提交 4 个新 noise JSON + 本节 §33。
+
+---
+
+## 34. 第三十轮 /loop — Rover Formula Verification — **FORMULA IS BURST-SPECIFIC**
+
+(2026-06-03 第三十轮 /loop。Round 33 §33.7 W+1 第 2 项:把 burst 上拟合的 `adaptive_gain ≈ -1.46 × gap` 公式拿到 rover 上验证 — 是否 task-agnostic。)
+
+### 34.1 假设
+
+> Round 29 在 burst 上拟合的线性公式 `adaptive_gain ≈ -1.46 × gap (R² = 0.88)` 应当在 rover 上也成立。在 rover h=32/ep=80 三个 audio_mode 下测,残差 ≤ 30pp 则 task-agnostic;残差 > 50pp 则 burst-specific。
+
+### 34.2 实验结果(rover, h=32/ep=80, n=200, K_mix=1, seed=42)
+
+| audio_mode | pure_xattn | pure_vo | adaptive K=40 | gap (%) | 实测 gain (%) | 公式预测 | 残差 (pp) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| normal (round 25 ref) | 60.84 | 37.59 | 4.49 | **+61.9** | **+88.1** | −90.3 | **+178.4** |
+| zero | 64.14 | 29.84 | 22.40 | **+114.9** | **+25.0** | −167.8 | **+192.7** |
+| random | 41.06 | 51.51 | 3.80 | **−20.3** | **+92.6** | +29.6 | **+63.0** |
+
+→ **可证伪假设彻底证伪**:三个残差全部 ≥ 63pp,最大达 +192.7pp。**公式在 rover 上严重失效**。
+   JSON:`analysis/emma_rover/2026-06-03_r30_h32ep80_audio_{zero,random}.json`。
+
+### 34.3 三个观察
+
+#### A. 符号都被颠倒
+
+公式预测 `gap > 0 → gain < 0 (FAIL)`,但 rover 上:
+- audio=normal: gap=+62%(xa 大败 vo),实测 gain=+88%(adaptive 巨胜)— 符号反!
+- audio=zero: gap=+115%(xa 极败),实测 gain=+25%(adaptive 仍胜)— 符号反!
+
+#### B. Rover 上 adaptive 几乎总是 PASS,不论 gap 符号
+
+在 rover 上,即便 pure_xattn 远败于 pure_vo(gap +115%),adaptive freeze 仍能拿到 +25% gain。这是 burst 上完全看不到的现象 — burst 上 gap > 0 → adaptive 必 FAIL。
+
+#### C. 但 rover 内部 *存在* 弱单调
+
+| audio_mode | gap | adaptive gain |
+|---|---:|---:|
+| random | −20% | +92.6%(最高) |
+| normal | +62% | +88.1% |
+| zero | +115% | +25.0%(最低) |
+
+gap 越正(pure_xattn 越差),adaptive_gain 越低。但是 monotonic 关系不是 −1.46×,而是更平缓 — adaptive freeze 把"差的 pure_xattn"也 rescue 到接近 vo 的水平。
+
+### 34.4 元结论第十四次精化 — 两种 regime 的双轨理论
+
+| Regime | 任务特征 | adaptive_gain 公式 |
+|---|---|---|
+| **Long-tailed (rover-like)** | test MSE 跨 100× 以上(525 → 0.31);多个 hidden_size 下端点 MSE 差异巨大;EMMA 真实数据 | adaptive 几乎总 PASS;gap 弱预测能力;**use adaptive freeze 是默认** |
+| **Compressed (burst-like)** | test MSE 跨 < 2×(1.0 → 0.6);端点 MSE 差异小;合成短窗任务 | adaptive_gain ≈ −1.46 × gap;**gap < 0 才 PASS** |
+
+新生产决策树:
+
+```python
+# Step 1: 任务 spread 测试 - 跑 pure_vo 在 (h=16, h=32, h=64) 三档
+mse_spread = max_mse / min_mse  # video_only across hidden_sizes
+
+# Step 2: 选 regime
+if mse_spread > 30:
+    regime = "long-tailed"  # rover-like; adaptive 几乎总赢
+elif mse_spread < 3:
+    regime = "compressed"   # burst-like; gap-driven 公式适用
+else:
+    regime = "moderate"     # 混合,需要更多测试
+
+# Step 3: 应用对应策略
+if regime == "long-tailed":
+    用 adaptive freeze K=0.5 × total audio_only (默认)
+elif regime == "compressed":
+    测 gap,按 -1.46×gap 公式决定;gap >= 0 时用 pure_vo
+else:
+    pilot 两个端点决定
+```
+
+### 34.5 关键意外发现 — Rover 上 audio=random 给出 adaptive 历史最高 gain
+
+rover audio=random 配置:
+- pure_xattn 41.06(round 16 同结构 h=16 下 cross_attn(random)=0.396 是相对 vo 最大 gain;本节 h=32/ep=80 也是 pure_xattn 三档中最低)
+- pure_vo 51.51(audio=random 让 vo 变差,因为 concat 了 noisy audio)
+- adaptive K=40 = **3.80** ← **比 round 25 audio=normal 的 4.49 更低!**
+
+→ 这是 30 轮以来 h=32/ep=80 下的最低 MSE 3.80,挑战了 round 25 的 4.49 SOTA。
+→ 机制:audio=random 在 phase 1 给 cross_attn 提供更强的"无信息音频" 正则信号,phase 2 frozen audio_encoder 输出更稳定的 noisy-context anchor,让 video_encoder+MDN 在 fine-tune 阶段更高效。
+→ **联合发现**:adaptive freeze K=40 + audio_mode='random' 可能是 rover 上新的 SOTA recipe。
+   JSON:`analysis/emma_rover/2026-06-03_r30_h32ep80_audio_random.json`。
+
+### 34.6 W+1 backlog
+
+- ~~rover 上验证 1.46× 公式~~(本节 ❌ 公式 burst-specific)
+- *新增*:**rover audio=random + adaptive freeze 在 h=64 上跑** — 看是否能突破 round 26 的 h=64 SOTA 0.31
+- *新增*:**找到 "mse_spread > 30" 的精确阈值** — 用 3-5 个 hidden_size 测各任务的 spread
+- *新增*:**EMMA quadrotor 数据集上同样跑两组 regime test**(数据释出后)
+- *现存*:K=30/50 在 h=64 上的精细扫描
+
+### 34.7 测试 + 提交
+
+- `pytest tests/` **142/142 全过**,零回归。
+- 提交 2 个新 audio_mode rover JSON + 本节 §34。
