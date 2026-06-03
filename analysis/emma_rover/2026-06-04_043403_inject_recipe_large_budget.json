@@ -1,0 +1,99 @@
+{
+  "config": {
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3
+    ],
+    "test_sigma": 0.0
+  },
+  "probe1_large_budget": {
+    "description": "h=64, ep=80, test_sigma=0.0, inject in {0.0, 0.1}",
+    "results": {
+      "inject0.0": {
+        "inject": 0.0,
+        "per_seed_mse": [
+          80.85798645019531,
+          0.131370410323143,
+          398576.875
+        ],
+        "mean": 132885.95478562018,
+        "std": 230095.0900007855
+      },
+      "inject0.1": {
+        "inject": 0.1,
+        "per_seed_mse": [
+          0.8389314413070679,
+          2.5789756774902344,
+          16935.474609375
+        ],
+        "mean": 5646.297505497932,
+        "std": 9776.71419849047
+      }
+    }
+  },
+  "probe2_finer_inject": {
+    "description": "h=16, ep=20, test_sigma=0.0, inject in {0.0, 0.05, 0.1, 0.15, 0.2}",
+    "results": {
+      "inject0.0": {
+        "inject": 0.0,
+        "per_seed_mse": [
+          595.9951171875,
+          564.1939086914062,
+          584.3253784179688
+        ],
+        "mean": 581.5048014322916,
+        "std": 16.087136362700004
+      },
+      "inject0.05": {
+        "inject": 0.05,
+        "per_seed_mse": [
+          473.0202941894531,
+          485.5361328125,
+          563.3804321289062
+        ],
+        "mean": 507.3122863769531,
+        "std": 48.95803590991199
+      },
+      "inject0.1": {
+        "inject": 0.1,
+        "per_seed_mse": [
+          426.57684326171875,
+          488.6432189941406,
+          521.0758056640625
+        ],
+        "mean": 478.7652893066406,
+        "std": 48.01763837344866
+      },
+      "inject0.15": {
+        "inject": 0.15,
+        "per_seed_mse": [
+          530.5313720703125,
+          492.90020751953125,
+          608.544921875
+        ],
+        "mean": 543.9921671549479,
+        "std": 58.98575881365262
+      },
+      "inject0.2": {
+        "inject": 0.2,
+        "per_seed_mse": [
+          400.7763366699219,
+          510.87774658203125,
+          523.0425415039062
+        ],
+        "mean": 478.2322082519531,
+        "std": 67.35395007549228
+      }
+    }
+  },
+  "metadata": {
+    "round": 55,
+    "follows_up": "round 54 noise injection production recipe (34th meta-refinement)",
+    "hypotheses": {
+      "H_a": "inject=0.1 wins at h=64/ep=80 (recipe is budget-invariant)",
+      "H_b": "0.1 is the optimal inject (V-shape or U-shape around 0.1)"
+    }
+  }
+}
