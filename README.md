@@ -11,13 +11,21 @@ date: 2026-05-24
 
 欢迎来到 **LNN (Liquid Neural Networks)** 研究与开源项目追踪仓库。本仓库旨在收集、整理并分析液态神经网络领域的最新论文、开源项目以及相关的实验代码。
 
+## ⚡ 30 秒 TL;DR
+
+> **新 SOTA**: 真实 EMMA rover 数据上 **MSE 0.31** (2.8× 优于 video_only baseline 0.87),通过 *adaptive freeze-after-warmup* 策略 + Bi-CfC-NAD backbone。跨 25 轮 ablation 后的核心结论: *regime 决定一切* (小预算 cross_attn 赢, 大预算 video_only 赢); *audio 信息内容 ≤ 5pp 贡献*; *family 选 LSTM/CfC/Bi-CfC-NAD 几乎并列* (均 +32~+36%)。详见 `LNN_TLDR.md` (1 页摘要) + `docs/guides/LNN_MULTIMODAL_DESIGN.md` (完整指南)。
+
 ## 📂 目录结构
 
 ```text
 LNN/
 ├── AGENTS.md                   # 自动化 Agent 规划与工作流说明
 ├── README.md                   # 项目概述与指南 (本文档)
+├── LNN_TLDR.md                 # 30 秒 TL;DR (新 PR 作者入口)
 ├── docs/                       # 文档目录（调研报告、论文总结、学习笔记等）
+│   ├── guides/                 # 设计指南
+│   │   └── LNN_MULTIMODAL_DESIGN.md   # 完整设计指南
+│   └── research/               # 25 轮 ablation 报告
 ├── papers/                     # 论文归档与每日追踪
 │   └── daily/                  # 每日/定期论文抓取记录
 ├── skills/                     # 符合 Vercel Skills 标准的 AI Agents 技能库
@@ -28,6 +36,11 @@ LNN/
 │       └── SKILL.md
 ├── projects/                   # 开源项目克隆、复现代码与实验项目
 ├── analysis/                   # 实验结果分析、数据或可视化相关
+│   ├── emma_rover/             # 真实 rover 数据所有 JSON
+│   └── multimodal_physreg/     # 合成数据所有 JSON
+├── lnn/                        # 核心 LNN 库
+│   ├── core/                   # 模型 + 编码器
+│   └── data/                   # 数据集
 └── scripts/                    # 自动化脚本（论文抓取、数据处理等）
 ```
 

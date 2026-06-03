@@ -2656,3 +2656,75 @@ freeze_targets = "audio_only"              # 大预算下: 只冻 audio_encoder
 
 - `pytest tests/` **137/137 全过**,零回归。
 - 提交 6 个 h=64 JSON + 本节 §30 + script 的 filename patch。
+
+---
+
+## 31. 第二十七轮 /loop — TL;DR for New PR Authors — **入口文档定稿**
+
+(2026-06-03 第二十七轮,1h cron `51a1f8bf` 触发。W+1 收尾:写 `LNN_TLDR.md` 放在仓库根, 30 秒入口 + 5 句话核心结论 + 5 行 production recipe + 必读清单。)
+
+### 31.1 动机
+
+25 轮 ablation 后,本仓库有 *巨大* 知识资产 (跨模态系统、9 个 ablation 类、5 个 benchmark 脚本、6 个扫描工具、20+ 论文索引)。但这些散落在 29 个 sections + 多个子模块里,新 PR 作者 30 秒内 *根本不可能* 知道:
+- SOTA 在哪里 (MSE 0.31, freeze-after-warmup)
+- 关键陷阱 (regime 翻转, audio 内容无关, GRU seed-sensitive)
+- 必读清单 (3 个文档)
+- 必跑流程 (3 步)
+
+本轮写 `LNN_TLDR.md` (64 行), 摘要 *5 句话核心结论 + 5 行 production recipe + 必读清单 + 3 步操作*,放在仓库根 + 链接到 README + design guide。
+
+### 31.2 产物
+
+`LNN_TLDR.md` (64 行):
+- **5 句话核心结论**:
+  1. regime 决定一切
+  2. 新 SOTA: adaptive freeze-after-warmup (MSE 0.31, 2.8× better)
+  3. recurrent + trainable + 输入有变化 是必要三条件
+  4. audio 信息内容 ≤ 5pp
+  5. hidden ≥ 8 起步; hidden=8 反常是 task-dependent
+- **5 行 production recipe** (★):
+  ```
+  hidden_size = 64
+  epochs = 80
+  warmup_epochs = 40       # 0.5 × total
+  freeze_targets = "audio_only"
+  # After warmup: requires_grad=False on audio_encoder; rebuild Adam.
+  ```
+- **必读清单** (3 文档): LNN_TLDR.md → LNN_MULTIMODAL_DESIGN.md → 25-轮 ablation 报告
+- **3 步操作**: 跑 pytest / 跑 2 个 regime / 比较 5 个 baseline
+- **一句话备忘**: *LNN 多模态系统的最优架构不是跨模态 attention, 而是 adaptive freeze 的单流 Bi-CfC-NAD*
+
+`README.md` 加 *30 秒 TL;DR 块* (4 行 + 5 行 production recipe) + 仓库结构图更新 (标 LNN_TLDR.md, docs/guides/, lnn/core, analysis/emma_rover)。
+
+### 31.3 仓库结构 (本轮新增后)
+
+```
+LNN/
+├── LNN_TLDR.md                    ★ NEW (1 页入口)
+├── README.md                       (含 30 秒 TL;DR 块 + 链接)
+├── docs/
+│   ├── guides/
+│   │   └── LNN_MULTIMODAL_DESIGN.md   (完整指南)
+│   └── research/
+│       └── 2026-06-02_multimodal_physreg_appendix.md  (25 轮 ablation)
+├── lnn/
+│   ├── core/                       (9 个 ablation 模型)
+│   └── data/                       (真实 + 合成数据)
+├── analysis/
+│   ├── emma_rover/                 (真实数据 JSON)
+│   └── multimodal_physreg/         (合成数据 JSON)
+└── scripts/                        (5 benchmark + 6 扫描)
+```
+
+### 31.4 测试 + 提交
+
+- `pytest tests/` **137/137 通过** (纯文档,无新单测)
+- 提交 LNN_TLDR.md + README.md 更新
+- 未来新 PR 作者应在 PR description 里 link `LNN_TLDR.md`
+
+### 31.5 参考
+
+- `LNN_TLDR.md` (本轮新增,64 行)
+- `docs/guides/LNN_MULTIMODAL_DESIGN.md` (190 行,完整设计指南)
+- `docs/research/2026-06-02_multimodal_physreg_appendix.md` §1-§30 (完整 ablation 历史)
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
