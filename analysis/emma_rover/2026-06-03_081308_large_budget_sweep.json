@@ -1,0 +1,45 @@
+{
+  "run_id": "2026-06-03_081308",
+  "config": {
+    "epochs": 80,
+    "num_samples": 200,
+    "window": 16,
+    "feature_noise_std": 0.02,
+    "hidden_size": 64,
+    "num_mixtures": 1,
+    "batch_size": 32,
+    "lr": 0.005,
+    "seed": 42,
+    "output_dir": "analysis/emma_rover"
+  },
+  "runs": [
+    {
+      "model_kind": "video_only",
+      "audio_mode": "normal",
+      "parameters": 45067,
+      "elapsed_seconds": 10.049084460013546,
+      "test_param_mse": 0.8739354014396667
+    },
+    {
+      "model_kind": "uni_video_xattn",
+      "audio_mode": "normal",
+      "parameters": 121355,
+      "elapsed_seconds": 20.220364267006516,
+      "test_param_mse": 25.147228240966797
+    },
+    {
+      "model_kind": "cross_attn",
+      "audio_mode": "normal",
+      "parameters": 120075,
+      "elapsed_seconds": 21.721388582023792,
+      "test_param_mse": 7.46921443939209
+    },
+    {
+      "model_kind": "cross_attn",
+      "audio_mode": "zero",
+      "parameters": 120075,
+      "elapsed_seconds": 21.002037688042037,
+      "test_param_mse": 57.34419250488281
+    }
+  ]
+}
