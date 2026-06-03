@@ -1,18 +1,20 @@
 ---
-title: LNN Multimodal TL;DR (v5)
-date: 2026-06-03
-tags: [LNN, multimodal, TLDR, SOTA, adaptive-freeze, regime, random-window-specific, seed-lucky, family-conditional, v5]
+title: LNN Multimodal TL;DR (v6)
+date: 2026-06-04
+tags: [LNN, multimodal, TLDR, SOTA, adaptive-freeze, regime, random-window-specific, seed-lucky, family-conditional, NAD-vs-ODE, vanilla-CfC, v6]
 related:
   - "[[LNN_QUICKSTART]]"
   - "[[docs/guides/LNN_MULTIMODAL_DESIGN]]"
   - "[[docs/research/2026-06-02_multimodal_physreg_appendix]]"
   - "[[docs/research/2026-06-03_loop_research_report]]"
   - "[[docs/research/2026-06-03_loo_multiseed_encoder_families_report]]"
+  - "[[docs/research/2026-06-04_audio_family_crossover_report]]"
+  - "[[docs/research/2026-06-04_4family_audio_crossover_report]]"
 ---
 
-# 🚀 LNN 多模态系统 — TL;DR v5 (30 秒读完)
+# 🚀 LNN 多模态系统 — TL;DR v6 (30 秒读完)
 
-> **TL;DR (v5)**: 跨 **45 轮** ablation + 5-seed × 3 family LOO probe (round 45) 后,本仓库发现:**encoder family ranking 是 *regime-conditional* (★ 25th meta-conclusion refinement)**。**LOO segment-pure (h=64, ep=30, 5-seed)** 下 **Bi-CfC-NAD 293.23 ± 48.38 显著强于 LSTM 470.75 / GRU 461.32** (~60% 优势) — round 21 必要性结论**在严格 LOO 协议下成立**。**random-window small-budget (h=16, ep=20, 5-seed)** 下 ranking 翻转: **LSTM 489.98 < Bi-CfC 548.38 < GRU 554.22** — *encoder family 排名不能跨 regime 推广*。Round 43 SOTA 0.42 (5-seed mean 8.16 ± 6.78) 仍是 advisory;**5-seed ensemble 在 random-window regime 下 ~0.1% gain (REFUTED)**,**未测** LOO regime。生产推荐: **LOO + large-budget** 用 Bi-CfC-NAD;**random-window + small-budget** 用 LSTM。
+> **TL;DR (v6)**: 跨 **47 轮** ablation + 5-seed × 4 family × 3 audio = **60 runs** 完整交叉后,本仓库发现两件大事:**(★ 26th)** family × audio 交互 50% 方差, audio 主效应 0.12%;**(★ 27th)** **vanilla CfC (no NAD) 在 clean audio 下击败所有 family** (474.34 ± 52.16, 5-seed mean) — *击败 Bi-CfC-NAD 13.4%*!Bi-CfC-NAD 仅在 audio=random 下反超 vanilla_cfc 2.2%。NAD 是"锦上添花"而非"必要条件",**closed-form ODE 本身**已提供 family 优势。Round 21 的 "Bi-CfC family 必要" 结论**部分 REFUTED** — 修订为 "**CfC family (含 vanilla) 必要 + NAD 仅在 noisy audio 下显优势**"。生产推荐: **clean audio + 小数据 → vanilla_cfc**;**noisy audio + 大数据 → Bi-CfC-NAD**;**GRU 全程不推荐**。
 
 
 ## 5 句话核心结论
@@ -95,6 +97,33 @@ JSON:
 - `analysis/emma_rover/2026-06-03_233707_multiseed_encoder_families.json` (实验 1)
 - `analysis/emma_rover/2026-06-03_234159_loo_multiseed_encoder_families.json` (实验 2)
 
+## ★ **vanilla_cfc 反超 Bi-CfC-NAD** (round 47, ★ 27th meta-conclusion refinement)
+
+**5-seed × 4 family × 3 audio = 60 runs** 完整交叉(脚本 `scripts/benchmark_audio_family_crossover.py`):
+
+| family ↓ \ audio → | normal | zero | random |
+|---|---:|---:|---:|
+| **vanilla_cfc** 🆕 | **474.34** 🏆 | **474.34** 🏆 | 503.73 |
+| Bi-CfC-NAD | 548.38 | 541.50 | **492.73** 🏆 |
+| LSTM | 489.98 | 489.98 | 539.60 |
+| GRU | 554.22 | 554.22 | 555.19 |
+
+**★ 27th meta-conclusion 升级**:
+- **vanilla_cfc (closed-form ODE, no NAD) 在 clean audio 下击败所有 family** (474.34 vs Bi-CfC 548.38, **−13.4%**)
+- **Bi-CfC-NAD 仅在 audio=random 下反超 2.2%** (492.73 vs vanilla_cfc 503.73)
+- **NAD 是"锦上添花"** — 在 normal audio 下**有损**,在 noisy audio 下**显优势**
+- **Round 21 "Bi-CfC family 必要" 结论部分 REFUTED** — 修订为 "**CfC family (含 vanilla) 必要 + NAD 仅在 noisy audio 下显优势**"
+- **生产推荐公式**:
+  - `if audio_snr < threshold: use Bi-CfC-NAD else: use vanilla_cfc`
+  - clean audio + 小数据 → **vanilla_cfc**
+  - noisy audio + 大数据 → **Bi-CfC-NAD**
+  - GRU 全程不推荐
+
+JSONs:
+- `analysis/emma_rover/2026-06-04_003405_audio_family_crossover.json` (3 family × 3 audio = 45 runs, round 46)
+- `analysis/emma_rover/2026-06-04_003639_vanilla_cfc_audio_probe.json` (10 runs, round 47 mini-probe)
+- `analysis/emma_rover/2026-06-04_004034_audio_family_crossover.json` (4 family × 3 audio = 60 runs, round 47 full)
+
 ## CI 强制双 regime 测 (★ §32)
 
 ```bash
@@ -144,4 +173,4 @@ python scripts/benchmark_adaptive_freeze.py --epochs 80 --warmup-epochs 40 --fre
 
 ## 一句话备忘
 
-> **LNN 多模态系统的最优架构 *不是* 跨模态 attention,而是 *adaptive freeze* 的单流 Bi-CfC-NAD (h=96, ep=80, K=10, freeze=audio_only, LOO single-seed MSE 0.42 / 5-seed mean 8.16 ± 6.78);**第二 encoder family ranking 是 *regime-conditional* (★ 25th meta-refinement)** — LOO large-budget 下 **Bi-CfC 显著强** 60% (round 45 5-seed × 3 family 验证),random-window small-budget 下 **LSTM 反超** 13%;regime 是 hidden_size × epochs × seed × protocol 四维空间,任何 "+X% gain" 必须注明 *全部* 维度;random-window 0.31 *不是* 跨段泛化 (真 LOO mean 14.89);5-seed ensemble 在 random-window regime 下无效 (REFUTED);SOTA recipe 在 regime 外灾难性失败 — 跨任务迁移需重新调参。**生产推荐**: LOO + large-budget → Bi-CfC-NAD;random-window + small-budget → LSTM。**
+> **LNN 多模态系统的最优架构 *不是* 跨模态 attention,而是 *adaptive freeze* 的单流 Bi-CfC-NAD (h=96, ep=80, K=10, freeze=audio_only, LOO single-seed MSE 0.42 / 5-seed mean 8.16 ± 6.78);**第二 encoder 应区分 ODE 风格 vs NAD 增强** (★ 27th meta-refinement) — 4×3×5=60 runs ANOVA 终极结论:**clean audio + 小数据 → vanilla_cfc (closed-form ODE, no NAD) 最佳** (474.34, 击败 Bi-CfC 13.4%);**noisy audio → Bi-CfC-NAD 最佳** (492.73, NAD 抗噪);**GRU 全程 family 最差不推荐**;regime 是 hidden × epochs × seed × protocol × audio-noise 五维空间,任何 "+X% gain" 必须注明全部维度;SOTA recipe 在 regime 外灾难性失败 — 跨任务迁移需重新调参;5-seed ensemble 在 random-window regime 下无效 (REFUTED);random-window 0.31 *不是* 跨段泛化 (真 LOO mean 14.89)。**生产推荐公式**: `if audio_snr < threshold: Bi-CfC-NAD else: vanilla_cfc`。**

@@ -1,0 +1,52 @@
+{
+  "config": {
+    "epochs": 20,
+    "hidden_size": 16,
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42
+    ],
+    "family": "vanilla_cfc"
+  },
+  "results": {
+    "normal": {
+      "per_seed": [
+        401.21722412109375,
+        506.39227294921875,
+        452.55096435546875,
+        473.68328857421875,
+        537.852294921875
+      ],
+      "mean": 474.339208984375,
+      "std": 52.161512393665504
+    },
+    "random": {
+      "per_seed": [
+        458.96173095703125,
+        538.6986694335938,
+        496.8041687011719,
+        540.1305541992188,
+        484.0331115722656
+      ],
+      "mean": 503.72564697265625,
+      "std": 35.3126767579295
+    }
+  },
+  "reference": {
+    "bi_cfc_nad_normal_mean": 548.38,
+    "bi_cfc_nad_random_mean": 492.73,
+    "lstm_normal_mean": 489.98,
+    "lstm_random_mean": 539.6,
+    "gru_normal_mean": 554.22,
+    "gru_random_mean": 555.19
+  },
+  "hypothesis": "If vanilla_cfc at audio=random \u2248 LSTM/GRU (540-555), NAD is THE mechanism. If \u2248 Bi-CfC-NAD (493), NAD is not the only factor.",
+  "metadata": {
+    "round": 47,
+    "follows_up": "round 46 \u00a75.1 NAD hypothesis"
+  }
+}
