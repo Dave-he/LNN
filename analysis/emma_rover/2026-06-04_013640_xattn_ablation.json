@@ -1,0 +1,137 @@
+{
+  "config": {
+    "epochs": 20,
+    "hidden_size": 16,
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3
+    ],
+    "sigmas": [
+      0.0,
+      0.1,
+      0.5,
+      1.0,
+      2.0
+    ],
+    "model": "CrossModalAttnBiCfCNADWithMDN"
+  },
+  "results": {
+    "normal_xattn__sigma0.0": {
+      "condition": "normal_xattn",
+      "sigma": 0.0,
+      "per_seed": [
+        595.9951171875,
+        564.1939086914062,
+        584.3253784179688
+      ],
+      "mean": 581.5048014322916,
+      "std": 16.087136362700004
+    },
+    "normal_xattn__sigma0.1": {
+      "condition": "normal_xattn",
+      "sigma": 0.1,
+      "per_seed": [
+        426.5841369628906,
+        488.6468200683594,
+        521.0740966796875
+      ],
+      "mean": 478.7683512369792,
+      "std": 48.013292239336046
+    },
+    "normal_xattn__sigma0.5": {
+      "condition": "normal_xattn",
+      "sigma": 0.5,
+      "per_seed": [
+        475.8631591796875,
+        528.3753662109375,
+        605.8226318359375
+      ],
+      "mean": 536.6870524088541,
+      "std": 65.37720725805077
+    },
+    "normal_xattn__sigma1.0": {
+      "condition": "normal_xattn",
+      "sigma": 1.0,
+      "per_seed": [
+        415.3179931640625,
+        539.8143310546875,
+        627.7434692382812
+      ],
+      "mean": 527.6252644856771,
+      "std": 106.73600952446857
+    },
+    "normal_xattn__sigma2.0": {
+      "condition": "normal_xattn",
+      "sigma": 2.0,
+      "per_seed": [
+        453.3837890625,
+        516.345703125,
+        594.6369018554688
+      ],
+      "mean": 521.4554646809896,
+      "std": 70.76505292724008
+    },
+    "frozen_xattn__sigma0.0": {
+      "condition": "frozen_xattn",
+      "sigma": 0.0,
+      "per_seed": [
+        495.8828125,
+        539.1043090820312,
+        541.20166015625
+      ],
+      "mean": 525.3962605794271,
+      "std": 25.580899779618978
+    },
+    "frozen_xattn__sigma0.1": {
+      "condition": "frozen_xattn",
+      "sigma": 0.1,
+      "per_seed": [
+        558.8863525390625,
+        567.9581909179688,
+        534.309326171875
+      ],
+      "mean": 553.7179565429688,
+      "std": 17.409645675732637
+    },
+    "frozen_xattn__sigma0.5": {
+      "condition": "frozen_xattn",
+      "sigma": 0.5,
+      "per_seed": [
+        552.440185546875,
+        512.4050903320312,
+        572.58203125
+      ],
+      "mean": 545.8091023763021,
+      "std": 30.631593209829404
+    },
+    "frozen_xattn__sigma1.0": {
+      "condition": "frozen_xattn",
+      "sigma": 1.0,
+      "per_seed": [
+        415.3335876464844,
+        518.846435546875,
+        474.1628723144531
+      ],
+      "mean": 469.4476318359375,
+      "std": 51.91726629638761
+    },
+    "frozen_xattn__sigma2.0": {
+      "condition": "frozen_xattn",
+      "sigma": 2.0,
+      "per_seed": [
+        516.0810546875,
+        573.9185791015625,
+        534.2396850585938
+      ],
+      "mean": 541.4131062825521,
+      "std": 29.578510554608236
+    }
+  },
+  "metadata": {
+    "round": 50,
+    "follows_up": "round 49 NAD retain visualization (REFUTED NAD hypothesis)",
+    "hypothesis": "if frozen_xattn removes sigma-switch, cross-attn IS the mechanism"
+  }
+}

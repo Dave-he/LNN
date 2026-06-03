@@ -1,0 +1,618 @@
+{
+  "config": {
+    "epochs": 20,
+    "hidden_size": 16,
+    "seeds": [
+      1,
+      2,
+      3
+    ],
+    "noise_levels": [
+      0.0,
+      0.1,
+      0.5,
+      1.0,
+      2.0
+    ],
+    "model": "CrossModalAttnBiCfCNADWithMDN (Bi-CfC-NAD)",
+    "note": "retain = sigmoid(noise_gate_proj(noise_score)) in NoiseAdaptiveCfCCell; high retain = use h_under_noise (h from past); low retain = use h_cfc (new ODE update)"
+  },
+  "per_run": {
+    "sigma0.0__seed1": {
+      "sigma": 0.0,
+      "seed": 1,
+      "test_mse": 595.9951171875,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5017085597656741,
+          "min_retain": 0.49817293882369995,
+          "max_retain": 0.5055186152458191,
+          "final_retain": 0.5055186152458191,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.49525087103616483,
+          "min_retain": 0.49190565943717957,
+          "max_retain": 0.5,
+          "final_retain": 0.4991499185562134,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.55732175071567,
+          "min_retain": 0.4985542893409729,
+          "max_retain": 0.6689805388450623,
+          "final_retain": 0.5628401637077332,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.46102995331408364,
+          "min_retain": 0.4377518594264984,
+          "max_retain": 0.5137932896614075,
+          "final_retain": 0.5000400543212891,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma0.0__seed2": {
+      "sigma": 0.0,
+      "seed": 2,
+      "test_mse": 564.1939086914062,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4972212600826037,
+          "min_retain": 0.49499428272247314,
+          "max_retain": 0.5,
+          "final_retain": 0.49808675050735474,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4994353550200415,
+          "min_retain": 0.4962746798992157,
+          "max_retain": 0.5029398202896118,
+          "final_retain": 0.5027782320976257,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.19726610961047433,
+          "min_retain": 0.1250004917383194,
+          "max_retain": 0.5061973333358765,
+          "final_retain": 0.1289633810520172,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.40664371717167963,
+          "min_retain": 0.37334656715393066,
+          "max_retain": 0.5070465207099915,
+          "final_retain": 0.38432544469833374,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma0.0__seed3": {
+      "sigma": 0.0,
+      "seed": 3,
+      "test_mse": 584.3253784179688,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5014017611225643,
+          "min_retain": 0.49694347381591797,
+          "max_retain": 0.5033700466156006,
+          "final_retain": 0.5028130412101746,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5044616085320416,
+          "min_retain": 0.5,
+          "max_retain": 0.5069685578346252,
+          "final_retain": 0.5069685578346252,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.3946445642205158,
+          "min_retain": 0.3733976185321808,
+          "max_retain": 0.5037583112716675,
+          "final_retain": 0.37592336535453796,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.2511640303021315,
+          "min_retain": 0.18706972897052765,
+          "max_retain": 0.5064457654953003,
+          "final_retain": 0.18777595460414886,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma0.1__seed1": {
+      "sigma": 0.1,
+      "seed": 1,
+      "test_mse": 426.5841369628906,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5020411160433351,
+          "min_retain": 0.4981846511363983,
+          "max_retain": 0.5047115683555603,
+          "final_retain": 0.5046780705451965,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.49517547304161114,
+          "min_retain": 0.49187102913856506,
+          "max_retain": 0.5,
+          "final_retain": 0.4963317811489105,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5577745258181107,
+          "min_retain": 0.4986029863357544,
+          "max_retain": 0.6689539551734924,
+          "final_retain": 0.562581479549408,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4542170644064646,
+          "min_retain": 0.4375016689300537,
+          "max_retain": 0.5037491321563721,
+          "final_retain": 0.437595397233963,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma0.1__seed2": {
+      "sigma": 0.1,
+      "seed": 2,
+      "test_mse": 488.6468200683594,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4977401043150094,
+          "min_retain": 0.49499833583831787,
+          "max_retain": 0.5,
+          "final_retain": 0.4997643232345581,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5002295496034446,
+          "min_retain": 0.496279776096344,
+          "max_retain": 0.5067681670188904,
+          "final_retain": 0.506762683391571,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.19745220525171792,
+          "min_retain": 0.12500010430812836,
+          "max_retain": 0.504675030708313,
+          "final_retain": 0.12897619605064392,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4048784325766091,
+          "min_retain": 0.372761994600296,
+          "max_retain": 0.5078094601631165,
+          "final_retain": 0.37604227662086487,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma0.1__seed3": {
+      "sigma": 0.1,
+      "seed": 3,
+      "test_mse": 521.0740966796875,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5018118125303547,
+          "min_retain": 0.49694135785102844,
+          "max_retain": 0.5050109624862671,
+          "final_retain": 0.5050042271614075,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5048158014986185,
+          "min_retain": 0.5,
+          "max_retain": 0.5102223753929138,
+          "final_retain": 0.5102223753929138,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.39009493795951994,
+          "min_retain": 0.3139457702636719,
+          "max_retain": 0.504818856716156,
+          "final_retain": 0.3151197135448456,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.25069876513121153,
+          "min_retain": 0.18654422461986542,
+          "max_retain": 0.507034420967102,
+          "final_retain": 0.18776680529117584,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma0.5__seed1": {
+      "sigma": 0.5,
+      "seed": 1,
+      "test_mse": 475.8631591796875,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5017703472645861,
+          "min_retain": 0.49818551540374756,
+          "max_retain": 0.5045838952064514,
+          "final_retain": 0.5045838952064514,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4949751527850876,
+          "min_retain": 0.49187177419662476,
+          "max_retain": 0.5,
+          "final_retain": 0.49640265107154846,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5577402517826545,
+          "min_retain": 0.49860453605651855,
+          "max_retain": 0.668882429599762,
+          "final_retain": 0.5626643896102905,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.45423734981087177,
+          "min_retain": 0.437501460313797,
+          "max_retain": 0.5035188794136047,
+          "final_retain": 0.4376068711280823,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma0.5__seed2": {
+      "sigma": 0.5,
+      "seed": 2,
+      "test_mse": 528.3753662109375,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4976678493036197,
+          "min_retain": 0.49499833583831787,
+          "max_retain": 0.5,
+          "final_retain": 0.4997362494468689,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5004078683876755,
+          "min_retain": 0.49627965688705444,
+          "max_retain": 0.5071674585342407,
+          "final_retain": 0.5071560144424438,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.19729991732073007,
+          "min_retain": 0.12500013411045074,
+          "max_retain": 0.5043017864227295,
+          "final_retain": 0.12905149161815643,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.40390369611432647,
+          "min_retain": 0.3727201521396637,
+          "max_retain": 0.5065127015113831,
+          "final_retain": 0.3755524456501007,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma0.5__seed3": {
+      "sigma": 0.5,
+      "seed": 3,
+      "test_mse": 605.8226318359375,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5015481417205664,
+          "min_retain": 0.4969409108161926,
+          "max_retain": 0.5032406449317932,
+          "final_retain": 0.5015864968299866,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5043122107070861,
+          "min_retain": 0.5,
+          "max_retain": 0.5060927867889404,
+          "final_retain": 0.5057336688041687,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.3938099861624512,
+          "min_retain": 0.3738659620285034,
+          "max_retain": 0.5023466944694519,
+          "final_retain": 0.37605878710746765,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.250878068369509,
+          "min_retain": 0.18705953657627106,
+          "max_retain": 0.5053936243057251,
+          "final_retain": 0.18766245245933533,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma1.0__seed1": {
+      "sigma": 1.0,
+      "seed": 1,
+      "test_mse": 415.3179931640625,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5018767098721006,
+          "min_retain": 0.49818575382232666,
+          "max_retain": 0.5044414401054382,
+          "final_retain": 0.504416823387146,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4950918606712972,
+          "min_retain": 0.49187183380126953,
+          "max_retain": 0.5,
+          "final_retain": 0.4961828589439392,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5577665944168768,
+          "min_retain": 0.4986055791378021,
+          "max_retain": 0.6688804030418396,
+          "final_retain": 0.5625644326210022,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4544482851714486,
+          "min_retain": 0.43750250339508057,
+          "max_retain": 0.5034304261207581,
+          "final_retain": 0.4375952482223511,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma1.0__seed2": {
+      "sigma": 1.0,
+      "seed": 2,
+      "test_mse": 539.8143310546875,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.49766184719703577,
+          "min_retain": 0.49499860405921936,
+          "max_retain": 0.5,
+          "final_retain": 0.4985629618167877,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5004959766854449,
+          "min_retain": 0.4962797164916992,
+          "max_retain": 0.5055044293403625,
+          "final_retain": 0.5055006742477417,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.19726772944784104,
+          "min_retain": 0.12500013411045074,
+          "max_retain": 0.5041524171829224,
+          "final_retain": 0.1293637901544571,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4049058167798684,
+          "min_retain": 0.37269315123558044,
+          "max_retain": 0.5046489834785461,
+          "final_retain": 0.3760621249675751,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma1.0__seed3": {
+      "sigma": 1.0,
+      "seed": 3,
+      "test_mse": 627.7434692382812,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5015262474886851,
+          "min_retain": 0.4969407618045807,
+          "max_retain": 0.5030218958854675,
+          "final_retain": 0.5028377175331116,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5042561414365722,
+          "min_retain": 0.5,
+          "max_retain": 0.5066216588020325,
+          "final_retain": 0.5066216588020325,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.3939038064920961,
+          "min_retain": 0.37389445304870605,
+          "max_retain": 0.505132794380188,
+          "final_retain": 0.375993549823761,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.25059038130474265,
+          "min_retain": 0.1869392991065979,
+          "max_retain": 0.5071507096290588,
+          "final_retain": 0.18771600723266602,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma2.0__seed1": {
+      "sigma": 2.0,
+      "seed": 1,
+      "test_mse": 453.3837890625,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5013834319934987,
+          "min_retain": 0.4981862008571625,
+          "max_retain": 0.5040698051452637,
+          "final_retain": 0.5040698051452637,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.49487263211371874,
+          "min_retain": 0.4918728470802307,
+          "max_retain": 0.5,
+          "final_retain": 0.4969862699508667,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.557262595816709,
+          "min_retain": 0.4986112713813782,
+          "max_retain": 0.6691735982894897,
+          "final_retain": 0.5625033974647522,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.45495302543634236,
+          "min_retain": 0.4375070333480835,
+          "max_retain": 0.5033934712409973,
+          "final_retain": 0.43777742981910706,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma2.0__seed2": {
+      "sigma": 2.0,
+      "seed": 2,
+      "test_mse": 516.345703125,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.49736960599254265,
+          "min_retain": 0.4950005114078522,
+          "max_retain": 0.5,
+          "final_retain": 0.4995955526828766,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.49959234493129917,
+          "min_retain": 0.4962807297706604,
+          "max_retain": 0.5037224888801575,
+          "final_retain": 0.5037133097648621,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.1964128035037677,
+          "min_retain": 0.12500013411045074,
+          "max_retain": 0.5016289353370667,
+          "final_retain": 0.1294795423746109,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.4068789273906167,
+          "min_retain": 0.37276163697242737,
+          "max_retain": 0.5083143711090088,
+          "final_retain": 0.3797241449356079,
+          "n_steps": 1616
+        }
+      }
+    },
+    "sigma2.0__seed3": {
+      "sigma": 2.0,
+      "seed": 3,
+      "test_mse": 594.6369018554688,
+      "retain_per_layer": {
+        "video_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5015284853185168,
+          "min_retain": 0.4969426095485687,
+          "max_retain": 0.503393292427063,
+          "final_retain": 0.5023928880691528,
+          "n_steps": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.5044295007713361,
+          "min_retain": 0.5,
+          "max_retain": 0.5066069960594177,
+          "final_retain": 0.5066069960594177,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.39361848706139785,
+          "min_retain": 0.3741019070148468,
+          "max_retain": 0.5021253228187561,
+          "final_retain": 0.37550225853919983,
+          "n_steps": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.noise_gate_proj": {
+          "mean_retain": 0.24982254203445842,
+          "min_retain": 0.186613991856575,
+          "max_retain": 0.5066718459129333,
+          "final_retain": 0.18764683604240417,
+          "n_steps": 1616
+        }
+      }
+    }
+  },
+  "per_sigma_aggregate": {
+    "0.0": {
+      "n_layers_times_seeds": 12,
+      "mean_retain_overall": 0.4389624617411371,
+      "min_retain_overall": 0.19726610961047433,
+      "max_retain_overall": 0.55732175071567,
+      "per_seed_mse": [
+        595.9951171875,
+        564.1939086914062,
+        584.3253784179688
+      ],
+      "mean_mse": 581.5048014322916
+    },
+    "0.1": {
+      "n_layers_times_seeds": 12,
+      "mean_retain_overall": 0.43807748234800065,
+      "min_retain_overall": 0.19745220525171792,
+      "max_retain_overall": 0.5577745258181107,
+      "per_seed_mse": [
+        426.5841369628906,
+        488.6468200683594,
+        521.0740966796875
+      ],
+      "mean_mse": 478.7683512369792
+    },
+    "0.5": {
+      "n_layers_times_seeds": 12,
+      "mean_retain_overall": 0.43821256997743036,
+      "min_retain_overall": 0.19729991732073007,
+      "max_retain_overall": 0.5577402517826545,
+      "per_seed_mse": [
+        475.8631591796875,
+        528.3753662109375,
+        605.8226318359375
+      ],
+      "mean_mse": 536.6870524088541
+    },
+    "1.0": {
+      "n_layers_times_seeds": 12,
+      "mean_retain_overall": 0.4383159497470008,
+      "min_retain_overall": 0.19726772944784104,
+      "max_retain_overall": 0.5577665944168768,
+      "per_seed_mse": [
+        415.3179931640625,
+        539.8143310546875,
+        627.7434692382812
+      ],
+      "mean_mse": 527.6252644856771
+    },
+    "2.0": {
+      "n_layers_times_seeds": 12,
+      "mean_retain_overall": 0.4381770318636837,
+      "min_retain_overall": 0.1964128035037677,
+      "max_retain_overall": 0.557262595816709,
+      "per_seed_mse": [
+        453.3837890625,
+        516.345703125,
+        594.6369018554688
+      ],
+      "mean_mse": 521.4554646809896
+    }
+  },
+  "metadata": {
+    "round": 49,
+    "follows_up": "round 48 SNR threshold scan (28th meta-refinement)",
+    "hypotheses": {
+      "H_a": "retain(sigma=0) > retain(sigma=0.1)",
+      "H_b": "retain(sigma>=0.1) is near 0 (NAD fully gates noise)",
+      "H_c": "retain is stable across seeds"
+    }
+  }
+}
