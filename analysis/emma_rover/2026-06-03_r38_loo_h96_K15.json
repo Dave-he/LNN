@@ -1,0 +1,38 @@
+{
+  "config": {
+    "epochs": 80,
+    "warmup_epochs": 15,
+    "hidden_size": 96,
+    "seed": 42,
+    "audio_mode": "normal",
+    "output_dir": "analysis/emma_rover"
+  },
+  "runs": [
+    {
+      "fold": 0,
+      "test_param_mse": 11.087240219116211,
+      "elapsed_seconds": 8.470126164029352
+    },
+    {
+      "fold": 1,
+      "test_param_mse": 13.877196311950684,
+      "elapsed_seconds": 7.877057675039396
+    },
+    {
+      "fold": 2,
+      "test_param_mse": 6.828357219696045,
+      "elapsed_seconds": 7.79670874599833
+    },
+    {
+      "fold": 3,
+      "test_param_mse": 4.498498439788818,
+      "elapsed_seconds": 7.871216865023598
+    }
+  ],
+  "summary": {
+    "mean": 9.07282304763794,
+    "std": 3.643554290605621,
+    "verdict": "REAL adaptive freeze BEATS pure video_only on LOO by 39.1%",
+    "vs_cron_vo_mean_diff_pct": 39.06767597288154
+  }
+}
