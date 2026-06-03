@@ -118,7 +118,7 @@ PRD 化的目的是固化范围 / 衡量指标 / 验证门槛,
 | # | 任务 | 出口物 | 估时 |
 |---|---|---|---|
 | 1 | ~~修复 Jetson CUDA wheel,跑通 GPU 路径 benchmark~~ **[loop#2 done]** torch 2.10.0+cu126 + libcudss 0.8.0.10 + `scripts/jetson_cuda_env.sh` | `analysis/jetson/2026-06-03_loop_iteration2_cuda_fix_pareto.md` | 1 loop |
-| 2 | 复现 LiquidTAD 长视频 TAD 实验(论文 2604.18274) | `analysis/paper_replication/liquid_tad_report.md` | 2–3 loop |
+| 2 | 复现 LiquidTAD 长视频 TAD 实验(论文 2604.18274) — **stage A 算子+单测 ✅ + stage B smoke ✅ (loop#3 done)**;C–E 待 CUDA 空载窗口 | `analysis/jetson/2026-06-03_loop_iteration3_liquid_tad_stage_ab.md` + `tests/test_liquid_tad_hierarchical.py` + `lnn/core/long_sequence.py::HierarchicalDecayLiquidTADHead` | 2 loop done / 2–3 loop left |
 | 3 | LFM2.5-1.2B-Distilled INT4 推理 + token/sec 测试 | `analysis/lfm25/2026-06-03_lfm25_int4_jetson.md` | 1–2 loop |
 | 4 | EMMA 多模态物理参数恢复最小验证(论文 2605.24047) | `analysis/multimodal/2026-06-03_emma_validation.md` | 2 loop |
 | 5 | Comparative Analysis of LNN & LSTM(2605.27467)对照重做 | `docs/reports/Comparative_Analysis_of_LNN_and_LSTM_研读报告.md` 增补 v2 | 1 loop |

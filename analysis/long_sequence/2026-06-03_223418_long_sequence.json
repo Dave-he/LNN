@@ -1,0 +1,49 @@
+{
+  "run_id": "2026-06-03_223418",
+  "run_date": "2026-06-03",
+  "generated_at": "2026-06-03T22:34:18.930324",
+  "mode": "tad",
+  "device": "cpu",
+  "parameters": 5382,
+  "elapsed_seconds": 2.392384300008416,
+  "config": {
+    "mode": "tad",
+    "tad_head": "hierarchical_decay",
+    "tad_init_decay": 0.8,
+    "tad_decay_growth": 1.05,
+    "tad_share_decay": false,
+    "samples": 64,
+    "seq_len": 48,
+    "feature_size": 4,
+    "num_classes": 3,
+    "hidden_size": 16,
+    "num_blocks": 3,
+    "epochs": 3,
+    "batch_size": 8,
+    "lr": 0.0003,
+    "seed": 42,
+    "device": "cpu",
+    "output_dir": "analysis/long_sequence"
+  },
+  "history": {
+    "train_loss": [
+      2.2678919633229575,
+      1.831131358941396,
+      1.568269928296407
+    ],
+    "val_loss": [
+      1.737225592136383,
+      1.3680053353309631,
+      1.1227165460586548
+    ],
+    "val_accuracy": [
+      0.04398148148148148,
+      0.04398148148148148,
+      0.7754629629629629
+    ]
+  },
+  "test": {
+    "loss": 1.07826167345047,
+    "accuracy": 0.7878787878787878
+  }
+}

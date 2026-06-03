@@ -17,7 +17,11 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from lnn.core.long_sequence import LiquidTADHead, LongSequenceLiquidClassifier
+from lnn.core.long_sequence import (
+    HierarchicalDecayLiquidTADHead,
+    LiquidTADHead,
+    LongSequenceLiquidClassifier,
+)
 from lnn.data.long_sequence import SyntheticLongSequenceDataset, create_long_sequence_dataloaders
 
 
@@ -145,6 +149,33 @@ def write_report(payload: dict[str, Any], output_dir: pathlib.Path) -> tuple[pat
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=["classification", "tad"], default="classification")
+    parser.add_argument(
+        "--tad-head",
+        choices=["data_dependent", "hierarchical_decay"],
+        default="data_dependent",
+        help=(
+            "data_dependent = LiquidTADHead (per-step retain gate, default); "
+            "hierarchical_decay = HierarchicalDecayLiquidTADHead (LiquidTAD paper, "
+            "layer-shared exponential decay schedule)."
+        ),
+    )
+    parser.add_argument(
+        "--tad-init-decay",
+        type=float,
+        default=0.80,
+        help="Initial decay coefficient for the first hierarchical_decay block.",
+    )
+    parser.add_argument(
+        "--tad-decay-growth",
+        type=float,
+        default=1.05,
+        help="Geometric growth factor for per-block decay (deeper layers integrate longer).",
+    )
+    parser.add_argument(
+        "--tad-share-decay",
+        action="store_true",
+        help="Tie the retain parameter across all hierarchical_decay blocks.",
+    )
     parser.add_argument("--samples", type=int, default=600)
     parser.add_argument("--seq-len", type=int, default=256)
     parser.add_argument("--feature-size", type=int, default=8)
@@ -182,6 +213,16 @@ def main() -> int:
             num_classes=args.num_classes,
             hidden_size=args.hidden_size,
             num_blocks=args.num_blocks,
+        ).to(device)
+    elif args.tad_head == "hierarchical_decay":
+        model = HierarchicalDecayLiquidTADHead(
+            input_size=args.feature_size,
+            num_classes=args.num_classes + 1,
+            hidden_size=args.hidden_size,
+            num_blocks=args.num_blocks,
+            init_decay=args.tad_init_decay,
+            decay_growth=args.tad_decay_growth,
+            share_decay=args.tad_share_decay,
         ).to(device)
     else:
         model = LiquidTADHead(

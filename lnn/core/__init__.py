@@ -12,6 +12,8 @@ from lnn.core.noise_adaptive_cfc import (
 from lnn.core.graph import GraphLNNPredictor, GraphSnapshotEncoder
 from lnn.core.liquid_neuron import LiquidLayer, LiquidNeuron, LiquidNN
 from lnn.core.long_sequence import (
+    HierarchicalDecayLiquidBlock,
+    HierarchicalDecayLiquidTADHead,
     LiquidS4Block,
     LiquidTADHead,
     LongSequenceLiquidClassifier,
@@ -83,6 +85,8 @@ __all__ = [
     "LiquidS4Block",
     "LongSequenceLiquidClassifier",
     "LiquidTADHead",
+    "HierarchicalDecayLiquidBlock",
+    "HierarchicalDecayLiquidTADHead",
     "PhysicsInformedLNN",
     "damped_oscillator_residual",
     "physics_informed_loss",
