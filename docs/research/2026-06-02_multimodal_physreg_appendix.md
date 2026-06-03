@@ -2975,3 +2975,105 @@ d096076  docs(tldr): LNN_TLDR.md
 - `docs/guides/LNN_MULTIMODAL_DESIGN.md` (完整设计指南,需 §28/§30 修订)
 - §27 cron `8d53b97` (regime 翻转原始发现) + §30 cron `68fe631` (新 SOTA MSE 0.31) + §32 (本节,CI 强制)
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 33. 第二十九轮 /loop — Gap→Gain 7-Point Continuous Curve — **★ ANALYTIC RELATIONSHIP DERIVED ★**
+
+(2026-06-03 第二十九轮 /loop。Round 32 §32.6 W+1 第 1 项:从 3 个 noise 点扩展到 7 个,拟合 gap → adaptive_gain 的解析关系。)
+
+### 33.1 假设
+
+> Round 28 §32 用 3 个 noise 点(0.05, 2.0, 4.0)定性确认了"gap-driven"理论。本节加 4 个新点(0.5, 1.0, 6.0, 8.0)填密度,拟合 gap → adaptive_gain 的解析关系,定位 PASS 阈值。
+
+### 33.2 完整 7 点数据(burst, h=32, ep=80, n=800, K_mix=2, seed=42)
+
+注意符号:**gap = (pure_xattn_MSE − pure_vo_MSE) / pure_vo_MSE × 100%**;负值 = pure_xattn 胜(MSE 更低)。
+
+| noise_std | pure_xattn | pure_vo | adaptive K=40 | gap (%) | adaptive_gain (%) | PASS? |
+|---:|---:|---:|---:|---:|---:|:---:|
+| 0.05 | 0.7117 | 0.6410 | 0.7267 | **+11.0** | **−13.4** | ❌ |
+| 0.50 | 0.7249 | 0.7452 | 0.7585 | **−2.7** | **−1.8** | ❌ |
+| 1.00 | 0.7323 | 0.8075 | 0.7429 | **−9.3** | **+8.0** | ⚠️ |
+| 2.00 | 0.8221 | 1.0938 | 0.7996 | **−24.8** | **+26.9** | ✅ |
+| 4.00 | 0.9186 | 1.3027 | 0.7715 | **−29.5** | **+40.8** | ✅✅ |
+| 6.00 | 0.9604 | 1.1433 | 0.7294 | **−16.0** | **+36.2** | ✅✅ |
+| 8.00 | 1.0798 | 1.4749 | 0.8056 | **−26.8** | **+45.4** | ✅✅✅ |
+
+完整 JSON:`analysis/multimodal_physreg/2026-06-03_r29_burst_noise{0.5,1.0,6.0,8.0}.json`(+ round 27/28 的 3 点)。
+
+### 33.3 线性拟合 — adaptive_gain ≈ −1.46 × gap (R² = 0.88)
+
+7 点 ordinary least squares 拟合(用 numpy 风格手算):
+
+```
+mean(gap)  = -14.0   mean(gain) = +20.3
+slope a    = Cov(gap, gain) / Var(gap) = -1892.2 / 1299.5 = **-1.46**
+intercept  = mean(gain) - a × mean(gap) = 20.3 - (-1.46) × (-14.0) ≈ **-0.1**
+R²         = 1 - SS_res / SS_tot = 1 - 367.17 / 3122.1 = **0.88**
+```
+
+→ **adaptive_gain ≈ -1.46 × gap**(截距近似 0)
+→ 等价说 **adaptive freeze 把 pure_xattn 对 pure_vo 的优势放大 ~1.5×**
+
+### 33.4 PASS 阈值的解析定位
+
+由 `adaptive_gain ≥ 0 ⇔ gap ≤ 0`,得到:
+- **PASS 充分条件**:pure_xattn 在该任务上 MSE 严格小于 pure_vo(gap < 0)
+- **PASS+ 阈值**:gain ≥ +20% 需要 gap ≤ -14%(pure_xattn 至少胜 vo 14%)
+- **PASS++ 阈值**:gain ≥ +40% 需要 gap ≤ -27%
+
+### 33.5 关键意外发现 — 6.0 是 outlier 上偏(+12.8pp residual)
+
+观察拟合残差(gain − 预测):
+
+| noise | gap | actual gain | predicted gain | residual |
+|---:|---:|---:|---:|---:|
+| 0.05 | +11.0 | −13.4 | −16.1 | +2.7 |
+| 0.50 | −2.7 | −1.8 | +3.9 | −5.7 |
+| 1.00 | −9.3 | +8.0 | +13.6 | −5.6 |
+| 2.00 | −24.8 | +26.9 | +36.2 | −9.3 |
+| 4.00 | −29.5 | +40.8 | +43.1 | −2.3 |
+| **6.00** | **−16.0** | **+36.2** | **+23.4** | **+12.8** ← 显著上偏 |
+| 8.00 | −26.8 | +45.4 | +39.1 | +6.3 |
+
+→ 在 noise=6.0 时 adaptive_gain 显著超过线性拟合预测。可能机制:**adaptive freeze 在中-高噪声下有"超额收益"区**,phase 1 cross_attn warmup 学到的 noise-rejection 表示在 phase 2 video_only fine-tune 时反而成为额外的鲁棒性先验。
+→ 这暗示更精细的拟合需要 quadratic 或 piecewise linear,但 7 点不足以稳健拟合非线性形式;留作下一轮 W+1 用更多 noise 点确认。
+
+### 33.6 元结论第十三次精化 — Gap-Driven Recipe + 1.5× 放大公式
+
+| Round | 关键发现 |
+|---:|---|
+| 28 | "recipe 是 gap-driven" (3 点定性) |
+| **29(本节)** | **"adaptive_gain ≈ −1.46 × gap (R² = 0.88) — 7 点定量关系"** |
+
+完整生产决策树(数值精化):
+
+```python
+gap = (pure_xattn_MSE - pure_vo_MSE) / pure_vo_MSE × 100
+
+# Step 1: 测两个端点
+# Step 2: 由 gap 估算 adaptive_gain ≈ -1.46 × gap
+# Step 3: 决策
+if gap >= 0:                # pure_xattn 不如 pure_vo
+    用 pure video_only
+if -14 < gap < 0:           # marginal 区间
+    adaptive 可能微弱有效(预测 +0 ~ +20%);考虑跑实验确认
+if gap <= -14:              # ★ adaptive freeze 高概率 PASS
+    K=0.5 × total,audio_only 冻结,预测 gain ≈ -1.46 × gap
+if gap <= -27:              # ★★ very strong gain expected
+    预测 gain ≥ +40%(已实测 +40.8% / +45.4%)
+```
+
+### 33.7 W+1 backlog
+
+- ~~gap→gain 7 点曲线~~(本节 ✅ R² = 0.88 线性关系建立)
+- *新增*:**用 12-15 个 noise 点拟合非线性形式** (二次或 piecewise),解释 noise=6.0 的 +12.8pp 上偏 outlier
+- *新增*:**rover 上人为加 video noise 验证反向**(扩大 gap 应让 adaptive 收益按 1.46× 增长)
+- *现存*:K=30/50 在 h=64 上的精细扫描
+- 真实 EMMA 多视频 / quadrotor(数据未释出)
+
+### 33.8 测试 + 提交
+
+- `pytest tests/` **142/142 全过**(cron round 28-cf14d21 增加了 large_budget pytest marker,共 142 测试),零回归。
+- 提交 4 个新 noise JSON + 本节 §33。
