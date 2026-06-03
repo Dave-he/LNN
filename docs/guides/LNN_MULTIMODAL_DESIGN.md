@@ -1,17 +1,19 @@
 ---
-title: LNN Multimodal Design Guideline (v3)
+title: LNN Multimodal Design Guideline (v4)
 date: 2026-06-03
-tags: [LNN, multimodal, design-guideline, regime-conditioned, adaptive-freeze, SOTA, v3]
+tags: [LNN, multimodal, design-guideline, regime-conditioned, adaptive-freeze, SOTA, random-window-specific, segment-LOO, v4]
 related:
   - "[[LNN_TLDR]]"
   - "[[docs/research/2026-06-02_multimodal_physreg_appendix]]"
 ---
 
-# 🧪 LNN 多模态系统设计指南 (v3)
+# 🧪 LNN 多IMODAL设计指南 (v4)
 
-> **v3 更新 (2026-06-03)**: 加入 §27 **regime 决定一切** (小预算 cross_attn 赢,大预算 video_only 赢), §30 **新 SOTA adaptive freeze MSE 0.31** (5 行 production recipe), §32 **CI 强制双 regime 测** (`@pytest.mark.large_budget`), 以及 §30 GRU seed sensitivity 修订。
+> **v4 更新 (2026-06-03)**: 加入 §35 关键发现 — **random-window SOTA 0.31 是 *段泄漏* artifact, segment-pure LOO mean 14.89**;新 SOTA 在 LOO 下是 **adaptive-freeze K=20 @ h=64, ep=80 → LOO mean 3.23** (round 36 cron `4510da4`)。两 regime 各自有 *不同* SOTA。
 
-## 0. ★ New SOTA — 2026-06-03
+## 0. ★ New SOTA — 2026-06-03 (★ random-window-specific 警告 ★)
+
+### 0a. random-window 数字 (段泄漏 reference)
 
 | 排名 | test MSE | 配置 | 来源 |
 |---:|---:|---|:---:|
@@ -21,13 +23,37 @@ related:
 | 4 | 60.84 | cross_attn(audio=normal) @ h=32, ep=40 | round 23 |
 | 5 | 248.64 | cross_attn(audio=zero) @ h=16, ep=20 | round 13 |
 
-**5 行 production recipe (★)**:
+**5 行 production recipe (★)** (random-window 限定):
 ```python
 hidden_size = 64
 epochs = 80
 warmup_epochs = 40       # 0.5 × total_epochs
 freeze_targets = "audio_only"
 # After warmup: requires_grad=False on audio_encoder; rebuild Adam.
+```
+
+### 0b. ★ random-window-specific 警告 (round 35)
+
+**0.31 是 *random-window 段泄漏* 数字**。`EmmaRoverRegressionDataset(num_samples=200, window=16)` 让模型在训练时 *见到全部 60 帧* (随机滑窗覆盖整个轨迹), 测试时也见到过这 4 段。
+
+当改用 `TemporalSegmentRegressionDataset` (4 disjoint 15-frame segments) + 4-fold LOO, **video_only baseline 升到 mean 14.89, std 11.18** (vs random-window 0.87 = **17× 差**)。Adaptive-freeze 在 LOO 上仅 **+6.3% over video_only** (marginal)。
+
+### 0c. LOO 数字 (★ 跨段泛化 ★ — 真正 SOTA)
+
+| 排名 | LOO mean | 配置 | 来源 |
+|---:|---:|---|:---:|
+| 🏆🥇 | **3.23** | **adaptive freeze audio_only K=20 @ h=64, ep=80** | round 36 cron `4510da4` |
+| 🥈 | 3.39 | adaptive freeze audio_only K=0 @ h=64, ep=80 | round 36 |
+| 🥉 | 14.89 | video_only @ h=64, ep=80 (no freeze) | round 35 |
+| 4 | 17.14 | adaptive freeze all_xattn K=40 @ h=64, ep=80 (LOO) | round 26 |
+
+**LOO 5 行 recipe (★)**:
+```python
+hidden_size = 64
+epochs = 80
+warmup_epochs = 20       # NOT 40!  K=20 才是 LOO 最优
+freeze_targets = "audio_only"
+# TemporalSegmentRegressionDataset 4-fold LOO; report mean +/- std
 ```
 
 **Adaptive gain 公式** (round 27 cron `44e4ff4` 拟合, R² 0.88):

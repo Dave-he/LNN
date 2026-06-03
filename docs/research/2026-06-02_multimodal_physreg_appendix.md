@@ -3939,3 +3939,81 @@ else:
 
 - `pytest tests/` **142/142 全过**,零回归。
 - 提交 2 个 K=20 audio JSON + dataset audio_mode 扩展 + 本节 §39 + 当日 evening 日报。
+
+---
+
+## 37. 第三十四轮 /loop — LNN_MULTIMODAL_DESIGN.md v4 — **同步 TL;DR v3 + 加 LOO SOTA 块**
+
+(2026-06-03 第三十四轮,1h cron `51a1f8bf` 触发。W+1:design guide 同步 TL;DR v3 的 random-window-specific 警告,加 LOO 数字块。)
+
+### 37.1 动机
+
+§33 round 32 已写 `LNN_TLDR.md` v3 (含 random-window-specific 警告), §35 round 35 揭露 SOTA 0.31 是 *段泄漏* artifact, §36 cron 跑 LOO K-sweep 发现 **K=20 是 LOO 最优 (MSE 3.23)**, §35.4 cron 进一步证 EMMA audio physics hypothesis 在 strict LOO 下 CONFIRMED。
+
+但 `LNN_MULTIMODAL_DESIGN.md` v3 *仍把 0.31 当 random-window + LOO 双 SOTA*, 且 *没有 LOO 块*。本轮 v4 升级同步:
+- §0 拆为 0a/0b/0c 三个子块: random-window 数字 / 警告 / **LOO 数字**
+- §4 regime 表加 LOO 列
+- §6 失败模式加 "report random-window 0.31 作 universal SOTA"
+- §9 checklist 加 "LOO mean 必须 < 14.89"
+
+### 37.2 v3 → v4 主要升级
+
+| 章节 | v3 | v4 |
+|---|---|---|
+| front matter | (v3) | v4 + 加 `random-window-specific, segment-LOO` tags |
+| §0 顶 | 单 random-window SOTA 表 | **拆 0a random-window / 0b 警告 / 0c LOO 数字** |
+| §0a random-window | 5 行 recipe | (v3) |
+| §0b ★ 警告 | (无) | **整块** (round 35 关键) |
+| §0c ★ LOO 数字 | (无) | **整块**: K=20 LOO SOTA 3.23, **5 行 LOO recipe** |
+| §4 regime 表 | 6 行 | + LOO 列 (1 行) |
+| §6 失败模式 | 11 条 | + "report random-window 0.31 universal" |
+| §9 checklist | 10 条 | + "新 SOTA 必须 LOO mean < 14.89" + "用 K=20 not K=40 on LOO" |
+| §12 一句话 | v3 修订 | + "random-window vs LOO 各自有 *不同* SOTA" |
+
+### 37.3 关键新 SOTA 块 (LOO 视角)
+
+```
+LOO 5 行 recipe (★) — K=20 才是 LOO 最优:
+  hidden_size = 64
+  epochs = 80
+  warmup_epochs = 20       # NOT 40!  K=20 才是 LOO 最优
+  freeze_targets = "audio_only"
+  # TemporalSegmentRegressionDataset 4-fold LOO; report mean +/- std
+```
+
+预期 LOO mean ≈ 3.23,vs video_only LOO mean 14.89 (5× 优于 baseline)。
+
+### 37.4 35 轮 ablation 后的 "两 SOTA 现实"
+
+| 数据集 | 最优配置 | MSE | 来源 |
+|---|---|---:|---|
+| **random-window** (段泄漏 reference) | adaptive-freeze K=40 @ h=64, ep=80 | **0.31** | round 26 |
+| **segment-pure LOO** (跨段严格) | adaptive-freeze K=20 @ h=64, ep=80 | **3.23** | round 36 |
+| 改进率 (vs video_only) | random-window: 2.8×;LOO: 4.6× | | |
+
+→ 任何报告必须 *同时* 给 random-window *和* LOO 数字。两者各自有最优 K (40 vs 20),*不能* 套用。
+
+### 37.5 4 文档金字塔(本轮升级后)
+
+```
+                ┌─ LNN_TLDR.md v3 (1 页入口, ★random-window-specific 警告)
+                ├─ LNN_QUICKSTART.md (5 分钟跑 SOTA)
+                ├─ docs/guides/LNN_MULTIMODAL_DESIGN.md v4 (★ 本轮升级) 完整设计指南, 同步 TL;DR v3
+                └─ docs/research/.../multimodal_physreg_appendix.md (37 轮 ablation)
+```
+
+### 37.6 产物清单
+
+| 路径 | 类型 |
+|---|---|
+| `docs/guides/LNN_MULTIMODAL_DESIGN.md` v3 → v4 | 升级 (~30 行净增) |
+| `docs/research/2026-06-02_multimodal_physreg_appendix.md` | + §37 报告 |
+| `pytest tests/` | 142/142 通过 (本轮纯文档) |
+
+### 37.7 参考
+
+- `LNN_TLDR.md` v3 (上一轮 round 33)
+- §35 cron segment-pure LOO (round 35) 揭露 0.31 是段泄漏
+- §36 cron TL;DR v3 + 警告
+- §37 (本节) 同步 design guide v4
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
