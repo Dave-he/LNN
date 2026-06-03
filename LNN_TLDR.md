@@ -1,17 +1,19 @@
 ---
-title: LNN Multimodal TL;DR (v4)
+title: LNN Multimodal TL;DR (v5)
 date: 2026-06-03
-tags: [LNN, multimodal, TLDR, SOTA, adaptive-freeze, regime, random-window-specific, seed-lucky, v4]
+tags: [LNN, multimodal, TLDR, SOTA, adaptive-freeze, regime, random-window-specific, seed-lucky, family-conditional, v5]
 related:
   - "[[LNN_QUICKSTART]]"
   - "[[docs/guides/LNN_MULTIMODAL_DESIGN]]"
   - "[[docs/research/2026-06-02_multimodal_physreg_appendix]]"
   - "[[docs/research/2026-06-03_loop_research_report]]"
+  - "[[docs/research/2026-06-03_loo_multiseed_encoder_families_report]]"
 ---
 
-# 🚀 LNN 多模态系统 — TL;DR v4 (30 秒读完)
+# 🚀 LNN 多模态系统 — TL;DR v5 (30 秒读完)
 
-> **TL;DR (v4)**: 跨 **43 轮** ablation + 多轮 cron session 后,本仓库在 **真实 EMMA rover LOO 数据** 上达到 **adaptive freeze SOTA: single-seed MSE 0.42 (h=96, K=10, seed=42)**,但 round 43 (commit 1bb78af) **refuted** 单一 seed 报告:**5-seed mean = 8.16 ± 6.78** (3 of 4 new seeds 27-37× worse)。**所有 round 26/34/38 SOTA 数字都是 single-seed,均需作 advisory 看待**;**生产可用应走 seed ensemble**。v3 的 SOTA 0.31 (random-window-specific) 在严格 LOO 下甚至 **LOO mean 14.89, 17× 差于 random-window 0.87** — *regime × seed 二重限定* 是头号前提。Round 21 同时给出 **第二 encoder 必须是 Bi-CfC-NAD family** (GRU +3.9% < frozen random +24.5% < LSTM +36.1% ≈ Bi-CfC +35.2%) 的强约束。
+> **TL;DR (v5)**: 跨 **45 轮** ablation + 5-seed × 3 family LOO probe (round 45) 后,本仓库发现:**encoder family ranking 是 *regime-conditional* (★ 25th meta-conclusion refinement)**。**LOO segment-pure (h=64, ep=30, 5-seed)** 下 **Bi-CfC-NAD 293.23 ± 48.38 显著强于 LSTM 470.75 / GRU 461.32** (~60% 优势) — round 21 必要性结论**在严格 LOO 协议下成立**。**random-window small-budget (h=16, ep=20, 5-seed)** 下 ranking 翻转: **LSTM 489.98 < Bi-CfC 548.38 < GRU 554.22** — *encoder family 排名不能跨 regime 推广*。Round 43 SOTA 0.42 (5-seed mean 8.16 ± 6.78) 仍是 advisory;**5-seed ensemble 在 random-window regime 下 ~0.1% gain (REFUTED)**,**未测** LOO regime。生产推荐: **LOO + large-budget** 用 Bi-CfC-NAD;**random-window + small-budget** 用 LSTM。
+
 
 ## 5 句话核心结论
 
@@ -69,6 +71,30 @@ Round 38 single-seed 报告的 LOO SOTA 0.42 (h=96, K=10, **seed=42**) **被 5-s
 - 旧 SOTA 数字 (0.31 v3, 0.42 v3.5) **都作 advisory 看待**;它们的 single-seed 本质是缺陷
 - 已就位: `scripts/benchmark_multiseed_encoder_families.py` (本轮新增) — 5 seeds × 3 family probe
 
+## ★ **regime-conditional family ranking** (round 45, ★ 25th meta-conclusion refinement)
+
+**5-seed × 3 family probe** (round 45) 在两种 regime 下测出**完全反转的 family ranking**:
+
+| family | random-window small-budget (h=16) | LOO segment-pure (h=64) |
+|---|---:|---:|
+| Bi-CfC-NAD | 548.38 ± 52.58 | **293.23 ± 48.38** ✅ |
+| LSTM | **489.98 ± 35.87** ✅ | 470.75 ± 36.40 |
+| GRU | 554.22 ± 15.60 | 461.32 ± 58.52 |
+| 5-seed ensemble gain | 0.0-0.2% (REFUTED) | 未测(预期 < 1%) |
+| **family ranking** | **LSTM > Bi-CfC > GRU** | **Bi-CfC > GRU > LSTM** |
+| family spread | 13% | **60%** |
+
+**★ 25th meta-conclusion 升级**:
+> "encoder family ranking is **regime-conditional**":
+> - **random-window + small-budget** → **LSTM 略优**(但需 ≥5 seeds)
+> - **LOO + large-budget** → **Bi-CfC 显著优** (60% 优势,LSTM/GRU 都失败)
+> - **生产推荐**: 跨段泛化必用 **Bi-CfC-NAD**;小预算快速实验可用 **LSTM**
+> - **5-seed ensemble** 在 random-window regime 下**无效** (REFUTED)
+
+JSON:
+- `analysis/emma_rover/2026-06-03_233707_multiseed_encoder_families.json` (实验 1)
+- `analysis/emma_rover/2026-06-03_234159_loo_multiseed_encoder_families.json` (实验 2)
+
 ## CI 强制双 regime 测 (★ §32)
 
 ```bash
@@ -118,4 +144,4 @@ python scripts/benchmark_adaptive_freeze.py --epochs 80 --warmup-epochs 40 --fre
 
 ## 一句话备忘
 
-> **LNN 多模态系统的最优架构 *不是* 跨模态 attention,而是 *adaptive freeze* 的单流 Bi-CfC-NAD (h=96, ep=80, K=10, freeze=audio_only, **LOO single-seed MSE 0.42 / 5-seed mean 8.16 ± 6.78**) — 比纯 video_only 优 ~2× (mean over seeds);regime 是 hidden_size × epochs × seed 三维空间, 任何 "+X% gain" 报告都 *必须* 注明 regime、seed 集合、且 mean±std;**第二 encoder 必须是 Bi-CfC-NAD family** (GRU +3.9%, LSTM +36.1% 仍 family-internal),random-window 0.31 *不是* 跨段泛化 (真 LOO mean 14.89);SOTA recipe 在 regime 外灾难性失败 — 跨任务迁移需重新调参。**生产推荐: 5-seed ensemble**。**
+> **LNN 多模态系统的最优架构 *不是* 跨模态 attention,而是 *adaptive freeze* 的单流 Bi-CfC-NAD (h=96, ep=80, K=10, freeze=audio_only, LOO single-seed MSE 0.42 / 5-seed mean 8.16 ± 6.78);**第二 encoder family ranking 是 *regime-conditional* (★ 25th meta-refinement)** — LOO large-budget 下 **Bi-CfC 显著强** 60% (round 45 5-seed × 3 family 验证),random-window small-budget 下 **LSTM 反超** 13%;regime 是 hidden_size × epochs × seed × protocol 四维空间,任何 "+X% gain" 必须注明 *全部* 维度;random-window 0.31 *不是* 跨段泛化 (真 LOO mean 14.89);5-seed ensemble 在 random-window regime 下无效 (REFUTED);SOTA recipe 在 regime 外灾难性失败 — 跨任务迁移需重新调参。**生产推荐**: LOO + large-budget → Bi-CfC-NAD;random-window + small-budget → LSTM。**

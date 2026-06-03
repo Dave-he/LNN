@@ -1,0 +1,68 @@
+{
+  "config": {
+    "hidden_size": 64,
+    "epochs": 30,
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42
+    ],
+    "folds": 4,
+    "freeze": false,
+    "protocol": "TemporalSegmentRegressionDataset LOO"
+  },
+  "families": {
+    "bi_cfc_nad": {
+      "per_seed": [
+        295.25243759155273,
+        272.2683639526367,
+        228.87918663024902,
+        309.26816272735596,
+        360.4792175292969
+      ],
+      "mean": 293.2294736862183,
+      "std": 48.38436612566392,
+      "min": 228.87918663024902,
+      "max": 360.4792175292969
+    },
+    "lstm": {
+      "per_seed": [
+        426.0746536254883,
+        438.3043670654297,
+        508.4561309814453,
+        485.282470703125,
+        495.6174774169922
+      ],
+      "mean": 470.7470199584961,
+      "std": 36.400350538202055,
+      "min": 426.0746536254883,
+      "max": 508.4561309814453
+    },
+    "gru": {
+      "per_seed": [
+        548.0389556884766,
+        460.2399444580078,
+        453.4627914428711,
+        383.1129913330078,
+        461.7338104248047
+      ],
+      "mean": 461.3176986694336,
+      "std": 58.5226172928254,
+      "min": 383.1129913330078,
+      "max": 548.0389556884766
+    }
+  },
+  "metadata": {
+    "round": 45,
+    "follows_up": "round 43 seed-lucky refutation + round 21 family necessity",
+    "hypotheses": {
+      "H_a": "all families similar multi-seed variance (REFUTED if not)",
+      "H_b": "Bi-CfC-NAD has lower variance than LSTM/GRU (round 21/25 implied)",
+      "H_c": "LSTM is robust across seeds",
+      "H_d": "5-seed ensemble helps (REFUTED at h=16 regime)"
+    }
+  }
+}
