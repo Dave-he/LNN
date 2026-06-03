@@ -4383,3 +4383,93 @@ audio=zero/random 对照**(round 42 W+1 #2,仍未做)
 
 - `pytest tests/` **142/142 全过**,零回归。
 - 提交 3 个 K JSON + 本节 §43。
+
+---
+
+## 44. 第四十轮 /loop — Multi-Seed LOO SOTA Validation — **★ SOTA 0.42 IS SEED-LUCKY ★**
+
+(2026-06-03 第四十轮 /loop。Round 43 §43.7 W+1 第 2 项:对 round 38 设立的 LOO SOTA(h=96 K=10 → 0.42)做多 seed 鲁棒性测试。如果 4 个新 seed 都接近 SOTA,recipe 是 seed-robust;如果某 seed 灾难,SOTA 是 lucky.)
+
+### 44.1 假设
+
+> Round 38 在 seed=42 上发现 h=96 K=10 audio=normal LOO mean = 0.42。
+> 在 seed ∈ {1, 2, 3, 100} 上重复测试,应当全部落在 [0.21, 0.84](SOTA ±100% 容忍范围)内。
+> 如果任一 seed 显著高于 4.2(10× SOTA),**SOTA 是 seed-lucky 不稳健**。
+
+### 44.2 实验结果(rover segment-LOO, h=96, ep=80, K=10, audio=normal, audio_only freeze)
+
+| seed | LOO mean | per-fold MSE | std | vs SOTA 0.42 |
+|---:|---:|---|---:|---:|
+| **42 (SOTA)** | **0.42** | [0.04, **0.002**, 1.35, 0.30] | 0.55 | baseline |
+| 1 (新) | **15.36** | [4.76, 2.22, 2.92, **51.56**] | 20.92 | **37× worse** ❌ |
+| 2 (新) | 0.72 | [0.20, 1.64, 0.19, 0.85] | 0.59 | 1.7× worse(close) |
+| 3 (新) | 12.80 | [13.13, 5.40, 14.25, 18.44] | 4.71 | 30× worse ❌ |
+| 100 (新) | 11.49 | [5.32, 9.15, 31.21, 0.28] | 11.81 | 27× worse ❌ |
+
+→ **可证伪假设彻底证伪**:4 个新 seed 中**只有 seed=2 (0.72) 落在容忍范围内**;seed 1/3/100 都灾难性 27-37× worse。
+→ JSON:`analysis/emma_rover/2026-06-03_r40_loo_h96K10_seed{1,2,3,100}.json`。
+
+### 44.3 多 seed 统计学诚实数字
+
+| 指标 | 5-seed 全集(seeds 1,2,3,42,100) |
+|---|---|
+| Mean | **8.16** |
+| Std | 6.78 |
+| Median | 11.49 |
+| Best | 0.42(seed=42) |
+| Worst | 15.36(seed=1) |
+| 5-seed range | 36.6× 跨度 |
+
+→ **真实 multi-seed LOO performance 是 ~8 MSE,不是 0.42**。
+→ Round 38 § 中报告的 SOTA 0.42 是**精心挑选**(intentionally cherry-picked?)的 seed=42 lucky case;真实 expected value 比 cron round 32 reference 的 pure_vo mean(14.89) 仅好约 **1.8×**。
+
+### 44.4 对前 39 轮 SOTA 叙事的根本性修正
+
+| Round | 原报告 SOTA | seed | 真实 multi-seed |
+|---:|---:|:---:|---|
+| 26 | RW 0.31 | 42 | (未测,假定也有 seed sensitivity) |
+| 34 | LOO 3.23 | 42 | (未测) |
+| 38 | LOO 0.42 | 42 | **5-seed mean 8.16, std 6.78** |
+
+前 39 轮所有 SOTA 数字 **都仅在 seed=42 测过**。本轮首次诚实揭示 seed sensitivity 巨大。**所有 SOTA 数字应配多 seed std**:
+
+**Honest 修订**:
+- LOO SOTA(seed=42 lucky 配置)= 0.42
+- **LOO expected(5-seed mean)= 8.16 ± 6.78** ← production 部署期望
+- LOO worst-case(5-seed max)= 15.36
+
+### 44.5 元结论第二十四次精化 — 所有 SOTA 必须报告 multi-seed 数字
+
+| Round | 关键发现 |
+|---:|---|
+| 38 | "h=96 K=10 LOO SOTA 0.42" |
+| **40(本节)** | **"SOTA 0.42 是 seed=42 lucky;5-seed mean 8.16, std 6.78,接近 pure_vo 14.89"** |
+
+**新生产推荐(诚实版)**:
+
+```python
+# 40-round honest LOO production
+# WARNING: previous "SOTA 0.42" was seed=42 cherry-pick.
+# Real multi-seed mean ≈ 8 MSE (range 0.42-15.36 across 5 seeds).
+
+# Two-tier recommendation:
+#   - For published "SOTA" claims: report 5-seed mean ± std, NOT single seed.
+#   - For deployment: expect MSE ~8 (best case 0.4, worst 15).
+
+# To consistently get low-MSE deployment, need ensemble across seeds:
+#   train 5 models with different seeds; ensemble predictions;
+#   expected ensemble MSE likely << 8 (untested)
+```
+
+### 44.6 W+1 backlog 紧急加项
+
+- ~~LOO SOTA 多 seed 验证~~(本节 ✅ 揭示 seed sensitivity)
+- *紧急新增*:**RW SOTA 0.31 多 seed 验证** — 看 RW 是否也 seed-lucky(若是,所有"SOTA"叙事都需修订)
+- *紧急新增*:**Ensemble across seeds** 看多 seed 平均能否取回 SOTA-level performance
+- *现存*:audio=zero/random @ K=10 h=96
+- *现存*:Phase 2 lr decay
+
+### 44.7 测试 + 提交
+
+- `pytest tests/` **142/142 全过**,零回归。
+- 提交 4 个 seed JSON + 本节 §44(诚实修正前 39 轮 SOTA 叙事)。
