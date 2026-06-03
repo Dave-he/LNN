@@ -246,6 +246,77 @@ def generate_concept_drift(
     return data, labels
 
 
+def generate_gradual_multi_regime(
+    num_samples: int = 2000,
+    num_regimes: int = 4,
+    transition_frac: float = 0.15,
+    freq_range: tuple[float, float] = (0.04, 0.18),
+    amp_range: tuple[float, float] = (0.5, 1.4),
+    noise_std: float = 0.05,
+    seed: int = 42,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Generate time series with ``num_regimes`` regimes that **gradually**
+    transition into each other.
+
+    The single sharp drift used by :func:`generate_concept_drift` is a
+    pessimistic case for any continuous-time model — when the dynamics jump
+    in one step the model has zero data to interpolate from. This generator
+    models the more realistic clinical-style non-stationarity the LiquidNN
+    paper claims its advantage on:
+
+    * sequence is split into ``num_regimes`` equal segments;
+    * each segment is a sine with its own ``(freq, amp)`` drawn uniformly
+      from the supplied ranges;
+    * neighbouring segments are blended via a cosine ramp over a
+      ``transition_frac`` window so signals overlap rather than jump.
+
+    Returns:
+        ``(data, regime_id)`` where ``regime_id[i]`` ∈ ``[0, num_regimes)``.
+    """
+    if num_regimes < 1:
+        raise ValueError("num_regimes must be >= 1")
+    if not 0.0 < transition_frac < 0.5:
+        raise ValueError("transition_frac must be in (0, 0.5)")
+
+    rng = np.random.default_rng(seed)
+    segment_len = num_samples // num_regimes
+    transition_len = max(1, int(segment_len * transition_frac))
+
+    freqs = rng.uniform(freq_range[0], freq_range[1], size=num_regimes)
+    amps = rng.uniform(amp_range[0], amp_range[1], size=num_regimes)
+    phases = rng.uniform(0, 2 * np.pi, size=num_regimes)
+
+    t = np.arange(num_samples)
+    data = np.zeros(num_samples, dtype=np.float32)
+    regime_id = np.zeros(num_samples, dtype=np.float32)
+
+    for r in range(num_regimes):
+        start = r * segment_len
+        end = num_samples if r == num_regimes - 1 else (r + 1) * segment_len
+        idx = np.arange(start, end)
+        primary = amps[r] * np.sin(2 * np.pi * freqs[r] * t[idx] + phases[r])
+        data[idx] = primary
+        regime_id[idx] = float(r)
+
+    # cosine-blend neighbouring regimes inside the transition window.
+    for r in range(1, num_regimes):
+        boundary = r * segment_len
+        lo = max(0, boundary - transition_len)
+        hi = min(num_samples, boundary + transition_len)
+        win = np.arange(lo, hi)
+        weight = 0.5 * (1.0 - np.cos(np.pi * (win - lo) / max(hi - lo - 1, 1)))
+        # blend from regime r-1 (computed for segment_len start) into r.
+        prev_signal = amps[r - 1] * np.sin(2 * np.pi * freqs[r - 1] * t[win] + phases[r - 1])
+        next_signal = amps[r] * np.sin(2 * np.pi * freqs[r] * t[win] + phases[r])
+        data[win] = (1.0 - weight) * prev_signal + weight * next_signal
+        # regime label fractionally tracks the blend so labels are continuous.
+        regime_id[win] = (r - 1) + weight
+
+    data = data + rng.normal(0, noise_std, num_samples).astype(np.float32)
+    return data.astype(np.float32), regime_id
+
+
 def generate_lorenz(
     num_samples: int = 2000,
     sigma: float = 10.0,

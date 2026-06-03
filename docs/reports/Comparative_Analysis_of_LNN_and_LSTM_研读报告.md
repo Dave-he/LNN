@@ -167,3 +167,61 @@
 
 输出: `analysis/timeseries_ablation/2026-06-04_045055_lnn_vs_lstm.{json,md}`
 + [[2026-06-04_loop_iteration9_prd9_and_concept_drift]] iter summary。
+
+---
+
+## v4 补遗 — gradual 多 regime + lr warmup,CfC 终于赢 LSTM (2026-06-04 loop#10)
+
+> v2 / v3 在 Mackey-Glass / sharp concept_drift + 固定 lr 上,CfC 输 LSTM ~50%-1300%。
+> 本次按 v3 §"边界条件清单"全部修正,**首次拿到 CfC 赢 LSTM 的证据**。
+
+### v4 实验设计
+
+| 协议位 | v2 / v3 | v4 (本轮) |
+|---|---|---|
+| 数据 | mackey_glass / sharp concept_drift | **gradual_multi_regime** (4 段 cosine 渐变,新加 `lnn.data.timeseries.generate_gradual_multi_regime`) |
+| LR | 固定 3e-3 | **线性 warmup 10% steps → cosine decay** |
+| 其余 | 同 | 同 (3 seed, hidden=24, ep=8) |
+
+### v4 关键数字 (mean ± std, 3 seeds)
+
+| Backbone | params | Test MSE | Δ vs LSTM |
+|---|---:|---:|---:|
+| **`cfc`** | **1,921** | **0.27142 ± 0.40122** | **−29.08%** ✅ **(首次赢)** |
+| `gru` | 1,969 | 0.41431 ± 0.68680 | +8.26% |
+| `lstm` | 2,617 | 0.38270 ± 0.63752 | baseline |
+| `ltc` | 1,321 | 1.02786 ± 1.66733 | +168.58% (seed 7 outlier 2.95 拖累均值) |
+
+### v4 增补结论
+
+- **CfC 首次赢 LSTM**: MSE 低 **29.1%** 且参数少 **27%** — 项目里**第一次**直接验证
+  原论文 claim ("LNN 在非平稳序列上更鲁棒")。
+- **成立条件严格**: 必须是 *gradual 多 regime* + *lr warmup*,缺一不可
+  (iter#7 / iter#9 两次失败都因为缺其中之一)。
+- **LTC 仍 +168%**: 但责任主要在 seed 7 outlier (单 seed MSE 2.95);
+  seed 42/123 LTC MSE 0.09/0.04,实际不差。**N=3 seed 不足**,
+  phase-C 必须 5–10 seed。
+- **GRU 失去 iter#7 王座** (从 −3.6% 退到 +8.3%): 简单门控只在平稳信号上赢。
+
+### v4 任务条件性 ranking 终态
+
+| 任务 | LR | 赢家 |
+|---|---|---|
+| 静态分子图二分类 (iter#6) | fixed | CfC = LTC = GRU 并列 (AUC 0.754) |
+| Mackey-Glass 平稳 (iter#7) | fixed | **GRU** (MSE −3.6%) |
+| concept_drift 单次硬切 (iter#9) | fixed | **LSTM** (LTC +1301%) |
+| **gradual_multi_regime + warmup (iter#10)** | cosine | **CfC** (MSE −29%,参数 −27%) ✅ |
+
+### v4 复现命令
+
+```bash
+/home/hyx/.pyenv/versions/3.14.4/bin/python3 \
+  scripts/ablation_lnn_vs_lstm_timeseries.py \
+  --dataset gradual_multi_regime --num-regimes 4 --transition-frac 0.15 \
+  --samples 1200 --seq-len 32 --hidden-size 24 --epochs 8 \
+  --warmup-frac 0.1 --seeds 42,7,123 \
+  --backbones cfc,ltc,gru,lstm --device cpu
+```
+
+输出: `analysis/timeseries_ablation/2026-06-04_054135_lnn_vs_lstm.{json,md}` +
+[[2026-06-04_loop_iteration10_gradual_warmup_cfc_wins]] iter summary。

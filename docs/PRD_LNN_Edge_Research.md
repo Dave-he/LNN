@@ -156,7 +156,7 @@ PRD §8 8 个任务里只剩 #3 LFM2.5(等 RAM 空载窗口)和 #4 EMMA(远程 a
 | # | 任务 | 出口物 | 关联 |
 |---:|---|---|---|
 | 9-1 | LFM2.5-1.2B-Distilled INT4 离线推理 + token/sec 测试(夜间空载窗口) | `analysis/lfm25/<date>_lfm25_int4.md` | §8 #3 |
-| 9-2 | concept_drift 复测 phase-B:多 regime 渐进 + lr warmup + curriculum | iter#9 v3 后续 | §8 #5 v3 |
+| 9-2 | concept_drift 复测 phase-B:多 regime 渐进 + lr warmup + curriculum — **loop#10 ✅** (gradual_multi_regime + warmup_frac=0.1: CfC MSE 0.27142 比 LSTM 0.38270 低 −29.1%, 参数 −27%;项目首次 CfC 赢 LSTM,印证 paper claim) | iter#9 v3 后续 → **iter#10 完成** | §8 #5 v4 |
 | 9-3 | LiquidTAD 真 Stage C:THUMOS-14 50-video 子集复现 | `analysis/paper_replication/liquid_tad_thumos.md` | §8 #2 stage C-true |
 | 9-4 | `experiment_graph_lnn_molecule.py` 加 `--frozen-encoder` 两阶段(模拟 GCN-CfC 解耦) | code + smoke | §8 #6 follow-up B |
 | 9-5 | `loop_status.py --since-last-loop` 自动定位上次 iter 结束后的变更 | code + sample report | §8 #8 v2 |

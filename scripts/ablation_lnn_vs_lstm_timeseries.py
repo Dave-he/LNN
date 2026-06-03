@@ -41,6 +41,7 @@ from lnn.core.ltc import LTCNetwork
 from lnn.data.timeseries import (
     create_dataloader,
     generate_concept_drift,
+    generate_gradual_multi_regime,
     generate_mackey_glass,
     generate_sine_data,
 )
@@ -98,6 +99,18 @@ def _load_split(args: argparse.Namespace, seed: int) -> tuple:
             drift_point=args.samples // 2,
             seed=seed,
         )
+    elif args.dataset == "gradual_multi_regime":
+        # PRD §9 #2 phase-B: multiple regimes that gradually blend into each
+        # other (cosine ramp), rather than a single sharp jump.  This is the
+        # closer analogue of the clinical-style non-stationarity the LiquidNN
+        # paper says it handles well — iter#9's negative finding was on a
+        # sharper protocol than the paper actually claims to address.
+        data, _ = generate_gradual_multi_regime(
+            num_samples=args.samples,
+            num_regimes=args.num_regimes,
+            transition_frac=args.transition_frac,
+            seed=seed,
+        )
     else:
         raise ValueError(f"unknown dataset {args.dataset}")
 
@@ -119,9 +132,30 @@ def _load_split(args: argparse.Namespace, seed: int) -> tuple:
 
 def _train_one(model: nn.Module, train_loader, args, device) -> float:
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    # PRD §9 #2 phase-B: optional cosine schedule with linear warmup for the
+    # first warmup_frac fraction of total steps.  iter#9 showed LTC suffers
+    # without per-backbone lr adaptation — this helper keeps the call sites
+    # identical while letting the recipe move.
+    total_steps = max(args.epochs * max(len(train_loader), 1), 1)
+    warmup_steps = max(int(total_steps * max(args.warmup_frac, 0.0)), 0)
+    use_schedule = args.warmup_frac > 0.0
+
+    def _lr_factor(step: int) -> float:
+        if step < warmup_steps:
+            return float(step + 1) / float(max(warmup_steps, 1))
+        # cosine decay over remaining steps.
+        progress = (step - warmup_steps) / max(total_steps - warmup_steps, 1)
+        import math
+        return 0.5 * (1.0 + math.cos(math.pi * min(progress, 1.0)))
+
+    scheduler = (
+        torch.optim.lr_scheduler.LambdaLR(optimizer, _lr_factor)
+        if use_schedule else None
+    )
     criterion = nn.MSELoss()
     model.train()
     start = time.perf_counter()
+    global_step = 0
     for _ in range(args.epochs):
         for batch in train_loader:
             x, y = batch[0].to(device), batch[1].to(device)
@@ -137,6 +171,9 @@ def _train_one(model: nn.Module, train_loader, args, device) -> float:
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
+            if scheduler is not None:
+                scheduler.step()
+            global_step += 1
     return time.perf_counter() - start
 
 
@@ -297,7 +334,14 @@ def _format_markdown(payload: dict) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", choices=["mackey_glass", "sine", "concept_drift"], default="mackey_glass")
+    parser.add_argument("--dataset", choices=["mackey_glass", "sine", "concept_drift", "gradual_multi_regime"], default="mackey_glass")
+    parser.add_argument("--num-regimes", type=int, default=4,
+                        help="Only used by --dataset gradual_multi_regime.")
+    parser.add_argument("--transition-frac", type=float, default=0.15,
+                        help="Cosine-blend width as a fraction of segment length (gradual_multi_regime only).")
+    parser.add_argument("--warmup-frac", type=float, default=0.0,
+                        help=">0 enables linear warmup + cosine decay over the full schedule. "
+                             "PRD §9 #2 phase-B uses 0.1 to fix LTC's iter#9 OOD failure.")
     parser.add_argument("--samples", type=int, default=1200)
     parser.add_argument("--seq-len", type=int, default=32)
     parser.add_argument("--hidden-size", type=int, default=24)
