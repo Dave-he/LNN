@@ -13,7 +13,28 @@ date: 2026-05-24
 
 ## ⚡ 30 秒 TL;DR
 
-> **新 SOTA**: 真实 EMMA rover 数据上 **MSE 0.31** (2.8× 优于 video_only baseline 0.87),通过 *adaptive freeze-after-warmup* 策略 + Bi-CfC-NAD backbone。跨 25 轮 ablation 后的核心结论: *regime 决定一切* (小预算 cross_attn 赢, 大预算 video_only 赢); *audio 信息内容 ≤ 5pp 贡献*; *family 选 LSTM/CfC/Bi-CfC-NAD 几乎并列* (均 +32~+36%)。详见 `LNN_TLDR.md` (1 页摘要) + `docs/guides/LNN_MULTIMODAL_DESIGN.md` (完整指南)。
+> **新 SOTA**: 真实 EMMA rover 数据上 **MSE 0.31** (2.8× 优于 video_only baseline 0.87),通过 *adaptive freeze-after-warmup* 策略 + Bi-CfC-NAD backbone。跨 25 轮 ablation 后的核心结论: *regime 决定一切* (小预算 cross_attn 赢, 大预算 video_only 赢); *audio 信息内容 ≤ 5pp 贡献*; *family 选 LSTM/CfC/Bi-CfC-NAD 几乎并列* (均 +32~+36%)。详见 `LNN_TLDR.md` (1 页摘要) + `LNN_QUICKSTART.md` (5 分钟跑出 SOTA) + `docs/guides/LNN_MULTIMODAL_DESIGN.md` (完整指南)。
+
+## 🚀 5 分钟跑 SOTA
+
+```bash
+# 1. 准备(自动缓存 EMMA rover 视频/音频特征)
+python lnn/data/emma_rover_features.py
+
+# 2. 跑测试(140 small + 2 large_budget, ~85 秒)
+python -m pytest tests/ -q
+
+# 3. ★ 跑 SOTA recipe(adaptive freeze, MSE 0.31, 1-2 分钟)
+python scripts/benchmark_adaptive_freeze.py \
+    --epochs 80 --warmup-epochs 40 --freeze-targets audio_only \
+    --num-samples 200 --hidden-size 64
+
+# 4. 看 3 模型对比(在两 regime 下分别跑, 验证 regime 翻转)
+python scripts/benchmark_emma_rover.py --epochs 20 --hidden-size 16
+python scripts/benchmark_emma_rover.py --epochs 80 --hidden-size 64
+```
+
+详见 `LNN_QUICKSTART.md`。
 
 ## 📂 目录结构
 
@@ -22,6 +43,7 @@ LNN/
 ├── AGENTS.md                   # 自动化 Agent 规划与工作流说明
 ├── README.md                   # 项目概述与指南 (本文档)
 ├── LNN_TLDR.md                 # 30 秒 TL;DR (新 PR 作者入口)
+├── LNN_QUICKSTART.md            # 5 分钟跑 SOTA MSE 0.31
 ├── docs/                       # 文档目录（调研报告、论文总结、学习笔记等）
 │   ├── guides/                 # 设计指南
 │   │   └── LNN_MULTIMODAL_DESIGN.md   # 完整设计指南

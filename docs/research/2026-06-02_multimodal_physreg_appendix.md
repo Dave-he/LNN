@@ -3175,3 +3175,67 @@ rover audio=random 配置:
 
 - `pytest tests/` **142/142 全过**,零回归。
 - 提交 2 个新 audio_mode rover JSON + 本节 §34。
+
+---
+
+## 33. 第三十轮 /loop — LNN_QUICKSTART.md — **5 分钟跑 SOTA 指南**
+
+(2026-06-03 第三十轮,1h cron `51a1f8bf` 触发。W+1 收尾:写 `LNN_QUICKSTART.md` (159 行) 放仓库根, 让任何新人 5 分钟内跑到 SOTA MSE 0.31。)
+
+### 33.1 动机
+
+仓库已有 3 个文档金字塔 (`LNN_TLDR.md` 摘要 / `LNN_MULTIMODAL_DESIGN.md` 完整指南 / 32 轮 ablation 报告),但 *缺少一个 "5 分钟动手" 入口*。任何新人想跑 SOTA 必须自己拼凑命令。
+
+本轮写 `LNN_QUICKSTART.md` (159 行), 5 步 + 一页 cheat sheet:
+1. 准备 (30 秒): conda env + 数据缓存
+2. 测试 (15 秒): `pytest tests/ -q`
+3. ★ 跑 SOTA recipe (1-2 分钟): `benchmark_adaptive_freeze.py --epochs 80 --warmup-epochs 40 --freeze-targets audio_only`
+4. 看 3 模型对比 (2-3 分钟): `benchmark_emma_rover.py` × 2 regime
+5. (可选) 跑 ablation 扫描 (5 分钟)
+
+### 33.2 产物
+
+`LNN_QUICKSTART.md` (159 行):
+- 0 准备 (30 秒)
+- 1 测试 (15 秒)
+- 2 ★ SOTA recipe (1-2 分钟) — 预期 MSE 0.31
+- 3 看 3 模型对比 (2-3 分钟) — regime 翻转演示
+- 4 ablation 扫描 (5 分钟) — 8 种第二 encoder
+- 5 完整阅读路径 (10 分钟) — 3 个文档链接
+- 一页 cheat sheet (7 任务 + 1 行命令)
+- 5 行 production recipe
+- 故障排查 (5 条)
+- 一句话备忘
+
+`README.md` 加:
+- TL;DR 块加 link `LNN_QUICKSTART.md`
+- 新增 "5 分钟跑 SOTA" 块 (4 行代码)
+- 仓库结构图加 `LNN_QUICKSTART.md` 行
+
+### 33.3 测试 + 提交
+
+- `pytest tests/` **142/142 通过** (本轮纯文档, 无新单测)
+- 提交 LNN_QUICKSTART.md + README.md 更新
+- 未来新人: clone → `cat LNN_QUICKSTART.md` → 5 步 → 看到 MSE 0.31
+
+### 33.4 仓库结构(本轮新增后)
+
+```
+LNN/
+├── LNN_TLDR.md                    ★ (1 页入口)
+├── LNN_QUICKSTART.md              ★ NEW (5 分钟动手)
+├── README.md                       (含 TL;DR 块 + 5 分钟跑 SOTA 块)
+├── docs/
+│   ├── guides/LNN_MULTIMODAL_DESIGN.md   (v3, 完整设计指南)
+│   └── research/.../multimodal_physreg_appendix.md  (32 轮 ablation)
+├── lnn/{core,data}                 (9 ablation 模型 + 真实/合成数据)
+├── analysis/{emma_rover,multimodal_physreg}/
+└── scripts/                        (5 benchmark + 6 扫描)
+```
+
+### 33.5 参考
+
+- `LNN_QUICKSTART.md` (本轮新增, 159 行)
+- `LNN_TLDR.md` (64 行, 30 秒入口)
+- `docs/guides/LNN_MULTIMODAL_DESIGN.md` v3 (241 行, 完整设计指南)
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
