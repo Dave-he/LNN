@@ -889,3 +889,76 @@ def test_gru_encoder_differs_from_uni_video() -> None:
         uni_loc = mdn_mean(uni(video))
     assert gru_loc.shape == uni_loc.shape
     assert not torch.allclose(gru_loc, uni_loc, atol=1e-3)
+
+
+# ---------- LSTMEncoderXAttnWithMDN tests (round 22) ----------
+
+
+def test_lstm_encoder_output_shape() -> None:
+    from lnn.core.multimodal_physreg import LSTMEncoderXAttnWithMDN
+    model = LSTMEncoderXAttnWithMDN(
+        video_dim=3, audio_dim=1, hidden_size=8, output_size=5, num_mixtures=2,
+    )
+    video = torch.randn(2, 16, 3)
+    out = model(video)
+    assert out["logits"].shape == (2, 16, 2)
+    assert out["loc"].shape == (2, 16, 2, 5)
+
+
+def test_lstm_encoder_audio_argument_ignored() -> None:
+    """LSTM 2nd encoder: audio is intentionally ignored (only video feeds the encoder)."""
+    from lnn.core.multimodal_physreg import LSTMEncoderXAttnWithMDN
+    torch.manual_seed(0)
+    model = LSTMEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2,
+    )
+    model.eval()
+    video = torch.randn(1, 8, 1)
+    audio_a = torch.randn(1, 8, 1)
+    audio_b = torch.randn(1, 8, 1) * 100
+    with torch.no_grad():
+        out_a = mdn_mean(model(video, audio_a))
+        out_b = mdn_mean(model(video, audio_b))
+    assert torch.allclose(out_a, out_b, atol=1e-6)
+
+
+def test_lstm_encoder_gradients_flow_into_lstm() -> None:
+    from lnn.core.multimodal_physreg import LSTMEncoderXAttnWithMDN
+    model = LSTMEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=4, output_size=2,
+    )
+    video = torch.randn(2, 6, 1, requires_grad=True)
+    out = model(video)
+    out["loc"].sum().backward()
+    lstm_grad = sum(
+        p.grad.abs().sum().item()
+        for p in model._inner.audio_encoder.parameters()
+        if p.grad is not None
+    )
+    assert lstm_grad > 0, "LSTM parameters did not receive gradient"
+    v_grad = sum(p.grad.abs().sum().item() for p in model.video_encoder.parameters() if p.grad is not None)
+    assert v_grad > 0
+
+
+def test_lstm_encoder_differs_from_gru_encoder() -> None:
+    """LSTM and GRU should produce different outputs (different gating mechanisms)."""
+    from lnn.core.multimodal_physreg import (
+        LSTMEncoderXAttnWithMDN,
+        GRUEncoderXAttnWithMDN,
+    )
+    torch.manual_seed(21)
+    lstm = LSTMEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2,
+    )
+    torch.manual_seed(21)
+    gru = GRUEncoderXAttnWithMDN(
+        video_dim=1, audio_dim=1, hidden_size=8, output_size=2,
+    )
+    video = torch.randn(1, 14, 1)
+    with torch.no_grad():
+        lstm_loc = mdn_mean(lstm(video))
+        gru_loc = mdn_mean(gru(video))
+    assert lstm_loc.shape == gru_loc.shape
+    assert not torch.allclose(lstm_loc, gru_loc, atol=1e-3), (
+        "LSTM and GRU should differ; identical means parameter init is leaking across models."
+    )
