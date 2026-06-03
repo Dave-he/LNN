@@ -3507,3 +3507,104 @@ audio_mode = "normal"                   # 大预算下必须 normal
 
 - `pytest tests/` **142/142 全过**,零回归。
 - 提交 4 个新 K 值 JSON + 本节 §36。
+
+---
+
+## 35. 第三十二轮 /loop — EMMA Rover Segment-Pure LOO — **SOTA MSE 0.31 IS RANDOM-WINDOW-SPECIFIC**
+
+(2026-06-03 第三十二轮,1h cron `51a1f8bf` 触发。W+1 #1:跨 rover 视频泛化。EMMA Dropbox 只 release 1 个 rover 视频, 做 *synthesized LOO* — 把 60 帧分 4 个不重叠 15 帧段, 4-fold LOO。)
+
+### 35.1 动机
+
+§30 round 26 报 SOTA MSE 0.31 (adaptive-freeze audio_only K=40 @ h=64, ep=80)。但 SOTA 用的是 `EmmaRoverRegressionDataset(num_samples=200, window=16)` — *随机滑窗*,**让模型同时看到全部 60 帧**。这相当于 *零难度的"测试集泄漏"*。
+
+真实 LOO 应是 *段-纯* (segment-pure): 测试时,模型 *从未* 见过该段。本轮实现 `TemporalSegmentRegressionDataset` (4 段 × 15 帧) + 4-fold LOO,看 SOTA recipe 是否在更严的 LOO 测试下保持优势。
+
+### 35.2 实现
+
+- `lnn/data/emma_rover_temporal_folds.py` (180 行, 新):
+  - `TemporalSegmentRegressionDataset`: 4 段 × 15 帧, padding 第 16 帧复制末帧
+  - `create_segment_loo_dataloaders(fold)`: train = 3 段 (24 个重复样本 = 3 batches of 8), test = held-out 段 (1 样本)
+- `scripts/benchmark_emma_segment_loo.py` (140 行, 新):
+  - 4-fold LOO, 跑 video_only baseline @ h=64, ep=80
+  - (注: LOO 设置下, "adaptive-freeze" 退化为 video_only, 因 4 段 *太短*, freeze 没意义)
+
+### 35.3 实验结果(EMMA rover 4 段, h=64, ep=80, video_only, K=40)
+
+| fold | test MSE |
+|---:|---:|
+| 0 (frames 0-14) | 4.36 |
+| 1 (frames 15-29) | 5.28 |
+| 2 (frames 30-44) | 18.07 |
+| 3 (frames 45-59) | **31.83** |
+| **mean ± std** | **14.89 ± 11.18** |
+
+数据: `analysis/emma_rover/2026-06-03_171403_segment_loo.json`。
+
+### 35.4 关键发现 — **SOTA MSE 0.31 is *random-window-specific* (48× 跨段翻车)**
+
+- **LOO mean 14.89** vs **random-window reference 0.31** = **48× worse**
+- 跨段方差巨大 (4.36 → 31.83, 7.3× range)
+- **fold 3 (last 15 frames) 是最差** (31.83) — 后期轨迹 (rover 减速 / 转向) 比早期难拟合
+- **段-纯 LOO 远比 random-window 严格** — 实际上"测试集泄漏"在 random-window 设定下 *不可避免*
+
+### 35.5 修订后的元结论
+
+**§30 round 26 报 "SOTA MSE 0.31" 在严格跨段 LOO 下 *不成立*。**真正的 SOTA 应该报 "LOO mean MSE" 而非 "test MSE":
+
+| 报告方式 | 数值 | 严格性 |
+|---|---:|---|
+| 旧: random-window test MSE | 0.31 | ❌ 段泄漏 |
+| 新: segment-pure LOO mean | 14.89 | ✅ 跨段泛化 |
+| 改进率 | **48× worse** (实际*更严格*的 SOTA) | |
+
+**真正能泛化的 recipe**: 需要 *跨段* 数据增强 (滑窗 + 段混合 + 时间扰动) 或 *在每段独立做域适应*。当前 single-rover SOTA 0.31 是 *random-window-specific*, 在真实多视频 / 跨段场景下 *不成立*。
+
+### 35.6 仓库价值
+
+- `TemporalSegmentRegressionDataset` 是 *新 baseline* — 任何未来 LNN 多模态 PR 必须 *同时* 在 random-window + segment-pure LOO 上报告
+- `LNN_QUICKSTART.md` + `LNN_TLDR.md` 中的 SOTA 数字应加 **"random-window-specific" 限定**
+- 任何声称 "新 SOTA" 的工作必须 *同时* verify LOO mean 显著 < 14.89
+
+### 35.7 跨任务元结论收尾(本轮之后 35 轮 ablation)
+
+| 维度 | 之前认为 | 现在修订 |
+|---|---|---|
+| "新 SOTA MSE 0.31" | universal SOTA | **random-window-specific; segment-pure LOO mean 14.89** |
+| audio 信息内容 ≤ 5pp | universal | 同 + adaptive-freeze 跨任务迁移 NEGATIVE (synth) |
+| GRU seed-sensitive | single anomaly | 真实,但 *同一 seed* 仍可能出现灾难 (round 30) |
+| **真正能跨任务迁移的 LNN 多模态 SOTA 还没出现** | — | 35 轮 ablation 后的最终元结论 |
+
+### 35.8 仓库结构(本轮新增后)
+
+```
+LNN/
+├── LNN_TLDR.md v2                  (1 页入口)
+├── LNN_QUICKSTART.md                (5 分钟跑 SOTA)
+├── docs/guides/LNN_MULTIMODAL_DESIGN.md v3
+├── lnn/
+│   ├── core/multimodal_physreg.py  (9 ablation 类)
+│   └── data/emma_rover_*.py        (regular + temporal_folds NEW)
+├── analysis/emma_rover/             (新增 segment_loo.json)
+└── scripts/
+    ├── benchmark_emma_rover.py
+    ├── benchmark_emma_segment_loo.py   ★ NEW
+    └── benchmark_adaptive_freeze.py
+```
+
+### 35.9 产物清单
+
+| 路径 | 类型 |
+|---|---|
+| `lnn/data/emma_rover_temporal_folds.py` | 段-纯 LOO dataset (180 行, 新) |
+| `scripts/benchmark_emma_segment_loo.py` | LOO benchmark (140 行, 新) |
+| `analysis/emma_rover/2026-06-03_171403_segment_loo.json` | 4-fold LOO 数据 |
+| `docs/research/2026-06-02_multimodal_physreg_appendix.md` | 本报告 §35 |
+| `pytest tests/` | 142/142 通过 (本轮纯新 LOO 工具,无新单测) |
+
+### 35.10 参考
+
+- §30 cron SOTA (round 26) `68fe631` — random-window SOTA MSE 0.31
+- §32 cron K-fine-sweep `5c4411b` — K=40 sharp V-shape optimum
+- §34 cron TL;DR v2 (上一轮) — 已含 "rover-specific" 限定
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
