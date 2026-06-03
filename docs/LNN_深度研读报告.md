@@ -174,6 +174,20 @@ tags: [LNN, reading-report, papers]
 - **演进路线**：从早期的理论控制验证（LTC, 2020），到效率突破（CfC, 2022），再到如今的通用液态基础模型（LFM2, 2025）及自动化架构搜索（STAR）。
 
 
+### [2026-06-04] LNN for Natural Gas Spot Price — v1 摘要复确认
+- **独立报告**：[[docs/reports/LNN_Natural_Gas_Forecasting_2604.24788_研读报告.md]]
+- **核心问题**：Henry Hub 天然气现货受季节性、地缘政治、宏观金融多源耦合，传统 LSTM / 滚动回归对 regime 切换滞后。
+- **方法论**：使用 LTC / Strict CfC / Hybrid CfC / CT-LTC 四种 LNN 变体，配合 2015-2025 十年半日度数据集 + 分层扩展窗口 + Moving Block Bootstrap。
+- **关键成果**：LNN 在高波动期（如 2022 俄乌冲突）相比 LSTM 误差下降 12-18%，参数压缩 30-50×；CfC 闭式解在工程上更友好。
+- **局限**：视界短（next-day）、单标的、τ_i 演化图缺乏因果归因、未提供端侧延迟数据。
+
+### [2026-06-04] Nonasymptotic Theory of Gain-Dependent Error Dynamics in BC（控制理论延伸）
+- **独立报告**：[[docs/reports/Nonasymptotic_BC_Error_Dynamics_2604.14484_研读报告.md]]
+- **核心问题**：BC 策略在 PD 控制器上的"训练损失 → 闭环失败"链条缺乏非渐近有限视界刻画；不同 (stiffness, damping) 增益区下的失败概率没有统一标尺。
+- **方法论**：在 PD 闭环中假设 action 误差独立 sub-Gaussian，导出 proxy matrix $X_\infty(K)$；对标量二阶 PD 给出**闭式连续时间平稳方差** $X_\infty^c(\alpha,\beta)=\sigma^2\alpha/(2\beta)$，证明 ZOH 离散化保单调。
+- **关键成果**：horizon-T 失败概率分解为增益依赖放大 × 验证损失 + 泛化松弛；四区排序 CO 紧、SU 松；可作 BC 部署前的快速"风险热图"。
+- **LNN 桥接**：$\Psi(K)$ 的"标签难度/注入强度/收缩性"三因子与 LNN 的"时间常数/输入门/状态收缩"有结构同构，可为未来 LNN-on-robotics 失败界提供方法论。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 

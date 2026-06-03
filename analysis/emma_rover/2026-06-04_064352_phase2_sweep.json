@@ -1,0 +1,113 @@
+{
+  "config": {
+    "epochs": 80,
+    "warmup_epochs": 40,
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3
+    ],
+    "folds": 4,
+    "protocol": "TemporalSegmentRegressionDataset 4-fold LOO",
+    "model": "CrossModalAttnBiCfCNADWithMDN"
+  },
+  "probe1_sigma_scan": {
+    "description": "h=96, ep=80, phase2_only inject in {0.0, 0.05, 0.1, 0.15, 0.2}",
+    "results": {
+      "sigma0.0": {
+        "sigma": 0.0,
+        "per_seed_loo_mean": [
+          9.370893836021423,
+          0.7198372036218643,
+          14.815124869346619
+        ],
+        "mean": 8.301951969663302,
+        "std": 7.10818268829122
+      },
+      "sigma0.05": {
+        "sigma": 0.05,
+        "per_seed_loo_mean": [
+          3.848804126493633,
+          24.320794788189232,
+          12.483498842222616
+        ],
+        "mean": 13.551032585635161,
+        "std": 10.277661292002731
+      },
+      "sigma0.1": {
+        "sigma": 0.1,
+        "per_seed_loo_mean": [
+          4.340162664651871,
+          3.2975868908688426,
+          20.269497573375702
+        ],
+        "mean": 9.302415709632138,
+        "std": 9.512066258997546
+      },
+      "sigma0.15": {
+        "sigma": 0.15,
+        "per_seed_loo_mean": [
+          18.235782369971275,
+          1.0525609040632844,
+          5.2705972492694855
+        ],
+        "mean": 8.186313507768014,
+        "std": 8.954988886741557
+      },
+      "sigma0.2": {
+        "sigma": 0.2,
+        "per_seed_loo_mean": [
+          7.306980079039931,
+          12.824171240441501,
+          118.19833856448531
+        ],
+        "mean": 46.10982996132225,
+        "std": 62.49139664025039
+      }
+    }
+  },
+  "probe2_cross_h": {
+    "description": "phase2_only inject=0.1, h in {32, 64, 96}",
+    "results": {
+      "h32": {
+        "hidden_size": 32,
+        "per_seed_loo_mean": [
+          61.34602403640747,
+          67.84205913543701,
+          66.31846141815186
+        ],
+        "mean": 65.16884819666545,
+        "std": 3.397179112325137
+      },
+      "h64": {
+        "hidden_size": 64,
+        "per_seed_loo_mean": [
+          24.667595209553838,
+          5.9065953101962805,
+          4.92925024300348
+        ],
+        "mean": 11.834480254251199,
+        "std": 11.12454180796228
+      },
+      "h96": {
+        "hidden_size": 96,
+        "per_seed_loo_mean": [
+          4.340162664651871,
+          3.2975868908688426,
+          20.269497573375702
+        ],
+        "mean": 9.302415709632138,
+        "std": 9.512066258997546
+      }
+    }
+  },
+  "metadata": {
+    "round": 58,
+    "follows_up": "round 57 (phase2-only inject wins -20.4%, 38th meta-refinement)",
+    "hypotheses": {
+      "H_a": "0.1 is optimal phase2 inject (V-shape around it)",
+      "H_b": "phase2_only inject=0.1 generalizes across h in [32, 64, 96]"
+    }
+  }
+}
