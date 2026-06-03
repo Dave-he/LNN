@@ -123,8 +123,8 @@ PRD 化的目的是固化范围 / 衡量指标 / 验证门槛,
 | 4 | EMMA 多模态物理参数恢复最小验证(论文 2605.24047) | `analysis/multimodal/2026-06-03_emma_validation.md` | 2 loop |
 | 5 | Comparative Analysis of LNN & LSTM(2605.27467)对照重做 — **loop#7 ✅ (诚实负面信号)** Mackey-Glass 4-backbone × 3-seed: GRU 最准 (MSE 0.00336), LTC 参数 −50% 但 MSE 高 41%, 训练慢 5.9× | `docs/reports/Comparative_Analysis_of_LNN_and_LSTM_研读报告.md` v2 增补 + `analysis/timeseries_ablation/2026-06-04_loop_iteration7_lnn_vs_lstm_v2.md` + `scripts/ablation_lnn_vs_lstm_timeseries.py` | 1 loop done |
 | 6 | GCN-CfC 分子筛选模型 smoke(GitHub Linlab2026/GCN-CfC) — **loop#5 结构化调研 ✅ + loop#6 follow-up A 落地 ✅**:`scripts/experiment_graph_lnn_molecule.py` 用本仓 `GraphLNNPredictor` 跑 Tox21-styled 二分类,3 seed × {CfC, LTC, GRU}: 三家 AUC 并列 0.754,LTC −28% 参数且方差最低,GRU 推理最快;证明端到端 PyTorch 单 stack 完胜两框架方案 | `docs/reports/GCN-CfC_仓库结构化调研.md` + `analysis/molecular/2026-06-04_loop_iteration6_graph_lnn_tox21_smoke.md` + `scripts/experiment_graph_lnn_molecule.py` | 2 loop done (B 级 + 落地实验) |
-| 7 | 把 Jetson Pareto sweep 接入 PRD 验证指标 #3 | 更新 `scripts/jetson_lnn_benchmark.py` + 本 PRD | 1 loop |
-| 8 | Loop 调度产物去重 + 自动 retro(避免重复研读相同 paper) | `scripts/select_papers_for_report.py` 改造 | 1 loop |
+| 7 | 把 Jetson Pareto sweep 接入 PRD 验证指标 #3 — **loop#2 ✅** (12 trials CfCStyle vs GRU × hidden∈{8,16,24} × seq∈{16,32}, 4 Pareto-front points; CfC@h=24,seq=32 最佳 MSE 0.4285 −30.6% vs GRU) | 更新 `scripts/jetson_lnn_benchmark.py --pareto` + `analysis/jetson/2026-06-03_loop_iteration2_cuda_fix_pareto.md` | 1 loop done |
+| 8 | Loop 调度产物去重 + 自动 retro(避免重复研读相同 paper) — **loop#8 ✅** `scripts/loop_status.py` 扫描 daily/jetson/molecular/timeseries/repo_watchlist + 解析 PRD §8 + git log,输出 JSON+MD 报告;首次跑就揪出 PRD §7 没补 ✅ 的 tracking 漏洞 | `scripts/loop_status.py` + `analysis/loop_status/<date>_loop_status_<date>.md` | 1 loop done |
 
 ## 9. 风险与缓解
 

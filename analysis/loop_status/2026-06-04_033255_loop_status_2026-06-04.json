@@ -1,0 +1,187 @@
+{
+  "run_id": "2026-06-04_033255",
+  "date": "2026-06-04",
+  "generated_at": "2026-06-04T03:32:55.455673",
+  "fixed_artifacts": {
+    "daily_digest": {
+      "path": "docs/daily/2026-06-04_LNN_research_digest.md",
+      "exists": true,
+      "size_bytes": 6011
+    },
+    "papers_json": {
+      "path": "papers/daily/2026-06-04_lnn_research.json",
+      "exists": true,
+      "size_bytes": 38535
+    },
+    "repo_watchlist": {
+      "path": "analysis/repo_watchlist/2026-06-04_lnn_open_source_watchlist.md",
+      "exists": true,
+      "size_bytes": 12501
+    },
+    "jetson_md": {
+      "path": "analysis/jetson/2026-06-04_lnn_benchmark.md",
+      "exists": true,
+      "size_bytes": 1412
+    },
+    "jetson_json": {
+      "path": "analysis/jetson/2026-06-04_lnn_benchmark.json",
+      "exists": true,
+      "size_bytes": 1338
+    }
+  },
+  "iterations": [
+    {
+      "iteration": 5,
+      "title": "2026-06-04_loop_iteration5_gcn_cfc_repo_survey",
+      "path": "analysis/jetson/2026-06-04_loop_iteration5_gcn_cfc_repo_survey.md"
+    },
+    {
+      "iteration": 6,
+      "title": "2026-06-04_loop_iteration6_graph_lnn_tox21_smoke",
+      "path": "analysis/molecular/2026-06-04_loop_iteration6_graph_lnn_tox21_smoke.md"
+    },
+    {
+      "iteration": 7,
+      "title": "2026-06-04_loop_iteration7_lnn_vs_lstm_v2",
+      "path": "analysis/timeseries_ablation/2026-06-04_loop_iteration7_lnn_vs_lstm_v2.md"
+    }
+  ],
+  "analysis_artifacts": [
+    {
+      "path": "analysis/jetson/2026-06-04_lnn_benchmark.png",
+      "exists": true,
+      "size_bytes": 60361
+    },
+    {
+      "path": "analysis/molecular/2026-06-04_013156_tox21_styled_graph_lnn.json",
+      "exists": true,
+      "size_bytes": 1583
+    },
+    {
+      "path": "analysis/molecular/2026-06-04_013156_tox21_styled_graph_lnn.md",
+      "exists": true,
+      "size_bytes": 1028
+    },
+    {
+      "path": "analysis/molecular/2026-06-04_013242_tox21_styled_graph_lnn.json",
+      "exists": true,
+      "size_bytes": 1667
+    },
+    {
+      "path": "analysis/molecular/2026-06-04_013242_tox21_styled_graph_lnn.md",
+      "exists": true,
+      "size_bytes": 1036
+    },
+    {
+      "path": "analysis/molecular/2026-06-04_013309_tox21_styled_graph_lnn.json",
+      "exists": true,
+      "size_bytes": 1657
+    },
+    {
+      "path": "analysis/molecular/2026-06-04_013309_tox21_styled_graph_lnn.md",
+      "exists": true,
+      "size_bytes": 1035
+    },
+    {
+      "path": "analysis/molecular/2026-06-04_013324_tox21_styled_graph_lnn.json",
+      "exists": true,
+      "size_bytes": 1653
+    },
+    {
+      "path": "analysis/molecular/2026-06-04_013324_tox21_styled_graph_lnn.md",
+      "exists": true,
+      "size_bytes": 1037
+    },
+    {
+      "path": "analysis/timeseries_ablation/2026-06-04_024244_lnn_vs_lstm.json",
+      "exists": true,
+      "size_bytes": 6318
+    },
+    {
+      "path": "analysis/timeseries_ablation/2026-06-04_024244_lnn_vs_lstm.md",
+      "exists": true,
+      "size_bytes": 1412
+    }
+  ],
+  "git_commits": [
+    {
+      "sha": "0047b77",
+      "author": "heyongxian",
+      "subject": "feat(comparative-v2): LNN vs LSTM Mackey-Glass 4-backbone x 3-seed ablation"
+    },
+    {
+      "sha": "c0cddf0",
+      "author": "heyongxian",
+      "subject": "feat(loop-r53): a_feat magnitude is sigma-switch carrier (33rd meta-refinement, 4 negations in a row)"
+    },
+    {
+      "sha": "8b93e0b",
+      "author": "heyongxian",
+      "subject": "feat(loop-r50): cross-attention IS the sigma-switch mechanism (30th meta-refinement)"
+    },
+    {
+      "sha": "4d412ae",
+      "author": "heyongxian",
+      "subject": "feat(molecular): GraphLNNPredictor Tox21-styled 3-backbone 3-seed smoke"
+    },
+    {
+      "sha": "b653371",
+      "author": "heyongxian",
+      "subject": "feat(loop-r48): audio SNR threshold scan — Bi-CfC sigma=0.1 best (28th meta-refinement)"
+    },
+    {
+      "sha": "f540ddf",
+      "author": "heyongxian",
+      "subject": "feat(loop-r47): vanilla_cfc beats Bi-CfC-NAD in clean audio (27th meta-refinement)"
+    },
+    {
+      "sha": "fb56630",
+      "author": "heyongxian",
+      "subject": "feat(daily, repo-survey): 2026-06-04 baseline + GCN-CfC structured survey"
+    }
+  ],
+  "prd_tasks": [
+    {
+      "id": 1,
+      "title": "~~修复 Jetson CUDA wheel,跑通 GPU 路径 benchmark~~ **[loop#2 done]** torch 2.10.0+cu126 + libcudss 0.8.0.10 + `scripts/jetson_cuda_env.sh`",
+      "status": "completed"
+    },
+    {
+      "id": 2,
+      "title": "复现 LiquidTAD 长视频 TAD 实验(论文 2604.18274) — **stage A 算子+单测 ✅ + stage B smoke ✅ (loop#3 done) + stage C-lite 3-seed ablation ✅ (loop#4)**;真正 St",
+      "status": "completed"
+    },
+    {
+      "id": 3,
+      "title": "LFM2.5-1.2B-Distilled INT4 推理 + token/sec 测试",
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "title": "EMMA 多模态物理参数恢复最小验证(论文 2605.24047)",
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "title": "Comparative Analysis of LNN & LSTM(2605.27467)对照重做 — **loop#7 ✅ (诚实负面信号)** Mackey-Glass 4-backbone × 3-seed: GRU 最准 (MSE 0.00336), LTC 参数 −5",
+      "status": "completed"
+    },
+    {
+      "id": 6,
+      "title": "GCN-CfC 分子筛选模型 smoke(GitHub Linlab2026/GCN-CfC) — **loop#5 结构化调研 ✅ + loop#6 follow-up A 落地 ✅**:`scripts/experiment_graph_lnn_molecule.py` 用本",
+      "status": "completed"
+    },
+    {
+      "id": 7,
+      "title": "把 Jetson Pareto sweep 接入 PRD 验证指标 #3 — **loop#2 ✅** (12 trials CfCStyle vs GRU × hidden∈{8,16,24} × seq∈{16,32}, 4 Pareto-front points; CfC@",
+      "status": "completed"
+    },
+    {
+      "id": 8,
+      "title": "Loop 调度产物去重 + 自动 retro(避免重复研读相同 paper) — **loop#8 ✅** `scripts/loop_status.py` 扫描 daily/jetson/molecular/timeseries/repo_watchlist + 解析 PRD ",
+      "status": "completed"
+    }
+  ],
+  "suggestion": "Pending PRD tasks: #3, #4. Next-up suggestion: #3 — LFM2.5-1.2B-Distilled INT4 推理 + token/sec 测试",
+  "json_path": "analysis/loop_status/2026-06-04_033255_loop_status_2026-06-04.json"
+}
