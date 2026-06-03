@@ -1,0 +1,147 @@
+{
+  "config": {
+    "hidden_size": 96,
+    "epochs": 80,
+    "warmup_epochs": 40,
+    "freeze": "audio_only",
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42
+    ],
+    "inject_conditions": [
+      0.0,
+      0.1
+    ],
+    "folds": 4,
+    "protocol": "TemporalSegmentRegressionDataset 4-fold LOO",
+    "model": "CrossModalAttnBiCfCNADWithMDN"
+  },
+  "results": {
+    "inject0.0__seed1": {
+      "inject": 0.0,
+      "seed": 1,
+      "per_fold_mse": [
+        14.164336204528809,
+        3.279911518096924,
+        11.620184898376465,
+        8.419142723083496
+      ],
+      "loo_mean": 9.370893836021423
+    },
+    "inject0.0__seed2": {
+      "inject": 0.0,
+      "seed": 2,
+      "per_fold_mse": [
+        0.04100989177823067,
+        2.1679017543792725,
+        0.034684550017118454,
+        0.6357526183128357
+      ],
+      "loo_mean": 0.7198372036218643
+    },
+    "inject0.0__seed3": {
+      "inject": 0.0,
+      "seed": 3,
+      "per_fold_mse": [
+        28.883567810058594,
+        27.181007385253906,
+        0.9341425895690918,
+        2.261781692504883
+      ],
+      "loo_mean": 14.815124869346619
+    },
+    "inject0.0__seed7": {
+      "inject": 0.0,
+      "seed": 7,
+      "per_fold_mse": [
+        0.005956104025244713,
+        28.647430419921875,
+        0.10347676277160645,
+        3.0062143802642822
+      ],
+      "loo_mean": 7.940769416745752
+    },
+    "inject0.0__seed42": {
+      "inject": 0.0,
+      "seed": 42,
+      "per_fold_mse": [
+        17.843595504760742,
+        0.11450983583927155,
+        22.304134368896484,
+        5.977736473083496
+      ],
+      "loo_mean": 11.559994045644999
+    },
+    "inject0.1__seed1": {
+      "inject": 0.1,
+      "seed": 1,
+      "per_fold_mse": [
+        27.43243980407715,
+        74.37140655517578,
+        0.5355836153030396,
+        2.095006227493286
+      ],
+      "loo_mean": 26.108609050512314
+    },
+    "inject0.1__seed2": {
+      "inject": 0.1,
+      "seed": 2,
+      "per_fold_mse": [
+        0.01138000376522541,
+        0.21424126625061035,
+        0.007780238054692745,
+        16.4786376953125
+      ],
+      "loo_mean": 4.178009800845757
+    },
+    "inject0.1__seed3": {
+      "inject": 0.1,
+      "seed": 3,
+      "per_fold_mse": [
+        1.3257309198379517,
+        26.047304153442383,
+        47.603302001953125,
+        36.269039154052734
+      ],
+      "loo_mean": 27.81134405732155
+    },
+    "inject0.1__seed7": {
+      "inject": 0.1,
+      "seed": 7,
+      "per_fold_mse": [
+        6.056286811828613,
+        37.171653747558594,
+        0.12275127321481705,
+        35.79307556152344
+      ],
+      "loo_mean": 19.785941848531365
+    },
+    "inject0.1__seed42": {
+      "inject": 0.1,
+      "seed": 42,
+      "per_fold_mse": [
+        22.901514053344727,
+        10.046082496643066,
+        4.754396438598633,
+        16.50922966003418
+      ],
+      "loo_mean": 13.552805662155151
+    }
+  },
+  "metadata": {
+    "round": 56,
+    "follows_up": "round 55 inject recipe large-budget verification",
+    "combines": "round 38 SOTA recipe + round 54 inject=0.1",
+    "round_38_sota_single_seed": 0.42,
+    "round_43_5seed_mean_no_inject": 8.16,
+    "hypotheses": {
+      "H_a": "inject=0.1 reduces 5-seed mean from 8.16 to <4",
+      "H_b": "inject=0.1 reduces std from 6.78 to <3",
+      "H_c": "inject=0.1 prevents catastrophic seed failure"
+    }
+  }
+}
