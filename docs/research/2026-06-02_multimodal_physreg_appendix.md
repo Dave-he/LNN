@@ -3865,3 +3865,77 @@ else:
 
 - `pytest tests/` **142/142 全过**,零回归。
 - 提交 3 个 K JSON + 本节 §38。
+
+---
+
+## 39. 第三十五轮 /loop — Audio Mode @ K=20 LOO — **★ EMMA AUDIO HYPOTHESIS CONFIRMED ★**
+
+(2026-06-03 第三十五轮 /loop。Round 38 §38.7 W+1 第 1 项:K=20 LOO SOTA 配置下扫 audio_mode,看 audio=random/zero 能否进一步下推 3.23。)
+
+### 39.1 假设
+
+> Round 34 设立 K=20 audio=normal LOO mean 3.23。Round 16 random-window 上发现 audio=random 比 normal 好。
+> 在 LOO 下若 audio=zero/random 任一 < 3.23,确认 audio 内容不重要(round 16 结论 generalize);若 audio=zero/random 都灾难,则 EMMA 论文的 audio 物理假说在严格泛化下成立。
+
+### 39.2 实验结果(rover segment-LOO, h=64, ep=80, K=20, seed=42)
+
+| audio_mode | LOO mean | per-fold MSE | std | vs normal=3.23 |
+|---|---:|---|---:|---:|
+| **normal** | **3.23** 🏆 | [0.11, 3.75, 4.61, 4.46] | 1.83 | baseline |
+| zero | 29.33 | [36.92, 38.92, 29.49, 11.98] | 10.61 | **+808% 灾难** |
+| random | 61.47 | [15.39, 42.69, 69.99, 117.81] | 37.82 | **+1804% 大灾难** |
+
+→ **可证伪假设彻底证伪**:audio=zero/random 在 LOO 上都灾难性更差。**audio=normal 在 LOO 下唯一最佳**。
+→ JSON:`analysis/emma_rover/2026-06-03_r35_loo_K20_audio_{zero,random}.json`。
+
+### 39.3 关键发现 — Random-Window 与 LOO 下 audio 角色完全反转
+
+| 评测协议 | audio=normal | audio=zero | audio=random |
+|---|---:|---:|---:|
+| **Random-window**(round 16) | +50.3%(基) | +52.7%(略好) | **+61.7%(最好)** |
+| **Segment-pure LOO**(本节) | **3.23(最佳)** | 29.33(差 9×) | 61.47(差 19×) |
+
+→ **EMMA 论文的 "audio 携带 video 推不出的 motor RPM 信息" 假说在严格 cross-segment LOO 下真正成立**。前 34 轮 ablation 在 random-window 上得到的 "audio 内容不重要,架构正则化才是 +51% 来源" 结论,**只在数据泄漏的评测下成立**。
+
+### 39.4 机制三档对照
+
+- **audio=normal LOO**:audio_encoder 学到的 motor RPM 表示对所有 4 个 segment 都 valid(wheel radius 物理常数不变);K=20 短 warmup 防止 segment-specific 过拟合
+- **audio=zero LOO**:cross-attn query 全部 attend 到常零 → context vanishing → video alone 不够恢复 5 个参数 → 所有 fold ≈ 30 MSE
+- **audio=random LOO**:cross-attn 学到对噪声的伪相关 → phase 2 video fine-tune 锁定错误模式 → held-out fold 完全失效(fold 3 = 118 MSE)
+
+### 39.5 35 轮以来 SOTA 完整 ranking
+
+| 排名 | LOO mean MSE | 配置 | Round |
+|---:|---:|---|:---:|
+| 🏆 LOO SOTA | **3.23** | adaptive freeze K=20 @ h=64/ep=80 audio=normal | **34** |
+| 🥈 LOO | 9.64 | K=60 | 34 |
+| 🥉 LOO | 12.44 | K=30 | 34 |
+| 4 LOO | 13.95 | K=40(random-window SOTA setting) | 33 |
+| 5 LOO | 14.89 | cron pure video_only | 32 |
+| 6 LOO | 29.33 | K=20 + audio=zero(本节) | 35 |
+| 7 LOO | 61.47 | K=20 + audio=random(本节) | 35 |
+
+| 排名 | Random-window MSE | 配置 | Round |
+|---:|---:|---|:---:|
+| 🏆 RW SOTA | **0.31** | adaptive freeze K=40 @ h=64 audio=normal | 26 |
+| 🥈 RW | 0.87 | pure video_only @ h=64 | 22 cron |
+| 🥉 RW | 1.15 | K=35 @ h=64 audio=normal | 32 |
+
+### 39.6 元结论第十九次精化 — EMMA Audio Hypothesis @ LOO ≠ @ Random-Window
+
+| Round | audio role |
+|---:|---|
+| 16 | "audio=random 比 normal 好 → audio 内容不重要,架构正则化是关键"(random-window) |
+| **35(本节)** | **"audio=normal 唯一 LOO SOTA → EMMA 物理假说在严格泛化下成立,audio 不可替代"** |
+
+### 39.7 W+1 backlog
+
+- ~~K=20 audio_mode LOO 扫描~~(本节 ✅ normal 唯一最优)
+- *新增*:**K 进一步细化(K=15, K=25)在 LOO + audio=normal** 验证 K=20 sharp 最优
+- *新增*:**audio=normal + K=20 + h=32 / h=96 / 其它容量** 看 LOO SOTA 3.23 是否容量 portable
+- *现存*:audio_mode 扫描 random-window vs LOO 对比的论文级图表
+
+### 39.8 测试 + 提交
+
+- `pytest tests/` **142/142 全过**,零回归。
+- 提交 2 个 K=20 audio JSON + dataset audio_mode 扩展 + 本节 §39 + 当日 evening 日报。

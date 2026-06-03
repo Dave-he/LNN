@@ -102,12 +102,14 @@ def main():
     p.add_argument("--warmup-epochs", type=int, default=40)
     p.add_argument("--hidden-size", type=int, default=64)
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--audio-mode", choices=["normal", "zero", "random", "lowpass"], default="normal",
+                   help="Round 35: extend LOO probe to audio_mode variants.")
     p.add_argument("--output-dir", default="analysis/emma_rover")
     args = p.parse_args()
     device = torch.device("cpu")
     print(f"=== REAL adaptive freeze on EMMA Segment LOO ===")
-    print(f"epochs={args.epochs} warmup={args.warmup_epochs} hidden={args.hidden_size}")
-    dataset = TemporalSegmentRegressionDataset(seed=args.seed)
+    print(f"epochs={args.epochs} warmup={args.warmup_epochs} hidden={args.hidden_size} audio={args.audio_mode}")
+    dataset = TemporalSegmentRegressionDataset(seed=args.seed, audio_mode=args.audio_mode)
     runs = []
     for fold in range(4):
         train_loader, test_loader = create_segment_loo_dataloaders(

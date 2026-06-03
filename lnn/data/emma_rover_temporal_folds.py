@@ -103,8 +103,11 @@ class TemporalSegmentRegressionDataset(Dataset):
         cache_file: str = "/tmp/emma_features/features.npz",
         feature_noise_std: float = 0.02,
         seed: int = 42,
+        audio_mode: str = "normal",
     ) -> None:
         import os
+        if audio_mode not in {"normal", "zero", "random", "lowpass"}:
+            raise ValueError(f"audio_mode must be one of normal/zero/random/lowpass, got {audio_mode!r}")
         if os.path.exists(cache_file):
             d = np.load(cache_file)
             video = d["video"]  # [60, 3]
@@ -113,6 +116,19 @@ class TemporalSegmentRegressionDataset(Dataset):
             feats = extract_rover_features("/tmp/RoverVideo.mp4", "/tmp/emma_features")
             video = feats["video"]
             audio = feats["audio"]
+        # Round 35 audio_mode transformation, applied to the FULL 60-frame
+        # audio trace before slicing into segments. Mirrors round 16's
+        # EmmaRoverRegressionDataset.audio_mode semantics so LOO can also
+        # explore audio ablations.
+        if audio_mode == "zero":
+            audio = np.zeros_like(audio)
+        elif audio_mode == "random":
+            rng_audio = np.random.default_rng(seed + 12345)
+            std = audio.std() + 1e-8
+            audio = (rng_audio.standard_normal(audio.shape).astype(np.float32) * std)
+        elif audio_mode == "lowpass":
+            # broadcast per-array mean (single scalar for whole 60-frame trace)
+            audio = np.full_like(audio, audio.mean())
         # 4 segments, each 15 frames.  We pad to 16 (window size) by
         # copying the last frame so window = whole segment.
         segs_video = []
@@ -129,6 +145,7 @@ class TemporalSegmentRegressionDataset(Dataset):
         self.segments_audio = np.stack(segs_audio)  # [4, 16]
         self.feature_noise_std = feature_noise_std
         self.seed = seed
+        self.audio_mode = audio_mode
         self.fold_assignments = np.array([0, 1, 2, 3])
 
     def __len__(self) -> int:
