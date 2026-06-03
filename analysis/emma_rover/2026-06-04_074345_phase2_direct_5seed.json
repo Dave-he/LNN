@@ -1,0 +1,57 @@
+{
+  "config": {
+    "hidden_size": 96,
+    "epochs": 80,
+    "warmup_epochs": 40,
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42
+    ],
+    "sigmas": [
+      0.1,
+      0.15
+    ],
+    "folds": 4,
+    "protocol": "TemporalSegmentRegressionDataset 4-fold LOO",
+    "model": "CrossModalAttnBiCfCNADWithMDN"
+  },
+  "results": {
+    "sigma0.1": {
+      "sigma": 0.1,
+      "per_seed_loo_mean": [
+        4.340162664651871,
+        3.2975868908688426,
+        20.269497573375702,
+        3.9018966988660395,
+        3.5207352191209793
+      ],
+      "mean": 7.0659758093766865,
+      "std": 7.391615634856994,
+      "min": 3.2975868908688426,
+      "max": 20.269497573375702
+    },
+    "sigma0.15": {
+      "sigma": 0.15,
+      "per_seed_loo_mean": [
+        18.235782369971275,
+        1.0525609040632844,
+        5.2705972492694855,
+        0.8958830400370061,
+        19.01115669310093
+      ],
+      "mean": 8.893196051288395,
+      "std": 9.058322742974129,
+      "min": 0.8958830400370061,
+      "max": 19.01115669310093
+    }
+  },
+  "metadata": {
+    "round": 59,
+    "follows_up": "round 58 (sweet spot [0.0, 0.15], 0.15 slightly better in 3-seed)",
+    "hypothesis": "5-seed head-to-head 0.10 vs 0.15"
+  }
+}
