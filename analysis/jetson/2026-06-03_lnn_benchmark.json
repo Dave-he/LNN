@@ -1,49 +1,43 @@
 {
-  "status": "ok_cpu_fallback",
-  "generated_at": "2026-06-02T22:39:41.480166+00:00",
+  "status": "ok",
+  "generated_at": "2026-06-03T12:38:19.071694+00:00",
   "environment": {
     "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
     "machine": "aarch64",
-    "python": "3.10.19",
-    "device_tree_model": null,
+    "python": "3.14.4",
+    "device_tree_model": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
     "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
-    "tegrastats_available": false,
-    "jetson_clocks_available": false,
-    "torch_version": "2.10.0",
-    "cuda_available": true,
-    "cuda_version": "12.6",
-    "cudnn_version": 90300,
-    "cuda_device": {
-      "name": "Orin",
-      "total_memory_mb": 7619.78,
-      "multi_processor_count": 8
-    }
+    "tegrastats_available": true,
+    "jetson_clocks_available": true,
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda_version": "13.0",
+    "cudnn_version": 91900
   },
   "device": "cpu",
   "config": {
-    "samples": 64,
-    "seq_len": 16,
-    "hidden_size": 8,
-    "epochs": 1,
-    "batch_size": 8,
+    "samples": 256,
+    "seq_len": 32,
+    "hidden_size": 16,
+    "epochs": 3,
+    "batch_size": 16,
     "lr": 0.003,
     "seed": 42
   },
   "results": [
     {
       "name": "CfCStyle",
-      "parameters": 329,
-      "test_mse": 0.571587085723877,
-      "train_seconds": 0.17419324908405542,
-      "inference_steps_per_sec": 33592.141146726724
+      "parameters": 1169,
+      "test_mse": 0.26371583342552185,
+      "train_seconds": 4.952013863949105,
+      "inference_steps_per_sec": 19458.065229635828
     },
     {
       "name": "GRU",
-      "parameters": 273,
-      "test_mse": 0.6755762696266174,
-      "train_seconds": 0.07028094190172851,
-      "inference_steps_per_sec": 155866.18526627967
+      "parameters": 929,
+      "test_mse": 0.3345525562763214,
+      "train_seconds": 1.4533792319707572,
+      "inference_steps_per_sec": 51818.208742980896
     }
-  ],
-  "cuda_fallback_reason": "RuntimeError: NVML_SUCCESS == r INTERNAL ASSERT FAILED at \"/opt/pytorch/c10/cuda/CUDACachingAllocator.cpp\":1154, please report a bug to PyTorch."
+  ]
 }

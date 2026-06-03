@@ -8,9 +8,9 @@ tags: [LNN, Jetson, benchmark, edge-ai]
 
 ## 环境
 - 平台：Linux-5.15.148-tegra-aarch64-with-glibc2.35
-- 设备树型号：unknown
-- PyTorch：2.10.0
-- CUDA：True (12.6)
+- 设备树型号：NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super
+- PyTorch：2.11.0+cu130
+- CUDA：False (13.0)
 - Jetson BSP：
 
 ```text
@@ -19,27 +19,21 @@ tags: [LNN, Jetson, benchmark, edge-ai]
 TARGET_USERSPACE_LIB_DIR=nvidia
 TARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia
 ```
-- CUDA 设备：Orin，显存 7619.78 MB
 
 ## 任务配置
 - 数据：合成非平稳时间序列，一步预测
-- 样本 / 序列长度：64 / 16
-- 隐藏维度 / Epoch：8 / 1
+- 样本 / 序列长度：256 / 32
+- 隐藏维度 / Epoch：16 / 3
 - 设备：cpu
 
 ## 结果
 | 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
 |---|---:|---:|---:|---:|
-| CfCStyle | 329 | 0.571587 | 33592.1 | 0.17 |
-| GRU | 273 | 0.675576 | 155866.2 | 0.07 |
+| CfCStyle | 1169 | 0.263716 | 19458.1 | 4.95 |
+| GRU | 929 | 0.334553 | 51818.2 | 1.45 |
 
-## CUDA 回退
-- 本次优先尝试 Jetson CUDA 路径，但 CUDA 运行时返回内存/加速器错误，已自动回退到 CPU smoke benchmark。
-- 回退原因：
-
-```text
-RuntimeError: NVML_SUCCESS == r INTERNAL ASSERT FAILED at "/opt/pytorch/c10/cuda/CUDACachingAllocator.cpp":1154, please report a bug to PyTorch.
-```
+## Benchmark 图
+![Jetson LNN Benchmark](2026-06-03_lnn_benchmark.png)
 
 ## 解读
 - `CfCStyle` 是闭式连续时间思想的轻量实现，用于快速验证 LNN 类动态门控在边缘设备上的训练与推理成本。
