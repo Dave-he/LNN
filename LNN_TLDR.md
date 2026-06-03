@@ -1,7 +1,7 @@
 ---
-title: LNN Multimodal TL;DR (v2)
+title: LNN Multimodal TL;DR (v3)
 date: 2026-06-03
-tags: [LNN, multimodal, TLDR, SOTA, adaptive-freeze, regime, v2]
+tags: [LNN, multimodal, TLDR, SOTA, adaptive-freeze, regime, random-window-specific, v3]
 related:
   - "[[LNN_QUICKSTART]]"
   - "[[docs/guides/LNN_MULTIMODAL_DESIGN]]"
@@ -30,12 +30,24 @@ freeze_targets = "audio_only"  # 冻结 audio_encoder;cross-attn projections 继
 # After warmup: requires_grad=False on audio_encoder; rebuild Adam.
 ```
 
-*期望*: 在 **EMMA rover 滑窗 dataset (n=200, window=16)** 上 **MSE ≈ 0.31** (★ SOTA)。
+*期望*: 在 **EMMA rover 滑窗 dataset (n=200, window=16)** 上 **MSE ≈ 0.31** (★ SOTA, ***random-window-specific***)。
 
-★ **regime 限定**:
+## ★ **random-window-specific 警告** (round 35)
+
+0.31 数字是 *random-window dataset* (200 windows from sliding across all 60 frames) 上测的。**当用 `TemporalSegmentRegressionDataset` (4 disjoint 15-frame segments) 做 4-fold LOO 时,video_only baseline 升到 mean 14.89, std 11.18 (vs random-window 0.87 = 17× 差)**。Adaptive-freeze 在 LOO 上仅 +6.3% over video_only (marginal)。
+
+**含义**: 任何未来 LNN 多模态 PR 声称 "新 SOTA" 必须 *同时* 在:
+- `EmmaRoverRegressionDataset` (random-window, *段泄漏*) — 报告 *仅作 reference*
+- `TemporalSegmentRegressionDataset` (4-fold LOO, *跨段严格*) — **作为主指标**
+
+`TemporalSegmentRegressionDataset` 是 *新 baseline*: 任何"新 SOTA"必须 < 14.89 LOO mean 才有跨段泛化价值。
+
+## ★ regime 限定 (round 32)
+
 - ✅ **适用**: 真实 EMMA rover 数据, h=64, ep=80, audio=normal/zero
 - ❌ **不适用**: 合成 burst / h=32 / h≥128 / audio=random — 会灾难性失败 (round 27, 31, 33)
 - ⚠️ **需重新调参**: 不同物理系统 / 不同数据 → K=0.5 经验可能不成立
+- ⚠️ **random-window vs LOO**: random-window 0.31 *不是* 跨段泛化; 真跨段 mean 14.89 (本节)
 
 ## CI 强制双 regime 测 (★ §32)
 

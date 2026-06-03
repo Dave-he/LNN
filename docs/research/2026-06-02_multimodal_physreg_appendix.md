@@ -3713,3 +3713,67 @@ audio_mode = 'normal'
 
 - `pytest tests/` **142/142 全过**,零回归。
 - 提交 segment_loo real adaptive freeze 脚本 + 1 JSON + 本节 §37。
+
+---
+
+## 36. 第三十三轮 /loop — LNN_TLDR.md v3 + Design Guide v4 — **加 random-window-specific 警告**
+
+(2026-06-03 第三十三轮,1h cron `51a1f8bf` 触发。W+1 收尾:把 §35 关键发现("SOTA 0.31 is random-window-specific, LOO mean 14.89")写进对外文档, 防止新 PR 作者把 random-window 0.31 当作 universal SOTA。)
+
+### 36.1 动机
+
+§35 揭露: random-window 0.31 是 *段泄漏* artifact — 模型训练时见到全部 60 帧, 测试时也见到过 4 段。Segment-pure LOO mean 14.89 (std 11.18) 是 *48×* 差。*真正*的跨段泛化 SOTA 还没出现。
+
+但 `LNN_TLDR.md` v2 + `LNN_MULTIMODAL_DESIGN.md` v3 *仍把 0.31 当 SOTA 报告*, 会误导新 PR 作者。本轮加 "★ random-window-specific 警告" 块到两文档, 区分 random-window 数字 (reference) vs segment-pure LOO (主指标)。
+
+### 36.2 升级
+
+#### `LNN_TLDR.md` v2 → v3
+
+| 块 | v2 | v3 |
+|---|---|---|
+| front matter | (v2) | v3 + 加 `random-window-specific` tag |
+| 5 行 recipe ★期望 | "MSE ≈ 0.31" | "MSE ≈ 0.31 (★ SOTA, **random-window-specific**)" |
+| (新) ★ **random-window-specific 警告** | (无) | **整块** (3 段): random-window 数字是 *段泄漏*;LOO mean 14.89;`TemporalSegmentRegressionDataset` 是新 baseline |
+| ★ regime 限定 | (v2) | (v2) + 加 "⚠️ random-window vs LOO" 块 |
+
+#### `LNN_MULTIMODAL_DESIGN.md` v3 → v4 (下一轮 cron 写)
+
+(本轮专注 TL;DR; design guide 升级留给下一轮)
+
+### 36.3 关键收紧
+
+**v2 风险**: 5 行 recipe 似 "SOTA 0.31 universal", 新 PR 作者拿 LOO test 一跑就是 14.89, 大跌眼镜。
+
+**v3 修复**: recipe 后立即加 "★ random-window-specific 警告" 块, 明确:
+- random-window 0.31 *不是* 跨段 SOTA
+- LOO mean 14.89 是 *真正* 跨段泛化基线
+- 任何 "新 SOTA" 必须 < 14.89 LOO mean
+
+### 36.4 测试 + 提交
+
+- `pytest tests/` **142/142 通过** (本轮纯文档, 无新单测)
+- 提交 LNN_TLDR.md v2 → v3
+
+### 36.5 仓库 4 文档金字塔(本轮升级后)
+
+```
+                ┌─ LNN_TLDR.md v3 (1 页入口, 含 ★random-window-specific 警告) ★
+                ├─ LNN_QUICKSTART.md (5 分钟跑 SOTA)
+                ├─ docs/guides/LNN_MULTIMODAL_DESIGN.md v3 (待升级到 v4)
+                └─ docs/research/.../multimodal_physreg_appendix.md (36 轮 ablation)
+```
+
+新 PR 作者学习路径:
+1. 30 秒读 `LNN_TLDR.md` v3 — 5 句话 + 5 行 recipe + **★ random-window-specific 警告**
+2. 5 分钟跑 `LNN_QUICKSTART.md` — 出 random-window 数字 0.31
+3. 必读 `LNN_MULTIMODAL_DESIGN.md` v3 — 决策树 + 失败模式
+4. 溯源 `multimodal_physreg_appendix.md` §1-§36 — 完整 ablation 历史
+5. *若声称 "新 SOTA"*: 必须 verify LOO mean < 14.89 (`TemporalSegmentRegressionDataset`)
+
+### 36.6 参考
+
+- `LNN_TLDR.md` v3 (本轮升级)
+- `LNN_QUICKSTART.md` (上一轮 round 30)
+- §35 cron segment-pure LOO (本节警示源头)
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
