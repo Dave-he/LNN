@@ -192,7 +192,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     now = dt.datetime.now()
     json_path = out_dir / (
-        f"2026-06-03_r25_freeze_{args.freeze_targets}_K{args.warmup_epochs}.json"
+        f"2026-06-03_freeze_h{args.hidden_size}_{args.freeze_targets}_K{args.warmup_epochs}.json"
     )
     json_path.write_text(json.dumps({
         "config": vars(args),
