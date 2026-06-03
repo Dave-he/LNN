@@ -3608,3 +3608,108 @@ LNN/
 - §32 cron K-fine-sweep `5c4411b` — K=40 sharp V-shape optimum
 - §34 cron TL;DR v2 (上一轮) — 已含 "rover-specific" 限定
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 37. 第三十三轮 /loop — REAL Adaptive Freeze on Segment LOO — **MARGINAL +6.3% (not 64%)**
+
+(2026-06-03 第三十三轮 /loop。Cron round 32 commit `ff4bedd` 揭示 SOTA 0.31 是 random-window 数据泄漏所致;但 cron 的 segment LOO benchmark 实际用 pure video_only,没跑真 adaptive freeze。本节补这个对照。)
+
+### 37.1 假设
+
+> Cron round 32 的 segment LOO mean MSE 14.89 是 pure video_only,**没用 cross_attn**。如果 SOTA 0.31 反映真实 LNN 多模态优势(而非 random-window 数据泄漏),那么用真 adaptive freeze recipe(cross_attn K=40 warmup + audio_encoder freeze)在 segment LOO 上应当**显著优于 video_only mean 14.89**。
+
+### 37.2 实现
+
+`scripts/benchmark_emma_segment_loo_real_adaptive_freeze.py` 用 `CrossModalAttnBiCfCNADWithMDN(video_dim=3, audio_dim=1)` 跑 4-fold LOO,每 fold:
+- Phase 1: train cross_attn 40 epoch
+- Freeze audio_encoder,重建 optimizer
+- Phase 2: 继续训 40 epoch
+- 在 held-out segment 上测 MSE
+
+### 37.3 实验结果(EMMA rover segment LOO, h=64, ep=80, K=40, n=24 train+8 test per fold, seed=42)
+
+| Fold | held-out frames | cron pure vo | **REAL adaptive freeze (本节)** | adaptive 相对 |
+|---:|---|---:|---:|---:|
+| 0 | 0-14 | 4.36 | **1.53** | −65% ✅ |
+| 1 | 15-29 | 5.28 | **34.94** | **+562% ❌ 灾难** |
+| 2 | 30-44 | 18.07 | **1.04** | **−94% ✅✅ 接近 SOTA** |
+| 3 | 45-59 | 31.83 | **18.29** | −43% ✅ |
+| **mean** | — | **14.89 ± 11.18** | **13.95 ± 13.97** | **−6.3% (略胜)** |
+
+→ adaptive freeze 在 LOO mean 上比 pure video_only 优 6.3%,但 **方差 100%(std/mean)** 远高于 cron 的 75%(11.18/14.89)。
+   JSON:`analysis/emma_rover/2026-06-03_173143_segment_loo_real_adaptive_freeze.json`。
+
+### 37.4 关键诊断 — Recipe 有边际泛化价值但高度 fold-dependent
+
+#### A. Fold 1 的灾难性逆转
+
+- pure vo:5.28(中等)
+- adaptive freeze:**34.94(7× 更糟)**
+- 这是 fold 1 的 audio segment 与 train segments 的 audio 分布严重不同,adaptive freeze 在 phase 2 把 video_encoder fine-tune 到一个"假信号"上,在 held-out fold 1 上完全失效。
+
+#### B. Fold 0/2 的成功
+
+- fold 0:adaptive 1.53 vs vo 4.36(−65%)
+- fold 2:adaptive **1.04** vs vo 18.07(−94%)
+- 这两个 fold 上,adaptive freeze 几乎拿到了 random-window 风格的 SOTA(<2 MSE),证明 recipe 在 segment 分布与 train 类似时仍有效。
+
+#### C. 高方差表明 recipe 是 segment-distribution-sensitive
+
+| 指标 | pure vo | real adaptive freeze |
+|---|---:|---:|
+| LOO mean | 14.89 | 13.95 |
+| LOO std | 11.18 | 13.97 |
+| Coefficient of Variation (std/mean) | **75%** | **100%** |
+| min fold | 4.36 | **1.04** |
+| max fold | 31.83 | **34.94** |
+
+→ adaptive 在最好的 fold 上更好(1.04 vs 4.36),但在最差的 fold 上也更糟(34.94 vs 31.83)。recipe 把 best case 推向 SOTA,把 worst case 推向更差。
+
+### 37.5 元结论第十七次精化 — SOTA 0.31 是"随机窗口 + recipe + 同分布 audio segment"的合谋
+
+| Round | 关键发现 |
+|---:|---|
+| 26 | "SOTA MSE 0.31 @ h=64 K=40" |
+| 32 cron | "segment LOO mean 14.89 vs SOTA 0.31 → 数据泄漏 48× 夸大" |
+| **33(本节)** | **"真 adaptive freeze 在 LOO 上只比 vo 优 6.3%;但单 fold 仍能拿到 ~1.04"** |
+
+revised 元结论(诚实版):
+
+```
+Round-26 SOTA MSE 0.31 是 random-window 数据泄漏 + 32 轮 ablation 调出的最优配置共同作用。
+真实跨 segment 泛化下:
+  - mean LOO MSE 13.95 (随机泄漏夸大约 45×)
+  - best fold 可达 1.04 (接近 SOTA-style)
+  - worst fold 可达 34.94 (远高于 SOTA-style)
+Recipe 有真实但有限的泛化能力,适用于"测试 segment 与训练分布相似" 的部署场景。
+```
+
+新生产推荐(诚实修订):
+
+```python
+# 33 轮 ablation 后真实泛化下的稳定 recipe
+hidden_size = 64
+total_epochs = 80
+warmup_epochs = 40
+freeze_targets = 'audio_only'
+audio_mode = 'normal'
+
+# 期望产出:
+#   - random-window 自评(可能存在分布泄漏)test MSE ~ 0.31
+#   - 严格 cross-segment LOO mean MSE ~ 14 (最好 fold ~ 1, 最差 fold ~ 35)
+#   - 真实部署效果应当用 LOO 数字预期
+```
+
+### 37.6 W+1 backlog
+
+- ~~real adaptive freeze 在 segment LOO~~(本节 ✅ +6.3% 弱泛化)
+- *新增*:**在 segment LOO 上扫描 K** 看是否 K=40 也是 LOO 最优,或需要 segment-specific K
+- *新增*:**audio_mode={zero, random, lowpass} 在 segment LOO 上重测** 看高方差是否能被 audio 改造缓解
+- *新增*:**segment-mixed training** 在每 batch 内同时采样多个 segment 的窗口,降低分布偏移
+- *现存*:phase 2 lr decay(round 36 W+1 #2,本轮被 cron 重大发现挤掉)
+
+### 37.7 测试 + 提交
+
+- `pytest tests/` **142/142 全过**,零回归。
+- 提交 segment_loo real adaptive freeze 脚本 + 1 JSON + 本节 §37。
