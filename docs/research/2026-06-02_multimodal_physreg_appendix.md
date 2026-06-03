@@ -4017,3 +4017,84 @@ LOO 5 行 recipe (★) — K=20 才是 LOO 最优:
 - §36 cron TL;DR v3 + 警告
 - §37 (本节) 同步 design guide v4
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 40. 第三十六轮 /loop — Fine K Sweep @ LOO — **K=20 IS SHARP LOO OPTIMUM (±5 catastrophic)**
+
+(2026-06-03 第三十六轮 /loop。Round 39 §39.7 W+1 第 1 项:在 K=20 附近 ±5 精细扫描 LOO,验证 K=20 是否真正最优。)
+
+### 40.1 假设
+
+> Round 34 发现 K=20 在 LOO 上是 mean MSE 3.23 SOTA(K=30/40/60 都差 3-4×)。但 K=15 或 K=25 可能更优。如果两者都 ≥ 3.23,K=20 是稳健 LOO 最优。
+
+### 40.2 实验结果(rover segment-LOO, h=64, ep=80, audio=normal, audio_only freeze, seed=42)
+
+| K | LOO mean | per-fold MSE | std | vs SOTA 3.23 |
+|---:|---:|---|---:|---:|
+| 15 (新) | 11.75 | [23.45, 1.53, 14.43, 7.58] | 8.15 | **3.6× worse** |
+| **20** | **3.23** 🏆 | [0.11, 3.75, 4.61, 4.46] | 1.83 | baseline |
+| 25 (新) | 30.29 | [49.74, 26.47, 42.93, 2.02] | 18.38 | **9.4× worse** |
+| 30 | 12.44 | [18.22, 12.99, 0.52, 18.01] | 7.19 | 3.9× worse |
+| 40 | 13.95 | [1.53, 34.94, 1.04, 18.29] | 13.97 | 4.3× worse |
+| 60 | 9.64 | [13.04, 0.69, 22.43, 2.42] | 8.77 | 3.0× worse |
+
+→ **K=20 在 LOO 上是 sharp V 形最优**:±5 epoch 偏移分别让 LOO mean 升 3.6×(K=15)和 9.4×(K=25)。
+→ K=20 仍唯一全 fold < 5(per-fold max 4.61),所有其他 K 都有至少一个 fold > 14。
+→ JSON:`analysis/emma_rover/2026-06-03_r36_loo_K{15,25}.json`。
+
+### 40.3 K=20 的尖锐程度对比
+
+| Optimum | sharpness(相邻 ±5 epoch MSE 倍数) |
+|---|---|
+| Random-window K=40(round 32) | K=35: 3.7×, K=45: 34× |
+| **LOO K=20(本节)** | **K=15: 3.6×, K=25: 9.4×** |
+
+→ LOO K=20 略 sharper than RW K=40(对称邻域内 9.4× 比 34× 更陡的下降斜率)。
+→ 但 K=15 / K=20 之间的 3.6× 与 RW K=35 / K=40 之间的 3.7× 几乎相同,说明 V 形左侧斜率相似;主要差异在右侧(K=25 → K=40 → K=60 是 LOO 上的"平台坏"区域)。
+
+### 40.4 LOO K 曲线的非对称性诊断
+
+把所有 6 个 LOO K 点画出 MSE 曲线:
+
+```
+ K  | mean MSE
+----+---------
+ 15 |   11.75   (over-early by 5)
+ 20 |    3.23   ★ SOTA
+ 25 |   30.29   (over-late by 5: catastrophic)
+ 30 |   12.44   (over-late by 10)
+ 40 |   13.95   (RW SOTA, LOO 4.3× worse)
+ 60 |    9.64   (over-late by 40, partial recovery)
+```
+
+**非对称性**:K<20 时 MSE 缓慢上升;K>20 时 MSE 急速上升到 30+;然后 K=40/60 部分恢复到 10-14 范围。
+
+机制猜测:
+- K=15 audio_encoder 训练不足 → 输出表示尚未稳定 → phase 2 video 拿不到稳定上下文 → 中等差(11.75)
+- K=20 audio_encoder 训练"恰好"反映 motor RPM 物理常数 → phase 2 video fine-tune 在稳定上下文下收敛 → SOTA(3.23)
+- K=25 audio_encoder 开始过拟合训练 segment 的 specific RPM 模式 → 在 held-out fold 上 mismatch → 灾难(30.29)
+- K=40-60 audio_encoder 严重过拟合,但同时 phase 2 epoch 也变少;两个不利因素加上 random optimizer chance 让结果回到 ~10-14 range(部分恢复)
+
+### 40.5 元结论第二十次精化 — Production K 容差总结
+
+| 部署协议 | Optimal K | ±5 容差 | ±10 容差 |
+|---|---:|---:|---:|
+| Random-window(round 32) | 40 | 3.7× worse(可接受) | 34×(灾难) |
+| **Segment-LOO(本节)** | **20** | **3.6×(可接受)** | **9.4×(已灾难)** |
+
+→ LOO 容差比 RW 更窄;**LOO 部署严格使用 K=20**,K=15/25 都显著退化。
+→ Random-window 部署 K=40 ±5 都能接受,容差更宽。
+
+### 40.6 W+1 backlog
+
+- ~~K 精细扫描 LOO~~(本节 ✅ K=20 ±5 sharp 最优)
+- *新增*:**K=20 在不同 hidden_size(h=32, h=96)** 看 LOO SOTA 3.23 是否容量 portable
+- *新增*:**phase 2 lr decay 在 K=20 LOO 上重试** 看是否能拓宽 K 容差
+- ~~K=20 audio_mode 扫描~~(round 35 ✅ normal 唯一最优)
+- 真实 EMMA 多视频(blocked)
+
+### 40.7 测试 + 提交
+
+- `pytest tests/` **142/142 全过**,零回归。
+- 提交 2 个 K JSON + 本节 §40。
