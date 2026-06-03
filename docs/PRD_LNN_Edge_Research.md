@@ -102,10 +102,13 @@ PRD 化的目的是固化范围 / 衡量指标 / 验证门槛,
 - ✅ 当日 CPU smoke benchmark: CfCStyle `MSE=0.264`(1169 参数)
   优于 GRU `MSE=0.335`(929 参数),提升 ~21.2%(see
   `analysis/jetson/2026-06-03_lnn_benchmark.md`)。
-- ⚠️ CUDA 路径暂不可用: 本机 `torch 2.11.0+cu130` 但 Jetson BSP CUDA 12.6,
-  PyTorch 启动时报 `NVIDIA driver too old`,需切到与 cu126 对齐的 wheel
-  或回退到 Liquid AI 提供的 NVIDIA Jetson 容器
-  (`ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin`)。
+- ⚠️→✅ **[2026-06-03 loop#2]** CUDA 路径已修复: `system python3.10` 装
+  `torch 2.10.0`(jetson-ai-lab.io/jp6/cu126 镜像)+ NVIDIA `libcudss 0.8.0.10
+  cuda12 aarch64`,`source scripts/jetson_cuda_env.sh` 后
+  `torch.cuda.is_available() == True / device.name == "Orin" / cuDNN 90300`。
+  剩余约束: Jetson 统一显存,实际 cudaMalloc 需要系统空载窗口
+  (本时段系统 RAM 5.2/7.6 GB 被并行 agents 占用,触发 `NvMap … error 12`)。
+  详见 [[2026-06-03_loop_iteration2_cuda_fix_pareto]]。
 - ✅ 日追踪流水线: 25 篇 arXiv + 32 仓库 + 23 HF 模型
   (见 `docs/daily/2026-06-03_LNN_research_digest.md`)。
 - ✅ 12 篇论文/方向研读报告归档于 `docs/reports/`。
@@ -114,7 +117,7 @@ PRD 化的目的是固化范围 / 衡量指标 / 验证门槛,
 
 | # | 任务 | 出口物 | 估时 |
 |---|---|---|---|
-| 1 | 修复 Jetson CUDA wheel,跑通 GPU 路径 benchmark | `analysis/jetson/2026-06-03_lnn_benchmark.json` 中 `device=cuda` | 1–2 loop |
+| 1 | ~~修复 Jetson CUDA wheel,跑通 GPU 路径 benchmark~~ **[loop#2 done]** torch 2.10.0+cu126 + libcudss 0.8.0.10 + `scripts/jetson_cuda_env.sh` | `analysis/jetson/2026-06-03_loop_iteration2_cuda_fix_pareto.md` | 1 loop |
 | 2 | 复现 LiquidTAD 长视频 TAD 实验(论文 2604.18274) | `analysis/paper_replication/liquid_tad_report.md` | 2–3 loop |
 | 3 | LFM2.5-1.2B-Distilled INT4 推理 + token/sec 测试 | `analysis/lfm25/2026-06-03_lfm25_int4_jetson.md` | 1–2 loop |
 | 4 | EMMA 多模态物理参数恢复最小验证(论文 2605.24047) | `analysis/multimodal/2026-06-03_emma_validation.md` | 2 loop |

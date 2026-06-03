@@ -9,8 +9,8 @@ tags: [LNN, Jetson, benchmark, edge-ai]
 ## 环境
 - 平台：Linux-5.15.148-tegra-aarch64-with-glibc2.35
 - 设备树型号：NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super
-- PyTorch：2.11.0+cu130
-- CUDA：False (13.0)
+- PyTorch：2.10.0
+- CUDA：True (12.6)
 - Jetson BSP：
 
 ```text
@@ -19,23 +19,32 @@ tags: [LNN, Jetson, benchmark, edge-ai]
 TARGET_USERSPACE_LIB_DIR=nvidia
 TARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia
 ```
+- CUDA 设备：Orin，显存 7619.78 MB
 
 ## 任务配置
 - 数据：合成非平稳时间序列，一步预测
-- 样本 / 序列长度：256 / 32
-- 隐藏维度 / Epoch：16 / 3
+- Samples / Epoch：96 / 2
+- Hidden sweep：[8, 16, 24]
+- SeqLen sweep：[16, 32]
+- Seeds：[42]
 - 设备：cpu
 
-## 结果
-| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
-|---|---:|---:|---:|---:|
-| CfCStyle | 1169 | 0.263716 | 19458.1 | 4.95 |
-| GRU | 929 | 0.334553 | 51818.2 | 1.45 |
-
-## Benchmark 图
-![Jetson LNN Benchmark](2026-06-03_lnn_benchmark.png)
+## Pareto 结果
+| Front | 模型 | Hidden | SeqLen | Seed | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| yes | CfCStyle | 24 | 32 | 42 | 2521 | 0.428481 | 48081.0 | 0.43 |
+| yes | CfCStyle | 24 | 16 | 42 | 2521 | 0.554439 | 47724.4 | 0.22 |
+| yes | CfCStyle | 8 | 32 | 42 | 329 | 0.563227 | 47201.9 | 0.41 |
+| yes | GRU | 8 | 32 | 42 | 273 | 0.584524 | 274086.6 | 0.15 |
+| yes | GRU | 16 | 16 | 42 | 929 | 0.620457 | 221062.2 | 0.09 |
+| yes | GRU | 8 | 16 | 42 | 273 | 0.651102 | 241817.5 | 0.09 |
+|  | CfCStyle | 16 | 32 | 42 | 1169 | 0.610435 | 49155.4 | 0.43 |
+|  | GRU | 16 | 32 | 42 | 929 | 0.612124 | 245763.7 | 0.17 |
+|  | GRU | 24 | 32 | 42 | 1969 | 0.617864 | 188596.8 | 0.18 |
+|  | CfCStyle | 8 | 16 | 42 | 329 | 0.632338 | 50900.5 | 0.34 |
+|  | GRU | 24 | 16 | 42 | 1969 | 0.634277 | 197556.9 | 0.09 |
+|  | CfCStyle | 16 | 16 | 42 | 1169 | 0.656239 | 49471.7 | 0.22 |
 
 ## 解读
-- `CfCStyle` 是闭式连续时间思想的轻量实现，用于快速验证 LNN 类动态门控在边缘设备上的训练与推理成本。
-- `GRU` 是同等隐藏维度的传统循环网络基线，便于比较参数量、误差和吞吐。
-- 该脚本是 smoke benchmark；正式论文复现应替换为论文数据集、固定随机种子、多次重复和置信区间。
+- Pareto front 表示没有其他配置能同时做到更低误差、更少参数、更短训练时间和更高吞吐。
+- 该 sweep 是边缘筛选入口，正式实验应在真实 Jetson CUDA 路径上增加多 seed、能耗和导出后延迟。
