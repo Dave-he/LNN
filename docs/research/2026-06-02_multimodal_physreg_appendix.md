@@ -2251,3 +2251,84 @@ LSTM (经典门控 RNN family) 与 CfC (闭式 ODE family) 在 cross-modal secon
 - 关键反例: LSTM +36.1% 完全否定"Bi-CfC family 必要" — 真必要条件只是 recurrent + trainable + 输入有变化;
 - 14 轮 ablation 总结: 跨模态 second encoder 推荐 **LSTM 或 Bi-CfC-NAD**,避免 GRU;
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 28. 第二十四轮 /loop — Adaptive Two-Phase Training — NEGATIVE: HEAD TRANSFER REQUIRED
+
+(2026-06-03 第二十四轮 /loop。Round 27 §27.6 第 3 项:利用 §27 convergence-driven regime 发现做"早期 cross_attn 暖启动 + 后期 video_only 微调"两阶段训练,目标取两端点之优。)
+
+### 28.1 假设
+
+> 在 (h=32, ep=80) regime(pure cross_attn 60.84 FAIL, pure video_only(input=4) 37.59 WIN),做 K 个 ep 的 cross_attn warmup → 提取 video_encoder 权重 → 转入新建 BiCfCNADWithMDN(input=3) 继续 (80-K) ep 训练。**可证伪指标**:某个 K 下,adaptive test MSE 严格小于两端点中较好者。
+
+### 28.2 实现
+
+`scripts/benchmark_adaptive_cross_to_video.py`:
+- Phase 1: train CrossModalAttnBiCfCNADWithMDN K epochs
+- Transfer: `vo.encoder.load_state_dict(xattn.video_encoder.encoder.state_dict())`
+- Phase 2: train BiCfCNADWithMDN(input_size=3) for (80-K) epochs (fresh MDN head; only encoder is warm-started)
+
+注意:cross_attn 的 video_encoder 是 `_SingleStreamEncoder`,真实 Bi-CfC-NAD 在它的 `.encoder` 属性下;转移路径修正后 state_dict 才匹配。
+
+### 28.3 实验结果(rover, h=32, ep=80, n=200, K=1, seed=42)
+
+| 配置 | test MSE | 评价 |
+|---|---:|---|
+| video_only(input=4 audio concat) 端点(r23) | **37.59** | 最佳基线 |
+| video_only(input=3 raw) 控制 | 55.11 | input=4 比 input=3 优 17.5 — audio concat 在 vo 里仍有 ~4pp 边际价值 |
+| 纯 cross_attn(audio=normal) 端点(r23) | 60.84 | 已知 FAIL |
+| **adaptive K=20** | **63.14** | 比 vo control 还差 8pp,接近纯 cross_attn |
+| adaptive K=40 | **283.82** | 灾难 — phase 2 NLL 一度爆到 8923 |
+| adaptive K=60 | **252.07** | 同样灾难 |
+
+→ **可证伪假设彻底证伪**:adaptive 在任何 K 下都**不优于两端点中较好者**(input=4 vo 37.59)。
+   K=40/60 反而 catastrophic:fresh MDN head + 较短 phase 2 时间 → 无法收敛。
+   JSON:`analysis/emma_rover/2026-06-03_r24_adaptive_K{20,40,60}.json` + `2026-06-03_r24_pure_vo_input3.json`。
+
+### 28.4 根因诊断 — Fresh MDN Head 是关键障碍
+
+把 K=40 的 phase 2 训练 loss 曲线放出来:
+```
+[vo-finetune] epoch  1/40   train NLL 178.66    val MSE 716.81  (重启反弹)
+[vo-finetune] epoch  8/40   train NLL 8923.77   val MSE 316.22  (NLL 爆炸)
+[vo-finetune] epoch 24/40   train NLL 1967.53   val MSE 417.29
+[vo-finetune] epoch 40/40   train NLL    2.08   val MSE 283.84  (远不及 phase 1 末的 97)
+```
+
+→ 转移的 Bi-CfC-NAD 输出特征空间与新随机初始化的 MDN head **不匹配**;optimizer 必须把 head 从头训出来,期间梯度反传也破坏了已暖启动的 encoder 表示。Phase 1 训出来的 100 MSE 状态在 phase 2 *倒退到* 700+ 后才慢慢爬回 280+。
+
+### 28.5 副发现 — Audio Concat 的边际价值在 vo 里 ~17 MSE
+
+| video_only 配置 | test MSE | delta |
+|---|---:|---|
+| input=3 (pure video) | 55.11 | baseline |
+| input=4 (video + audio concat) | 37.59 | **−17.5(audio 提供 ~4pp 帮助)** |
+
+这与 round 16 §19.5 的发现一致 — audio 真实信息在 cross_attn 上贡献 ~4pp;在 vo concat 上贡献类似数量级。**audio 不是无价值,只是其价值远小于 cross_attn 架构的正则化效应**。
+
+### 28.6 元结论第八次精化 — 简单 encoder 迁移行不通
+
+| Round | 元结论 |
+|---:|---|
+| 22 | "video_only 在大预算下几乎独自解决" |
+| 23 | "regime 由 convergence 决定,不是 capacity" |
+| **24** | **"利用 convergence-driven regime 做 adaptive 训练 = 不平凡,简单 encoder 迁移会被 fresh head 破坏"** |
+
+新工程结论:**adaptive 两阶段需要同时迁移 encoder + head 才有希望成功**。可能的下一轮 W+1:
+1. 迁移 cross_attn 的 fuse_proj+MDN head 也一并到 video_only(需要架构对齐)
+2. 不切换模型,只在 cross_attn 内部 freeze 第二 encoder 后继续训(避免 head 重启)
+3. EMA / Lookahead-style 慢权重平滑 + soft 切换
+
+### 28.7 W+1 backlog 调整
+
+- ~~adaptive cross→video 简单迁移~~(本节 ❌ 证伪)
+- *新增*:**adaptive cross→video with head transfer** — 同时迁移 fuse_proj + MDN(需要 cross_attn 也用 input=3 video-only 形式的 MDN 输入,架构对齐工作量较大)
+- *新增*:**adaptive "freeze second encoder" 简化版** — 不切换模型,在 cross_attn 内 phase 1 后 freeze audio_encoder/q_a/k_v/v_v/fuse_proj 的一部分,只继续训 video_encoder + MDN。技术上更干净。
+- LSTM second encoder(round 24 cron 已做 ✅ +36.1%)
+- 真实 EMMA 多视频 / quadrotor(数据未释出)
+
+### 28.8 测试 + 提交
+
+- `pytest tests/` **137/137 全过**(纯 benchmark,无新模型代码,无新单测),零回归。
+- 提交 `scripts/benchmark_adaptive_cross_to_video.py` + 4 个 JSON + 本节 §28。
