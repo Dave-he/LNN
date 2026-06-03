@@ -1,0 +1,337 @@
+{
+  "config": {
+    "hidden_size": 96,
+    "epochs": 80,
+    "warmup_epochs": 40,
+    "freeze": "audio_only",
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42
+    ],
+    "conditions": [
+      [
+        "none",
+        0.0,
+        0.0
+      ],
+      [
+        "warmup_only",
+        0.1,
+        0.0
+      ],
+      [
+        "warmup_only_05",
+        0.05,
+        0.0
+      ],
+      [
+        "phase2_only",
+        0.0,
+        0.1
+      ]
+    ],
+    "folds": 4,
+    "protocol": "TemporalSegmentRegressionDataset 4-fold LOO",
+    "model": "CrossModalAttnBiCfCNADWithMDN"
+  },
+  "results": {
+    "none__seed1": {
+      "label": "none",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.0,
+      "seed": 1,
+      "per_fold_mse": [
+        14.164336204528809,
+        3.279911518096924,
+        11.620184898376465,
+        8.419142723083496
+      ],
+      "loo_mean": 9.370893836021423
+    },
+    "none__seed2": {
+      "label": "none",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.0,
+      "seed": 2,
+      "per_fold_mse": [
+        0.04100989177823067,
+        2.1679017543792725,
+        0.034684550017118454,
+        0.6357526183128357
+      ],
+      "loo_mean": 0.7198372036218643
+    },
+    "none__seed3": {
+      "label": "none",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.0,
+      "seed": 3,
+      "per_fold_mse": [
+        28.883567810058594,
+        27.181007385253906,
+        0.9341425895690918,
+        2.261781692504883
+      ],
+      "loo_mean": 14.815124869346619
+    },
+    "none__seed7": {
+      "label": "none",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.0,
+      "seed": 7,
+      "per_fold_mse": [
+        0.005956104025244713,
+        28.647430419921875,
+        0.10347676277160645,
+        3.0062143802642822
+      ],
+      "loo_mean": 7.940769416745752
+    },
+    "none__seed42": {
+      "label": "none",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.0,
+      "seed": 42,
+      "per_fold_mse": [
+        17.843595504760742,
+        0.11450983583927155,
+        22.304134368896484,
+        5.977736473083496
+      ],
+      "loo_mean": 11.559994045644999
+    },
+    "warmup_only__seed1": {
+      "label": "warmup_only",
+      "warmup_sigma": 0.1,
+      "phase2_sigma": 0.0,
+      "seed": 1,
+      "per_fold_mse": [
+        0.9164904952049255,
+        68.56038665771484,
+        31.446704864501953,
+        0.4671250283718109
+      ],
+      "loo_mean": 25.347676761448383
+    },
+    "warmup_only__seed2": {
+      "label": "warmup_only",
+      "warmup_sigma": 0.1,
+      "phase2_sigma": 0.0,
+      "seed": 2,
+      "per_fold_mse": [
+        0.02754141204059124,
+        0.2397390455007553,
+        0.005229260306805372,
+        95.77520751953125
+      ],
+      "loo_mean": 24.01192930934485
+    },
+    "warmup_only__seed3": {
+      "label": "warmup_only",
+      "warmup_sigma": 0.1,
+      "phase2_sigma": 0.0,
+      "seed": 3,
+      "per_fold_mse": [
+        6.44559383392334,
+        11.197892189025879,
+        4.300906181335449,
+        0.16671977937221527
+      ],
+      "loo_mean": 5.527777995914221
+    },
+    "warmup_only__seed7": {
+      "label": "warmup_only",
+      "warmup_sigma": 0.1,
+      "phase2_sigma": 0.0,
+      "seed": 7,
+      "per_fold_mse": [
+        3.4034764766693115,
+        14.451249122619629,
+        0.15228168666362762,
+        98.5565185546875
+      ],
+      "loo_mean": 29.140881460160017
+    },
+    "warmup_only__seed42": {
+      "label": "warmup_only",
+      "warmup_sigma": 0.1,
+      "phase2_sigma": 0.0,
+      "seed": 42,
+      "per_fold_mse": [
+        6.742866516113281,
+        0.790306031703949,
+        54.85773468017578,
+        12.665848731994629
+      ],
+      "loo_mean": 18.76418898999691
+    },
+    "warmup_only_05__seed1": {
+      "label": "warmup_only_05",
+      "warmup_sigma": 0.05,
+      "phase2_sigma": 0.0,
+      "seed": 1,
+      "per_fold_mse": [
+        3.520338773727417,
+        0.06608910858631134,
+        4.778980255126953,
+        36.70335388183594
+      ],
+      "loo_mean": 11.267190504819155
+    },
+    "warmup_only_05__seed2": {
+      "label": "warmup_only_05",
+      "warmup_sigma": 0.05,
+      "phase2_sigma": 0.0,
+      "seed": 2,
+      "per_fold_mse": [
+        0.000318452890496701,
+        0.11714495718479156,
+        0.011820112355053425,
+        0.8948860168457031
+      ],
+      "loo_mean": 0.2560423848190112
+    },
+    "warmup_only_05__seed3": {
+      "label": "warmup_only_05",
+      "warmup_sigma": 0.05,
+      "phase2_sigma": 0.0,
+      "seed": 3,
+      "per_fold_mse": [
+        25.661863327026367,
+        0.17769546806812286,
+        0.28791242837905884,
+        62.57789611816406
+      ],
+      "loo_mean": 22.176341835409403
+    },
+    "warmup_only_05__seed7": {
+      "label": "warmup_only_05",
+      "warmup_sigma": 0.05,
+      "phase2_sigma": 0.0,
+      "seed": 7,
+      "per_fold_mse": [
+        1.838578462600708,
+        17.454483032226562,
+        8.594005584716797,
+        9.814596176147461
+      ],
+      "loo_mean": 9.425415813922882
+    },
+    "warmup_only_05__seed42": {
+      "label": "warmup_only_05",
+      "warmup_sigma": 0.05,
+      "phase2_sigma": 0.0,
+      "seed": 42,
+      "per_fold_mse": [
+        127.22108459472656,
+        22.860849380493164,
+        4.401737213134766,
+        2.223616361618042
+      ],
+      "loo_mean": 39.17682188749313
+    },
+    "phase2_only__seed1": {
+      "label": "phase2_only",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.1,
+      "seed": 1,
+      "per_fold_mse": [
+        0.34654659032821655,
+        0.27816981077194214,
+        5.2520599365234375,
+        11.483874320983887
+      ],
+      "loo_mean": 4.340162664651871
+    },
+    "phase2_only__seed2": {
+      "label": "phase2_only",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.1,
+      "seed": 2,
+      "per_fold_mse": [
+        0.05256121605634689,
+        4.464158535003662,
+        0.04048057273030281,
+        8.633147239685059
+      ],
+      "loo_mean": 3.2975868908688426
+    },
+    "phase2_only__seed3": {
+      "label": "phase2_only",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.1,
+      "seed": 3,
+      "per_fold_mse": [
+        14.940922737121582,
+        1.384892463684082,
+        2.095696210861206,
+        62.65647888183594
+      ],
+      "loo_mean": 20.269497573375702
+    },
+    "phase2_only__seed7": {
+      "label": "phase2_only",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.1,
+      "seed": 7,
+      "per_fold_mse": [
+        0.011530691757798195,
+        12.29246997833252,
+        0.13943207263946533,
+        3.164154052734375
+      ],
+      "loo_mean": 3.9018966988660395
+    },
+    "phase2_only__seed42": {
+      "label": "phase2_only",
+      "warmup_sigma": 0.0,
+      "phase2_sigma": 0.1,
+      "seed": 42,
+      "per_fold_mse": [
+        6.759574890136719,
+        1.9480388164520264,
+        0.7351241707801819,
+        4.64020299911499
+      ],
+      "loo_mean": 3.5207352191209793
+    }
+  },
+  "summary": {
+    "none": {
+      "mean": 8.88132387427613,
+      "std": 5.246890847120122,
+      "min": 0.7198372036218643,
+      "max": 14.815124869346619
+    },
+    "warmup_only": {
+      "mean": 20.558490903372878,
+      "std": 9.187788302130315,
+      "min": 5.527777995914221,
+      "max": 29.140881460160017
+    },
+    "warmup_only_05": {
+      "mean": 16.460362485292716,
+      "std": 14.897562279691849,
+      "min": 0.2560423848190112,
+      "max": 39.17682188749313
+    },
+    "phase2_only": {
+      "mean": 7.0659758093766865,
+      "std": 7.391615634856994,
+      "min": 3.2975868908688426,
+      "max": 20.269497573375702
+    }
+  },
+  "metadata": {
+    "round": 57,
+    "follows_up": "round 56 (inject+freeze incompatible, 37th meta-refinement NEGATIVE)",
+    "hypotheses": {
+      "H_a": "warmup-only inject <= baseline 8.88 -> freeze+inject is fixable",
+      "H_b": "warmup-only inject >= 8.88 -> freeze+inject mismatch is fundamental"
+    }
+  }
+}
