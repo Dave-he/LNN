@@ -1,0 +1,44 @@
+{
+  "run_id": "2026-06-03_201432",
+  "config": {
+    "epochs": 80,
+    "hidden_size": 64,
+    "num_samples": 200,
+    "seq_len": 32,
+    "ks": [
+      0,
+      10,
+      20,
+      40
+    ],
+    "seed": 42,
+    "output_dir": "analysis/emma_drone"
+  },
+  "runs": [
+    {
+      "K": 0,
+      "test_param_mse": 0.012050295248627663,
+      "elapsed_seconds": 21.70721214299556
+    },
+    {
+      "K": 10,
+      "test_param_mse": 0.012050295248627663,
+      "elapsed_seconds": 20.631960149970837
+    },
+    {
+      "K": 20,
+      "test_param_mse": 0.012050295248627663,
+      "elapsed_seconds": 25.740969290025532
+    },
+    {
+      "K": 40,
+      "test_param_mse": 0.012050295248627663,
+      "elapsed_seconds": 27.262329827062786
+    }
+  ],
+  "summary": {
+    "best_K": 0,
+    "best_mse": 0.012050295248627663,
+    "verdict": "RECIPE GENERALISES (drone test MSE < 1.0)"
+  }
+}
