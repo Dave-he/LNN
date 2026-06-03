@@ -1,0 +1,63 @@
+{
+  "run_id": "2026-06-04_013324",
+  "experiment": "tox21_styled_graph_lnn",
+  "generated_at": "2026-06-04T01:33:24.658567",
+  "config": {
+    "num_train": 384,
+    "num_val": 96,
+    "max_nodes": 14,
+    "feature_size": 4,
+    "edge_prob": 0.35,
+    "graph_feature_size": 24,
+    "hidden_size": 32,
+    "epochs": 8,
+    "batch_size": 32,
+    "lr": 0.003,
+    "seed": 123,
+    "inference_repeats": 3,
+    "device": "cpu",
+    "backbones": "cfc,ltc,gru",
+    "output_dir": "analysis/molecular"
+  },
+  "class_balance": {
+    "train_pos_ratio": 0.5,
+    "val_pos_ratio": 0.5
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "device": "cpu"
+  },
+  "results": [
+    {
+      "backbone": "cfc",
+      "parameters": 6377,
+      "val_accuracy": 0.65625,
+      "val_auc_roc": 0.7326388955116272,
+      "train_seconds": 2.5647176280617714,
+      "inference_seconds": 0.08103579003363848,
+      "inference_samples": 288,
+      "inference_samples_per_sec": 3553.985219129095
+    },
+    {
+      "backbone": "ltc",
+      "parameters": 4585,
+      "val_accuracy": 0.6979166865348816,
+      "val_auc_roc": 0.7239583134651184,
+      "train_seconds": 2.0798358470201492,
+      "inference_seconds": 0.0535812359303236,
+      "inference_samples": 288,
+      "inference_samples_per_sec": 5375.015992063187
+    },
+    {
+      "backbone": "gru",
+      "parameters": 6441,
+      "val_accuracy": 0.59375,
+      "val_auc_roc": 0.7222222089767456,
+      "train_seconds": 1.9846883448772132,
+      "inference_seconds": 0.03781414986588061,
+      "inference_samples": 288,
+      "inference_samples_per_sec": 7616.196609509394
+    }
+  ]
+}

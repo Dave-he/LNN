@@ -122,7 +122,7 @@ PRD 化的目的是固化范围 / 衡量指标 / 验证门槛,
 | 3 | LFM2.5-1.2B-Distilled INT4 推理 + token/sec 测试 | `analysis/lfm25/2026-06-03_lfm25_int4_jetson.md` | 1–2 loop |
 | 4 | EMMA 多模态物理参数恢复最小验证(论文 2605.24047) | `analysis/multimodal/2026-06-03_emma_validation.md` | 2 loop |
 | 5 | Comparative Analysis of LNN & LSTM(2605.27467)对照重做 | `docs/reports/Comparative_Analysis_of_LNN_and_LSTM_研读报告.md` 增补 v2 | 1 loop |
-| 6 | GCN-CfC 分子筛选模型 smoke(GitHub Linlab2026/GCN-CfC) — **loop#5 结构化调研完成 ✅**:仓库是 PyTorch GCN ↔ TF CfC 两阶段管线,CfC 部分直接 fork raminmh tf_cfc;**不建议复现**(双框架不利 Jetson),改用本仓 `lnn.core.graph.GraphLNNPredictor` 跑下游任务 | `docs/reports/GCN-CfC_仓库结构化调研.md` | 1 loop done (B 级) |
+| 6 | GCN-CfC 分子筛选模型 smoke(GitHub Linlab2026/GCN-CfC) — **loop#5 结构化调研 ✅ + loop#6 follow-up A 落地 ✅**:`scripts/experiment_graph_lnn_molecule.py` 用本仓 `GraphLNNPredictor` 跑 Tox21-styled 二分类,3 seed × {CfC, LTC, GRU}: 三家 AUC 并列 0.754,LTC −28% 参数且方差最低,GRU 推理最快;证明端到端 PyTorch 单 stack 完胜两框架方案 | `docs/reports/GCN-CfC_仓库结构化调研.md` + `analysis/molecular/2026-06-04_loop_iteration6_graph_lnn_tox21_smoke.md` + `scripts/experiment_graph_lnn_molecule.py` | 2 loop done (B 级 + 落地实验) |
 | 7 | 把 Jetson Pareto sweep 接入 PRD 验证指标 #3 | 更新 `scripts/jetson_lnn_benchmark.py` + 本 PRD | 1 loop |
 | 8 | Loop 调度产物去重 + 自动 retro(避免重复研读相同 paper) | `scripts/select_papers_for_report.py` 改造 | 1 loop |
 
