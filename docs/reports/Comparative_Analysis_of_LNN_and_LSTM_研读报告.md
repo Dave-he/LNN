@@ -68,3 +68,50 @@
   - N-MNIST 将异步事件积累为 10 个时间步的 $2 \times 34 \times 34$ event frames，使用对数压缩方式 $\log(1 + count)$ 控制特征动态范围。
   - PhysioNet Sepsis-3 显式拼接了时间差值特征 $\Delta t$。
 - **所用库依赖**：Python 3.10, PyTorch 2.x, `ncps` (Neural Circuit Policies) 0.0.7 版本。
+
+---
+
+## v2 补遗 — 本仓 Mackey-Glass 4-backbone × 3-seed ablation (2026-06-04 loop#7)
+
+> 这部分是 PRD §8 #5 v2 的"诚实负面信号"。
+> 原论文优势体现在 **不规则临床序列 + 长训练 + 强扰动**;
+> 在 **标准合成时间序列 + 小预算** 上,本仓 Mackey-Glass 12 trial
+> (CfC/LTC/GRU/LSTM × seeds {42,7,123}, hidden=24, 8 epochs) 显示
+> **LNN 类并不必然赢 LSTM**,详见
+> [[2026-06-04_loop_iteration7_lnn_vs_lstm_v2]]。
+
+### v2 关键数字 (mean ± std)
+
+| Backbone | params | Test MSE | Train s | Inf samples/s |
+|---|---:|---:|---:|---:|
+| `cfc` | 1,921 | 0.00521 ± 0.00057 | 43.50 | 445 |
+| `ltc` | **1,321** | 0.00491 ± 0.00048 | 129.94 | 136 |
+| **`gru`** | 1,969 | **0.00336 ± 0.00046** | **17.72** | 805 |
+| `lstm` | 2,617 | 0.00348 ± 0.00085 | 18.89 | **954** |
+
+### v2 增补结论
+
+- **MSE 维度**: GRU > LSTM > LTC > CfC (差距 ~3% 到 ~50%);
+  CfC/LTC 在该任务上输 LSTM **40~50%** test MSE。
+- **参数效率**: LTC 用 LSTM 50.5% 的参数,达成同档 MAE
+  (差距 21%),嵌入式存储紧约束下仍可优选。
+- **训练速度**: LTC 比 LSTM 慢 **5.9×** (RK4 ODE 求解开销),
+  CfC 比 LSTM 慢 **2.3×**。
+- **适用边界**: 原论文的 LNN 优势在 *non-stationary clinical* + *temporal dropout*
+  压力测试上成立;在 *平稳合成时序 + 短训练* 上则不成立。
+- **跨 task 一致性**: iter#6 在合成分子 (静态图二分类) 上 LTC 综合最佳;
+  iter#7 在 Mackey-Glass 上 LTC 输给 LSTM。 → 没有"通杀 backbone",
+  必须按任务画 ranking。
+
+### v2 复现命令
+
+```bash
+. scripts/jetson_cuda_env.sh   # 可选,启用 CUDA(本时段 RAM 紧仍 CPU)
+/home/hyx/.pyenv/versions/3.14.4/bin/python3 \
+  scripts/ablation_lnn_vs_lstm_timeseries.py \
+  --dataset mackey_glass --samples 1200 --seq-len 32 \
+  --hidden-size 24 --epochs 8 --seeds 42,7,123 \
+  --backbones cfc,ltc,gru,lstm --device cpu
+```
+
+输出: `analysis/timeseries_ablation/<run_id>_lnn_vs_lstm.{json,md}` + iteration summary。
