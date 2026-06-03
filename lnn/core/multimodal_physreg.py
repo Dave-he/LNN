@@ -1223,3 +1223,99 @@ class VanillaCfCXAttnWithMDN(nn.Module):
         a_refined = a_feat + a_from_v
         fused = self._inner.fuse_proj(torch.cat([v_refined, a_refined], dim=-1))
         return self._inner.mdn(fused)
+
+
+class LSTMEncoderXAttnWithMDN(nn.Module):
+    """Round-23 LSTM encoder probe.
+
+    Identical architecture to :class:`UniVideoSelfXAttnWithMDN`,
+    but the second encoder is a *bidirectional LSTM* (the second
+    classic RNN family besides GRU).  This tests whether the
+    catastrophic +3.9% failure of GRU in round 21 is a *GRU
+    specific quirk* or a *RNN-family-general* phenomenon.
+
+    Hypothesis (falsifiable):  if LSTM also catastrophically fails
+    (test MSE near video_only baseline), then "RNN family fails in
+    cross-modal second encoder" is a general claim.  If LSTM
+    recovers to roughly the CfC level (+32.5%), then GRU is
+    special.
+    """
+
+    def __init__(
+        self,
+        video_dim: int,
+        audio_dim: int,  # noqa: ARG002 - kept for API parity; ignored
+        hidden_size: int = 16,
+        output_size: int = 2,
+        num_mixtures: int = 1,
+        num_layers: int = 1,
+    ) -> None:
+        super().__init__()
+        self._inner = CrossModalAttnBiCfCNADWithMDN(
+            video_dim=video_dim,
+            audio_dim=video_dim,
+            hidden_size=hidden_size,
+            output_size=output_size,
+            num_mixtures=num_mixtures,
+            num_layers=num_layers,
+            noise_beta=0.9,
+            noise_aggregation="independent",
+            modality_dropout=0.0,
+        )
+        # Bidirectional LSTM with output projection from 2H -> H to
+        # match the Bi-CfC-NAD's hidden_size output.
+        self._inner.audio_encoder = nn.LSTM(
+            input_size=video_dim,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            bidirectional=True,
+        )
+        # The LSTM returns [B, T, 2H] for bidirectional; we project
+        # to [B, T, H] so the rest of the harness is shape-compatible.
+        # We replace the LSTM's identity forward with one that does
+        # the projection; this lives on the encoder module itself.
+        self._lstm_proj = nn.Linear(2 * hidden_size, hidden_size)
+        self.video_dim = video_dim
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.num_mixtures = num_mixtures
+
+    @property
+    def video_encoder(self) -> nn.Module:
+        return self._inner.video_encoder
+
+    @property
+    def audio_encoder(self) -> nn.Module:
+        return self._inner.audio_encoder
+
+    def _lstm_with_projection(self, x: torch.Tensor) -> torch.Tensor:
+        out, _ = self._inner.audio_encoder(x)  # [B, T, 2H]
+        return self._lstm_proj(out)  # [B, T, H]
+
+    def forward(
+        self,
+        video: torch.Tensor,
+        audio: torch.Tensor | None = None,  # noqa: ARG002 - intentionally ignored
+        dt: float | torch.Tensor | None = None,  # noqa: ARG002
+        mask: torch.Tensor | None = None,  # noqa: ARG002
+        return_attention: bool = False,  # noqa: ARG002
+    ) -> dict[str, torch.Tensor]:
+        # LSTM forward doesn't accept dt/mask, replicate manual
+        # cross-attention forward.
+        v_feat = self._inner.video_encoder(video)
+        a_feat = self._lstm_with_projection(video)
+        if v_feat.shape[0] != a_feat.shape[0]:
+            raise ValueError("video and audio must share the batch dimension")
+        if v_feat.shape[1] != a_feat.shape[1]:
+            raise ValueError("video and audio must share the time dimension")
+        v_from_a, _ = self._inner._attend(
+            self._inner.q_v(v_feat), self._inner.k_a(a_feat), self._inner.v_a(a_feat),
+        )
+        a_from_v, _ = self._inner._attend(
+            self._inner.q_a(a_feat), self._inner.k_v(v_feat), self._inner.v_v(v_feat),
+        )
+        v_refined = v_feat + v_from_a
+        a_refined = a_feat + a_from_v
+        fused = self._inner.fuse_proj(torch.cat([v_refined, a_refined], dim=-1))
+        return self._inner.mdn(fused)
