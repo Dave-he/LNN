@@ -3239,3 +3239,99 @@ LNN/
 - `LNN_TLDR.md` (64 行, 30 秒入口)
 - `docs/guides/LNN_MULTIMODAL_DESIGN.md` v3 (241 行, 完整设计指南)
 - 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
+
+---
+
+## 35. 第三十一轮 /loop — audio=random @ h=64 — NEGATIVE: SOTA UNCHALLENGED
+
+(2026-06-03 第三十一轮 /loop。Round 34 §34.6 W+1 第 1 项:把 round 30 的小预算 audio=random 优势(MSE 3.80 vs normal 4.49 @ h=32)推到 h=64,看是否打破 round 26 SOTA 0.31。)
+
+### 35.1 假设
+
+> Round 30 §34.5 发现 audio=random + adaptive K=40 @ h=32/ep=80 拿到 MSE 3.80,比同配置 audio=normal 的 4.49 好 −15%。如果这种"audio noise 帮助 adaptive freeze"机制随容量缩放,h=64/ep=80 audio=random + adaptive K=40 应当 ≤ 0.31(round 26 audio=normal SOTA)。
+
+### 35.2 实验结果(rover, h=64, ep=80, n=200, K_mix=1, seed=42)
+
+| K | audio=normal (round 26 ref) | **audio=random (NEW)** | 差值 |
+|---:|---:|---:|---:|
+| 20 | 1.19 | **22.52** | **+1793%(灾难)** |
+| **40** | **0.31** 🏆 SOTA | **17.02** | **+5390%(更严重灾难)** |
+| 60 | 21.74 | 18.02 | −17%(略好) |
+
+→ **可证伪假设彻底证伪**:audio=random 在 h=64 上**普遍灾难**(K=20/40 都比 audio=normal 差 18-54×)。
+   JSON:`analysis/emma_rover/2026-06-03_freeze_h64_random_audio_only_K{20,40,60}.json`。
+
+### 35.3 跨容量 audio_mode 反转 — Recipe 的另一重 regime-dependence
+
+把 round 25/26 与 round 30/31 的结果合并:
+
+| (hidden, K, audio_mode) | test MSE | 排名 |
+|---|---:|---:|
+| (64, 40, normal) | **0.31** 🏆 | 1 |
+| (64, 20, normal) | 1.19 | 2 |
+| (32, 40, random) | **3.80** | 3 |
+| (32, 40, normal) | 4.49 | 4 |
+| (64, 20, random) | 22.52 | 灾难 |
+| **(64, 40, random)** | **17.02** | **本轮意外灾难** |
+| (32, 40, zero) | 22.40 | 弱 |
+
+**关键发现 — audio_mode 与 hidden_size 强非线性交互**:
+- 在 h=32(中预算):audio=random > audio=normal(差 -15%)
+- 在 h=64(大预算):audio=random << audio=normal(差 +5390%)
+
+机制猜测:
+- h=32 容量受限时,cross_attn 容易过拟合真实 audio 模式;random 提供正则化
+- h=64 容量充足时,cross_attn 可正确利用 audio 信号;random 反而把有用音频替换为破坏性噪声
+
+→ 推论:**audio_mode 是 hidden_size-dependent 超参,不能跨容量迁移**。Round 30 §34.5 的"audio=random 候选 SOTA" 仅在中等预算成立。
+
+### 35.4 完整 31 轮 SOTA 排名(rover EMMA)
+
+| 排名 | test MSE | 完整配置 | Round |
+|---:|---:|---|:---:|
+| 🏆🥇 | **0.31** | adaptive freeze audio_only K=40 @ h=64/ep=80 + audio=normal | 26 |
+| 🥈 | 0.87 | pure video_only(input=4) @ h=64/ep=80 + audio=normal | 22 cron |
+| 🥉 | 1.19 | adaptive freeze audio_only K=20 @ h=64/ep=80 + audio=normal | 26 |
+| 4 | 3.80 | adaptive freeze K=40 @ h=32/ep=80 + audio=random | 30 |
+| 5 | 4.49 | adaptive freeze K=40 @ h=32/ep=80 + audio=normal | 25 |
+| 6 | 4.89 | adaptive freeze all_xattn K=60 @ h=64/ep=80 + audio=normal | 26 |
+
+Round 26 SOTA 0.31 在 6 轮挑战后(rounds 27-31)**屹立不倒**。
+
+### 35.5 元结论第十五次精化 — Audio Mode 也是 regime-dependent
+
+| Round | 关键发现 |
+|---:|---|
+| 26 | "K = 0.5 × total 跨容量通用最优" |
+| 30 | "rover audio=random 在 h=32 候选 SOTA(3.80 vs 4.49)" |
+| **31(本节)** | **"audio=random 在 h=64 灾难;audio_mode 选择是 hidden-dependent"** |
+
+最终 production recipe(31 轮 ablation 后稳定版):
+
+```python
+hidden_size = 64                       # 大预算
+total_epochs = 80
+warmup_epochs = 40                     # K = 0.5 × total (round 26 通用最优)
+freeze_targets = "audio_only"          # 大预算下只冻 audio_encoder
+audio_mode = "normal"                  # ★ 大预算下必须 normal,不能 random ★
+
+# Phase 1 (epoch 1..40): train CrossModalAttnBiCfCNADWithMDN(video, audio) normally
+# Phase 2 (epoch 41..80):
+#   for p in model.audio_encoder.parameters(): p.requires_grad = False
+#   optimizer = Adam([p for p in model.parameters() if p.requires_grad], lr=lr)
+#   continue training
+# Result on EMMA rover: test MSE 0.31
+```
+
+### 35.6 W+1 backlog
+
+- ~~audio=random @ h=64 试 SOTA~~(本节 ❌ 灾难,SOTA 仍是 0.31)
+- *新增*:**audio=lowpass @ h=64** 测第三种 audio_mode 是否能挑战 SOTA
+- *新增*:**精细 K 扫描在 h=64**(K=30, 35, 45, 50)看是否 K=40 是最佳
+- *现存*:mse_spread 精确阈值(round 34 W+1 #2)
+- 真实 EMMA 多视频 / quadrotor(数据未释出)
+
+### 35.7 测试 + 提交
+
+- `pytest tests/` **142/142 全过**,零回归。
+- 提交 3 个 audio=random h=64 JSON + 本节 §35。

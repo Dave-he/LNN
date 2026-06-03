@@ -170,6 +170,10 @@ def main():
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--video-path", default="/tmp/RoverVideo.mp4")
     parser.add_argument("--video-channels", default="0,1,2")
+    parser.add_argument("--audio-mode", choices=["normal", "zero", "random", "lowpass"],
+                        default="normal",
+                        help="Round-30 follow-up: 'random' on rover yields lower "
+                             "test MSE at h=32 than 'normal'.")
     args = parser.parse_args()
 
     device = torch.device(args.device)
@@ -180,7 +184,7 @@ def main():
         seed=args.seed,
         video_path=args.video_path,
         video_channels=tuple(int(c) for c in args.video_channels.split(",")),
-        audio_mode="normal",
+        audio_mode=args.audio_mode,
     )
     print(
         f"=== Adaptive freeze benchmark (h={args.hidden_size}, ep={args.epochs}, "
@@ -192,7 +196,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     now = dt.datetime.now()
     json_path = out_dir / (
-        f"2026-06-03_freeze_h{args.hidden_size}_{args.freeze_targets}_K{args.warmup_epochs}.json"
+        f"2026-06-03_freeze_h{args.hidden_size}_{args.audio_mode}_{args.freeze_targets}_K{args.warmup_epochs}.json"
     )
     json_path.write_text(json.dumps({
         "config": vars(args),
