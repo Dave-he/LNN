@@ -4098,3 +4098,84 @@ LOO 5 行 recipe (★) — K=20 才是 LOO 最优:
 
 - `pytest tests/` **142/142 全过**,零回归。
 - 提交 2 个 K JSON + 本节 §40。
+
+---
+
+## 41. 第三十七轮 /loop — Capacity Portability @ K=20 LOO — **LOO SOTA IS h=64-SPECIFIC**
+
+(2026-06-03 第三十七轮 /loop。Round 40 §40.6 W+1 第 1 项:把 K=20 LOO SOTA 3.23 推到 h=32/h=96 容量,看是否 portable。)
+
+### 41.1 假设
+
+> Round 34/36 在 h=64 上确认 K=20 audio=normal 是 LOO SOTA(mean MSE 3.23)。Round 26 在 random-window 上发现 K=0.5×total 是跨容量通用最优。LOO 上 K=20 应当至少在 h=96 仍接近 SOTA(±50%)。
+
+### 41.2 实验结果(rover segment-LOO, ep=80, K=20, audio=normal, audio_only freeze, seed=42)
+
+| hidden | LOO mean | per-fold MSE | std | vs h=64 SOTA 3.23 |
+|---:|---:|---|---:|---:|
+| 32 (新) | **44.40** | [35.35, 59.71, 63.01, 19.55] | 17.89 | **13.7× worse** |
+| **64** | **3.23** 🏆 | [0.11, 3.75, 4.61, 4.46] | 1.83 | baseline |
+| 96 (新) | 16.79 | [21.79, 39.58, **5.18**, **0.59**] | 15.34 | **5.2× worse** |
+
+→ **可证伪假设彻底证伪**:K=20 LOO SOTA 是 h=64-specific。
+   - h=32:dramatic 灾难(容量不足)
+   - h=96:高方差(fold 3=0.59 接近 RW SOTA,但 fold 0/1 很差)
+→ JSON:`analysis/emma_rover/2026-06-03_r37_loo_K20_h{32,96}.json`。
+
+### 41.3 关键发现 — LOO SOTA 是三元(h=64, K=20, audio=normal)精确联合最优
+
+| 维度 | 偏离 | 在其他维度固定时的影响 |
+|---|---|---|
+| K | K=15/25 → 11.75/30.29 (3.6×/9.4× worse) | round 36 § |
+| audio_mode | zero/random → 29.33/61.47 (9×/19× worse) | round 35 § |
+| **hidden** | h=32/96 → 44.40/16.79 (13.7×/5.2× worse) | **本节** |
+
+**任何一个维度偏离都让 SOTA 退化 3-19×**。LOO SOTA 是个 sharp、isolated local 最优点,需要精确锁定三个超参。
+
+### 41.4 h=96 的有趣观察 — 部分 fold 接近 RW SOTA
+
+h=96 K=20 per-fold:[21.79, 39.58, **5.18**, **0.59**]
+- fold 3 = 0.59,**比 round 26 random-window SOTA 0.31 仅差 1.9×**
+- fold 2 = 5.18,接近 h=64 的 fold 4.61 / 4.46
+- fold 0/1 = 21-40,catastrophic
+
+→ 高容量 (h=96) 在"训练-测试 segment 分布相似"的 fold 上能逼近 RW SOTA;在分布偏移大的 fold 上严重失效。
+→ 推论:h=96 可能需要不同 K(本轮没扫描),或需要 data augmentation 来稳定 fold 0/1。
+
+### 41.5 元结论第二十一次精化 — Production Recipe 需要三元精确锁定
+
+| Round | 关键发现 |
+|---:|---|
+| 26 | "K=0.5×total 跨容量通用最优"(random-window) |
+| 34 | "K=20 是 LOO SOTA"(h=64) |
+| **37(本节)** | **"K=20 不容量 portable;LOO SOTA 是(h=64, K=20, audio=normal) 三元联合最优"** |
+
+更新生产决策:
+
+```python
+# 37-round honest LOO production: triple lock-in required
+hidden_size = 64         # ★ 必须 h=64 (h=32 灾难, h=96 高方差)
+total_epochs = 80
+warmup_epochs = 20       # ★ 必须 K=20 (±5 = 3-9× worse)
+freeze_targets = 'audio_only'
+audio_mode = 'normal'    # ★ 必须 normal (zero/random = 9-19× worse)
+# → LOO mean MSE 3.23 (per-fold range 0.11-4.61)
+
+# 任何一个超参偏移都会让 LOO SOTA 退化 3× 以上
+# h=32: 44.40, h=96: 16.79
+# K=15: 11.75, K=25: 30.29
+# audio=zero: 29.33, audio=random: 61.47
+```
+
+### 41.6 W+1 backlog
+
+- ~~K=20 容量 portability~~(本节 ❌ h=64-specific)
+- *新增*:**h=96 上重做 K 扫描** 看 h=96 是否有自己的 LOO 最优(可能 K=10/15)
+- *新增*:**Phase 2 lr decay 在 K=20 上** 尝试拓宽三元锁定中至少一个维度的容差
+- *新增*:**多 seed 重复(seed=1,2,3,42,100)** 看 LOO SOTA 3.23 的 seed sensitivity
+- 真实 EMMA 多视频(blocked)
+
+### 41.7 测试 + 提交
+
+- `pytest tests/` **142/142 全过**,零回归。
+- 提交 2 个 hidden JSON + 本节 §41。
