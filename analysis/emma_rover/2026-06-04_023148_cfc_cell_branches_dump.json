@@ -1,0 +1,1444 @@
+{
+  "config": {
+    "epochs": 20,
+    "hidden_size": 16,
+    "seeds": [
+      1,
+      2,
+      3
+    ],
+    "noise_levels": [
+      0.0,
+      0.1,
+      0.5,
+      1.0,
+      2.0
+    ],
+    "model": "CrossModalAttnBiCfCNADWithMDN (Bi-CfC-NAD)",
+    "hooks_on": "f_gate, g_branch, h_branch (post-activation outputs)"
+  },
+  "per_run": {
+    "sigma0.0__seed1": {
+      "sigma": 0.0,
+      "seed": 1,
+      "test_mse": 595.9951171875,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5084914719630586,
+          "min": 0.4983234703540802,
+          "max": 0.5132253170013428,
+          "final": 0.5065525770187378,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.00013649540453863467,
+          "min": -0.05263117328286171,
+          "max": 0.02248874306678772,
+          "final": 0.004591281991451979,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.012809921043425324,
+          "min": -0.07412289828062057,
+          "max": 0.03003254160284996,
+          "final": 0.025831762701272964,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.511227319219915,
+          "min": 0.4918007552623749,
+          "max": 0.5303797721862793,
+          "final": 0.5037177801132202,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": 0.012243706529999947,
+          "min": -0.04538674280047417,
+          "max": 0.044889435172080994,
+          "final": 0.04042033106088638,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.0031286444150327502,
+          "min": -0.028179965913295746,
+          "max": 0.02553301863372326,
+          "final": 0.021723462268710136,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.26941931201606106,
+          "min": 0.21576614677906036,
+          "max": 0.4398112893104553,
+          "final": 0.23139019310474396,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.3639071286831162,
+          "min": -0.3746408224105835,
+          "max": -0.21603544056415558,
+          "final": -0.3737753629684448,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.11397569844762029,
+          "min": -0.12298151105642319,
+          "max": -0.0030575059354305267,
+          "final": -0.11060801148414612,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5606735294666325,
+          "min": 0.48534682393074036,
+          "max": 0.6553628444671631,
+          "final": 0.556928277015686,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.09436977565424554,
+          "min": -0.12009787559509277,
+          "max": -0.011381705291569233,
+          "final": -0.014392844401299953,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.0006787166573468596,
+          "min": -0.0368037223815918,
+          "max": -7.199744231911609e-06,
+          "final": -8.748372056288645e-05,
+          "n": 1616
+        }
+      }
+    },
+    "sigma0.0__seed2": {
+      "sigma": 0.0,
+      "seed": 2,
+      "test_mse": 564.1939086914062,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.49885960288419584,
+          "min": 0.49379032850265503,
+          "max": 0.5060473084449768,
+          "final": 0.49509137868881226,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.0917862461059179,
+          "min": 0.03262773156166077,
+          "max": 0.1300935596227646,
+          "final": 0.07863041758537292,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.04358178915889325,
+          "min": -0.0866304486989975,
+          "max": -0.032598745077848434,
+          "final": -0.04497242346405983,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.4926045880938816,
+          "min": 0.48891615867614746,
+          "max": 0.49557334184646606,
+          "final": 0.49155667424201965,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.04059121147199248,
+          "min": -0.05026824772357941,
+          "max": -0.030628984794020653,
+          "final": -0.04269508644938469,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.023020705935489938,
+          "min": 0.0006732828915119171,
+          "max": 0.04130413755774498,
+          "final": 0.03612487018108368,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.41661351972656085,
+          "min": 0.3590738773345947,
+          "max": 0.46143388748168945,
+          "final": 0.42330417037010193,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.00613484030022092,
+          "min": 5.364418029785156e-07,
+          "max": 0.12417992949485779,
+          "final": 1.7086664456655853e-06,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.4998269346680972,
+          "min": 0.49320921301841736,
+          "max": 0.49999988079071045,
+          "final": 0.4999987483024597,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.6910116119254933,
+          "min": 0.5784639716148376,
+          "max": 0.7584235668182373,
+          "final": 0.6915044188499451,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.010052448855599784,
+          "min": -0.12493328750133514,
+          "max": -4.256764896126697e-06,
+          "final": -1.4968713003327139e-05,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.10784136729849743,
+          "min": -0.1379140317440033,
+          "max": 0.1400206983089447,
+          "final": 0.12499044835567474,
+          "n": 1616
+        }
+      }
+    },
+    "sigma0.0__seed3": {
+      "sigma": 0.0,
+      "seed": 3,
+      "test_mse": 584.3253784179688,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.48061615957113185,
+          "min": 0.47538602352142334,
+          "max": 0.4864884912967682,
+          "final": 0.48017725348472595,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.02679546108460146,
+          "min": -0.04869763180613518,
+          "max": -0.008770368993282318,
+          "final": -0.020631615072488785,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.0492465610715035,
+          "min": -0.06764158606529236,
+          "max": -0.011696627363562584,
+          "final": -0.047909606248140335,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5002995264891645,
+          "min": 0.4969656765460968,
+          "max": 0.511656641960144,
+          "final": 0.5017382502555847,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.024819683464962095,
+          "min": -0.06356161087751389,
+          "max": -0.0026983218267560005,
+          "final": -0.006482845172286034,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.05853918272573132,
+          "min": -0.11681535094976425,
+          "max": -0.02339170314371586,
+          "final": -0.027479561045765877,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5108858085799926,
+          "min": 0.42944011092185974,
+          "max": 0.6111348271369934,
+          "final": 0.4855499565601349,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.13398423869310333,
+          "min": -0.35618072748184204,
+          "max": -0.12498410046100616,
+          "final": -0.124999038875103,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.32054179362805174,
+          "min": 0.26653602719306946,
+          "max": 0.3750113248825073,
+          "final": 0.2674378454685211,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.4872240753715286,
+          "min": 0.41477784514427185,
+          "max": 0.6294068098068237,
+          "final": 0.43750008940696716,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.13352022146677026,
+          "min": -0.26954972743988037,
+          "max": -0.12235867232084274,
+          "final": -0.12454782426357269,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.1342226771342725,
+          "min": 0.12577615678310394,
+          "max": 0.2038828432559967,
+          "final": 0.1260787397623062,
+          "n": 1616
+        }
+      }
+    },
+    "sigma0.1__seed1": {
+      "sigma": 0.1,
+      "seed": 1,
+      "test_mse": 426.5841369628906,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5084446703849157,
+          "min": 0.4983234703540802,
+          "max": 0.5141837000846863,
+          "final": 0.5097391605377197,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.0011778866343351777,
+          "min": -0.05263117328286171,
+          "max": 0.019814806059002876,
+          "final": 0.007847403176128864,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.013720435219898484,
+          "min": -0.07412289828062057,
+          "max": 0.011164430528879166,
+          "final": 0.005569964647293091,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5110073608742787,
+          "min": 0.4918007552623749,
+          "max": 0.5302944183349609,
+          "final": 0.5102308988571167,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": 0.012262342256928948,
+          "min": -0.04538674280047417,
+          "max": 0.02831701934337616,
+          "final": 0.023867035284638405,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.0016630331045252935,
+          "min": -0.027876602485775948,
+          "max": 0.015104911290109158,
+          "final": 0.009661590680480003,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.27487170990408943,
+          "min": 0.21951918303966522,
+          "max": 0.43967771530151367,
+          "final": 0.2353646606206894,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.3639620947052199,
+          "min": -0.374706506729126,
+          "max": -0.21603405475616455,
+          "final": -0.37423431873321533,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.11503606646939522,
+          "min": -0.14089438319206238,
+          "max": -0.003057491034269333,
+          "final": -0.12157738208770752,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.556787431424502,
+          "min": 0.4851209223270416,
+          "max": 0.6503980755805969,
+          "final": 0.5561520457267761,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.05903743021132535,
+          "min": -0.11841540038585663,
+          "max": -0.004930277820676565,
+          "final": -0.009158587083220482,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.0006376167720931659,
+          "min": -0.036805249750614166,
+          "max": -5.322197921486804e-06,
+          "final": -8.216103015001863e-05,
+          "n": 1616
+        }
+      }
+    },
+    "sigma0.1__seed2": {
+      "sigma": 0.1,
+      "seed": 2,
+      "test_mse": 488.6468200683594,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.4967440754949751,
+          "min": 0.4897063374519348,
+          "max": 0.5056936740875244,
+          "final": 0.4933951795101166,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.09276796153995513,
+          "min": 0.03262773156166077,
+          "max": 0.13041472434997559,
+          "final": 0.07839235663414001,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.043384614926163516,
+          "min": -0.0866304486989975,
+          "max": -0.03209821879863739,
+          "final": -0.054976996034383774,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.4931529113229844,
+          "min": 0.4889225959777832,
+          "max": 0.4962509572505951,
+          "final": 0.4912799298763275,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.03591742560539468,
+          "min": -0.05026824772357941,
+          "max": -0.02687104605138302,
+          "final": -0.03157597780227661,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.023212999946871163,
+          "min": 0.0006732828915119171,
+          "max": 0.03389761596918106,
+          "final": 0.031435538083314896,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.41512405686080456,
+          "min": 0.3449631631374359,
+          "max": 0.4610334634780884,
+          "final": 0.4236277937889099,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.006130260409424297,
+          "min": 5.165736070011917e-07,
+          "max": 0.12417969107627869,
+          "final": 1.5417734857692267e-06,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.4998268832332722,
+          "min": 0.49320900440216064,
+          "max": 0.4999997615814209,
+          "final": 0.4999987483024597,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.6725388687878552,
+          "min": 0.5784634351730347,
+          "max": 0.7458126544952393,
+          "final": 0.6279006600379944,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.01011321683112081,
+          "min": -0.12493330240249634,
+          "max": -3.2087166346173035e-06,
+          "final": -1.373290979245212e-05,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.10785515032856181,
+          "min": -0.13791535794734955,
+          "max": 0.14081302285194397,
+          "final": 0.12498276680707932,
+          "n": 1616
+        }
+      }
+    },
+    "sigma0.1__seed3": {
+      "sigma": 0.1,
+      "seed": 3,
+      "test_mse": 521.0740966796875,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.4816750837213332,
+          "min": 0.47836655378341675,
+          "max": 0.4863356947898865,
+          "final": 0.47914212942123413,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.03043894192127806,
+          "min": -0.05021867901086807,
+          "max": -0.0091789485886693,
+          "final": -0.01940717175602913,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.05319271394510357,
+          "min": -0.07165325433015823,
+          "max": -0.011696627363562584,
+          "final": -0.033905211836099625,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5004889672197917,
+          "min": 0.49714183807373047,
+          "max": 0.511656641960144,
+          "final": 0.5022844076156616,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.027249505896638722,
+          "min": -0.06281718611717224,
+          "max": 0.016537785530090332,
+          "final": 0.01281803473830223,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.06275249740090405,
+          "min": -0.11572244763374329,
+          "max": -0.008495716378092766,
+          "final": -0.011334121227264404,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5118900941740169,
+          "min": 0.4292865991592407,
+          "max": 0.6126279234886169,
+          "final": 0.5024250149726868,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.1339816349457101,
+          "min": -0.3561888635158539,
+          "max": -0.12497956305742264,
+          "final": -0.12499915808439255,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.3261913504119557,
+          "min": 0.2717668414115906,
+          "max": 0.37501126527786255,
+          "final": 0.2979952096939087,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.48638649218448315,
+          "min": 0.414786159992218,
+          "max": 0.6294070482254028,
+          "final": 0.4375000596046448,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.13363772469323756,
+          "min": -0.26955416798591614,
+          "max": -0.12294459342956543,
+          "final": -0.12408211827278137,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.13307423598252902,
+          "min": 0.12575411796569824,
+          "max": 0.19978734850883484,
+          "final": 0.12623965740203857,
+          "n": 1616
+        }
+      }
+    },
+    "sigma0.5__seed1": {
+      "sigma": 0.5,
+      "seed": 1,
+      "test_mse": 475.8631591796875,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5083738562678641,
+          "min": 0.4983234703540802,
+          "max": 0.5141803622245789,
+          "final": 0.5087732076644897,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.0011793526944210058,
+          "min": -0.05263117328286171,
+          "max": 0.01966014690697193,
+          "final": 0.0070037078112363815,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.013776865657323153,
+          "min": -0.07412289828062057,
+          "max": 0.015133492648601532,
+          "final": 0.010926046408712864,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5109989559554523,
+          "min": 0.4918007552623749,
+          "max": 0.5302786231040955,
+          "final": 0.5069619417190552,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": 0.012689752914560237,
+          "min": -0.04538674280047417,
+          "max": 0.030078301206231117,
+          "final": 0.024929406121373177,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.0026878331955276285,
+          "min": -0.02786305919289589,
+          "max": 0.01547898631542921,
+          "final": 0.01089894212782383,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.27617998566884217,
+          "min": 0.21954579651355743,
+          "max": 0.4395740032196045,
+          "final": 0.23785056173801422,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.36394071402858097,
+          "min": -0.37470439076423645,
+          "max": -0.2160242199897766,
+          "final": -0.3741084933280945,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.11433601494657226,
+          "min": -0.12348821759223938,
+          "max": -0.003057533875107765,
+          "final": -0.11940226703882217,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5585282903238393,
+          "min": 0.48422741889953613,
+          "max": 0.6534783840179443,
+          "final": 0.5545920729637146,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.08520527768160889,
+          "min": -0.11837209761142731,
+          "max": -0.012289054691791534,
+          "final": -0.05348401144146919,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.0006381550782966859,
+          "min": -0.03681137412786484,
+          "max": -5.3147473408898804e-06,
+          "final": -8.705258369445801e-05,
+          "n": 1616
+        }
+      }
+    },
+    "sigma0.5__seed2": {
+      "sigma": 0.5,
+      "seed": 2,
+      "test_mse": 528.3753662109375,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.49688157208706485,
+          "min": 0.49006351828575134,
+          "max": 0.5056928992271423,
+          "final": 0.4940304458141327,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.09397968893068483,
+          "min": 0.03262773156166077,
+          "max": 0.13041022419929504,
+          "final": 0.08172543346881866,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.04317536612161168,
+          "min": -0.0866304486989975,
+          "max": -0.0324372835457325,
+          "final": -0.05381204932928085,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.4928737278142483,
+          "min": 0.48701632022857666,
+          "max": 0.4962249994277954,
+          "final": 0.48944953083992004,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.03581537597347051,
+          "min": -0.05026824772357941,
+          "max": -0.02803281880915165,
+          "final": -0.03552815690636635,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.022003112793646494,
+          "min": 0.0006732828915119171,
+          "max": 0.030469024553894997,
+          "final": 0.024407433345913887,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.415355824985274,
+          "min": 0.3487381637096405,
+          "max": 0.4609678089618683,
+          "final": 0.4324735701084137,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.006126288892659925,
+          "min": -0.00042247772216796875,
+          "max": 0.12417861819267273,
+          "final": 1.4781951449549524e-06,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.49982674152470463,
+          "min": 0.49320662021636963,
+          "max": 0.4999997615814209,
+          "final": 0.4999985992908478,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.6741496676044298,
+          "min": 0.5784615874290466,
+          "max": 0.7455210089683533,
+          "final": 0.6282771825790405,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.01012113683209579,
+          "min": -0.12493330240249634,
+          "max": -1.969436880244757e-06,
+          "final": -8.930762305681128e-06,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.10785059766419748,
+          "min": -0.13792112469673157,
+          "max": 0.14073601365089417,
+          "final": 0.12498496472835541,
+          "n": 1616
+        }
+      }
+    },
+    "sigma0.5__seed3": {
+      "sigma": 0.5,
+      "seed": 3,
+      "test_mse": 605.8226318359375,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.4814424837321633,
+          "min": 0.4784266948699951,
+          "max": 0.48636960983276367,
+          "final": 0.48544010519981384,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.032617109314778285,
+          "min": -0.04987943172454834,
+          "max": -0.009172452613711357,
+          "final": -0.030838964506983757,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.05558538382543288,
+          "min": -0.0719941183924675,
+          "max": -0.011696627363562584,
+          "final": -0.0632704347372055,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.500069983395757,
+          "min": 0.4971107244491577,
+          "max": 0.511656641960144,
+          "final": 0.5044587850570679,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.033307400895468485,
+          "min": -0.06281392276287079,
+          "max": 0.0021089306101202965,
+          "final": -0.00045317262993194163,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.06997132245140003,
+          "min": -0.11572038382291794,
+          "max": -0.01319088600575924,
+          "final": -0.015751570463180542,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5080574087355987,
+          "min": 0.42869314551353455,
+          "max": 0.612750232219696,
+          "final": 0.4666721224784851,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.1339796775500152,
+          "min": -0.3562207818031311,
+          "max": -0.1249801516532898,
+          "final": -0.12499911338090897,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.33000506128710094,
+          "min": 0.29327672719955444,
+          "max": 0.3750111162662506,
+          "final": 0.3057442903518677,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.47883009962221185,
+          "min": 0.4147804379463196,
+          "max": 0.6294083595275879,
+          "final": 0.4375000298023224,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.13368334397581397,
+          "min": -0.2695663571357727,
+          "max": -0.12354820966720581,
+          "final": -0.12489952892065048,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.1331569620564875,
+          "min": 0.12576158344745636,
+          "max": 0.19966794550418854,
+          "final": 0.12589618563652039,
+          "n": 1616
+        }
+      }
+    },
+    "sigma1.0__seed1": {
+      "sigma": 1.0,
+      "seed": 1,
+      "test_mse": 415.3179931640625,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5084021307048526,
+          "min": 0.4983234703540802,
+          "max": 0.5141764283180237,
+          "final": 0.5096606016159058,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.0013669455936879146,
+          "min": -0.05263117328286171,
+          "max": 0.0199537742882967,
+          "final": 0.007184750400483608,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.014004460267151804,
+          "min": -0.07412289828062057,
+          "max": 0.010866766795516014,
+          "final": 0.0047318339347839355,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5113354807922451,
+          "min": 0.4918007552623749,
+          "max": 0.530274510383606,
+          "final": 0.5110942125320435,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": 0.012828544331857148,
+          "min": -0.04538674280047417,
+          "max": 0.029354318976402283,
+          "final": 0.02599829062819481,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.0016739231677912348,
+          "min": -0.02785513550043106,
+          "max": 0.015350017696619034,
+          "final": 0.009890614077448845,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.2730359655279334,
+          "min": 0.214926078915596,
+          "max": 0.4395577013492584,
+          "final": 0.23208649456501007,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.36395022779297415,
+          "min": -0.3747014105319977,
+          "max": -0.21601209044456482,
+          "final": -0.37424662709236145,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.11478174412346417,
+          "min": -0.1341245025396347,
+          "max": -0.003057759255170822,
+          "final": -0.1215817779302597,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5579578772297885,
+          "min": 0.4833488464355469,
+          "max": 0.6553217768669128,
+          "final": 0.5524833798408508,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.06974947467759841,
+          "min": -0.11830376088619232,
+          "max": -0.012417010962963104,
+          "final": -0.03955654427409172,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.0006430572085373615,
+          "min": -0.03681925684213638,
+          "max": -5.543231964111328e-06,
+          "final": -9.048779611475766e-05,
+          "n": 1616
+        }
+      }
+    },
+    "sigma1.0__seed2": {
+      "sigma": 1.0,
+      "seed": 2,
+      "test_mse": 539.8143310546875,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.49622265791686454,
+          "min": 0.4895404279232025,
+          "max": 0.5056915283203125,
+          "final": 0.49119383096694946,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.09545445108859993,
+          "min": 0.03262773156166077,
+          "max": 0.13040347397327423,
+          "final": 0.08773434907197952,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.04123075301113474,
+          "min": -0.0866304486989975,
+          "max": -0.0332300178706646,
+          "final": -0.04462767392396927,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.49348541758585684,
+          "min": 0.49107980728149414,
+          "max": 0.4964357912540436,
+          "final": 0.494380921125412,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.0341506347781748,
+          "min": -0.05026824772357941,
+          "max": -0.024067040532827377,
+          "final": -0.037385616451501846,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.019573756403723122,
+          "min": 0.0006732828915119171,
+          "max": 0.030146414414048195,
+          "final": 0.010032664984464645,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.41332228762088435,
+          "min": 0.34698161482810974,
+          "max": 0.46086591482162476,
+          "final": 0.4328836500644684,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.00337061918065376,
+          "min": -0.0910521000623703,
+          "max": 0.12417703866958618,
+          "final": 1.4940898154236493e-06,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.499826440698292,
+          "min": 0.49320006370544434,
+          "max": 0.4999997615814209,
+          "final": 0.4999982714653015,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.671990402227286,
+          "min": 0.5784590840339661,
+          "max": 0.7447515726089478,
+          "final": 0.6286254525184631,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.0101313000992399,
+          "min": -0.12493324279785156,
+          "max": -2.7865171432495117e-06,
+          "final": -1.2137492376496084e-05,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.10784577250038044,
+          "min": -0.1379297375679016,
+          "max": 0.14065419137477875,
+          "final": 0.12498936802148819,
+          "n": 1616
+        }
+      }
+    },
+    "sigma1.0__seed3": {
+      "sigma": 1.0,
+      "seed": 3,
+      "test_mse": 627.7434692382812,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.48171350946373276,
+          "min": 0.478424996137619,
+          "max": 0.48668766021728516,
+          "final": 0.48506394028663635,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.03421937021436078,
+          "min": -0.05527789145708084,
+          "max": -0.009168382734060287,
+          "final": -0.04155021533370018,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.05713912624333257,
+          "min": -0.0828607976436615,
+          "max": -0.011696627363562584,
+          "final": -0.06900407373905182,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5000799689441919,
+          "min": 0.49710604548454285,
+          "max": 0.511656641960144,
+          "final": 0.5037034749984741,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.032793543970118404,
+          "min": -0.06281031668186188,
+          "max": 0.01774602010846138,
+          "final": 0.014323113486170769,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.06897293078436115,
+          "min": -0.11571231484413147,
+          "max": 0.0037656903732568026,
+          "final": 0.0004188120365142822,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5090780295247194,
+          "min": 0.428017795085907,
+          "max": 0.6128101348876953,
+          "final": 0.5022714734077454,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.13397768434450621,
+          "min": -0.3562597930431366,
+          "max": -0.12497386336326599,
+          "final": -0.12499818205833435,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.32615400127845234,
+          "min": 0.2509182393550873,
+          "max": 0.37501078844070435,
+          "final": 0.25095245242118835,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.4783841595975774,
+          "min": 0.4146828353404999,
+          "max": 0.6294101476669312,
+          "final": 0.4375,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.1336335810546828,
+          "min": -0.26957252621650696,
+          "max": -0.12151195108890533,
+          "final": -0.12333811819553375,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.1330726942195013,
+          "min": 0.12530982494354248,
+          "max": 0.19960862398147583,
+          "final": 0.12540535628795624,
+          "n": 1616
+        }
+      }
+    },
+    "sigma2.0__seed1": {
+      "sigma": 2.0,
+      "seed": 1,
+      "test_mse": 453.3837890625,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5085212655808076,
+          "min": 0.4983234703540802,
+          "max": 0.5141682028770447,
+          "final": 0.5083349943161011,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.00023332997869210254,
+          "min": -0.05263117328286171,
+          "max": 0.021792389452457428,
+          "final": 0.011069993488490582,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.013291228041457498,
+          "min": -0.07412289828062057,
+          "max": 0.024822944775223732,
+          "final": 0.021461866796016693,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5115946601006655,
+          "min": 0.4918007552623749,
+          "max": 0.5302639007568359,
+          "final": 0.5062657594680786,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": 0.012577947591594103,
+          "min": -0.04538674280047417,
+          "max": 0.03097512386739254,
+          "final": 0.026429299265146255,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.00302184637699737,
+          "min": -0.027835460379719734,
+          "max": 0.019626500084996223,
+          "final": 0.018231915310025215,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.26269779830138285,
+          "min": 0.19378431141376495,
+          "max": 0.43921318650245667,
+          "final": 0.21278685331344604,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.3639420927087269,
+          "min": -0.3746911585330963,
+          "max": -0.21596649289131165,
+          "final": -0.3741862177848816,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.1146297711915899,
+          "min": -0.12360700219869614,
+          "max": -0.0030587222427129745,
+          "final": -0.12094851583242416,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5586829226611569,
+          "min": 0.4828476011753082,
+          "max": 0.6523779034614563,
+          "final": 0.5526614785194397,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.08190702633776772,
+          "min": -0.11809466779232025,
+          "max": -0.0008452733163721859,
+          "final": -0.002150893211364746,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.0007116629548760904,
+          "min": -0.036835677921772,
+          "max": -8.540849194105249e-06,
+          "final": -0.000101619960332755,
+          "n": 1616
+        }
+      }
+    },
+    "sigma2.0__seed2": {
+      "sigma": 2.0,
+      "seed": 2,
+      "test_mse": 516.345703125,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.49710387891471974,
+          "min": 0.4906691312789917,
+          "max": 0.5056878328323364,
+          "final": 0.4946640729904175,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.08518528769779397,
+          "min": 0.03262773156166077,
+          "max": 0.13039344549179077,
+          "final": 0.07379627227783203,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.044573899522184,
+          "min": -0.0866304486989975,
+          "max": -0.03455473110079765,
+          "final": -0.047499384731054306,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.4939114519828322,
+          "min": 0.4910767674446106,
+          "max": 0.49795711040496826,
+          "final": 0.49335014820098877,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.035221348530474574,
+          "min": -0.05026824772357941,
+          "max": -0.023749379441142082,
+          "final": -0.0413341149687767,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.023201018023779524,
+          "min": 0.0006732828915119171,
+          "max": 0.034634385257959366,
+          "final": 0.018703877925872803,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.4079017101390527,
+          "min": 0.33950328826904297,
+          "max": 0.46079617738723755,
+          "final": 0.4080938994884491,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": 0.006141806137555477,
+          "min": 5.066394805908203e-07,
+          "max": 0.1241731271147728,
+          "final": 1.5497207641601562e-06,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.49982539490602984,
+          "min": 0.49317461252212524,
+          "max": 0.4999997615814209,
+          "final": 0.49999845027923584,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.6714859317877505,
+          "min": 0.5784541368484497,
+          "max": 0.7426391839981079,
+          "final": 0.62722247838974,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.010153969102015645,
+          "min": -0.12493285536766052,
+          "max": -3.3602118492126465e-06,
+          "final": -1.1448065379227046e-05,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.1282579523492789,
+          "min": -0.1379527449607849,
+          "max": 0.24697284400463104,
+          "final": 0.12500356137752533,
+          "n": 1616
+        }
+      }
+    },
+    "sigma2.0__seed3": {
+      "sigma": 2.0,
+      "seed": 3,
+      "test_mse": 594.6369018554688,
+      "branches": {
+        "video_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.48156819310002397,
+          "min": 0.47839948534965515,
+          "max": 0.4863355755805969,
+          "final": 0.48235467076301575,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.03283251290345601,
+          "min": -0.05079927667975426,
+          "max": -0.009150141850113869,
+          "final": -0.037983398884534836,
+          "n": 1616
+        },
+        "video_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": -0.05581845510416747,
+          "min": -0.07189320027828217,
+          "max": -0.011696627363562584,
+          "final": -0.06317781656980515,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.5000776024258667,
+          "min": 0.4971047341823578,
+          "max": 0.511656641960144,
+          "final": 0.50167316198349,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.03180802613966723,
+          "min": -0.06282259523868561,
+          "max": 0.0019714380614459515,
+          "final": -0.0006294697523117065,
+          "n": 1616
+        },
+        "video_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": -0.06792470184558227,
+          "min": -0.11572343111038208,
+          "max": -0.01005473081022501,
+          "final": -0.01247110404074192,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.f_gate": {
+          "mean": 0.5192816460707991,
+          "min": 0.42693978548049927,
+          "max": 0.6128508448600769,
+          "final": 0.5033982992172241,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.g_branch": {
+          "mean": -0.1339734646878989,
+          "min": -0.3563355803489685,
+          "max": -0.12497653067111969,
+          "final": -0.12499788403511047,
+          "n": 1616
+        },
+        "audio_encoder.encoder.forward_net.cells.0.h_branch": {
+          "mean": 0.32181490913476096,
+          "min": 0.2520240843296051,
+          "max": 0.37501034140586853,
+          "final": 0.2520897686481476,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.f_gate": {
+          "mean": 0.47747029716351835,
+          "min": 0.41433489322662354,
+          "max": 0.6294139623641968,
+          "final": 0.4375,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.g_branch": {
+          "mean": -0.13367139404676487,
+          "min": -0.2696009576320648,
+          "max": -0.12349546700716019,
+          "final": -0.1247999370098114,
+          "n": 1616
+        },
+        "audio_encoder.encoder.backward_net.cells.0.h_branch": {
+          "mean": 0.13351354423430886,
+          "min": 0.12608204782009125,
+          "max": 0.2003435492515564,
+          "final": 0.12634730339050293,
+          "n": 1616
+        }
+      }
+    }
+  },
+  "per_sigma_aggregate": {
+    "0.0": {
+      "f_gate_mean": 0.493993877108968,
+      "g_branch_mean": -0.05983432265356592,
+      "h_branch_mean": 0.06695774709540463,
+      "mse_mean": 581.5048014322916,
+      "f_gate_std": 0.0957108753039434,
+      "g_branch_std": 0.11514682896683992,
+      "h_branch_std": 0.17834226614022827
+    },
+    "0.1": {
+      "f_gate_mean": 0.49242597686283585,
+      "g_branch_mean": -0.05702960810316266,
+      "h_branch_mean": 0.06664780350542555,
+      "mse_mean": 478.7683512369792,
+      "f_gate_std": 0.09100722155012364,
+      "g_branch_std": 0.11465048099509834,
+      "h_branch_std": 0.17961554082569334
+    },
+    "0.5": {
+      "f_gate_mean": 0.49181182134939544,
+      "g_branch_mean": -0.059754471517362344,
+      "h_branch_mean": 0.06605596117083105,
+      "mse_mean": 536.6870524088541,
+      "f_gate_std": 0.09111342936281568,
+      "g_branch_std": 0.11492210093633695,
+      "h_branch_std": 0.18073991560146555
+    },
+    "1.0": {
+      "f_gate_mean": 0.49125065726132777,
+      "g_branch_mean": -0.05852659566035271,
+      "h_branch_mean": 0.06566888919121468,
+      "mse_mean": 527.6252644856771,
+      "f_gate_std": 0.09154569405892442,
+      "g_branch_std": 0.11474596722513387,
+      "h_branch_std": 0.18022020897880595
+    },
+    "2.0": {
+      "f_gate_mean": 0.49085811318571465,
+      "g_branch_mean": -0.05998651025071003,
+      "h_branch_mean": 0.06722010446760862,
+      "mse_mean": 521.4554646809896,
+      "f_gate_std": 0.09444299096293197,
+      "g_branch_std": 0.11389183338647418,
+      "h_branch_std": 0.1801576543542147
+    }
+  },
+  "metadata": {
+    "round": 51,
+    "follows_up": "round 50 cross-attn ablation (located mechanism in cross-attn q/k/v)",
+    "hypotheses": {
+      "H_a": "f_gate mean shifts with sigma (f_gate drives sigma-switch)",
+      "H_b": "g_branch mean shifts with sigma",
+      "H_c": "h_branch mean shifts with sigma",
+      "H_d": "all three are sigma-invariant (mechanism elsewhere)"
+    }
+  }
+}
