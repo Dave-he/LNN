@@ -3335,3 +3335,62 @@ audio_mode = "normal"                  # ★ 大预算下必须 normal,不能 ra
 
 - `pytest tests/` **142/142 全过**,零回归。
 - 提交 3 个 audio=random h=64 JSON + 本节 §35。
+
+---
+
+## 34. 第三十一轮 /loop — LNN_TLDR.md v2 (regime + CI 强化)
+
+(2026-06-03 第三十一轮,1h cron `51a1f8bf` 触发。W+1 收尾:更新 `LNN_TLDR.md` (v1 → v2) 反映 §27 regime 翻转 + §30 SOTA recipe rover-specific + §32 CI marker。)
+
+### 34.1 动机
+
+`LNN_TLDR.md` (v1) 写于 round 27,在 §27 cron (regime 翻转) + §30 cron (SOTA recipe rover-specific) + §32 CI marker 之前。本轮把 *regime 限定* 加为头号前提, 防止新 PR 作者误把 "MSE 0.31" 推广到合成数据 / 不同 audio mode 上(会灾难性失败)。
+
+### 34.2 v1 → v2 主要升级
+
+| 块 | v1 | v2 |
+|---|---|---|
+| 5 句话核心结论 #1 | regime 决定一切 | 同 + 强调 SOTA recipe 是 rover-specific |
+| 5 行 production recipe | 给 recipe | **加 "★ regime 限定" 块** (适用/不适用/需重新调参) |
+| 必读清单 | 3 文档 | + 加 `LNN_QUICKSTART.md` |
+| CI 强制 | (无) | **新增整块** (`pytest -m large_budget` 等) |
+| 新 PR 作者操作 | 3 步 | **5 步** (+ 跑 adaptive-freeze baseline + 3 seeds) |
+| 一句话备忘 | "regime 必须注明" | "regime 必须注明 + 两 regime 都跑 + SOTA 跨任务迁移会失败" |
+
+### 34.3 关键收紧
+
+**v1 风险**: 5 行 recipe 似乎普适,可能误导新 PR 作者套用到合成 burst 数据(会 NEGATIVE, round 27 已证)。
+
+**v2 修复**: 5 行 recipe 后立即加 "★ regime 限定" 块, 明确列出:
+- ✅ 适用: 真实 EMMA rover, h=64, ep=80, audio=normal/zero
+- ❌ 不适用: 合成 burst / h=32 / h≥128 / audio=random
+
++ 5 步 onboarding 加 *第 4 步: (若声明新 SOTA) 必须 verify adaptive-freeze baseline* — 把 SOTA 阈值 *代码化 enforce* 在 PR 工作流里。
+
+### 34.4 测试 + 提交
+
+- `pytest tests/` **142/142 通过** (本轮纯文档,无新单测)
+- 提交 LNN_TLDR.md 更新
+
+### 34.5 仓库 4 文档金字塔(本轮升级后)
+
+```
+                ┌─ LNN_TLDR.md v2 (1 页入口,含 regime 限定 + CI 强制) ★
+                ├─ LNN_QUICKSTART.md (5 分钟跑 SOTA)
+                ├─ docs/guides/LNN_MULTIMODAL_DESIGN.md v3 (241 行,完整设计指南)
+                └─ docs/research/.../multimodal_physreg_appendix.md (33 轮 ablation)
+```
+
+新 PR 作者学习路径:
+1. 30 秒读 `LNN_TLDR.md` — 5 句话 + 5 行 recipe + regime 限定
+2. 5 分钟跑 `LNN_QUICKSTART.md` — 出 MSE 0.31
+3. 必读 `docs/guides/LNN_MULTIMODAL_DESIGN.md` v3 — 决策树 + 失败模式
+4. 溯源 `multimodal_physreg_appendix.md` §1-§33 — 完整 ablation 历史
+
+### 34.6 参考
+
+- `LNN_TLDR.md` v2 (本轮升级)
+- `LNN_QUICKSTART.md` (上一轮 round 30)
+- `docs/guides/LNN_MULTIMODAL_DESIGN.md` v3 (round 29)
+- §30 cron SOTA recipe rover-specific; §32 CI marker; §27 cron regime 翻转
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`
