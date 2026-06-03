@@ -1,0 +1,222 @@
+{
+  "run_id": "2026-06-04_045055",
+  "experiment": "lnn_vs_lstm_timeseries_ablation",
+  "generated_at": "2026-06-04T04:50:55.269438",
+  "config": {
+    "dataset": "concept_drift",
+    "samples": 1200,
+    "seq_len": 32,
+    "hidden_size": 24,
+    "epochs": 8,
+    "batch_size": 32,
+    "lr": 0.003,
+    "seeds": [
+      42,
+      7,
+      123
+    ],
+    "backbones": [
+      "cfc",
+      "ltc",
+      "gru",
+      "lstm"
+    ],
+    "inference_repeats": 3,
+    "device": "cpu",
+    "output_dir": "analysis/timeseries_ablation"
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "device": "cpu"
+  },
+  "per_run": [
+    {
+      "backbone": "cfc",
+      "seed": 42,
+      "parameters": 1921,
+      "test_mse": 0.006310965463116362,
+      "test_mae": 0.061746479691685854,
+      "val_mse": 0.0047449371903329285,
+      "train_seconds": 92.63851437391713,
+      "inference_samples_per_sec": 282.498933047841
+    },
+    {
+      "backbone": "cfc",
+      "seed": 7,
+      "parameters": 1921,
+      "test_mse": 0.02728693751064507,
+      "test_mae": 0.13661813574868278,
+      "val_mse": 0.02542527865719151,
+      "train_seconds": 79.01689767907374,
+      "inference_samples_per_sec": 241.97187380598137
+    },
+    {
+      "backbone": "cfc",
+      "seed": 123,
+      "parameters": 1921,
+      "test_mse": 0.012131230452576199,
+      "test_mae": 0.08969696148021801,
+      "val_mse": 0.013326341235959853,
+      "train_seconds": 78.21830415306613,
+      "inference_samples_per_sec": 275.4149132245234
+    },
+    {
+      "backbone": "ltc",
+      "seed": 42,
+      "parameters": 1321,
+      "test_mse": 0.09349682443850749,
+      "test_mae": 0.271729369421263,
+      "val_mse": 0.09484544315853634,
+      "train_seconds": 220.870451382827,
+      "inference_samples_per_sec": 87.16085077491051
+    },
+    {
+      "backbone": "ltc",
+      "seed": 7,
+      "parameters": 1321,
+      "test_mse": 0.08484447244051341,
+      "test_mae": 0.2621459574312777,
+      "val_mse": 0.0854664058298678,
+      "train_seconds": 218.44211541791447,
+      "inference_samples_per_sec": 81.36145017084563
+    },
+    {
+      "backbone": "ltc",
+      "seed": 123,
+      "parameters": 1321,
+      "test_mse": 0.0893497338166108,
+      "test_mae": 0.2643980110013807,
+      "val_mse": 0.09269909278766529,
+      "train_seconds": 222.605505670188,
+      "inference_samples_per_sec": 82.406039665971
+    },
+    {
+      "backbone": "gru",
+      "seed": 42,
+      "parameters": 1969,
+      "test_mse": 0.029200860777416744,
+      "test_mae": 0.14746303171724887,
+      "val_mse": 0.029160276055336,
+      "train_seconds": 36.417137196986005,
+      "inference_samples_per_sec": 514.8049187706348
+    },
+    {
+      "backbone": "gru",
+      "seed": 7,
+      "parameters": 1969,
+      "test_mse": 0.011295198085340293,
+      "test_mae": 0.08490170820339306,
+      "val_mse": 0.010937315588061875,
+      "train_seconds": 35.62397728511132,
+      "inference_samples_per_sec": 428.29377345089125
+    },
+    {
+      "backbone": "gru",
+      "seed": 123,
+      "parameters": 1969,
+      "test_mse": 0.021819440295567382,
+      "test_mae": 0.1223830661258182,
+      "val_mse": 0.021328786337697827,
+      "train_seconds": 33.323071236955,
+      "inference_samples_per_sec": 538.0372610554854
+    },
+    {
+      "backbone": "lstm",
+      "seed": 42,
+      "parameters": 2617,
+      "test_mse": 0.009343612234334688,
+      "test_mae": 0.07917526847607381,
+      "val_mse": 0.009768649835038829,
+      "train_seconds": 20.147059238981456,
+      "inference_samples_per_sec": 842.3691257838016
+    },
+    {
+      "backbone": "lstm",
+      "seed": 7,
+      "parameters": 2617,
+      "test_mse": 0.005020327564026858,
+      "test_mae": 0.05828424241091754,
+      "val_mse": 0.004447421210037696,
+      "train_seconds": 17.702707023127005,
+      "inference_samples_per_sec": 957.0870597115182
+    },
+    {
+      "backbone": "lstm",
+      "seed": 123,
+      "parameters": 2617,
+      "test_mse": 0.004740320800526722,
+      "test_mae": 0.054541450900000496,
+      "val_mse": 0.0045416727158668875,
+      "train_seconds": 19.03446257999167,
+      "inference_samples_per_sec": 827.2526474586546
+    }
+  ],
+  "summary": {
+    "cfc": {
+      "parameters": 1921,
+      "test_mse_mean": 0.015243044475445876,
+      "test_mse_std": 0.010828683702065208,
+      "test_mae_mean": 0.09602052564019554,
+      "test_mae_std": 0.0378342677733206,
+      "train_seconds_mean": 83.29123873535234,
+      "train_seconds_std": 8.104820127703363,
+      "inference_samples_per_sec_mean": 266.6285733594486,
+      "inference_samples_per_sec_std": 21.645102422182056,
+      "seeds": [
+        42,
+        7,
+        123
+      ]
+    },
+    "ltc": {
+      "parameters": 1321,
+      "test_mse_mean": 0.08923034356521058,
+      "test_mse_std": 0.004327411385389086,
+      "test_mae_mean": 0.26609111261797386,
+      "test_mae_std": 0.005011026956176862,
+      "train_seconds_mean": 220.63935749030983,
+      "train_seconds_std": 2.091293353059446,
+      "inference_samples_per_sec_mean": 83.64278020390906,
+      "inference_samples_per_sec_std": 3.0911821703422,
+      "seeds": [
+        42,
+        7,
+        123
+      ]
+    },
+    "gru": {
+      "parameters": 1969,
+      "test_mse_mean": 0.020771833052774805,
+      "test_mse_std": 0.008998683226559773,
+      "test_mae_mean": 0.11824926868215337,
+      "test_mae_std": 0.031484853674906436,
+      "train_seconds_mean": 35.12139523968411,
+      "train_seconds_std": 1.6070944513453445,
+      "inference_samples_per_sec_mean": 493.71198442567044,
+      "inference_samples_per_sec_std": 57.83244917315587,
+      "seeds": [
+        42,
+        7,
+        123
+      ]
+    },
+    "lstm": {
+      "parameters": 2617,
+      "test_mse_mean": 0.00636808686629609,
+      "test_mse_std": 0.002580680987410568,
+      "test_mae_mean": 0.06400032059566395,
+      "test_mae_std": 0.013274464375386865,
+      "train_seconds_mean": 18.961409614033375,
+      "train_seconds_std": 1.2238124818225293,
+      "inference_samples_per_sec_mean": 875.5696109846581,
+      "inference_samples_per_sec_std": 70.99963249511127,
+      "seeds": [
+        42,
+        7,
+        123
+      ]
+    }
+  },
+  "json_path": "analysis/timeseries_ablation/2026-06-04_045055_lnn_vs_lstm.json"
+}

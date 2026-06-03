@@ -40,6 +40,7 @@ from lnn.core.cfc import CfCNetwork
 from lnn.core.ltc import LTCNetwork
 from lnn.data.timeseries import (
     create_dataloader,
+    generate_concept_drift,
     generate_mackey_glass,
     generate_sine_data,
 )
@@ -87,6 +88,16 @@ def _load_split(args: argparse.Namespace, seed: int) -> tuple:
         data = generate_mackey_glass(num_samples=args.samples, seed=seed)
     elif args.dataset == "sine":
         data = generate_sine_data(num_samples=args.samples, freq=0.07, noise_std=0.05, seed=seed)
+    elif args.dataset == "concept_drift":
+        # Regime A (lo-freq / hi-amp) → Regime B (hi-freq / lo-amp).
+        # drift_point at 50% so train spans both regimes; val/test sees the
+        # post-drift regime more heavily — exactly the non-stationary
+        # boundary condition the LiquidNN paper claims to handle well.
+        data, _ = generate_concept_drift(
+            num_samples=args.samples,
+            drift_point=args.samples // 2,
+            seed=seed,
+        )
     else:
         raise ValueError(f"unknown dataset {args.dataset}")
 
@@ -286,7 +297,7 @@ def _format_markdown(payload: dict) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", choices=["mackey_glass", "sine"], default="mackey_glass")
+    parser.add_argument("--dataset", choices=["mackey_glass", "sine", "concept_drift"], default="mackey_glass")
     parser.add_argument("--samples", type=int, default=1200)
     parser.add_argument("--seq-len", type=int, default=32)
     parser.add_argument("--hidden-size", type=int, default=24)

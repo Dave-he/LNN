@@ -283,19 +283,180 @@ def _format_markdown(payload: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-# ----- main -----------------------------------------------------------------
+# ----- weekly aggregator (--week N) -----------------------------------------
+
+
+def _main_weekly(args: argparse.Namespace) -> int:
+    """Aggregate the past N days (inclusive of --date) into one retro report."""
+    end_date = dt.date.fromisoformat(args.date)
+    days = [(end_date - dt.timedelta(days=i)).isoformat() for i in range(args.week)]
+    days.sort()  # chronological
+
+    per_day: list[dict] = []
+    total_iterations = 0
+    total_commits = 0
+    total_other = 0
+    days_with_digest = 0
+    days_with_benchmark = 0
+    iteration_index: list[dict] = []
+
+    for date in days:
+        fixed = {
+            "daily_digest": _exists(ROOT / "docs" / "daily" / f"{date}_LNN_research_digest.md"),
+            "jetson_md": _exists(ROOT / "analysis" / "jetson" / f"{date}_lnn_benchmark.md"),
+        }
+        iters = _scan_iterations(date)
+        commits = _git_commits_for_date(date)
+        # everything-else analysis files (lightweight; we only want a count).
+        other_count = 0
+        for sub in ("analysis/jetson", "analysis/molecular", "analysis/long_sequence",
+                    "analysis/timeseries_ablation", "analysis/repo_watchlist",
+                    "analysis/lfm25", "analysis/multimodal", "analysis/paper_replication",
+                    "analysis/loop_status"):
+            other_count += len(_glob(sub, date))
+
+        per_day.append({
+            "date": date,
+            "has_digest": fixed["daily_digest"]["exists"],
+            "has_benchmark": fixed["jetson_md"]["exists"],
+            "iteration_count": len(iters),
+            "commit_count": len(commits),
+            "analysis_file_count": other_count,
+        })
+        total_iterations += len(iters)
+        total_commits += len(commits)
+        total_other += other_count
+        if fixed["daily_digest"]["exists"]:
+            days_with_digest += 1
+        if fixed["jetson_md"]["exists"]:
+            days_with_benchmark += 1
+        for it in iters:
+            iteration_index.append({**it, "date": date})
+
+    prd_tasks = _parse_prd_tasks()
+    pending = [r for r in prd_tasks if r["status"] == "pending"]
+
+    now = dt.datetime.now()
+    run_id = now.strftime("%Y-%m-%d_%H%M%S")
+    output_dir = pathlib.Path(args.output_dir)
+    if not output_dir.is_absolute():
+        output_dir = ROOT / output_dir
+    json_path = output_dir / f"{run_id}_loop_status_weekly_{args.week}d.json"
+    md_path = output_dir / f"{run_id}_loop_status_weekly_{args.week}d.md"
+    rel_json = json_path.relative_to(ROOT) if json_path.is_relative_to(ROOT) else json_path
+
+    payload = {
+        "run_id": run_id,
+        "mode": "weekly",
+        "window_days": args.week,
+        "end_date": end_date.isoformat(),
+        "start_date": days[0] if days else end_date.isoformat(),
+        "generated_at": now.isoformat(),
+        "per_day": per_day,
+        "totals": {
+            "iterations": total_iterations,
+            "commits": total_commits,
+            "analysis_files": total_other,
+            "days_with_digest": days_with_digest,
+            "days_with_benchmark": days_with_benchmark,
+        },
+        "iteration_index": iteration_index,
+        "prd_tasks": prd_tasks,
+        "json_path": str(rel_json),
+    }
+
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+
+    if not args.no_write:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        md_path.write_text(_format_weekly_md(payload), encoding="utf-8")
+
+    print(f"=== Loop weekly retro: {payload['start_date']} → {payload['end_date']} ({args.week} days) ===")
+    print(f"  days with daily digest:    {days_with_digest}/{args.week}")
+    print(f"  days with jetson benchmark:{days_with_benchmark}/{args.week}")
+    print(f"  total iterations:          {total_iterations}")
+    print(f"  total local commits:       {total_commits}")
+    print(f"  total analysis files:      {total_other}")
+    print(f"  PRD §8 pending:            {len(pending)} / {len(prd_tasks)}")
+    if not args.no_write:
+        print(f"  wrote JSON: {json_path}")
+        print(f"  wrote MD:   {md_path}")
+    return 0
+
+
+def _format_weekly_md(payload: dict) -> str:
+    totals = payload["totals"]
+    lines = [
+        f"# Loop weekly retro — {payload['start_date']} → {payload['end_date']}",
+        "",
+        f"({payload['window_days']} days inclusive, generated {payload['generated_at']})",
+        "",
+        "## 1. Totals",
+        f"- iteration reports: **{totals['iterations']}**",
+        f"- local git commits: **{totals['commits']}**",
+        f"- analysis files: **{totals['analysis_files']}**",
+        f"- days with daily digest: {totals['days_with_digest']}/{payload['window_days']}",
+        f"- days with jetson benchmark: {totals['days_with_benchmark']}/{payload['window_days']}",
+        "",
+        "## 2. Per-day breakdown",
+        "| date | digest | jetson | iterations | commits | analysis files |",
+        "|---|:---:|:---:|---:|---:|---:|",
+    ]
+    for d in payload["per_day"]:
+        lines.append(
+            f"| {d['date']} | "
+            f"{'✅' if d['has_digest'] else '—'} | "
+            f"{'✅' if d['has_benchmark'] else '—'} | "
+            f"{d['iteration_count']} | {d['commit_count']} | {d['analysis_file_count']} |"
+        )
+
+    if payload["iteration_index"]:
+        lines.extend([
+            "",
+            "## 3. Iteration index",
+            "| date | # | title |",
+            "|---|---:|---|",
+        ])
+        for it in payload["iteration_index"]:
+            lines.append(f"| {it['date']} | {it['iteration']} | `{it['path']}` |")
+
+    pending = [r for r in payload["prd_tasks"] if r["status"] == "pending"]
+    completed = [r for r in payload["prd_tasks"] if r["status"] == "completed"]
+    completed_ids = ", ".join(f"#{r['id']}" for r in completed) or "none"
+    pending_ids = ", ".join(f"#{r['id']}" for r in pending) or "none"
+    lines.extend([
+        "",
+        "## 4. PRD §8 snapshot (at retro time)",
+        f"- ✅ completed: **{len(completed)}** ({completed_ids})",
+        f"- ⏳ pending:   **{len(pending)}** ({pending_ids})",
+        "",
+        f"JSON 原数据: `{payload['json_path']}`",
+    ])
+    return "\n".join(lines) + "\n"
+
+
+# ----- main (single-day) ----------------------------------------------------
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--date", default=dt.date.today().isoformat(),
                         help="Date to scan (YYYY-MM-DD), defaults to today (local).")
+    parser.add_argument("--week", type=int, default=0,
+                        help=("Aggregate the past N days ending at --date. "
+                              "0 (default) = single-day view; >=2 enables weekly retro."))
     parser.add_argument("--no-write", action="store_true",
                         help="Skip writing reports to analysis/loop_status/.")
     parser.add_argument("--json", action="store_true",
                         help="Emit JSON to stdout instead of Markdown summary.")
     parser.add_argument("--output-dir", default="analysis/loop_status")
     args = parser.parse_args()
+
+    if args.week >= 2:
+        return _main_weekly(args)
 
     date = args.date
 

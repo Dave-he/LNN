@@ -115,3 +115,55 @@
 ```
 
 输出: `analysis/timeseries_ablation/<run_id>_lnn_vs_lstm.{json,md}` + iteration summary。
+
+---
+
+## v3 补遗 — 同一 ablation,换 concept_drift 数据 (2026-06-04 loop#9)
+
+> v2 在 Mackey-Glass (平稳混沌) 上发现 GRU 反超 LNN;
+> 本次把数据换成 `generate_concept_drift` (单次 sharp drift, regime A→B),
+> 同样 4 backbone × 3 seed,完全一致的超参。
+> 测试**论文 claim 的 LNN 优势区**(非平稳序列)。
+
+### v3 关键数字 (mean ± std, 3 seeds, concept_drift)
+
+| Backbone | params | Test MSE | Δ vs LSTM | Train s |
+|---|---:|---:|---:|---:|
+| **`lstm`** | 2,617 | **0.00637 ± 0.00258** | baseline | 18.96 |
+| `cfc` | 1,921 | 0.01524 ± 0.01083 | **+139.4%** | 83.29 |
+| `gru` | 1,969 | 0.02077 ± 0.00900 | **+226.2%** | 35.12 |
+| `ltc` | **1,321** | **0.08923 ± 0.00433** | **+1301.2%** | 220.64 |
+
+### v3 增补结论
+
+- **LSTM 在论文宣称的 LNN 优势区上反而赢得更大**: concept_drift 上 LSTM
+  MSE 0.00637 比 Mackey-Glass 的 0.00348 略高,但 LTC catastrophic 失败
+  (MSE 0.08923, +1301% vs LSTM)。
+- **LTC catastrophic on sharp drift**: 14× MSE 差距,
+  这是一条工程边界 — RK4 ODE 集成 + 训练数据未见 regime B 的组合
+  导致积分轨迹失稳。
+- **GRU 不再领跑**: iter#7 在 Mackey-Glass 上 GRU 是赢家,
+  本轮 GRU MSE +226%。**GRU 的简单门控也是规模/任务条件性的**。
+- **不能直接证伪论文**: 单次硬 drift ≠ 论文的 gradual clinical 非平稳;
+  超参未自适应;sample 太少。本结论只能说**论文 claim 在更严格复现协议
+  下不直接成立**。
+
+### v3 边界条件清单(写入 PRD §9)
+
+1. 数据: 必须是 *gradual 多 regime* 才能验证 LNN claim;sharp split 是反例。
+2. 超参: 必须按 backbone 自适应 lr + warmup,不能 1 lr 通吃。
+3. 样本: 1200 样本 = 840 train tokens,LNN 训练不充分。
+4. LTC RK4: 在 OOD test set 上轨迹外推不稳,需考虑 Euler 或更小 lr。
+
+### v3 复现命令
+
+```bash
+/home/hyx/.pyenv/versions/3.14.4/bin/python3 \
+  scripts/ablation_lnn_vs_lstm_timeseries.py \
+  --dataset concept_drift --samples 1200 --seq-len 32 \
+  --hidden-size 24 --epochs 8 --seeds 42,7,123 \
+  --backbones cfc,ltc,gru,lstm --device cpu
+```
+
+输出: `analysis/timeseries_ablation/2026-06-04_045055_lnn_vs_lstm.{json,md}`
++ [[2026-06-04_loop_iteration9_prd9_and_concept_drift]] iter summary。

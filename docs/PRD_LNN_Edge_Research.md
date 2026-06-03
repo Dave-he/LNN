@@ -146,3 +146,41 @@ PRD 化的目的是固化范围 / 衡量指标 / 验证门槛,
 - [[LNN_深度研读报告]] — 论文研读总索引
 - [[IMPLEMENTATION_SUMMARY]] — 9 变体实现摘要
 - [[OPTIMIZATION_STRATEGIES]] — 选模型 / 调参指南
+
+## §9. 下一周候选任务(由 loop iter#9 落地, 2026-06-04)
+
+PRD §8 8 个任务里只剩 #3 LFM2.5(等 RAM 空载窗口)和 #4 EMMA(远程 agent 负责)
+两个真实阻塞,工作面已基本耗尽。本节列出下一周(2026-06-04 → 2026-06-11)
+8 个新候选任务,供 `/loop 1h` 调度参考。
+
+| # | 任务 | 出口物 | 关联 |
+|---:|---|---|---|
+| 9-1 | LFM2.5-1.2B-Distilled INT4 离线推理 + token/sec 测试(夜间空载窗口) | `analysis/lfm25/<date>_lfm25_int4.md` | §8 #3 |
+| 9-2 | concept_drift 复测 phase-B:多 regime 渐进 + lr warmup + curriculum | iter#9 v3 后续 | §8 #5 v3 |
+| 9-3 | LiquidTAD 真 Stage C:THUMOS-14 50-video 子集复现 | `analysis/paper_replication/liquid_tad_thumos.md` | §8 #2 stage C-true |
+| 9-4 | `experiment_graph_lnn_molecule.py` 加 `--frozen-encoder` 两阶段(模拟 GCN-CfC 解耦) | code + smoke | §8 #6 follow-up B |
+| 9-5 | `loop_status.py --since-last-loop` 自动定位上次 iter 结束后的变更 | code + sample report | §8 #8 v2 |
+| 9-6 | `HierarchicalDecayLiquidTADHead` 加 ONNX export + TensorRT INT8 | `analysis/jetson/<date>_liquid_tad_tensorrt.md` | §8 #2 stage D |
+| 9-7 | 跨数据 backbone ranking 自动生成:ablation runner 加 `--datasets` 多个,出 task-conditional 表 | `analysis/timeseries_ablation/<date>_task_conditional_matrix.md` | iter#6+iter#7+iter#9 综合 |
+| 9-8 | PRD §6 验证指标自动 CI:GitHub Actions 跑 `verify_all_models.py + ablation_*` 周线 | `.github/workflows/lnn_weekly_verify.yml` | §6 enforcement |
+
+### 已调研但不复现(C 级, 只入索引,不投复现 budget)
+
+| 仓库 / 模型 | 排入理由 | 链接 |
+|---|---|---|
+| `Linlab2026/GCN-CfC`(iter#5) | 双框架管线;不利 Jetson 部署 | [[GCN-CfC_仓库结构化调研]] |
+| `LiquidAI/LFM2.5-8B-A1B` | 8B 模型 too big for Orin Nano 8GB 显存 | iter#1 daily research |
+| `raminmh/CfC` (官方 tf 版) | 已被 `ncps` 取代,本仓 `lnn/core/cfc.py` 已 PyTorch 化 | iter#5 引用 |
+
+### 复现协议边界条件(本仓沉淀的"什么时候 LNN 不赢")
+
+1. **iter#7 / iter#9** — Mackey-Glass / concept_drift 单次硬切,小预算 + 固定 lr 下:
+   GRU / LSTM 显著优于 CfC / LTC;LTC 在 concept_drift 上 catastrophic
+   (MSE 高 +1301% vs LSTM)。论文 claim 的"LNN 在非平稳序列上更鲁棒"在
+   **更严格** 复现协议下不直接成立 — 需要 gradual 多 regime + lr warmup +
+   更多 sample。
+2. **iter#6** — 在静态图二分类(time=1)上,CfC / LTC / GRU AUC 完全并列(0.754),
+   LTC 仅在参数效率和方差稳定性维度上略胜。
+3. **跨 task ranking**: 没有"通杀 backbone";必须按任务画 ranking
+   (与远程 EMMA agent commits `5518b20 / cf14d21 / 7575a9d` 的
+   regime-conditional encoder ranking 同源)。

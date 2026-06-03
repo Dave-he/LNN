@@ -1,0 +1,128 @@
+{
+  "run_id": "2026-06-04_044413",
+  "mode": "weekly",
+  "window_days": 3,
+  "end_date": "2026-06-04",
+  "start_date": "2026-06-02",
+  "generated_at": "2026-06-04T04:44:13.654304",
+  "per_day": [
+    {
+      "date": "2026-06-02",
+      "has_digest": true,
+      "has_benchmark": true,
+      "iteration_count": 0,
+      "commit_count": 14,
+      "analysis_file_count": 3
+    },
+    {
+      "date": "2026-06-03",
+      "has_digest": true,
+      "has_benchmark": true,
+      "iteration_count": 3,
+      "commit_count": 61,
+      "analysis_file_count": 18
+    },
+    {
+      "date": "2026-06-04",
+      "has_digest": true,
+      "has_benchmark": true,
+      "iteration_count": 4,
+      "commit_count": 9,
+      "analysis_file_count": 26
+    }
+  ],
+  "totals": {
+    "iterations": 7,
+    "commits": 84,
+    "analysis_files": 47,
+    "days_with_digest": 3,
+    "days_with_benchmark": 3
+  },
+  "iteration_index": [
+    {
+      "iteration": 2,
+      "title": "2026-06-03_loop_iteration2_cuda_fix_pareto",
+      "path": "analysis/jetson/2026-06-03_loop_iteration2_cuda_fix_pareto.md",
+      "date": "2026-06-03"
+    },
+    {
+      "iteration": 3,
+      "title": "2026-06-03_loop_iteration3_liquid_tad_stage_ab",
+      "path": "analysis/jetson/2026-06-03_loop_iteration3_liquid_tad_stage_ab.md",
+      "date": "2026-06-03"
+    },
+    {
+      "iteration": 4,
+      "title": "2026-06-03_loop_iteration4_liquid_tad_3way_ablation",
+      "path": "analysis/jetson/2026-06-03_loop_iteration4_liquid_tad_3way_ablation.md",
+      "date": "2026-06-03"
+    },
+    {
+      "iteration": 5,
+      "title": "2026-06-04_loop_iteration5_gcn_cfc_repo_survey",
+      "path": "analysis/jetson/2026-06-04_loop_iteration5_gcn_cfc_repo_survey.md",
+      "date": "2026-06-04"
+    },
+    {
+      "iteration": 6,
+      "title": "2026-06-04_loop_iteration6_graph_lnn_tox21_smoke",
+      "path": "analysis/molecular/2026-06-04_loop_iteration6_graph_lnn_tox21_smoke.md",
+      "date": "2026-06-04"
+    },
+    {
+      "iteration": 7,
+      "title": "2026-06-04_loop_iteration7_lnn_vs_lstm_v2",
+      "path": "analysis/timeseries_ablation/2026-06-04_loop_iteration7_lnn_vs_lstm_v2.md",
+      "date": "2026-06-04"
+    },
+    {
+      "iteration": 8,
+      "title": "2026-06-04_loop_iteration8_loop_status_tooling",
+      "path": "analysis/loop_status/2026-06-04_loop_iteration8_loop_status_tooling.md",
+      "date": "2026-06-04"
+    }
+  ],
+  "prd_tasks": [
+    {
+      "id": 1,
+      "title": "~~修复 Jetson CUDA wheel,跑通 GPU 路径 benchmark~~ **[loop#2 done]** torch 2.10.0+cu126 + libcudss 0.8.0.10 + `scripts/jetson_cuda_env.sh`",
+      "status": "completed"
+    },
+    {
+      "id": 2,
+      "title": "复现 LiquidTAD 长视频 TAD 实验(论文 2604.18274) — **stage A 算子+单测 ✅ + stage B smoke ✅ (loop#3 done) + stage C-lite 3-seed ablation ✅ (loop#4)**;真正 St",
+      "status": "completed"
+    },
+    {
+      "id": 3,
+      "title": "LFM2.5-1.2B-Distilled INT4 推理 + token/sec 测试",
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "title": "EMMA 多模态物理参数恢复最小验证(论文 2605.24047)",
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "title": "Comparative Analysis of LNN & LSTM(2605.27467)对照重做 — **loop#7 ✅ (诚实负面信号)** Mackey-Glass 4-backbone × 3-seed: GRU 最准 (MSE 0.00336), LTC 参数 −5",
+      "status": "completed"
+    },
+    {
+      "id": 6,
+      "title": "GCN-CfC 分子筛选模型 smoke(GitHub Linlab2026/GCN-CfC) — **loop#5 结构化调研 ✅ + loop#6 follow-up A 落地 ✅**:`scripts/experiment_graph_lnn_molecule.py` 用本",
+      "status": "completed"
+    },
+    {
+      "id": 7,
+      "title": "把 Jetson Pareto sweep 接入 PRD 验证指标 #3 — **loop#2 ✅** (12 trials CfCStyle vs GRU × hidden∈{8,16,24} × seq∈{16,32}, 4 Pareto-front points; CfC@",
+      "status": "completed"
+    },
+    {
+      "id": 8,
+      "title": "Loop 调度产物去重 + 自动 retro(避免重复研读相同 paper) — **loop#8 ✅** `scripts/loop_status.py` 扫描 daily/jetson/molecular/timeseries/repo_watchlist + 解析 PRD ",
+      "status": "completed"
+    }
+  ],
+  "json_path": "analysis/loop_status/2026-06-04_044413_loop_status_weekly_3d.json"
+}
