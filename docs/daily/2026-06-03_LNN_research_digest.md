@@ -14,6 +14,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - Hugging Face 候选模型：18 个
 - 已下载 PDF：0 个
 
+## 数据源状态
+- `arXiv fetch failed: The read operation timed out`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
+
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
@@ -55,10 +59,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-06-02 | [mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-GGUF](https://huggingface.co/mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-GGUF) | 11 | 0 |  |
 | 2026-06-02 | [mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-i1-GGUF](https://huggingface.co/mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-i1-GGUF) | 8 | 0 |  |
 | 2026-06-02 | [cPilotGod/liquid-ai-lfm2-24b-a2b-24b-gguf](https://huggingface.co/cPilotGod/liquid-ai-lfm2-24b-a2b-24b-gguf) | 0 | 0 |  |
+| 2026-06-02 | [FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF](https://huggingface.co/FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF) | 0 | 0 | text-generation |
 | 2026-06-02 | [sahilchachra/LFM2.5-8B-A1B-Uncensored](https://huggingface.co/sahilchachra/LFM2.5-8B-A1B-Uncensored) | 0 | 0 | text-generation |
 | 2026-06-02 | [LiberteEPFL/lfm25-1.2b-grpo-molora-all-linear-e8xr16-rmfull-b0.04-bigchat-v2](https://huggingface.co/LiberteEPFL/lfm25-1.2b-grpo-molora-all-linear-e8xr16-rmfull-b0.04-bigchat-v2) | 0 | 0 | text-generation |
 | 2026-06-02 | [coder3101/LFM2.5-VL-450M-heretic](https://huggingface.co/coder3101/LFM2.5-VL-450M-heretic) | 0 | 1 | image-text-to-text |
-| 2026-06-02 | [coder3101/LFM2.5-350M-heretic](https://huggingface.co/coder3101/LFM2.5-350M-heretic) | 0 | 0 | text-generation |
 | 2026-06-01 | [LiquidAI/LFM2.5-8B-A1B-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit) | 3951 | 12 | text-generation |
 | 2026-06-01 | [LiquidAI/LFM2.5-8B-A1B-MLX-4bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-4bit) | 1959 | 2 | text-generation |
 
