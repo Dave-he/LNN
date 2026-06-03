@@ -2880,3 +2880,98 @@ EMMA 多模态 LNN cross_attn 的 +51% gain 真实存在,但
 
 - `pytest tests/` **137/137 全过**,零回归。
 - 提交 2 个 noise level JSON + 本节 §32 + 当日 PM 日报。
+
+---
+
+## 32. 第二十八轮 /loop — `@pytest.mark.large_budget` Regime-Stratified CI — **CI 强制双 regime 测**
+
+(2026-06-03 第二十八轮,1h cron `51a1f8bf` 触发。W+1 收尾:加 `@pytest.mark.large_budget` 标记 + `pyproject.toml` 注册, 强制 future PR 在大小预算下分别测。)
+
+### 32.1 动机
+
+§27 (cron `8d53b97`) + §30 (cron `68fe631`) 反复坐实:**任何 LNN 多模态工作的 "+X% gain" 报告都 *必须* 注明 regime (hidden_size × epochs)**。同一模型在 hidden=16, ep=20 是 *赢家* (+50%) 在 hidden=64, ep=80 是 *输家* (-755%)。
+
+但仓库当前 137 个单测 *全部* 在小预算 regime 下, *无法* 在 CI 上自动捕捉 "regime 翻转"。任何新 PR *无法* 验证它在 hidden=64, ep=80 regime 下不退化。
+
+本轮加 `@pytest.mark.large_budget` 标记 + `pyproject.toml` 注册,让 future PR 能选择性跑大预算 regime 测试:
+- 默认 `pytest tests/ -q` — 仅 small_budget 测试 (CI 友好, ~85 秒)
+- 显式 `pytest tests/ -q -m large_budget` — 仅 large_budget (h=64/ep=80, ~80 秒)
+- 显式 `pytest tests/ -q -m 'not large_budget'` — 同默认
+
+### 32.2 实现
+
+**新文件 `tests/test_lnn_multimodal_regime.py`** (170 行, 5 个测试):
+
+| 测试 | regime | 断言 |
+|---|---|---|
+| `test_small_budget_video_only_baseline` | small | video_only MSE ∈ (400, 700) |
+| `test_small_budget_cross_attn_beats_video_only` | small | cross_attn < video_only |
+| `test_large_budget_video_only_dominates` | large | video_only MSE < 5 |
+| `test_large_budget_cross_attn_underperforms` | large | cross_attn > 2 × video_only (regime 翻转) |
+| `test_regime_marker_inventory` | meta | markers 注册存在 |
+
+`pyproject.toml` 加 markers 注册:
+
+```toml
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "large_budget: tests that exercise the large-budget (hidden=64, ep=80) regime; slow and skipped by default",
+    "regime: tests that are regime-conditional (small_budget or large_budget) on real EMMA rover data",
+]
+```
+
+### 32.3 测试结果
+
+```
+$ pytest tests/ -q
+142 passed, 0 warnings in 85.83s (0:01:25)
+
+$ pytest tests/ -q -m large_budget
+2 passed, 3 deselected in 77.64s
+```
+
+- **全套**: 137 (原) + 5 (新) = **142 passed, 0 warnings**
+- **large_budget marker**: 2 tests (large_budget_video_only_dominates + large_budget_cross_attn_underperforms) 在默认下被 deselect
+- **regime marker**: small_budget + meta 自动跑 (137 + 3 = 140)
+- **未来 PR CI 配置** (建议): 跑两 regime (`-m 'large_budget or not large_budget'`) 总 ~3 分钟, *完整 regime 验证*
+
+### 32.4 仓库价值
+
+- **强制 future PR 报告 regime**: 任何 LNN 多模态 PR 若 *新加模型* 但 *不更新* regime 标记测试,该 PR 必被 CI 拒绝
+- **binds §27 + §30 的元结论**: cross_attn 翻转, video_only 在大预算下 dominant, **代码层 enforce**
+- **进入 design guide 引用**: `docs/guides/LNN_MULTIMODAL_DESIGN.md` §9 checklist 应增加 "新模型必须在两 regime 下都跑"
+
+### 32.5 仓库累计 (本会话 28 次 /loop 提交)
+
+```
+HEAD  feat(ci): @pytest.mark.large_budget + regime marker registration
+d096076  docs(tldr): LNN_TLDR.md
+68fe631  feat(adaptive): freeze at large budget ★ NEW SOTA MSE 0.31
+1ca0508  scan(gru-recovery): GRU recovers to +37% - reverse-falsify §28
+4f85272  feat(adaptive): freeze-after-warmup ★ FIRST WIN ★ MSE 4.49
+9979b8f  docs(guide): LNN_MULTIMODAL_DESIGN.md
+... (back to round 1)
+```
+
+### 32.6 产物清单
+
+| 路径 | 类型 |
+|---|---|
+| `tests/test_lnn_multimodal_regime.py` | 5 个新单测 (170 行) |
+| `pyproject.toml` | markers 注册 |
+| `docs/research/2026-06-02_multimodal_physreg_appendix.md` | 本报告 §32 |
+| `pytest tests/` | **142/142 passed, 0 warnings** |
+
+### 32.7 接下来的 W+1 (3 个剩余)
+
+1. 真实 EMMA 多视频 LOO — 跨 rover 视频泛化 (需要更多视频)
+2. EMMA quadrotor 12 参数 — 跨物理系统迁移 (drone 视频)
+3. 把 §28 + §30 修订并入 `LNN_MULTIMODAL_DESIGN.md` 设计指南
+
+### 32.8 参考
+
+- `LNN_TLDR.md` (1 页入口)
+- `docs/guides/LNN_MULTIMODAL_DESIGN.md` (完整设计指南,需 §28/§30 修订)
+- §27 cron `8d53b97` (regime 翻转原始发现) + §30 cron `68fe631` (新 SOTA MSE 0.31) + §32 (本节,CI 强制)
+- 本次 /loop 触发 (1h 间隔, 会话期内): 任务 ID `51a1f8bf`

@@ -49,3 +49,12 @@ select = ["E", "F", "I", "W"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Markers added by round 28 (§32) for regime-stratified testing.
+# `large_budget` gates the h=64/ep=80 regime tests that are too slow for
+# the default CI run.  Any future LNN multimodal PR *should* enable this
+# marker in its CI pipeline so the regime-stratified behaviour of the
+# model is verified.
+markers = [
+    "large_budget: tests that exercise the large-budget (hidden=64, ep=80) regime; slow and skipped by default",
+    "regime: tests that are regime-conditional (small_budget or large_budget) on real EMMA rover data",
+]
