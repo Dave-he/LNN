@@ -244,7 +244,7 @@ def _run_one(name: str, args, seed: int, device) -> dict:
 
 
 def _aggregate(per_run: list[dict]) -> dict:
-    """mean / std grouped by backbone."""
+    """mean / std / median / min / max grouped by backbone (iter#11 lesson)."""
     by_backbone: dict[str, list[dict]] = {}
     for record in per_run:
         by_backbone.setdefault(record["backbone"], []).append(record)
@@ -255,23 +255,54 @@ def _aggregate(per_run: list[dict]) -> dict:
         train = [r["train_seconds"] for r in records]
         infs = [r["inference_samples_per_sec"] for r in records]
         params = records[0]["parameters"]  # constant across seeds for fixed config
+        mse_mean = statistics.fmean(mse)
+        mse_std = statistics.stdev(mse) if len(mse) > 1 else 0.0
         summary[name] = {
             "parameters": params,
-            "test_mse_mean": statistics.fmean(mse),
-            "test_mse_std": statistics.stdev(mse) if len(mse) > 1 else 0.0,
+            "test_mse_mean": mse_mean,
+            "test_mse_std": mse_std,
+            "test_mse_median": statistics.median(mse),
+            "test_mse_min": min(mse),
+            "test_mse_max": max(mse),
+            "test_mse_std_over_mean": (mse_std / mse_mean) if mse_mean > 1e-12 else 0.0,
             "test_mae_mean": statistics.fmean(mae),
             "test_mae_std": statistics.stdev(mae) if len(mae) > 1 else 0.0,
+            "test_mae_median": statistics.median(mae),
             "train_seconds_mean": statistics.fmean(train),
             "train_seconds_std": statistics.stdev(train) if len(train) > 1 else 0.0,
             "inference_samples_per_sec_mean": statistics.fmean(infs),
             "inference_samples_per_sec_std": statistics.stdev(infs) if len(infs) > 1 else 0.0,
             "seeds": [r["seed"] for r in records],
+            "n_seeds": len(records),
         }
     return summary
 
 
+def _variance_flag(std_over_mean: float) -> str:
+    """iter#11 lesson: std/mean > 1 -> high variance warning."""
+    if std_over_mean > 1.0:
+        return " ⚠️"
+    if std_over_mean > 0.5:
+        return " ⚠"
+    return ""
+
+
+def _small_n_flag(n_seeds: int) -> str:
+    """iter#11 lesson: anything below 5 seeds is statistically suspect."""
+    if n_seeds < 3:
+        return " ⚠️ N<3"
+    if n_seeds < 5:
+        return " ⚠ N<5"
+    return ""
+
+
 def _format_markdown(payload: dict) -> str:
     cfg = payload["config"]
+    summary = payload["summary"]
+    # Order: cfc, ltc, gru, lstm for readable comparison.
+    order = [n for n in ("cfc", "ltc", "gru", "lstm") if n in summary]
+    any_n = max((summary[n]["n_seeds"] for n in order), default=0)
+    n_warn = _small_n_flag(any_n)
     lines = [
         f"# LNN vs LSTM Time-Series Ablation — {payload['run_id']}",
         "",
@@ -279,23 +310,39 @@ def _format_markdown(payload: dict) -> str:
         f"- dataset: `{cfg['dataset']}`",
         f"- samples / seq_len: {cfg['samples']} / {cfg['seq_len']}",
         f"- hidden_size / epochs / batch / lr: {cfg['hidden_size']} / {cfg['epochs']} / {cfg['batch_size']} / {cfg['lr']}",
-        f"- seeds: {cfg['seeds']}",
+        f"- seeds ({any_n}{n_warn}): {cfg['seeds']}",
         f"- device: {payload['environment']['device']}",
-        "",
-        "## 跨 seed 汇总 (mean ± std)",
-        "| Backbone | params | Test MSE | Test MAE | Train s | Inf samples/s |",
-        "|---|---:|---:|---:|---:|---:|",
     ]
-    summary = payload["summary"]
-    # Order: cfc, ltc, gru, lstm for readable comparison.
-    order = [n for n in ("cfc", "ltc", "gru", "lstm") if n in summary]
+    if n_warn:
+        lines.append("- ⚠️ **iter#11 lesson**: N<5 seed 的"
+                     "Δ vs baseline 不可信 — 见 [[Comparative_Analysis_of_LNN_and_LSTM_研读报告]] v5。")
+    lines.extend([
+        "",
+        "## 跨 seed 鲁棒统计",
+        "| Backbone | params | mean MSE | **median MSE** | std/mean | min / max | n |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ])
     for name in order:
         s = summary[name]
+        warn = _variance_flag(s["test_mse_std_over_mean"])
         lines.append(
             f"| `{name}` | {s['parameters']:,} | "
             f"{s['test_mse_mean']:.5f} ± {s['test_mse_std']:.5f} | "
-            f"{s['test_mae_mean']:.5f} ± {s['test_mae_std']:.5f} | "
-            f"{s['train_seconds_mean']:.2f} ± {s['train_seconds_std']:.2f} | "
+            f"{s['test_mse_median']:.5f} | "
+            f"{s['test_mse_std_over_mean']:.2f}{warn} | "
+            f"{s['test_mse_min']:.5f} / {s['test_mse_max']:.5f} | "
+            f"{s['n_seeds']} |"
+        )
+    lines.extend([
+        "",
+        "## 训练/推理开销 (mean ± std)",
+        "| Backbone | Train s | Inf samples/s |",
+        "|---|---:|---:|",
+    ])
+    for name in order:
+        s = summary[name]
+        lines.append(
+            f"| `{name}` | {s['train_seconds_mean']:.2f} ± {s['train_seconds_std']:.2f} | "
             f"{s['inference_samples_per_sec_mean']:.0f} ± {s['inference_samples_per_sec_std']:.0f} |"
         )
 
@@ -303,8 +350,8 @@ def _format_markdown(payload: dict) -> str:
         lstm = summary["lstm"]
         lines.extend([
             "",
-            "## 相对 LSTM baseline (per-backbone mean over seeds)",
-            "| Backbone | Δparams | Δtest_mse | Δtest_mae | Δtrain_s | Δinf_throughput |",
+            "## 相对 LSTM baseline (mean + median 双视图)",
+            "| Backbone | Δparams | Δmean_mse | Δmedian_mse | Δtrain_s | Δinf_throughput |",
             "|---|---:|---:|---:|---:|---:|",
         ])
         for name in order:
@@ -312,20 +359,23 @@ def _format_markdown(payload: dict) -> str:
                 continue
             s = summary[name]
             d_params = (s["parameters"] - lstm["parameters"]) / lstm["parameters"] * 100.0
-            d_mse = (s["test_mse_mean"] - lstm["test_mse_mean"]) / max(lstm["test_mse_mean"], 1e-9) * 100.0
-            d_mae = (s["test_mae_mean"] - lstm["test_mae_mean"]) / max(lstm["test_mae_mean"], 1e-9) * 100.0
+            d_mse_mean = (s["test_mse_mean"] - lstm["test_mse_mean"]) / max(lstm["test_mse_mean"], 1e-9) * 100.0
+            d_mse_median = (s["test_mse_median"] - lstm["test_mse_median"]) / max(lstm["test_mse_median"], 1e-9) * 100.0
             d_train = (s["train_seconds_mean"] - lstm["train_seconds_mean"]) / max(lstm["train_seconds_mean"], 1e-9) * 100.0
             d_inf = (s["inference_samples_per_sec_mean"] - lstm["inference_samples_per_sec_mean"]) / max(lstm["inference_samples_per_sec_mean"], 1e-9) * 100.0
+            sign_mean = "✅" if d_mse_mean < 0 else "❌"
+            sign_median = "✅" if d_mse_median < 0 else "❌"
             lines.append(
-                f"| `{name}` | {d_params:+.2f}% | {d_mse:+.2f}% | {d_mae:+.2f}% | {d_train:+.2f}% | {d_inf:+.2f}% |"
+                f"| `{name}` | {d_params:+.2f}% | {d_mse_mean:+.2f}% {sign_mean} | "
+                f"{d_mse_median:+.2f}% {sign_median} | {d_train:+.2f}% | {d_inf:+.2f}% |"
             )
 
     lines.extend([
         "",
         "## 解读模板",
-        "- MSE 下降 + 参数减少 → LNN 类对该时序数据有结构化先验优势;",
-        "- 推理吞吐输 LSTM/GRU 但 std 更小 → 适合实时性可放宽的非平稳任务;",
-        "- std 显著高于 mean → 该 backbone seed 敏感,需要更多 seed 或 warmup。",
+        "- mean 和 median 一致下降 → 真信号;只 mean 下降 → outlier 可能在拉低 baseline,看 median;",
+        "- std/mean > 1 ⚠️ → 该 backbone 在该任务上 seed 极不稳定;",
+        "- N<5 ⚠ → 单轮 Δ vs baseline 不可作结论(iter#11 教训)。",
         "",
         f"JSON 原数据: `{payload['json_path']}`",
     ])

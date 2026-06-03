@@ -161,7 +161,7 @@ PRD §8 8 个任务里只剩 #3 LFM2.5(等 RAM 空载窗口)和 #4 EMMA(远程 a
 | 9-4 | `experiment_graph_lnn_molecule.py` 加 `--frozen-encoder` 两阶段(模拟 GCN-CfC 解耦) | code + smoke | §8 #6 follow-up B |
 | 9-5 | `loop_status.py --since-last-loop` 自动定位上次 iter 结束后的变更 | code + sample report | §8 #8 v2 |
 | 9-6 | `HierarchicalDecayLiquidTADHead` 加 ONNX export + TensorRT INT8 | `analysis/jetson/<date>_liquid_tad_tensorrt.md` | §8 #2 stage D |
-| 9-7 | 跨数据 backbone ranking 自动生成:ablation runner 加 `--datasets` 多个,出 task-conditional 表 | `analysis/timeseries_ablation/<date>_task_conditional_matrix.md` | iter#6+iter#7+iter#9 综合 |
+| 9-7 | 跨数据 backbone ranking 自动生成:ablation runner 加 `--datasets` 多个,出 task-conditional 表 — **loop#12 ✅** `scripts/build_backbone_matrix.py` 扫 `analysis/timeseries_ablation/*` + `analysis/molecular/*` pivot 出 task × backbone 矩阵,dedup 规则保留 n_seeds 更大的;首跑结果 LSTM 3 wins / GRU 1 win / CfC/LTC 0 wins (4 任务) | `analysis/timeseries_ablation/<date>_task_conditional_matrix.md` + `scripts/build_backbone_matrix.py` | 1 loop done |
 | 9-8 | PRD §6 验证指标自动 CI:GitHub Actions 跑 `verify_all_models.py + ablation_*` 周线 | `.github/workflows/lnn_weekly_verify.yml` | §6 enforcement |
 
 ### 已调研但不复现(C 级, 只入索引,不投复现 budget)
