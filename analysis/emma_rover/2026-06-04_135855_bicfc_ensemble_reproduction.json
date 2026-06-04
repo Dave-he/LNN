@@ -1,0 +1,50 @@
+{
+  "config": {
+    "n_seeds": 10,
+    "K": 5,
+    "hidden_size": 96,
+    "epochs": 80,
+    "warmup_epochs": 40,
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42,
+      11,
+      100,
+      2026,
+      313,
+      777
+    ]
+  },
+  "per_fold": {
+    "ensemble_mses": [
+      0.040027081966400146,
+      0.016870183870196342,
+      0.023832542821764946,
+      0.11766060441732407
+    ],
+    "per_seed_mean_mses": [
+      3.3111059349030256,
+      5.021634301543235,
+      2.740412692935206,
+      10.75157933831215
+    ]
+  },
+  "aggregate": {
+    "ensemble_mse_mean": 0.049597603268921375,
+    "per_seed_mean_mse_mean": 5.456183066923404,
+    "delta": 5.406585463654483,
+    "delta_pct": 99.09098351978707
+  },
+  "references": {
+    "round_64_20seed_K10": 0.75,
+    "round_65_30seed_K20": 0.24
+  },
+  "metadata": {
+    "round": 68,
+    "purpose": "Verify BiCfCEnsemble class reproduces round 65 protocol (smaller scale)",
+    "expected": "Pattern: ensemble < per-seed mean; 10-seed K=5 should be > 0.24 but < 1.5"
+  }
+}

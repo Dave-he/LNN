@@ -105,3 +105,4 @@ __all__ = [
     "EulerLTCDTCell",
     "EulerLTCDTNetwork",
 ]
+from lnn.core.ensemble import BiCfCEnsemble
