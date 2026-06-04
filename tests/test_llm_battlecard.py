@@ -118,6 +118,65 @@ def test_build_payload_summarizes_local_micro_eval(tmp_path):
     assert payload["local_micro_eval"]["summary"]["generation_tps_mean"] == 31.7
 
 
+def test_build_payload_summarizes_local_micro_leaderboard(tmp_path):
+    leaderboard_json = tmp_path / "leaderboard.json"
+    leaderboard_json.write_text(
+        json.dumps({
+            "date": "2026-06-04",
+            "summary": {
+                "n_entries": 2,
+                "n_rankable": 2,
+                "roles": {"under_3b_candidate": 2},
+                "top_model": "lfm25_1.2b_instruct_q4",
+                "top_accuracy": 1.0,
+                "top_generation_tps_mean": 16.843,
+            },
+            "entries": [
+                {
+                    "rank": 1,
+                    "model_name": "lfm25_1.2b_instruct_q4",
+                    "backend": "llama-cli",
+                    "comparison_role": "under_3b_candidate",
+                    "source_path": "analysis/llm_micro_eval/a.json",
+                    "summary": {
+                        "n": 7,
+                        "passed": 7,
+                        "accuracy": 1.0,
+                        "generation_tps_mean": 16.843,
+                    },
+                },
+                {
+                    "rank": 2,
+                    "model_name": "lfm25_1.2b_instruct_q4_http",
+                    "backend": "openai-chat",
+                    "comparison_role": "under_3b_candidate",
+                    "source_path": "analysis/llm_micro_eval/b.json",
+                    "summary": {
+                        "n": 7,
+                        "passed": 7,
+                        "accuracy": 1.0,
+                        "generation_tps_mean": 5.707,
+                    },
+                },
+            ],
+        }),
+        encoding="utf-8",
+    )
+    args = argparse.Namespace(
+        date="2026-06-04",
+        candidate="lfm25-8b-a1b",
+        baseline="qwen3-30b-a3b-thinking-2507",
+        local_validation=str(tmp_path / "missing_local_validation.json"),
+        local_micro_eval=str(tmp_path / "missing_micro_eval.json"),
+        local_micro_leaderboard=str(leaderboard_json),
+    )
+
+    payload = build_llm_battlecard.build_payload(args)
+
+    assert payload["local_micro_leaderboard"]["summary"]["n_entries"] == 2
+    assert payload["local_micro_leaderboard"]["entries"][1]["backend"] == "openai-chat"
+
+
 def test_markdown_contains_prediction_gate():
     candidate = build_llm_battlecard.MODEL_SNAPSHOTS["lfm25-8b-a1b"]
     baseline = build_llm_battlecard.MODEL_SNAPSHOTS["qwen3-30b-a3b-thinking-2507"]
@@ -133,6 +192,17 @@ def test_markdown_contains_prediction_gate():
             "path": "analysis/llm_micro_eval/example.json",
             "summary": {"n": 7, "passed": 7, "accuracy": 1.0, "generation_tps_mean": 31.7},
         },
+        "local_micro_leaderboard": {
+            "path": "analysis/llm_micro_eval/leaderboard.json",
+            "summary": {
+                "n_entries": 2,
+                "roles": {"under_3b_candidate": 2},
+                "top_model": "lfm25",
+                "top_accuracy": 1.0,
+                "top_generation_tps_mean": 31.7,
+            },
+            "entries": [],
+        },
         "sources": [],
     }
 
@@ -141,6 +211,7 @@ def test_markdown_contains_prediction_gate():
     assert "Do **not** claim a general 3B model can beat 30B+ models yet" in markdown
     assert "7 win / 6 loss / 0 tie" in markdown
     assert "Micro-eval: 100.0% (7/7)" in markdown
+    assert "Micro leaderboard: 2 entries" in markdown
 
 
 def test_write_outputs_accepts_external_directory(tmp_path):

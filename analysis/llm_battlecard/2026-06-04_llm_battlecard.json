@@ -239,40 +239,100 @@
     }
   },
   "local_micro_eval": {
-    "path": "analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.json",
+    "path": "analysis/llm_micro_eval/2026-06-04_lfm25_dpo_s1_f16_micro_eval.json",
     "date": "2026-06-04",
-    "model_name": "lfm25_1.2b_instruct_q4",
-    "model_path": "models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+    "model_name": "lfm25_dpo_s1_f16",
+    "model_path": "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
     "summary": {
       "n": 7,
-      "passed": 7,
-      "failed": 0,
-      "accuracy": 1.0,
+      "passed": 1,
+      "failed": 6,
+      "accuracy": 0.1429,
       "by_category": {
         "arithmetic": {
           "n": 3,
-          "passed": 3,
-          "accuracy": 1.0
+          "passed": 1,
+          "accuracy": 0.3333
         },
         "instruction": {
           "n": 2,
-          "passed": 2,
-          "accuracy": 1.0
+          "passed": 0,
+          "accuracy": 0.0
         },
         "structured_output": {
           "n": 1,
-          "passed": 1,
-          "accuracy": 1.0
+          "passed": 0,
+          "accuracy": 0.0
         },
         "abstention": {
           "n": 1,
-          "passed": 1,
-          "accuracy": 1.0
+          "passed": 0,
+          "accuracy": 0.0
         }
       },
-      "generation_tps_mean": 16.843,
-      "generation_tps_median": 14.7
+      "generation_tps_mean": 4.257,
+      "generation_tps_median": 3.3
     }
+  },
+  "local_micro_leaderboard": {
+    "path": "analysis/llm_micro_eval/2026-06-04_llm_micro_leaderboard.json",
+    "date": "2026-06-04",
+    "summary": {
+      "n_entries": 4,
+      "n_rankable": 4,
+      "roles": {
+        "under_3b_candidate": 4
+      },
+      "top_model": "lfm25_1.2b_instruct_q4",
+      "top_accuracy": 1.0,
+      "top_generation_tps_mean": 16.843
+    },
+    "entries": [
+      {
+        "rank": 1,
+        "model_name": "lfm25_1.2b_instruct_q4",
+        "backend": "llama-cli",
+        "comparison_role": "under_3b_candidate",
+        "accuracy": 1.0,
+        "passed": 7,
+        "n": 7,
+        "generation_tps_mean": 16.843,
+        "source_path": "analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.json"
+      },
+      {
+        "rank": 2,
+        "model_name": "lfm25_1.2b_instruct_q4_http",
+        "backend": "openai-chat",
+        "comparison_role": "under_3b_candidate",
+        "accuracy": 1.0,
+        "passed": 7,
+        "n": 7,
+        "generation_tps_mean": 5.707,
+        "source_path": "analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_http_micro_eval.json"
+      },
+      {
+        "rank": 3,
+        "model_name": "lfm25_dpo_s1_q4",
+        "backend": "llama-cli",
+        "comparison_role": "under_3b_candidate",
+        "accuracy": 0.5714,
+        "passed": 4,
+        "n": 7,
+        "generation_tps_mean": 11.371,
+        "source_path": "analysis/llm_micro_eval/2026-06-04_lfm25_dpo_s1_q4_micro_eval.json"
+      },
+      {
+        "rank": 4,
+        "model_name": "lfm25_dpo_s1_f16",
+        "backend": "llama-cli",
+        "comparison_role": "under_3b_candidate",
+        "accuracy": 0.1429,
+        "passed": 1,
+        "n": 7,
+        "generation_tps_mean": 4.257,
+        "source_path": "analysis/llm_micro_eval/2026-06-04_lfm25_dpo_s1_f16_micro_eval.json"
+      }
+    ]
   },
   "sources": [
     {
@@ -299,6 +359,11 @@
       "name": "Local LLM micro-eval",
       "url": "analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.md",
       "used_for": "deterministic local deployment sanity check"
+    },
+    {
+      "name": "Local LLM micro-eval leaderboard",
+      "url": "analysis/llm_micro_eval/2026-06-04_llm_micro_leaderboard.md",
+      "used_for": "local smoke leaderboard across CLI and OpenAI-compatible endpoint runs"
     }
   ]
 }

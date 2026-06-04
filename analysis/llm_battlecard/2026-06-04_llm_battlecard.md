@@ -52,8 +52,10 @@ Shared metric tally: **7 win / 6 loss / 0 tie** (win rate 53.8%).
 - Local validation file: `analysis/lfm25/2026-06-01_lfm25_local_validation.json`
 - GGUF: status `ok`, generation 19.00 tok/s
 - DPO: status `ok`, generation 1.75 tok/s
-- Local micro-eval file: `analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.json`
-- Micro-eval: 100.0% (7/7), mean generation 16.843 tok/s
+- Local micro-eval file: `analysis/llm_micro_eval/2026-06-04_lfm25_dpo_s1_f16_micro_eval.json`
+- Micro-eval: 14.3% (1/7), mean generation 4.257 tok/s
+- Micro leaderboard file: `analysis/llm_micro_eval/2026-06-04_llm_micro_leaderboard.json`
+- Micro leaderboard: 4 entries, roles: under_3b_candidate=4; leader `lfm25_1.2b_instruct_q4` (100.0%, 16.843 tok/s)
 
 ## Prediction
 
@@ -68,3 +70,4 @@ Shared metric tally: **7 win / 6 loss / 0 tie** (win rate 53.8%).
 - [Qwen3-30B-A3B model card](https://huggingface.co/Qwen/Qwen3-30B-A3B) - 30.5B total / 3.3B active parameter metadata
 - [LFM2.5-1.2B local validation](analysis/lfm25/2026-06-01_lfm25_local_inference_quantization.md) - local GGUF/DPO smoke inference evidence already in this repo
 - [Local LLM micro-eval](analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.md) - deterministic local deployment sanity check
+- [Local LLM micro-eval leaderboard](analysis/llm_micro_eval/2026-06-04_llm_micro_leaderboard.md) - local smoke leaderboard across CLI and OpenAI-compatible endpoint runs

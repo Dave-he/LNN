@@ -1,0 +1,259 @@
+{
+  "run_id": "2026-06-04_lfm25_1_2b_instruct_q4_http_micro_eval",
+  "date": "2026-06-04",
+  "backend": "openai-chat",
+  "model_name": "lfm25_1.2b_instruct_q4_http",
+  "model_path": "models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+  "model_exists": true,
+  "llama_cli": "projects/llama.cpp/build/bin/llama-cli",
+  "llama_cli_exists": true,
+  "openai_base_url": "http://127.0.0.1:18080/v1",
+  "openai_model": "lfm25-1.2b-instruct-q4",
+  "config": {
+    "ctx_size": 256,
+    "threads": 4,
+    "temperature": 0.0,
+    "top_k": 1,
+    "repeat_penalty": 1.05,
+    "seed": 1,
+    "timeout": 120,
+    "tasks": "all",
+    "min_accuracy": 1.0,
+    "dry_run": false
+  },
+  "summary": {
+    "n": 7,
+    "passed": 7,
+    "failed": 0,
+    "accuracy": 1.0,
+    "by_category": {
+      "arithmetic": {
+        "n": 3,
+        "passed": 3,
+        "accuracy": 1.0
+      },
+      "instruction": {
+        "n": 2,
+        "passed": 2,
+        "accuracy": 1.0
+      },
+      "structured_output": {
+        "n": 1,
+        "passed": 1,
+        "accuracy": 1.0
+      },
+      "abstention": {
+        "n": 1,
+        "passed": 1,
+        "accuracy": 1.0
+      }
+    },
+    "generation_tps_mean": 5.707,
+    "generation_tps_median": 5.587
+  },
+  "results": [
+    {
+      "task_id": "arith_2_plus_3",
+      "category": "arithmetic",
+      "prompt": "Answer with exactly the number. What is 2+3?",
+      "expected": "5",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 1.848,
+      "response": "5",
+      "timing": {
+        "generation_tps": 1.082
+      },
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 22,
+        "total_tokens": 24,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "5",
+        "expected_normalized": "5"
+      },
+      "endpoint": "http://127.0.0.1:18080/v1/chat/completions",
+      "model": "lfm25-1.2b-instruct-q4"
+    },
+    {
+      "task_id": "arith_17_minus_9",
+      "category": "arithmetic",
+      "prompt": "Answer with exactly the number. What is 17-9?",
+      "expected": "8",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 0.387,
+      "response": "8",
+      "timing": {
+        "generation_tps": 5.168
+      },
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 22,
+        "total_tokens": 24,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "8",
+        "expected_normalized": "8"
+      },
+      "endpoint": "http://127.0.0.1:18080/v1/chat/completions",
+      "model": "lfm25-1.2b-instruct-q4"
+    },
+    {
+      "task_id": "arith_12_times_4",
+      "category": "arithmetic",
+      "prompt": "Answer with exactly the number. What is 12*4?",
+      "expected": "48",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 0.352,
+      "response": "48",
+      "timing": {
+        "generation_tps": 5.682
+      },
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 22,
+        "total_tokens": 24,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "48",
+        "expected_normalized": "48"
+      },
+      "endpoint": "http://127.0.0.1:18080/v1/chat/completions",
+      "model": "lfm25-1.2b-instruct-q4"
+    },
+    {
+      "task_id": "instr_exact_word",
+      "category": "instruction",
+      "prompt": "Reply with exactly this word: BLUE",
+      "expected": "BLUE",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 0.537,
+      "response": "BLUE",
+      "timing": {
+        "generation_tps": 5.587
+      },
+      "usage": {
+        "completion_tokens": 3,
+        "prompt_tokens": 17,
+        "total_tokens": 20,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "BLUE",
+        "expected_normalized": "BLUE"
+      },
+      "endpoint": "http://127.0.0.1:18080/v1/chat/completions",
+      "model": "lfm25-1.2b-instruct-q4"
+    },
+    {
+      "task_id": "instr_exact_two_words",
+      "category": "instruction",
+      "prompt": "Reply with exactly these two words: liquid networks",
+      "expected": "liquid networks",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 0.469,
+      "response": "liquid networks",
+      "timing": {
+        "generation_tps": 8.529
+      },
+      "usage": {
+        "completion_tokens": 4,
+        "prompt_tokens": 18,
+        "total_tokens": 22,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "liquid networks",
+        "expected_normalized": "liquid networks"
+      },
+      "endpoint": "http://127.0.0.1:18080/v1/chat/completions",
+      "model": "lfm25-1.2b-instruct-q4"
+    },
+    {
+      "task_id": "json_color_blue",
+      "category": "structured_output",
+      "prompt": "Return only this JSON object and no other text: {\"color\":\"blue\"}",
+      "expected": "{\"color\":\"blue\"}",
+      "grader": "json_equal",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 0.708,
+      "response": "{\"color\":\"blue\"}",
+      "timing": {
+        "generation_tps": 9.887
+      },
+      "usage": {
+        "completion_tokens": 7,
+        "prompt_tokens": 25,
+        "total_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "{\"color\":\"blue\"}",
+        "expected_normalized": "{\"color\":\"blue\"}"
+      },
+      "endpoint": "http://127.0.0.1:18080/v1/chat/completions",
+      "model": "lfm25-1.2b-instruct-q4"
+    },
+    {
+      "task_id": "abstain_unknown",
+      "category": "abstention",
+      "prompt": "If the answer is not contained in this prompt, reply exactly UNKNOWN. What is the launch code for Project Zephyr-917?",
+      "expected": "UNKNOWN",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 0.996,
+      "response": "UNKNOWN",
+      "timing": {
+        "generation_tps": 4.016
+      },
+      "usage": {
+        "completion_tokens": 4,
+        "prompt_tokens": 38,
+        "total_tokens": 42,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "UNKNOWN",
+        "expected_normalized": "UNKNOWN"
+      },
+      "endpoint": "http://127.0.0.1:18080/v1/chat/completions",
+      "model": "lfm25-1.2b-instruct-q4"
+    }
+  ]
+}

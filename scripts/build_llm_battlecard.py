@@ -28,6 +28,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "analysis" / "llm_battlecard"
 DEFAULT_LOCAL_GLOB = "analysis/lfm25/*_lfm25_local_validation.json"
 DEFAULT_MICRO_EVAL_GLOB = "analysis/llm_micro_eval/*_micro_eval.json"
+DEFAULT_MICRO_LEADERBOARD_GLOB = "analysis/llm_micro_eval/*_llm_micro_leaderboard.json"
 
 HIGHER_IS_BETTER = "higher_is_better"
 
@@ -178,6 +179,11 @@ def _latest_micro_eval() -> pathlib.Path | None:
     return candidates[0] if candidates else None
 
 
+def _latest_micro_leaderboard() -> pathlib.Path | None:
+    candidates = sorted(ROOT.glob(DEFAULT_MICRO_LEADERBOARD_GLOB), key=lambda p: p.stat().st_mtime, reverse=True)
+    return candidates[0] if candidates else None
+
+
 def _display_path(path: pathlib.Path) -> str:
     try:
         return str(path.relative_to(ROOT))
@@ -214,6 +220,35 @@ def _load_micro_eval(path: pathlib.Path | None) -> dict[str, Any] | None:
         "model_name": payload.get("model_name"),
         "model_path": payload.get("model_path"),
         "summary": payload.get("summary", {}),
+    }
+
+
+def _load_micro_leaderboard(path: pathlib.Path | None) -> dict[str, Any] | None:
+    if path is None or not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"status": "unreadable", "path": str(path)}
+    entries = []
+    for entry in payload.get("entries", [])[:8]:
+        summary = entry.get("summary") or {}
+        entries.append({
+            "rank": entry.get("rank"),
+            "model_name": entry.get("model_name"),
+            "backend": entry.get("backend"),
+            "comparison_role": entry.get("comparison_role"),
+            "accuracy": summary.get("accuracy"),
+            "passed": summary.get("passed"),
+            "n": summary.get("n"),
+            "generation_tps_mean": summary.get("generation_tps_mean"),
+            "source_path": entry.get("source_path"),
+        })
+    return {
+        "path": _display_path(path),
+        "date": payload.get("date"),
+        "summary": payload.get("summary", {}),
+        "entries": entries,
     }
 
 
@@ -319,8 +354,10 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     baseline = MODEL_SNAPSHOTS[args.baseline]
     local_arg = getattr(args, "local_validation", "")
     micro_arg = getattr(args, "local_micro_eval", "")
+    leaderboard_arg = getattr(args, "local_micro_leaderboard", "")
     local_path = pathlib.Path(local_arg).expanduser() if local_arg else _latest_local_validation()
     micro_path = pathlib.Path(micro_arg).expanduser() if micro_arg else _latest_micro_eval()
+    leaderboard_path = pathlib.Path(leaderboard_arg).expanduser() if leaderboard_arg else _latest_micro_leaderboard()
     rows = compare_models(candidate, baseline)
     summary = summarize_comparison(rows, candidate, baseline)
     return {
@@ -334,6 +371,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "summary": summary,
         "local_validation": _load_local_validation(local_path),
         "local_micro_eval": _load_micro_eval(micro_path),
+        "local_micro_leaderboard": _load_micro_leaderboard(leaderboard_path),
         "sources": [
             {
                 "name": "LiquidAI LFM2.5-8B-A1B model card",
@@ -360,6 +398,11 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
                 "url": "analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.md",
                 "used_for": "deterministic local deployment sanity check",
             },
+            {
+                "name": "Local LLM micro-eval leaderboard",
+                "url": "analysis/llm_micro_eval/2026-06-04_llm_micro_leaderboard.md",
+                "used_for": "local smoke leaderboard across CLI and OpenAI-compatible endpoint runs",
+            },
         ],
     }
 
@@ -385,6 +428,7 @@ def format_markdown(payload: dict[str, Any]) -> str:
     summary = payload["summary"]
     local = payload.get("local_validation")
     micro_eval = payload.get("local_micro_eval")
+    micro_leaderboard = payload.get("local_micro_leaderboard")
     lines = [
         "---",
         "title: LFM/LNN-related 3B-vs-30B battlecard",
@@ -461,6 +505,20 @@ def format_markdown(payload: dict[str, Any]) -> str:
         )
     else:
         lines.append("- No local LLM micro-eval JSON found.")
+    if micro_leaderboard:
+        leaderboard_summary = micro_leaderboard.get("summary", {})
+        roles = leaderboard_summary.get("roles") or {}
+        roles_text = ", ".join(f"{role}={count}" for role, count in sorted(roles.items())) or "none"
+        lines.append(f"- Micro leaderboard file: `{micro_leaderboard.get('path')}`")
+        lines.append(
+            "- Micro leaderboard: "
+            f"{leaderboard_summary.get('n_entries')} entries, roles: {roles_text}; "
+            f"leader `{leaderboard_summary.get('top_model')}` "
+            f"({_format_accuracy(leaderboard_summary.get('top_accuracy'))}, "
+            f"{leaderboard_summary.get('top_generation_tps_mean')} tok/s)"
+        )
+    else:
+        lines.append("- No local LLM micro leaderboard JSON found.")
     lines.extend([
         "",
         "## Prediction",
@@ -503,6 +561,12 @@ def _format_speed(section: dict[str, Any]) -> str:
     return "no timing parsed"
 
 
+def _format_accuracy(value: Any) -> str:
+    if value is None:
+        return "not run"
+    return f"{float(value):.1%}"
+
+
 def write_outputs(payload: dict[str, Any], output_dir: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / f"{payload['run_id']}.json"
@@ -519,6 +583,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--baseline", choices=sorted(MODEL_SNAPSHOTS), default="qwen3-30b-a3b-thinking-2507")
     parser.add_argument("--local-validation", default="")
     parser.add_argument("--local-micro-eval", default="")
+    parser.add_argument("--local-micro-leaderboard", default="")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--json", action="store_true", help="Print JSON payload instead of Markdown summary.")

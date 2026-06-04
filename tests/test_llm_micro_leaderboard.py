@@ -86,12 +86,23 @@ def test_discover_entries_and_infer_roles(monkeypatch, tmp_path):
         speed=22.5,
         openai_model="Qwen/Qwen3-30B-A3B",
     )
+    _write_micro_eval(
+        eval_dir / "2026-06-04_lfm25_dpo_micro_eval.json",
+        run_id="2026-06-04_lfm25_dpo_micro_eval",
+        model_name="lfm25_dpo_s1_q4",
+        backend="llama-cli",
+        accuracy=0.5714,
+        passed=4,
+        n=7,
+        speed=11.4,
+    )
 
     entries = build_llm_micro_leaderboard.discover_entries("analysis/llm_micro_eval/*_micro_eval.json")
 
-    assert len(entries) == 2
+    assert len(entries) == 3
     roles = {entry["model_name"]: entry["comparison_role"] for entry in entries}
     assert roles["lfm25_1.2b_instruct_q4"] == "under_3b_candidate"
+    assert roles["lfm25_dpo_s1_q4"] == "under_3b_candidate"
     assert roles["qwen3_30b_endpoint"] == "30b_plus_baseline"
 
 

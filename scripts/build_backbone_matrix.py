@@ -215,6 +215,53 @@ def _ingest_smnist_gap(path: pathlib.Path) -> dict | None:
     }
 
 
+def _compute_win_tally(rows: list[dict], backbones: list[str]) -> dict[str, int]:
+    """Per-backbone win tally (used by both Markdown formatter and README snippet).
+
+    Each row declares a winner (lowest median_mse for timeseries, highest
+    median_metric for molecular / smnist_gap). Returns a dict {bb: wins}.
+    """
+    tally: dict[str, int] = {b: 0 for b in backbones}
+    for row in rows:
+        if row["domain"] == "timeseries":
+            valid = {b: row["backbones"].get(b, {}).get("median_mse")
+                     for b in backbones if row["backbones"].get(b, {}).get("median_mse") is not None}
+            if valid:
+                tally[min(valid, key=valid.get)] += 1
+        elif row["domain"] in ("molecular", "smnist_gap"):
+            valid = {b: row["backbones"].get(b, {}).get("median_metric")
+                     for b in backbones if row["backbones"].get(b, {}).get("median_metric") is not None}
+            if valid:
+                tally[max(valid, key=valid.get)] += 1
+    return tally
+
+
+def _format_readme_snippet(payload: dict) -> str:
+    """PRD §10 #6: 1-line Markdown badge for README.md embedding.
+
+    Example output (PRD §10 #6 / iter#29):
+        **Backbone matrix:** LSTM 3 / cfc 2 / cfc_pulse 1 / others 0 (5 rows × 4 domains)
+    """
+    rows = payload["rows"]
+    backbones = payload["backbones_seen"]
+    tally = _compute_win_tally(rows, backbones)
+    # Count distinct domains represented
+    domains = sorted({r["domain"] for r in rows})
+    domain_count = len(domains)
+    row_count = len(rows)
+    # Build the "name wins" string, sorted by win count desc
+    parts = sorted(tally.items(), key=lambda kv: (-kv[1], kv[0]))
+    nonzero = [(name, n) for name, n in parts if n > 0]
+    if not nonzero:
+        return f"**Backbone matrix:** {row_count} rows × {domain_count} domains (no winners yet)"
+    pieces = [f"`{name}` {n}" for name, n in nonzero]
+    pieces.append(f"others {sum(n for _, n in parts) - sum(n for _, n in nonzero)}")
+    return (
+        f"**Backbone matrix ({row_count} rows × {domain_count} domains):** "
+        + " / ".join(pieces)
+    )
+
+
 def _dedupe_keep_higher_n(rows: list[dict]) -> list[dict]:
     """Merge rows with the same row_key by per-backbone max n_seeds (iter#25).
 
@@ -341,18 +388,7 @@ def _format_markdown(payload: dict) -> str:
             )
 
     # Per-backbone win tally.
-    tally: dict[str, int] = {b: 0 for b in backbones}
-    for row in rows:
-        if row["domain"] == "timeseries":
-            valid = {b: row["backbones"].get(b, {}).get("median_mse")
-                     for b in backbones if row["backbones"].get(b, {}).get("median_mse") is not None}
-            if valid:
-                tally[min(valid, key=valid.get)] += 1
-        elif row["domain"] in ("molecular", "smnist_gap"):
-            valid = {b: row["backbones"].get(b, {}).get("median_metric")
-                     for b in backbones if row["backbones"].get(b, {}).get("median_metric") is not None}
-            if valid:
-                tally[max(valid, key=valid.get)] += 1
+    tally = _compute_win_tally(rows, backbones)
 
     lines.extend([
         "",
@@ -386,6 +422,12 @@ def main() -> int:
                              "(PDNA stage B, iter#20+)")
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--export-readme-snippet", action="store_true",
+                        help=(
+                            "PRD §10 #6 / iter#29: emit a 1-line Markdown badge summarising "
+                            "the cross-task backbone matrix (e.g. 'LSTM 3 / cfc 2 / ...'). "
+                            "Designed to be embedded in README.md. Does not write any file."
+                        ))
     parser.add_argument("--output-dir", default="analysis/backbone_matrix")
     args = parser.parse_args()
 
@@ -450,6 +492,13 @@ def main() -> int:
     }
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.export_readme_snippet:
+        # PRD §10 #6: emit a 1-line Markdown badge for README.md embedding.
+        # Does NOT write any file — caller is expected to redirect stdout
+        # or copy-paste the result into README.md.
+        print(_format_readme_snippet(payload))
         return 0
 
     if not args.no_write:

@@ -1,0 +1,379 @@
+{
+  "run_id": "2026-06-04_lfm25_dpo_s1_f16_micro_eval",
+  "date": "2026-06-04",
+  "backend": "llama-cli",
+  "model_name": "lfm25_dpo_s1_f16",
+  "model_path": "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
+  "model_exists": true,
+  "llama_cli": "projects/llama.cpp/build/bin/llama-cli",
+  "llama_cli_exists": true,
+  "openai_base_url": null,
+  "openai_model": null,
+  "config": {
+    "ctx_size": 256,
+    "threads": 4,
+    "temperature": 0.0,
+    "top_k": 1,
+    "repeat_penalty": 1.05,
+    "seed": 1,
+    "timeout": 300,
+    "tasks": "all",
+    "min_accuracy": 1.0,
+    "dry_run": false
+  },
+  "summary": {
+    "n": 7,
+    "passed": 1,
+    "failed": 6,
+    "accuracy": 0.1429,
+    "by_category": {
+      "arithmetic": {
+        "n": 3,
+        "passed": 1,
+        "accuracy": 0.3333
+      },
+      "instruction": {
+        "n": 2,
+        "passed": 0,
+        "accuracy": 0.0
+      },
+      "structured_output": {
+        "n": 1,
+        "passed": 0,
+        "accuracy": 0.0
+      },
+      "abstention": {
+        "n": 1,
+        "passed": 0,
+        "accuracy": 0.0
+      }
+    },
+    "generation_tps_mean": 4.257,
+    "generation_tps_median": 3.3
+  },
+  "results": [
+    {
+      "task_id": "arith_2_plus_3",
+      "category": "arithmetic",
+      "prompt": "Answer with exactly the number. What is 2+3?",
+      "expected": "5",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 15.79,
+      "response": "4",
+      "timing": {
+        "prompt_tps": 4.5,
+        "generation_tps": 7.3
+      },
+      "grade": {
+        "passed": false,
+        "normalized": "4",
+        "expected_normalized": "5"
+      },
+      "command": [
+        "projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
+        "-p",
+        "Answer with exactly the number. What is 2+3?",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "arith_17_minus_9",
+      "category": "arithmetic",
+      "prompt": "Answer with exactly the number. What is 17-9?",
+      "expected": "8",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 13.368,
+      "response": "Eight. I'm glad you asked",
+      "timing": {
+        "prompt_tps": 6.4,
+        "generation_tps": 2.4
+      },
+      "grade": {
+        "passed": false,
+        "normalized": "Eight. I'm glad you asked",
+        "expected_normalized": "8"
+      },
+      "command": [
+        "projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
+        "-p",
+        "Answer with exactly the number. What is 17-9?",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "arith_12_times_4",
+      "category": "arithmetic",
+      "prompt": "Answer with exactly the number. What is 12*4?",
+      "expected": "48",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 10.058,
+      "response": "48",
+      "timing": {
+        "prompt_tps": 8.5,
+        "generation_tps": 7.1
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "48",
+        "expected_normalized": "48"
+      },
+      "command": [
+        "projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
+        "-p",
+        "Answer with exactly the number. What is 12*4?",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "instr_exact_word",
+      "category": "instruction",
+      "prompt": "Reply with exactly this word: BLUE",
+      "expected": "BLUE",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 11.407,
+      "response": "Ah, yes... I see. You",
+      "timing": {
+        "prompt_tps": 8.3,
+        "generation_tps": 3.2
+      },
+      "grade": {
+        "passed": false,
+        "normalized": "Ah, yes... I see. You",
+        "expected_normalized": "BLUE"
+      },
+      "command": [
+        "projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
+        "-p",
+        "Reply with exactly this word: BLUE",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "instr_exact_two_words",
+      "category": "instruction",
+      "prompt": "Reply with exactly these two words: liquid networks",
+      "expected": "liquid networks",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 12.93,
+      "response": "Ah, yes... the liquid networks.",
+      "timing": {
+        "prompt_tps": 6.5,
+        "generation_tps": 3.2
+      },
+      "grade": {
+        "passed": false,
+        "normalized": "Ah, yes... the liquid networks.",
+        "expected_normalized": "liquid networks"
+      },
+      "command": [
+        "projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
+        "-p",
+        "Reply with exactly these two words: liquid networks",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "json_color_blue",
+      "category": "structured_output",
+      "prompt": "Return only this JSON object and no other text: {\"color\":\"blue\"}",
+      "expected": "{\"color\":\"blue\"}",
+      "grader": "json_equal",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 13.973,
+      "response": "I understand, but I'm not sure why you're being so specific. Can we just have a general conversation instead of",
+      "timing": {
+        "prompt_tps": 8.9,
+        "generation_tps": 3.3
+      },
+      "grade": {
+        "passed": false,
+        "normalized": "I understand, but I'm not sure why you're being so specific. Can we just have a general conversation instead of",
+        "expected_normalized": "{\"color\":\"blue\"}",
+        "error": "ValueError: no JSON object found"
+      },
+      "command": [
+        "projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
+        "-p",
+        "Return only this JSON object and no other text: {\"color\":\"blue\"}",
+        "-n",
+        "24",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "abstain_unknown",
+      "category": "abstention",
+      "prompt": "If the answer is not contained in this prompt, reply exactly UNKNOWN. What is the launch code for Project Zephyr-917?",
+      "expected": "UNKNOWN",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 7.718,
+      "response": "I'm not here to provide a code, but to ask",
+      "timing": {
+        "prompt_tps": 24.0,
+        "generation_tps": 3.3
+      },
+      "grade": {
+        "passed": false,
+        "normalized": "I'm not here to provide a code, but to ask",
+        "expected_normalized": "UNKNOWN"
+      },
+      "command": [
+        "projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
+        "-p",
+        "If the answer is not contained in this prompt, reply exactly UNKNOWN. What is the launch code for Project Zephyr-917?",
+        "-n",
+        "12",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    }
+  ]
+}

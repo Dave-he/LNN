@@ -3,10 +3,10 @@
   "date": "2026-06-04",
   "input_glob": "analysis/llm_micro_eval/*_micro_eval.json",
   "summary": {
-    "n_entries": 1,
-    "n_rankable": 1,
+    "n_entries": 4,
+    "n_rankable": 4,
     "roles": {
-      "under_3b_candidate": 1
+      "under_3b_candidate": 4
     },
     "top_model": "lfm25_1.2b_instruct_q4",
     "top_accuracy": 1.0,
@@ -61,6 +61,159 @@
           "n": 1,
           "passed": 1,
           "accuracy": 1.0
+        }
+      }
+    },
+    {
+      "rank": 2,
+      "run_id": "2026-06-04_lfm25_1_2b_instruct_q4_http_micro_eval",
+      "date": "2026-06-04",
+      "model_name": "lfm25_1.2b_instruct_q4_http",
+      "backend": "openai-chat",
+      "comparison_role": "under_3b_candidate",
+      "source_path": "analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_http_micro_eval.json",
+      "model_path": "models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+      "openai_model": "lfm25-1.2b-instruct-q4",
+      "openai_base_url": "http://127.0.0.1:18080/v1",
+      "task_signature": [
+        "abstain_unknown",
+        "arith_12_times_4",
+        "arith_17_minus_9",
+        "arith_2_plus_3",
+        "instr_exact_two_words",
+        "instr_exact_word",
+        "json_color_blue"
+      ],
+      "summary": {
+        "n": 7,
+        "passed": 7,
+        "failed": 0,
+        "accuracy": 1.0,
+        "generation_tps_mean": 5.707,
+        "generation_tps_median": 5.587
+      },
+      "by_category": {
+        "arithmetic": {
+          "n": 3,
+          "passed": 3,
+          "accuracy": 1.0
+        },
+        "instruction": {
+          "n": 2,
+          "passed": 2,
+          "accuracy": 1.0
+        },
+        "structured_output": {
+          "n": 1,
+          "passed": 1,
+          "accuracy": 1.0
+        },
+        "abstention": {
+          "n": 1,
+          "passed": 1,
+          "accuracy": 1.0
+        }
+      }
+    },
+    {
+      "rank": 3,
+      "run_id": "2026-06-04_lfm25_dpo_s1_q4_micro_eval",
+      "date": "2026-06-04",
+      "model_name": "lfm25_dpo_s1_q4",
+      "backend": "llama-cli",
+      "comparison_role": "under_3b_candidate",
+      "source_path": "analysis/llm_micro_eval/2026-06-04_lfm25_dpo_s1_q4_micro_eval.json",
+      "model_path": "models/lfm25-dpo-s1/LFM25-DPO-Q4_0.gguf",
+      "openai_model": null,
+      "openai_base_url": null,
+      "task_signature": [
+        "abstain_unknown",
+        "arith_12_times_4",
+        "arith_17_minus_9",
+        "arith_2_plus_3",
+        "instr_exact_two_words",
+        "instr_exact_word",
+        "json_color_blue"
+      ],
+      "summary": {
+        "n": 7,
+        "passed": 4,
+        "failed": 3,
+        "accuracy": 0.5714,
+        "generation_tps_mean": 11.371,
+        "generation_tps_median": 9.7
+      },
+      "by_category": {
+        "arithmetic": {
+          "n": 3,
+          "passed": 3,
+          "accuracy": 1.0
+        },
+        "instruction": {
+          "n": 2,
+          "passed": 0,
+          "accuracy": 0.0
+        },
+        "structured_output": {
+          "n": 1,
+          "passed": 1,
+          "accuracy": 1.0
+        },
+        "abstention": {
+          "n": 1,
+          "passed": 0,
+          "accuracy": 0.0
+        }
+      }
+    },
+    {
+      "rank": 4,
+      "run_id": "2026-06-04_lfm25_dpo_s1_f16_micro_eval",
+      "date": "2026-06-04",
+      "model_name": "lfm25_dpo_s1_f16",
+      "backend": "llama-cli",
+      "comparison_role": "under_3b_candidate",
+      "source_path": "analysis/llm_micro_eval/2026-06-04_lfm25_dpo_s1_f16_micro_eval.json",
+      "model_path": "models/lfm25-dpo-s1/LFM25-DPO-F16.gguf",
+      "openai_model": null,
+      "openai_base_url": null,
+      "task_signature": [
+        "abstain_unknown",
+        "arith_12_times_4",
+        "arith_17_minus_9",
+        "arith_2_plus_3",
+        "instr_exact_two_words",
+        "instr_exact_word",
+        "json_color_blue"
+      ],
+      "summary": {
+        "n": 7,
+        "passed": 1,
+        "failed": 6,
+        "accuracy": 0.1429,
+        "generation_tps_mean": 4.257,
+        "generation_tps_median": 3.3
+      },
+      "by_category": {
+        "arithmetic": {
+          "n": 3,
+          "passed": 1,
+          "accuracy": 0.3333
+        },
+        "instruction": {
+          "n": 2,
+          "passed": 0,
+          "accuracy": 0.0
+        },
+        "structured_output": {
+          "n": 1,
+          "passed": 0,
+          "accuracy": 0.0
+        },
+        "abstention": {
+          "n": 1,
+          "passed": 0,
+          "accuracy": 0.0
         }
       }
     }

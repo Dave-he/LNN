@@ -154,3 +154,58 @@ def test_non_backbone_fields_from_first_row():
     assert out[0]["source_path"] == "first.json"  # from first
     # Both backbones present
     assert set(out[0]["backbones"].keys()) == {"cfc", "gru"}
+
+
+# ---------------------------------------------------------- 6. README snippet
+def test_readme_snippet_format():
+    """PRD §10 #6: 1-line Markdown badge summarizing win tally."""
+    payload = {
+        "rows": [
+            {"row_key": "t1", "domain": "timeseries", "n_seeds": 3,
+             "backbones": {"cfc": {"n": 3, "median_mse": 0.05},
+                           "lstm": {"n": 3, "median_mse": 0.04}}},
+            {"row_key": "t2", "domain": "timeseries", "n_seeds": 3,
+             "backbones": {"lstm": {"n": 3, "median_mse": 0.10},
+                           "gru": {"n": 3, "median_mse": 0.11}}},
+            {"row_key": "t3", "domain": "molecular", "n_seeds": 6,
+             "backbones": {"cfc": {"n": 6, "median_metric": 0.75},
+                           "ltc": {"n": 6, "median_metric": 0.74}}},
+        ],
+        "backbones_seen": ["cfc", "ltc", "gru", "lstm"],
+    }
+    out = build_backbone_matrix._format_readme_snippet(payload)
+    # Contains expected components
+    assert "Backbone matrix" in out
+    assert "3 rows" in out
+    # LSTM should appear first (most wins)
+    lstm_idx = out.find("`lstm`")
+    cfc_idx = out.find("`cfc`")
+    assert lstm_idx < cfc_idx
+    # Format has win counts
+    assert "2" in out  # LSTM has 2 wins
+
+
+def test_readme_snippet_with_no_winners():
+    """Edge case: no rows have a valid winner — snippet still emits something sane."""
+    payload = {
+        "rows": [],
+        "backbones_seen": [],
+    }
+    out = build_backbone_matrix._format_readme_snippet(payload)
+    assert "0 rows" in out
+    assert "no winners" in out
+
+
+def test_cli_export_readme_snippet_runs():
+    """End-to-end: --export-readme-snippet on the real matrix must succeed."""
+    import subprocess
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve().parents[1] / "scripts" / "build_backbone_matrix.py"),
+         "--include-molecular", "--include-smnist-gap", "--export-readme-snippet"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"stderr: {result.stderr}"
+    out = result.stdout.strip()
+    assert "Backbone matrix" in out
+    # Should mention the major winners we know about
+    assert "lstm" in out or "cfc" in out

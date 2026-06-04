@@ -68,7 +68,7 @@ def infer_comparison_role(payload: dict[str, Any]) -> str:
         return "30b_plus_baseline"
     if "8b-a1b" in text or "8b_a1b" in text:
         return "active_under_3b_moe_candidate"
-    if re.search(r"(1\.2b|1_2b|1-2b|1\.17b|2b|3b)", text):
+    if re.search(r"(1\.2b|1_2b|1-2b|1\.17b|2b|3b|lfm25[_-]dpo|lfm2\.5[_-]dpo)", text):
         return "under_3b_candidate"
     return "unknown"
 
