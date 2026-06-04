@@ -1,0 +1,73 @@
+{
+  "config": {
+    "hidden_size": 96,
+    "epochs": 80,
+    "warmup_epochs": 40,
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42,
+      11,
+      100,
+      2026,
+      313,
+      777,
+      55,
+      99,
+      314,
+      555,
+      888,
+      1024,
+      2027,
+      3141,
+      4242,
+      9999,
+      17,
+      88,
+      256,
+      512,
+      1023,
+      2048,
+      4096,
+      8192,
+      16384,
+      32768,
+      31,
+      71,
+      113,
+      211,
+      311,
+      419,
+      521,
+      631,
+      733,
+      911
+    ],
+    "inject_sigma": 0.1,
+    "folds": 4,
+    "val_frac": 0.2,
+    "protocol": "TemporalSegmentRegressionDataset 4-fold LOO + 80/20 train/val split",
+    "model": "CrossModalAttnBiCfCNADWithMDN"
+  },
+  "strategies": {
+    "K=3": 0.6506197674534633,
+    "K=5": 0.3458569703889225,
+    "K=10": 0.47527952026575804,
+    "K=15": 0.6051409933716059,
+    "K=20": 0.49817371962126344,
+    "K=25": 0.4334422666579485,
+    "K=30": 0.6501270979642868,
+    "K=40": 1.8513629958033562
+  },
+  "round_65_reference": {
+    "K=20_by_val": 0.24
+  },
+  "metadata": {
+    "round": 67,
+    "follows_up": "round 65 (30-seed pool K=20 = 0.24, 46th meta NEW BEST)",
+    "hypothesis": "40-seed pool improves over 30-seed pool"
+  }
+}
