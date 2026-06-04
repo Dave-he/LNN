@@ -171,6 +171,50 @@ def _merge_molecular_per_seed(rows: list[dict]) -> list[dict]:
     }]
 
 
+def _ingest_smnist_gap(path: pathlib.Path) -> dict | None:
+    """Ingest a PDNA stage B summary JSON (5 variants × N seeds, sMNIST Gapped).
+
+    Each variant name is treated as a separate "backbone" for the matrix;
+    primary reported metric is multi-gap accuracy (higher better), per the
+    PDNA paper's headline number (+4.62 pp multi-gap, Cohen's d=0.87).
+    """
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    variants = payload.get("variants") or []
+    if not variants:
+        return None
+    backbones: dict = {}
+    for v in variants:
+        name = v.get("name", "?")
+        agg = v.get("aggregate", {}) or {}
+        if not agg:
+            continue
+        backbones[name] = {
+            "params": agg.get("n_params_mean"),
+            "median_metric": agg.get("multi20_mean"),
+            "mean_metric": agg.get("multi20_mean"),
+            "std_metric": agg.get("multi20_std", 0.0),
+            "median_metric_gap5": agg.get("5%_mean"),
+            "median_metric_gap0": agg.get("0%_mean"),
+            "n": agg.get("n_seeds", 0),
+        }
+    if not backbones:
+        return None
+    n_seeds = max((b["n"] for b in backbones.values()), default=0)
+    return {
+        "row_key": f"smnist_gap [n={n_seeds},h={payload.get('hidden_size',64)}]",
+        "domain": "smnist_gap",
+        "metric": "multi_gap_acc",
+        "metric_direction": "higher_is_better",
+        "n_seeds": n_seeds,
+        "backbones": backbones,
+        "source_path": str(path.relative_to(ROOT)),
+        "run_id": payload.get("run_id", "?"),
+    }
+
+
 def _dedupe_keep_higher_n(rows: list[dict]) -> list[dict]:
     by_key: dict[str, dict] = {}
     for r in rows:
@@ -216,6 +260,31 @@ def _format_markdown(payload: dict) -> str:
             f"| {row['row_key']} | {row['n_seeds']} | " + " | ".join(cells) + " |"
         )
 
+    smnist_gap_rows = [r for r in rows if r["domain"] == "smnist_gap"]
+    if smnist_gap_rows:
+        lines.extend([
+            "",
+            "## sMNIST Gapped (higher multi_gap_acc better, PDNA stage B iter#20+)",
+            "",
+            "| Task / config | n | " + " | ".join(f"`{b}`" for b in backbones) + " |",
+            "|---" + " |---:" * (len(backbones) + 1) + " |",
+        ])
+        for row in smnist_gap_rows:
+            values = {b: row["backbones"].get(b, {}).get("median_metric") for b in backbones}
+            valid = {k: v for k, v in values.items() if v is not None}
+            winner = max(valid, key=valid.get) if valid else None
+            cells = []
+            for b in backbones:
+                cell = row["backbones"].get(b)
+                if not cell or cell.get("median_metric") is None:
+                    cells.append("—")
+                    continue
+                mark = " ⭐" if b == winner else ""
+                cells.append(f"{cell['median_metric']:.2f}{mark}")
+            lines.append(
+                f"| {row['row_key']} | {row['n_seeds']} | " + " | ".join(cells) + " |"
+            )
+
     mol_rows = [r for r in rows if r["domain"] == "molecular"]
     if mol_rows:
         lines.extend([
@@ -249,7 +318,7 @@ def _format_markdown(payload: dict) -> str:
                      for b in backbones if row["backbones"].get(b, {}).get("median_mse") is not None}
             if valid:
                 tally[min(valid, key=valid.get)] += 1
-        elif row["domain"] == "molecular":
+        elif row["domain"] in ("molecular", "smnist_gap"):
             valid = {b: row["backbones"].get(b, {}).get("median_metric")
                      for b in backbones if row["backbones"].get(b, {}).get("median_metric") is not None}
             if valid:
@@ -282,6 +351,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--include-molecular", action="store_true",
                         help="Also ingest analysis/molecular/*_tox21_styled_graph_lnn.json")
+    parser.add_argument("--include-smnist-gap", action="store_true",
+                        help="Also ingest analysis/pdna/2026-06-04_pdna_stage_b_summary.json "
+                             "(PDNA stage B, iter#20+)")
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--output-dir", default="analysis/backbone_matrix")
@@ -305,6 +377,14 @@ def main() -> int:
                 if r:
                     mol_rows.append(r)
             rows.extend(_merge_molecular_per_seed(mol_rows))
+
+    if args.include_smnist_gap:
+        pdna_dir = ROOT / "analysis" / "pdna"
+        # Match the stage-B summary file produced by scripts/experiment_pdna_smoke.py
+        for path in sorted(pdna_dir.glob("*_pdna_stage_b_summary.json")):
+            r = _ingest_smnist_gap(path)
+            if r:
+                rows.append(r)
 
     # Discover full backbone set across all rows.
     backbones_seen: list[str] = []
@@ -332,6 +412,7 @@ def main() -> int:
         "scan_summary": (
             f"{len(rows)} rows; timeseries from analysis/timeseries_ablation/"
             + (", molecular from analysis/molecular/" if args.include_molecular else "")
+            + (", smnist_gap from analysis/pdna/" if args.include_smnist_gap else "")
         ),
         "rows": rows,
         "backbones_seen": backbones_seen,
