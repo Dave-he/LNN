@@ -1,0 +1,63 @@
+{
+  "config": {
+    "hidden_size": 96,
+    "epochs": 80,
+    "warmup_epochs": 40,
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42,
+      11,
+      100,
+      2026,
+      313,
+      777,
+      55,
+      99,
+      314,
+      555,
+      888,
+      1024,
+      2027,
+      3141,
+      4242,
+      9999,
+      17,
+      88,
+      256,
+      512,
+      1023,
+      2048,
+      4096,
+      8192,
+      16384,
+      32768
+    ],
+    "inject_sigma": 0.1,
+    "folds": 4,
+    "val_frac": 0.2,
+    "protocol": "TemporalSegmentRegressionDataset 4-fold LOO + 80/20 train/val split",
+    "model": "CrossModalAttnBiCfCNADWithMDN"
+  },
+  "strategies": {
+    "K=3": 0.40611725515918806,
+    "K=5": 0.3005082875461085,
+    "K=7": 0.35265970055479556,
+    "K=10": 0.5462700672214851,
+    "K=15": 0.47605945728719234,
+    "K=20": 0.24247835762798786,
+    "K=25": 0.6119424253702164,
+    "K=30": 1.399245671927929
+  },
+  "round_64_reference": {
+    "best_10_by_val_honest": 0.75
+  },
+  "metadata": {
+    "round": 65,
+    "follows_up": "round 64 (honest val-ranking 0.75, 45th meta)",
+    "hypothesis": "30-seed pool best 10 < 20-seed pool best 10 (0.75)"
+  }
+}
