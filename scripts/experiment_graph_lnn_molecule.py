@@ -104,8 +104,52 @@ def _train_eval(
         output_size=1,
         recurrent_type=backbone,
     ).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-    parameters = sum(p.numel() for p in model.parameters())
+
+    # PRD §9 #4 / iter#13: optional two-stage training that emulates GCN-CfC's
+    # "GNN-encoder + frozen embeddings → CfC head" pipeline within our single-
+    # stack PyTorch model.  Phase 1 pre-trains the encoder + a tiny linear
+    # probe; Phase 2 freezes the encoder and trains only the recurrent head.
+    # The end-to-end baseline is what we get with --frozen-encoder OFF.
+    if getattr(args, "frozen_encoder", False):
+        encoder = model.encoder
+        encoder_parameters = sum(p.numel() for p in encoder.parameters())
+        # Phase 1: train encoder only via a 1-layer linear probe to the label.
+        probe = torch.nn.Linear(args.graph_feature_size, 1).to(device)
+        pre_opt = torch.optim.AdamW(
+            list(encoder.parameters()) + list(probe.parameters()), lr=args.lr
+        )
+        tn, ta, tl = (t.to(device) for t in train_data)
+        pretrain_epochs = max(args.frozen_pretrain_epochs, 1)
+        for _ in range(pretrain_epochs):
+            idx = torch.randperm(tn.shape[0], device=device)
+            for chunk in idx.split(args.batch_size):
+                feat = encoder(tn[chunk], ta[chunk])
+                # take the only (time=1) step
+                pooled = feat[:, 0, :]
+                logits = probe(pooled).squeeze(-1)
+                loss = F.binary_cross_entropy_with_logits(logits, tl[chunk])
+                pre_opt.zero_grad(set_to_none=True)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(
+                    list(encoder.parameters()) + list(probe.parameters()),
+                    max_norm=1.0,
+                )
+                pre_opt.step()
+        # Phase 2: freeze encoder, optimise only the recurrent + readout.
+        for p in encoder.parameters():
+            p.requires_grad_(False)
+        head_params = [p for p in model.parameters() if p.requires_grad]
+        optimizer = torch.optim.AdamW(head_params, lr=args.lr)
+        parameters = sum(p.numel() for p in model.parameters())
+        trainable = sum(p.numel() for p in head_params)
+        print(
+            f"    [frozen] encoder={encoder_parameters:,} (frozen),"
+            f" head trainable={trainable:,},"
+            f" pretrain_epochs={pretrain_epochs}"
+        )
+    else:
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+        parameters = sum(p.numel() for p in model.parameters())
 
     tn, ta, tl = (t.to(device) for t in train_data)
     vn, va, vl = (t.to(device) for t in val_data)
@@ -181,6 +225,18 @@ def main() -> int:
     parser.add_argument("--inference-repeats", type=int, default=3)
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--backbones", default="cfc,ltc,gru")
+    parser.add_argument(
+        "--frozen-encoder", action="store_true",
+        help=(
+            "PRD §9 #4 / iter#13: two-stage training that emulates GCN-CfC. "
+            "Phase 1 trains GraphSnapshotEncoder + a linear probe; "
+            "Phase 2 freezes the encoder and trains only the recurrent head + readout."
+        ),
+    )
+    parser.add_argument(
+        "--frozen-pretrain-epochs", type=int, default=5,
+        help="Epochs of phase-1 pretraining when --frozen-encoder is set.",
+    )
     parser.add_argument("--output-dir", default="analysis/molecular")
     args = parser.parse_args()
 
