@@ -1,0 +1,127 @@
+name: LNN Weekly Verify
+
+# PRD §6 verification metrics + PRD §9 #8 enforcement.
+# Runs the canonical "what must be green for the repo to be releasable" gate
+# every Monday 03:00 UTC plus on-demand via workflow_dispatch.
+#
+# Companion to .github/workflows/daily-lnn-research.yml (research scrape,
+# daily 22:30 UTC). That one updates docs/daily; this one verifies code.
+#
+# Wall-clock target: < 10 minutes on ubuntu-latest CPU.
+# Output: artefacts uploaded (NOT committed back) so a failed run never
+# pollutes master.
+
+on:
+  schedule:
+    # Mondays 03:07 UTC — non-:00 to dodge the fleet (RTK convention).
+    - cron: "7 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      include_ablation:
+        description: "Also run a tiny 3-backbone ablation smoke (~2 min CPU)"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install minimal deps
+        run: |
+          python -m pip install --upgrade pip
+          # Editable install + dev extras (pytest only).
+          pip install -e ".[dev]"
+          # Skip ncps -- its CPU-only torch wheel sometimes lags on aarch64
+          # but is fine here. If it pulls a giant CUDA wheel, downgrade
+          # to torch+cpu first.
+
+      - name: Show env (for log forensics)
+        run: |
+          python -V
+          pip show torch torchdiffeq | grep -E "^(Name|Version)"
+
+      - name: Pytest (core + paper models + liquid-tad hierarchical)
+        run: |
+          python -m pytest \
+            tests/test_core.py \
+            tests/test_paper_models.py \
+            tests/test_liquid_tad_hierarchical.py \
+            -q
+
+      - name: 9-variant verify_all_models
+        run: python scripts/verify_all_models.py
+
+      - name: quick_validate_implement
+        run: python scripts/quick_validate_implement.py
+
+      - name: Tiny ablation smoke
+        if: ${{ github.event.inputs.include_ablation != 'false' }}
+        run: |
+          # 3 backbones × 1 seed on a small Mackey-Glass slice
+          # — enough to catch regressions, not enough to need GPU.
+          python scripts/ablation_lnn_vs_lstm_timeseries.py \
+            --dataset mackey_glass \
+            --samples 400 --seq-len 16 --hidden-size 16 --epochs 4 \
+            --seeds 42 \
+            --backbones cfc,gru,lstm \
+            --device cpu
+
+      - name: Rebuild backbone matrix
+        if: ${{ github.event.inputs.include_ablation != 'false' }}
+        run: |
+          python scripts/build_backbone_matrix.py --include-molecular
+
+      - name: Loop status weekly retro (for the artifact bundle)
+        run: |
+          python scripts/loop_status.py --week 7 --no-write --json > /tmp/loop_status_weekly.json
+          python scripts/loop_status.py --since-last-loop --no-write --json > /tmp/loop_status_since_last.json
+
+      - name: Bundle artefacts
+        if: always()
+        run: |
+          mkdir -p /tmp/lnn_weekly_artifacts
+          # Snapshot the latest run-id products without polluting git tree.
+          cp -r analysis/loop_status /tmp/lnn_weekly_artifacts/ 2>/dev/null || true
+          cp -r analysis/backbone_matrix /tmp/lnn_weekly_artifacts/ 2>/dev/null || true
+          cp -r analysis/timeseries_ablation /tmp/lnn_weekly_artifacts/ 2>/dev/null || true
+          cp /tmp/loop_status_weekly.json /tmp/lnn_weekly_artifacts/ 2>/dev/null || true
+          cp /tmp/loop_status_since_last.json /tmp/lnn_weekly_artifacts/ 2>/dev/null || true
+          (cd /tmp/lnn_weekly_artifacts && ls -la)
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lnn-weekly-verify-${{ github.run_id }}
+          path: /tmp/lnn_weekly_artifacts/
+          retention-days: 14
+          if-no-files-found: warn
+
+  summary:
+    needs: verify
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print PRD §6 result
+        run: |
+          if [ "${{ needs.verify.result }}" = "success" ]; then
+            echo "::notice title=LNN Weekly Verify::PRD §6 gates green — repo releasable."
+          else
+            echo "::error title=LNN Weekly Verify::PRD §6 gate failed — check the verify job log."
+            exit 1
+          fi

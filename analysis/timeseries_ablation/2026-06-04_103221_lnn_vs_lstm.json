@@ -1,0 +1,128 @@
+{
+  "run_id": "2026-06-04_103221",
+  "experiment": "lnn_vs_lstm_timeseries_ablation",
+  "generated_at": "2026-06-04T10:32:21.252994",
+  "config": {
+    "dataset": "mackey_glass",
+    "num_regimes": 4,
+    "transition_frac": 0.15,
+    "warmup_frac": 0.0,
+    "samples": 400,
+    "seq_len": 16,
+    "hidden_size": 16,
+    "epochs": 4,
+    "batch_size": 32,
+    "lr": 0.003,
+    "seeds": [
+      42
+    ],
+    "backbones": [
+      "cfc",
+      "gru",
+      "lstm"
+    ],
+    "inference_repeats": 3,
+    "device": "cpu",
+    "output_dir": "analysis/timeseries_ablation"
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "device": "cpu"
+  },
+  "per_run": [
+    {
+      "backbone": "cfc",
+      "seed": 42,
+      "parameters": 897,
+      "test_mse": 0.13755562088706277,
+      "test_mae": 0.34237858382138336,
+      "val_mse": 0.06043850088661367,
+      "train_seconds": 1.7297831617761403,
+      "inference_samples_per_sec": 703.069225946598
+    },
+    {
+      "backbone": "gru",
+      "seed": 42,
+      "parameters": 929,
+      "test_mse": 0.381958777254278,
+      "test_mae": 0.5414143692363392,
+      "val_mse": 0.16531693935394287,
+      "train_seconds": 1.5435490950476378,
+      "inference_samples_per_sec": 2369.2469086627552
+    },
+    {
+      "backbone": "lstm",
+      "seed": 42,
+      "parameters": 1233,
+      "test_mse": 0.3578459349545566,
+      "test_mae": 0.5580787116831,
+      "val_mse": 0.18657756935466419,
+      "train_seconds": 1.8727751160040498,
+      "inference_samples_per_sec": 1472.5229207818168
+    }
+  ],
+  "summary": {
+    "cfc": {
+      "parameters": 897,
+      "test_mse_mean": 0.13755562088706277,
+      "test_mse_std": 0.0,
+      "test_mse_median": 0.13755562088706277,
+      "test_mse_min": 0.13755562088706277,
+      "test_mse_max": 0.13755562088706277,
+      "test_mse_std_over_mean": 0.0,
+      "test_mae_mean": 0.34237858382138336,
+      "test_mae_std": 0.0,
+      "test_mae_median": 0.34237858382138336,
+      "train_seconds_mean": 1.7297831617761403,
+      "train_seconds_std": 0.0,
+      "inference_samples_per_sec_mean": 703.069225946598,
+      "inference_samples_per_sec_std": 0.0,
+      "seeds": [
+        42
+      ],
+      "n_seeds": 1
+    },
+    "gru": {
+      "parameters": 929,
+      "test_mse_mean": 0.381958777254278,
+      "test_mse_std": 0.0,
+      "test_mse_median": 0.381958777254278,
+      "test_mse_min": 0.381958777254278,
+      "test_mse_max": 0.381958777254278,
+      "test_mse_std_over_mean": 0.0,
+      "test_mae_mean": 0.5414143692363392,
+      "test_mae_std": 0.0,
+      "test_mae_median": 0.5414143692363392,
+      "train_seconds_mean": 1.5435490950476378,
+      "train_seconds_std": 0.0,
+      "inference_samples_per_sec_mean": 2369.2469086627552,
+      "inference_samples_per_sec_std": 0.0,
+      "seeds": [
+        42
+      ],
+      "n_seeds": 1
+    },
+    "lstm": {
+      "parameters": 1233,
+      "test_mse_mean": 0.3578459349545566,
+      "test_mse_std": 0.0,
+      "test_mse_median": 0.3578459349545566,
+      "test_mse_min": 0.3578459349545566,
+      "test_mse_max": 0.3578459349545566,
+      "test_mse_std_over_mean": 0.0,
+      "test_mae_mean": 0.5580787116831,
+      "test_mae_std": 0.0,
+      "test_mae_median": 0.5580787116831,
+      "train_seconds_mean": 1.8727751160040498,
+      "train_seconds_std": 0.0,
+      "inference_samples_per_sec_mean": 1472.5229207818168,
+      "inference_samples_per_sec_std": 0.0,
+      "seeds": [
+        42
+      ],
+      "n_seeds": 1
+    }
+  },
+  "json_path": "analysis/timeseries_ablation/2026-06-04_103221_lnn_vs_lstm.json"
+}
