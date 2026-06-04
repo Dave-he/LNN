@@ -202,6 +202,7 @@ PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
 | 10-7 | LFM2 (LFM2.5-1.2B-Distilled-SFT)在 RAM 空载窗口跑 1 次 INT8 推理 + token/sec 表 | `analysis/lfm25/<date>_lfm25_int8_jetson.md` | §8 #3 / §9 #1 | pending (RAM blocker) |
 | 10-8 | `analysis/loop_status/` 自动生成 README 标签云(高频 task / 高方差 seed 提示) | tooling | meta | pending |
 | 10-9 | **SVAF (arXiv 2604.03955) τ-modulated peer-blending 算子复现**(iter#17 研读,见 [[Symbolic-Vector_Attention_Fusion_SVAF_研读报告]]):toy 2-agent mesh + τ_i ∈ {1, 10, 60} 三组神经元,N 步耦合后看 spectral diff 验证"fast τ 同步 / slow τ 主权"现象 | `analysis/cfcs/svaf_tau_blend_<date>.md` + 50 行 core code | iter#17 研读, 最小可复现单元 | pending (P2) |
+| 10-10 | **PDNA (arXiv 2603.00153) PulseHead + Gapped protocol 复现**(iter#18 研读,见 [[Pulse-Driven_Neural_Architecture_PDNA_研读报告]]):stage A `lnn/core/cfc_cell.py::PDNAPulseHead` (~25 行) + unit test;stage B sMNIST Gapped protocol 5 seed × 4 backbone ablation, backbone matrix 加 smnist_gap 行;stage C Long Range Arena 长程任务 | code + matrix 行 | iter#18 研读,**代码公开** + MNIST zero-cost | **pending (P1)** |
 
 ### 已调研未复现 (C 级) 累计表
 
@@ -213,6 +214,7 @@ PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
 | DynPMNN (arXiv 2605.08176) | **无公开代码**,需自行复现 — 见 PRD §10 #1 → #2 | [[Physics-Modeled_Neural_Networks_DynPMNN_研读报告]] |
 | **SVAF (arXiv 2604.03955, iter#17)** | **部分可复现**: 端到端需 237K LLM-authored 训练数据(作者未公开);**τ 调制耦合算子(公式 20)是 P2 mini-task** | [[Symbolic-Vector_Attention_Fusion_SVAF_研读报告]] |
 | AEGIS (arXiv 2604.02149) | 与 LNN 弱关联(Thermodynamic State Space Model,非 CfC/LTC);非 P0 候选 | iter#17 调研 |
+| **PDNA (arXiv 2603.00153, iter#18)** | **代码公开** (github.com/Parassharmaa/pdna) + MNIST zero-cost + 5 seed ablation + noise control 严谨度;**P1 stage A/B/C 与本仓 LNN/CfC 复用度极高** | [[Pulse-Driven_Neural_Architecture_PDNA_研读报告]] |
 
 ### §10 完成度(由 iter#17 跟踪)
 
