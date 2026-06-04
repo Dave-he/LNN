@@ -744,6 +744,109 @@ def _main_since_last_loop(args: argparse.Namespace) -> int:
 # ----- main (single-day) ----------------------------------------------------
 
 
+# ----- tag cloud (--tag-cloud) ----------------------------------------------
+
+
+def _parse_frontmatter_tags(path: pathlib.Path) -> list[str]:
+    """Extract the `tags: [a, b, c]` field from a Markdown report's YAML frontmatter.
+
+    Returns an empty list if no frontmatter or no tags field is present.
+    """
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return []
+    if not text.startswith("---"):
+        return []
+    # Find the closing ---
+    end = text.find("\n---", 3)
+    if end < 0:
+        return []
+    fm_block = text[3:end]
+    # Find the tags: line
+    for line in fm_block.splitlines():
+        m = re.match(r"^tags:\s*\[(.+)\]\s*$", line.strip())
+        if m:
+            inner = m.group(1)
+            return [t.strip().strip("'\"") for t in inner.split(",") if t.strip()]
+    return []
+
+
+def _collect_iteration_tags() -> list[dict]:
+    """Walk all `analysis/**/loop_iteration*_*.md` files and collect tags.
+
+    Returns a list of {tag, path, date, iteration} dicts (one per tag occurrence).
+    """
+    out: list[dict] = []
+    pattern = re.compile(r"^(?P<date>\d{4}-\d{2}-\d{2})_loop_iteration(?P<it>\d+)_.+\.md$")
+    # Filenames are `<date>_loop_iteration<N>_<title>.md` so the glob
+    # pattern needs a leading `*` to match the date prefix.
+    for sub in ROOT.glob("analysis/*/"):
+        if not sub.is_dir():
+            continue
+        for p in sorted(sub.glob("*loop_iteration*_*.md")):
+            m = pattern.match(p.name)
+            if not m:
+                continue
+            tags = _parse_frontmatter_tags(p)
+            for t in tags:
+                out.append({
+                    "tag": t,
+                    "path": str(p.relative_to(ROOT)),
+                    "date": m.group("date"),
+                    "iteration": int(m.group("it")),
+                })
+    return out
+
+
+def _format_tag_cloud(tag_records: list[dict], min_count: int = 1, top_n: int | None = None) -> str:
+    """Format tag records as a Markdown tag cloud (PRD §10 #8 / iter#30).
+
+    Output is designed to be embedded in README.md as a project-status sidebar.
+    Tags below `min_count` are filtered out; if `top_n` is set, only the N
+    most-frequent tags are emitted (others are summarised as "+N more").
+    """
+    from collections import Counter
+    counts = Counter(r["tag"] for r in tag_records)
+    kept = [(t, n) for t, n in counts.most_common() if n >= min_count]
+    total_files = len({r["path"] for r in tag_records})
+    if not kept:
+        return f"**Tag cloud:** (no tags found across {total_files} iteration reports)"
+    if top_n and len(kept) > top_n:
+        head, tail = kept[:top_n], kept[top_n:]
+        parts = [f"`{t}`×{n}" for t, n in head]
+        parts.append(f"+{len(tail)} more")
+    else:
+        parts = [f"`{t}`×{n}" for t, n in kept]
+    return (
+        f"**Tag cloud ({total_files} iteration reports):** "
+        + " · ".join(parts)
+    )
+
+
+def _main_tag_cloud(args: argparse.Namespace) -> int:
+    """PRD §10 #8: scan all iteration reports, aggregate tags, emit cloud."""
+    tag_records = _collect_iteration_tags()
+    cloud = _format_tag_cloud(tag_records, min_count=1, top_n=args.top_n)
+    print(cloud)
+    if not args.no_write:
+        output_dir = pathlib.Path(args.output_dir)
+        if not output_dir.is_absolute():
+            output_dir = ROOT / output_dir
+        output_dir.mkdir(parents=True, exist_ok=True)
+        now = dt.datetime.now()
+        run_id = now.strftime("%Y-%m-%d_%H%M%S")
+        out_path = output_dir / f"{run_id}_loop_status_tag_cloud.md"
+        out_path.write_text(
+            f"# Loop iteration tag cloud — {now.isoformat(timespec='seconds')}\n\n"
+            f"_Source: all `analysis/**/loop_iteration*_*.md` reports._\n\n"
+            f"{cloud}\n",
+            encoding="utf-8",
+        )
+        print(f"  wrote MD:   {out_path}")
+    return 0
+
+
 # ----- PRD status (--prd-status) --------------------------------------------
 
 
@@ -907,6 +1010,15 @@ def main() -> int:
                             "status report. Sections are computed independently, so you "
                             "can see exactly which PRD generation is the next bottleneck."
                         ))
+    parser.add_argument("--tag-cloud", action="store_true",
+                        help=(
+                            "PRD §10 #8 / iter#30: scan ALL analysis/**/loop_iteration*_*.md "
+                            "files (no date filter), aggregate the `tags:` frontmatter "
+                            "field, and emit a Markdown tag cloud sorted by frequency. "
+                            "Designed to be embedded in README.md as a project-status sidebar."
+                        ))
+    parser.add_argument("--top-n", type=int, default=20,
+                        help="With --tag-cloud, only emit the top N tags by frequency (default 20).")
     parser.add_argument("--no-write", action="store_true",
                         help="Skip writing reports to analysis/loop_status/.")
     parser.add_argument("--json", action="store_true",
@@ -916,7 +1028,10 @@ def main() -> int:
 
     if args.since_last_loop:
         return _main_since_last_loop(args)
+    if args.tag_cloud:
+        return _main_tag_cloud(args)
     if args.prd_status:
+        return _main_prd_status(args)
         return _main_prd_status(args)
     if args.week >= 2:
         return _main_weekly(args)

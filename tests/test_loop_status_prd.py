@@ -153,3 +153,77 @@ def test_prd_status_cli_runs():
     assert "§8:" in out
     assert "§9:" in out
     assert "§10:" in out
+
+
+# ---------------------------------------------------------- 7. tag cloud (PRD §10 #8 / iter#30)
+def test_format_tag_cloud_basic():
+    """`_format_tag_cloud` aggregates by frequency and shows top tags first."""
+    records = [
+        {"tag": "LNN", "path": "a", "date": "2026-06-04", "iteration": 1},
+        {"tag": "LNN", "path": "a", "date": "2026-06-04", "iteration": 2},
+        {"tag": "LNN", "path": "b", "date": "2026-06-04", "iteration": 3},
+        {"tag": "CfC", "path": "a", "date": "2026-06-04", "iteration": 1},
+        {"tag": "CfC", "path": "b", "date": "2026-06-04", "iteration": 3},
+        {"tag": "rare", "path": "c", "date": "2026-06-04", "iteration": 4},
+    ]
+    out = loop_status._format_tag_cloud(records, min_count=1, top_n=None)
+    assert "`LNN`×3" in out
+    assert "`CfC`×2" in out
+    assert "`rare`×1" in out
+    # LNN should appear first (highest count)
+    lnn_idx = out.find("`LNN`")
+    cfc_idx = out.find("`CfC`")
+    rare_idx = out.find("`rare`")
+    assert lnn_idx < cfc_idx < rare_idx
+    # File count: 3 distinct paths
+    assert "3 iteration reports" in out
+
+
+def test_format_tag_cloud_top_n_truncates():
+    """`--top-n N` keeps the N most-frequent and summarises the rest as '+M more'."""
+    records = (
+        [{"tag": f"t{i}", "path": f"p{i}", "date": "2026-06-04", "iteration": 1} for i in range(30)]
+    )
+    out = loop_status._format_tag_cloud(records, min_count=1, top_n=5)
+    # Top 5 present
+    for t in ("t0", "t1", "t2", "t3", "t4"):
+        assert f"`{t}`×1" in out
+    # Tail summarised
+    assert "+25 more" in out
+
+
+def test_format_tag_cloud_empty():
+    records = []
+    out = loop_status._format_tag_cloud(records)
+    assert "no tags found" in out
+
+
+def test_parse_frontmatter_tags():
+    """`_parse_frontmatter_tags` extracts `tags: [a, b, c]` from YAML frontmatter."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "r.md"
+        p.write_text("---\ntitle: t\ntags: [LNN, CfC, ablation]\n---\n\nbody\n")
+        assert loop_status._parse_frontmatter_tags(p) == ["LNN", "CfC", "ablation"]
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "r.md"
+        p.write_text("---\ntitle: t\n---\n\nno tags field\n")
+        assert loop_status._parse_frontmatter_tags(p) == []
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "r.md"
+        p.write_text("no frontmatter at all\n")
+        assert loop_status._parse_frontmatter_tags(p) == []
+
+
+def test_tag_cloud_cli_runs():
+    """End-to-end: --tag-cloud on the real repo must succeed and find ≥1 tag."""
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve().parents[1] / "scripts" / "loop_status.py"),
+         "--tag-cloud", "--top-n", "5", "--no-write"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"stderr: {result.stderr}"
+    out = result.stdout
+    assert "Tag cloud" in out
+    # LNN is the universal backbone of the project — must be in the top 5
+    assert "LNN" in out
