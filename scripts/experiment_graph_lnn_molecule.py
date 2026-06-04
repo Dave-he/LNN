@@ -224,7 +224,7 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--inference-repeats", type=int, default=3)
     parser.add_argument("--device", default="cpu")
-    parser.add_argument("--backbones", default="cfc,ltc,gru")
+    parser.add_argument("--backbones", default="cfc,ltc,gru,liquid_tad")
     parser.add_argument(
         "--frozen-encoder", action="store_true",
         help=(

@@ -1,0 +1,75 @@
+{
+  "run_id": "2026-06-05_011022",
+  "experiment": "tox21_styled_graph_lnn",
+  "generated_at": "2026-06-05T01:10:22.805321",
+  "config": {
+    "num_train": 512,
+    "num_val": 128,
+    "max_nodes": 14,
+    "feature_size": 4,
+    "edge_prob": 0.35,
+    "graph_feature_size": 24,
+    "hidden_size": 32,
+    "epochs": 5,
+    "batch_size": 32,
+    "lr": 0.003,
+    "seed": 42,
+    "inference_repeats": 3,
+    "device": "cpu",
+    "backbones": "cfc,ltc,gru,liquid_tad",
+    "frozen_encoder": false,
+    "frozen_pretrain_epochs": 5,
+    "output_dir": "analysis/molecular"
+  },
+  "class_balance": {
+    "train_pos_ratio": 0.5,
+    "val_pos_ratio": 0.5
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "device": "cpu"
+  },
+  "results": [
+    {
+      "backbone": "cfc",
+      "parameters": 6377,
+      "val_accuracy": 0.5703125,
+      "val_auc_roc": 0.6630859375,
+      "train_seconds": 1.9713476188480854,
+      "inference_seconds": 0.10277172108180821,
+      "inference_samples": 384,
+      "inference_samples_per_sec": 3736.436404468977
+    },
+    {
+      "backbone": "ltc",
+      "parameters": 4585,
+      "val_accuracy": 0.609375,
+      "val_auc_roc": 0.656982421875,
+      "train_seconds": 1.417810290120542,
+      "inference_seconds": 0.06918841204605997,
+      "inference_samples": 384,
+      "inference_samples_per_sec": 5550.062339114884
+    },
+    {
+      "backbone": "gru",
+      "parameters": 6441,
+      "val_accuracy": 0.53125,
+      "val_auc_roc": 0.656982421875,
+      "train_seconds": 1.636992113897577,
+      "inference_seconds": 0.12929506599903107,
+      "inference_samples": 384,
+      "inference_samples_per_sec": 2969.950918334948
+    },
+    {
+      "backbone": "liquid_tad",
+      "parameters": 16105,
+      "val_accuracy": 0.5,
+      "val_auc_roc": 0.6669921875,
+      "train_seconds": 6.528247272130102,
+      "inference_seconds": 0.22156047285534441,
+      "inference_samples": 384,
+      "inference_samples_per_sec": 1733.1611322688927
+    }
+  ]
+}

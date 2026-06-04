@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 
 from lnn.core.cfc import CfCNetwork
+from lnn.core.long_sequence import LongSequenceLiquidClassifier
 from lnn.core.ltc import LTCNetwork
 
 
@@ -61,8 +62,8 @@ class GraphLNNPredictor(nn.Module):
     ) -> None:
         super().__init__()
         recurrent_type = recurrent_type.lower()
-        if recurrent_type not in {"cfc", "ltc", "gru"}:
-            raise ValueError("recurrent_type must be cfc, ltc, or gru")
+        if recurrent_type not in {"cfc", "ltc", "gru", "liquid_tad"}:
+            raise ValueError("recurrent_type must be cfc, ltc, gru, or liquid_tad")
         self.recurrent_type = recurrent_type
         self.encoder = GraphSnapshotEncoder(
             node_feature_size,
@@ -73,6 +74,16 @@ class GraphLNNPredictor(nn.Module):
             self.recurrent = CfCNetwork(graph_feature_size, hidden_size, output_size, return_sequences=False)
         elif recurrent_type == "ltc":
             self.recurrent = LTCNetwork(graph_feature_size, hidden_size, output_size, ode_method="euler")
+        elif recurrent_type == "liquid_tad":
+            # LongSequenceLiquidClassifier is the linear-readout cousin of
+            # HierarchicalDecayLiquidTADHead; uses LiquidS4Block (iter#3
+            # cumsum-log parallel relaxation).  PRD §10 #4 / iter#33.
+            self.recurrent = LongSequenceLiquidClassifier(
+                input_size=graph_feature_size,
+                num_classes=output_size,
+                hidden_size=hidden_size,
+                num_blocks=2,
+            )
         else:
             self.recurrent = nn.GRU(graph_feature_size, hidden_size, batch_first=True)
             self.readout = nn.Linear(hidden_size, output_size)
@@ -82,6 +93,9 @@ class GraphLNNPredictor(nn.Module):
         if self.recurrent_type == "gru":
             output, _ = self.recurrent(graph_sequence)
             return self.readout(output[:, -1, :])
+        if self.recurrent_type == "liquid_tad":
+            # LongSequenceLiquidClassifier returns per-graph logits (no dt).
+            return self.recurrent(graph_sequence, mask=batch.get("mask"))
         output = self.recurrent(graph_sequence, dt=batch.get("dt"), mask=batch.get("mask"))
         if output.dim() == 3:
             output = output[:, -1, :]

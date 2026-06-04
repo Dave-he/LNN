@@ -197,7 +197,7 @@ PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
 | 10-1 | DynPMNN(2605.08176)复现 stage A:`lnn/core/dynpmnn.py::FHNCell + DynPMNNNetwork` | code + unit test | iter#16 研读 | **stage A+B ✅ (iter#23/24)**, 6-seed mackey_glass 跑出 median MSE 0.0182 (诚实负面) |
 | 10-2 | DynPMNN stage B:加 `--backbone fhn_dynpmnn` 到 ablation runner,跑 multi-seed 对比 | matrix 新增 dynpmnn 列 | §10 #1 之后 | **✅ (iter#24)**: 6-seed mackey_glass fhn_dynpmnn median MSE 0.0182, backbone matrix ingest 把 fhn_dynpmnn 加进 mackey_glass h=24 r=4 行 (诚实负面: 输 ~3× vs cfc/ltc/gru) |
 | 10-3 | Comparative LNN vs LSTM phase-D:hidden=64 + epochs=50 + samples=4000,看 LNN 优势是否随规模出现 | `analysis/timeseries_ablation/<date>_phase_d.md` | §9 #2 v6 | pending |
-| 10-4 | 给 `experiment_graph_lnn_molecule.py` 加 `HierarchicalDecayLiquidTADHead` 作为 recurrent 选项(交叉 #2 与 #6) | code + smoke | 综合 | pending |
+| 10-4 | 给 `experiment_graph_lnn_molecule.py` 加 `HierarchicalDecayLiquidTADHead` 作为 recurrent 选项(交叉 #2 与 #6) | code + smoke | 综合 | **✅ (iter#33)**: lnn/core/graph.py 加 `liquid_tad` recurrent_type (复用 LongSequenceLiquidClassifier, LiquidS4Block 堆叠); 3-seed × 4-backbone ablation: cfc/ltc/gru/liquid_tad median AUC 0.6631/0.6570/0.6570/0.6670 — liquid_tad 微弱赢 (seed 2026 显著 +0.073) |
 | 10-5 | `loop_status.py` 加 `--prd-status` 子模式:解析 §8/§9/§10 全表,出未完成 + 阻塞理由 | code + sample report | §9 #5 衍生 | ✅ (iter#21) |
 | 10-6 | `build_backbone_matrix.py` 加 `--export-readme-snippet`:产 README 顶部 badge 行(LSTM 3/4 win 等) | code + README badge | §9 #7 衍生 | ✅ (iter#29) |
 | 10-7 | LFM2 (LFM2.5-1.2B-Distilled-SFT)在 RAM 空载窗口跑 1 次 INT8 推理 + token/sec 表 | `analysis/lfm25/<date>_lfm25_int8_jetson.md` | §8 #3 / §9 #1 | pending (RAM blocker) |

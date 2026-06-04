@@ -150,7 +150,7 @@ tags: [LNN, repo-watchlist, automation]
 ## Hugging Face 模型
 ### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
 - 更新：2026-06-04
-- 下载 / Likes：72114 / 495
+- 下载 / Likes：72114 / 497
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
 
@@ -160,17 +160,23 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：unknown
 - Tags：gguf, endpoints_compatible, region:us, conversational
 
-### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
+### [naklitechie/indira-lfm2-8b-a1b-onnx](https://huggingface.co/naklitechie/indira-lfm2-8b-a1b-onnx)
 - 更新：2026-06-04
-- 下载 / Likes：498 / 0
+- 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
+- Tags：transformers.js, onnx, lfm2_moe, text-generation, webgpu, lfm2, lora, rag
 
-### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
+### [avneetsb/LFM2.5-8B-A1B-mlx-fp16](https://huggingface.co/avneetsb/LFM2.5-8B-A1B-mlx-fp16)
 - 更新：2026-06-04
-- 下载 / Likes：194 / 4
+- 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
+- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, mlx
+
+### [zaakirio/LFM2.5-8B-A1B-Uncensored](https://huggingface.co/zaakirio/LFM2.5-8B-A1B-Uncensored)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, lfm2_moe, abliteration, heretic, decensored, liquid, moe, base_model:LiquidAI/LFM2.5-8B-A1B
 
 ### [mradermacher/lfm-2.5-thinking-1.2b-k2.5-GGUF](https://huggingface.co/mradermacher/lfm-2.5-thinking-1.2b-k2.5-GGUF)
 - 更新：2026-06-04
@@ -183,12 +189,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 0
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, text-generation-inference, unsloth, trl, conversational
-
-### [naklitechie/indira-lfm2-8b-a1b-onnx](https://huggingface.co/naklitechie/indira-lfm2-8b-a1b-onnx)
-- 更新：2026-06-04
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers.js, onnx, lfm2_moe, text-generation, webgpu, lfm2, lora, rag
 
 ### [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M)
 - 更新：2026-06-03

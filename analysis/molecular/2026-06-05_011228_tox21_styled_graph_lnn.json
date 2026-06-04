@@ -1,0 +1,75 @@
+{
+  "run_id": "2026-06-05_011228",
+  "experiment": "tox21_styled_graph_lnn",
+  "generated_at": "2026-06-05T01:12:28.578685",
+  "config": {
+    "num_train": 512,
+    "num_val": 128,
+    "max_nodes": 14,
+    "feature_size": 4,
+    "edge_prob": 0.35,
+    "graph_feature_size": 24,
+    "hidden_size": 32,
+    "epochs": 5,
+    "batch_size": 32,
+    "lr": 0.003,
+    "seed": 2026,
+    "inference_repeats": 3,
+    "device": "cpu",
+    "backbones": "cfc,ltc,gru,liquid_tad",
+    "frozen_encoder": false,
+    "frozen_pretrain_epochs": 5,
+    "output_dir": "analysis/molecular"
+  },
+  "class_balance": {
+    "train_pos_ratio": 0.5,
+    "val_pos_ratio": 0.5
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "device": "cpu"
+  },
+  "results": [
+    {
+      "backbone": "cfc",
+      "parameters": 6377,
+      "val_accuracy": 0.6015625,
+      "val_auc_roc": 0.6396484375,
+      "train_seconds": 1.9303622760344297,
+      "inference_seconds": 0.13675365992821753,
+      "inference_samples": 384,
+      "inference_samples_per_sec": 2807.9687242123023
+    },
+    {
+      "backbone": "ltc",
+      "parameters": 4585,
+      "val_accuracy": 0.5859375,
+      "val_auc_roc": 0.6279296875,
+      "train_seconds": 2.488267441978678,
+      "inference_seconds": 0.19755258900113404,
+      "inference_samples": 384,
+      "inference_samples_per_sec": 1943.7862188573781
+    },
+    {
+      "backbone": "gru",
+      "parameters": 6441,
+      "val_accuracy": 0.6171875,
+      "val_auc_roc": 0.65625,
+      "train_seconds": 2.9476061689201742,
+      "inference_seconds": 0.11075644195079803,
+      "inference_samples": 384,
+      "inference_samples_per_sec": 3467.0669555328122
+    },
+    {
+      "backbone": "liquid_tad",
+      "parameters": 16105,
+      "val_accuracy": 0.640625,
+      "val_auc_roc": 0.700927734375,
+      "train_seconds": 7.482651372905821,
+      "inference_seconds": 0.25603295187465847,
+      "inference_samples": 384,
+      "inference_samples_per_sec": 1499.8069474588103
+    }
+  ]
+}
