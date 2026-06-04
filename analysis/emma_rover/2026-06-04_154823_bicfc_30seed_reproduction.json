@@ -1,0 +1,75 @@
+{
+  "config": {
+    "n_seeds": 30,
+    "K": 20,
+    "hidden_size": 96,
+    "epochs": 80,
+    "warmup_epochs": 40,
+    "phase2_inject_sigma": 0.1,
+    "freeze": "audio_only",
+    "val_frac": 0.2,
+    "lr": 0.005,
+    "device": "cpu",
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42,
+      11,
+      100,
+      2026,
+      313,
+      777,
+      55,
+      99,
+      314,
+      555,
+      888,
+      1024,
+      2027,
+      3141,
+      4242,
+      9999,
+      17,
+      88,
+      256,
+      512,
+      1023,
+      2048,
+      4096,
+      8192,
+      16384,
+      32768
+    ]
+  },
+  "per_fold": {
+    "ensemble_mses": [
+      0.37192749977111816,
+      0.15910285711288452,
+      0.16568215191364288,
+      0.24674737453460693
+    ],
+    "per_seed_mean_mses": [
+      4.605378011478266,
+      7.103103690615778,
+      8.883499359424848,
+      19.801071011275052
+    ]
+  },
+  "aggregate": {
+    "ensemble_mse_mean": 0.23586497083306313,
+    "per_seed_mean_mse_mean": 10.098263018198486,
+    "delta": 9.862398047365422,
+    "delta_pct": 97.66430156940851
+  },
+  "references": {
+    "round_65_30seed_K20": 0.24,
+    "round_68_reproduction_10seed_K5": 0.0496
+  },
+  "metadata": {
+    "round": 70,
+    "purpose": "BiCfCEnsemble \u5b8c\u6574 30-seed K=20 reproduction (validates class v15 recipe)",
+    "round_65_reference": 0.24
+  }
+}
