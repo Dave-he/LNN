@@ -195,7 +195,7 @@ PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
 | # | 任务 | 出口物 | 关联 | 状态 |
 |---:|---|---|---|---|
 | 10-1 | DynPMNN(2605.08176)复现 stage A:`lnn/core/dynpmnn.py::FHNCell + DynPMNNNetwork` | code + unit test | iter#16 研读 | **stage A+B ✅ (iter#23/24)**, 6-seed mackey_glass 跑出 median MSE 0.0182 (诚实负面) |
-| 10-2 | DynPMNN stage B:加 `--backbone fhn_dynpmnn` 到 ablation runner,跑 multi-seed 对比 | matrix 新增 dynpmnn 列 | §10 #1 之后 | pending |
+| 10-2 | DynPMNN stage B:加 `--backbone fhn_dynpmnn` 到 ablation runner,跑 multi-seed 对比 | matrix 新增 dynpmnn 列 | §10 #1 之后 | **✅ (iter#24)**: 6-seed mackey_glass fhn_dynpmnn median MSE 0.0182, backbone matrix ingest 把 fhn_dynpmnn 加进 mackey_glass h=24 r=4 行 (诚实负面: 输 ~3× vs cfc/ltc/gru) |
 | 10-3 | Comparative LNN vs LSTM phase-D:hidden=64 + epochs=50 + samples=4000,看 LNN 优势是否随规模出现 | `analysis/timeseries_ablation/<date>_phase_d.md` | §9 #2 v6 | pending |
 | 10-4 | 给 `experiment_graph_lnn_molecule.py` 加 `HierarchicalDecayLiquidTADHead` 作为 recurrent 选项(交叉 #2 与 #6) | code + smoke | 综合 | pending |
 | 10-5 | `loop_status.py` 加 `--prd-status` 子模式:解析 §8/§9/§10 全表,出未完成 + 阻塞理由 | code + sample report | §9 #5 衍生 | ✅ (iter#21) |
