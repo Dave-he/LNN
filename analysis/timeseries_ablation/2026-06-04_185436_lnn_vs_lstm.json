@@ -1,0 +1,90 @@
+{
+  "run_id": "2026-06-04_185436",
+  "experiment": "lnn_vs_lstm_timeseries_ablation",
+  "generated_at": "2026-06-04T18:54:36.430892",
+  "config": {
+    "dataset": "mackey_glass",
+    "num_regimes": 4,
+    "transition_frac": 0.15,
+    "warmup_frac": 0.0,
+    "samples": 1000,
+    "seq_len": 24,
+    "hidden_size": 24,
+    "epochs": 6,
+    "batch_size": 32,
+    "lr": 0.003,
+    "seeds": [
+      42,
+      7,
+      123
+    ],
+    "backbones": [
+      "fhn_dynpmnn"
+    ],
+    "inference_repeats": 3,
+    "device": "cpu",
+    "output_dir": "analysis/timeseries_ablation"
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "device": "cpu"
+  },
+  "per_run": [
+    {
+      "backbone": "fhn_dynpmnn",
+      "seed": 42,
+      "parameters": 145,
+      "test_mse": 0.024801436870817154,
+      "test_mae": 0.1247902578777737,
+      "val_mse": 0.028789283027724613,
+      "train_seconds": 14.045594410970807,
+      "inference_samples_per_sec": 530.556045514673
+    },
+    {
+      "backbone": "fhn_dynpmnn",
+      "seed": 7,
+      "parameters": 145,
+      "test_mse": 0.020970078687819225,
+      "test_mae": 0.1212446065176101,
+      "val_mse": 0.03874043150553628,
+      "train_seconds": 17.11189197888598,
+      "inference_samples_per_sec": 406.2905799215261
+    },
+    {
+      "backbone": "fhn_dynpmnn",
+      "seed": 123,
+      "parameters": 145,
+      "test_mse": 0.022725172459133088,
+      "test_mae": 0.1229965781408643,
+      "val_mse": 0.024989886889382015,
+      "train_seconds": 16.010219742078334,
+      "inference_samples_per_sec": 649.8869333346523
+    }
+  ],
+  "summary": {
+    "fhn_dynpmnn": {
+      "parameters": 145,
+      "test_mse_mean": 0.02283222933925649,
+      "test_mse_std": 0.0019179213391827662,
+      "test_mse_median": 0.022725172459133088,
+      "test_mse_min": 0.020970078687819225,
+      "test_mse_max": 0.024801436870817154,
+      "test_mse_std_over_mean": 0.08400061643937663,
+      "test_mae_mean": 0.12301048084541603,
+      "test_mae_std": 0.0017728665645933125,
+      "test_mae_median": 0.1229965781408643,
+      "train_seconds_mean": 15.72256871064504,
+      "train_seconds_std": 1.5532554621388275,
+      "inference_samples_per_sec_mean": 528.9111862569505,
+      "inference_samples_per_sec_std": 121.80650647862149,
+      "seeds": [
+        42,
+        7,
+        123
+      ],
+      "n_seeds": 3
+    }
+  },
+  "json_path": "analysis/timeseries_ablation/2026-06-04_185436_lnn_vs_lstm.json"
+}

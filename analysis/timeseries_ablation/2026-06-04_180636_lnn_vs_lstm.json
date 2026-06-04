@@ -1,0 +1,126 @@
+{
+  "run_id": "2026-06-04_180636",
+  "experiment": "lnn_vs_lstm_timeseries_ablation",
+  "generated_at": "2026-06-04T18:06:36.553272",
+  "config": {
+    "dataset": "mackey_glass",
+    "num_regimes": 4,
+    "transition_frac": 0.15,
+    "warmup_frac": 0.0,
+    "samples": 1200,
+    "seq_len": 32,
+    "hidden_size": 24,
+    "epochs": 8,
+    "batch_size": 32,
+    "lr": 0.003,
+    "seeds": [
+      42,
+      7,
+      123,
+      2026,
+      11,
+      313
+    ],
+    "backbones": [
+      "fhn_dynpmnn"
+    ],
+    "inference_repeats": 3,
+    "device": "cpu",
+    "output_dir": "analysis/timeseries_ablation"
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "device": "cpu"
+  },
+  "per_run": [
+    {
+      "backbone": "fhn_dynpmnn",
+      "seed": 42,
+      "parameters": 145,
+      "test_mse": 0.011898907656605178,
+      "test_mae": 0.08648951472462835,
+      "val_mse": 0.01982243177858559,
+      "train_seconds": 25.48907859902829,
+      "inference_samples_per_sec": 692.4800111214811
+    },
+    {
+      "backbone": "fhn_dynpmnn",
+      "seed": 7,
+      "parameters": 145,
+      "test_mse": 0.025744713037400634,
+      "test_mae": 0.1258145119692828,
+      "val_mse": 0.04181058704853058,
+      "train_seconds": 25.480585743905976,
+      "inference_samples_per_sec": 383.2012795590411
+    },
+    {
+      "backbone": "fhn_dynpmnn",
+      "seed": 123,
+      "parameters": 145,
+      "test_mse": 0.015101699007524026,
+      "test_mae": 0.10168272095757562,
+      "val_mse": 0.014464736387536332,
+      "train_seconds": 23.391598348971456,
+      "inference_samples_per_sec": 560.1292152797731
+    },
+    {
+      "backbone": "fhn_dynpmnn",
+      "seed": 2026,
+      "parameters": 145,
+      "test_mse": 0.021306392610878556,
+      "test_mae": 0.12125628703349345,
+      "val_mse": 0.023242868684433603,
+      "train_seconds": 22.46201806003228,
+      "inference_samples_per_sec": 724.5577130080709
+    },
+    {
+      "backbone": "fhn_dynpmnn",
+      "seed": 11,
+      "parameters": 145,
+      "test_mse": 0.01405865024473216,
+      "test_mae": 0.09371788195661597,
+      "val_mse": 0.02412684795421523,
+      "train_seconds": 22.50583528308198,
+      "inference_samples_per_sec": 659.8909224658759
+    },
+    {
+      "backbone": "fhn_dynpmnn",
+      "seed": 313,
+      "parameters": 145,
+      "test_mse": 0.031555978833018125,
+      "test_mae": 0.141329195048358,
+      "val_mse": 0.02523428000308372,
+      "train_seconds": 22.91530541400425,
+      "inference_samples_per_sec": 746.9990335193073
+    }
+  ],
+  "summary": {
+    "fhn_dynpmnn": {
+      "parameters": 145,
+      "test_mse_mean": 0.019944390231693112,
+      "test_mse_std": 0.007657038178441289,
+      "test_mse_median": 0.01820404580920129,
+      "test_mse_min": 0.011898907656605178,
+      "test_mse_max": 0.031555978833018125,
+      "test_mse_std_over_mean": 0.3839193923449055,
+      "test_mae_mean": 0.11171501861499238,
+      "test_mae_std": 0.021107822874082163,
+      "test_mae_median": 0.11146950399553454,
+      "train_seconds_mean": 23.70740357483737,
+      "train_seconds_std": 1.417070553913693,
+      "inference_samples_per_sec_mean": 627.8763624922582,
+      "inference_samples_per_sec_std": 136.5222545378586,
+      "seeds": [
+        42,
+        7,
+        123,
+        2026,
+        11,
+        313
+      ],
+      "n_seeds": 6
+    }
+  },
+  "json_path": "analysis/timeseries_ablation/2026-06-04_180636_lnn_vs_lstm.json"
+}

@@ -80,6 +80,14 @@ def _build_model(name: str, input_size: int, hidden_size: int, output_size: int)
         return GRUModel(input_size, hidden_size, output_size)
     if name == "lstm":
         return LSTMModel(input_size, hidden_size, output_size)
+    if name == "fhn_dynpmnn":
+        # DynPMNN — arXiv 2605.08176v1 (Felipe-Sosa 2026) FitzHugh-Nagumo ODE
+        # backbone. 4 Euler steps is a smoke-scale choice (paper default ~5).
+        from lnn.core.dynpmnn import DynPMNNNetwork
+        return DynPMNNNetwork(
+            input_size=input_size, hidden_size=hidden_size, output_size=output_size,
+            num_layers=1, n_euler_steps=4, return_sequences=False,
+        )
     raise ValueError(f"unknown backbone {name}")
 
 
