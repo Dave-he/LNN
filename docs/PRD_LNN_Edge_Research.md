@@ -184,3 +184,29 @@ PRD §8 8 个任务里只剩 #3 LFM2.5(等 RAM 空载窗口)和 #4 EMMA(远程 a
 3. **跨 task ranking**: 没有"通杀 backbone";必须按任务画 ranking
    (与远程 EMMA agent commits `5518b20 / cf14d21 / 7575a9d` 的
    regime-conditional encoder ranking 同源)。
+
+## §10. 第三波候选任务(由 loop iter#16 落地, 2026-06-04)
+
+PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
+(#1 RAM / #3 数据 / #6 RAM+CUDA)。无外部依赖任务面已耗尽,
+启动第三波 — 主要面向**新论文复现 + 把 backbone matrix 扩展到更多 LNN 变体**。
+
+| # | 任务 | 出口物 | 关联 |
+|---:|---|---|---|
+| 10-1 | DynPMNN(2605.08176)复现 stage A:`lnn/core/dynpmnn.py::FHNCell + DynPMNNNetwork` | code + unit test | iter#16 研读 |
+| 10-2 | DynPMNN stage B:加 `--backbone fhn_dynpmnn` 到 ablation runner,跑 multi-seed 对比 | matrix 新增 dynpmnn 列 | §10 #1 之后 |
+| 10-3 | Comparative LNN vs LSTM phase-D:hidden=64 + epochs=50 + samples=4000,看 LNN 优势是否随规模出现 | `analysis/timeseries_ablation/<date>_phase_d.md` | §9 #2 v6 |
+| 10-4 | 给 `experiment_graph_lnn_molecule.py` 加 `HierarchicalDecayLiquidTADHead` 作为 recurrent 选项(交叉 #2 与 #6) | code + smoke | 综合 |
+| 10-5 | `loop_status.py` 加 `--prd-status` 子模式:解析 §8/§9/§10 全表,出未完成 + 阻塞理由 | code + sample report | §9 #5 衍生 |
+| 10-6 | `build_backbone_matrix.py` 加 `--export-readme-snippet`:产 README 顶部 badge 行(LSTM 3/4 win 等) | code + README badge | §9 #7 衍生 |
+| 10-7 | LFM2 (LFM2.5-1.2B-Distilled-SFT)在 RAM 空载窗口跑 1 次 INT8 推理 + token/sec 表 | `analysis/lfm25/<date>_lfm25_int8_jetson.md` | §8 #3 / §9 #1 |
+| 10-8 | `analysis/loop_status/` 自动生成 README 标签云(高频 task / 高方差 seed 提示) | tooling | meta |
+
+### 已调研未复现 (C 级) 累计表
+
+| 仓库/论文 | 排入理由 | 链接 |
+|---|---|---|
+| Linlab2026/GCN-CfC (iter#5) | 双框架管线,iter#13 已量化 −5% AUC | [[GCN-CfC_仓库结构化调研]] |
+| LiquidAI/LFM2.5-8B-A1B | 8B too big for Orin Nano 8GB | iter#1 daily |
+| raminmh/CfC (官方 tf) | 被 ncps 取代 | iter#5 |
+| DynPMNN (arXiv 2605.08176) | **无公开代码**,需自行复现 — 见 PRD §10 #1 → #2 | [[Physics-Modeled_Neural_Networks_DynPMNN_研读报告]] |

@@ -148,65 +148,95 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Bearing fault diagnosis with a Transformer where multi-head attention is replaced by a bidirectional Closed-form Continuous-time (CfC) liquid neural network. PyTorch implementation, evaluated on CWRU / MFPT / SEU.
 
 ## Hugging Face 模型
-### [mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-i1-GGUF](https://huggingface.co/mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-i1-GGUF)
-- 更新：2026-06-03
-- 下载 / Likes：732 / 0
+### [Mungert/LFM2.5-8B-A1B-GGUF](https://huggingface.co/Mungert/LFM2.5-8B-A1B-GGUF)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 0
 - 任务：unknown
-- Tags：transformers, gguf, liquid, lfm2.5, edge, abliterated, uncensored, en
+- Tags：gguf, endpoints_compatible, region:us, conversational
 
-### [mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-GGUF](https://huggingface.co/mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-GGUF)
+### [hardcoremoore/LFM2.5-8B-A1B](https://huggingface.co/hardcoremoore/LFM2.5-8B-A1B)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
+
+### [LiberteEPFL/lfm25-1.2b-molorasft-bigchat-v2](https://huggingface.co/LiberteEPFL/lfm25-1.2b-molorasft-bigchat-v2)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：peft, safetensors, base_model:adapter:LiquidAI/LFM2.5-1.2B-Base, lora, transformers, text-generation, conversational, arxiv:1910.09700
+
+### [viniciusianni/LFM2.5-1.2B-Instruct-Q4_K_M-GGUF](https://huggingface.co/viniciusianni/LFM2.5-1.2B-Instruct-Q4_K_M-GGUF)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, gguf, liquid, lfm2.5, edge, llama-cpp, gguf-my-repo, text-generation
+
+### [viniciusianni/LFM2.5-1.2B-Instruct-Q8_0-GGUF](https://huggingface.co/viniciusianni/LFM2.5-1.2B-Instruct-Q8_0-GGUF)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, gguf, liquid, lfm2.5, edge, llama-cpp, gguf-my-repo, text-generation
+
+### [ersolog/lfm2.5-vl-turtle-detection-unsloth-merged](https://huggingface.co/ersolog/lfm2.5-vl-turtle-detection-unsloth-merged)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 0
+- 任务：image-text-to-text
+- Tags：transformers, safetensors, lfm2_vl, image-text-to-text, text-generation-inference, unsloth, trl, conversational
+
+### [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M)
 - 更新：2026-06-03
-- 下载 / Likes：576 / 1
+- 下载 / Likes：93841 / 316
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
+
+### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
+- 更新：2026-06-03
+- 下载 / Likes：60171 / 479
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
+
+### [w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ](https://huggingface.co/w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ)
+- 更新：2026-06-03
+- 下载 / Likes：3422 / 0
 - 任务：unknown
-- Tags：transformers, gguf, liquid, lfm2.5, edge, abliterated, uncensored, en
+- Tags：gguf, endpoints_compatible, region:us, conversational
 
-### [FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF](https://huggingface.co/FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF)
+### [LLM-OS-Models/LFM2-8B-Terminal-SFT-2Epoch-Unsloth-7GPU](https://huggingface.co/LLM-OS-Models/LFM2-8B-Terminal-SFT-2Epoch-Unsloth-7GPU)
 - 更新：2026-06-03
-- 下载 / Likes：19 / 0
+- 下载 / Likes：183 / 0
 - 任务：text-generation
-- Tags：gguf, llama-cpp, neurosymbolic, neurosynthetic, vitalis, quadruflow, cognitive-architecture, sovereign-ai
+- Tags：transformers, safetensors, lfm2_moe, text-generation, terminal, sft, vllm, tb2-lite
 
-### [usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-4Bit](https://huggingface.co/usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-4Bit)
+### [LiberteEPFL/lfm25-1.2b-preact-psl-bigchat-v2](https://huggingface.co/LiberteEPFL/lfm25-1.2b-preact-psl-bigchat-v2)
 - 更新：2026-06-03
-- 下载 / Likes：0 / 0
+- 下载 / Likes：0 / 1
 - 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, abliterated
+- Tags：peft, safetensors, base_model:adapter:LiquidAI/LFM2.5-1.2B-Base, lora, transformers, text-generation, conversational, arxiv:1910.09700
 
-### [usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-3Bit](https://huggingface.co/usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-3Bit)
-- 更新：2026-06-03
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, abliterated
-
-### [usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-2Bit](https://huggingface.co/usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-2Bit)
+### [nihaliddya/lfm2-audio-toolcall-1.5b](https://huggingface.co/nihaliddya/lfm2-audio-toolcall-1.5b)
 - 更新：2026-06-03
 - 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, abliterated
+- 任务：unknown
+- Tags：safetensors, ml-intern, region:us
 
-### [usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-fp16](https://huggingface.co/usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-fp16)
-- 更新：2026-06-03
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, abliterated
-
-### [ersolog/lfm2.5-vl-turtle-detection](https://huggingface.co/ersolog/lfm2.5-vl-turtle-detection)
+### [ersolog/lfm2.5-vl-turtle-detection-unsloth](https://huggingface.co/ersolog/lfm2.5-vl-turtle-detection-unsloth)
 - 更新：2026-06-03
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：transformers, safetensors, arxiv:1910.09700, endpoints_compatible, region:us
 
-### [iraklixyz/LFM2.5-8B-A1B-Georgian-CPT](https://huggingface.co/iraklixyz/LFM2.5-8B-A1B-Georgian-CPT)
-- 更新：2026-06-03
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：safetensors, lfm2_moe, region:us
-
-### [iraklixyz/LFM2.5-8B-A1B-Georgian-CPT-Checkpoint](https://huggingface.co/iraklixyz/LFM2.5-8B-A1B-Georgian-CPT-Checkpoint)
+### [crumb/imagegpt-lfm2.5-350m](https://huggingface.co/crumb/imagegpt-lfm2.5-350m)
 - 更新：2026-06-03
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：peft, safetensors, base_model:adapter:LiquidAI/LFM2.5-8B-A1B, lora, sft, transformers, trl, unsloth
+- Tags：transformers, safetensors, lfm2, text-generation, conversational, endpoints_compatible, region:us
+
+### [mradermacher/LFM2.5-8B-A1B-Georgian-CPT-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-Georgian-CPT-GGUF)
+- 更新：2026-06-03
+- 下载 / Likes：0 / 1
+- 任务：unknown
+- Tags：transformers, gguf, en, base_model:iraklixyz/LFM2.5-8B-A1B-Georgian-CPT, base_model:quantized:iraklixyz/LFM2.5-8B-A1B-Georgian-CPT, endpoints_compatible, region:us, conversational
 
 ### [cPilotGod/liquid-ai-lfm2-24b-a2b-24b-gguf](https://huggingface.co/cPilotGod/liquid-ai-lfm2-24b-a2b-24b-gguf)
 - 更新：2026-06-02
@@ -237,33 +267,3 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：836 / 2
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
-
-### [LiquidAI/LFM2.5-8B-A1B-MLX-5bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-5bit)
-- 更新：2026-06-01
-- 下载 / Likes：446 / 0
-- 任务：text-generation
-- Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
-
-### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
-- 更新：2026-05-31
-- 下载 / Likes：60171 / 465
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
-
-### [LiquidAI/LFM2.5-8B-A1B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF)
-- 更新：2026-05-29
-- 下载 / Likes：87045 / 168
-- 任务：text-generation
-- Tags：gguf, liquid, lfm2, edge, llama.cpp, text-generation, en, ar
-
-### [LiquidAI/LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B)
-- 更新：2026-05-29
-- 下载 / Likes：49609 / 366
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2, edge, moe
-
-### [LiquidAI/LFM2-350M](https://huggingface.co/LiquidAI/LFM2-350M)
-- 更新：2026-05-29
-- 下载 / Likes：15583 / 249
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, edge, conversational, en

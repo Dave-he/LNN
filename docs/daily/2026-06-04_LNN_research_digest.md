@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：51 个
-- Hugging Face 候选模型：21 个
+- Hugging Face 候选模型：24 个
 - 已下载 PDF：0 个
 
 ## 数据源状态
@@ -53,18 +53,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-06-03 | [mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-i1-GGUF](https://huggingface.co/mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-i1-GGUF) | 732 | 0 |  |
-| 2026-06-03 | [mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-GGUF](https://huggingface.co/mradermacher/Huihui-LFM2.5-8B-A1B-abliterated-GGUF) | 576 | 1 |  |
-| 2026-06-03 | [FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF](https://huggingface.co/FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF) | 19 | 0 | text-generation |
-| 2026-06-03 | [usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-4Bit](https://huggingface.co/usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-4Bit) | 0 | 0 | text-generation |
-| 2026-06-03 | [usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-3Bit](https://huggingface.co/usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-3Bit) | 0 | 0 | text-generation |
-| 2026-06-03 | [usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-2Bit](https://huggingface.co/usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-2Bit) | 0 | 0 | text-generation |
-| 2026-06-03 | [usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-fp16](https://huggingface.co/usermma/Huihui-LFM2.5-8B-A1B-abliterated-mlx-fp16) | 0 | 0 | text-generation |
-| 2026-06-03 | [ersolog/lfm2.5-vl-turtle-detection](https://huggingface.co/ersolog/lfm2.5-vl-turtle-detection) | 0 | 0 |  |
-| 2026-06-03 | [iraklixyz/LFM2.5-8B-A1B-Georgian-CPT](https://huggingface.co/iraklixyz/LFM2.5-8B-A1B-Georgian-CPT) | 0 | 0 |  |
-| 2026-06-03 | [iraklixyz/LFM2.5-8B-A1B-Georgian-CPT-Checkpoint](https://huggingface.co/iraklixyz/LFM2.5-8B-A1B-Georgian-CPT-Checkpoint) | 0 | 0 | text-generation |
-| 2026-06-02 | [cPilotGod/liquid-ai-lfm2-24b-a2b-24b-gguf](https://huggingface.co/cPilotGod/liquid-ai-lfm2-24b-a2b-24b-gguf) | 82 | 0 |  |
-| 2026-06-01 | [LiquidAI/LFM2.5-8B-A1B-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-MLX-8bit) | 4527 | 12 | text-generation |
+| 2026-06-04 | [Mungert/LFM2.5-8B-A1B-GGUF](https://huggingface.co/Mungert/LFM2.5-8B-A1B-GGUF) | 0 | 0 |  |
+| 2026-06-04 | [hardcoremoore/LFM2.5-8B-A1B](https://huggingface.co/hardcoremoore/LFM2.5-8B-A1B) | 0 | 0 | text-generation |
+| 2026-06-04 | [LiberteEPFL/lfm25-1.2b-molorasft-bigchat-v2](https://huggingface.co/LiberteEPFL/lfm25-1.2b-molorasft-bigchat-v2) | 0 | 0 | text-generation |
+| 2026-06-04 | [viniciusianni/LFM2.5-1.2B-Instruct-Q4_K_M-GGUF](https://huggingface.co/viniciusianni/LFM2.5-1.2B-Instruct-Q4_K_M-GGUF) | 0 | 0 | text-generation |
+| 2026-06-04 | [viniciusianni/LFM2.5-1.2B-Instruct-Q8_0-GGUF](https://huggingface.co/viniciusianni/LFM2.5-1.2B-Instruct-Q8_0-GGUF) | 0 | 0 | text-generation |
+| 2026-06-04 | [ersolog/lfm2.5-vl-turtle-detection-unsloth-merged](https://huggingface.co/ersolog/lfm2.5-vl-turtle-detection-unsloth-merged) | 0 | 0 | image-text-to-text |
+| 2026-06-03 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 93841 | 316 | text-generation |
+| 2026-06-03 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 60171 | 479 | text-generation |
+| 2026-06-03 | [w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ](https://huggingface.co/w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ) | 3422 | 0 |  |
+| 2026-06-03 | [LLM-OS-Models/LFM2-8B-Terminal-SFT-2Epoch-Unsloth-7GPU](https://huggingface.co/LLM-OS-Models/LFM2-8B-Terminal-SFT-2Epoch-Unsloth-7GPU) | 183 | 0 | text-generation |
+| 2026-06-03 | [LiberteEPFL/lfm25-1.2b-preact-psl-bigchat-v2](https://huggingface.co/LiberteEPFL/lfm25-1.2b-preact-psl-bigchat-v2) | 0 | 1 | text-generation |
+| 2026-06-03 | [nihaliddya/lfm2-audio-toolcall-1.5b](https://huggingface.co/nihaliddya/lfm2-audio-toolcall-1.5b) | 0 | 0 |  |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
