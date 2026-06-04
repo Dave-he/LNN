@@ -179,6 +179,88 @@ def _parse_prd_tasks() -> list[dict]:
     return rows
 
 
+def _parse_all_prd_sections() -> list[dict]:
+    """Parse all PRD sections (§8 / §9 / §10) and classify each row.
+
+    Returns a flat list of dicts with section, id, title, status, blockers.
+    The "section" field uses a string like "8", "9", "10" so downstream
+    consumers can group by it.
+    """
+    prd_path = ROOT / "docs" / "PRD_LNN_Edge_Research.md"
+    if not prd_path.exists():
+        return []
+    text = prd_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    rows: list[dict] = []
+    current_section: str | None = None
+    # Recognised blocker hints (case-insensitive substring)
+    blocker_hints = (
+        "RAM blocker", "RAM", "CUDA", "driver 12", "空载", "THUMOS-14",
+        "data blocker", "数据未下载", "数据", "1.7GB", "1.7 GB",
+        "need RAM", "need data", "still insufficient",
+    )
+    done_markers = ("✅", "[done]", "loop#", "完成 ✅", "DONE",
+                    "已 ✅", " done)", " done.", " done ", "完成]")
+    target_sections = {"8", "9", "10"}
+    for line in text:
+        s = line.strip()
+        # Detect new section like "## §8." or "## 8." or "## §10."
+        m = re.match(r"^##\s*§?(\d+)\.\s", s)
+        if m:
+            section_num = m.group(1)
+            if section_num in target_sections:
+                current_section = section_num
+            else:
+                current_section = None
+            continue
+        if current_section is None:
+            continue
+        if not s.startswith("|"):
+            continue
+        cells = [c.strip() for c in s.strip("|").split("|")]
+        # ID format: pure integer (e.g., "1" in §8) or "N-M" (e.g., "9-1", "10-3")
+        if not cells:
+            continue
+        first = cells[0]
+        if first.isdigit():
+            id_str = first
+            id_int = int(first)
+        elif re.match(r"^\d+-\d+$", first):
+            id_str = first
+            # take the suffix as the numeric id (preserves §8 id uniqueness 1..8)
+            id_int = int(first.split("-", 1)[1])
+        else:
+            continue
+        title = cells[1] if len(cells) > 1 else ""
+        # Some sections (§10) have a 5th "状态" column; treat the last cell
+        # as also a candidate for done/pending markers so the parser doesn't
+        # miss the "✅ (iter#21)" style status badge.
+        last_cell = cells[-1] if cells else ""
+        marker_source = title + " " + last_cell
+        is_done = any(d in marker_source for d in done_markers)
+        is_pending = "pending" in marker_source.lower() or "PENDING" in marker_source
+        if is_done:
+            status = "completed"
+        elif is_pending:
+            status = "pending"
+        else:
+            status = "pending"  # default per iter#14 convention
+        # Blocker detection across the whole row text
+        row_text = " ".join(cells)
+        blockers = []
+        for hint in blocker_hints:
+            if hint.lower() in row_text.lower():
+                blockers.append(hint)
+        rows.append({
+            "section": current_section,
+            "id": id_int,
+            "id_str": id_str,
+            "title": title[:200],
+            "status": status,
+            "blockers": blockers,
+        })
+    return rows
+
+
 # ----- next-task suggestion -------------------------------------------------
 
 
@@ -662,6 +744,146 @@ def _main_since_last_loop(args: argparse.Namespace) -> int:
 # ----- main (single-day) ----------------------------------------------------
 
 
+# ----- PRD status (--prd-status) --------------------------------------------
+
+
+def _main_prd_status(args: argparse.Namespace) -> int:
+    """Parse all PRD task tables and emit a one-screen status report."""
+    rows = _parse_all_prd_sections()
+
+    # Group by section
+    by_section: dict[str, list[dict]] = {"8": [], "9": [], "10": []}
+    for r in rows:
+        by_section.setdefault(r["section"], []).append(r)
+
+    # Stats
+    stats: dict[str, dict] = {}
+    for sec, sec_rows in by_section.items():
+        n_total = len(sec_rows)
+        n_done = sum(1 for r in sec_rows if r["status"] == "completed")
+        n_pending = n_total - n_done
+        blocked = [r for r in sec_rows if r["blockers"]]
+        stats[sec] = {
+            "total": n_total,
+            "done": n_done,
+            "pending": n_pending,
+            "pct": (100.0 * n_done / n_total) if n_total else 0.0,
+            "blocked_ids": [r["id"] for r in blocked],
+        }
+
+    now = dt.datetime.now()
+    run_id = now.strftime("%Y-%m-%d_%H%M%S")
+    output_dir = pathlib.Path(args.output_dir)
+    if not output_dir.is_absolute():
+        output_dir = ROOT / output_dir
+    json_path = output_dir / f"{run_id}_loop_status_prd.json"
+    md_path = output_dir / f"{run_id}_loop_status_prd.md"
+    rel_json = json_path.relative_to(ROOT) if json_path.is_relative_to(ROOT) else json_path
+
+    payload = {
+        "run_id": run_id,
+        "mode": "prd_status",
+        "generated_at": now.isoformat(),
+        "stats": stats,
+        "tasks": rows,
+        "json_path": str(rel_json),
+    }
+
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+
+    if not args.no_write:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        md_path.write_text(_format_prd_status_md(payload), encoding="utf-8")
+
+    # Stdout summary
+    print(f"=== PRD status (iter#21) — {now.isoformat(timespec='seconds')} ===")
+    for sec in ("8", "9", "10"):
+        s = stats[sec]
+        blocked_str = f"  blocked: {s['blocked_ids']}" if s["blocked_ids"] else ""
+        print(f"  §{sec}: {s['done']}/{s['total']} done ({s['pct']:.1f}%), {s['pending']} pending{blocked_str}")
+    if not args.no_write:
+        print(f"  wrote JSON: {json_path}")
+        print(f"  wrote MD:   {md_path}")
+    return 0
+
+
+def _format_prd_status_md(payload: dict) -> str:
+    stats = payload["stats"]
+    tasks = payload["tasks"]
+    lines = [
+        "# PRD status report (iter#21+)",
+        "",
+        f"_Generated: {payload['generated_at']}_",
+        f"_Source: `docs/PRD_LNN_Edge_Research.md` (sections §8, §9, §10)_",
+        "",
+        "## Summary by section",
+        "",
+        "| Section | Done | Pending | % Complete | Blocked IDs |",
+        "|---|---:|---:|---:|---|",
+    ]
+    section_titles = {"8": "§8 P0 blockers", "9": "§9 second wave", "10": "§10 third wave backlog"}
+    for sec in ("8", "9", "10"):
+        s = stats[sec]
+        blocked = ", ".join(f"#{b}" for b in s["blocked_ids"]) if s["blocked_ids"] else "—"
+        lines.append(f"| {section_titles[sec]} (PRD §{sec}) | {s['done']} | {s['pending']} | {s['pct']:.1f}% | {blocked} |")
+
+    # Per-section table
+    by_section: dict[str, list[dict]] = {"8": [], "9": [], "10": []}
+    for t in tasks:
+        by_section.setdefault(t["section"], []).append(t)
+    for sec in ("8", "9", "10"):
+        sec_rows = by_section[sec]
+        if not sec_rows:
+            continue
+        lines.extend([
+            "",
+            f"## §{sec} — {section_titles[sec]}",
+            "",
+            "| ID | Status | Blocker | Title |",
+            "|---:|:---:|---|---|",
+        ])
+        for r in sec_rows:
+            mark = "✅" if r["status"] == "completed" else "⏳ pending"
+            blockers = ", ".join(r["blockers"]) if r["blockers"] else "—"
+            # Truncate title for table readability
+            title = r["title"]
+            if len(title) > 120:
+                title = title[:117] + "..."
+            lines.append(f"| §{sec}-{r['id']} | {mark} | {blockers} | {title} |")
+
+    # Next-up heuristic
+    next_up: list[str] = []
+    for sec in ("8", "9", "10"):
+        pending = [r for r in by_section[sec] if r["status"] == "pending"]
+        if pending:
+            if sec == "8":
+                next_up.append(f"§{sec}: §{sec}-{pending[0]['id']} (P0 blocker — fix first)")
+            elif sec == "9":
+                next_up.append(f"§{sec}: §{sec}-{pending[0]['id']} (second wave)")
+            else:
+                next_up.append(f"§{sec}: §{sec}-{pending[0]['id']} (third wave, no-blocker preferred)")
+
+    lines.extend([
+        "",
+        "## Next-up (one candidate per section)",
+        "",
+    ])
+    if next_up:
+        for line in next_up:
+            lines.append(f"- {line}")
+    else:
+        lines.append("- All tasks in §8/§9/§10 have ✅ markers (verify manually if this is wrong).")
+
+    lines.extend([
+        "",
+        f"JSON 原数据: `{payload['json_path']}`",
+    ])
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--date", default=dt.date.today().isoformat(),
@@ -677,6 +899,14 @@ def main() -> int:
                             "Use this at the very start of a /loop iteration to see "
                             "exactly what the previous iteration left behind."
                         ))
+    parser.add_argument("--prd-status", action="store_true",
+                        help=(
+                            "PRD §10 #5 / iter#21: parse §8/§9/§10 task tables in "
+                            "docs/PRD_LNN_Edge_Research.md, classify each row by "
+                            "completion marker + blocker keyword, and emit a one-screen "
+                            "status report. Sections are computed independently, so you "
+                            "can see exactly which PRD generation is the next bottleneck."
+                        ))
     parser.add_argument("--no-write", action="store_true",
                         help="Skip writing reports to analysis/loop_status/.")
     parser.add_argument("--json", action="store_true",
@@ -686,6 +916,8 @@ def main() -> int:
 
     if args.since_last_loop:
         return _main_since_last_loop(args)
+    if args.prd_status:
+        return _main_prd_status(args)
     if args.week >= 2:
         return _main_weekly(args)
 
