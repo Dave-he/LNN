@@ -222,6 +222,7 @@ PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
 | **SVAF (arXiv 2604.03955, iter#17)** | **部分可复现**: 端到端需 237K LLM-authored 训练数据(作者未公开);**τ 调制耦合算子(公式 20)是 P2 mini-task** | [[Symbolic-Vector_Attention_Fusion_SVAF_研读报告]] |
 | AEGIS (arXiv 2604.02149) | 与 LNN 弱关联(Thermodynamic State Space Model,非 CfC/LTC);非 P0 候选 | iter#17 调研 |
 | **PDNA (arXiv 2603.00153, iter#18)** | **代码公开** (github.com/Parassharmaa/pdna) + MNIST zero-cost + 5 seed ablation + noise control 严谨度;**P1 stage A/B/C 与本仓 LNN/CfC 复用度极高** | [[Pulse-Driven_Neural_Architecture_PDNA_研读报告]] |
+| **RLSTG (arXiv 2601.14115, iter#31)** | WWW '26 accepted, Lu et al. **LTC + Riemannian manifolds** (tangent space ODE + exp/log wrapper);**理论推广 LTC 稳定性到黎曼域**;数据集 ENRON 邮件网络 (与本仓分子/时序不重叠);**仅项目页 demo 无代码**;复现需 `geoopt` 依赖 + 新 tangent-space 包装;B 级 ROI | [[Riemannian_Liquid_Spatio-Temporal_Graph_Network_RLSTG_研读报告]] |
 
 ### §10 完成度(由 iter#17 跟踪)
 
