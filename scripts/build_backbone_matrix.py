@@ -216,12 +216,42 @@ def _ingest_smnist_gap(path: pathlib.Path) -> dict | None:
 
 
 def _dedupe_keep_higher_n(rows: list[dict]) -> list[dict]:
-    by_key: dict[str, dict] = {}
+    """Merge rows with the same row_key by per-backbone max n_seeds (iter#25).
+
+    The original implementation replaced the whole row with the higher-n_seeds
+    one, which had a real failure mode: a 3-seed cfc/ltc/gru/lstm/fhn_dynpmnn
+    row and a 6-seed fhn_dynpmnn-only row (same row_key) would keep the
+    6-seed row and silently drop the 3-seed cfc/ltc/gru/lstm data.
+
+    The new logic: for each (row_key, backbone) pair, keep the row where
+    that backbone has the highest n_seeds. This is per-backbone max.
+    """
+    by_key: dict[str, list[dict]] = {}
     for r in rows:
-        existing = by_key.get(r["row_key"])
-        if existing is None or r["n_seeds"] > existing["n_seeds"]:
-            by_key[r["row_key"]] = r
-    return list(by_key.values())
+        by_key.setdefault(r["row_key"], []).append(r)
+
+    merged: list[dict] = []
+    for row_key, group in by_key.items():
+        # For each backbone across all rows in this group, keep the
+        # entry with the highest n_seeds for that backbone.
+        best_per_backbone: dict[str, dict] = {}
+        for r in group:
+            for bb_name, bb_data in r.get("backbones", {}).items():
+                cur = best_per_backbone.get(bb_name)
+                if cur is None or bb_data.get("n", 0) > cur.get("n", 0):
+                    best_per_backbone[bb_name] = bb_data
+        # Total n_seeds for the row is the max across backbones (matches
+        # the original semantics so the n column in the Markdown table
+        # still reflects "the strongest backbone had this many seeds").
+        n_seeds = max((bb.get("n", 0) for bb in best_per_backbone.values()), default=0)
+        # Use the first row as a template for non-backbone fields.
+        template = group[0]
+        merged.append({
+            **template,
+            "n_seeds": n_seeds,
+            "backbones": best_per_backbone,
+        })
+    return merged
 
 
 def _format_markdown(payload: dict) -> str:
