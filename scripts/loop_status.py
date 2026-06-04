@@ -438,6 +438,227 @@ def _format_weekly_md(payload: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+# ----- since-last-loop (--since-last-loop) ----------------------------------
+
+
+def _find_last_iteration_marker() -> tuple[pathlib.Path | None, dt.datetime | None]:
+    """Find the most recent loop_iteration*.md report across analysis/**/."""
+    pattern = re.compile(r"^\d{4}-\d{2}-\d{2}_loop_iteration\d+_.+\.md$")
+    candidates: list[tuple[float, pathlib.Path]] = []
+    for sub in ("analysis/jetson", "analysis/molecular", "analysis/long_sequence",
+                "analysis/timeseries_ablation", "analysis/loop_status",
+                "analysis/backbone_matrix"):
+        root = ROOT / sub
+        if not root.exists():
+            continue
+        for p in root.glob("*.md"):
+            if pattern.match(p.name):
+                try:
+                    candidates.append((p.stat().st_mtime, p))
+                except OSError:
+                    continue
+    if not candidates:
+        return None, None
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    mtime, path = candidates[0]
+    return path, dt.datetime.fromtimestamp(mtime)
+
+
+def _git_commits_since(since: dt.datetime) -> list[dict]:
+    """Local commits authored after the given timestamp."""
+    try:
+        result = subprocess.run(
+            ["git", "log",
+             "--since", since.isoformat(),
+             "--pretty=format:%h|%an|%ad|%s",
+             "--date=iso-strict"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+        commits = []
+        for line in result.stdout.splitlines():
+            if "|" not in line:
+                continue
+            sha, author, when, subject = line.split("|", 3)
+            commits.append({"sha": sha, "author": author, "when": when, "subject": subject})
+        return commits
+    except (subprocess.SubprocessError, FileNotFoundError):
+        return []
+
+
+def _files_modified_since(since: dt.datetime, roots: list[str]) -> list[dict]:
+    """Walk ``roots`` returning files with mtime > since."""
+    out: list[dict] = []
+    threshold = since.timestamp()
+    for root_rel in roots:
+        root = ROOT / root_rel
+        if not root.exists():
+            continue
+        for p in root.rglob("*"):
+            if not p.is_file():
+                continue
+            try:
+                m = p.stat().st_mtime
+            except OSError:
+                continue
+            if m > threshold:
+                out.append({
+                    "path": str(p.relative_to(ROOT)),
+                    "mtime": dt.datetime.fromtimestamp(m).isoformat(timespec="seconds"),
+                    "size_bytes": p.stat().st_size,
+                })
+    out.sort(key=lambda x: x["mtime"])
+    return out
+
+
+def _format_since_md(payload: dict) -> str:
+    lines = [
+        f"# Loop status — since last iteration",
+        "",
+        f"- generated: {payload['generated_at']}",
+        f"- previous marker: `{payload['marker_path'] or '(none found)'}`",
+        f"- previous marker mtime: {payload['marker_mtime'] or '(n/a)'}",
+        f"- elapsed since marker: {payload['elapsed_human']}",
+        "",
+        "## 1. Git commits since marker (local)",
+    ]
+    if payload["commits"]:
+        lines.append("| when | sha | author | subject |")
+        lines.append("|---|---|---|---|")
+        for c in payload["commits"]:
+            subj = c["subject"].replace("|", "\\|")
+            lines.append(f"| {c['when']} | `{c['sha']}` | {c['author']} | {subj} |")
+    else:
+        lines.append("_(none)_")
+
+    lines.extend([
+        "",
+        "## 2. Files modified since marker",
+        f"- total: **{len(payload['files'])}**",
+    ])
+    if payload["files"]:
+        lines.append("| mtime | path | bytes |")
+        lines.append("|---|---|---:|")
+        # Cap list at 60 to keep MD readable; full count in summary.
+        for rec in payload["files"][:60]:
+            lines.append(f"| {rec['mtime']} | `{rec['path']}` | {rec['size_bytes']:,} |")
+        if len(payload["files"]) > 60:
+            lines.append(f"| ... | _(+{len(payload['files']) - 60} more)_ | |")
+
+    lines.extend([
+        "",
+        "## 3. New iteration reports detected since marker",
+    ])
+    if payload["new_iterations"]:
+        for it in payload["new_iterations"]:
+            lines.append(f"- `{it['path']}` (mtime {it['mtime']})")
+    else:
+        lines.append("_(none — the next iteration report you write becomes the new marker)_")
+
+    lines.extend([
+        "",
+        "## 4. Suggestion",
+        f"> {payload['suggestion']}",
+        "",
+        f"JSON 原数据: `{payload['json_path']}`",
+    ])
+    return "\n".join(lines) + "\n"
+
+
+def _main_since_last_loop(args: argparse.Namespace) -> int:
+    marker_path, marker_time = _find_last_iteration_marker()
+    if marker_time is None:
+        # Fall back to "midnight today" so the tool still gives something useful.
+        marker_time = dt.datetime.combine(dt.date.today(), dt.time())
+        marker_label = "(none — falling back to today 00:00)"
+    else:
+        marker_label = str(marker_path.relative_to(ROOT))
+
+    commits = _git_commits_since(marker_time)
+    files = _files_modified_since(
+        marker_time,
+        roots=["analysis", "docs", "scripts", "lnn", "tests", "papers"],
+    )
+    # Detect iteration reports newer than the previous marker.
+    iter_pattern = re.compile(r"loop_iteration\d+_.+\.md$")
+    new_iters = [f for f in files if iter_pattern.search(f["path"])]
+    # Don't list the marker itself even if its mtime equals threshold.
+    new_iters = [f for f in new_iters if f["path"] != marker_label]
+
+    elapsed = dt.datetime.now() - marker_time
+    hours = elapsed.total_seconds() / 3600.0
+    if hours < 1:
+        elapsed_human = f"{int(elapsed.total_seconds()/60)} min"
+    elif hours < 24:
+        elapsed_human = f"{hours:.1f} h"
+    else:
+        elapsed_human = f"{hours/24:.1f} d"
+
+    if not commits and not files:
+        suggestion = (
+            "Nothing changed since the last iteration marker — "
+            "either the loop is freshly fired or the marker is stale. "
+            "Run with --date today to get the date-scoped view instead."
+        )
+    elif new_iters:
+        suggestion = (
+            f"You already wrote {len(new_iters)} new iteration report(s) since "
+            f"the marker — the newest can serve as the next marker."
+        )
+    else:
+        suggestion = (
+            f"{len(commits)} commit(s) and {len(files)} file change(s) since marker, "
+            "but no new iteration report yet. Write one before pushing so the next "
+            "/loop has a clean marker to read from."
+        )
+
+    now = dt.datetime.now()
+    run_id = now.strftime("%Y-%m-%d_%H%M%S")
+    output_dir = pathlib.Path(args.output_dir)
+    if not output_dir.is_absolute():
+        output_dir = ROOT / output_dir
+    json_path = output_dir / f"{run_id}_loop_status_since_last.json"
+    md_path = output_dir / f"{run_id}_loop_status_since_last.md"
+    rel_json = json_path.relative_to(ROOT) if json_path.is_relative_to(ROOT) else json_path
+
+    payload = {
+        "run_id": run_id,
+        "mode": "since-last-loop",
+        "generated_at": now.isoformat(),
+        "marker_path": marker_label,
+        "marker_mtime": marker_time.isoformat(),
+        "elapsed_human": elapsed_human,
+        "commits": commits,
+        "files": files,
+        "new_iterations": new_iters,
+        "suggestion": suggestion,
+        "json_path": str(rel_json),
+    }
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+
+    if not args.no_write:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        md_path.write_text(_format_since_md(payload), encoding="utf-8")
+
+    print(f"=== Loop status — since last iteration marker ===")
+    print(f"  marker: {marker_label}")
+    print(f"  elapsed: {elapsed_human}")
+    print(f"  commits since: {len(commits)}")
+    print(f"  files modified: {len(files)}")
+    print(f"  new iteration reports: {len(new_iters)}")
+    print(f"  suggestion: {suggestion}")
+    if not args.no_write:
+        print(f"  wrote JSON: {json_path}")
+        print(f"  wrote MD:   {md_path}")
+    return 0
+
+
 # ----- main (single-day) ----------------------------------------------------
 
 
@@ -448,6 +669,14 @@ def main() -> int:
     parser.add_argument("--week", type=int, default=0,
                         help=("Aggregate the past N days ending at --date. "
                               "0 (default) = single-day view; >=2 enables weekly retro."))
+    parser.add_argument("--since-last-loop", action="store_true",
+                        help=(
+                            "PRD §9 #5 / iter#14: instead of a date-bounded view, "
+                            "show everything that changed since the most recent "
+                            "analysis/**/{date}_loop_iteration*_*.md file's mtime. "
+                            "Use this at the very start of a /loop iteration to see "
+                            "exactly what the previous iteration left behind."
+                        ))
     parser.add_argument("--no-write", action="store_true",
                         help="Skip writing reports to analysis/loop_status/.")
     parser.add_argument("--json", action="store_true",
@@ -455,6 +684,8 @@ def main() -> int:
     parser.add_argument("--output-dir", default="analysis/loop_status")
     args = parser.parse_args()
 
+    if args.since_last_loop:
+        return _main_since_last_loop(args)
     if args.week >= 2:
         return _main_weekly(args)
 
