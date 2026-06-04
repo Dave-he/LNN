@@ -1,0 +1,295 @@
+{
+  "run_id": "2026-06-04_200319",
+  "mode": "prd_status",
+  "generated_at": "2026-06-04T20:03:19.979165",
+  "stats": {
+    "8": {
+      "total": 8,
+      "done": 6,
+      "pending": 2,
+      "pct": 75.0,
+      "blocked_ids": [
+        1,
+        2,
+        7
+      ]
+    },
+    "9": {
+      "total": 8,
+      "done": 5,
+      "pending": 3,
+      "pct": 62.5,
+      "blocked_ids": [
+        1,
+        2,
+        3,
+        7
+      ]
+    },
+    "10": {
+      "total": 13,
+      "done": 7,
+      "pending": 6,
+      "pct": 53.84615384615385,
+      "blocked_ids": [
+        7
+      ]
+    }
+  },
+  "tasks": [
+    {
+      "section": "8",
+      "id": 1,
+      "id_str": "1",
+      "title": "~~修复 Jetson CUDA wheel,跑通 GPU 路径 benchmark~~ **[loop#2 done]** torch 2.10.0+cu126 + libcudss 0.8.0.10 + `scripts/jetson_cuda_env.sh`",
+      "status": "completed",
+      "blockers": [
+        "CUDA"
+      ]
+    },
+    {
+      "section": "8",
+      "id": 2,
+      "id_str": "2",
+      "title": "复现 LiquidTAD 长视频 TAD 实验(论文 2604.18274) — **stage A 算子+单测 ✅ + stage B smoke ✅ (loop#3 done) + stage C-lite 3-seed ablation ✅ (loop#4)**;真正 Stage C–E 待 CUDA 空载窗口 + THUMOS-14 数据",
+      "status": "completed",
+      "blockers": [
+        "CUDA",
+        "空载",
+        "THUMOS-14",
+        "数据"
+      ]
+    },
+    {
+      "section": "8",
+      "id": 3,
+      "id_str": "3",
+      "title": "LFM2.5-1.2B-Distilled INT4 推理 + token/sec 测试",
+      "status": "pending",
+      "blockers": []
+    },
+    {
+      "section": "8",
+      "id": 4,
+      "id_str": "4",
+      "title": "EMMA 多模态物理参数恢复最小验证(论文 2605.24047)",
+      "status": "pending",
+      "blockers": []
+    },
+    {
+      "section": "8",
+      "id": 5,
+      "id_str": "5",
+      "title": "Comparative Analysis of LNN & LSTM(2605.27467)对照重做 — **loop#7 ✅ (诚实负面信号)** Mackey-Glass 4-backbone × 3-seed: GRU 最准 (MSE 0.00336), LTC 参数 −50% 但 MSE 高 41%, 训练慢 5.9×",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "8",
+      "id": 6,
+      "id_str": "6",
+      "title": "GCN-CfC 分子筛选模型 smoke(GitHub Linlab2026/GCN-CfC) — **loop#5 结构化调研 ✅ + loop#6 follow-up A 落地 ✅**:`scripts/experiment_graph_lnn_molecule.py` 用本仓 `GraphLNNPredictor` 跑 Tox21-styled 二分类,3 seed × {CfC, LTC,",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "8",
+      "id": 7,
+      "id_str": "7",
+      "title": "把 Jetson Pareto sweep 接入 PRD 验证指标 #3 — **loop#2 ✅** (12 trials CfCStyle vs GRU × hidden∈{8,16,24} × seq∈{16,32}, 4 Pareto-front points; CfC@h=24,seq=32 最佳 MSE 0.4285 −30.6% vs GRU)",
+      "status": "completed",
+      "blockers": [
+        "CUDA"
+      ]
+    },
+    {
+      "section": "8",
+      "id": 8,
+      "id_str": "8",
+      "title": "Loop 调度产物去重 + 自动 retro(避免重复研读相同 paper) — **loop#8 ✅** `scripts/loop_status.py` 扫描 daily/jetson/molecular/timeseries/repo_watchlist + 解析 PRD §8 + git log,输出 JSON+MD 报告;首次跑就揪出 PRD §7 没补 ✅ 的 tracking 漏洞",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "9",
+      "id": 1,
+      "id_str": "9-1",
+      "title": "LFM2.5-1.2B-Distilled INT4 离线推理 + token/sec 测试(夜间空载窗口)",
+      "status": "pending",
+      "blockers": [
+        "空载"
+      ]
+    },
+    {
+      "section": "9",
+      "id": 2,
+      "id_str": "9-2",
+      "title": "concept_drift 复测 phase-B:多 regime 渐进 + lr warmup + curriculum — **loop#10 ✅** (gradual_multi_regime + warmup_frac=0.1: CfC MSE 0.27142 比 LSTM 0.38270 低 −29.1%, 参数 −27%;项目首次 CfC 赢 LSTM,印证 paper claim) ",
+      "status": "completed",
+      "blockers": [
+        "数据"
+      ]
+    },
+    {
+      "section": "9",
+      "id": 3,
+      "id_str": "9-3",
+      "title": "LiquidTAD 真 Stage C:THUMOS-14 50-video 子集复现",
+      "status": "pending",
+      "blockers": [
+        "THUMOS-14"
+      ]
+    },
+    {
+      "section": "9",
+      "id": 4,
+      "id_str": "9-4",
+      "title": "`experiment_graph_lnn_molecule.py` 加 `--frozen-encoder` 两阶段(模拟 GCN-CfC 解耦) — **loop#13 ✅** 9 trials (3 backbone × 3 seed): frozen mean AUC 0.71 vs e2e 0.75 (Δ −4.8% cfc / −6.8% ltc / −5.0% gru);**6/9 ",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "9",
+      "id": 5,
+      "id_str": "9-5",
+      "title": "`loop_status.py --since-last-loop` 自动定位上次 iter 结束后的变更 — **loop#14 ✅** 扫 `analysis/**/loop_iteration*.md` 取 mtime 最新作为 marker,列 marker 后 git commits + analysis/docs/scripts/lnn/tests/papers 文件变更 + 新 it",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "9",
+      "id": 6,
+      "id_str": "9-6",
+      "title": "`HierarchicalDecayLiquidTADHead` 加 ONNX export + TensorRT INT8",
+      "status": "pending",
+      "blockers": []
+    },
+    {
+      "section": "9",
+      "id": 7,
+      "id_str": "9-7",
+      "title": "跨数据 backbone ranking 自动生成:ablation runner 加 `--datasets` 多个,出 task-conditional 表 — **loop#12 ✅** `scripts/build_backbone_matrix.py` 扫 `analysis/timeseries_ablation/*` + `analysis/molecular/*` pivot 出 ",
+      "status": "completed",
+      "blockers": [
+        "数据"
+      ]
+    },
+    {
+      "section": "9",
+      "id": 8,
+      "id_str": "9-8",
+      "title": "PRD §6 验证指标自动 CI:GitHub Actions 跑 `verify_all_models.py + ablation_*` 周线 — **loop#15 ✅** `.github/workflows/lnn_weekly_verify.yml` (~120 行) 周一 03:07 UTC 跑 pytest+verify_all_models+quick_validate+tiny ",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 1,
+      "id_str": "10-1",
+      "title": "DynPMNN(2605.08176)复现 stage A:`lnn/core/dynpmnn.py::FHNCell + DynPMNNNetwork`",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 2,
+      "id_str": "10-2",
+      "title": "DynPMNN stage B:加 `--backbone fhn_dynpmnn` 到 ablation runner,跑 multi-seed 对比",
+      "status": "pending",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 3,
+      "id_str": "10-3",
+      "title": "Comparative LNN vs LSTM phase-D:hidden=64 + epochs=50 + samples=4000,看 LNN 优势是否随规模出现",
+      "status": "pending",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 4,
+      "id_str": "10-4",
+      "title": "给 `experiment_graph_lnn_molecule.py` 加 `HierarchicalDecayLiquidTADHead` 作为 recurrent 选项(交叉 #2 与 #6)",
+      "status": "pending",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 5,
+      "id_str": "10-5",
+      "title": "`loop_status.py` 加 `--prd-status` 子模式:解析 §8/§9/§10 全表,出未完成 + 阻塞理由",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 6,
+      "id_str": "10-6",
+      "title": "`build_backbone_matrix.py` 加 `--export-readme-snippet`:产 README 顶部 badge 行(LSTM 3/4 win 等)",
+      "status": "pending",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 7,
+      "id_str": "10-7",
+      "title": "LFM2 (LFM2.5-1.2B-Distilled-SFT)在 RAM 空载窗口跑 1 次 INT8 推理 + token/sec 表",
+      "status": "pending",
+      "blockers": [
+        "RAM blocker",
+        "RAM",
+        "空载"
+      ]
+    },
+    {
+      "section": "10",
+      "id": 8,
+      "id_str": "10-8",
+      "title": "`analysis/loop_status/` 自动生成 README 标签云(高频 task / 高方差 seed 提示)",
+      "status": "pending",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 9,
+      "id_str": "10-9",
+      "title": "**SVAF (arXiv 2604.03955) τ-modulated peer-blending 算子复现**(iter#17 研读,见 [[Symbolic-Vector_Attention_Fusion_SVAF_研读报告]]):toy 2-agent mesh + τ_i ∈ {1, 10, 60} 三组神经元,N 步耦合后看 spectral diff 验证\"fast τ 同步 / ",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 10,
+      "id_str": "10-10",
+      "title": "**PDNA (arXiv 2603.00153) PulseHead + Gapped protocol 复现**(iter#18 研读,见 [[Pulse-Driven_Neural_Architecture_PDNA_研读报告]]):stage A `lnn/core/cfc.py::PDNAPulseHead` (~80 行) + unit test ✅ (iter#19, 12 test",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 11,
+      "id_str": "10-11",
+      "title": "**LFM/LNN-related active≤3B vs 30B+ LLM 打榜证据卡**:汇总 `LFM2.5-8B-A1B`(8.3B total / 1.5B active)公开指标、`Qwen3-30B-A3B` 30B+ 基线、本仓 `LFM2.5-1.2B` 本地 GGUF/DPO 推理证据;默认判定 13 个重叠指标 7 胜 / 6 负,只支持 active≤3B MoE 局部胜",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 12,
+      "id_str": "10-12",
+      "title": "**本机 LFM2.5 GGUF micro-eval harness**: `scripts/run_llm_micro_eval.py` 通过 llama.cpp 对本机模型跑 deterministic arithmetic / instruction / JSON / abstention sanity tasks;当前 `LFM2.5-1.2B-Instruct-Q4_0.gguf` 7",
+      "status": "completed",
+      "blockers": []
+    },
+    {
+      "section": "10",
+      "id": 13,
+      "id_str": "10-13",
+      "title": "**30B+ OpenAI-compatible endpoint micro-eval 后端**: `run_llm_micro_eval.py --backend openai-chat` 支持 `/v1/chat/completions`,可直接接本机 llama-server/vLLM/SGLang 或远程 30B+ API,输出同一 JSON schema;当前已用本地 fake Ope",
+      "status": "completed",
+      "blockers": []
+    }
+  ],
+  "json_path": "analysis/loop_status/2026-06-04_200319_loop_status_prd.json"
+}

@@ -65,6 +65,7 @@ PRD 化的目的是固化范围 / 衡量指标 / 验证门槛,
 | **数据合成** | `lnn/data/` | Mackey-Glass / 正弦 / 多模态 / 能源价格 |
 | **每日追踪** | `scripts/daily_lnn_research.py` + `.github/workflows/daily-lnn-research.yml` | arXiv/GitHub/HF 聚合 + digest + watchlist |
 | **边缘 Benchmark** | `scripts/jetson_lnn_benchmark.py`,`run_daily_lnn_task.sh` | Jetson Orin Nano Super 上 smoke + Pareto sweep |
+| **LFM/LLM 打榜证据卡** | `scripts/build_llm_battlecard.py`,`scripts/run_llm_micro_eval.py`,`scripts/build_llm_micro_leaderboard.py` | 汇总本地 LFM2.5 推理证据 + 公开 30B+ 基线 + micro-eval 榜单,审计 active≤3B 是否可声称胜出 |
 | **论文复现** | `scripts/replicate_paper_dispatch.py`,`scripts/minimal_lnn_paper_validation.py` 等 | 选目 → 最小复现 → 误差报告 |
 | **研究 Skills** | `skills/living-field-researcher`,`skills/paper-analyzer`,`skills/paper-translator` | 可移植到 Cursor/Trae 等工具 |
 | **Loop 调度** | `/loop 1h …`(Claude Code CronCreate)+ user systemd timer | 自动化滚动收资料、跑验证、提交 |
@@ -203,6 +204,10 @@ PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
 | 10-8 | `analysis/loop_status/` 自动生成 README 标签云(高频 task / 高方差 seed 提示) | tooling | meta | pending |
 | 10-9 | **SVAF (arXiv 2604.03955) τ-modulated peer-blending 算子复现**(iter#17 研读,见 [[Symbolic-Vector_Attention_Fusion_SVAF_研读报告]]):toy 2-agent mesh + τ_i ∈ {1, 10, 60} 三组神经元,N 步耦合后看 spectral diff 验证"fast τ 同步 / slow τ 主权"现象 | `analysis/svaf/2026-06-04_tau_toy.md` + ~100 行 core code | iter#17 研读, 最小可复现单元 | **stage A ✅ (iter#22)**, stage B pending (P2) |
 | 10-10 | **PDNA (arXiv 2603.00153) PulseHead + Gapped protocol 复现**(iter#18 研读,见 [[Pulse-Driven_Neural_Architecture_PDNA_研读报告]]):stage A `lnn/core/cfc.py::PDNAPulseHead` (~80 行) + unit test ✅ (iter#19, 12 tests);stage B sMNIST Gapped protocol 3 seed × 5 backbone ablation, backbone matrix 加 smnist_gap 行 ✅ (iter#20, cfc_pulse multi-gap +2.53 pp);stage C Long Range Arena 长程任务 | code + matrix 行 | iter#18 研读,**代码公开** + MNIST zero-cost | **stage A+B ✅, stage C pending (P1)** |
+| 10-11 | **LFM/LNN-related active≤3B vs 30B+ LLM 打榜证据卡**:汇总 `LFM2.5-8B-A1B`(8.3B total / 1.5B active)公开指标、`Qwen3-30B-A3B` 30B+ 基线、本仓 `LFM2.5-1.2B` 本地 GGUF/DPO 推理证据;默认判定 13 个重叠指标 7 胜 / 6 负,只支持 active≤3B MoE 局部胜出,**不支持 exact 3B dense 全面吊打** | `scripts/build_llm_battlecard.py` + `analysis/llm_battlecard/2026-06-04_llm_battlecard.{json,md}` + `tests/test_llm_battlecard.py` | 用户 3B-vs-30B 目标 | ✅ iter#26 claim-audit 落地 |
+| 10-12 | **本机 LFM2.5 GGUF micro-eval harness**: `scripts/run_llm_micro_eval.py` 通过 llama.cpp 对本机模型跑 deterministic arithmetic / instruction / JSON / abstention sanity tasks;当前 `LFM2.5-1.2B-Instruct-Q4_0.gguf` 7/7,最近一次平均生成 16.8 tok/s(随系统负载波动);该门槛不替代公开榜,但阻断“模型部署都没跑通就谈打榜”的假阳性 | `analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.{json,md}` + `tests/test_llm_micro_eval.py` | 用户 3B-vs-30B 目标 | ✅ iter#27 本机实测入口落地 |
+| 10-13 | **30B+ OpenAI-compatible endpoint micro-eval 后端**: `run_llm_micro_eval.py --backend openai-chat` 支持 `/v1/chat/completions`,可直接接本机 llama-server/vLLM/SGLang 或远程 30B+ API,输出同一 JSON schema;当前已用本地 fake OpenAI server 单测覆盖,等待真实 30B+ endpoint/权重 | code + unit test | 用户 3B-vs-30B 目标 | ✅ iter#28 endpoint 对照入口落地 |
+| 10-14 | **LLM micro-eval leaderboard 汇总器**: `build_llm_micro_leaderboard.py` 扫描 `analysis/llm_micro_eval/*_micro_eval.json`,按 accuracy → task coverage → mean tok/s 排序,输出可追加 30B+ endpoint 行的 JSON/Markdown 榜单;当前只有本机 `LFM2.5-1.2B-Instruct-Q4_0.gguf` 一行,1/1 rankable,7/7,16.843 tok/s,尚未形成真实 30B+ 对照 | `analysis/llm_micro_eval/2026-06-04_llm_micro_leaderboard.{json,md}` + `tests/test_llm_micro_leaderboard.py` | 用户 3B-vs-30B 目标 | ✅ iter#29 micro leaderboard 落地 |
 
 ### 已调研未复现 (C 级) 累计表
 

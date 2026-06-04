@@ -1,0 +1,304 @@
+{
+  "run_id": "2026-06-04_llm_battlecard",
+  "date": "2026-06-04",
+  "candidate_key": "lfm25-8b-a1b",
+  "baseline_key": "qwen3-30b-a3b-thinking-2507",
+  "candidate": {
+    "model_id": "LiquidAI/LFM2.5-8B-A1B",
+    "display_name": "LFM2.5-8B-A1B",
+    "family": "Liquid Foundation Model / LNN-related hybrid",
+    "total_params_b": 8.3,
+    "active_params_b": 1.5,
+    "architecture": "MoE + double-gated LIV convolution + GQA",
+    "source_url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B",
+    "source_date": "2026-05-28",
+    "notes": "Closest current LFM-family target to active<=3B; not an exact 3B dense model.",
+    "metrics": {
+      "aa_omniscience_index": -24.7,
+      "aa_omniscience_accuracy": 8.67,
+      "aa_omniscience_non_hallucination": 63.47,
+      "ifeval": 91.84,
+      "ifbench": 56.47,
+      "multi_if": 79.93,
+      "math500": 88.76,
+      "aime25": 42.53,
+      "aime26": 50.0,
+      "bfclv3": 64.79,
+      "bfclv4": 49.73,
+      "tau2_telecom": 88.07,
+      "tau2_retail": 39.82
+    }
+  },
+  "baseline": {
+    "model_id": "Qwen/Qwen3-30B-A3B",
+    "display_name": "Qwen3-30B-A3B-Thinking-2507",
+    "family": "Qwen3 MoE",
+    "total_params_b": 30.5,
+    "active_params_b": 3.3,
+    "architecture": "Transformer MoE",
+    "source_url": "https://huggingface.co/Qwen/Qwen3-30B-A3B",
+    "source_date": "2025-05-13",
+    "notes": "30B+ comparison row from LiquidAI's LFM2.5-8B-A1B benchmark table.",
+    "metrics": {
+      "aa_omniscience_index": -51.31,
+      "aa_omniscience_accuracy": 18.8,
+      "aa_omniscience_non_hallucination": 13.87,
+      "ifeval": 90.82,
+      "ifbench": 51.11,
+      "multi_if": 79.04,
+      "math500": 86.48,
+      "aime25": 71.67,
+      "aime26": 66.67,
+      "bfclv3": 73.39,
+      "bfclv4": 50.53,
+      "tau2_telecom": 21.93,
+      "tau2_retail": 56.14
+    }
+  },
+  "comparison": [
+    {
+      "metric": "aa_omniscience_accuracy",
+      "label": "AA-Omniscience Accuracy",
+      "direction": "higher_is_better",
+      "candidate": 8.67,
+      "baseline": 18.8,
+      "delta": -10.13,
+      "winner": "baseline"
+    },
+    {
+      "metric": "aa_omniscience_index",
+      "label": "AA-Omniscience Index",
+      "direction": "higher_is_better",
+      "candidate": -24.7,
+      "baseline": -51.31,
+      "delta": 26.61,
+      "winner": "candidate"
+    },
+    {
+      "metric": "aa_omniscience_non_hallucination",
+      "label": "AA-Omniscience Non-Hallucination",
+      "direction": "higher_is_better",
+      "candidate": 63.47,
+      "baseline": 13.87,
+      "delta": 49.6,
+      "winner": "candidate"
+    },
+    {
+      "metric": "aime25",
+      "label": "AIME25",
+      "direction": "higher_is_better",
+      "candidate": 42.53,
+      "baseline": 71.67,
+      "delta": -29.14,
+      "winner": "baseline"
+    },
+    {
+      "metric": "aime26",
+      "label": "AIME26",
+      "direction": "higher_is_better",
+      "candidate": 50.0,
+      "baseline": 66.67,
+      "delta": -16.67,
+      "winner": "baseline"
+    },
+    {
+      "metric": "bfclv3",
+      "label": "BFCLv3",
+      "direction": "higher_is_better",
+      "candidate": 64.79,
+      "baseline": 73.39,
+      "delta": -8.6,
+      "winner": "baseline"
+    },
+    {
+      "metric": "bfclv4",
+      "label": "BFCLv4",
+      "direction": "higher_is_better",
+      "candidate": 49.73,
+      "baseline": 50.53,
+      "delta": -0.8,
+      "winner": "baseline"
+    },
+    {
+      "metric": "ifbench",
+      "label": "IFBench",
+      "direction": "higher_is_better",
+      "candidate": 56.47,
+      "baseline": 51.11,
+      "delta": 5.36,
+      "winner": "candidate"
+    },
+    {
+      "metric": "ifeval",
+      "label": "IFEval",
+      "direction": "higher_is_better",
+      "candidate": 91.84,
+      "baseline": 90.82,
+      "delta": 1.02,
+      "winner": "candidate"
+    },
+    {
+      "metric": "math500",
+      "label": "MATH500",
+      "direction": "higher_is_better",
+      "candidate": 88.76,
+      "baseline": 86.48,
+      "delta": 2.28,
+      "winner": "candidate"
+    },
+    {
+      "metric": "multi_if",
+      "label": "Multi-IF",
+      "direction": "higher_is_better",
+      "candidate": 79.93,
+      "baseline": 79.04,
+      "delta": 0.89,
+      "winner": "candidate"
+    },
+    {
+      "metric": "tau2_retail",
+      "label": "Tau2 Retail",
+      "direction": "higher_is_better",
+      "candidate": 39.82,
+      "baseline": 56.14,
+      "delta": -16.32,
+      "winner": "baseline"
+    },
+    {
+      "metric": "tau2_telecom",
+      "label": "Tau2 Telecom",
+      "direction": "higher_is_better",
+      "candidate": 88.07,
+      "baseline": 21.93,
+      "delta": 66.14,
+      "winner": "candidate"
+    }
+  ],
+  "summary": {
+    "wins": 7,
+    "losses": 6,
+    "ties": 0,
+    "n_metrics": 13,
+    "win_rate": 0.5385,
+    "groups": {
+      "knowledge_instruction": {
+        "wins": 5,
+        "losses": 1,
+        "ties": 0,
+        "n_metrics": 6
+      },
+      "math_agentic": {
+        "wins": 2,
+        "losses": 5,
+        "ties": 0,
+        "n_metrics": 7
+      }
+    },
+    "scope": {
+      "candidate_total_under_3b": false,
+      "candidate_active_under_3b": true,
+      "baseline_total_30b_plus": true,
+      "baseline_active_30b_plus": false
+    },
+    "verdict": "active_under_3b_not_dense_3b",
+    "interpretation": "LFM2.5-8B-A1B beats Qwen3-30B-A3B-Thinking-2507 on 7 shared metrics and loses on 6, but it is 8.3B total / 1.5B active, so this supports only the active<=3B MoE thesis, not an exact 3B dense claim."
+  },
+  "local_validation": {
+    "path": "analysis/lfm25/2026-06-01_lfm25_local_validation.json",
+    "run_date": "2026-06-01",
+    "environment": {
+      "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+      "machine": "aarch64",
+      "python": "3.14.4",
+      "llama_cli_on_path": null,
+      "torch": "2.11.0+cu130",
+      "cuda_available": false,
+      "cuda": "13.0"
+    },
+    "gguf": {
+      "status": "ok",
+      "model_path": "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+      "size_bytes": 695751488,
+      "prompt_tps": 58.8,
+      "generation_tps": 19.0,
+      "input_tokens": null,
+      "output_tokens": null,
+      "generation_seconds": null,
+      "response_preview": "Liquid neural networks are adaptive AI models that dynamically adjust their structure in response to data."
+    },
+    "dpo": {
+      "status": "ok",
+      "model_path": "/mnt/ssd/codespace/LNN/models/lfm25-dpo-s1",
+      "size_bytes": 2340697936,
+      "prompt_tps": null,
+      "generation_tps": null,
+      "input_tokens": 19,
+      "output_tokens": 24,
+      "generation_seconds": 13.716,
+      "response_preview": "Liquid neural networks are a type of artificial neural network that uses a continuous, flowing representation of data, allowing for"
+    }
+  },
+  "local_micro_eval": {
+    "path": "analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.json",
+    "date": "2026-06-04",
+    "model_name": "lfm25_1.2b_instruct_q4",
+    "model_path": "models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+    "summary": {
+      "n": 7,
+      "passed": 7,
+      "failed": 0,
+      "accuracy": 1.0,
+      "by_category": {
+        "arithmetic": {
+          "n": 3,
+          "passed": 3,
+          "accuracy": 1.0
+        },
+        "instruction": {
+          "n": 2,
+          "passed": 2,
+          "accuracy": 1.0
+        },
+        "structured_output": {
+          "n": 1,
+          "passed": 1,
+          "accuracy": 1.0
+        },
+        "abstention": {
+          "n": 1,
+          "passed": 1,
+          "accuracy": 1.0
+        }
+      },
+      "generation_tps_mean": 16.843,
+      "generation_tps_median": 14.7
+    }
+  },
+  "sources": [
+    {
+      "name": "LiquidAI LFM2.5-8B-A1B model card",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B",
+      "used_for": "LFM2.5-8B-A1B metrics and architecture snapshot"
+    },
+    {
+      "name": "LiquidAI LFM2.5-8B-A1B blog",
+      "url": "https://www.liquid.ai/blog/lfm2-5-8b-a1b",
+      "used_for": "release date, benchmark interpretation, inference support"
+    },
+    {
+      "name": "Qwen3-30B-A3B model card",
+      "url": "https://huggingface.co/Qwen/Qwen3-30B-A3B",
+      "used_for": "30.5B total / 3.3B active parameter metadata"
+    },
+    {
+      "name": "LFM2.5-1.2B local validation",
+      "url": "analysis/lfm25/2026-06-01_lfm25_local_inference_quantization.md",
+      "used_for": "local GGUF/DPO smoke inference evidence already in this repo"
+    },
+    {
+      "name": "Local LLM micro-eval",
+      "url": "analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.md",
+      "used_for": "deterministic local deployment sanity check"
+    }
+  ]
+}

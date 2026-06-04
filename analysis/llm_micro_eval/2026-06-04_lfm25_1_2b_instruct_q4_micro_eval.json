@@ -1,0 +1,378 @@
+{
+  "run_id": "2026-06-04_lfm25_1_2b_instruct_q4_micro_eval",
+  "date": "2026-06-04",
+  "backend": "llama-cli",
+  "model_name": "lfm25_1.2b_instruct_q4",
+  "model_path": "models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+  "model_exists": true,
+  "llama_cli": "projects/llama.cpp/build/bin/llama-cli",
+  "llama_cli_exists": true,
+  "openai_base_url": null,
+  "openai_model": null,
+  "config": {
+    "ctx_size": 256,
+    "threads": 4,
+    "temperature": 0.0,
+    "top_k": 1,
+    "repeat_penalty": 1.05,
+    "seed": 1,
+    "timeout": 120,
+    "tasks": "all",
+    "min_accuracy": 1.0,
+    "dry_run": false
+  },
+  "summary": {
+    "n": 7,
+    "passed": 7,
+    "failed": 0,
+    "accuracy": 1.0,
+    "by_category": {
+      "arithmetic": {
+        "n": 3,
+        "passed": 3,
+        "accuracy": 1.0
+      },
+      "instruction": {
+        "n": 2,
+        "passed": 2,
+        "accuracy": 1.0
+      },
+      "structured_output": {
+        "n": 1,
+        "passed": 1,
+        "accuracy": 1.0
+      },
+      "abstention": {
+        "n": 1,
+        "passed": 1,
+        "accuracy": 1.0
+      }
+    },
+    "generation_tps_mean": 16.843,
+    "generation_tps_median": 14.7
+  },
+  "results": [
+    {
+      "task_id": "arith_2_plus_3",
+      "category": "arithmetic",
+      "prompt": "Answer with exactly the number. What is 2+3?",
+      "expected": "5",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 6.232,
+      "response": "5",
+      "timing": {
+        "prompt_tps": 23.6,
+        "generation_tps": 13.7
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "5",
+        "expected_normalized": "5"
+      },
+      "command": [
+        "/mnt/ssd/codespace/LNN/projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+        "-p",
+        "Answer with exactly the number. What is 2+3?",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "arith_17_minus_9",
+      "category": "arithmetic",
+      "prompt": "Answer with exactly the number. What is 17-9?",
+      "expected": "8",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 4.074,
+      "response": "8",
+      "timing": {
+        "prompt_tps": 44.7,
+        "generation_tps": 14.0
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "8",
+        "expected_normalized": "8"
+      },
+      "command": [
+        "/mnt/ssd/codespace/LNN/projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+        "-p",
+        "Answer with exactly the number. What is 17-9?",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "arith_12_times_4",
+      "category": "arithmetic",
+      "prompt": "Answer with exactly the number. What is 12*4?",
+      "expected": "48",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 3.153,
+      "response": "48",
+      "timing": {
+        "prompt_tps": 38.2,
+        "generation_tps": 23.2
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "48",
+        "expected_normalized": "48"
+      },
+      "command": [
+        "/mnt/ssd/codespace/LNN/projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+        "-p",
+        "Answer with exactly the number. What is 12*4?",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "instr_exact_word",
+      "category": "instruction",
+      "prompt": "Reply with exactly this word: BLUE",
+      "expected": "BLUE",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 2.856,
+      "response": "BLUE",
+      "timing": {
+        "prompt_tps": 38.2,
+        "generation_tps": 14.7
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "BLUE",
+        "expected_normalized": "BLUE"
+      },
+      "command": [
+        "/mnt/ssd/codespace/LNN/projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+        "-p",
+        "Reply with exactly this word: BLUE",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "instr_exact_two_words",
+      "category": "instruction",
+      "prompt": "Reply with exactly these two words: liquid networks",
+      "expected": "liquid networks",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 3.085,
+      "response": "liquid networks",
+      "timing": {
+        "prompt_tps": 41.7,
+        "generation_tps": 22.4
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "liquid networks",
+        "expected_normalized": "liquid networks"
+      },
+      "command": [
+        "/mnt/ssd/codespace/LNN/projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+        "-p",
+        "Reply with exactly these two words: liquid networks",
+        "-n",
+        "8",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "json_color_blue",
+      "category": "structured_output",
+      "prompt": "Return only this JSON object and no other text: {\"color\":\"blue\"}",
+      "expected": "{\"color\":\"blue\"}",
+      "grader": "json_equal",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 3.827,
+      "response": "{\"color\":\"blue\"}",
+      "timing": {
+        "prompt_tps": 33.2,
+        "generation_tps": 9.8
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "{\"color\":\"blue\"}",
+        "expected_normalized": "{\"color\":\"blue\"}"
+      },
+      "command": [
+        "/mnt/ssd/codespace/LNN/projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+        "-p",
+        "Return only this JSON object and no other text: {\"color\":\"blue\"}",
+        "-n",
+        "24",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "task_id": "abstain_unknown",
+      "category": "abstention",
+      "prompt": "If the answer is not contained in this prompt, reply exactly UNKNOWN. What is the launch code for Project Zephyr-917?",
+      "expected": "UNKNOWN",
+      "grader": "exact_text",
+      "status": "ok",
+      "returncode": 0,
+      "seconds": 3.373,
+      "response": "UNKNOWN",
+      "timing": {
+        "prompt_tps": 47.5,
+        "generation_tps": 20.1
+      },
+      "grade": {
+        "passed": true,
+        "normalized": "UNKNOWN",
+        "expected_normalized": "UNKNOWN"
+      },
+      "command": [
+        "/mnt/ssd/codespace/LNN/projects/llama.cpp/build/bin/llama-cli",
+        "-m",
+        "/mnt/ssd/codespace/LNN/models/lfm25/LFM2.5-1.2B-Instruct-Q4_0.gguf",
+        "-p",
+        "If the answer is not contained in this prompt, reply exactly UNKNOWN. What is the launch code for Project Zephyr-917?",
+        "-n",
+        "12",
+        "-c",
+        "256",
+        "-t",
+        "4",
+        "--temp",
+        "0.0",
+        "--top-k",
+        "1",
+        "--repeat-penalty",
+        "1.05",
+        "--no-display-prompt",
+        "--no-warmup",
+        "--single-turn",
+        "--simple-io",
+        "--seed",
+        "1"
+      ],
+      "stderr_tail": ""
+    }
+  ]
+}

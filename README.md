@@ -78,6 +78,9 @@ to inspect how a result was produced.
 | Learn LNN principles from zero | [docs/guides/LNN_PRINCIPLES_FOR_BEGINNERS.md](docs/guides/LNN_PRINCIPLES_FOR_BEGINNERS.md) |
 | Reproduce the EMMA rover recipe | [LNN_QUICKSTART.md](LNN_QUICKSTART.md) |
 | Compare supported model families | [LNN_MODEL_GUIDE.md](LNN_MODEL_GUIDE.md) |
+| Audit LFM/LNN active-3B vs 30B+ LLM claims | [analysis/llm_battlecard/2026-06-04_llm_battlecard.md](analysis/llm_battlecard/2026-06-04_llm_battlecard.md) |
+| Run the local LFM2.5 micro-eval | [analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.md](analysis/llm_micro_eval/2026-06-04_lfm25_1_2b_instruct_q4_micro_eval.md) |
+| Inspect the LLM micro-eval leaderboard | [analysis/llm_micro_eval/2026-06-04_llm_micro_leaderboard.md](analysis/llm_micro_eval/2026-06-04_llm_micro_leaderboard.md) |
 | Read the product/research roadmap | [docs/PRD_LNN_Edge_Research.md](docs/PRD_LNN_Edge_Research.md) |
 | Inspect multimodal design decisions | [docs/guides/LNN_MULTIMODAL_DESIGN.md](docs/guides/LNN_MULTIMODAL_DESIGN.md) |
 | Understand the automation agents | [AGENTS.md](AGENTS.md) |
