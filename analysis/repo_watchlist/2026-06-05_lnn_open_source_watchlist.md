@@ -150,15 +150,33 @@ tags: [LNN, repo-watchlist, automation]
 ## Hugging Face 模型
 ### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
 - 更新：2026-06-04
-- 下载 / Likes：72114 / 497
+- 下载 / Likes：72114 / 504
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
 
-### [w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ](https://huggingface.co/w-ahmad/LFM2.5-8B-A1B-GGUF-MoQ)
+### [zaakirio/LFM2.5-1.2B-Instruct-Uncensored-GGUF](https://huggingface.co/zaakirio/LFM2.5-1.2B-Instruct-Uncensored-GGUF)
 - 更新：2026-06-04
-- 下载 / Likes：31179 / 0
+- 下载 / Likes：297 / 1
+- 任务：text-generation
+- Tags：gguf, heretic, abliterated, decensored, uncensored, liquid, lfm2, lfm2.5
+
+### [akashicmarga/LFM2.5-Audio-1.5B-ASR-LoRA](https://huggingface.co/akashicmarga/LFM2.5-Audio-1.5B-ASR-LoRA)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 0
 - 任务：unknown
-- Tags：gguf, endpoints_compatible, region:us, conversational
+- Tags：mlx, lora, audio, asr, speech-to-text, function-calling, voice-assistant, apple-silicon
+
+### [Mungert/LFM2.5-8B-A1B-GGUF](https://huggingface.co/Mungert/LFM2.5-8B-A1B-GGUF)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 1
+- 任务：text-generation
+- Tags：transformers, gguf, liquid, lfm2.5, edge, text-generation, en, ar
+
+### [vsuhas9/lfm2-vl-denm](https://huggingface.co/vsuhas9/lfm2-vl-denm)
+- 更新：2026-06-04
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
 
 ### [naklitechie/indira-lfm2-8b-a1b-onnx](https://huggingface.co/naklitechie/indira-lfm2-8b-a1b-onnx)
 - 更新：2026-06-04
@@ -177,18 +195,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：safetensors, lfm2_moe, abliteration, heretic, decensored, liquid, moe, base_model:LiquidAI/LFM2.5-8B-A1B
-
-### [mradermacher/lfm-2.5-thinking-1.2b-k2.5-GGUF](https://huggingface.co/mradermacher/lfm-2.5-thinking-1.2b-k2.5-GGUF)
-- 更新：2026-06-04
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, en, dataset:owenqwenllmwine/kimi-k2.5-1000x-rl, base_model:owenqwenllmwine/lfm-2.5-thinking-1.2b-k2.5, base_model:quantized:owenqwenllmwine/lfm-2.5-thinking-1.2b-k2.5, endpoints_compatible, region:us
-
-### [ersolog/lfm2.5-vl-turtle-detection-vision-unfrozen-r32](https://huggingface.co/ersolog/lfm2.5-vl-turtle-detection-vision-unfrozen-r32)
-- 更新：2026-06-04
-- 下载 / Likes：0 / 0
-- 任务：image-text-to-text
-- Tags：transformers, safetensors, lfm2_vl, image-text-to-text, text-generation-inference, unsloth, trl, conversational
 
 ### [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M)
 - 更新：2026-06-03
