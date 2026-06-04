@@ -1,339 +1,156 @@
----
-title: Liquid Neural Networks (LNN) Research & Projects
-tags:
-  - LNN
-  - AI
-  - project
-date: 2026-05-24
----
+# LNN
 
-# Liquid Neural Networks (LNN) Research & Projects
+PyTorch implementations, benchmarks, and research logs for Liquid Neural Networks.
 
-欢迎来到 **LNN (Liquid Neural Networks)** 研究与开源项目追踪仓库。本仓库旨在收集、整理并分析液态神经网络领域的最新论文、开源项目以及相关的实验代码。
+`Dave-he/LNN` is a code-first research project. It contains a reusable Python
+package under `lnn/` plus an auditable research archive under `docs/` and
+`analysis/`. The package includes CfC, LTC, liquid neuron layers, continuous-time
+variants, graph models, physics-informed models, multimodal models, and
+noise-adaptive CfC backbones. The research archive records paper tracking,
+ablation history, Jetson checks, and EMMA rover benchmark results.
 
-## ⚡ 30 秒 TL;DR
+Current package status: `0.1.0`. Core sequence models are covered by tests and
+are intended for reuse. Timestamped research reports and analysis outputs are
+evidence trails, not stable APIs.
 
-> **新 SOTA**: 真实 EMMA rover 数据上 **MSE 0.31** (2.8× 优于 video_only baseline 0.87),通过 *adaptive freeze-after-warmup* 策略 + Bi-CfC-NAD backbone。跨 25 轮 ablation 后的核心结论: *regime 决定一切* (小预算 cross_attn 赢, 大预算 video_only 赢); *audio 信息内容 ≤ 5pp 贡献*; *family 选 LSTM/CfC/Bi-CfC-NAD 几乎并列* (均 +32~+36%)。详见 `LNN_TLDR.md` (1 页摘要) + `LNN_QUICKSTART.md` (5 分钟跑出 SOTA) + `docs/guides/LNN_MULTIMODAL_DESIGN.md` (完整指南)。
-
-## 🚀 5 分钟跑 SOTA
+## Install
 
 ```bash
-# 1. 准备(自动缓存 EMMA rover 视频/音频特征)
-python lnn/data/emma_rover_features.py
+git clone https://github.com/Dave-he/LNN.git
+cd LNN
 
-# 2. 跑测试(140 small + 2 large_budget, ~85 秒)
-python -m pytest tests/ -q
+python -m venv .venv
+source .venv/bin/activate
 
-# 3. ★ 跑 SOTA recipe(adaptive freeze, MSE 0.31, 1-2 分钟)
-python scripts/benchmark_adaptive_freeze.py \
-    --epochs 80 --warmup-epochs 40 --freeze-targets audio_only \
-    --num-samples 200 --hidden-size 64
-
-# 4. 看 3 模型对比(在两 regime 下分别跑, 验证 regime 翻转)
-python scripts/benchmark_emma_rover.py --epochs 20 --hidden-size 16
-python scripts/benchmark_emma_rover.py --epochs 80 --hidden-size 64
-```
-
-详见 `LNN_QUICKSTART.md`。
-
-## 📂 目录结构
-
-```text
-LNN/
-├── AGENTS.md                   # 自动化 Agent 规划与工作流说明
-├── README.md                   # 项目概述与指南 (本文档)
-├── LNN_TLDR.md                 # 30 秒 TL;DR (新 PR 作者入口)
-├── LNN_QUICKSTART.md            # 5 分钟跑 SOTA MSE 0.31
-├── docs/                       # 文档目录（调研报告、论文总结、学习笔记等）
-│   ├── guides/                 # 设计指南
-│   │   └── LNN_MULTIMODAL_DESIGN.md   # 完整设计指南
-│   └── research/               # 25 轮 ablation 报告
-├── papers/                     # 论文归档与每日追踪
-│   └── daily/                  # 每日/定期论文抓取记录
-├── skills/                     # 符合 Vercel Skills 标准的 AI Agents 技能库
-│   ├── living-field-researcher/ # 领域持续研究与知识库沉淀工作流
-│   ├── paper-analyzer/
-│   │   └── SKILL.md
-│   └── paper-translator/
-│       └── SKILL.md
-├── projects/                   # 开源项目克隆、复现代码与实验项目
-├── analysis/                   # 实验结果分析、数据或可视化相关
-│   ├── emma_rover/             # 真实 rover 数据所有 JSON
-│   └── multimodal_physreg/     # 合成数据所有 JSON
-├── lnn/                        # 核心 LNN 库
-│   ├── core/                   # 模型 + 编码器
-│   └── data/                   # 数据集
-└── scripts/                    # 自动化脚本（论文抓取、数据处理等）
-```
-
-## 🎯 项目目标
-
-1. **追踪前沿**：持续追踪液态神经网络（LNN）及相关领域（如连续时间循环神经网络、神经常微分方程）的最新学术进展。
-2. **源码分析**：汇总、分析和复现主流的开源 LNN 框架和应用案例（如时间序列预测、自动驾驶决策等）。
-3. **自动化研究**：构建基于 AI Agent 的自动化信息收集与分析工作流，提升科研效率。
-
-## 🚀 快速开始
-
-- 想要了解项目的范围 / 验证指标 / 当前进度，请阅读：[[PRD_LNN_Edge_Research|LNN 边缘研究与验证平台 PRD]]
-- 想要了解当前最新进展，请阅读：[[液态神经网络最新进展与开源项目调研]]
-- 想要了解最新的论文总结，请阅读：[[Liquid_Neural_Networks_Latest_Papers_Summary|LNN 最新论文总结]]
-- 想要系统学习 LNN 如何构建数据集、搭建架构、训练和调参，请阅读：[[LNN_训练方法与方向可行报告]]
-- 想要了解本仓库如何持续搜索、筛选和沉淀 LNN 领域知识，请阅读：[[LNN_持续研究协议]]
-- 想要查看每日自动化追踪结果，请阅读：[[docs/daily/2026-05-25_LNN_research_digest|2026-05-25 LNN 每日研究追踪]]
-- 想要配置本机每日任务或 Jetson 验证，请阅读：[[每日自动化任务与Jetson验证]]
-- 关于本项目中自动化工具与工作流的规划，请参阅：[[AGENTS]]
-
-### 自动化任务
-
-本仓库已提供可直接运行的每日追踪入口：
-
-```bash
-# 只生成资料追踪，不提交
-COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
-
-# 安装本机 user systemd timer，每天 06:30 自动运行并推送
-./scripts/install_daily_lnn_timer.sh
-```
-
-GitHub Actions 也已配置 `.github/workflows/daily-lnn-research.yml`，会每天生成 LNN 资料摘要并推送回仓库。
-
-### Jetson 验证
-
-Jetson 本地 smoke benchmark（当前归档数据来自 Jetson Orin Nano；CUDA 容器内设备名显示为 `Orin`）：
-
-```bash
-RUN_BENCHMARK=1 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
-```
-
-如果 CUDA 容器因显存碎片或运行时内存分配失败退出，脚本会默认重试 2 次，再退回 CPU smoke benchmark 并在报告中标记 `ok_cpu_fallback`，便于保留当天验证记录。
-
-需要做边缘 Pareto 筛选时，可显式开启 sweep：
-
-```bash
-python scripts/jetson_lnn_benchmark.py --quick --pareto --hidden-sizes 8,16,24 --seq-lens 16,32 --seeds 42,43
-```
-
-当前真实 Jetson Orin Nano CUDA smoke benchmark（2026-05-26）：
-
-![Jetson LNN Benchmark](analysis/jetson/2026-05-26_lnn_benchmark.png)
-
-| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
-|---|---:|---:|---:|---:|
-| CfCStyle | 329 | 0.691654 | 9,610.1 | 0.79 |
-| GRU | 273 | 0.671285 | 168,201.6 | 0.14 |
-
-- 设备：Jetson Orin Nano / CUDA device `Orin`
-- 环境：Jetson Linux R36.4.7、PyTorch 2.10.0、CUDA 12.6
-- 配置：合成非平稳时间序列，一步预测；samples=64、seq_len=16、hidden_size=8、epochs=1
-- 完整记录：[[analysis/jetson/2026-05-26_lnn_benchmark]]
-
-## 🌟 LNN 相关开源仓库 (Open Source Repositories)
-
-以下是 GitHub 上一些高价值的液态神经网络 (LNN) 及液态时间常数网络 (LTC) 的开源实现与应用案例：
-
-### 核心框架与实现
-- [raminmh/liquid_time_constant_networks](https://github.com/raminmh/liquid_time_constant_networks): Liquid Time-Constant Networks (LTCs) 的经典代码仓库。
-- [Ipsedo/LiquidNetworks](https://github.com/Ipsedo/LiquidNetworks): 使用 PyTorch 实现的 Liquid Time-Constant Networks。
-- [emilierp/exact_lnn](https://github.com/emilierp/exact_lnn): 闭式液态神经网络 (Closed-Form LNNs) 的精确实现。
-- [aygp-dr/liquid-neural-networks](https://github.com/aygp-dr/liquid-neural-networks): 混合 Clojure/Python 实现，参数高效的 LNN 架构（灵感来自秀丽隐杆线虫）。
-- [KPEKEP/LTCtutorial](https://github.com/KPEKEP/LTCtutorial): 从零开始实现 Liquid Time-Constant Neural Network 的详尽教程。
-
-### 实践与应用案例
-- [makramchahine/drone_causality](https://github.com/makramchahine/drone_causality): 论文《Robust Visual Flight Navigation with Liquid Neural Networks》（基于 LNN 的无人机视觉飞行导航）的官方复现代码。
-- [HusseinJammal/Liquid-Neural-Networks-in-Stock-Market-Prediction](https://github.com/HusseinJammal/Liquid-Neural-Networks-in-Stock-Market-Prediction): 使用 LNN 进行股市预测（如特斯拉和苹果）的数据驱动预测模型。
-- [safipatel/LNN-cancer-classification](https://github.com/safipatel/LNN-cancer-classification): 基于 LNN 的癌症图像分类项目。
-- [2ai-lab/LLNs-for-Early-Breast-Cancer-Detection](https://github.com/2ai-lab/LLNs-for-Early-Breast-Cancer-Detection): 利用 LNN 进行早期乳腺癌诊断的创新方法。
-- [SeyedMuhammadHosseinMousavi/Liquid-Neural-Networks-LNNs-Classification](https://github.com/SeyedMuhammadHosseinMousavi/Liquid-Neural-Networks-LNNs-Classification): LNN 在基础分类、聚类和回归任务中的应用探索。
-
-## 📝 Obsidian 导入说明与使用规则
-
-本项目完全兼容并推荐作为 **Obsidian Vault (知识库)** 导入，以获得最佳的双向链接阅读与网状知识管理体验。
-
-### 📥 如何导入
-
-1. 下载或 Clone 本项目到本地：`git clone https://github.com/Dave-he/LNN.git`
-2. 启动 Obsidian，点击 **"Open folder as vault" (打开文件夹作为仓库)**。
-3. 选择本地的 `LNN` 文件夹。
-4. 导入完成！你可以在 Obsidian 中直接查看、编辑和浏览各个 LNN 文档之间的双链关联。
-
-### ✍️ 写作与文档维护规则
-
-为了保证项目在 GitHub 上的可读性，同时发挥 Obsidian 的最大优势，请在协作时遵循以下规则：
-
-1. **双向链接语法**：文档之间的交叉引用请优先使用双向链接 `[[页面名称]]` 或 `[[页面名称|显示别名]]`。GitHub 目前已原生支持解析此类链接。
-2. **文档命名**：
-   - 优先使用有意义的英文或中文命名。
-   - 避免使用系统中不允许的特殊符号。多个单词建议使用下划线 `_` 或中划线 `-` 连接。
-3. **附件与图片**：
-   - 插入图片或 PDF 附件时，推荐统一放置在对应文档同级目录的 `assets/` 文件夹下。
-   - 建议在 Obsidian 设置中将 `Default location for new attachments` 设置为 `In subfolder under current folder`，并命名为 `assets`。
-4. **元数据 (YAML Frontmatter)**：
-   - 建议在每篇新建研究报告或笔记顶部添加 YAML frontmatter，至少包含 `title`, `tags`, `date` 等字段，便于 Obsidian 进行检索与属性管理。
-
-## 🤖 通用 Agents / Skills (基于 Vercel Skills)
-
-本项目使用 [Vercel Skills](https://github.com/vercel-labs/skills) 规范来管理专门用于**领域持续研究、论文研读与分析**的 AI Agents，支持跨平台和跨模型（Claude, Gemini, Qwen, Cursor, Trae 等）使用。
-
-关于如何通过软链接一键安装 `skills/` 目录下的 `living-field-researcher`、`paper-analyzer` 和 `paper-translator` 工具，以及项目中其他自动化 Agent 的规划，**请详细参阅：[[AGENTS]]**。
-
-- `living-field-researcher`：面向任意研究领域的持续搜索、筛选、知识沉淀和实验队列维护；本仓库默认使用 LNN / LTC / CfC / NCP / LFM 研究画像。
-- `paper-analyzer`：单篇论文结构化研读报告。
-- `paper-translator`：学术论文与段落的中英互译。
-
-## 🚀 后续计划
-
-## 🛠️ 工程实践 (Engineering Practice)
-
-本项目已搭建完整的 LNN 工程实践代码框架，支持从零实现和 ncps 库集成两种路径。
-
-### 环境搭建
-
-```bash
-# 创建 conda 环境
-conda create -n lnn python=3.11 -y
-conda activate lnn
-
-# 安装项目（含核心依赖）
-pip install -e .
-
-# 开发依赖
 pip install -e ".[dev]"
-
-# LFM2 模型推理（可选）
-pip install -e ".[lfm]"
+python -m pytest tests -q -m "not large_budget"
 ```
 
-### 项目代码结构
-
-```text
-LNN/
-├── lnn/                          # 核心 Python 包
-│   ├── core/                     # LNN 核心实现（从零构建）
-│   │   ├── liquid_neuron.py      # LiquidNeuron / LiquidLayer / LiquidNN
-│   │   ├── ltc.py                # LTC (Liquid Time-Constant) 网络
-│   │   ├── cfc.py                # CfC (Closed-form Continuous-time) 网络
-│   │   └── trainer.py            # 通用训练引擎
-│   ├── ncps_integration/         # ncps 库集成封装
-│   │   └── ncps_models.py        # NCPSCfC / NCPSLTC / NCPSAutoNCP
-│   ├── lfm2/                     # LFM2 液态基础模型推理与部署
-│   │   └── inference.py          # LFM2Inference / LFM2EdgeDeployer
-│   ├── data/                     # 数据加载与生成
-│   │   ├── timeseries.py         # TimeSeriesDataset / Mackey-Glass / Sine
-│   │   └── multimodal.py         # SyntheticMultimodalDataset / 多模态本机验证数据
-│   └── utils/                    # 工具函数
-│       ├── metrics.py            # MSE / RMSE / MAE / MAPE
-│       └── visualization.py      # 训练曲线 / 预测图 / 对比图
-├── scripts/                      # 实验脚本
-│   ├── experiment_timeseries.py  # 单模型时间序列预测实验
-│   ├── experiment_multimodal_lnn.py # 本机多模态 LNN 实验
-│   └── benchmark_comparison.py   # LNN vs LSTM vs GRU 对比基准
-├── configs/                      # 实验配置文件
-│   ├── default.yaml
-│   ├── ltc_sine.yaml
-│   └── benchmark.yaml
-├── tests/                        # 单元测试
-│   └── test_core.py
-├── analysis/                     # 实验结果输出
-└── pyproject.toml                # 项目配置与依赖
-```
-
-### 快速运行实验
+Run the large-budget EMMA rover tests explicitly when you want the slower
+regime checks:
 
 ```bash
-# CfC 模型 - 正弦波预测
-python scripts/experiment_timeseries.py --model cfc --data sine --epochs 50
-
-# LTC 模型 - Mackey-Glass 混沌时间序列
-python scripts/experiment_timeseries.py --model ltc --data mackey_glass --epochs 50
-
-# 模型对比基准测试（CfC vs LTC vs LSTM vs GRU）
-python scripts/benchmark_comparison.py --data mackey_glass --epochs 50
-
-# OOD 泛化实验：验证 LNN 对分布偏移的鲁棒性
-python scripts/experiment_ood.py --epochs 50
-
-# 概念漂移实验：验证 LNN 对 Regime Change 的适应性
-python scripts/experiment_concept_drift.py --epochs 50
-
-# AutoNCP 稀疏神经电路实验
-python scripts/experiment_autoncp.py --epochs 50
-
-# LNN 控制模仿学习：CfC/LTC/AutoNCP + MSE/MDN action head
-python scripts/experiment_imitation_lnn.py --recurrent cfc --head mdn --epochs 12
-
-# GNN + LNN 动态图预测
-python scripts/experiment_graph_lnn.py --recurrent cfc --epochs 12
-
-# Liquid-S4/LiquidTAD 风格长序列 smoke 实验
-python scripts/experiment_long_sequence.py --mode classification --epochs 10
-python scripts/experiment_long_sequence.py --mode tad --epochs 10
-
-# Physics-informed LNN：damped oscillator 参数恢复与 rollout
-python scripts/experiment_physics_lnn.py --recurrent ltc --epochs 12
-
-# 本机多模态 LNN：传感器序列 + 图像 + 文本 token
-python scripts/experiment_multimodal_lnn.py --model cfc --samples 360 --epochs 8 --device cpu
+python -m pytest tests -q -m large_budget
 ```
 
-### 本机多模态 LNN 验证
-
-已新增 `scripts/experiment_multimodal_lnn.py`，用于在无外部数据下载的情况下验证 LNN 处理多模态输入：
-
-- `sensor`：时序传感器特征，作为 LNN 的时间主轴。
-- `image`：小尺寸灰度图像模式，经 CNN 编码为静态上下文。
-- `tokens`：短文本 token 序列，经 Embedding/mean pooling 编码为静态上下文。
-- 融合方式：将 image/text 上下文广播到每个时间步，与 sensor 编码拼接后输入 CfC 或 LTC。
-
-最近一次本机 CPU smoke run 输出见：[[analysis/multimodal/2026-05-26_115225_multimodal_lnn]]
-
-### 在代码中使用
+## Minimal API Example
 
 ```python
 import torch
-from lnn.core.cfc import CfCNetwork
-from lnn.core.ltc import LTCNetwork
-from lnn.data.timeseries import generate_mackey_glass, create_dataloader
-from lnn.core.trainer import Trainer
+from lnn import CfCNetwork
 
-# 生成数据
-data = generate_mackey_glass(num_samples=2000, tau=17)
-train_loader = create_dataloader(data[:1400], seq_len=32, horizon=1)
+batch, steps, features = 8, 32, 3
+x = torch.randn(batch, steps, features)
+dt = torch.full((batch, steps, 1), 0.5)
+mask = torch.ones(batch, steps, features)
+mask[:, 10:12, :] = 0.0
 
-# 创建 CfC 模型
-model = CfCNetwork(input_size=1, hidden_size=32, output_size=1)
-
-# 训练
-trainer = Trainer(model, lr=1e-3, patience=15)
-history = trainer.fit(train_loader, num_epochs=50)
-```
-
-不规则采样或缺失值序列可以把 `delta_t` 和 `mask` 交给同一个 DataLoader；`Trainer` 会自动把 metadata 传给支持 `dt`、`mask` 的模型：
-
-```python
-delta_t = torch.ones(len(data)) * 0.5
-mask = torch.ones(len(data))
-mask[100:120] = 0.0
-
-train_loader = create_dataloader(
-    data[:1400],
-    seq_len=32,
-    horizon=1,
-    delta_t=delta_t[:1400],
-    mask=mask[:1400],
+model = CfCNetwork(
+    input_size=features,
+    hidden_size=32,
+    output_size=1,
+    return_sequences=False,
 )
-model = CfCNetwork(input_size=1, hidden_size=32, output_size=1, return_sequences=False)
-history = Trainer(model, lr=1e-3, patience=15).fit(train_loader, num_epochs=50)
+
+y = model(x, dt=dt, mask=mask)
+print(y.shape)  # torch.Size([8, 1])
 ```
 
-### Jetson Orin Nano 实测 Benchmark
+## What Is Stable?
 
-README 不再固化桌面/示例实验数值；下表与图来自 `analysis/jetson/2026-05-26_lnn_benchmark.json` 的真实 Jetson Orin Nano CUDA smoke test。
+| Area | Path | Status |
+|---|---|---|
+| Core sequence models | `lnn/core/cfc.py`, `lnn/core/ltc.py`, `lnn/core/liquid_neuron.py` | Reusable, tested package code |
+| Sequence utilities | `lnn/core/sequence_utils.py`, `lnn/core/trainer.py`, `lnn/data/timeseries.py` | Reusable helpers for experiments |
+| Research backbones | `lnn/core/noise_adaptive_cfc.py`, `lnn/core/multimodal_physreg.py`, `lnn/core/dynpmnn.py`, `lnn/core/variants.py` | Tested, but APIs may change with new papers |
+| Benchmarks and recipes | `scripts/`, `configs/` | Reproducibility entry points; CLI flags may evolve |
+| Research archive | `docs/research/`, `docs/reports/`, `analysis/` | Timestamped evidence and iteration history |
+| Knowledge workflow | `AGENTS.md`, `skills/` | Automation and paper-analysis workflow docs |
 
-![Jetson LNN Benchmark](analysis/jetson/2026-05-26_lnn_benchmark.png)
+Use `lnn/` for library code. Use `docs/research/` and `analysis/` when you want
+to inspect how a result was produced.
 
-| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
-|---|---:|---:|---:|---:|
-| CfCStyle | 329 | 0.691654 | 9,610.1 | 0.79 |
-| GRU | 273 | 0.671285 | 168,201.6 | 0.14 |
+## Quick Paths
 
-本次 benchmark 是 quick smoke test，用于验证 Jetson 上的数据生成、训练、推理和结果归档链路。正式性能结论应提高样本数、隐藏维度、epoch，并加入多次重复与置信区间。
+| Goal | Start here |
+|---|---|
+| Understand the current benchmark result | [LNN_TLDR.md](LNN_TLDR.md) |
+| Reproduce the EMMA rover recipe | [LNN_QUICKSTART.md](LNN_QUICKSTART.md) |
+| Compare supported model families | [LNN_MODEL_GUIDE.md](LNN_MODEL_GUIDE.md) |
+| Read the product/research roadmap | [docs/PRD_LNN_Edge_Research.md](docs/PRD_LNN_Edge_Research.md) |
+| Inspect multimodal design decisions | [docs/guides/LNN_MULTIMODAL_DESIGN.md](docs/guides/LNN_MULTIMODAL_DESIGN.md) |
+| Understand the automation agents | [AGENTS.md](AGENTS.md) |
+
+## Benchmark Snapshot
+
+The current headline EMMA rover result is an adaptive freeze recipe using a
+Bi-CfC-NAD style backbone:
+
+```bash
+python lnn/data/emma_rover_features.py
+python scripts/benchmark_adaptive_freeze.py \
+    --epochs 80 \
+    --warmup-epochs 40 \
+    --freeze-targets audio_only \
+    --num-samples 200 \
+    --hidden-size 64
+```
+
+The latest recorded run reports roughly `MSE ~= 0.31`, compared with a
+`video_only` baseline around `0.87`. Treat this as an actively maintained
+research benchmark; inspect `analysis/emma_rover/` and the linked research docs
+for the full ablation trail.
+
+For Jetson smoke checks:
+
+```bash
+RUN_BENCHMARK=1 COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
+python scripts/jetson_lnn_benchmark.py --quick --pareto
+```
+
+## Repository Layout
+
+```text
+LNN/
+├── lnn/                  # Python package: models, datasets, utilities
+├── tests/                # Unit and regime tests
+├── scripts/              # Benchmarks, ablations, automation entry points
+├── configs/              # Experiment configs
+├── analysis/             # Generated benchmark outputs and plots
+├── docs/                 # Research reports, PRD, living-review notes
+├── papers/               # Paper tracking and archives
+├── projects/             # External repo clones and reproduction work
+└── skills/               # Vercel Skills-compatible research agents
+```
+
+This repository can also be opened as an Obsidian vault. The GitHub README is
+intentionally shorter and code-first; the vault-style notes remain in `docs/`.
+
+## Automation
+
+Generate the daily LNN research digest without committing:
+
+```bash
+COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
+```
+
+Install the local user-level systemd timer:
+
+```bash
+./scripts/install_daily_lnn_timer.sh
+```
+
+GitHub Actions also runs `.github/workflows/daily-lnn-research.yml` to generate
+daily research summaries.
+
+## Related Implementations
+
+- [raminmh/liquid_time_constant_networks](https://github.com/raminmh/liquid_time_constant_networks)
+- [raminmh/CfC](https://github.com/raminmh/CfC)
+- [mlech26l/ncps](https://github.com/mlech26l/ncps)
+- [emilierp/exact_lnn](https://github.com/emilierp/exact_lnn)
+- [makramchahine/drone_causality](https://github.com/makramchahine/drone_causality)
+
+## License
+
+MIT. See [LICENSE](LICENSE).
