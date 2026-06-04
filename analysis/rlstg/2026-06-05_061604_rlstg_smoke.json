@@ -1,0 +1,82 @@
+{
+  "run_id": "2026-06-05_061604",
+  "generated_at": "2026-06-05T06:16:04",
+  "config": {
+    "num_train": 512,
+    "num_val": 128,
+    "seq_len": 20,
+    "input_size": 16,
+    "hidden_size": 15,
+    "epochs": 5,
+    "lr": 0.003,
+    "seed": 42,
+    "backbones": [
+      "cfc",
+      "ltc",
+      "gru",
+      "rlstg"
+    ],
+    "device": "cpu",
+    "output_dir": "analysis/rlstg"
+  },
+  "results": [
+    {
+      "backbone": "cfc",
+      "seed": 42,
+      "params": 1471,
+      "acc": 0.546875,
+      "aux_loss_proxy": 0.03195551037788391,
+      "train_seconds": 1.015744924545288
+    },
+    {
+      "backbone": "ltc",
+      "seed": 42,
+      "params": 1006,
+      "acc": 0.4453125,
+      "aux_loss_proxy": 0.010166912339627743,
+      "train_seconds": 1.5280179977416992
+    },
+    {
+      "backbone": "gru",
+      "seed": 42,
+      "params": 1501,
+      "acc": 0.5625,
+      "aux_loss_proxy": 0.02248329669237137,
+      "train_seconds": 0.7196507453918457
+    },
+    {
+      "backbone": "rlstg",
+      "seed": 42,
+      "params": 834,
+      "acc": 0.5546875,
+      "aux_loss_proxy": 0.10066507756710052,
+      "train_seconds": 1.973677396774292
+    }
+  ],
+  "summary": {
+    "cfc": {
+      "n_seeds": 1,
+      "acc_mean": 0.546875,
+      "acc_std": 0.0,
+      "params_mean": 1471
+    },
+    "ltc": {
+      "n_seeds": 1,
+      "acc_mean": 0.4453125,
+      "acc_std": 0.0,
+      "params_mean": 1006
+    },
+    "gru": {
+      "n_seeds": 1,
+      "acc_mean": 0.5625,
+      "acc_std": 0.0,
+      "params_mean": 1501
+    },
+    "rlstg": {
+      "n_seeds": 1,
+      "acc_mean": 0.5546875,
+      "acc_std": 0.0,
+      "params_mean": 834
+    }
+  }
+}

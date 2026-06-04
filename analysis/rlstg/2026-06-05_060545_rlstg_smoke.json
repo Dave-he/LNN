@@ -1,0 +1,40 @@
+{
+  "run_id": "2026-06-05_060545",
+  "generated_at": "2026-06-05T06:05:45",
+  "config": {
+    "num_train": 512,
+    "num_val": 128,
+    "seq_len": 20,
+    "input_size": 16,
+    "hidden_size": 15,
+    "epochs": 3,
+    "lr": 0.003,
+    "seed": 42,
+    "backbones": [
+      "cfc",
+      "ltc",
+      "gru",
+      "rlstg"
+    ],
+    "device": "cpu",
+    "output_dir": "analysis/rlstg"
+  },
+  "results": [
+    {
+      "backbone": "gru",
+      "seed": 42,
+      "params": 1501,
+      "acc": 0.5546875,
+      "aux_loss_proxy": 0.021969681605696678,
+      "train_seconds": 0.8426008224487305
+    }
+  ],
+  "summary": {
+    "gru": {
+      "n_seeds": 1,
+      "acc_mean": 0.5546875,
+      "acc_std": 0.0,
+      "params_mean": 1501
+    }
+  }
+}
