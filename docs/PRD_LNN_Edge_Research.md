@@ -191,16 +191,17 @@ PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
 (#1 RAM / #3 数据 / #6 RAM+CUDA)。无外部依赖任务面已耗尽,
 启动第三波 — 主要面向**新论文复现 + 把 backbone matrix 扩展到更多 LNN 变体**。
 
-| # | 任务 | 出口物 | 关联 |
-|---:|---|---|---|
-| 10-1 | DynPMNN(2605.08176)复现 stage A:`lnn/core/dynpmnn.py::FHNCell + DynPMNNNetwork` | code + unit test | iter#16 研读 |
-| 10-2 | DynPMNN stage B:加 `--backbone fhn_dynpmnn` 到 ablation runner,跑 multi-seed 对比 | matrix 新增 dynpmnn 列 | §10 #1 之后 |
-| 10-3 | Comparative LNN vs LSTM phase-D:hidden=64 + epochs=50 + samples=4000,看 LNN 优势是否随规模出现 | `analysis/timeseries_ablation/<date>_phase_d.md` | §9 #2 v6 |
-| 10-4 | 给 `experiment_graph_lnn_molecule.py` 加 `HierarchicalDecayLiquidTADHead` 作为 recurrent 选项(交叉 #2 与 #6) | code + smoke | 综合 |
-| 10-5 | `loop_status.py` 加 `--prd-status` 子模式:解析 §8/§9/§10 全表,出未完成 + 阻塞理由 | code + sample report | §9 #5 衍生 |
-| 10-6 | `build_backbone_matrix.py` 加 `--export-readme-snippet`:产 README 顶部 badge 行(LSTM 3/4 win 等) | code + README badge | §9 #7 衍生 |
-| 10-7 | LFM2 (LFM2.5-1.2B-Distilled-SFT)在 RAM 空载窗口跑 1 次 INT8 推理 + token/sec 表 | `analysis/lfm25/<date>_lfm25_int8_jetson.md` | §8 #3 / §9 #1 |
-| 10-8 | `analysis/loop_status/` 自动生成 README 标签云(高频 task / 高方差 seed 提示) | tooling | meta |
+| # | 任务 | 出口物 | 关联 | 状态 |
+|---:|---|---|---|---|
+| 10-1 | DynPMNN(2605.08176)复现 stage A:`lnn/core/dynpmnn.py::FHNCell + DynPMNNNetwork` | code + unit test | iter#16 研读 | pending |
+| 10-2 | DynPMNN stage B:加 `--backbone fhn_dynpmnn` 到 ablation runner,跑 multi-seed 对比 | matrix 新增 dynpmnn 列 | §10 #1 之后 | pending |
+| 10-3 | Comparative LNN vs LSTM phase-D:hidden=64 + epochs=50 + samples=4000,看 LNN 优势是否随规模出现 | `analysis/timeseries_ablation/<date>_phase_d.md` | §9 #2 v6 | pending |
+| 10-4 | 给 `experiment_graph_lnn_molecule.py` 加 `HierarchicalDecayLiquidTADHead` 作为 recurrent 选项(交叉 #2 与 #6) | code + smoke | 综合 | pending |
+| 10-5 | `loop_status.py` 加 `--prd-status` 子模式:解析 §8/§9/§10 全表,出未完成 + 阻塞理由 | code + sample report | §9 #5 衍生 | pending |
+| 10-6 | `build_backbone_matrix.py` 加 `--export-readme-snippet`:产 README 顶部 badge 行(LSTM 3/4 win 等) | code + README badge | §9 #7 衍生 | pending |
+| 10-7 | LFM2 (LFM2.5-1.2B-Distilled-SFT)在 RAM 空载窗口跑 1 次 INT8 推理 + token/sec 表 | `analysis/lfm25/<date>_lfm25_int8_jetson.md` | §8 #3 / §9 #1 | pending (RAM blocker) |
+| 10-8 | `analysis/loop_status/` 自动生成 README 标签云(高频 task / 高方差 seed 提示) | tooling | meta | pending |
+| 10-9 | **SVAF (arXiv 2604.03955) τ-modulated peer-blending 算子复现**(iter#17 研读,见 [[Symbolic-Vector_Attention_Fusion_SVAF_研读报告]]):toy 2-agent mesh + τ_i ∈ {1, 10, 60} 三组神经元,N 步耦合后看 spectral diff 验证"fast τ 同步 / slow τ 主权"现象 | `analysis/cfcs/svaf_tau_blend_<date>.md` + 50 行 core code | iter#17 研读, 最小可复现单元 | pending (P2) |
 
 ### 已调研未复现 (C 级) 累计表
 
@@ -210,3 +211,11 @@ PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
 | LiquidAI/LFM2.5-8B-A1B | 8B too big for Orin Nano 8GB | iter#1 daily |
 | raminmh/CfC (官方 tf) | 被 ncps 取代 | iter#5 |
 | DynPMNN (arXiv 2605.08176) | **无公开代码**,需自行复现 — 见 PRD §10 #1 → #2 | [[Physics-Modeled_Neural_Networks_DynPMNN_研读报告]] |
+| **SVAF (arXiv 2604.03955, iter#17)** | **部分可复现**: 端到端需 237K LLM-authored 训练数据(作者未公开);**τ 调制耦合算子(公式 20)是 P2 mini-task** | [[Symbolic-Vector_Attention_Fusion_SVAF_研读报告]] |
+| AEGIS (arXiv 2604.02149) | 与 LNN 弱关联(Thermodynamic State Space Model,非 CfC/LTC);非 P0 候选 | iter#17 调研 |
+
+### §10 完成度(由 iter#17 跟踪)
+
+- **0/9 完成**(全部 pending,iter#17 加 10-9 SVAF)
+- 最小可启动无阻塞项: 10-5 (loop_status 已有),10-8 (loop_status 已有)
+- 最小可复现新论文单元: 10-9 (τ 调制算子 50 行)
