@@ -225,3 +225,107 @@ class PDNAPulseHead(nn.Module):
             attended = self.self_attend_proj(torch.sigmoid(h))
             h = h + self.beta * attended
         return h
+
+
+# ===================================================================
+# SVAF τ-modulated peer-blending (arXiv 2604.03955v1 §7.1 Eq. 19-20)
+# ===================================================================
+# Implemented as a *standalone* utility — does not require SVAF's full
+# Cognitive-Memory-Block + fusion-gate machinery, just the per-neuron
+# coupling coefficient. This is the minimum unit that lets a multi-agent
+# mesh blend CfC cognitive states with explicit per-neuron τ control.
+#
+# Reference (Eq. 20 in the paper, iter#17 deep-read):
+#     β_i = min(α_eff × K × sim_i / τ_i, 1.0)
+# where:
+#     sim_i = max(1 - |h_local_i - h_mesh_i| / max(|h_local_i|, |h_mesh_i|), 0)
+# Neuron role table (Table 14):
+#     τ < 5s     → Fast   — readily coupled (mood, reactive signals)
+#     5 ≤ τ ≤ 30 → Medium — moderate
+#     τ > 30s    → Slow   — resists coupling (domain expertise)
+
+
+def similarity_per_dim(h_local: torch.Tensor, h_mesh: torch.Tensor) -> torch.Tensor:
+    """Per-neuron similarity in [0, 1], Eq. 19 left half.
+
+    Args:
+        h_local: [B, d]  agent's own hidden state.
+        h_mesh:  [B, d]  peer's hidden state (or mesh aggregate).
+
+    Returns:
+        sim: [B, d] per-neuron similarity.
+    """
+    diff = (h_local - h_mesh).abs()
+    denom = torch.maximum(h_local.abs(), h_mesh.abs()).clamp_min(1e-8)
+    sim = (1.0 - diff / denom).clamp_min(0.0)
+    return sim
+
+
+def tau_modulated_blend_coef(
+    h_local: torch.Tensor,
+    h_mesh: torch.Tensor,
+    tau: torch.Tensor,
+    alpha_eff: float = 0.40,
+    K: float = 30.0,
+) -> torch.Tensor:
+    """Compute per-neuron blending coefficient β_i per Eq. 20.
+
+    Args:
+        h_local:   [B, d] agent's own hidden state.
+        h_mesh:    [B, d] peer's hidden state.
+        tau:       [d]    per-neuron time constants (in seconds, > 0).
+        alpha_eff: scalar peer-level blending strength (0.40 aligned, 0.15 guarded, 0 rejected).
+        K:         scalar constant that scales the (sim / τ) term before clipping to 1.0.
+
+    Returns:
+        beta: [B, d] per-neuron blending coefficient in [0, 1].
+    """
+    sim = similarity_per_dim(h_local, h_mesh)        # [B, d]
+    beta = alpha_eff * K * sim / tau.clamp_min(1e-8)  # [B, d]
+    return beta.clamp_max(1.0)
+
+
+def tau_modulated_blend_update(
+    h_local: torch.Tensor,
+    h_mesh: torch.Tensor,
+    tau: torch.Tensor,
+    alpha_eff: float = 0.40,
+    K: float = 30.0,
+) -> torch.Tensor:
+    """Apply one τ-modulated peer-blend step to h_local (Eq. 20 update form).
+
+    Returns the new hidden state: h_new = (1 - β) ⊙ h_local + β ⊙ h_mesh,
+    where β is per-neuron.
+
+    Args:
+        h_local:   [B, d] agent's own hidden state.
+        h_mesh:    [B, d] peer's hidden state.
+        tau:       [d]    per-neuron time constants.
+        alpha_eff: scalar (see tau_modulated_blend_coef).
+        K:         scalar (see tau_modulated_blend_coef).
+
+    Returns:
+        h_new: [B, d] blended hidden state.
+    """
+    beta = tau_modulated_blend_coef(h_local, h_mesh, tau, alpha_eff, K)
+    return (1.0 - beta) * h_local + beta * h_mesh
+
+
+def default_three_group_tau(d: int) -> torch.Tensor:
+    """Convenience helper: split d neurons into Fast / Medium / Slow τ groups.
+
+    Fast:    τ = 1s   (readily coupled)
+    Medium:  τ = 10s  (moderate)
+    Slow:    τ = 60s  (resists coupling)
+
+    Returns a 1D tensor of length d cycling through the three groups
+    in 1/3 + 1/3 + 1/3 ratio (caller may override).
+    """
+    third = max(1, d // 3)
+    groups = torch.cat([
+        torch.full((third,), 1.0),                # Fast
+        torch.full((third,), 10.0),               # Medium
+        torch.full((d - 2 * third,), 60.0),       # Slow (remainder)
+    ])
+    return groups
+

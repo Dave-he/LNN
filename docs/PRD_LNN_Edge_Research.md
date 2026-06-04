@@ -201,7 +201,7 @@ PRD §9 完成度 **5/8 = 62.5%**(#2/#4/#5/#7/#8 ✅),剩 3 个真实硬阻塞
 | 10-6 | `build_backbone_matrix.py` 加 `--export-readme-snippet`:产 README 顶部 badge 行(LSTM 3/4 win 等) | code + README badge | §9 #7 衍生 | pending |
 | 10-7 | LFM2 (LFM2.5-1.2B-Distilled-SFT)在 RAM 空载窗口跑 1 次 INT8 推理 + token/sec 表 | `analysis/lfm25/<date>_lfm25_int8_jetson.md` | §8 #3 / §9 #1 | pending (RAM blocker) |
 | 10-8 | `analysis/loop_status/` 自动生成 README 标签云(高频 task / 高方差 seed 提示) | tooling | meta | pending |
-| 10-9 | **SVAF (arXiv 2604.03955) τ-modulated peer-blending 算子复现**(iter#17 研读,见 [[Symbolic-Vector_Attention_Fusion_SVAF_研读报告]]):toy 2-agent mesh + τ_i ∈ {1, 10, 60} 三组神经元,N 步耦合后看 spectral diff 验证"fast τ 同步 / slow τ 主权"现象 | `analysis/cfcs/svaf_tau_blend_<date>.md` + 50 行 core code | iter#17 研读, 最小可复现单元 | pending (P2) |
+| 10-9 | **SVAF (arXiv 2604.03955) τ-modulated peer-blending 算子复现**(iter#17 研读,见 [[Symbolic-Vector_Attention_Fusion_SVAF_研读报告]]):toy 2-agent mesh + τ_i ∈ {1, 10, 60} 三组神经元,N 步耦合后看 spectral diff 验证"fast τ 同步 / slow τ 主权"现象 | `analysis/svaf/2026-06-04_tau_toy.md` + ~100 行 core code | iter#17 研读, 最小可复现单元 | **stage A ✅ (iter#22)**, stage B pending (P2) |
 | 10-10 | **PDNA (arXiv 2603.00153) PulseHead + Gapped protocol 复现**(iter#18 研读,见 [[Pulse-Driven_Neural_Architecture_PDNA_研读报告]]):stage A `lnn/core/cfc.py::PDNAPulseHead` (~80 行) + unit test ✅ (iter#19, 12 tests);stage B sMNIST Gapped protocol 3 seed × 5 backbone ablation, backbone matrix 加 smnist_gap 行 ✅ (iter#20, cfc_pulse multi-gap +2.53 pp);stage C Long Range Arena 长程任务 | code + matrix 行 | iter#18 研读,**代码公开** + MNIST zero-cost | **stage A+B ✅, stage C pending (P1)** |
 
 ### 已调研未复现 (C 级) 累计表
