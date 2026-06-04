@@ -1,0 +1,74 @@
+{
+  "config": {
+    "model": "VanillaCfCXAttnWithMDN",
+    "n_seeds": 30,
+    "K": 20,
+    "hidden_size": 96,
+    "epochs": 80,
+    "warmup_epochs": 40,
+    "phase2_inject_sigma": 0.1,
+    "freeze": "audio_only",
+    "val_frac": 0.2,
+    "lr": 0.005,
+    "seeds": [
+      1,
+      2,
+      3,
+      7,
+      42,
+      11,
+      100,
+      2026,
+      313,
+      777,
+      55,
+      99,
+      314,
+      555,
+      888,
+      1024,
+      2027,
+      3141,
+      4242,
+      9999,
+      17,
+      88,
+      256,
+      512,
+      1023,
+      2048,
+      4096,
+      8192,
+      16384,
+      32768
+    ]
+  },
+  "per_fold": {
+    "ensemble_mses": [
+      7.593245506286621,
+      4.823698043823242,
+      3.796393871307373,
+      3.6723015308380127
+    ],
+    "per_seed_mean_mses": [
+      24.577976305161915,
+      19.30521371445308,
+      20.113850136722128,
+      18.424104854961236
+    ]
+  },
+  "aggregate": {
+    "ensemble_mse_mean": 4.971409738063812,
+    "per_seed_mean_mse_mean": 20.60528625282459,
+    "delta": 15.633876514760779,
+    "delta_pct": 75.8731343158005
+  },
+  "references": {
+    "round_70_BiCfC_30seed_K20": 0.2359,
+    "round_65_BiCfC_30seed_K20": 0.24
+  },
+  "metadata": {
+    "round": 71,
+    "purpose": "Test if v15 recipe (30 seeds + K=20 + phase2 inject) generalizes to vanilla_cfc"
+  }
+}
