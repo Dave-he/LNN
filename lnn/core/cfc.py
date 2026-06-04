@@ -132,3 +132,96 @@ class CfCNetwork(nn.Module):
             return self.output_proj(layer_input)
         else:
             return self.output_proj(layer_input[:, -1, :])
+
+
+class PDNAPulseHead(nn.Module):
+    """
+    Pulse-Driven Neural Architecture (PDNA) augmentation head.
+
+    Implements the post-hoc gated additive residuals from arXiv:2603.00153v1
+    (Paras Sharma, 2026) §3.2-3.3, designed to augment a CfC backbone's hidden
+    state sequence with learnable oscillatory dynamics + optional recurrent
+    self-attention. The paper shows +4.62 pp on sMNIST multi-gap protocol
+    (Cohen's d=0.87, 5/5 seeds) for the pulse variant over a CfC baseline.
+
+    Two gated additive residuals:
+        pulse:    h + α · A · sin(ω · t + φ(h))              (Eq. 3-4)
+        attend:   h + β · Wself · σ(h)                       (Eq. 5-6)
+    where:
+        - A ∈ R^d  learnable amplitude (per hidden dim)
+        - ω ∈ R^d  learnable frequency, log-uniform init [0.1, 10.0]
+        - φ(h) = W_φ h + b_φ  state-dependent phase
+        - α, β    scalar gates, init 0.01 (let backbone train first)
+
+    Note: as the paper §8 (iii) acknowledges, this is a *post-hoc* augmentation
+    of the full hidden-state tensor rather than a true continuous-time dynamic
+    evolving between input steps. A sequential ODE-based architecture would be
+    needed for the latter.
+
+    Args:
+        hidden_size: d, the CfC backbone's hidden dimension
+        use_self_attend: whether to also add the recurrent self-attend module
+        omega_low/high: bounds for the log-uniform ω init
+        alpha_init: initial value for the pulse scalar gate (paper uses 0.01)
+        beta_init:  initial value for the attend scalar gate (paper uses 0.01)
+    """
+
+    def __init__(
+        self,
+        hidden_size: int,
+        use_self_attend: bool = True,
+        omega_low: float = 0.1,
+        omega_high: float = 10.0,
+        alpha_init: float = 0.01,
+        beta_init: float = 0.01,
+    ):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.use_self_attend = use_self_attend
+
+        # Per-dim learnable amplitude A ∈ R^d (init to 1.0, paper leaves default)
+        self.amplitude = nn.Parameter(torch.ones(hidden_size))
+        # Per-dim learnable frequency ω ∈ R^d, log-uniform init
+        log_low, log_high = float(torch.log(torch.tensor(omega_low)).item()), \
+                            float(torch.log(torch.tensor(omega_high)).item())
+        self.omega = nn.Parameter(torch.empty(hidden_size).uniform_(log_low, log_high).exp())
+        # State-dependent phase: φ(h) = W_φ h + b_φ
+        self.phase_proj = nn.Linear(hidden_size, hidden_size)
+        # Scalar pulse gate α (init 0.01)
+        self.alpha = nn.Parameter(torch.tensor(float(alpha_init)))
+
+        if use_self_attend:
+            # Recurrent self-attention: Wself · σ(h)
+            self.self_attend_proj = nn.Linear(hidden_size, hidden_size)
+            # Scalar attend gate β (init 0.01)
+            self.beta = nn.Parameter(torch.tensor(float(beta_init)))
+
+    def forward(self, h: torch.Tensor, t: torch.Tensor | None = None) -> torch.Tensor:
+        """
+        Apply pulse (+ optional self-attend) augmentation to a hidden state seq.
+
+        Args:
+            h: [B, T, d] hidden state sequence (typically CfCNetwork return_sequences output)
+            t: optional [T] linear timestep index (defaults to torch.arange(T))
+
+        Returns:
+            h_aug: [B, T, d] augmented hidden state sequence (same shape as h)
+        """
+        B, T, d = h.shape
+        assert d == self.hidden_size, f"hidden dim mismatch: got {d}, expected {self.hidden_size}"
+        if t is None:
+            t = torch.arange(T, device=h.device, dtype=h.dtype)
+        # Broadcast t to per-batch: [T] -> [1, T] -> [B, T]
+        t_b = t.view(1, T).expand(B, T)
+
+        # Pulse: pulse(t, h) = A · sin(ω · t + φ(h))
+        # ω is [d], so ω · t is [B, T, d] via broadcasting
+        phase = self.phase_proj(h)                       # [B, T, d]
+        angular = self.omega.view(1, 1, d) * t_b.unsqueeze(-1)  # [B, T, d]
+        pulse = self.amplitude.view(1, 1, d) * torch.sin(angular + phase)
+        h = h + self.alpha * pulse
+
+        if self.use_self_attend:
+            attended = self.self_attend_proj(torch.sigmoid(h))
+            h = h + self.beta * attended
+        return h
