@@ -188,6 +188,13 @@ tags: [LNN, reading-report, papers]
 - **关键成果**：horizon-T 失败概率分解为增益依赖放大 × 验证损失 + 泛化松弛；四区排序 CO 紧、SU 松；可作 BC 部署前的快速"风险热图"。
 - **LNN 桥接**：$\Psi(K)$ 的"标签难度/注入强度/收缩性"三因子与 LNN 的"时间常数/输入门/状态收缩"有结构同构，可为未来 LNN-on-robotics 失败界提供方法论。
 
+### [2026-06-06] AEGIS — TVD-HL-SSM（零信任 + 双曲液态 SSM 反白盒对抗）
+- **独立报告**：[[docs/reports/AEGIS_TVD-HL-SSM_2604.02149_研读报告.md]]
+- **核心问题**：TLS 1.3 下欧氏 Transformer（ET-BERT）在对抗前缀注入下准确率跌至 25.68%，VLESS Reality + AMOI 形态变异 + Manifold Shattering 同步攻击使传统内容/时序分类器均失效。
+- **方法论**：抛弃 payload，提取 6 维流物理量 $(S_i,\Delta t_i,D_i,W_i,F_i,P_i)$；用 Poincaré 双曲投影 + Liquid Time-Constant ODE（$\tau(\Delta t_i)$ 时变）+ Mamba-3 选择式 SSM 串成 TVD-HL-SSM；引入 Shannon 熵正则项 $\mathcal{L}_{\text{thermo}}=\lambda(\mathbb{E}[H_{\text{benign}}]-H(X))$ 反 Manifold Shattering；C++ eBPF XDP Harvester + 零拷贝共享内存 + torch.frombuffer 跨进程桥。
+- **关键成果**：400 GB / 4 层对抗语料上 F1=0.9952, TPR=99.50%, 推理延迟 262.27 µs (RTX 4090)，理论 40 Mpps；与 ET-BERT/标准 SSM 范式对比表显示"双曲流物理"同时免疫对抗前缀与时序变异。
+- **局限**：Tier IV 闭源导致 F1 不可第三方复现；$\tau_{\text{threshold}}=0.12$ 跨域迁移性未充分论证；AMOI/Ayaka 攻击为作者内部框架，独立白盒复现缺位；长时间漂移（小时级）热力学异常未明确。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
