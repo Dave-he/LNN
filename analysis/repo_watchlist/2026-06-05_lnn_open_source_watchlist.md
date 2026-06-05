@@ -7,19 +7,26 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-06-05
 
 ## GitHub 仓库
+### [Gonzablanmar/Hybrid-Neural-network-for-double-pendulum-simulation](https://github.com/Gonzablanmar/Hybrid-Neural-network-for-double-pendulum-simulation)
+- 更新：2026-06-05
+- Star / Fork：0 / 0
+- 语言：Jupyter Notebook
+- Topics：未标注
+- 说明：Mix of a Lagrangian neural network and Liquid neural network to predict the dynamics of the double pendulum with
+
+### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
+- 更新：2026-06-05
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
+
 ### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
 - 更新：2026-06-04
 - Star / Fork：1 / 0
 - 语言：C
 - Topics：未标注
 - 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
-
-### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-06-04
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
 
 ### [infinition/LSTN](https://github.com/infinition/LSTN)
 - 更新：2026-06-03
@@ -90,13 +97,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：未标注
 - 说明：Transparency archive for a liquid neural networks review: literature matrix, source verification, and reproducible synthetic benchmark.
-
-### [everest-an/O1](https://github.com/everest-an/O1)
-- 更新：2026-05-27
-- Star / Fork：2 / 0
-- 语言：Python
-- Topics：anesthesia-validation, brain-inspired, deep-learning, liquid-neural-network, llm, long-context, microtubule, mt-lnn
-- 说明：MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).
 
 ### [rohitsalesforce132/lfm-finetune-suite](https://github.com/rohitsalesforce132/lfm-finetune-suite)
 - 更新：2026-05-23
