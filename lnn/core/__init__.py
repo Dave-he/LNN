@@ -9,8 +9,17 @@ from lnn.core.arxiv_catalog import (
     VerifyResult,
     build_default_catalog,
 )
+from lnn.core.bench_suite import (
+    BenchResult,
+    DatasetBundle,
+    list_backbones,
+    list_datasets,
+    load_dataset,
+    run_suite,
+)
 from lnn.core.cfc import CfCCell, CfCNetwork
 from lnn.core.control import LNNImitationPolicy
+from lnn.core.dss_cell import DiagonalSSMCell, DiagonalSSMNetwork
 from lnn.core.noise_adaptive_cfc import (
     BiCfCNADWithMDN,
     BidirectionalNoiseAdaptiveCfC,
@@ -109,6 +118,10 @@ __all__ = [
     "CTLTCNetwork",
     "LiquidS4Cell",
     "LiquidS4Network",
+    "SelectiveScanMamba",
+    "SelectiveScanMambaNetwork",
+    "DiagonalSSMCell",
+    "DiagonalSSMNetwork",
     "LRCCell",
     "LRCNetwork",
     "CfCDTCell",
@@ -120,6 +133,12 @@ __all__ = [
     "VerifyResult",
     "build_default_catalog",
     "harvest_arxiv_catalog",
+    "BenchResult",
+    "DatasetBundle",
+    "list_backbones",
+    "list_datasets",
+    "load_dataset",
+    "run_suite",
     "REPRO_STATUS_VALUES",
     "REPRO_STATUS_VENDOR",
     "REPRO_STATUS_REPRODUCED",
