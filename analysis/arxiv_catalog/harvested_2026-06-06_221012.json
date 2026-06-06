@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "source": [
+    "2026-06-06_lnn_research.json"
+  ],
+  "counts": {
+    "third_party_reproduced": 7,
+    "vendor_claim": 24,
+    "failed_to_reproduce": 1,
+    "untested": 1
+  },
+  "entries": {
+    "2106.13898": {
+      "arxiv_id": "2106.13898",
+      "expected_title": "Closed-form Continuous-Depth Models: a class of Liquid Time-Constant networks",
+      "authors": "Hasani, Lechner, Amini, Rus, Grosu",
+      "year": "2022",
+      "reproduction_status": "third_party_reproduced",
+      "notes": "Nature Machine Intelligence 4:992-1003 (2022), DOI 10.1038/s42256-022-00556-7. CfC is a tightly-bounded closed-form APPROXIMATION of LTC, not an exact closed form."
+    },
+    "2006.04439": {
+      "arxiv_id": "2006.04439",
+      "expected_title": "Liquid Time-Constant Networks",
+      "authors": "Hasani, Lechner, Amini, Ghomi, Grosu, Rus",
+      "year": "2020",
+      "reproduction_status": "third_party_reproduced",
+      "notes": "Original LTC paper. Repository lnn/core/ltc.py implements a from-scratch version."
+    },
+    "2003.06236": {
+      "arxiv_id": "2003.06236",
+      "expected_title": "Monte Carlo simulation of hydrocarbon adsorption [MISMATCH — NOT Hasani CfC; correct CfC ID is 2106.13898]",
+      "authors": "(misattributed)",
+      "year": "2020",
+      "reproduction_status": "failed_to_reproduce",
+      "notes": "Known misattribution: this ID has been mis-cited as the CfC paper in some downstream commentary. The actual CfC paper is 2106.13898. Catalogued here as a trap so lint flags it."
+    },
+    "2203.14343": {
+      "arxiv_id": "2203.14343",
+      "expected_title": "Diagonal State Spaces are as Effective as Structured [MISMATCH — NOT Lockhart adaptive solvers]",
+      "authors": "Gupta, Gu, Berant",
+      "year": "2022",
+      "reproduction_status": "third_party_reproduced",
+      "notes": "DSS paper. Purely diagonal A matches S4 on LRA (avg 81.88 vs 80.21) and Speech Commands (98.2 vs 98.1). 2022 historical comparison only — does NOT include Mamba/Mamba-2/RetNet."
+    },
+    "2002.08071": {
+      "arxiv_id": "2002.08071",
+      "expected_title": "Dissecting Neural ODEs [MISMATCH — NOT Lienen & Günnemann torchode]",
+      "authors": "Massaroli, Poli, Park, Yamashita, Asama, Kosec, Murray",
+      "year": "2020",
+      "reproduction_status": "untested",
+      "notes": "NeurIPS 2020. Foundational context for CfC/LTC training optimization, but NOT a CfC/LTC paper. Catalogued as a known misattribution."
+    },
+    "2111.00396": {
+      "arxiv_id": "2111.00396",
+      "expected_title": "Efficiently Modeling Long Sequences with Structured State Spaces",
+      "authors": "Gu, Goel, Ré",
+      "year": "2021",
+      "reproduction_status": "third_party_reproduced",
+      "notes": "S4 paper."
+    },
+    "2312.00752": {
+      "arxiv_id": "2312.00752",
+      "expected_title": "Mamba: Linear-Time Sequence Modeling with Selective State Spaces",
+      "authors": "Gu, Dao",
+      "year": "2023",
+      "reproduction_status": "third_party_reproduced",
+      "notes": "Mamba paper. CfC vs Mamba head-to-head is open work (round 73 candidate)."
+    },
+    "1706.01350": {
+      "arxiv_id": "1706.01350",
+      "expected_title": "Neural Circuit Policies: Enabling Robust Learning of Sensorimotor Skills",
+      "authors": "Lechner, Hasani, Grosu, Rus, Grosu",
+      "year": "2017",
+      "reproduction_status": "third_party_reproduced",
+      "notes": "Original NCP paper. Sparse wiring is foundational for LNN interpretability."
+    },
+    "2605.24047": {
+      "arxiv_id": "2605.24047",
+      "expected_title": "EMMA: Extracting Multiple physical parameters from Multimodal Data",
+      "authors": "Shaikh, Banerjee, Gupta",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "CVPR 2026 submission. Uses LTC backbone for physics-informed multimodal parameter recovery. Reproduction in repo via lnn/core/multimodal_physreg.py + scripts/benchmark_emma_*."
+    },
+    "2601.14115": {
+      "arxiv_id": "2601.14115",
+      "expected_title": "Riemannian Liquid Spatio-Temporal Graph Network",
+      "authors": "(see repo docs/research)",
+      "year": "2026",
+      "reproduction_status": "third_party_reproduced",
+      "notes": "WWW '26. Reproduced in round 65-70 as lnn/core/riemannian_ltc.py."
+    },
+    "2605.27467": {
+      "arxiv_id": "2605.27467",
+      "expected_title": "Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition: Robustness, Efficiency, and Clinical Utility",
+      "authors": "Ye Kyaw Thu, Thazin Myint Oo, Thepchai Supnithi",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=6; categories=cs.LG,cs.AI,cs.CV"
+    },
+    "2605.08176": {
+      "arxiv_id": "2605.08176",
+      "expected_title": "Physics-Modeled Neural Networks",
+      "authors": "Raul Felipe-Sosa, Angel Martin del Rey, Maria Flores Ceballos",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=3; categories=cs.LG,cs.NE"
+    },
+    "2604.24788": {
+      "arxiv_id": "2604.24788",
+      "expected_title": "Liquid Neural Network Models for Natural Gas Spot Price Time-Series Forecasting",
+      "authors": "Yiqian Liu, Jiayi Niu, Adam Kelleher, Subhabrata Das",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=2; categories=cs.LG,cs.AI"
+    },
+    "2604.18274": {
+      "arxiv_id": "2604.18274",
+      "expected_title": "LiquidTAD: Efficient Temporal Action Detection via Parallel Liquid-Inspired Temporal Relaxation",
+      "authors": "Zepeng Sun, Naichuan Zheng, Hailun Xia, Junjie Wu, Liwei Bao, Xiaotai Zhang",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=2; categories=cs.CV"
+    },
+    "2604.14484": {
+      "arxiv_id": "2604.14484",
+      "expected_title": "A Nonasymptotic Theory of Gain-Dependent Error Dynamics in Behavior Cloning",
+      "authors": "Junghoon Seo",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=1; categories=cs.RO,cs.AI,math.OC"
+    },
+    "2604.10815": {
+      "arxiv_id": "2604.10815",
+      "expected_title": "MeloTune: On-Device Arousal Learning and Peer-to-Peer Mood Coupling for Proactive Music Curation",
+      "authors": "Hongwei Xu",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=7; categories=cs.SD,cs.AI,cs.MA"
+    },
+    "2604.07219": {
+      "arxiv_id": "2604.07219",
+      "expected_title": "Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks",
+      "authors": "Xinquan Wang, Mingjun Ying, Hongren Chen, Guanyue Qian, Xingchen Liu, Peijie Ma, Dipankar Shakya, Christos Argyropoulos, Theodore S. Rappaport",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=2; categories=cs.IT,eess.SP"
+    },
+    "2604.03955": {
+      "arxiv_id": "2604.03955",
+      "expected_title": "Symbolic-Vector Attention Fusion for Collective Intelligence",
+      "authors": "Hongwei Xu",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=6; categories=cs.MA,cs.AI"
+    },
+    "2604.02149": {
+      "arxiv_id": "2604.02149",
+      "expected_title": "AEGIS: Adversarial Entropy-Guided Immune System -- Thermodynamic State Space Models for Zero-Day Network Evasion Detection",
+      "authors": "Vickson Ferrel",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=1; categories=cs.CR,cs.LG"
+    },
+    "2603.27058": {
+      "arxiv_id": "2603.27058",
+      "expected_title": "Liquid Networks with Mixture Density Heads for Efficient Imitation Learning",
+      "authors": "Nikolaus Correll",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=1; categories=cs.LG,cs.RO"
+    },
+    "2603.00459": {
+      "arxiv_id": "2603.00459",
+      "expected_title": "Explainable Continuous-Time Mask Refinement with Local Self-Similarity Priors for Medical Image Segmentation",
+      "authors": "Rajdeep Chatterjee, Sudip Chakrabarty, Trishaani Acharjee",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=3; categories=cs.CV"
+    },
+    "2603.00153": {
+      "arxiv_id": "2603.00153",
+      "expected_title": "Pulse-Driven Neural Architecture: Learnable Oscillatory Dynamics for Robust Continuous-Time Sequence Processing",
+      "authors": "Paras Sharma",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=4; categories=cs.NE,cs.AI,cs.LG"
+    },
+    "2602.06997": {
+      "arxiv_id": "2602.06997",
+      "expected_title": "Adaptive Temporal Dynamics for Personalized Emotion Recognition: A Liquid Neural Network Approach",
+      "authors": "Anindya Bhattacharjee, Nittya Ananda Biswas, K. A. Shahriar, Adib Rahman",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=3; categories=eess.SP,cs.AI,cs.LG,cs.NE"
+    },
+    "2601.06227": {
+      "arxiv_id": "2601.06227",
+      "expected_title": "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics",
+      "authors": "Dhivya Dharshini Kannan, Wei Li, Wei Zhang, Jianbiao Wang, Zhi Wei Seh, Man-Fai Ng",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=2; categories=cs.LG,cs.AI"
+    },
+    "2601.06195": {
+      "arxiv_id": "2601.06195",
+      "expected_title": "EntroLnn: Entropy-Guided Liquid Neural Networks for Operando Refinement of Battery Capacity Fade Trajectories",
+      "authors": "Wei Li, Wei Zhang, Qingyu Yan",
+      "year": "2026",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=2; categories=cs.LG,cs.AI"
+    },
+    "2512.22500": {
+      "arxiv_id": "2512.22500",
+      "expected_title": "Bidirectional Neural Networks for Global Nucleon-Nucleus Optical Model Calculations",
+      "authors": "Jin Lei",
+      "year": "2025",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=1; categories=nucl-th"
+    },
+    "2512.14323": {
+      "arxiv_id": "2512.14323",
+      "expected_title": "FUSION: Forecast-Embedded Agent Scheduling with Service Incentive Optimization over Distributed Air-Ground Edge Networks",
+      "authors": "Houyi Qi, Minghui Liwang, Seyyedali Hosseinalipour, Liqun Fu, Sai Zou, Xianbin Wang, Wei Ni, Yiguang Hong",
+      "year": "2025",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=1; categories=cs.NI"
+    },
+    "2512.14112": {
+      "arxiv_id": "2512.14112",
+      "expected_title": "Optimizing Multi-Tier Supply Chain Ordering with a Hybrid Liquid Neural Network and Extreme Gradient Boosting Model",
+      "authors": "Chunan Tong",
+      "year": "2025",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=2; categories=cs.AI"
+    },
+    "2512.05158": {
+      "arxiv_id": "2512.05158",
+      "expected_title": "Continuous-Time Homeostatic Dynamics for Reentrant Inference Models",
+      "authors": "Byung Gyu Chae",
+      "year": "2025",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=1; categories=math.DS,cs.LG,stat.ML"
+    },
+    "2511.18014": {
+      "arxiv_id": "2511.18014",
+      "expected_title": "Modeling Retinal Ganglion Cells with Neural Differential Equations",
+      "authors": "Kacper Dobek, Daniel Jankowski, Krzysztof Krawiec",
+      "year": "2025",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=5; categories=cs.CV,cs.AI"
+    },
+    "2511.09909": {
+      "arxiv_id": "2511.09909",
+      "expected_title": "Simulating Distribution Dynamics: Liquid Temporal Feature Evolution for Single-Domain Generalized Object Detection",
+      "authors": "Zihao Zhang, Yang Li, Aming Wu, Yahong Han",
+      "year": "2025",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=1; categories=cs.CV"
+    },
+    "2510.25020": {
+      "arxiv_id": "2510.25020",
+      "expected_title": "Hybrid Liquid Neural Network-Random Finite Set Filtering for Robust Maneuvering Object Tracking",
+      "authors": "Minti Liu, Qinghua Guo, Cao Zeng, Yanguang Yu, Jun Li, Ming Jin",
+      "year": "2025",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=2; categories=eess.SP"
+    },
+    "2510.09207": {
+      "arxiv_id": "2510.09207",
+      "expected_title": "Operator-Consistent Physics-Informed Learning for Wafer Thermal Reconstruction in Lithography",
+      "authors": "Ze Tao, Fujun Liu, Yuxi Jin, Ke Xu, Minghui Sun, Xiangsheng Hu, Qi Cao, Haoran Xu, Hanxuan Wang",
+      "year": "2025",
+      "reproduction_status": "vendor_claim",
+      "notes": "Harvested from 2026-06-06_lnn_research.json; keyword_score=1; categories=math-ph"
+    }
+  }
+}

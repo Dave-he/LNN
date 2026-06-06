@@ -1,3 +1,14 @@
+from lnn.core.arxiv_catalog import (
+    ArxivCatalog,
+    CatalogEntry,
+    REPRO_STATUS_FAILED,
+    REPRO_STATUS_REPRODUCED,
+    REPRO_STATUS_UNTESTED,
+    REPRO_STATUS_VENDOR,
+    REPRO_STATUS_VALUES,
+    VerifyResult,
+    build_default_catalog,
+)
 from lnn.core.cfc import CfCCell, CfCNetwork
 from lnn.core.control import LNNImitationPolicy
 from lnn.core.noise_adaptive_cfc import (
@@ -104,5 +115,15 @@ __all__ = [
     "CfCDTNetwork",
     "EulerLTCDTCell",
     "EulerLTCDTNetwork",
+    "ArxivCatalog",
+    "CatalogEntry",
+    "VerifyResult",
+    "build_default_catalog",
+    "harvest_arxiv_catalog",
+    "REPRO_STATUS_VALUES",
+    "REPRO_STATUS_VENDOR",
+    "REPRO_STATUS_REPRODUCED",
+    "REPRO_STATUS_FAILED",
+    "REPRO_STATUS_UNTESTED",
 ]
 from lnn.core.ensemble import BiCfCEnsemble
