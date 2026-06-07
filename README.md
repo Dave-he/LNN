@@ -1,3 +1,5 @@
+> **兄弟项目**:[Dave-he/RoboticsResearch](https://github.com/Dave-he/RoboticsResearch) —— 通用机器人技术的同模式活知识库(本项目的范式扩展)
+
 # LNN
 
 PyTorch implementations, benchmarks, and research logs for Liquid Neural Networks.
