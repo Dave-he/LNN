@@ -258,6 +258,52 @@ def _ingest_lra_pathfinder(path: pathlib.Path) -> dict | None:
     }
 
 
+def _ingest_natural_gas(path: pathlib.Path) -> dict | None:
+    """Ingest a Natural Gas LNN Forecaster summary JSON (N backbones × seeds).
+
+    Primary reported metric is **median MAPE** (lower is better), with a
+    secondary 7-day directional accuracy (higher is better). The data is the
+    synthetic Henry Hub series from ``lnn/data/natural_gas_generator.py``
+    (2645 business days). Sequence-to-1 regression with a 30-day window.
+    """
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    backbones = payload.get("backbones") or []
+    if not backbones:
+        return None
+    by_backbone: dict = {}
+    for v in backbones:
+        name = v.get("name", "?")
+        agg = v.get("aggregate", {}) or {}
+        per_seed = v.get("per_seed", [])
+        if not agg or not per_seed:
+            continue
+        mapes = [r["median_mape"] for r in per_seed if r.get("median_mape") is not None and not (isinstance(r["median_mape"], float) and (r["median_mape"] != r["median_mape"]))]  # NaN-safe
+        dirs = [r["directional_acc_7d"] for r in per_seed if r.get("directional_acc_7d") is not None and not (isinstance(r["directional_acc_7d"], float) and (r["directional_acc_7d"] != r["directional_acc_7d"]))]
+        by_backbone[name] = {
+            "params": agg.get("n_params_mean"),
+            "median_mse": agg.get("median_mape_mean"),  # using median_mse field for matrix consistency
+            "mean_mse": agg.get("median_mape_mean"),
+            "std_mse": agg.get("median_mape_std", 0.0),
+            "median_metric_dir7": agg.get("directional_acc_7d_mean"),
+            "n": agg.get("n_seeds", 0),
+        }
+    if not by_backbone:
+        return None
+    n_seeds = max((b["n"] for b in by_backbone.values()), default=0)
+    return {
+        "row_key": f"natural_gas [n={n_seeds},w={payload.get('window',30)},h={payload.get('hidden_size',32)}]",
+        "domain": "timeseries",
+        "metric": "median_mape",
+        "metric_direction": "lower_is_better",
+        "n_seeds": n_seeds,
+        "backbones": by_backbone,
+        "source_path": str(path.relative_to(ROOT)),
+    }
+
+
 def _compute_win_tally(rows: list[dict], backbones: list[str]) -> dict[str, int]:
     """Per-backbone win tally (used by both Markdown formatter and README snippet).
 
@@ -466,6 +512,9 @@ def main() -> int:
     parser.add_argument("--include-lra", action="store_true",
                         help="Also ingest analysis/pdna_lra/*_pdna_lra_summary.json "
                              "(PDNA stage C, iter#28+ LRA Pathfinder smoke)")
+    parser.add_argument("--include-natural-gas", action="store_true",
+                        help="Also ingest analysis/timeseries_ablation/*_natural_gas_lnn_summary.json "
+                             "(Natural Gas LNN Forecaster, iter-skill 2026-06-08)")
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--export-readme-snippet", action="store_true",
@@ -512,6 +561,14 @@ def main() -> int:
             if r:
                 rows.append(r)
 
+    if args.include_natural_gas:
+        # Match the summary file produced by scripts/experiment_natural_gas_lnn.py
+        ts_dir = ROOT / "analysis" / "timeseries_ablation"
+        for path in sorted(ts_dir.glob("*_natural_gas_lnn_summary.json")):
+            r = _ingest_natural_gas(path)
+            if r:
+                rows.append(r)
+
     # Discover full backbone set across all rows.
     backbones_seen: list[str] = []
     for r in rows:
@@ -540,6 +597,7 @@ def main() -> int:
             + (", molecular from analysis/molecular/" if args.include_molecular else "")
             + (", smnist_gap from analysis/pdna/" if args.include_smnist_gap else "")
             + (", lra_pathfinder from analysis/pdna_lra/" if args.include_lra else "")
+            + (", natural_gas (subset of timeseries) from analysis/timeseries_ablation/" if args.include_natural_gas else "")
         ),
         "rows": rows,
         "backbones_seen": backbones_seen,

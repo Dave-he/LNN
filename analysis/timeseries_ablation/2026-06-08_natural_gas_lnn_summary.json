@@ -1,0 +1,80 @@
+{
+  "backbones": [
+    {
+      "name": "gru",
+      "per_seed": [
+        {
+          "backbone": "gru",
+          "seed": 42,
+          "train_seconds": 11.27201247215271,
+          "n_params": 929,
+          "median_mape": 98.97444152832031,
+          "directional_acc_7d": 55.46875,
+          "n_train": 2100,
+          "n_val": 262,
+          "window": 20
+        },
+        {
+          "backbone": "gru",
+          "seed": 1153,
+          "train_seconds": 11.001648664474487,
+          "n_params": 929,
+          "median_mape": 103.28280639648438,
+          "directional_acc_7d": 53.515625,
+          "n_train": 2100,
+          "n_val": 262,
+          "window": 20
+        }
+      ],
+      "aggregate": {
+        "n_seeds": 2,
+        "median_mape_mean": 101.12862396240234,
+        "median_mape_std": 2.1541824340820312,
+        "directional_acc_7d_mean": 54.4921875,
+        "directional_acc_7d_std": 0.9765625,
+        "n_params_mean": 929,
+        "train_seconds_mean": 11.136830568313599
+      }
+    },
+    {
+      "name": "lstm",
+      "per_seed": [
+        {
+          "backbone": "lstm",
+          "seed": 42,
+          "train_seconds": 5.700523853302002,
+          "n_params": 1233,
+          "median_mape": 99.4737777709961,
+          "directional_acc_7d": 52.34375,
+          "n_train": 2100,
+          "n_val": 262,
+          "window": 20
+        },
+        {
+          "backbone": "lstm",
+          "seed": 1153,
+          "train_seconds": 4.864770412445068,
+          "n_params": 1233,
+          "median_mape": 100.77009582519531,
+          "directional_acc_7d": 53.515625,
+          "n_train": 2100,
+          "n_val": 262,
+          "window": 20
+        }
+      ],
+      "aggregate": {
+        "n_seeds": 2,
+        "median_mape_mean": 100.1219367980957,
+        "median_mape_std": 0.6481590270996094,
+        "directional_acc_7d_mean": 52.9296875,
+        "directional_acc_7d_std": 0.5859375,
+        "n_params_mean": 1233,
+        "train_seconds_mean": 5.282647132873535
+      }
+    }
+  ],
+  "n_seeds": 2,
+  "window": 20,
+  "hidden_size": 16,
+  "epochs": 5
+}
