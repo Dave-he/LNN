@@ -1,0 +1,45 @@
+{
+  "variants": [
+    {
+      "name": "baseline_cfc",
+      "per_seed": [
+        {
+          "train_seconds": 471.0583939552307,
+          "n_params": 3362,
+          "test_acc": 50.0,
+          "pdna_alpha": null,
+          "pdna_beta": null,
+          "variant": "baseline_cfc",
+          "seed": 42,
+          "seq_len": 1024,
+          "grid_size": 32
+        },
+        {
+          "train_seconds": 384.0720090866089,
+          "n_params": 3362,
+          "test_acc": 52.0,
+          "pdna_alpha": null,
+          "pdna_beta": null,
+          "variant": "baseline_cfc",
+          "seed": 1153,
+          "seq_len": 1024,
+          "grid_size": 32
+        }
+      ],
+      "aggregate": {
+        "n_seeds": 2,
+        "test_acc_mean": 51.0,
+        "test_acc_std": 1.4142135623730951,
+        "train_seconds_mean": 427.5652015209198,
+        "n_params_mean": 3362
+      }
+    }
+  ],
+  "n_seeds": 2,
+  "hidden_size": 32,
+  "epochs": 2,
+  "train_samples": 300,
+  "test_samples": 100,
+  "seq_len": 1024,
+  "grid_size": 32
+}
