@@ -321,6 +321,10 @@ def _format_markdown(payload: dict) -> str:
         f"- seeds ({any_n}{n_warn}): {cfg['seeds']}",
         f"- device: {payload['environment']['device']}",
     ]
+    if cfg.get("phase_d"):
+        lines.extend([
+            "- 🧪 **phase-D 预设** (PRD §10 #3): hidden=64 epochs=50 samples=4000 seq_len=64 warmup=0.1 — 检验 LNN 优势是否随规模出现",
+        ])
     if n_warn:
         lines.append("- ⚠️ **iter#11 lesson**: N<5 seed 的"
                      "Δ vs baseline 不可信 — 见 [[Comparative_Analysis_of_LNN_and_LSTM_研读报告]] v5。")
@@ -412,14 +416,50 @@ def main() -> int:
     parser.add_argument("--inference-repeats", type=int, default=3)
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--output-dir", default="analysis/timeseries_ablation")
+    parser.add_argument("--phase-d", action="store_true",
+                        help="PRD §10 #3 preset: hidden=64 epochs=50 samples=4000 seq-len=64 "
+                             "warmup-frac=0.1 — checks whether LNN advantage emerges at larger scale.")
     args = parser.parse_args()
 
     args.seeds = [int(s) for s in args.seeds.split(",") if s.strip()]
     backbones = [b.strip() for b in args.backbones.split(",") if b.strip()]
 
+    # PRD §10 #3 phase-D preset — scale-up smoke for the LNN-vs-LSTM
+    # "通杀 thesis" question. Replaces individual --hidden-size/--epochs/--samples
+    # flags only if those weren't explicitly overridden.
+    phase_d_applied: list[str] = []
+    if args.phase_d:
+        if args.hidden_size == 24:
+            args.hidden_size = 64
+            phase_d_applied.append("hidden_size")
+        if args.epochs == 8:
+            args.epochs = 50
+            phase_d_applied.append("epochs")
+        if args.samples == 1200:
+            args.samples = 4000
+            phase_d_applied.append("samples")
+        if args.seq_len == 32:
+            args.seq_len = 64
+            phase_d_applied.append("seq_len")
+        if args.warmup_frac == 0.0:
+            args.warmup_frac = 0.1
+            phase_d_applied.append("warmup_frac")
+        args.phase_d_applied = phase_d_applied  # recorded for JSON
+        if phase_d_applied:
+            print(
+                f"[phase-d] applied: {', '.join(phase_d_applied)} "
+                f"(hidden={args.hidden_size} epochs={args.epochs} samples={args.samples} "
+                f"seq_len={args.seq_len} warmup_frac={args.warmup_frac})"
+            )
+        else:
+            print("[phase-d] requested but all preset values were already overridden by CLI flags")
+    else:
+        args.phase_d_applied = []
+
     device = torch.device(args.device)
     print("=== LNN vs LSTM Time-Series Ablation ===")
-    print(f"Dataset: {args.dataset} | Samples: {args.samples} | seq_len: {args.seq_len}")
+    phase_tag = " [phase-d]" if args.phase_d else ""
+    print(f"Dataset: {args.dataset} | Samples: {args.samples} | seq_len: {args.seq_len}{phase_tag}")
     print(f"Backbones: {backbones} | Seeds: {args.seeds} | Device: {device}")
 
     per_run: list[dict] = []
