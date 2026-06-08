@@ -1,0 +1,377 @@
+{
+  "run_id": "2026-06-08_153115",
+  "generated_at": "2026-06-08T15:31:15.149061",
+  "scan_summary": "9 rows; timeseries from analysis/timeseries_ablation/, molecular from analysis/molecular/, smnist_gap from analysis/pdna/, lra_pathfinder from analysis/pdna_lra/",
+  "rows": [
+    {
+      "row_key": "mackey_glass [h=24]",
+      "domain": "timeseries",
+      "metric": "test_mse",
+      "metric_direction": "lower_is_better",
+      "n_seeds": 3,
+      "backbones": {
+        "cfc": {
+          "params": 1921,
+          "median_mse": 0.005514801152654596,
+          "mean_mse": 0.0052096918393094264,
+          "std_mse": 0.0005720093328147562,
+          "n": 3
+        },
+        "ltc": {
+          "params": 1321,
+          "median_mse": 0.005039046845726065,
+          "mean_mse": 0.004914659797004214,
+          "std_mse": 0.00047553873889620416,
+          "n": 3
+        },
+        "gru": {
+          "params": 1969,
+          "median_mse": 0.0035706136274982142,
+          "mean_mse": 0.0033589965319848272,
+          "std_mse": 0.0004633931909975835,
+          "n": 3
+        },
+        "lstm": {
+          "params": 2617,
+          "median_mse": 0.0030323556951574377,
+          "mean_mse": 0.003484659761123292,
+          "std_mse": 0.0008519310843808157,
+          "n": 3
+        }
+      },
+      "source_path": "analysis/timeseries_ablation/2026-06-04_024244_lnn_vs_lstm.json",
+      "run_id": "2026-06-04_024244"
+    },
+    {
+      "row_key": "concept_drift [h=24]",
+      "domain": "timeseries",
+      "metric": "test_mse",
+      "metric_direction": "lower_is_better",
+      "n_seeds": 3,
+      "backbones": {
+        "cfc": {
+          "params": 1921,
+          "median_mse": 0.012131230452576199,
+          "mean_mse": 0.015243044475445876,
+          "std_mse": 0.010828683702065208,
+          "n": 3
+        },
+        "ltc": {
+          "params": 1321,
+          "median_mse": 0.0893497338166108,
+          "mean_mse": 0.08923034356521058,
+          "std_mse": 0.004327411385389086,
+          "n": 3
+        },
+        "gru": {
+          "params": 1969,
+          "median_mse": 0.021819440295567382,
+          "mean_mse": 0.020771833052774805,
+          "std_mse": 0.008998683226559773,
+          "n": 3
+        },
+        "lstm": {
+          "params": 2617,
+          "median_mse": 0.005020327564026858,
+          "mean_mse": 0.00636808686629609,
+          "std_mse": 0.002580680987410568,
+          "n": 3
+        }
+      },
+      "source_path": "analysis/timeseries_ablation/2026-06-04_044951_lnn_vs_lstm.json",
+      "run_id": "2026-06-04_044951"
+    },
+    {
+      "row_key": "gradual_multi_regime [warmup=0.1,h=24,r=4]",
+      "domain": "timeseries",
+      "metric": "test_mse",
+      "metric_direction": "lower_is_better",
+      "n_seeds": 8,
+      "backbones": {
+        "cfc": {
+          "params": 1921,
+          "median_mse": 0.05136429981605427,
+          "mean_mse": 0.21115777309279185,
+          "std_mse": 0.31557761506975773,
+          "n": 8
+        },
+        "ltc": {
+          "params": 1321,
+          "median_mse": 0.19436709864719492,
+          "mean_mse": 0.5316273313066041,
+          "std_mse": 0.9910475087536484,
+          "n": 8
+        },
+        "gru": {
+          "params": 1969,
+          "median_mse": 0.03473532058902689,
+          "mean_mse": 0.1993650566736186,
+          "std_mse": 0.4128550087297968,
+          "n": 8
+        },
+        "lstm": {
+          "params": 2617,
+          "median_mse": 0.02376024087739957,
+          "mean_mse": 0.1834624027329925,
+          "std_mse": 0.3832866879930895,
+          "n": 8
+        }
+      },
+      "source_path": "analysis/timeseries_ablation/2026-06-04_054135_lnn_vs_lstm.json",
+      "run_id": "2026-06-04_054135"
+    },
+    {
+      "row_key": "mackey_glass [h=16,r=4]",
+      "domain": "timeseries",
+      "metric": "test_mse",
+      "metric_direction": "lower_is_better",
+      "n_seeds": 1,
+      "backbones": {
+        "cfc": {
+          "params": 897,
+          "median_mse": 0.13755562088706277,
+          "mean_mse": 0.13755562088706277,
+          "std_mse": 0.0,
+          "n": 1
+        },
+        "gru": {
+          "params": 929,
+          "median_mse": 0.381958777254278,
+          "mean_mse": 0.381958777254278,
+          "std_mse": 0.0,
+          "n": 1
+        },
+        "lstm": {
+          "params": 1233,
+          "median_mse": 0.3578459349545566,
+          "mean_mse": 0.3578459349545566,
+          "std_mse": 0.0,
+          "n": 1
+        }
+      },
+      "source_path": "analysis/timeseries_ablation/2026-06-04_103221_lnn_vs_lstm.json",
+      "run_id": "2026-06-04_103221"
+    },
+    {
+      "row_key": "mackey_glass [h=24,r=4]",
+      "domain": "timeseries",
+      "metric": "test_mse",
+      "metric_direction": "lower_is_better",
+      "n_seeds": 6,
+      "backbones": {
+        "fhn_dynpmnn": {
+          "params": 145,
+          "median_mse": 0.01820404580920129,
+          "mean_mse": 0.019944390231693112,
+          "std_mse": 0.007657038178441289,
+          "n": 6
+        },
+        "cfc": {
+          "params": 1921,
+          "median_mse": 0.008134484054550292,
+          "mean_mse": 0.007785165593737649,
+          "std_mse": 0.0010246782573667603,
+          "n": 3
+        },
+        "ltc": {
+          "params": 1321,
+          "median_mse": 0.0080818815363778,
+          "mean_mse": 0.008805173375303782,
+          "std_mse": 0.002325546654322202,
+          "n": 3
+        },
+        "gru": {
+          "params": 1969,
+          "median_mse": 0.0081006439905318,
+          "mean_mse": 0.008276964582148051,
+          "std_mse": 0.0009735553639536411,
+          "n": 3
+        },
+        "lstm": {
+          "params": 2617,
+          "median_mse": 0.010104443227487898,
+          "mean_mse": 0.009253909141219483,
+          "std_mse": 0.0028453710573173724,
+          "n": 3
+        }
+      },
+      "source_path": "analysis/timeseries_ablation/2026-06-04_180636_lnn_vs_lstm.json",
+      "run_id": "2026-06-04_180636"
+    },
+    {
+      "row_key": "mackey_glass [warmup=0.1,h=32,r=4]",
+      "domain": "timeseries",
+      "metric": "test_mse",
+      "metric_direction": "lower_is_better",
+      "n_seeds": 2,
+      "backbones": {
+        "cfc": {
+          "params": 3329,
+          "median_mse": 0.13712976601990787,
+          "mean_mse": 0.13712976601990787,
+          "std_mse": 0.02911582649955473,
+          "n": 2
+        },
+        "ltc": {
+          "params": 2273,
+          "median_mse": 0.26849329742518335,
+          "mean_mse": 0.26849329742518335,
+          "std_mse": 0.03654738297359902,
+          "n": 2
+        },
+        "gru": {
+          "params": 3393,
+          "median_mse": 0.22575256905772467,
+          "mean_mse": 0.22575256905772467,
+          "std_mse": 0.03342632646343613,
+          "n": 2
+        },
+        "lstm": {
+          "params": 4513,
+          "median_mse": 0.4482337561520663,
+          "mean_mse": 0.4482337561520663,
+          "std_mse": 0.003016043805566333,
+          "n": 2
+        }
+      },
+      "source_path": "analysis/timeseries_ablation/2026-06-08_121903_lnn_vs_lstm.json",
+      "run_id": "2026-06-08_121903"
+    },
+    {
+      "row_key": "graph_tox21 [seeds:10]",
+      "domain": "molecular",
+      "metric": "val_auc_roc",
+      "metric_direction": "higher_is_better",
+      "n_seeds": 10,
+      "backbones": {
+        "cfc": {
+          "params": 6377,
+          "median_metric": 0.7303331196308136,
+          "mean_metric": 0.7152940511703492,
+          "n": 10
+        },
+        "ltc": {
+          "params": 4585,
+          "median_metric": 0.7125650942325592,
+          "mean_metric": 0.7078179240226745,
+          "n": 10
+        },
+        "gru": {
+          "params": 6441,
+          "median_metric": 0.7202419638633728,
+          "mean_metric": 0.7148464620113373,
+          "n": 10
+        },
+        "liquid_tad": {
+          "params": 16105,
+          "median_metric": 0.6839599609375,
+          "mean_metric": 0.6988525390625,
+          "n": 4
+        }
+      },
+      "source_path": "analysis/molecular/*_tox21_styled_graph_lnn.json (merged)"
+    },
+    {
+      "row_key": "smnist_gap [n=3,h=64]",
+      "domain": "smnist_gap",
+      "metric": "multi_gap_acc",
+      "metric_direction": "higher_is_better",
+      "n_seeds": 3,
+      "backbones": {
+        "baseline_cfc": {
+          "params": 18570,
+          "median_metric": 35.51111111111111,
+          "mean_metric": 35.51111111111111,
+          "std_metric": 6.4018515840109655,
+          "median_metric_gap5": 34.13333333333333,
+          "median_metric_gap0": 37.977777777777774,
+          "n": 3
+        },
+        "cfc_noise": {
+          "params": 18571,
+          "median_metric": 35.31111111111111,
+          "mean_metric": 35.31111111111111,
+          "std_metric": 6.136351914192571,
+          "median_metric_gap5": 34.93333333333334,
+          "median_metric_gap0": 37.955555555555556,
+          "n": 3
+        },
+        "cfc_pulse": {
+          "params": 27020,
+          "median_metric": 38.044444444444444,
+          "mean_metric": 38.044444444444444,
+          "std_metric": 4.185866873358671,
+          "median_metric_gap5": 34.733333333333334,
+          "median_metric_gap0": 38.48888888888889,
+          "n": 3
+        },
+        "cfc_selfattend": {
+          "params": 27020,
+          "median_metric": 29.222222222222225,
+          "mean_metric": 29.222222222222225,
+          "std_metric": 13.674360977689165,
+          "median_metric_gap5": 27.48888888888889,
+          "median_metric_gap0": 29.77777777777778,
+          "n": 3
+        },
+        "full_pdna": {
+          "params": 27020,
+          "median_metric": 29.400000000000002,
+          "mean_metric": 29.400000000000002,
+          "std_metric": 13.933333333333334,
+          "median_metric_gap5": 27.57777777777778,
+          "median_metric_gap0": 29.933333333333334,
+          "n": 3
+        }
+      },
+      "source_path": "analysis/pdna/2026-06-04_pdna_stage_b_summary.json",
+      "run_id": "?"
+    },
+    {
+      "row_key": "lra_pathfinder [n=1,h=32,seq=1024]",
+      "domain": "lra_pathfinder",
+      "metric": "test_acc",
+      "metric_direction": "higher_is_better",
+      "n_seeds": 1,
+      "backbones": {
+        "baseline_cfc": {
+          "params": 3362,
+          "median_metric": 48.75,
+          "mean_metric": 48.75,
+          "std_metric": 0.0,
+          "n": 1
+        },
+        "cfc_pulse": {
+          "params": 5540,
+          "median_metric": 48.75,
+          "mean_metric": 48.75,
+          "std_metric": 0.0,
+          "n": 1
+        },
+        "full_pdna": {
+          "params": 5540,
+          "median_metric": 48.75,
+          "mean_metric": 48.75,
+          "std_metric": 0.0,
+          "n": 1
+        }
+      },
+      "source_path": "analysis/pdna_lra/2026-06-08_pdna_lra_summary.json",
+      "run_id": "?"
+    }
+  ],
+  "backbones_seen": [
+    "cfc",
+    "ltc",
+    "gru",
+    "lstm",
+    "fhn_dynpmnn",
+    "liquid_tad",
+    "baseline_cfc",
+    "cfc_noise",
+    "cfc_pulse",
+    "cfc_selfattend",
+    "full_pdna"
+  ],
+  "json_path": "analysis/backbone_matrix/2026-06-08_153115_backbone_matrix.json"
+}

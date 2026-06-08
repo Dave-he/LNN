@@ -215,6 +215,49 @@ def _ingest_smnist_gap(path: pathlib.Path) -> dict | None:
     }
 
 
+def _ingest_lra_pathfinder(path: pathlib.Path) -> dict | None:
+    """Ingest a PDNA stage C summary JSON (N variants × seeds, synthetic Pathfinder).
+
+    Reported metric is binary classification test accuracy (higher better).
+    Pathfinder is an LRA-style long-range task: 32x32 grid → seq_len=1024,
+    and the model must integrate information across the full sequence to
+    decide whether two endpoint markers are connected by a path.
+    """
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    variants = payload.get("variants") or []
+    if not variants:
+        return None
+    backbones: dict = {}
+    for v in variants:
+        name = v.get("name", "?")
+        agg = v.get("aggregate", {}) or {}
+        if not agg:
+            continue
+        backbones[name] = {
+            "params": agg.get("n_params_mean"),
+            "median_metric": agg.get("test_acc_mean"),
+            "mean_metric": agg.get("test_acc_mean"),
+            "std_metric": agg.get("test_acc_std", 0.0),
+            "n": agg.get("n_seeds", 0),
+        }
+    if not backbones:
+        return None
+    n_seeds = max((b["n"] for b in backbones.values()), default=0)
+    return {
+        "row_key": f"lra_pathfinder [n={n_seeds},h={payload.get('hidden_size',32)},seq={payload.get('seq_len',1024)}]",
+        "domain": "lra_pathfinder",
+        "metric": "test_acc",
+        "metric_direction": "higher_is_better",
+        "n_seeds": n_seeds,
+        "backbones": backbones,
+        "source_path": str(path.relative_to(ROOT)),
+        "run_id": payload.get("run_id", "?"),
+    }
+
+
 def _compute_win_tally(rows: list[dict], backbones: list[str]) -> dict[str, int]:
     """Per-backbone win tally (used by both Markdown formatter and README snippet).
 
@@ -228,7 +271,7 @@ def _compute_win_tally(rows: list[dict], backbones: list[str]) -> dict[str, int]
                      for b in backbones if row["backbones"].get(b, {}).get("median_mse") is not None}
             if valid:
                 tally[min(valid, key=valid.get)] += 1
-        elif row["domain"] in ("molecular", "smnist_gap"):
+        elif row["domain"] in ("molecular", "smnist_gap", "lra_pathfinder"):
             valid = {b: row["backbones"].get(b, {}).get("median_metric")
                      for b in backbones if row["backbones"].get(b, {}).get("median_metric") is not None}
             if valid:
@@ -420,6 +463,9 @@ def main() -> int:
     parser.add_argument("--include-smnist-gap", action="store_true",
                         help="Also ingest analysis/pdna/2026-06-04_pdna_stage_b_summary.json "
                              "(PDNA stage B, iter#20+)")
+    parser.add_argument("--include-lra", action="store_true",
+                        help="Also ingest analysis/pdna_lra/*_pdna_lra_summary.json "
+                             "(PDNA stage C, iter#28+ LRA Pathfinder smoke)")
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--export-readme-snippet", action="store_true",
@@ -458,6 +504,14 @@ def main() -> int:
             if r:
                 rows.append(r)
 
+    if args.include_lra:
+        pdna_lra_dir = ROOT / "analysis" / "pdna_lra"
+        # Match the stage-C summary file produced by scripts/experiment_pdna_lra.py
+        for path in sorted(pdna_lra_dir.glob("*_pdna_lra_summary.json")):
+            r = _ingest_lra_pathfinder(path)
+            if r:
+                rows.append(r)
+
     # Discover full backbone set across all rows.
     backbones_seen: list[str] = []
     for r in rows:
@@ -485,6 +539,7 @@ def main() -> int:
             f"{len(rows)} rows; timeseries from analysis/timeseries_ablation/"
             + (", molecular from analysis/molecular/" if args.include_molecular else "")
             + (", smnist_gap from analysis/pdna/" if args.include_smnist_gap else "")
+            + (", lra_pathfinder from analysis/pdna_lra/" if args.include_lra else "")
         ),
         "rows": rows,
         "backbones_seen": backbones_seen,

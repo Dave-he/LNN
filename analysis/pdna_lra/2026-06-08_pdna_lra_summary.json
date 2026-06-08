@@ -1,0 +1,74 @@
+{
+  "variants": [
+    {
+      "name": "baseline_cfc",
+      "per_seed": [
+        {
+          "train_seconds": 115.85791969299316,
+          "n_params": 3362,
+          "test_acc": 48.75,
+          "variant": "baseline_cfc",
+          "seed": 42,
+          "seq_len": 1024,
+          "grid_size": 32
+        }
+      ],
+      "aggregate": {
+        "n_seeds": 1,
+        "test_acc_mean": 48.75,
+        "test_acc_std": 0.0,
+        "train_seconds_mean": 115.85791969299316,
+        "n_params_mean": 3362
+      }
+    },
+    {
+      "name": "cfc_pulse",
+      "per_seed": [
+        {
+          "train_seconds": 140.4388267993927,
+          "n_params": 5540,
+          "test_acc": 48.75,
+          "variant": "cfc_pulse",
+          "seed": 42,
+          "seq_len": 1024,
+          "grid_size": 32
+        }
+      ],
+      "aggregate": {
+        "n_seeds": 1,
+        "test_acc_mean": 48.75,
+        "test_acc_std": 0.0,
+        "train_seconds_mean": 140.4388267993927,
+        "n_params_mean": 5540
+      }
+    },
+    {
+      "name": "full_pdna",
+      "per_seed": [
+        {
+          "train_seconds": 120.78978943824768,
+          "n_params": 5540,
+          "test_acc": 48.75,
+          "variant": "full_pdna",
+          "seed": 42,
+          "seq_len": 1024,
+          "grid_size": 32
+        }
+      ],
+      "aggregate": {
+        "n_seeds": 1,
+        "test_acc_mean": 48.75,
+        "test_acc_std": 0.0,
+        "train_seconds_mean": 120.78978943824768,
+        "n_params_mean": 5540
+      }
+    }
+  ],
+  "n_seeds": 1,
+  "hidden_size": 32,
+  "epochs": 1,
+  "train_samples": 200,
+  "test_samples": 80,
+  "seq_len": 1024,
+  "grid_size": 32
+}
