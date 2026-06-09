@@ -207,11 +207,13 @@ def test_cli_quick_single_run_no_pareto(tmp_path: pathlib.Path) -> None:
     assert json_path.exists()
     payload = json.loads(json_path.read_text())
     assert payload["status"] in {"ok", "ok_cpu_fallback"}
-    # Non-Pareto: results list has exactly 2 rows (CfC + GRU), no
-    # hidden_size / seq_len / pareto_front fields.
-    assert len(payload["results"]) == 2
+    # iter#34: non-Pareto now has 4 rows (CfCStyle + LTC + PDNAPulse + GRU),
+    # no hidden_size / seq_len / pareto_front fields.
+    assert len(payload["results"]) == 4
     names = {row["name"] for row in payload["results"]}
     assert "CfCStyle" in names
+    assert "LTC" in names
+    assert "PDNAPulse" in names
     assert "GRU" in names
     for row in payload["results"]:
         assert "pareto_front" not in row

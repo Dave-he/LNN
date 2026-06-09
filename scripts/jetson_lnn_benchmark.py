@@ -383,6 +383,52 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             output, _ = self.gru(x)
             return self.readout(output)
 
+    # iter#34: add LTC and PDNA-pulse arms to the Pareto sweep, so we can
+    # directly test the Hasani 2022 (Nature MI) "CfC 1-5 orders faster than
+    # ODE-based LTC" claim and the PDNA paper's "pulse modulation ≈ CfC on
+    # latency, slightly higher accuracy" claim on real Jetson hardware.
+    from lnn.core.ltc import LTCNetwork
+    from lnn.core.cfc import PDNAPulseHead
+
+    class LTCModel(nn.Module):
+        """ODE-solver-based LTC (the original LNN). Uses in-repo LTCNetwork."""
+
+        def __init__(self, hidden_size: int) -> None:
+            super().__init__()
+            self.network = LTCNetwork(
+                input_size=1,
+                hidden_size=hidden_size,
+                output_size=1,
+                num_layers=1,
+                ode_method="rk4",
+                return_sequences=True,
+            )
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            return self.network(x)
+
+    class PDNAPulseModel(nn.Module):
+        """CfC + PDNA pulse modulation (iter#19 augmentation head)."""
+
+        def __init__(self, hidden_size: int) -> None:
+            super().__init__()
+            self.hidden_size = hidden_size
+            self.cell = CfCCell(1, hidden_size)
+            self.pulse = PDNAPulseHead(hidden_size, use_self_attend=False)
+            self.readout = nn.Linear(hidden_size, 1)
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            batch, seq_len, _ = x.shape
+            h = x.new_zeros(batch, self.hidden_size)
+            hidden_states = []
+            dt_value = 1.0 / max(seq_len, 1)
+            for index in range(seq_len):
+                h = self.cell(x[:, index, :], h, dt_value)
+                hidden_states.append(h)
+            hidden_seq = torch.stack(hidden_states, dim=1)  # [B, T, H]
+            augmented = self.pulse(hidden_seq)  # [B, T, H]
+            return self.readout(augmented)  # [B, T, 1]
+
     def make_dataset(samples: int, seq_len: int, device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
         steps = seq_len + 1
         t_axis = torch.linspace(0, 1, steps, device=device).unsqueeze(0).repeat(samples, 1)
@@ -460,6 +506,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
 
     models = [
         ("CfCStyle", CfCStyleModel(args.hidden_size).to(device)),
+        ("LTC", LTCModel(args.hidden_size).to(device)),
+        ("PDNAPulse", PDNAPulseModel(args.hidden_size).to(device)),
         ("GRU", GRUModel(args.hidden_size).to(device)),
     ]
     results = [train_and_eval(name, model, train_x, train_y, test_x, test_y) for name, model in models]

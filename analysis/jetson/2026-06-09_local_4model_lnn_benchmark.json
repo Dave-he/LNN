@@ -1,0 +1,215 @@
+{
+  "status": "ok",
+  "experiment": "jetson_lnn_pareto_sweep",
+  "generated_at": "2026-06-09T04:08:47.337287+00:00",
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.14.4",
+    "device_tree_model": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
+    "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "tegrastats_available": true,
+    "jetson_clocks_available": true,
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda_version": "13.0",
+    "cudnn_version": 91900
+  },
+  "device": "cpu",
+  "config": {
+    "samples": 384,
+    "epochs": 3,
+    "batch_size": 64,
+    "lr": 0.003,
+    "hidden_sizes": [
+      8,
+      16
+    ],
+    "seq_lens": [
+      16,
+      32
+    ],
+    "seeds": [
+      42
+    ],
+    "inference_repeats": 4
+  },
+  "results": [
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.5911010503768921,
+      "train_seconds": 0.7721202159882523,
+      "inference_steps_per_sec": 52684.58427068029,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 185,
+      "test_mse": 0.6546131372451782,
+      "train_seconds": 2.0972977679921314,
+      "inference_steps_per_sec": 15629.354771797867,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 418,
+      "test_mse": 0.7216138243675232,
+      "train_seconds": 0.6868858870002441,
+      "inference_steps_per_sec": 35645.617821081636,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.6012542843818665,
+      "train_seconds": 0.23914887598948553,
+      "inference_steps_per_sec": 206188.79351617765,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.5620386600494385,
+      "train_seconds": 1.529816469992511,
+      "inference_steps_per_sec": 38911.07237669095,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 185,
+      "test_mse": 0.6072125434875488,
+      "train_seconds": 4.143717864004429,
+      "inference_steps_per_sec": 12560.849580271799,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 418,
+      "test_mse": 0.4013366103172302,
+      "train_seconds": 1.3237031300086528,
+      "inference_steps_per_sec": 53335.19890293747,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.48397213220596313,
+      "train_seconds": 0.4446142839733511,
+      "inference_steps_per_sec": 280985.060209583,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.6223242878913879,
+      "train_seconds": 0.859983422968071,
+      "inference_steps_per_sec": 40442.38752410669,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 625,
+      "test_mse": 0.5711333155632019,
+      "train_seconds": 3.1638100739801303,
+      "inference_steps_per_sec": 17444.21932255128,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 1474,
+      "test_mse": 0.5253464579582214,
+      "train_seconds": 0.8155221329652704,
+      "inference_steps_per_sec": 54964.40623273356,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.5752718448638916,
+      "train_seconds": 0.33324739296222106,
+      "inference_steps_per_sec": 155571.23556881858,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.4698704183101654,
+      "train_seconds": 2.0110762209515087,
+      "inference_steps_per_sec": 40897.06296941528,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 625,
+      "test_mse": 0.5065013766288757,
+      "train_seconds": 5.457742493017577,
+      "inference_steps_per_sec": 15915.560767840669,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 1474,
+      "test_mse": 0.44949617981910706,
+      "train_seconds": 1.9055573220248334,
+      "inference_steps_per_sec": 37132.77597285402,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.567334771156311,
+      "train_seconds": 0.6091472510015592,
+      "inference_steps_per_sec": 117452.78416517787,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    }
+  ]
+}
