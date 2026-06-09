@@ -1,8 +1,27 @@
 {
   "date": "2026-06-09",
-  "generated_at": "2026-06-08T22:37:52.606316+00:00",
+  "generated_at": "2026-06-09T23:53:03.872747+00:00",
   "errors": [],
   "papers": [
+    {
+      "id": "2606.07670v1",
+      "title": "Liquid Neural Networks as a Drop-in Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting",
+      "authors": [
+        "Mingzhao Li",
+        "Arghya Pal",
+        "Guan Yuan Tan"
+      ],
+      "published": "2026-06-04",
+      "updated": "2026-06-04",
+      "summary": "Deformable 3D Gaussian Splatting (D-3DGS) re-constructs dynamic scenes from monocular video by deforming a canonical set of 3D Gaussians through a positional-encoded MLP of frame time t. Although fitted to a continuous variable, the MLP couples no two values of t in its architecture and effectively predicts discrete per-frame offsets, leaving temporal smoothness to emerge only as a byproduct of optimisation. We redesign the deformation field as a stack of Closed-form Continuous-time (CfC) cells, a Liquid Neural Network (LNN), that is the closed-form solution of the Liquid Time-constant ODE while preserving every other part of the D-3DGS pipeline. Each cell exposes a sigmoidal time gate that interpolates between two candidate hidden states, baking a learned smooth response to t into the loss landscape without invoking any numerical solver. On the eight D-NeRF and seven NeRF-DS scenes the liquid field matches or exceeds the MLP baseline in aggregate, with its largest gains concentrated on the scenes with the most high-frequency articulated motion. The result is a near-zero-friction architectural design that turns the discrete MLP deformation field into an explicit continuous-time function of t.",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.07670v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.07670v1",
+      "keyword_score": 7
+    },
     {
       "id": "2605.27467v1",
       "title": "Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition: Robustness, Efficiency, and Clinical Utility",
@@ -464,42 +483,18 @@
       "abs_url": "https://arxiv.org/abs/2510.25020v1",
       "pdf_url": "https://arxiv.org/pdf/2510.25020v1",
       "keyword_score": 2
-    },
-    {
-      "id": "2510.09207v2",
-      "title": "Operator-Consistent Physics-Informed Learning for Wafer Thermal Reconstruction in Lithography",
-      "authors": [
-        "Ze Tao",
-        "Fujun Liu",
-        "Yuxi Jin",
-        "Ke Xu",
-        "Minghui Sun",
-        "Xiangsheng Hu",
-        "Qi Cao",
-        "Haoran Xu",
-        "Hanxuan Wang"
-      ],
-      "published": "2025-10-10",
-      "updated": "2025-10-27",
-      "summary": "Thermal field reconstruction in post-exposure bake (PEB) is critical for advanced lithography, yet current physics-informed neural networks (PINNs) suffer from inconsistent accuracy due to a misalignment between geometric coordinates, physical fields, and differential operators. To resolve this, we introduce a novel architecture that unifies these elements on a single computation graph by integrating LSTM-gated mechanisms within a Liquid Neural Network (LNN) backbone. This specific combination of gated liquid layers is necessary to dynamically regulate the network's spectral behavior and enforce operator-level consistency, which ensures stable training and high-fidelity predictions. Applied to a 2D PEB scenario with internal heat generation and convective boundaries, our model formulates residuals via differential forms and a composite loss functional. The results demonstrate rapid convergence, uniformly low errors, strong agreement with FEM benchmarks, and stable training without late-stage oscillations, outperforming existing baselines in accuracy and robustness. Our framework thus establishes a reliable foundation for high-fidelity thermal modeling and offers a transferable strategy for operator-consistent neural surrogates in other physical domains.",
-      "categories": [
-        "math-ph"
-      ],
-      "abs_url": "https://arxiv.org/abs/2510.09207v2",
-      "pdf_url": "https://arxiv.org/pdf/2510.09207v2",
-      "keyword_score": 1
     }
   ],
   "github_repos": [
     {
       "full_name": "maximecb/bebelm",
-      "description": "CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B",
+      "description": "CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM",
       "html_url": "https://github.com/maximecb/bebelm",
-      "stars": 35,
-      "forks": 1,
+      "stars": 45,
+      "forks": 2,
       "language": "Rust",
-      "updated_at": "2026-06-08",
-      "pushed_at": "2026-06-08",
+      "updated_at": "2026-06-09",
+      "pushed_at": "2026-06-09",
       "topics": [
         "cpu",
         "inference",
@@ -517,10 +512,22 @@
       "stars": 1,
       "forks": 0,
       "language": "C",
-      "updated_at": "2026-06-08",
-      "pushed_at": "2026-06-08",
+      "updated_at": "2026-06-09",
+      "pushed_at": "2026-06-09",
       "topics": [],
       "query": "\"liquid neural network\""
+    },
+    {
+      "full_name": "heimdilon/sncp-ppo-crowdnav",
+      "description": "PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.",
+      "html_url": "https://github.com/heimdilon/sncp-ppo-crowdnav",
+      "stars": 0,
+      "forks": 0,
+      "language": "Python",
+      "updated_at": "2026-06-09",
+      "pushed_at": "2026-06-09",
+      "topics": [],
+      "query": "\"liquid time constant\""
     },
     {
       "full_name": "g023/cuda_inf",
@@ -552,18 +559,6 @@
         "token"
       ],
       "query": "LiquidAI LFM2"
-    },
-    {
-      "full_name": "heimdilon/sncp-ppo-crowdnav",
-      "description": "PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.",
-      "html_url": "https://github.com/heimdilon/sncp-ppo-crowdnav",
-      "stars": 0,
-      "forks": 0,
-      "language": "Python",
-      "updated_at": "2026-06-08",
-      "pushed_at": "2026-06-08",
-      "topics": [],
-      "query": "\"liquid time constant\""
     },
     {
       "full_name": "patel-om/liquid-neural-networks",

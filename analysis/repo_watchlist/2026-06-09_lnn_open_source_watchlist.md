@@ -8,18 +8,25 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [maximecb/bebelm](https://github.com/maximecb/bebelm)
-- 更新：2026-06-08
-- Star / Fork：35 / 1
+- 更新：2026-06-09
+- Star / Fork：45 / 2
 - 语言：Rust
 - Topics：cpu, inference, llm, local-ai, local-llm, rust
-- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B
+- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
 
 ### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
-- 更新：2026-06-08
+- 更新：2026-06-09
 - Star / Fork：1 / 0
 - 语言：C
 - Topics：未标注
 - 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
+
+### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
+- 更新：2026-06-09
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
 
 ### [g023/cuda_inf](https://github.com/g023/cuda_inf)
 - 更新：2026-06-08
@@ -27,13 +34,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Cuda
 - Topics：3060, ai, c, cpp, cuda, fast-inference, gpu, inference
 - 说明：A self-contained CUDA inference engine for LiquidAI/LFM2.5-8B-A1B (hybrid conv + GQA-attention MoE, 8.5B params, 1B active) targeting a single RTX 3060 (12 GB). No Python, no frameworks at runtime: a single .cu engine + a header-only byte-level BPE tokenizer.
-
-### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-06-08
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
 
 ### [patel-om/liquid-neural-networks](https://github.com/patel-om/liquid-neural-networks)
 - 更新：2026-06-07
