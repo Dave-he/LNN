@@ -335,6 +335,89 @@ def mark_pareto_front(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return marked
 
 
+def aggregate_seeds(
+    per_seed_results: list[dict[str, Any]],
+    metrics: tuple[str, ...] = ("test_mse", "inference_steps_per_sec", "train_seconds"),
+) -> list[dict[str, Any]]:
+    """iter#35: collapse per-seed rows into per-(model, hidden, seq) mean ± std.
+
+    Groups by (name, hidden_size, seq_len) and computes mean + std + n_seeds
+    for the requested metrics. `parameters` and `seeds` are passed through.
+    The aggregated rows use the same flat-dict shape as per-seed rows but with
+    the metric values wrapped as {mean, std, n_seeds} dicts. The dominance
+    check in `mark_pareto_front` operates on these aggregated rows by reading
+    the `.mean` sub-field (see `dominates` patched below).
+    """
+    import statistics
+
+    groups: dict[tuple[str, int, int], list[dict[str, Any]]] = {}
+    for row in per_seed_results:
+        key = (row["name"], row.get("hidden_size", -1), row.get("seq_len", -1))
+        groups.setdefault(key, []).append(row)
+
+    aggregated: list[dict[str, Any]] = []
+    for (name, hidden_size, seq_len), rows in groups.items():
+        params = rows[0].get("parameters", 0)
+        seeds = sorted({row.get("seed", -1) for row in rows})
+        agg: dict[str, Any] = {
+            "name": name,
+            "hidden_size": hidden_size,
+            "seq_len": seq_len,
+            "parameters": params,
+            "seeds": seeds,
+        }
+        for metric in metrics:
+            values = [float(row[metric]) for row in rows if row.get(metric) is not None]
+            if not values:
+                continue
+            if len(values) >= 2:
+                mean = statistics.fmean(values)
+                std = statistics.stdev(values)
+            else:
+                mean = float(values[0])
+                std = 0.0
+            agg[metric] = {"mean": mean, "std": std, "n_seeds": len(values)}
+        aggregated.append(agg)
+    return aggregated
+
+
+def _agg_dominates(candidate: dict[str, Any], other: dict[str, Any]) -> bool:
+    """Patched dominance check for aggregated rows (reads .mean sub-fields)."""
+    def _get(row: dict[str, Any], key: str) -> float:
+        val = row.get(key)
+        if isinstance(val, dict) and "mean" in val:
+            return float(val["mean"])
+        return float(val) if val is not None else 0.0
+
+    no_worse = (
+        _get(candidate, "test_mse") <= _get(other, "test_mse")
+        and _get(candidate, "parameters") <= _get(other, "parameters")
+        and _get(candidate, "train_seconds") <= _get(other, "train_seconds")
+        and _get(candidate, "inference_steps_per_sec") >= _get(other, "inference_steps_per_sec")
+    )
+    strictly_better = (
+        _get(candidate, "test_mse") < _get(other, "test_mse")
+        or _get(candidate, "parameters") < _get(other, "parameters")
+        or _get(candidate, "train_seconds") < _get(other, "train_seconds")
+        or _get(candidate, "inference_steps_per_sec") > _get(other, "inference_steps_per_sec")
+    )
+    return no_worse and strictly_better
+
+
+def mark_pareto_front_aggregated(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Pareto marking for aggregated (mean-valued) rows."""
+    marked = []
+    for index, result in enumerate(rows):
+        dominated = any(
+            other_index != index and _agg_dominates(other, result)
+            for other_index, other in enumerate(rows)
+        )
+        result = dict(result)
+        result["pareto_front"] = not dominated
+        marked.append(result)
+    return marked
+
+
 def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     import torch
     import torch.nn as nn
@@ -581,6 +664,11 @@ def run_pareto_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             "inference_repeats": args.inference_repeats,
         },
         "results": mark_pareto_front(flat_results),
+        # iter#35: aggregated mean ± std per (model, hidden, seq) for the
+        # multi-seed case. Empty list if only 1 seed (no aggregation needed).
+        "aggregated_results": mark_pareto_front_aggregated(
+            aggregate_seeds(flat_results)
+        ) if len(seeds) >= 2 else [],
     }
 
 

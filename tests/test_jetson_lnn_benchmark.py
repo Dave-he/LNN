@@ -103,6 +103,81 @@ def test_dominates_requires_strictly_better() -> None:
     assert module.dominates(a3, a) is False
 
 
+def test_aggregate_seeds_groups_by_model_hidden_seq() -> None:
+    """iter#35: 6 per-seed rows collapse to 2 aggregated rows."""
+    module = _import_helpers()
+    per_seed = [
+        {"name": "CfC", "hidden_size": 8, "seq_len": 16, "seed": 42,
+         "parameters": 329, "test_mse": 0.50, "inference_steps_per_sec": 40000.0,
+         "train_seconds": 1.0},
+        {"name": "CfC", "hidden_size": 8, "seq_len": 16, "seed": 123,
+         "parameters": 329, "test_mse": 0.60, "inference_steps_per_sec": 42000.0,
+         "train_seconds": 1.2},
+        {"name": "CfC", "hidden_size": 8, "seq_len": 16, "seed": 7,
+         "parameters": 329, "test_mse": 0.55, "inference_steps_per_sec": 38000.0,
+         "train_seconds": 1.1},
+        {"name": "GRU", "hidden_size": 8, "seq_len": 16, "seed": 42,
+         "parameters": 273, "test_mse": 0.60, "inference_steps_per_sec": 200000.0,
+         "train_seconds": 0.3},
+        {"name": "GRU", "hidden_size": 8, "seq_len": 16, "seed": 123,
+         "parameters": 273, "test_mse": 0.65, "inference_steps_per_sec": 210000.0,
+         "train_seconds": 0.4},
+        {"name": "GRU", "hidden_size": 8, "seq_len": 16, "seed": 7,
+         "parameters": 273, "test_mse": 0.62, "inference_steps_per_sec": 195000.0,
+         "train_seconds": 0.35},
+    ]
+    aggregated = module.aggregate_seeds(per_seed)
+    assert len(aggregated) == 2  # 2 (name, hidden, seq) groups
+    by_name = {row["name"]: row for row in aggregated}
+    # CfC group
+    cfc = by_name["CfC"]
+    assert cfc["hidden_size"] == 8 and cfc["seq_len"] == 16
+    assert cfc["parameters"] == 329
+    assert sorted(cfc["seeds"]) == [7, 42, 123]
+    # Mean of 0.50, 0.60, 0.55 = 0.55; std ≈ 0.05
+    assert abs(cfc["test_mse"]["mean"] - 0.55) < 1e-9
+    assert cfc["test_mse"]["std"] > 0.04 and cfc["test_mse"]["std"] < 0.06
+    assert cfc["test_mse"]["n_seeds"] == 3
+    # GRU group: steps/sec mean ~201667, std should be > 0
+    gru = by_name["GRU"]
+    assert gru["inference_steps_per_sec"]["n_seeds"] == 3
+    assert gru["inference_steps_per_sec"]["std"] > 0
+    # Single-seed case: std must be 0.0 (not crash on stdev of 1)
+    single = per_seed[:1]
+    agg_single = module.aggregate_seeds(single)
+    assert len(agg_single) == 1
+    assert agg_single[0]["test_mse"]["std"] == 0.0
+    assert agg_single[0]["test_mse"]["n_seeds"] == 1
+
+
+def test_aggregate_seeds_then_mark_pareto_front_uses_mean() -> None:
+    """iter#35: aggregated dominance check uses .mean sub-fields."""
+    module = _import_helpers()
+    # Three aggregated rows; PDNA h=8 has mean 0.45 (better) but high std.
+    # CfC h=8 has mean 0.50 (worse) but low std. They both go on Pareto
+    # because PDNA doesn't strictly dominate CfC (mean 0.45 < 0.50 is
+    # strictly better, but parameters 418 > 329). Verify the math.
+    aggregated = [
+        {"name": "PDNA", "hidden_size": 8, "seq_len": 16, "parameters": 418,
+         "test_mse": {"mean": 0.45, "std": 0.10, "n_seeds": 3},
+         "train_seconds": {"mean": 1.0, "std": 0.0, "n_seeds": 3},
+         "inference_steps_per_sec": {"mean": 50000.0, "std": 0.0, "n_seeds": 3}},
+        {"name": "CfC", "hidden_size": 8, "seq_len": 16, "parameters": 329,
+         "test_mse": {"mean": 0.50, "std": 0.01, "n_seeds": 3},
+         "train_seconds": {"mean": 1.0, "std": 0.0, "n_seeds": 3},
+         "inference_steps_per_sec": {"mean": 40000.0, "std": 0.0, "n_seeds": 3}},
+        {"name": "GRU", "hidden_size": 8, "seq_len": 16, "parameters": 273,
+         "test_mse": {"mean": 0.60, "std": 0.02, "n_seeds": 3},
+         "train_seconds": {"mean": 0.3, "std": 0.0, "n_seeds": 3},
+         "inference_steps_per_sec": {"mean": 200000.0, "std": 0.0, "n_seeds": 3}},
+    ]
+    marked = module.mark_pareto_front_aggregated(aggregated)
+    pareto_names = {row["name"] for row in marked if row.get("pareto_front")}
+    # All three are Pareto: PDNA has best MSE but more params, CfC middle,
+    # GRU has best throughput. None strictly dominates another on all 4 axes.
+    assert pareto_names == {"PDNA", "CfC", "GRU"}
+
+
 def test_looks_like_cuda_runtime_error_detection() -> None:
     """CUDA OOM and cublas asserts are detected; plain Python errors are not.
 

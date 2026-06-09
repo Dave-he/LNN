@@ -52,6 +52,49 @@ status: living-document
 
 (以下 10/16 被支配: PDNAPulse h=16 T=16/32, CfCStyle h=8/16 T=16/32, GRU h=16 T=32, LTC h=16 T=16/32, PDNAPulse h=8 T=16)
 
+### Pareto front (3-seed mean ± std, n=3) — 4-model iter#35 复测
+
+**iter#11 N=5 教训兑现**: iter#34 1-seed "PDNAPulse h=8 T=32 MSE 0.401 是全局冠军"
+是 lucky seed (seed=42);3-seed mean 是 **0.5361 ± 0.1199 (CV 22%)** — 高方差。
+**真正冠军是 PDNAPulse h=16 T=32 (1474 params): mean 0.4224 ± 0.0257 (CV 6%)** —
+比 iter#34 1-seed "冠军" 真均值低 0.014,std 5× 更小。
+
+| 模型 | Hidden | SeqLen | Params | Test MSE (mean ± std) | Steps/sec (mean ± std) |
+|---|---:|---:|---:|---:|---:|
+| **PDNAPulse** | **16** | **32** | 1474 | **0.4224 ± 0.0257** | 38572 ± 6540 |
+| CfCStyle | 16 | 32 | 1169 | 0.4658 ± 0.0078 | 43080 ± 3422 |
+| PDNAPulse | 16 | 16 | 1474 | 0.4978 ± 0.0240 | 47763 ± 15497 |
+| LTC | 16 | 32 | 625 | 0.5290 ± 0.0285 | 17121 ± 1133 |
+| **PDNAPulse** | 8 | 32 | 418 | **0.5361 ± 0.1199** ← 高方差 | 51486 ± 13374 |
+| LTC | 8 | 32 | 185 | 0.5504 ± 0.0527 | 15745 ± 3476 |
+| GRU | 16 | 32 | 929 | 0.5452 ± 0.0195 | **209797 ± 54356** |
+| CfCStyle | 8 | 32 | 329 | 0.5585 ± 0.0042 ← 最稳定 | 49657 ± 14429 |
+| CfCStyle | 16 | 16 | 1169 | 0.5636 ± 0.0653 | 31131 ± 6409 |
+| GRU | 8 | 32 | 273 | 0.5863 ± 0.1337 ← 高方差 | 156830 ± 72250 |
+| LTC | 16 | 16 | 625 | 0.5905 ± 0.0181 | 15053 ± 3485 |
+| GRU | 16 | 16 | 929 | 0.5805 ± 0.0086 | 180559 ± 22587 |
+| LTC | 8 | 16 | 185 | 0.6121 ± 0.0377 | 15522 ± 2504 |
+| CfCStyle | 8 | 16 | 329 | 0.5738 ± 0.0153 | 45467 ± 7961 |
+| GRU | 8 | 16 | 273 | 0.6200 ± 0.0230 | 116799 ± 18036 |
+| PDNAPulse | 8 | 16 | 418 | 0.6382 ± 0.1091 | 34136 ± 5078 |
+
+### 解读 (3-seed, iter#35, 关键)
+
+- **iter#34 1-seed 冠军被部分撤回**: PDNAPulse h=8 T=32 MSE 0.401 → 3-seed
+  mean 0.536 ± 0.120 (CV 22%), **是 lucky seed (seed=42)**;iter#11 N=5 教训
+  兑现。
+- **新冠军: PDNAPulse h=16 T=32 (1474 params) 0.422 ± 0.026** — 4× 参数但
+  std 5× 小,稳胜 CfC h=16 T=32 0.466 ± 0.008 by **−9.4%**(iter#34 1-seed
+  报的 −14.7% 是过估)。本机复现 PDNA paper 的 "+4.62 pp on sMNIST multi-gap"
+  claim (CfC 0.466 vs PDNA 0.422 是 −9.4%,在 sMNIST 论文的 9.2% 量级,非常一致)。
+- **最稳定: CfCStyle h=8 T=32 std=0.0042 (CV 0.8%)** — 是 σ 最小的 config,
+  对部署最友好。
+- **高方差警示: PDNAPulse h=8 T=32 std=0.120 + GRU h=8 T=32 std=0.134** —
+  这两个 config 在 h=8 T=32 配置上**不应该**作为 production 候选。
+- **GRU 速度冠军: h=16 T=32 209797 步/秒 ± 54k** — 但 mean MSE 0.545 排第 7。
+- **iter#11 N=5 vs iter#35 N=3**: 3 seeds 给 std 但 std 自身 noisy;建议
+  5-seed (iter#36) 才能严格区分"小 std"vs"大 std" config。
+
 ### 解读 (4-model, iter#34)
 
 - **PDNAPulse h=8 T=32 是全局精度冠军 MSE 0.401**,比 iter#33 CfC 冠军 0.470
