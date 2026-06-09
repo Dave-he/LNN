@@ -1,0 +1,127 @@
+{
+  "status": "ok",
+  "experiment": "jetson_lnn_pareto_sweep",
+  "generated_at": "2026-06-09T03:33:46.074083+00:00",
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.14.4",
+    "device_tree_model": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
+    "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "tegrastats_available": true,
+    "jetson_clocks_available": true,
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda_version": "13.0",
+    "cudnn_version": 91900
+  },
+  "device": "cpu",
+  "config": {
+    "samples": 384,
+    "epochs": 3,
+    "batch_size": 64,
+    "lr": 0.003,
+    "hidden_sizes": [
+      8,
+      16
+    ],
+    "seq_lens": [
+      16,
+      32
+    ],
+    "seeds": [
+      42
+    ],
+    "inference_repeats": 4
+  },
+  "results": [
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.5908786058425903,
+      "train_seconds": 1.2221989669487812,
+      "inference_steps_per_sec": 28377.11835249335,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.5589355826377869,
+      "train_seconds": 0.3087265460053459,
+      "inference_steps_per_sec": 92016.5554584354,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.5619156956672668,
+      "train_seconds": 2.411461560986936,
+      "inference_steps_per_sec": 28666.99955859386,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.5651243329048157,
+      "train_seconds": 0.6526329199550673,
+      "inference_steps_per_sec": 118700.1872260939,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.6224396228790283,
+      "train_seconds": 2.1260810690000653,
+      "inference_steps_per_sec": 32303.71406555235,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.5479227900505066,
+      "train_seconds": 0.9896229819860309,
+      "inference_steps_per_sec": 110075.849122837,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.4703378975391388,
+      "train_seconds": 4.107698504987638,
+      "inference_steps_per_sec": 21960.28463089245,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.5363500118255615,
+      "train_seconds": 1.4539204210159369,
+      "inference_steps_per_sec": 98844.46551416215,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    }
+  ]
+}

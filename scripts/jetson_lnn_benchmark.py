@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
+import io
 import json
 import math
 import os
@@ -41,11 +43,12 @@ def write_benchmark_plot(run_date: str, payload: dict[str, Any], output_dir: pat
         return write_pareto_plot(run_date, payload, output_dir)
 
     try:
-        import matplotlib
+        with contextlib.redirect_stderr(io.StringIO()):
+            import matplotlib
 
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-    except ImportError:
+            matplotlib.use("Agg")
+            import matplotlib.pyplot as plt
+    except Exception:
         return None
 
     results = payload["results"]
@@ -87,11 +90,12 @@ def write_benchmark_plot(run_date: str, payload: dict[str, Any], output_dir: pat
 
 def write_pareto_plot(run_date: str, payload: dict[str, Any], output_dir: pathlib.Path) -> pathlib.Path | None:
     try:
-        import matplotlib
+        with contextlib.redirect_stderr(io.StringIO()):
+            import matplotlib
 
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-    except ImportError:
+            matplotlib.use("Agg")
+            import matplotlib.pyplot as plt
+    except Exception:
         return None
 
     results = payload["results"]

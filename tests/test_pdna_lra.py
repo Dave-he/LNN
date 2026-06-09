@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import pathlib
 import subprocess
 import sys
@@ -87,6 +88,25 @@ def test_pdna_lra_cli_runs_end_to_end(tmp_path) -> None:
     seed_md = list(analysis_dir.glob("cli_smoke_pdna_lra_summary.md"))
     assert len(seed_json) >= 1
     assert len(seed_md) == 1
+    # Verify the iter#30 addition: pdna_alpha/pdna_beta are in the JSON for
+    # variants that have a PDNA head (cfc_pulse, full_pdna) and null for
+    # baseline_cfc.
+    payload = json.loads(seed_json[0].read_text())
+    assert "pdna_alpha" in payload
+    assert payload["pdna_alpha"] is None, "baseline_cfc has no head, alpha should be None"
+    # Also check cfc_pulse alpha/beta are not None
+    cfc_pulse_json = list(analysis_dir.glob("cli_smoke_pdna_lra_cfc_pulse_seed42.json"))
+    if cfc_pulse_json:
+        cfc_pulse_payload = json.loads(cfc_pulse_json[0].read_text())
+        assert cfc_pulse_payload["pdna_alpha"] is not None, "cfc_pulse should have alpha"
+        assert cfc_pulse_payload["pdna_beta"] is not None, "cfc_pulse should have beta"
+        # beta is pinned to 0.0 at init via attend_beta=0.0; after 1 epoch
+        # of optimizer updates it may drift slightly. We just verify it
+        # remained "small" (< 0.01) so the cfc_pulse vs full_pdna distinction
+        # is preserved (full_pdna learns beta normally).
+        assert abs(cfc_pulse_payload["pdna_beta"]) < 0.01, (
+            f"cfc_pulse beta should stay near 0 init, got {cfc_pulse_payload['pdna_beta']}"
+        )
     # Clean up the CLI smoke artifacts so they don't pollute future runs.
     for p in analysis_dir.glob("cli_smoke_*"):
         p.unlink()

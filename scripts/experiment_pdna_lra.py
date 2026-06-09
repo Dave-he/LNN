@@ -91,7 +91,18 @@ def _train_one(
             n_total += y.numel()
     acc = 100.0 * n_correct / n_total
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    return {"train_seconds": train_seconds, "n_params": n_params, "test_acc": acc}
+    # Capture trained PDNA gate values (iter#30: verify pulse/attend learned
+    # beyond their 0.01 init). For baseline_cfc (no head) these are None.
+    head = getattr(model, "head", None)
+    pdna_alpha = float(head.alpha.detach().cpu().item()) if head is not None and hasattr(head, "alpha") else None
+    pdna_beta = float(head.beta.detach().cpu().item()) if head is not None and hasattr(head, "beta") else None
+    return {
+        "train_seconds": train_seconds,
+        "n_params": n_params,
+        "test_acc": acc,
+        "pdna_alpha": pdna_alpha,
+        "pdna_beta": pdna_beta,
+    }
 
 
 # --------------------------------------------------------- one full run
@@ -193,12 +204,12 @@ def _format_markdown(payload: dict) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seeds", type=int, default=3)
-    parser.add_argument("--hidden-size", type=int, default=64)
+    parser.add_argument("--hidden-size", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=5e-4)
-    parser.add_argument("--train-samples", type=int, default=2000)
-    parser.add_argument("--test-samples", type=int, default=500)
+    parser.add_argument("--train-samples", type=int, default=500)
+    parser.add_argument("--test-samples", type=int, default=200)
     parser.add_argument(
         "--variants", nargs="+",
         default=["baseline_cfc", "cfc_pulse", "full_pdna"],
