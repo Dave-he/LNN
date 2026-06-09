@@ -195,6 +195,13 @@ tags: [LNN, reading-report, papers]
 - **关键成果**：400 GB / 4 层对抗语料上 F1=0.9952, TPR=99.50%, 推理延迟 262.27 µs (RTX 4090)，理论 40 Mpps；与 ET-BERT/标准 SSM 范式对比表显示"双曲流物理"同时免疫对抗前缀与时序变异。
 - **局限**：Tier IV 闭源导致 F1 不可第三方复现；$\tau_{\text{threshold}}=0.12$ 跨域迁移性未充分论证；AMOI/Ayaka 攻击为作者内部框架，独立白盒复现缺位；长时间漂移（小时级）热力学异常未明确。
 
+### [2026-06-04] LNN as a Drop-in Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting（4D 重建方向）
+- **独立报告**：[[docs/reports/Liquid_Neural_Networks_3DGS_Deformation_Field_2606.07670_研读报告.md]]
+- **核心问题**：D-3DGS 用 MLP $F_\theta(\gamma(x),\gamma(t))$ 把规范化 3D 高斯形变到任意 $t$，但 MLP 是逐帧独立前馈，**架构上没有任何机制把 $F_\theta(t)$ 与 $F_\theta(t+\delta t)$ 关联**，时间平滑性只能由优化器"顺带"逼出；Neural ODE / SDE 替代方案要 ODE 求解器，训练 / 推理慢一档。
+- **方法论**：把 MLP 形变场**完全替换**为 D 个 CfC cell 的栈（"depth-as-time"），每 cell 暴露 sigmoid 时间门 $\sigma_\tau=\sigma(W_a z \cdot t + W_b z)$，在两个候选隐藏态 $g,h_{\text{cand}}$ 间做时间门插值；其余 D-3DGS 流水线（canonical Gaussian、rasterizer、L1+SSIM、密度控制、AST schedule、40k iter Adam）完全保留；默认 D=6, W=128, backbone 64×2 GELU；D-NeRF 8 场景 + NeRF-DS 7 场景，PSNR/SSIM/LPIPS + ptflops Params/MACs 全量对比。
+- **关键成果**：D-NeRF 6/8 场景匹配或超过 MLP（均值 38.25 vs 38.26 dB）；NeRF-DS **均值 PSNR 23.86 vs 23.39 (+0.47), SSIM 0.8491 vs 0.8403, LPIPS 0.1891 vs 0.2011 全指标领先**；最 specular 场景 As 单点 +2.74 dB、LPIPS −41%；默认配置 **0.33M params / 6.0G MACs**，比 D-3DGS MLP 小 36%；CfC 在均值 PSNR 上超过 specular-aware NeRF-DS baseline，是**唯一一个做到这点的通用方法**。
+- **局限**：跨帧递归被主动放弃，长程时间记忆未激活；评估集偏短 / 偏受控；未做 $\partial F_\theta/\partial t$ 派生的物理一致性辅助损失（inertia / ARAP）；作者明示外推与重噪声场景仍属 ODE-GS / SDE 主场。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
