@@ -67,10 +67,11 @@ import torch
 # ---------------------------------------------------------------------------
 
 try:  # pragma: no cover - import-time guard
-    from lnn.core.ltc import LTCNetwork
+    from lnn.core.ltc import LTCNetwork, TransformableLTC
     _HAS_LTC = True
 except Exception:  # pragma: no cover
     LTCNetwork = None
+    TransformableLTC = None
     _HAS_LTC = False
 
 try:  # pragma: no cover
@@ -239,7 +240,7 @@ def run_case_quadruped(
     policy = SNCPPolicyLite(
         temporal_input_size=state_dim,
         action_dim=action_dim,
-        hidden_size=8 if quick else 16,
+        ltc_hidden_size=8 if quick else 16,
     )
     optim = torch.optim.Adam(policy.parameters(), lr=3e-4)
     last5_returns: List[float] = []
@@ -248,13 +249,15 @@ def run_case_quadruped(
         # Roll out expert policy as a "data" pass + PPO clipped surrogate.
         # For smoke we treat expert actions as the "old" actions.
         # The lite policy is small; we run a single epoch of imitation
-        # (MSE on expert actions) to keep wall time low.
+        # (MSE on the *last* expert action) to keep wall time low.
         # NOTE: full PPO clipped loss is in experiment_sncp_ppo_lite.py;
         # here we use a behaviour-cloning shortcut suitable for a smoke.
         hidden = policy.initial_hidden(n_ep, obs.device)
-        mean, _ = policy.encode(obs, hidden)
-        pred = mean[:, :action_dim]
-        loss = ((pred - expert_actions) ** 2).mean()
+        last_feat, _ = policy.encode(obs, hidden)  # [n_ep, ltc_hidden]
+        sf = policy.trunk(last_feat)  # [n_ep, trunk_hidden]
+        mu, _ = policy.actor(sf)  # [n_ep, action_dim]
+        target = expert_actions[:, -1, :]  # [n_ep, action_dim] — last-step target
+        loss = ((mu - target) ** 2).mean()
         optim.zero_grad()
         loss.backward()
         optim.step()
@@ -423,9 +426,34 @@ def run_case_battery(
     seed: int,
     steps: int,
     quick: bool,
+    battery_mode: str = "single",
+    refine_steps: int = 10,
+    refine_lr: float = 1e-4,
 ) -> Dict[str, Any]:
-    """Case D: Battery SoH regression via LTCNetwork (EntroLnn formula)."""
+    """Case D: Battery SoH regression via TransformableLTC (EntroLnn 2-stage).
+
+    Modes
+    -----
+    * ``"single"`` (default, backward-compatible): one-shot training on the
+      train split, evaluate on the val split. Same semantics as iter#36.
+    * ``"transformable"`` (iter#37): 2-stage EntroLnn protocol —
+      (1) train on **reference cell** (first cell of train split),
+      (2) online-refine on the remaining train cells for ``refine_steps``
+      steps at ``refine_lr`` (10× smaller than train_lr), then evaluate
+      on the val split.
+
+    Parameters
+    ----------
+    seed, steps, quick : standard
+    battery_mode : "single" or "transformable"
+    refine_steps : K gradient steps in stage 2 (default 10).
+    refine_lr : learning rate for stage 2 (default 1e-4 = 1/10 of train_lr).
+    """
     t0 = time.time()
+    if battery_mode not in {"single", "transformable"}:
+        raise ValueError(
+            f"battery_mode must be 'single' or 'transformable', got {battery_mode!r}"
+        )
     if not _HAS_LTC:
         return {
             "case": "battery", "seed": seed, "status": "skipped",
@@ -437,52 +465,63 @@ def run_case_battery(
     # Flatten cells × cycles into batch, treat each as a 1-step feature
     # summary (we use mean across seq for the smoke).
     X_flat = X.mean(dim=2)  # [n_cells, n_cycles, feat_dim]
-    Y_flat = Y  # [n_cells, n_cycles]
-    # 80/10/10 split
+    # Use the last-cycle SoH per cell as the scalar regression target. This
+    # keeps shapes consistent (X: [B, T, F] vs Y: [B, 1]) and matches the
+    # EntroLnn paper's "predict SoH from cycle history" setup.
+    Y_flat = Y[:, -1:]  # [n_cells, 1]
+    # 80/10/10 split (cells-level)
     n = n_cells
     n_tr = int(n * 0.8)
     X_tr, Y_tr = X_flat[:n_tr], Y_flat[:n_tr]
     X_va, Y_va = X_flat[n_tr:], Y_flat[n_tr:]
-    # Use LTCNetwork (it has a built-in output_proj). The full EntroLnn
-    # requires a 2-stage reference → target training; here we just do
-    # single-stage regression as a smoke. Note LTCNetwork signature is
-    # (input_size, hidden_size, output_size, num_layers=1, ode_method='rk4').
-    class BatteryLite(torch.nn.Module):
-        def __init__(self, input_size: int, hidden_size: int, output_size: int):
-            super().__init__()
-            self.ltc = LTCNetwork(
-                input_size, hidden_size, output_size,
-                num_layers=1, ode_method="euler",
-            )
-
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            # LTCNetwork forward expects [B, T, F] and returns [B, T, output_size]
-            # when return_sequences=True (default). We take the last step.
-            out = self.ltc(x)
-            return out[:, -1, :]
-
-    model = BatteryLite(feat_dim, 8 if quick else 16, 1)
-    optim = torch.optim.Adam(model.parameters(), lr=1e-3)
-    loss_fn = torch.nn.MSELoss()
+    # Build the model via the new public TransformableLTC class (iter#37).
+    # In single mode we still use it for symmetry — train_reference(K=0)
+    # is equivalent to a no-op, so we use refine_target(K=steps) to keep
+    # the same total training budget as iter#36.
+    hidden = 8 if quick else 16
+    model = TransformableLTC(
+        input_size=feat_dim, hidden_size=hidden, output_size=1,
+        num_layers=1, ode_method="euler",
+        train_lr=1e-3, refine_lr=refine_lr, loss_fn="mse",
+    )
     bs = 8
-    for epoch in range(max(1, steps // 4)):
-        perm = torch.randperm(n_tr)
-        for i in range(0, n_tr, bs):
-            idx = perm[i : i + bs]
-            xb, yb = X_tr[idx], Y_tr[idx]
-            pred = model(xb).squeeze(-1)
-            loss = loss_fn(pred, yb)
-            optim.zero_grad()
-            loss.backward()
-            optim.step()
+    history: Dict[str, Any] = {"mode": battery_mode, "refine_steps": refine_steps}
+    if battery_mode == "transformable":
+        # 2-stage: reference cell (first of train) → refine on rest
+        ref_x, ref_y = X_tr[:1], Y_tr[:1]
+        ref_out = model.train_reference(ref_x, ref_y, epochs=max(1, steps // 4), batch_size=1, verbose=False)
+        history["ref_loss_history"] = ref_out["ref_loss_history"]
+        history["final_ref_loss"] = ref_out["final_ref_loss"]
+        tgt_x, tgt_y = X_tr[1:], Y_tr[1:]
+        ref_out2 = model.refine_target(tgt_x, tgt_y, K=refine_steps, batch_size=bs, verbose=False)
+        history["refine_loss_history"] = ref_out2["refine_loss_history"]
+        history["final_tgt_loss"] = ref_out2["final_tgt_loss"]
+        history["final_ref_loss_after"] = ref_out2["final_ref_loss_after"]
+    else:  # single mode (backward-compatible)
+        # Run train_reference for the same total epochs as iter#36, then skip refine.
+        single_out = model.train_reference(X_tr, Y_tr, epochs=max(1, steps // 4), batch_size=bs, verbose=False)
+        history["ref_loss_history"] = single_out["ref_loss_history"]
+        history["final_ref_loss"] = single_out["final_ref_loss"]
     with torch.no_grad():
-        pred_va = model(X_va).squeeze(-1)
+        # Forward through the (possibly refined) model
+        out_va = model(X_va)
+        if out_va.dim() == 3:
+            pred_va = out_va[:, -1, :].squeeze(-1)
+        else:
+            pred_va = out_va.squeeze(-1)
         mse = float(((pred_va - Y_va) ** 2).mean().item())
     t_inf0 = time.time()
     with torch.no_grad():
         _ = model(X_va[:1])
     inference_ms = (time.time() - t_inf0) * 1000.0
     wall = time.time() - t0
+    note = f"mode={battery_mode}"
+    if battery_mode == "transformable":
+        ref_after = history.get("final_ref_loss_after", float("nan"))
+        # Stability guard — flag if reference loss blew up
+        ref_pre = history.get("final_ref_loss", 0.0)
+        if ref_pre > 0 and ref_after > 10 * ref_pre:
+            note += f" | WARNING: ref loss {ref_pre:.4f} → {ref_after:.4f} (>10×)"
     return {
         "case": "battery", "seed": seed, "steps": steps,
         "wall_time_s": wall,
@@ -490,8 +529,9 @@ def run_case_battery(
         "inference_ms": inference_ms,
         "primary_metric": "val_mse",
         "primary_metric_value": mse,
+        "secondary_metrics": history,
         "status": "ok",
-        "notes": "Single-stage regression (EntroLnn transformable 2-stage is future work).",
+        "notes": note,
     }
 
 

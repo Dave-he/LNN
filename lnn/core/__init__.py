@@ -39,7 +39,7 @@ from lnn.core.long_sequence import (
     LongSequenceLiquidClassifier,
     parallel_liquid_relaxation,
 )
-from lnn.core.ltc import LTCCell, LTCNetwork
+from lnn.core.ltc import LTCCell, LTCNetwork, TransformableLTC
 from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sample
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
@@ -76,6 +76,7 @@ __all__ = [
     "LiquidNN",
     "LTCCell",
     "LTCNetwork",
+    "TransformableLTC",
     "CfCCell",
     "CfCNetwork",
     "NoiseAdaptiveCfCCell",
