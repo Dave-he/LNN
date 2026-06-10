@@ -575,6 +575,13 @@ def main() -> int:
                    help="Tiny hidden sizes + small steps for smoke (default off).")
     p.add_argument("--out-dir", default="analysis/device_control",
                    help="Where to write JSON reports.")
+    p.add_argument("--battery-mode", choices=["single", "transformable"],
+                   default="single",
+                   help="Battery case mode (iter#37). 'single' = iter#36 behaviour; "
+                        "'transformable' = 2-stage EntroLnn protocol.")
+    p.add_argument("--refine-steps", type=int, default=10,
+                   help="K gradient steps in battery transformable stage 2 "
+                        "(default 10 per EntroLnn §3).")
     args = p.parse_args()
 
     cases = list(CASE_FUNCS.keys()) if args.case == "all" else [args.case]
@@ -588,7 +595,14 @@ def main() -> int:
             seed = 42 + s * 1000
             steps = max(8, args.steps // max(1, args.seeds))
             try:
-                rpt = func(seed=seed, steps=steps, quick=args.quick)
+                # Battery case exposes extra kwargs; pass them through if accepted.
+                if case == "battery":
+                    rpt = func(
+                        seed=seed, steps=steps, quick=args.quick,
+                        battery_mode=args.battery_mode, refine_steps=args.refine_steps,
+                    )
+                else:
+                    rpt = func(seed=seed, steps=steps, quick=args.quick)
             except Exception as exc:  # pragma: no cover - smoke safety net
                 rpt = {"case": case, "seed": seed, "status": "error", "notes": str(exc)}
             per_seed.append(rpt)
@@ -605,6 +619,8 @@ def main() -> int:
                 "steps_per_seed": max(8, args.steps // max(1, args.seeds)),
                 "seeds": args.seeds,
                 "quick": args.quick,
+                "battery_mode": getattr(args, "battery_mode", None),
+                "refine_steps": getattr(args, "refine_steps", None),
             },
         }
         with open(out_path, "w") as f:
