@@ -1,0 +1,150 @@
+{
+  "schema": {
+    "version": 1,
+    "fields": [
+      "case",
+      "seed",
+      "steps",
+      "wall_time_s",
+      "params",
+      "inference_ms",
+      "primary_metric",
+      "primary_metric_value",
+      "secondary_metrics",
+      "status",
+      "notes"
+    ]
+  },
+  "case": "battery",
+  "per_seed": [
+    {
+      "case": "battery",
+      "seed": 42,
+      "steps": 26,
+      "wall_time_s": 29.048064947128296,
+      "params": 233,
+      "inference_ms": 374.1946220397949,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.1604231595993042,
+      "secondary_metrics": {
+        "mode": "transformable",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          0.6066357493400574,
+          0.5981792211532593,
+          0.5898954272270203,
+          0.5817822217941284,
+          0.5738371014595032,
+          0.566057026386261
+        ],
+        "final_ref_loss": 0.566057026386261,
+        "refine_loss_history": [
+          0.36539321144421893,
+          0.363491157690684,
+          0.36160150170326233,
+          0.35973785320917767,
+          0.3578685025374095,
+          0.3560594618320465,
+          0.35422512888908386,
+          0.35238346457481384,
+          0.35059181849161786,
+          0.348798006772995
+        ],
+        "final_tgt_loss": 0.348798006772995,
+        "final_ref_loss_after": 0.4609126150608063
+      },
+      "status": "ok",
+      "notes": "mode=transformable"
+    },
+    {
+      "case": "battery",
+      "seed": 1042,
+      "steps": 26,
+      "wall_time_s": 27.7144775390625,
+      "params": 233,
+      "inference_ms": 610.3007793426514,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.12189651280641556,
+      "secondary_metrics": {
+        "mode": "transformable",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          0.5544062852859497,
+          0.5472851395606995,
+          0.540187418460846,
+          0.5331135988235474,
+          0.5260636806488037,
+          0.5190379023551941
+        ],
+        "final_ref_loss": 0.5190379023551941,
+        "refine_loss_history": [
+          0.31983479857444763,
+          0.3180774251619975,
+          0.3163309892018636,
+          0.314568430185318,
+          0.31280932823816937,
+          0.3110691507657369,
+          0.3093258837858836,
+          0.3075957198937734,
+          0.305859903494517,
+          0.3041224181652069
+        ],
+        "final_tgt_loss": 0.3041224181652069,
+        "final_ref_loss_after": 0.41545605659484863
+      },
+      "status": "ok",
+      "notes": "mode=transformable"
+    },
+    {
+      "case": "battery",
+      "seed": 2042,
+      "steps": 26,
+      "wall_time_s": 29.555639028549194,
+      "params": 233,
+      "inference_ms": 585.7288837432861,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.10638603568077087,
+      "secondary_metrics": {
+        "mode": "transformable",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          0.615307629108429,
+          0.6082351207733154,
+          0.6012420654296875,
+          0.5943270921707153,
+          0.5874865055084229,
+          0.5807136297225952
+        ],
+        "final_ref_loss": 0.5807136297225952,
+        "refine_loss_history": [
+          0.3386901418368022,
+          0.3370255430539449,
+          0.3353648881117503,
+          0.33367255330085754,
+          0.33201347788174945,
+          0.33034129937489826,
+          0.32864223917325336,
+          0.3269469539324443,
+          0.3252554039160411,
+          0.3235609829425812
+        ],
+        "final_tgt_loss": 0.3235609829425812,
+        "final_ref_loss_after": 0.46108728647232056
+      },
+      "status": "ok",
+      "notes": "mode=transformable"
+    }
+  ],
+  "aggregated": {
+    "mean": 0.12956856936216354,
+    "std": 0.027823515759024385,
+    "n_seeds": 3
+  },
+  "config": {
+    "steps_per_seed": 26,
+    "seeds": 3,
+    "quick": true,
+    "battery_mode": "transformable",
+    "refine_steps": 10
+  }
+}

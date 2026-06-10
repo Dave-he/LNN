@@ -1,0 +1,69 @@
+{
+  "schema": {
+    "version": 1,
+    "fields": [
+      "case",
+      "seed",
+      "steps",
+      "wall_time_s",
+      "params",
+      "inference_ms",
+      "primary_metric",
+      "primary_metric_value",
+      "secondary_metrics",
+      "status",
+      "notes"
+    ]
+  },
+  "case": "industrial",
+  "per_seed": [
+    {
+      "case": "industrial",
+      "seed": 42,
+      "steps": 26,
+      "wall_time_s": 2.5065081119537354,
+      "params": 133,
+      "inference_ms": 24.133920669555664,
+      "primary_metric": "il_mse",
+      "primary_metric_value": 0.11851290613412857,
+      "status": "ok",
+      "notes": "LTC recurrent; NCP sparse wiring not yet active (recurrent_type='ltc')."
+    },
+    {
+      "case": "industrial",
+      "seed": 1042,
+      "steps": 26,
+      "wall_time_s": 2.788264513015747,
+      "params": 133,
+      "inference_ms": 33.06889533996582,
+      "primary_metric": "il_mse",
+      "primary_metric_value": 0.1316164880990982,
+      "status": "ok",
+      "notes": "LTC recurrent; NCP sparse wiring not yet active (recurrent_type='ltc')."
+    },
+    {
+      "case": "industrial",
+      "seed": 2042,
+      "steps": 26,
+      "wall_time_s": 2.215837240219116,
+      "params": 133,
+      "inference_ms": 23.33688735961914,
+      "primary_metric": "il_mse",
+      "primary_metric_value": 0.1557387411594391,
+      "status": "ok",
+      "notes": "LTC recurrent; NCP sparse wiring not yet active (recurrent_type='ltc')."
+    }
+  ],
+  "aggregated": {
+    "mean": 0.13528937846422195,
+    "std": 0.018882751151740918,
+    "n_seeds": 3
+  },
+  "config": {
+    "steps_per_seed": 26,
+    "seeds": 3,
+    "quick": true,
+    "battery_mode": "transformable",
+    "refine_steps": 10
+  }
+}

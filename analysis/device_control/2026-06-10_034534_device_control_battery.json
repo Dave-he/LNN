@@ -1,0 +1,150 @@
+{
+  "schema": {
+    "version": 1,
+    "fields": [
+      "case",
+      "seed",
+      "steps",
+      "wall_time_s",
+      "params",
+      "inference_ms",
+      "primary_metric",
+      "primary_metric_value",
+      "secondary_metrics",
+      "status",
+      "notes"
+    ]
+  },
+  "case": "battery",
+  "per_seed": [
+    {
+      "case": "battery",
+      "seed": 42,
+      "steps": 26,
+      "wall_time_s": 33.69887185096741,
+      "params": 233,
+      "inference_ms": 1308.8946342468262,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.389443576335907,
+      "secondary_metrics": {
+        "mode": "transformable",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          1.0409151315689087,
+          1.0329440832138062,
+          1.0249965190887451,
+          1.0170714855194092,
+          1.0091685056686401,
+          1.0012873411178589
+        ],
+        "final_ref_loss": 1.0012873411178589,
+        "refine_loss_history": [
+          0.7044244408607483,
+          0.7023906509081522,
+          0.7003470857938131,
+          0.6982905268669128,
+          0.6962753335634867,
+          0.6942464113235474,
+          0.6921904683113098,
+          0.690149982770284,
+          0.6881436705589294,
+          0.6861330270767212
+        ],
+        "final_tgt_loss": 0.6861330270767212,
+        "final_ref_loss_after": 0.8585840463638306
+      },
+      "status": "ok",
+      "notes": "mode=transformable"
+    },
+    {
+      "case": "battery",
+      "seed": 1042,
+      "steps": 26,
+      "wall_time_s": 32.93591809272766,
+      "params": 233,
+      "inference_ms": 534.1243743896484,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.1306847482919693,
+      "secondary_metrics": {
+        "mode": "transformable",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          0.6053524613380432,
+          0.5968979597091675,
+          0.5883670449256897,
+          0.5797579884529114,
+          0.5710693001747131,
+          0.5622995495796204
+        ],
+        "final_ref_loss": 0.5622995495796204,
+        "refine_loss_history": [
+          0.34338708718617755,
+          0.341220627228419,
+          0.33909372488657635,
+          0.33692733446757,
+          0.3347863256931305,
+          0.33262256781260174,
+          0.3304612934589386,
+          0.3282616138458252,
+          0.3261097272237142,
+          0.3239256938298543
+        ],
+        "final_tgt_loss": 0.3239256938298543,
+        "final_ref_loss_after": 0.4426022171974182
+      },
+      "status": "ok",
+      "notes": "mode=transformable"
+    },
+    {
+      "case": "battery",
+      "seed": 2042,
+      "steps": 26,
+      "wall_time_s": 33.78671860694885,
+      "params": 233,
+      "inference_ms": 1279.5615196228027,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.4548637866973877,
+      "secondary_metrics": {
+        "mode": "transformable",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          1.1519936323165894,
+          1.1420847177505493,
+          1.132304310798645,
+          1.1226515769958496,
+          1.1131258010864258,
+          1.1037251949310303
+        ],
+        "final_ref_loss": 1.1037251949310303,
+        "refine_loss_history": [
+          0.7919620474179586,
+          0.7894870837529501,
+          0.787055492401123,
+          0.78459099928538,
+          0.7821550965309143,
+          0.7797310948371887,
+          0.777323842048645,
+          0.7749466300010681,
+          0.7725415031115214,
+          0.7701962192853292
+        ],
+        "final_tgt_loss": 0.7701962192853292,
+        "final_ref_loss_after": 0.9512546062469482
+      },
+      "status": "ok",
+      "notes": "mode=transformable"
+    }
+  ],
+  "aggregated": {
+    "mean": 0.32499737044175464,
+    "std": 0.17142927791360213,
+    "n_seeds": 3
+  },
+  "config": {
+    "steps_per_seed": 26,
+    "seeds": 3,
+    "quick": true,
+    "battery_mode": "transformable",
+    "refine_steps": 10
+  }
+}

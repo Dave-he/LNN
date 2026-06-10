@@ -1,0 +1,66 @@
+{
+  "schema": {
+    "version": 1,
+    "fields": [
+      "case",
+      "seed",
+      "steps",
+      "wall_time_s",
+      "params",
+      "inference_ms",
+      "primary_metric",
+      "primary_metric_value",
+      "secondary_metrics",
+      "status",
+      "notes"
+    ]
+  },
+  "case": "quadruped",
+  "per_seed": [
+    {
+      "case": "quadruped",
+      "seed": 42,
+      "steps": 26,
+      "wall_time_s": 8.158554315567017,
+      "params": 6017,
+      "primary_metric": "last5_mean_return",
+      "primary_metric_value": -2.680196523666382,
+      "status": "ok",
+      "notes": "BC shortcut (not full PPO) \u2014 see experiment_sncp_ppo_lite.py for full PPO clipped loss."
+    },
+    {
+      "case": "quadruped",
+      "seed": 1042,
+      "steps": 26,
+      "wall_time_s": 0.36206817626953125,
+      "params": 6017,
+      "primary_metric": "last5_mean_return",
+      "primary_metric_value": -2.7411844730377197,
+      "status": "ok",
+      "notes": "BC shortcut (not full PPO) \u2014 see experiment_sncp_ppo_lite.py for full PPO clipped loss."
+    },
+    {
+      "case": "quadruped",
+      "seed": 2042,
+      "steps": 26,
+      "wall_time_s": 0.48773622512817383,
+      "params": 6017,
+      "primary_metric": "last5_mean_return",
+      "primary_metric_value": -2.6800413131713867,
+      "status": "ok",
+      "notes": "BC shortcut (not full PPO) \u2014 see experiment_sncp_ppo_lite.py for full PPO clipped loss."
+    }
+  ],
+  "aggregated": {
+    "mean": -2.7004741032918296,
+    "std": 0.03525629980882515,
+    "n_seeds": 3
+  },
+  "config": {
+    "steps_per_seed": 26,
+    "seeds": 3,
+    "quick": true,
+    "battery_mode": "transformable",
+    "refine_steps": 10
+  }
+}

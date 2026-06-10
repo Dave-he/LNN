@@ -1,0 +1,69 @@
+{
+  "schema": {
+    "version": 1,
+    "fields": [
+      "case",
+      "seed",
+      "steps",
+      "wall_time_s",
+      "params",
+      "inference_ms",
+      "primary_metric",
+      "primary_metric_value",
+      "secondary_metrics",
+      "status",
+      "notes"
+    ]
+  },
+  "case": "drone",
+  "per_seed": [
+    {
+      "case": "drone",
+      "seed": 42,
+      "steps": 26,
+      "wall_time_s": 4.069718360900879,
+      "params": 1108,
+      "inference_ms": 164.88933563232422,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 1.0367239713668823,
+      "status": "ok",
+      "notes": "CfC recurrent; visual feature stand-in (no real CNN backbone)."
+    },
+    {
+      "case": "drone",
+      "seed": 1042,
+      "steps": 26,
+      "wall_time_s": 3.5531198978424072,
+      "params": 1108,
+      "inference_ms": 109.01665687561035,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 1.024412751197815,
+      "status": "ok",
+      "notes": "CfC recurrent; visual feature stand-in (no real CNN backbone)."
+    },
+    {
+      "case": "drone",
+      "seed": 2042,
+      "steps": 26,
+      "wall_time_s": 3.4300665855407715,
+      "params": 1108,
+      "inference_ms": 107.72252082824707,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.9699592590332031,
+      "status": "ok",
+      "notes": "CfC recurrent; visual feature stand-in (no real CNN backbone)."
+    }
+  ],
+  "aggregated": {
+    "mean": 1.0103653271993,
+    "std": 0.03552997739930707,
+    "n_seeds": 3
+  },
+  "config": {
+    "steps_per_seed": 26,
+    "seeds": 3,
+    "quick": true,
+    "battery_mode": "transformable",
+    "refine_steps": 10
+  }
+}

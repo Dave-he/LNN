@@ -1,0 +1,108 @@
+{
+  "schema": {
+    "version": 1,
+    "fields": [
+      "case",
+      "seed",
+      "steps",
+      "wall_time_s",
+      "params",
+      "inference_ms",
+      "primary_metric",
+      "primary_metric_value",
+      "secondary_metrics",
+      "status",
+      "notes"
+    ]
+  },
+  "case": "battery",
+  "per_seed": [
+    {
+      "case": "battery",
+      "seed": 42,
+      "steps": 26,
+      "wall_time_s": 24.850041151046753,
+      "params": 233,
+      "inference_ms": 653.7892818450928,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.25899598002433777,
+      "secondary_metrics": {
+        "mode": "single",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          0.7189124822616577,
+          0.632353238761425,
+          0.6226769983768463,
+          0.584714449942112,
+          0.6297500133514404,
+          0.5754340440034866
+        ],
+        "final_ref_loss": 0.5754340440034866
+      },
+      "status": "ok",
+      "notes": "mode=single"
+    },
+    {
+      "case": "battery",
+      "seed": 1042,
+      "steps": 26,
+      "wall_time_s": 22.172067880630493,
+      "params": 233,
+      "inference_ms": 600.0790596008301,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.0371938981115818,
+      "secondary_metrics": {
+        "mode": "single",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          0.050707237562164664,
+          0.05321144126355648,
+          0.05622374825179577,
+          0.03418724192306399,
+          0.021503006690181792,
+          0.028375294990837574
+        ],
+        "final_ref_loss": 0.028375294990837574
+      },
+      "status": "ok",
+      "notes": "mode=single"
+    },
+    {
+      "case": "battery",
+      "seed": 2042,
+      "steps": 26,
+      "wall_time_s": 20.922364711761475,
+      "params": 233,
+      "inference_ms": 562.7648830413818,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.10128965228796005,
+      "secondary_metrics": {
+        "mode": "single",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          0.4319886490702629,
+          0.4510374739766121,
+          0.41670726239681244,
+          0.3664371743798256,
+          0.322807639837265,
+          0.3010064922273159
+        ],
+        "final_ref_loss": 0.3010064922273159
+      },
+      "status": "ok",
+      "notes": "mode=single"
+    }
+  ],
+  "aggregated": {
+    "mean": 0.13249317680795988,
+    "std": 0.11414589717576755,
+    "n_seeds": 3
+  },
+  "config": {
+    "steps_per_seed": 26,
+    "seeds": 3,
+    "quick": true,
+    "battery_mode": "single",
+    "refine_steps": 10
+  }
+}
