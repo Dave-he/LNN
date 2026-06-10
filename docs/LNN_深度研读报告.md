@@ -200,30 +200,15 @@ tags: [LNN, reading-report, papers]
 - **核心问题**：D-3DGS 用 MLP $F_\theta(\gamma(x),\gamma(t))$ 把规范化 3D 高斯形变到任意 $t$，但 MLP 是逐帧独立前馈，**架构上没有任何机制把 $F_\theta(t)$ 与 $F_\theta(t+\delta t)$ 关联**，时间平滑性只能由优化器"顺带"逼出；Neural ODE / SDE 替代方案要 ODE 求解器，训练 / 推理慢一档。
 - **方法论**：把 MLP 形变场**完全替换**为 D 个 CfC cell 的栈（"depth-as-time"），每 cell 暴露 sigmoid 时间门 $\sigma_\tau=\sigma(W_a z \cdot t + W_b z)$，在两个候选隐藏态 $g,h_{\text{cand}}$ 间做时间门插值；其余 D-3DGS 流水线（canonical Gaussian、rasterizer、L1+SSIM、密度控制、AST schedule、40k iter Adam）完全保留；默认 D=6, W=128, backbone 64×2 GELU；D-NeRF 8 场景 + NeRF-DS 7 场景，PSNR/SSIM/LPIPS + ptflops Params/MACs 全量对比。
 - **关键成果**：D-NeRF 6/8 场景匹配或超过 MLP（均值 38.25 vs 38.26 dB）；NeRF-DS **均值 PSNR 23.86 vs 23.39 (+0.47), SSIM 0.8491 vs 0.8403, LPIPS 0.1891 vs 0.2011 全指标领先**；最 specular 场景 As 单点 +2.74 dB、LPIPS −41%；默认配置 **0.33M params / 6.0G MACs**，比 D-3DGS MLP 小 36%；CfC 在均值 PSNR 上超过 specular-aware NeRF-DS baseline，是**唯一一个做到这点的通用方法**。
-- **局限**：跨帧递归被主动放弃，长程时间记忆未激活；评估集偏短 / 偏受控；未做 $\partial F_\theta/ \partial t$ 派生的物理一致性辅助损失（inertia / ARAP）；作者明示外推与重噪声场景仍属 ODE-GS / SDE 主场。
-
-### [2026-05-21] EMMA — Extracting Multiple physical parameters from Multimodal Data（多模态物理参数反演 / CVPR 2026）
-- **独立报告**：[[docs/reports/EMMA_Multimodal_Dynamical_Parameter_Extraction_2605.24047_研读报告.md]]
-- **核心问题**：从视频 / 音频 / 图表被动感知反推 ODE 参数 $\theta \in \mathbb{R}^K$ 是构建数字孪生的关键，但 SOTA (Delfys / NIRPI / PAIG / ϕ-SfT / RISP / gradSim) 普遍存在**四不**：(i) 忽略外部强迫输入 $u(t)$（rover 轮速 / 电机转速通常视频不可见）、(ii) 只能恢复单一 / 有限参数、(iii) 无法处理隐式动力学（摩擦 / 阻力等不直接出现在任何模态的项）、(iv) 需要已知坐标系原点等不变量。
-- **方法论**：三段式架构。**(1) 多模态特征管线**：YOLOv11+Kalman 视频轨迹 $\mathbf{p}(t)$，librosa STFT (FFT 2048/hop 512) 音频 $\mathbf{w}(t)$，PIL+OpenCV 图表曲线 $\mathbf{m}(t)$，统一时序网格拼接 $\mathbf{x}(t)=[\mathbf{p};\mathbf{w};\mathbf{m}]\in\mathbb{R}^{D_{\text{in}}}$，空间编码 $N_{\text{spatial}}=100$。**(2) LTC-NN 核心 (Eq. 4)**：64 单元，输入依赖时间常数 $\tau_i(t)$ 自适应 + 隐式 ODE 求解，天然能跟随强迫输入；用 [ncps](https://github.com/mlech26l/ncps) 库。**(3) 稠密头读出**：sigmoid 输出 → 反归一化到物理尺度 (Eq. 5)，额外 ReLU 单元学不变量 $\gamma_i$。**物理约束训练 (Eq. 6-8)**：完全无监督，$\mathcal{L}_{\text{total}} = \mathcal{L}^{\text{cal}}_{\text{traj}} + \lambda_{\text{param}} \mathcal{L}_{\text{param}}$，ReLU 软夹紧保 $\theta_i$ 在物理有效区间；音频 $f_{\text{tone}}(t)\approx\alpha v(t)+\beta$ 提供线性先验。AdamW + cosine annealing, 6 步 ODE unfolding, PyTorch。
-- **关键成果**：5 标准基准 (单摆 45/90/150 cm、Torricelli、滑动块、LED、自由落体) + 2 真实机器人 (rover 5 维参数、drone 7 维含 4 隐式) + 6 图表系统 (Lotka/Lorenz/F8/HIV/AID)。**单摆长度恢复 0.507/0.859/1.501 m vs GT 0.45/0.9/1.5，150 cm 长摆 PySINDy 完全失效 (0.00) 而 EMMA 误差 0.001 m**；滑动块倾角误差 < 1°；**真实 rover 平均相对误差 8.8% ± 1.7%，drone 7 参数 15.9% ± 7.4%**（含 4 隐式动力学）；Lorenz $\theta_{\text{rmse}}$ 1.7 vs PySINDy 37.4 (22× 优势)；引入隐式项时 PySINDy 性能崩塌 (1.68→3.66) 而 EMMA 几乎不退化 (1.7→1.68)。**音频 SNR=5 dB 噪声下参数变化 < 1.1%**。**模型仅 53.2K 参数 vs Delfys 5.7M (107× 小)**, 1 epoch 0.37 s (RTX Ada 6000) 慢 1.4× 换取 107× 压缩。LTC vs Neural ODE vs CT-GRU 在强迫输入下参数误差分别低 25% / 5%。
-- **局限**：依赖至少一个时变模态；音频线性 $f_{\text{tone}} \approx \alpha v+\beta$ 先验在湍流 / 多转子干涉下失效；相机剧烈抖动敏感；LTC ODE 求解在微控制器上仍偏慢；物理 ODE 形式 $f$ 需先验已知（无法处理完全未知物理）；真实 rover / drone 数据集需申请。
-
-### [2026-06-12] Multi-Rate MoE for Accelerating LNN Training（MoE + 多速率 + 双注意力）
-- **独立报告**：[[docs/reports/Multi-Rate_MoE_Accelerating_LNN_Training_2606.12240_研读报告.md]]
-- **核心问题**：真实多元时序存在 fast/slow 异构时间尺度 + 不规则采样 + 噪声，单 ODE 系统的 LNN (LTC/CfC 等) 无法同时表达多尺度；ODE 数值积分在长序列上计算成本高。
-- **方法论**：在 LNN 之上叠加 **Mixture-of-Experts (K=3)**，把奇摄动理论 (Kokotović 1999) 引入，**显式给每个专家绑定不同时间常数** $\tau_1 \ll \tau_2 \ll \tau_3$；快专家用 quasi-steady-state 近似 $x_k \approx h_k(x_{\text{slow}}, u)$ 跳过 ODE 积分；慢专家保留完整连续动力学；再叠加 **feature-level + temporal 双注意力** (softmax 软特征选择 + 每专家历史 hidden 加权)；任务为 sepsis 早期预测 (Moor et al. 2023 ICU 时序)。
-- **关键成果**：AUROC ladder = 0.53 (LSTM) < 0.55 (LNN) < 0.58 (MoE) < 0.61 (MR-MoE) < **0.65-0.68 (MR-MoE+Attn)**；AUPRC 从 0.22 → 0.45 (+23 pp)；MR-MoE 因快专家稳态近似而**内存/计算优于单 LNN**；在 σ 增大的噪声实验下退化最慢 (Figure 14)。是"连续时间 + 专家分工 + 多尺度 + 注意力"四机制叠加的统一架构。
-- **局限**：仅 1 个临床数据集，无 Transformer/iTransformer/NCDE baseline，无统计检验 (Checklist §7 "No")，代码未公开 (Checklist §5 "Not yet")，τ_k 手动指定而非可学习；每专家 1500 神经元、K=3 总参数量大，与 NCP 轻量路线背离；需 Jetson 部署 + 跨域 (金融/工业/机器人) 二次验证。
-- **与 LNN 主线关系**：把 LTC 的"时间常数"概念升级为"专家级时间常数谱"，比 Hasani 2021 单调 LNN 表达力强；保留 ODE 形式与 CfC 路线互补；可作为 LFM2/LFM2.5 cell 的多尺度增强候选。
+- **局限**：跨帧递归被主动放弃，长程时间记忆未激活；评估集偏短 / 偏受控；未做 $\partial F_\theta/\partial t$ 派生的物理一致性辅助损失（inertia / ARAP）；作者明示外推与重噪声场景仍属 ODE-GS / SDE 主场。
 
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-06-12**：[[docs/daily/2026-06-12_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 19 个。
 - **2026-06-11**：[[docs/daily/2026-06-11_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
-- **2026-06-10**：[[docs/daily/2026-06-10_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
+- **2026-06-10**：[[docs/daily/2026-06-10_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 17 个。
 - **2026-06-09**：[[docs/daily/2026-06-09_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
+- **2026-06-10**：[[docs/daily/2026-06-10_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 17 个。
 - **2026-06-08**：[[docs/daily/2026-06-08_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 25 个，模型 18 个。
 - **2026-06-07**：[[docs/daily/2026-06-07_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 43 个，模型 19 个。
 - **2026-06-06**：[[docs/daily/2026-06-06_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 43 个，模型 21 个。
