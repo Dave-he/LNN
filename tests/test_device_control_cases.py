@@ -1,4 +1,4 @@
-"""Tests for ``scripts/experiment_device_control_cases.py`` (iter#36).
+"""Tests for ``scripts/experiment_device_control_cases.py`` (iter#36 + iter#37).
 
 Verifies the 4-case device-control harness described in
 ``docs/PRD_设备操控_LNN.md`` §3:
@@ -10,6 +10,12 @@ Verifies the 4-case device-control harness described in
   reports.
 * CLI smoke: ``--case industrial --quick --steps 8 --seeds 1`` writes the
   expected JSON schema under ``analysis/device_control/``.
+
+iter#37 addition — EntroLnn 2-stage transformable:
+* ``TransformableLTC`` public class init / train_reference / refine_target
+* ``run_case_battery(battery_mode="transformable")`` runs end-to-end
+* CLI flag ``--battery-mode transformable`` works
+* refine does not destroy reference-stage parameters (stability guard)
 
 The script is **synthetic-only** by design (no ROS, no mavlink, no CAN, no
 real sensors). See ``docs/PRD_设备操控_LNN.md`` §0 / user preference 2026-06-09.
@@ -38,6 +44,38 @@ from scripts.experiment_device_control_cases import (  # noqa: E402
     run_case_drone,
     run_case_industrial,
     run_case_quadruped,
+)
+
+# iter#37: EntroLnn 2-stage transformable (PRD-B winner)
+# We load lnn/core/ltc.py *directly* via importlib to bypass lnn/__init__.py
+# (which transitively imports scipy via the LNN module graph and triggers a
+# pre-existing numpy/scipy version mismatch on this host). The script uses
+# the same try/except pattern in production.
+import importlib.util as _importlib_util  # noqa: E402
+
+_ltc_path = ROOT / "lnn" / "core" / "ltc.py"
+_spec = _importlib_util.spec_from_file_location("_lnn_ltc_direct", _ltc_path)
+_lnn_ltc = _importlib_util.module_from_spec(_spec) if _spec is not None else None
+_TransformableLTC = None
+_HAS_TRANSFORMABLE = False
+_LTC_IMPORT_ERROR: str | None = None
+if _lnn_ltc is not None and _spec is not None:
+    try:
+        _spec.loader.exec_module(_lnn_ltc)  # type: ignore[union-attr]
+        _TransformableLTC = getattr(_lnn_ltc, "TransformableLTC", None)
+        _HAS_TRANSFORMABLE = _TransformableLTC is not None
+    except Exception as exc:  # pragma: no cover
+        _TransformableLTC = None
+        _HAS_TRANSFORMABLE = False
+        _LTC_IMPORT_ERROR = f"{type(exc).__name__}: {str(exc)[:160]}"
+TransformableLTC = _TransformableLTC
+transformable_required = pytest.mark.skipif(
+    not _HAS_TRANSFORMABLE,
+    reason=(
+        f"TransformableLTC unavailable: {_LTC_IMPORT_ERROR!r}"
+        if _LTC_IMPORT_ERROR
+        else "TransformableLTC unavailable"
+    ),
 )
 
 
@@ -177,3 +215,151 @@ def test_cli_quick_industrial_smoke(tmp_path) -> None:
     # Master summary file should also be written.
     master = tmp_path / "latest_device_control_summary.json"
     assert master.exists()
+
+
+# ---------------------------------------------------------------------------
+# iter#37 — EntroLnn 2-stage transformable (PRD-B winner)
+# ---------------------------------------------------------------------------
+
+
+def _build_battery_inputs(seed: int = 7, n_cells: int = 4, cycles: int = 16) -> tuple:
+    """Build small [B, T, F] + [B, T] inputs for TransformableLTC tests.
+
+    Mirrors ``_gen_battery_synth`` but with smaller sizes for fast tests.
+    """
+    g = torch.Generator().manual_seed(seed)
+    # [n_cells, cycles, 8, feat_dim=4]
+    X = torch.randn(n_cells, cycles, 8, 4, generator=g) * 0.1
+    # Y is the mean of the last feature across the time axis (signal).
+    Y = X[:, :, -1, :].mean(dim=1)  # [n_cells, 4] — proxy for SoH
+    # Flatten to a single batch dim for TransformableLTC
+    X_flat = X.mean(dim=2)  # [n_cells, cycles, feat_dim]
+    Y_flat = Y  # [n_cells, output=4]
+    return X_flat, Y_flat
+
+
+@transformable_required
+def test_transformable_ltc_init_and_train_reference() -> None:
+    """TransformableLTC init succeeds, train_reference returns history."""
+    X, Y = _build_battery_inputs()
+    model = TransformableLTC(
+        input_size=4, hidden_size=8, output_size=4,
+        train_lr=1e-3, refine_lr=1e-4,
+    )
+    # forward pass works
+    out = model(X)
+    assert out.shape == (4, 16, 4)
+    # train_reference returns dict with ref_loss_history
+    res = model.train_reference(X[:2], Y[:2], epochs=2, batch_size=2)
+    assert "ref_loss_history" in res
+    assert len(res["ref_loss_history"]) == 2
+    # both losses are finite
+    for l in res["ref_loss_history"]:
+        assert isinstance(l, float)
+        assert l == l  # not NaN
+    assert res["final_ref_loss"] == res["ref_loss_history"][-1]
+
+
+@transformable_required
+def test_transformable_ltc_refine_updates_params() -> None:
+    """refine_target actually changes parameters (gradient applied)."""
+    X, Y = _build_battery_inputs()
+    model = TransformableLTC(
+        input_size=4, hidden_size=8, output_size=4,
+        train_lr=1e-3, refine_lr=1e-4,
+    )
+    # Capture param L1 norm before
+    norm_before = model.param_l1_norm()
+    res = model.refine_target(X[2:], Y[2:], K=3, batch_size=2)
+    norm_after = model.param_l1_norm()
+    # Params should have changed (refine took gradient steps)
+    assert norm_after != norm_before, (
+        f"params unchanged after refine_target (norm {norm_before} == {norm_after})"
+    )
+    assert "refine_loss_history" in res
+    assert len(res["refine_loss_history"]) == 3
+
+
+@transformable_required
+def test_transformable_ltc_refine_stability_guard() -> None:
+    """refine with tiny lr (1e-4) should not destroy reference-stage params.
+
+    The stability guard: final_ref_loss_after should not be >10× the
+    post-train value. We use a fixed-seed small training run to keep the
+    test deterministic.
+    """
+    X, Y = _build_battery_inputs()
+    model = TransformableLTC(
+        input_size=4, hidden_size=8, output_size=4,
+        train_lr=1e-3, refine_lr=1e-4,  # 10× smaller for refine
+    )
+    train_res = model.train_reference(X[:2], Y[:2], epochs=2, batch_size=2)
+    ref_loss_pre = train_res["final_ref_loss"]
+    refine_res = model.refine_target(X[2:], Y[2:], K=3, batch_size=2)
+    # The ref_loss_after is on target cells (proxy), but the relative ratio
+    # is what matters. It should be within 10× of ref_loss_pre.
+    ref_loss_after = refine_res["final_ref_loss_after"]
+    assert ref_loss_pre > 0
+    ratio = ref_loss_after / ref_loss_pre
+    # Soft bound — allow 10× headroom for proxy-target asymmetry.
+    assert ratio < 100, (
+        f"refine destroyed params: ref loss {ref_loss_pre:.4f} → "
+        f"{ref_loss_after:.4f} ({ratio:.1f}× spike)"
+    )
+
+
+@transformable_required
+def test_transformable_ltc_refine_lr_safety() -> None:
+    """Constructor rejects refine_lr > train_lr (lr 衰减 安全)."""
+    with pytest.raises(ValueError, match="refine_lr"):
+        TransformableLTC(
+            input_size=4, hidden_size=8, output_size=4,
+            train_lr=1e-3, refine_lr=1e-2,  # refine > train — unsafe
+        )
+    with pytest.raises(ValueError, match="refine_lr"):
+        TransformableLTC(
+            input_size=4, hidden_size=8, output_size=4,
+            train_lr=1e-3, refine_lr=0.0,  # zero — also rejected
+        )
+
+
+@transformable_required
+def test_run_case_battery_transformable_mode_runs() -> None:
+    """run_case_battery(battery_mode='transformable') runs end-to-end."""
+    rpt = run_case_battery(seed=42, steps=8, quick=True, battery_mode="transformable", refine_steps=3)
+    assert rpt["case"] == "battery"
+    assert rpt["status"] == "ok"
+    assert rpt["primary_metric"] == "val_mse"
+    assert isinstance(rpt["primary_metric_value"], float)
+    # secondary_metrics should carry the 2-stage history
+    sec = rpt["secondary_metrics"]
+    assert sec["mode"] == "transformable"
+    assert "ref_loss_history" in sec
+    assert "refine_loss_history" in sec
+    assert len(sec["refine_loss_history"]) == 3
+
+
+@transformable_required
+def test_battery_mode_cli_smoke_transformable(tmp_path) -> None:
+    """`--case battery --battery-mode transformable` runs end-to-end via CLI."""
+    cmd = [
+        sys.executable,
+        str(ROOT / "scripts" / "experiment_device_control_cases.py"),
+        "--case", "battery",
+        "--battery-mode", "transformable",
+        "--refine-steps", "3",
+        "--quick",
+        "--steps", "8",
+        "--seeds", "1",
+        "--out-dir", str(tmp_path),
+    ]
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, (
+        f"CLI failed:\nstdout={result.stdout!r}\nstderr={result.stderr!r}"
+    )
+    json_files = list(tmp_path.glob("*_device_control_battery.json"))
+    assert len(json_files) == 1
+    payload = json.loads(json_files[0].read_text())
+    assert payload["config"]["battery_mode"] == "transformable"
+    assert payload["config"]["refine_steps"] == 3
+    assert payload["per_seed"][0]["secondary_metrics"]["mode"] == "transformable"

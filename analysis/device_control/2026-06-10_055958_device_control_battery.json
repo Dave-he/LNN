@@ -1,0 +1,68 @@
+{
+  "schema": {
+    "version": 1,
+    "fields": [
+      "case",
+      "seed",
+      "steps",
+      "wall_time_s",
+      "params",
+      "inference_ms",
+      "primary_metric",
+      "primary_metric_value",
+      "secondary_metrics",
+      "status",
+      "notes"
+    ]
+  },
+  "case": "battery",
+  "per_seed": [
+    {
+      "case": "battery",
+      "seed": 42,
+      "steps": 8,
+      "wall_time_s": 27.75827646255493,
+      "params": 233,
+      "inference_ms": 416.8076515197754,
+      "primary_metric": "val_mse",
+      "primary_metric_value": 0.001442904700525105,
+      "secondary_metrics": {
+        "mode": "transformable",
+        "refine_steps": 10,
+        "ref_loss_history": [
+          0.2022961974143982,
+          0.19836677610874176
+        ],
+        "final_ref_loss": 0.19836677610874176,
+        "refine_loss_history": [
+          0.07883480439583461,
+          0.07813242574532826,
+          0.077391617000103,
+          0.07671165714661281,
+          0.07599991808334987,
+          0.07527584830919902,
+          0.07457760100563367,
+          0.07388885815938313,
+          0.07325090716282527,
+          0.07255175461371739
+        ],
+        "final_tgt_loss": 0.07255175461371739,
+        "final_ref_loss_after": 0.13390155136585236
+      },
+      "status": "ok",
+      "notes": "mode=transformable"
+    }
+  ],
+  "aggregated": {
+    "mean": 0.001442904700525105,
+    "std": 0.0,
+    "n_seeds": 1
+  },
+  "config": {
+    "steps_per_seed": 8,
+    "seeds": 1,
+    "quick": true,
+    "battery_mode": "transformable",
+    "refine_steps": 10
+  }
+}
