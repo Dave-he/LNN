@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：41 个
-- Hugging Face 候选模型：17 个
+- Hugging Face 候选模型：18 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -33,34 +33,34 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
-| 2026-06-09 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 45 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
-| 2026-06-09 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
-| 2026-06-09 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
+| 2026-06-10 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 52 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-06-10 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
+| 2026-06-10 | [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet) | 1 | Jupyter Notebook | This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for E… |
+| 2026-06-10 | [ochigenuka/FYP](https://github.com/ochigenuka/FYP) | 1 | Jupyter Notebook | Solar Energy Forecasting using Liquid Time-Constant Network |
+| 2026-06-10 | [GhostRider2023/Liquid-Neural-Network--Audio-Deepfake-Classifier](https://github.com/GhostRider2023/Liquid-Neural-Network--Audio-Deepfake-Classifier) | 0 | Jupyter Notebook |  |
+| 2026-06-10 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
+| 2026-06-10 | [ochigenuka/FYP2](https://github.com/ochigenuka/FYP2) | 0 |  | Solar Energy Forecasting using Liquid Time-Constant Networks |
 | 2026-06-08 | [g023/cuda_inf](https://github.com/g023/cuda_inf) | 1 | Cuda | A self-contained CUDA inference engine for LiquidAI/LFM2.5-8B-A1B (hybrid conv + GQA-attention MoE, 8.5B params, 1B active) targeting a single RTX 3060 (12 GB)… |
 | 2026-06-07 | [patel-om/liquid-neural-networks](https://github.com/patel-om/liquid-neural-networks) | 0 |  |  |
 | 2026-06-05 | [Gonzablanmar/Hybrid-Neural-network-for-double-pendulum-simulation](https://github.com/Gonzablanmar/Hybrid-Neural-network-for-double-pendulum-simulation) | 0 | Jupyter Notebook | Mix of a Lagrangian neural network and Liquid neural network to predict the dynamics of the double pendulum with |
 | 2026-06-03 | [infinition/LSTN](https://github.com/infinition/LSTN) | 2 | Rust | LSTN is an experimental text generation engine that models language not as static probabilities, but as a dynamic and "liquid" neural network. Each trigram (3-… |
 | 2026-06-03 | [Linlab2026/GCN-CfC](https://github.com/Linlab2026/GCN-CfC) | 0 | Python | Official implementation of "Graph continuous molecular screening for noncovalent inhibitor discovery". A graph-continuous model coupling GCN with closed-form c… |
-| 2026-06-02 | [YGTKL16/MFENCE](https://github.com/YGTKL16/MFENCE) | 0 | Rust | High-Performance Hybrid HFT Market Maker Engine with Liquid Neural Networks in Rust & Python |
-| 2026-06-01 | [Alexng2024/EDSSM](https://github.com/Alexng2024/EDSSM) | 0 |  | We introduce Event-Driven State Space Models (EDSSM), a framework that propagates latent state through exact closed-form continuous-time linear dynamics—implem… |
-| 2026-05-30 | [parhat1/cfdna-tau-repository](https://github.com/parhat1/cfdna-tau-repository) | 1 | Python | Liquid Neural Networks for cancer detection from cfDNA fragment time constants. Within-cohort AUC=0.91, cross-study LOSO AUC=0.40. Exploratory research. |
-| 2026-05-29 | [2841649220/LSHN](https://github.com/2841649220/LSHN) | 0 | Python | About A bionic neural network that combines liquid neural networks, spiking neural networks, and hypergraph neural networks |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-06-09 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 510 | 0 | text-generation |
-| 2026-06-09 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 299 | 5 | text-generation |
-| 2026-06-09 | [LLM-OS-Models/LFM2.5-8B-A1B-Terminal-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Terminal-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
-| 2026-06-09 | [mradermacher/LFM2.5-8b-saudi-dialect-GGUF](https://huggingface.co/mradermacher/LFM2.5-8b-saudi-dialect-GGUF) | 0 | 0 |  |
-| 2026-06-09 | [tantony/LFM2.5-VL-1.6B-nutrition-lora](https://huggingface.co/tantony/LFM2.5-VL-1.6B-nutrition-lora) | 0 | 0 | text-generation |
-| 2026-06-09 | [tantony/LFM2.5-VL-450M-nutrition-lora-v2](https://huggingface.co/tantony/LFM2.5-VL-450M-nutrition-lora-v2) | 0 | 0 | text-generation |
-| 2026-06-09 | [AyoubChLin/LFM2.5-8b-saudi-dialect](https://huggingface.co/AyoubChLin/LFM2.5-8b-saudi-dialect) | 0 | 0 | text-generation |
-| 2026-06-09 | [eadx/LFM2.5-8B-A1B](https://huggingface.co/eadx/LFM2.5-8B-A1B) | 0 | 0 | text-generation |
-| 2026-06-07 | [LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF) | 1694 | 19 | audio-to-audio |
-| 2026-06-06 | [LiquidAI/LFM2.5-VL-450M-Extract](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-Extract) | 2534 | 47 | image-text-to-text |
-| 2026-06-05 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 137138 | 570 | text-generation |
-| 2026-06-05 | [LiquidAI/LFM2.5-Audio-1.5B-JP](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP) | 452 | 51 | audio-to-audio |
+| 2026-06-10 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 142134 | 581 | text-generation |
+| 2026-06-10 | [OrdenWills/LFM2.5-350M-home-assistant-sft](https://huggingface.co/OrdenWills/LFM2.5-350M-home-assistant-sft) | 4361 | 4 | text-generation |
+| 2026-06-10 | [LiquidAI/LFM2.5-Audio-1.5B-JP](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP) | 534 | 58 | audio-to-audio |
+| 2026-06-10 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 519 | 0 | text-generation |
+| 2026-06-10 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 318 | 5 | text-generation |
+| 2026-06-10 | [sliderforthewin/lfm2.5-8b-a1b-ft-GGUF](https://huggingface.co/sliderforthewin/lfm2.5-8b-a1b-ft-GGUF) | 131 | 0 |  |
+| 2026-06-10 | [LiquidAI/LFM2-8B-A1B-smoltalk-LoRA](https://huggingface.co/LiquidAI/LFM2-8B-A1B-smoltalk-LoRA) | 101 | 2 |  |
+| 2026-06-10 | [tugot17/lfm2-8b-a1b-smoltalk-lora-classic](https://huggingface.co/tugot17/lfm2-8b-a1b-smoltalk-lora-classic) | 16 | 0 |  |
+| 2026-06-10 | [LLM-OS-Models/LFM2.5-8B-A1B-Terminal-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Terminal-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
+| 2026-06-10 | [mlboydaisuke/LFM2.5-1.2B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-1.2B-CoreAI) | 0 | 0 | text-generation |
+| 2026-06-10 | [Tivaphraen/LFM2-8B-A1B-smoltalk-GGUF](https://huggingface.co/Tivaphraen/LFM2-8B-A1B-smoltalk-GGUF) | 0 | 0 | text-generation |
+| 2026-06-10 | [PinoCookie/LFM2.5-350M-abliterated](https://huggingface.co/PinoCookie/LFM2.5-350M-abliterated) | 0 | 0 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
