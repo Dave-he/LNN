@@ -1,0 +1,57 @@
+{
+  "status": "ok",
+  "generated_at": "2026-06-11T08:44:57.654566+00:00",
+  "environment": {
+    "platform": "macOS-15.7.7-x86_64-i386-64bit",
+    "machine": "x86_64",
+    "python": "3.12.10",
+    "device_tree_model": null,
+    "nv_tegra_release": null,
+    "tegrastats_available": false,
+    "jetson_clocks_available": false,
+    "torch_version": "2.2.2",
+    "cuda_available": false,
+    "cuda_version": null,
+    "cudnn_version": null
+  },
+  "device": "cpu",
+  "config": {
+    "samples": 384,
+    "seq_len": 48,
+    "hidden_size": 24,
+    "epochs": 3,
+    "batch_size": 64,
+    "lr": 0.003,
+    "seed": 42
+  },
+  "results": [
+    {
+      "name": "CfCStyle",
+      "parameters": 2521,
+      "test_mse": 0.3129754662513733,
+      "train_seconds": 0.44735540699912235,
+      "inference_steps_per_sec": 452917.586967196
+    },
+    {
+      "name": "LTC",
+      "parameters": 1321,
+      "test_mse": 0.46435123682022095,
+      "train_seconds": 1.1500512160127982,
+      "inference_steps_per_sec": 104187.40926067636
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 3170,
+      "test_mse": 0.28447893261909485,
+      "train_seconds": 0.3814294089679606,
+      "inference_steps_per_sec": 475660.1424475411
+    },
+    {
+      "name": "GRU",
+      "parameters": 1969,
+      "test_mse": 0.39430785179138184,
+      "train_seconds": 0.15775586699601263,
+      "inference_steps_per_sec": 975703.9533518066
+    }
+  ]
+}
