@@ -14,6 +14,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - Hugging Face 候选模型：18 个
 - 已下载 PDF：0 个
 
+## 数据源状态
+- `arXiv fetch failed: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
+
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
