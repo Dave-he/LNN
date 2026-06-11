@@ -209,6 +209,14 @@ tags: [LNN, reading-report, papers]
 - **关键成果**：5 标准基准 (单摆 45/90/150 cm、Torricelli、滑动块、LED、自由落体) + 2 真实机器人 (rover 5 维参数、drone 7 维含 4 隐式) + 6 图表系统 (Lotka/Lorenz/F8/HIV/AID)。**单摆长度恢复 0.507/0.859/1.501 m vs GT 0.45/0.9/1.5，150 cm 长摆 PySINDy 完全失效 (0.00) 而 EMMA 误差 0.001 m**；滑动块倾角误差 < 1°；**真实 rover 平均相对误差 8.8% ± 1.7%，drone 7 参数 15.9% ± 7.4%**（含 4 隐式动力学）；Lorenz $\theta_{\text{rmse}}$ 1.7 vs PySINDy 37.4 (22× 优势)；引入隐式项时 PySINDy 性能崩塌 (1.68→3.66) 而 EMMA 几乎不退化 (1.7→1.68)。**音频 SNR=5 dB 噪声下参数变化 < 1.1%**。**模型仅 53.2K 参数 vs Delfys 5.7M (107× 小)**, 1 epoch 0.37 s (RTX Ada 6000) 慢 1.4× 换取 107× 压缩。LTC vs Neural ODE vs CT-GRU 在强迫输入下参数误差分别低 25% / 5%。
 - **局限**：依赖至少一个时变模态；音频线性 $f_{\text{tone}} \approx \alpha v+\beta$ 先验在湍流 / 多转子干涉下失效；相机剧烈抖动敏感；LTC ODE 求解在微控制器上仍偏慢；物理 ODE 形式 $f$ 需先验已知（无法处理完全未知物理）；真实 rover / drone 数据集需申请。
 
+### [2026-06-12] Multi-Rate MoE for Accelerating LNN Training（MoE + 多速率 + 双注意力）
+- **独立报告**：[[docs/reports/Multi-Rate_MoE_Accelerating_LNN_Training_2606.12240_研读报告.md]]
+- **核心问题**：真实多元时序存在 fast/slow 异构时间尺度 + 不规则采样 + 噪声，单 ODE 系统的 LNN (LTC/CfC 等) 无法同时表达多尺度；ODE 数值积分在长序列上计算成本高。
+- **方法论**：在 LNN 之上叠加 **Mixture-of-Experts (K=3)**，把奇摄动理论 (Kokotović 1999) 引入，**显式给每个专家绑定不同时间常数** $\tau_1 \ll \tau_2 \ll \tau_3$；快专家用 quasi-steady-state 近似 $x_k \approx h_k(x_{\text{slow}}, u)$ 跳过 ODE 积分；慢专家保留完整连续动力学；再叠加 **feature-level + temporal 双注意力** (softmax 软特征选择 + 每专家历史 hidden 加权)；任务为 sepsis 早期预测 (Moor et al. 2023 ICU 时序)。
+- **关键成果**：AUROC ladder = 0.53 (LSTM) < 0.55 (LNN) < 0.58 (MoE) < 0.61 (MR-MoE) < **0.65-0.68 (MR-MoE+Attn)**；AUPRC 从 0.22 → 0.45 (+23 pp)；MR-MoE 因快专家稳态近似而**内存/计算优于单 LNN**；在 σ 增大的噪声实验下退化最慢 (Figure 14)。是"连续时间 + 专家分工 + 多尺度 + 注意力"四机制叠加的统一架构。
+- **局限**：仅 1 个临床数据集，无 Transformer/iTransformer/NCDE baseline，无统计检验 (Checklist §7 "No")，代码未公开 (Checklist §5 "Not yet")，τ_k 手动指定而非可学习；每专家 1500 神经元、K=3 总参数量大，与 NCP 轻量路线背离；需 Jetson 部署 + 跨域 (金融/工业/机器人) 二次验证。
+- **与 LNN 主线关系**：把 LTC 的"时间常数"概念升级为"专家级时间常数谱"，比 Hasani 2021 单调 LNN 表达力强；保留 ODE 形式与 CfC 路线互补；可作为 LFM2/LFM2.5 cell 的多尺度增强候选。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
