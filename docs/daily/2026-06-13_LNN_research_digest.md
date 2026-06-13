@@ -51,9 +51,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 |---|---|---:|---:|---|
 | 2026-06-12 | [FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF](https://huggingface.co/FerrellSyntheticIntelligence/Vitalis_LFM2.5_Cortex.GGUF) | 212 | 1 |  |
 | 2026-06-12 | [cbrpnkrd/LFM2-VL-3B-gearbox](https://huggingface.co/cbrpnkrd/LFM2-VL-3B-gearbox) | 1 | 0 | image-text-to-text |
-| 2026-06-12 | [josephmayo/LFM2.5-8B-A1B-Coder](https://huggingface.co/josephmayo/LFM2.5-8B-A1B-Coder) | 0 | 0 |  |
-| 2026-06-12 | [mradermacher/LFM2.5-8B-A1B-Coder-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-Coder-GGUF) | 0 | 0 |  |
 | 2026-06-12 | [LLM-OS-Models/LFM2.5-8B-A1B-Terminal-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Terminal-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
+| 2026-06-12 | [mradermacher/LFM2.5-8B-A1B-Coder-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-Coder-GGUF) | 0 | 0 |  |
+| 2026-06-12 | [josephmayo/LFM2.5-8B-A1B-Coder](https://huggingface.co/josephmayo/LFM2.5-8B-A1B-Coder) | 0 | 0 | text-generation |
 | 2026-06-12 | [Iambackup/Huihui-LFM2.5-1.2B-Thinking-abliterated-i1-GGUF](https://huggingface.co/Iambackup/Huihui-LFM2.5-1.2B-Thinking-abliterated-i1-GGUF) | 0 | 0 |  |
 | 2026-06-12 | [Iambackup/Huihui-LFM2.5-8B-A1B-abliterated-i1-GGUF](https://huggingface.co/Iambackup/Huihui-LFM2.5-8B-A1B-abliterated-i1-GGUF) | 0 | 0 |  |
 | 2026-06-12 | [Iambackup/Huihui-LFM2.5-1.2B-Instruct-abliterated-GGUF](https://huggingface.co/Iambackup/Huihui-LFM2.5-1.2B-Instruct-abliterated-GGUF) | 0 | 0 |  |
