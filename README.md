@@ -58,6 +58,35 @@ y = model(x, dt=dt, mask=mask)
 print(y.shape)  # torch.Size([8, 1])
 ```
 
+## Multi-Time-Scale CfC (n_tau ≥ 2)
+
+`CfCCell` and `CfCNetwork` accept an optional `n_tau: int = 1` argument.  When
+`n_tau == 1` (default) the cell is numerically equivalent to the legacy
+single-τ path.  Setting `n_tau > 1` splits the hidden state into K independent
+time-scale groups, each with its own τ, f_gate, g_branch, h_branch.  This is
+the minimum-variance extension that aligns with the multi-τ pattern observed
+in arXiv:2606.12240 (MR-MoE), arXiv:2606.11162 (COGENT),
+arXiv:2606.07670 (Liquid-3DGS), and arXiv:2604.18274 (LiquidTAD).
+
+```python
+from lnn import CfCNetwork
+
+# Three time-scale groups: τ ∈ {0.1, 1.0, 10.0}.
+model = CfCNetwork(
+    input_size=3,
+    hidden_size=24,
+    output_size=1,
+    n_tau=3,
+    tau_scales=(0.1, 1.0, 10.0),  # per-branch initial τ
+)
+y = model(x)  # hidden dim is split evenly across the 3 branches
+```
+
+Smoke-bench on toy sin/cos: `n_tau=3` reaches final MSE 0.0463 vs
+`n_tau=1` 0.0535 (-13.4%, std 49% tighter) — see
+`docs/research/2026-06-14_cfc_n_tau_sweep_report.md` and the unit
+tests in `tests/test_cfc_n_tau.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |

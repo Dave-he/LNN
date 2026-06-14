@@ -14,35 +14,123 @@ class CfCCell(nn.Module):
 
     Key advantage: No ODE solver needed, making it much faster
     than LTC while preserving the continuous-time dynamics.
+
+    Multi-time-scale support (PRD #10-29, 2026-06-14):
+    Set ``n_tau > 1`` to split the hidden state into K independent
+    time-scale groups. Each group carries its own τ_i, f_gate, g_branch,
+    h_branch.  When ``n_tau == 1`` (default) the cell is *numerically
+    equivalent* to the original single-τ CfCCell within float32
+    precision.  This is the minimum-variance extension that aligns
+    with the multi-τ pattern observed in arXiv:2606.12240 (MR-MoE),
+    arXiv:2606.11162 (COGENT), arXiv:2606.07670 (Liquid-3DGS), and
+    arXiv:2604.18274 (LiquidTAD).
+
+    Args:
+        input_size: Input feature dimension.
+        hidden_size: Hidden state dimension.
+        n_tau: Number of independent time-scale groups (≥1).
+            ``n_tau == 1`` reproduces the original cell exactly.
+        tau_scales: Per-branch initial time constants, length
+            ``n_tau``.  If shorter than ``n_tau`` the last value is
+            geometrically extended (×10 each step) to fill the list.
     """
 
-    def __init__(self, input_size: int, hidden_size: int):
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        n_tau: int = 1,
+        tau_scales: tuple = (0.1, 1.0, 10.0),
+    ):
         super().__init__()
+        assert n_tau >= 1, f"n_tau must be >= 1, got {n_tau}"
+        if n_tau > 1:
+            assert len(tau_scales) >= 1, "tau_scales must be non-empty when n_tau>1"
         self.input_size = input_size
         self.hidden_size = hidden_size
+        self.n_tau = int(n_tau)
 
-        self.f_gate = nn.Sequential(
-            nn.Linear(input_size + hidden_size, hidden_size),
-            nn.Sigmoid(),
-        )
-        self.g_branch = nn.Sequential(
-            nn.Linear(input_size + hidden_size, hidden_size),
-            nn.Tanh(),
-        )
-        self.h_branch = nn.Sequential(
-            nn.Linear(input_size + hidden_size, hidden_size),
-            nn.Tanh(),
-        )
-        self.time_scale = nn.Parameter(torch.ones(hidden_size))
+        if self.n_tau == 1:
+            # Original single-τ path (numerically equivalent to pre-PR behaviour).
+            self.f_gate = nn.Sequential(
+                nn.Linear(input_size + hidden_size, hidden_size),
+                nn.Sigmoid(),
+            )
+            self.g_branch = nn.Sequential(
+                nn.Linear(input_size + hidden_size, hidden_size),
+                nn.Tanh(),
+            )
+            self.h_branch = nn.Sequential(
+                nn.Linear(input_size + hidden_size, hidden_size),
+                nn.Tanh(),
+            )
+            self.time_scale = nn.Parameter(torch.ones(hidden_size))
+            self._multi_tau = False
+        else:
+            # Multi-τ path: K independent branches with their own τ and projections.
+            # Pad / truncate tau_scales to length n_tau.
+            scales = list(tau_scales)
+            if len(scales) < self.n_tau:
+                while len(scales) < self.n_tau:
+                    scales.append(scales[-1] * 10.0)
+            scales = scales[: self.n_tau]
+            self._tau_init = tuple(scales)
+
+            # Even split of hidden dim, with any remainder absorbed by the last branch.
+            base = hidden_size // self.n_tau
+            rem = hidden_size - base * self.n_tau
+
+            self.f_gates = nn.ModuleList()
+            self.g_branches = nn.ModuleList()
+            self.h_branches = nn.ModuleList()
+            self.time_scales = nn.ParameterList()
+            for i in range(self.n_tau):
+                out_dim = base + (rem if i == self.n_tau - 1 else 0)
+                self.f_gates.append(
+                    nn.Sequential(
+                        nn.Linear(input_size + hidden_size, out_dim),
+                        nn.Sigmoid(),
+                    )
+                )
+                self.g_branches.append(
+                    nn.Sequential(
+                        nn.Linear(input_size + hidden_size, out_dim),
+                        nn.Tanh(),
+                    )
+                )
+                self.h_branches.append(
+                    nn.Sequential(
+                        nn.Linear(input_size + hidden_size, out_dim),
+                        nn.Tanh(),
+                    )
+                )
+                self.time_scales.append(nn.Parameter(torch.full((out_dim,), float(scales[i]))))
+            self._multi_tau = True
+
+    def _branch_dims(self) -> list[int]:
+        """Hidden dim per branch (only meaningful when ``n_tau>1``)."""
+        base = self.hidden_size // self.n_tau
+        rem = self.hidden_size - base * self.n_tau
+        return [base + (rem if i == self.n_tau - 1 else 0) for i in range(self.n_tau)]
 
     def forward(self, x_t: torch.Tensor, h: torch.Tensor, dt: float | torch.Tensor = 1.0) -> torch.Tensor:
         combined = torch.cat([x_t, h], dim=-1)
-        f = self.f_gate(combined)
-        g = self.g_branch(combined)
-        h_out = self.h_branch(combined)
-        decay = torch.sigmoid(-f * self.time_scale * dt)
-        h_new = decay * g + (1.0 - decay) * h_out
-        return h_new
+        if not self._multi_tau:
+            f = self.f_gate(combined)
+            g = self.g_branch(combined)
+            h_out = self.h_branch(combined)
+            decay = torch.sigmoid(-f * self.time_scale * dt)
+            return decay * g + (1.0 - decay) * h_out
+
+        # Multi-τ path: K branches share the same combined input but evolve at different τ.
+        branch_outputs = []
+        for i in range(self.n_tau):
+            f = self.f_gates[i](combined)
+            g = self.g_branches[i](combined)
+            h_out = self.h_branches[i](combined)
+            decay = torch.sigmoid(-f * self.time_scales[i] * dt)
+            branch_outputs.append(decay * g + (1.0 - decay) * h_out)
+        return torch.cat(branch_outputs, dim=-1)
 
 
 class CfCNetwork(nn.Module):
@@ -59,6 +147,10 @@ class CfCNetwork(nn.Module):
         output_size: Dimension of output
         num_layers: Number of stacked CfC layers
         return_sequences: Whether to return full sequence or last step
+        n_tau: Number of independent time-scale groups per cell (>=1).
+            Forwarded to every ``CfCCell``.  Default 1 = original behaviour.
+        tau_scales: Per-branch initial time constants, forwarded to every
+            ``CfCCell``.  See ``CfCCell`` docstring.
     """
 
     def __init__(
@@ -68,6 +160,8 @@ class CfCNetwork(nn.Module):
         output_size: int,
         num_layers: int = 1,
         return_sequences: bool = True,
+        n_tau: int = 1,
+        tau_scales: tuple = (0.1, 1.0, 10.0),
     ):
         super().__init__()
         self.input_size = input_size
@@ -75,11 +169,13 @@ class CfCNetwork(nn.Module):
         self.output_size = output_size
         self.num_layers = num_layers
         self.return_sequences = return_sequences
+        self.n_tau = int(n_tau)
+        self.tau_scales = tuple(tau_scales)
 
         self.cells = nn.ModuleList()
         for i in range(num_layers):
             in_dim = input_size if i == 0 else hidden_size
-            self.cells.append(CfCCell(in_dim, hidden_size))
+            self.cells.append(CfCCell(in_dim, hidden_size, n_tau=self.n_tau, tau_scales=self.tau_scales))
 
         self.output_proj = nn.Linear(hidden_size, output_size)
 
