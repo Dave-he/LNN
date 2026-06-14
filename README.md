@@ -1479,6 +1479,61 @@ total_loss.backward()
 See `docs/research/2026-06-15_seta_sparse_shared_experts_report.md` and the
 unit tests in `tests/test_seta_moe.py` (29/29 pass).
 
+## AuxLF: Auxiliary-Loss-Free Load Balancing (round 106)
+
+`AuxLFConfig(bias_lr, target_load_fraction, bias_clamp, warmup_steps, use_update)`,
+`update_load_balancing_bias(bias, top_idx_counts, config, n_experts)`,
+`AuxLFRouter(SETARouter)`, `AuxLFSETAMoECfCCell(SETAMoECfCCell)`, and
+`AuxLFSETAMoECfCNetwork` implement AuxLF (arXiv:2408.15664 Wang et al. Aug
+2024) — the load-balancing mechanism used in DeepSeek-V3.
+
+The idea: replace the standard auxiliary loss with a per-expert **bias term**
+that is added to the routing scores before top-K selection. The bias is
+updated based on recent load counts, but **outside the gradient**:
+```
+score_k = logit_k + bias_k
+bias_k -= γ · (count_k − target)   # over-loaded → reduce
+```
+
+This achieves load balancing **without** gradient interference.
+
+**Bench result (24 cells: 4 conds × 3 datasets × 1 K × 2 seeds × 100 epochs)**:
+
+| cond | sin test | sin uniq_H | struct test | struct uniq_H | random test | random uniq_H |
+|------|------|------|------|------|------|------|
+| seta_only_shared | 0.0871 | 0.480 | 0.3884 | 0.443 | **0.1564** | 0.580 |
+| seta_auxlf_no_update | 0.0855 | 0.523 | 0.3825 | 0.526 | **0.1487** | 0.440 |
+| seta_auxlf_active | 0.0862 | 0.566 | 0.3834 | 0.549 | 0.1525 | 0.567 |
+| seta_auxlf_strong | 0.0859 | **0.398** | 0.3840 | **0.331** | 0.1516 | **0.308** |
+
+**Verdict: HONEST TARGET-DEPENDENT-WITH-NUANCE** (6th routing-only mechanism in 91-106 audit)
+- **H1 PARTIAL**: AuxLF forces uniform load on unique experts (util_std 25k → 31-37, unique_H -50% on strong)
+- **H2 REJECTED in expected direction**: test_mse does NOT improve; on random it WORSENS in some seeds
+- **H3 CONFIRMED**: SETA's H=0 fix preserved (shared_H = 0.693 always)
+- **H4 CONFIRMED**: training stable across all 24 cells
+- **Use as diagnostic** (auxlf_util_std, auxlf_max_min_ratio, auxlf_bias_norm) for expert load monitoring
+- **Use as regularizer** when you need guaranteed balanced inference cost / hardware load
+- **Don't use** as default time-series MoE regularizer — does not improve task loss
+
+```python
+from lnn.core.auxlf import AuxLFConfig, AuxLFSETAMoECfCNetwork
+from lnn.core.seta_moe import SETAConfig
+
+sdta_cfg = SETAConfig(n_shared=2, n_unique=3, top_k=2)
+net = AuxLFSETAMoECfCNetwork(
+    input_size=2, hidden_size=16,
+    sdta_config=sdta_cfg,
+    auxlf_config=AuxLFConfig(bias_lr=0.01, warmup_steps=10),
+    n_queries=4, d_context=16, n_heads=4, output_size=2,
+)
+outputs = net(observations, times, mask=mask)  # (B, T, 2)
+# After forward:
+util = net.get_utilization()  # includes auxlf_util_std, auxlf_max_min_ratio, auxlf_bias_norm
+```
+
+See `docs/research/2026-06-15_auxlf_load_balancing_report.md` and the
+unit tests in `tests/test_auxlf.py` (22/22 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

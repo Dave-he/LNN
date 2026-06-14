@@ -125,6 +125,13 @@ from lnn.core.seta_moe import (
     snapshot_expert_weights,
     update_ema_anchors,
 )
+from lnn.core.auxlf import (
+    AuxLFConfig,
+    AuxLFRouter,
+    AuxLFSETAMoECfCCell,
+    AuxLFSETAMoECfCNetwork,
+    update_load_balancing_bias,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -276,6 +283,11 @@ __all__ = [
     "routing_regularization",
     "snapshot_expert_weights",
     "update_ema_anchors",
+    "AuxLFConfig",
+    "AuxLFRouter",
+    "AuxLFSETAMoECfCCell",
+    "AuxLFSETAMoECfCNetwork",
+    "update_load_balancing_bias",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
