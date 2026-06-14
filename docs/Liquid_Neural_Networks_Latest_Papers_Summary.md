@@ -84,6 +84,14 @@ date: 2026-05-25
 - **核心成果**：在神经拟态 N-MNIST 上以 99.38% 表现更佳，且在 30% 帧丢失时能保持 91.84% 精度 (LSTM 坠至 77.48%)；败血症预测中将误报率从 151 降至 2 (Wide CfC-256)，取得 0.94 超高精确率，极佳地抑制了告警疲劳。
 - **链接**：https://arxiv.org/abs/2605.27467
 
+### 2.10 LNN 边缘电池 SOH 双阶段蒸馏 + Pareto 压缩 (DLNet, ICPR 2026)
+**论文名称**：*When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics* (arXiv:2601.06227v3, 2026-06-11; ICPR 2026 接收)
+- **主要内容**:三段式流水线 — Euler 离散化 → Dual-Stage KD (Stage 2 恢复式蒸馏) → Pareto-guided selection → int8 部署, 把 LNN teacher 蒸馏到 Arduino Nano 33 BLE Sense (Cortex-M4 @ 64 MHz) 上做电池 SOH 预测.
+- **核心成果**:100-cycle SOH 预测误差 0.0066 (比 teacher 低 15.4%); 模型 616 kB → 94 kB (−84.7%); Arduino 实测 21 ms / inference.
+- **本仓关联**:与 `lnn/core/variants.py::EulerLTCNetwork` 95% 同构, 可作 `to_embedded()` 入口; 列入 PRD §10 #24 (MCU 边缘部署) 候选.
+- **独立研读**:[[docs/reports/DLNet_Dual_Stage_Distillation_Pareto_LNN_2601.06227_研读报告.md]] (2026-06-14, 8 节 ~116 行)
+- **链接**:https://arxiv.org/abs/2601.06227; 代码仓库 https://github.com/Dhivya-DD17/DLNet
+
 ## 3. 总结与未来展望
 
 截至 2026 年，液态神经网络（LNN）正逐步成为边缘计算（Edge AI）、自动驾驶、医疗实时监控（如心电图异常检测）及高频金融交易等时间敏感型领域的新标准。虽然大规模 Transformer 继续在云端主导静态大语言模型任务，但极其紧凑且高效的液态神经网络正在成为各类物联网及机器人等边缘设备的“数字神经系统”。

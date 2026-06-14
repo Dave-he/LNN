@@ -67,6 +67,14 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - 对最近更新且 Star 较高的仓库，优先记录复现成本、依赖栈和 Jetson 部署可行性。
 - 对 LFM2/LFM2.5 相关模型，优先筛选 350M、450M、1.2B 等边缘友好规格，进入 Jetson 量化/推理验证队列。
 
+## 今日研读 (2026-06-14)
+- **DLNet (arXiv:2601.06227v3, ICPR 2026)** — *When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics*
+  - 三段式流水线: Euler 离散化 → Dual-Stage KD (Stage 2 恢复式蒸馏) → Pareto 选优 → int8 部署
+  - 100-cycle SOH 误差 **0.0066** (−15.4% vs teacher), **616 kB → 94 kB** (−84.7%), Arduino 实测 **21 ms/inference**
+  - 独立研读: [[docs/reports/DLNet_Dual_Stage_Distillation_Pareto_LNN_2601.06227_研读报告.md]]
+  - 父索引: [[docs/LNN_深度研读报告#2026-06-14-dlnet-when-smaller-wins-dual-stage-distillation--pareto-guided-compression-of-lnn-for-edge-battery-prognostics|LNN 深度研读报告 §2]]
+  - PRD 候选: §10 #24 (MCU 边缘部署, 与 `EulerLTCNetwork::to_embedded()` 95% 同构)
+
 ## 数据源
 - arXiv API: https://export.arxiv.org/api/query
 - GitHub Search API: https://docs.github.com/rest/search/search
