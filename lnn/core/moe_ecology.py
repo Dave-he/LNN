@@ -41,6 +41,15 @@ the empirical H with a **gradient-based H** that measures the loss
 sensitivity to routing.  This addresses arXiv:2606.10703 (Causal
 Audit: observational ≠ causal).  Default remains
 ``H_mode="empirical"`` for back-compat.
+
+**Round 88 (PRD #10-50)**: extends the gradient H from
+**aggregated** to **per-expert**.  Adds
+``H_mode="per_expert_gradient"`` (returns per-expert E as [K]
+tensor) and ``per_expert_gradient_norms()`` function.  The
+motivation is GRIN (arXiv:2409.12136): aggregated signals average
+out per-expert pathologies, so a dead expert can be masked by
+healthy ones in the aggregate.  Per-expert H_grad catches
+per-expert collapse.
 """
 from __future__ import annotations
 
@@ -100,6 +109,55 @@ def gradient_routing_sensitivity(
     return h
 
 
+def per_expert_gradient_norms(
+    router_logits: torch.Tensor,  # [B, K], requires_grad
+    task_loss: torch.Tensor | None,
+    normalize: bool = True,
+) -> torch.Tensor:
+    """Compute per-expert gradient norms (round 88, PRD #10-50).
+
+    For each expert k, compute ``||∂L_task/∂g_k||`` — the gradient
+    norm of the loss with respect to expert k's gate logits, summed
+    over the batch.  This is the **per-expert** counterpart to the
+    aggregated ``gradient_routing_sensitivity`` (round 87).
+
+    Where aggregated H_grad averages over experts (and can mask
+    per-expert pathologies), per-expert H_grad exposes **which
+    specific experts** are dead or alive.  An expert with all-zero
+    gradient magnitude is functionally dead (its gate probability
+    doesn't matter for the loss).
+
+    Args:
+        router_logits: [B, K] raw router logits (must require_grad
+            for the gradient to be defined; returns zeros if not).
+        task_loss: Scalar task loss.  Returns zeros if None.
+        normalize: If True, divide by B for scale-invariance.
+
+    Returns:
+        [K] tensor of non-negative values, one per expert.  Large
+        ⇒ expert k matters.  Small ⇒ expert k is functionally
+        dead (its gate probability doesn't matter for the loss).
+    """
+    K = router_logits.shape[-1]
+    if task_loss is None or not router_logits.requires_grad:
+        return torch.zeros(K)
+    try:
+        grads = torch.autograd.grad(
+            task_loss, router_logits,
+            retain_graph=True, create_graph=False, allow_unused=True,
+        )[0]
+    except RuntimeError:
+        return torch.zeros(K)
+    if grads is None:
+        return torch.zeros(K)
+    # grads: [B, K]. Per-expert norm = ||g_b,k|| over batch dim.
+    per_expert = grads.norm(dim=0)  # [K]
+    if normalize:
+        B = router_logits.shape[0]
+        per_expert = per_expert / max(B, 1)
+    return per_expert
+
+
 def moe_ecology_number(
     router_logits: torch.Tensor,
     last_g: torch.Tensor,
@@ -132,15 +190,22 @@ def moe_ecology_number(
         H_mode: ``"empirical"`` (default, round 83) uses
             ``-Σ g_mean log g_mean / log(K)``; ``"gradient"`` (round 87)
             uses ``||∂L_task/∂router_logits||``; ``"blend"`` uses
-            ``alpha·H_emp + (1-alpha)·H_grad``.
+            ``alpha·H_emp + (1-alpha)·H_grad``;
+            ``"per_expert_gradient"`` (round 88) returns per-expert
+            E as a [K] tensor (per-expert gradient magnitude).
         alpha: Blend weight for ``H_mode="blend"`` (ignored otherwise).
         task_loss: Scalar task loss.  Required for
-            ``H_mode="gradient"`` and ``H_mode="blend"``; silently
-            falls back to ``H_mode="empirical"`` when None.
+            ``H_mode="gradient"``, ``H_mode="blend"``, and
+            ``H_mode="per_expert_gradient"``; silently falls back to
+            empirical when None.
 
     Returns:
-        Scalar ``E ∈ [0, ∞)``.  E ≥ 0.5 in the paper implies a healthy
-        ecology with no dead experts.
+        Scalar ``E ∈ [0, ∞)`` for ``H_mode="empirical"|"gradient"|"blend"``.
+        ``E ≥ 0.5`` in the paper implies a healthy ecology with no
+        dead experts.
+
+        Tensor ``[K]`` for ``H_mode="per_expert_gradient"`` —
+        per-expert E values, one per expert.
     """
     K = last_g.shape[-1]
     if H is not None:
@@ -162,8 +227,22 @@ def moe_ecology_number(
         h_emp = float((-(g_mean * torch.log(g_mean)).sum() / max(torch.log(torch.tensor(float(K))).item(), eps)).item())
         h_grad = gradient_routing_sensitivity(router_logits, task_loss, normalize=True)
         H_val = alpha * h_emp + (1.0 - alpha) * h_grad
+    elif H_mode == "per_expert_gradient":
+        if task_loss is None:
+            # Fall back to per-expert empirical (uniform H over experts).
+            h_per_expert = torch.ones(K) / float(K)
+        else:
+            h_per_expert = per_expert_gradient_norms(
+                router_logits, task_loss, normalize=True,
+            )
+        # Per-expert E_k = T · H_grad_k / (O + B), shape [K].
+        denom = O + B
+        return T * h_per_expert / (denom + eps)
     else:
-        raise ValueError(f"H_mode must be 'empirical', 'gradient', or 'blend', got {H_mode!r}")
+        raise ValueError(
+            f"H_mode must be 'empirical', 'gradient', 'blend', "
+            f"or 'per_expert_gradient', got {H_mode!r}"
+        )
     denom = O + B
     # Ensure H_val is a tensor (gradient mode returns a Python float).
     if not isinstance(H_val, torch.Tensor):
@@ -276,6 +355,59 @@ class MoEEcologyMonitor(nn.Module):
             "H_grad": h_grad,
             "E_emp": h_emp,  # when B=0, E=H
             "E_grad": h_grad,
+        }
+
+    def per_expert_gradient_diagnostic(
+        self,
+        router_logits: torch.Tensor,
+        task_loss: torch.Tensor,
+        dead_grad_threshold: float = 1e-6,
+    ) -> dict:
+        """Per-expert gradient magnitude diagnostic (round 88, PRD #10-50).
+
+        Identifies experts whose gate probabilities **don't matter**
+        for the loss (i.e., functionally dead).  This is a
+        per-expert refinement of the round 87 aggregated H_grad:
+        while the aggregated H_grad averages over experts (and can
+        mask per-expert pathologies), this method exposes
+        **which specific experts** are dead.
+
+        Args:
+            router_logits: [B, K] raw router logits (requires_grad).
+            task_loss: Scalar task loss.
+            dead_grad_threshold: Per-expert gradient norm below this
+                is considered "dead by gradient".  Default 1e-6.
+
+        Returns:
+            Dict with:
+            - ``per_expert_grad``: [K] tensor of gradient norms
+            - ``per_expert_grad_list``: [K] list of floats (JSON-safe)
+            - ``dead_by_grad``: int count of dead experts
+            - ``alive_by_grad``: list[int] of alive expert indices
+            - ``dead_by_grad_indices``: list[int] of dead expert indices
+            - ``max_grad``: float max per-expert gradient
+            - ``min_grad``: float min per-expert gradient
+            - ``max_min_ratio``: float max_grad / (min_grad + eps)
+        """
+        per_expert = per_expert_gradient_norms(
+            router_logits, task_loss, normalize=True,
+        )
+        K = per_expert.shape[0]
+        dead_mask = per_expert < dead_grad_threshold
+        alive_mask = ~dead_mask
+        max_g = float(per_expert.max().item()) if K > 0 else 0.0
+        min_g = float(per_expert.min().item()) if K > 0 else 0.0
+        eps = 1e-8
+        ratio = max_g / (min_g + eps)
+        return {
+            "per_expert_grad": per_expert,
+            "per_expert_grad_list": per_expert.tolist(),
+            "dead_by_grad": int(dead_mask.sum().item()),
+            "alive_by_grad": torch.where(alive_mask)[0].tolist(),
+            "dead_by_grad_indices": torch.where(dead_mask)[0].tolist(),
+            "max_grad": max_g,
+            "min_grad": min_g,
+            "max_min_ratio": float(ratio),
         }
 
     def summary(self) -> dict:

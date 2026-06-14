@@ -544,6 +544,59 @@ is set, callers must pass `task_loss` to
 See `docs/research/2026-06-15_gradient_based_h_report.md` and the
 unit tests in `tests/test_gradient_based_h.py`.
 
+## Per-Expert Gradient Magnitude (causal imbalance detection, opt-in)
+
+`per_expert_gradient_norms` (PRD #10-50, round 88) is the
+**per-expert refinement** of the round 87 aggregated gradient H.
+While aggregated H_grad averages over experts (and can mask
+per-expert collapse), per-expert H_grad exposes **which specific
+experts** are causally alive or dead.
+
+```python
+from lnn import FAMECfCNetwork
+
+net = FAMECfCNetwork(
+    input_size=3, hidden_size=24, output_size=1,
+    n_experts=3, top_k=1,
+    ecology_per_expert_grad=True,  # opt in
+)
+# ... train loop ...
+task_loss = ...  # scalar, with grad
+diag = net.cells[0].moe_ecology_diagnostic(
+    B=0.001, task_loss=task_loss,
+)
+# diag["per_expert_grad_list"]  # [K] list of gradient norms per expert
+# diag["dead_by_grad"]          # count of dead experts by gradient
+# diag["max_min_ratio"]         # spread of per-expert gradients
+```
+
+**Honest-positive headline (round 88)**: in our 9-cell bench,
+per-expert H_grad exposes **causal imbalance** that empirical H
+cannot see:
+- 1-hot collapsed regimes: `max_min_ratio_grad = 13-27×` (one
+  expert doing 95% of the causal work)
+- Healthy regimes: `max_min_ratio_grad = 2-3×` (balanced experts)
+- Even "dead-by-utilization" experts have **non-zero gradient**
+  (100-300× smaller, but not zero)
+
+This is the **direct response to the Causal Audit
+(arXiv:2606.10703)**: observational E can mask causal collapse,
+but per-expert H_grad catches it.
+
+**Bug fix**: `self.last_g` is intentionally detached (so the
+routing isn't perturbed by every forward).  Round 88 adds
+`self.last_router_logits` (non-detached) for gradient
+computation.  `moe_ecology_diagnostic` uses `last_router_logits`
+for gradient-based H modes and `last_g` for utilization-based
+ones.
+
+The diagnostic is **purely additive** —
+`ecology_per_expert_grad=False` (default) is fully back-compat.
+When set, callers should pass `task_loss` to
+`moe_ecology_diagnostic()`.  See
+`docs/research/2026-06-15_per_expert_gradient_report.md` and the
+unit tests in `tests/test_per_expert_gradient.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |

@@ -48,6 +48,7 @@ from lnn.core.moe_ecology import (
     MoEEcologyMonitor,
     gradient_routing_sensitivity,
     moe_ecology_number,
+    per_expert_gradient_norms,
 )
 from lnn.core.ecology_gated_balancing import (
     CombinedEcologyGate,
@@ -156,6 +157,7 @@ __all__ = [
     "moe_ecology_number",
     "MoEEcologyMonitor",
     "gradient_routing_sensitivity",
+    "per_expert_gradient_norms",
     "EcologyGatedBalancer",
     "EcologyGatedOrth",
     "CombinedEcologyGate",

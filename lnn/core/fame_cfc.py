@@ -107,6 +107,8 @@ class FAMECfCCell(nn.Module):
         ecology_combined: bool = False,
         ecology_H_mode: str = "empirical",
         ecology_H_alpha: float = 0.5,
+        ecology_per_expert_grad: bool = False,
+        ecology_dead_grad_threshold: float = 1e-6,
     ):
         super().__init__()
         assert n_experts >= 1
@@ -127,12 +129,14 @@ class FAMECfCCell(nn.Module):
         self.router_type = router_type
         self.ecology_E_min = float(ecology_E_min)
         self.ecology_warmup_steps = int(ecology_warmup_steps)
-        assert ecology_H_mode in ("empirical", "gradient", "blend"), (
-            f"ecology_H_mode must be 'empirical', 'gradient', or 'blend', "
-            f"got {ecology_H_mode!r}"
+        assert ecology_H_mode in ("empirical", "gradient", "blend", "per_expert_gradient"), (
+            f"ecology_H_mode must be 'empirical', 'gradient', 'blend', or "
+            f"'per_expert_gradient', got {ecology_H_mode!r}"
         )
         self.ecology_H_mode = str(ecology_H_mode)
         self.ecology_H_alpha = float(ecology_H_alpha)
+        self.ecology_per_expert_grad = bool(ecology_per_expert_grad)
+        self.ecology_dead_grad_threshold = float(ecology_dead_grad_threshold)
         # Step counter for ecology-gated balancing (incremented in forward).
         self._step_idx: int = 0
 
@@ -243,6 +247,7 @@ class FAMECfCCell(nn.Module):
     def moe_ecology_diagnostic(
         self, B: float = 0.0, T: float = 1.0, O: float = 0.0,
         task_loss: torch.Tensor | None = None,
+        per_expert: bool = False,
     ) -> dict:
         """Return current MoE ecology diagnostic (PRD #10-42, Zhang 2026).
 
@@ -264,19 +269,34 @@ class FAMECfCCell(nn.Module):
             O: Oracle weight.  Default 0.0.
             task_loss: Scalar task loss, required when
                 ``ecology_H_mode != "empirical"`` (round 87, PRD #10-49).
-                When None and H_mode is gradient/blend, falls back to
-                empirical H silently.
+                When None and H_mode is gradient/blend/per_expert_gradient,
+                falls back to empirical H silently.
+            per_expert: If True (or cell was constructed with
+                ``ecology_per_expert_grad=True``), include the
+                per-expert gradient diagnostic in the returned dict
+                (round 88, PRD #10-50).  Adds keys
+                ``per_expert_grad``, ``per_expert_grad_list``,
+                ``dead_by_grad``, ``dead_by_grad_indices``,
+                ``max_grad``, ``min_grad``, ``max_min_ratio``.
 
         Returns:
-            Dict with ``E`` (float), ``dead_experts`` (int),
-            ``utilization`` (list of K floats), and (if ecology-gated
-            balancing is on) ``ecology_gate`` (gate state dict).
+            Dict with ``E`` (float or [K] tensor for per_expert_gradient
+            mode), ``dead_experts`` (int), ``utilization`` (list of
+            K floats), and (if ecology-gated balancing is on)
+            ``ecology_gate`` (gate state dict).
         """
-        from lnn.core.moe_ecology import moe_ecology_number
+        from lnn.core.moe_ecology import (
+            MoEEcologyMonitor,
+            moe_ecology_number,
+            per_expert_gradient_norms,
+        )
         if not hasattr(self, "last_g") or self.last_g is None:
             return {"E": float("nan"), "dead_experts": -1, "utilization": []}
+        # Use last_router_logits (raw, has grad) for gradient-based H
+        # modes; fall back to last_g if not present (pre-round-88).
+        router_for_grad = getattr(self, "last_router_logits", self.last_g)
         E = moe_ecology_number(
-            router_logits=self.last_g, last_g=self.last_g,
+            router_logits=router_for_grad, last_g=self.last_g,
             T=T, H=None, O=O, B=B,
             H_mode=self.ecology_H_mode,
             alpha=self.ecology_H_alpha,
@@ -284,11 +304,29 @@ class FAMECfCCell(nn.Module):
         )
         util = self.last_g.mean(dim=0)
         dead = int((util < 0.01).sum().item())
+        if E.dim() == 0:
+            E_out: float = float(E.item())
+        else:
+            # per_expert_gradient returns [K] tensor.
+            E_out = E.tolist()  # list of K floats
         out = {
-            "E": float(E.item()),
+            "E": E_out,
             "dead_experts": dead,
             "utilization": util.tolist(),
         }
+        # Round 88: per-expert gradient diagnostic (PRD #10-50).
+        if per_expert or self.ecology_per_expert_grad:
+            per_expert_grads = per_expert_gradient_norms(
+                router_for_grad, task_loss, normalize=True,
+            )
+            dead_by_grad_mask = per_expert_grads < self.ecology_dead_grad_threshold
+            out["per_expert_grad"] = per_expert_grads
+            out["per_expert_grad_list"] = per_expert_grads.tolist()
+            out["dead_by_grad"] = int(dead_by_grad_mask.sum().item())
+            out["dead_by_grad_indices"] = torch.where(dead_by_grad_mask)[0].tolist()
+            out["max_grad"] = float(per_expert_grads.max().item()) if per_expert_grads.numel() > 0 else 0.0
+            out["min_grad"] = float(per_expert_grads.min().item()) if per_expert_grads.numel() > 0 else 0.0
+            out["max_min_ratio"] = out["max_grad"] / (out["min_grad"] + 1e-8)
         # Ecology-gated balancing (PRD #10-43): run the gate, then
         # auto-attach a PhiBalancer if the gate fires.  The attach is
         # gated on `self.training` so eval-mode diagnostics don't
@@ -388,7 +426,11 @@ class FAMECfCCell(nn.Module):
         # Bump step counter for ecology-gated balancing (PRD #10-43).
         self._step_idx += 1
         # Diagnostics side-channel: mixture weights and top-K indices.
+        # ``last_g`` is detached (no grad) — used for utilization /
+        # entropy diagnostics.  ``last_router_logits`` (round 88) is the
+        # raw (non-detached) router output for gradient diagnostics.
         self.last_g = g.detach()
+        self.last_router_logits = g  # has requires_grad
         self.last_top_idx = self.router.last_top_idx.detach()
         # φ-balancing (PRD #10-40): update the EMA of per-expert assignment
         # from the hard top-K indices.  Skipped in eval mode (the bias is
