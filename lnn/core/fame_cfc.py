@@ -70,6 +70,11 @@ class FAMECfCCell(nn.Module):
             instead of ``orthogonality_loss()`` to get the rescaling.
         ecology_orth_lambda_safe: Target effective λ when orth gate fires.
             Default 0.001 (round 80 default, validated in round 83 B).
+        ecology_combined: If True (default False), attach BOTH the φ gate
+            AND the orth gate co-actively (PRD #10-48, round 86).  This
+            is a strict superset of ``ecology_gated_balancing=True`` and
+            ``ecology_gated_orth=True`` — those flags are turned on
+            automatically.  Use this for the full 2-axis adaptive policy.
     """
 
     def __init__(
@@ -90,6 +95,7 @@ class FAMECfCCell(nn.Module):
         ecology_warmup_steps: int = 0,
         ecology_gated_orth: bool = False,
         ecology_orth_lambda_safe: float = 0.001,
+        ecology_combined: bool = False,
     ):
         super().__init__()
         assert n_experts >= 1
@@ -114,8 +120,9 @@ class FAMECfCCell(nn.Module):
         self._step_idx: int = 0
 
         # Ecology-gated balancer (PRD #10-43, round 84).  Only attached
-        # when the user opts in via ``ecology_gated_balancing=True``.
-        if ecology_gated_balancing:
+        # when the user opts in via ``ecology_gated_balancing=True`` or
+        # via the round 86 combined gate.
+        if ecology_gated_balancing or ecology_combined:
             from lnn.core.ecology_gated_balancing import EcologyGatedBalancer
             self.ecology_gate = EcologyGatedBalancer(
                 E_min=self.ecology_E_min,
@@ -124,9 +131,10 @@ class FAMECfCCell(nn.Module):
         else:
             self.ecology_gate = None
         # Ecology-gated orth rescaling (PRD #10-44, round 85).  Only
-        # attached when ``ecology_gated_orth=True``.  Rescales user's
-        # orth λ down to ``ecology_orth_lambda_safe`` when E<threshold.
-        if ecology_gated_orth:
+        # attached when ``ecology_gated_orth=True`` or via the round 86
+        # combined gate.  Rescales user's orth λ down to
+        # ``ecology_orth_lambda_safe`` when E<threshold.
+        if ecology_gated_orth or ecology_combined:
             from lnn.core.ecology_gated_balancing import EcologyGatedOrth
             self.orth_gate = EcologyGatedOrth(
                 E_min=self.ecology_E_min,
@@ -135,6 +143,24 @@ class FAMECfCCell(nn.Module):
             )
         else:
             self.orth_gate = None
+        # Combined ecology gate (PRD #10-48, round 86).  When
+        # ``ecology_combined=True``, also attach a unified orchestrator
+        # that runs both sub-gates in parallel and reports a combined
+        # state in the diagnostic.  We pass the SAME sub-gate instances
+        # to the orchestrator so state stays consistent across the
+        # cell and the orchestrator.
+        if ecology_combined:
+            from lnn.core.ecology_gated_balancing import CombinedEcologyGate
+            self.combined_gate = CombinedEcologyGate(
+                E_min=self.ecology_E_min,
+                lambda_safe=ecology_orth_lambda_safe,
+                eta=self.phi_step_size,
+                warmup_steps=self.ecology_warmup_steps,
+                phi_gate=self.ecology_gate,
+                orth_subgate=self.orth_gate,
+            )
+        else:
+            self.combined_gate = None
 
         self.experts = nn.ModuleList(
             [
@@ -267,6 +293,15 @@ class FAMECfCCell(nn.Module):
                 E=float(E.item()), lambda_coeff=B, step_idx=self._step_idx,
             )
             out["ecology_gate_orth"] = orth_gate_info
+        # Combined ecology gate (PRD #10-48, round 86): when on, run the
+        # orchestrator and stash a unified summary.  The orchestrator
+        # composes the same φ + orth sub-gates, so the per-gate keys
+        # above are still populated.
+        if self.combined_gate is not None:
+            combined_info = self.combined_gate.step(
+                E=float(E.item()), lambda_coeff=B, step_idx=self._step_idx,
+            )
+            out["ecology_gate_combined"] = combined_info
         return out
 
     def compute_orth_loss(

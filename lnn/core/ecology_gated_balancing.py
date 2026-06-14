@@ -326,3 +326,157 @@ class EcologyGatedOrth:
             f"triggered_step={self._triggered_step}, "
             f"n_rescaled={self.n_rescaled}/{self.n_steps})"
         )
+
+
+@dataclass
+class CombinedEcologyGateState:
+    """Snapshot of the combined gate's current state."""
+    phi_intervened: bool
+    orth_intervened: bool
+    triggered_step: int
+    E: float
+    lambda_coeff: float
+    lambda_scale: float
+    effective_lambda: float
+    phi_enabled: bool
+
+
+class CombinedEcologyGate:
+    """Combined ecology-gated policy: φ gate (soft) + orth gate (strong) co-active.
+
+    Round 86 (PRD #10-48).  Closes the loop on rounds 84 + 85 by
+    running **both** gates in parallel on the same E < 0.5 condition.
+
+    - **φ gate** (round 84, soft): attaches a ``PhiBalancer`` to the
+      router.  Strong for low-λ regimes where the routing is unbalanced
+      but the aux loss is small.
+    - **orth gate** (round 85, strong): rescales user's orth λ down
+      to ``lambda_safe`` (default 0.001).  Strong for high-λ regimes
+      where the aux loss dominates the task loss.
+
+    The combined gate **doesn't change either gate's semantics** — it
+    is a thin orchestrator that runs both and reports a unified state.
+
+    Hypotheses tested in round 86's bench:
+    - **H1 (cumulative)**: combined ≥ both individually.
+    - **H2 (orth dominates)**: combined ≈ orth alone.
+    - **H3 (φ adds noise)**: combined < orth alone (rare).
+
+    Args:
+        E_min: Shared threshold.  Default 0.5.
+        lambda_safe: Target effective λ when orth gate fires.  Default 0.001.
+        eta: φ bias step size when φ gate fires.  Default 0.05.
+        warmup_steps: Shared warmup.  Default 0.
+
+    Example:
+        >>> gate = CombinedEcologyGate()
+        >>> for step in range(100):
+        ...     info = gate.step(E=2.0, lambda_coeff=1.0, step_idx=step)
+        ...     if info["phi_intervened"]:
+        ...         enable_phi_balancing()
+        ...     if info["orth_intervened"]:
+        ...         effective_lambda = info["effective_lambda"]  # 0.001
+    """
+
+    def __init__(
+        self,
+        E_min: float = 0.5,
+        lambda_safe: float = 0.001,
+        eta: float = 0.05,
+        warmup_steps: int = 0,
+        phi_gate: EcologyGatedBalancer | None = None,
+        orth_subgate: EcologyGatedOrth | None = None,
+    ):
+        assert E_min > 0.0, f"E_min must be positive, got {E_min}"
+        assert lambda_safe > 0.0, f"lambda_safe must be positive, got {lambda_safe}"
+        assert eta > 0.0, f"eta must be positive, got {eta}"
+        assert warmup_steps >= 0, f"warmup_steps must be non-negative, got {warmup_steps}"
+        self.E_min = float(E_min)
+        self.lambda_safe = float(lambda_safe)
+        self.eta = float(eta)
+        self.warmup_steps = int(warmup_steps)
+        # Sub-gates (compose, don't reimplement).  If the caller
+        # pre-built sub-gates (e.g., FAMECfCCell wires the same instance
+        # into both cell.ecology_gate and the orchestrator), reuse them
+        # so the diagnostic state stays consistent.
+        self.phi_gate = phi_gate if phi_gate is not None else EcologyGatedBalancer(
+            E_min=self.E_min, warmup_steps=self.warmup_steps,
+        )
+        self.orth_subgate = orth_subgate if orth_subgate is not None else EcologyGatedOrth(
+            E_min=self.E_min, lambda_safe=self.lambda_safe,
+            warmup_steps=self.warmup_steps,
+        )
+
+    def step(self, E: float, lambda_coeff: float, step_idx: int) -> dict:
+        """Run both sub-gates; return combined state.
+
+        Args:
+            E: Current MoE ecology number.
+            lambda_coeff: User-specified orth λ (forwarded to orth gate).
+            step_idx: Global step index (for warmup).
+
+        Returns:
+            Dict with:
+                - phi_intervened: bool (φ gate fired)
+                - orth_intervened: bool (orth gate fired)
+                - phi_enabled: bool (alias for phi_intervened, for clarity)
+                - effective_lambda: float (orth gate's effective λ, = user λ when healthy)
+                - lambda_scale: float (orth gate's scale factor)
+                - triggered_step: int (earliest of φ or orth triggered; -1 if neither)
+                - phi_gate_info: dict (raw φ gate output)
+                - orth_gate_info: dict (raw orth gate output)
+                - E: float
+                - lambda_coeff: float
+                - in_warmup: bool
+        """
+        E = float(E)
+        lambda_coeff = float(lambda_coeff)
+        phi_info = self.phi_gate.step(E=E, B_active=lambda_coeff, step_idx=step_idx)
+        orth_info = self.orth_subgate.step(E=E, lambda_coeff=lambda_coeff, step_idx=step_idx)
+        # Earliest trigger.
+        triggers = [t for t in (phi_info["triggered_step"], orth_info["triggered_step"]) if t >= 0]
+        triggered = min(triggers) if triggers else -1
+        return {
+            "phi_intervened": phi_info["intervened"],
+            "orth_intervened": orth_info["intervened"],
+            "phi_enabled": phi_info["intervened"],
+            "effective_lambda": orth_info["effective_lambda"],
+            "lambda_scale": orth_info["lambda_scale"],
+            "triggered_step": triggered,
+            "phi_gate_info": phi_info,
+            "orth_gate_info": orth_info,
+            "E": E,
+            "lambda_coeff": lambda_coeff,
+            "in_warmup": phi_info["in_warmup"],
+        }
+
+    def state(self) -> CombinedEcologyGateState:
+        """Snapshot of current state."""
+        phi_st = self.phi_gate.state()
+        orth_st = self.orth_subgate.state()
+        return CombinedEcologyGateState(
+            phi_intervened=phi_st.intervened,
+            orth_intervened=orth_st.intervened,
+            triggered_step=min(
+                t for t in (phi_st.triggered_step, orth_st.triggered_step) if t >= 0
+            ) if (phi_st.triggered_step >= 0 or orth_st.triggered_step >= 0) else -1,
+            E=orth_st.E,
+            lambda_coeff=orth_st.lambda_coeff,
+            lambda_scale=orth_st.lambda_scale,
+            effective_lambda=orth_st.effective_lambda,
+            phi_enabled=phi_st.intervened,
+        )
+
+    def reset(self) -> None:
+        """Reset both sub-gates."""
+        self.phi_gate.reset()
+        self.orth_subgate.reset()
+
+    def __repr__(self) -> str:
+        return (
+            f"CombinedEcologyGate(E_min={self.E_min}, "
+            f"lambda_safe={self.lambda_safe}, eta={self.eta}, "
+            f"warmup_steps={self.warmup_steps}, "
+            f"phi={self.phi_gate.intervened}, "
+            f"orth={self.orth_subgate.intervened})"
+        )

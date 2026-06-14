@@ -451,6 +451,52 @@ The gate is **purely additive** — `ecology_gated_orth=False`
 `docs/research/2026-06-15_ecology_gated_orth_report.md` and the unit
 tests in `tests/test_ecology_gated_orth.py`.
 
+## Combined Ecology Gates (2-axis policy: φ + orth co-active, recommended)
+
+`CombinedEcologyGate` (PRD #10-48, round 86) is the **2-axis adaptive
+policy** that closes the LNN+MoE stack.  When `ecology_combined` is
+on, **both** the round 84 φ gate (soft) and the round 85 orth gate
+(strong) fire co-actively when E < 0.5.
+
+```python
+from lnn import FAMECfCNetwork
+
+# One-line opt-in for the full 2-axis adaptive policy.
+net = FAMECfCNetwork(
+    input_size=3, hidden_size=24, output_size=1,
+    n_experts=3, top_k=1,                      # the unstable cell
+    ecology_combined=True,                    # opt in (recommended)
+    ecology_orth_lambda_safe=0.001,           # target effective λ
+)
+```
+
+**Why combined is a safe superset** (verified in 4 conditions × 3
+datasets × 3 λ = 36 cells):
+
+| Hypothesis | Verdict |
+|---|---|
+| H1: combined ≤ min(φ, orth) (combined best) | Partial — never worse, never strictly better in 9/9 cells |
+| H2: combined ≈ orth (orth dominates) | **Confirmed** — D = C in 8/9 cells |
+| H3: combined > orth (φ adds noise) | **Rejected** — combined never degrades |
+
+The strong intervention (orth rescale) is **dominant** in our toy
+bench.  The soft intervention (φ balancer) is **redundant but
+harmless** — adding it doesn't hurt, doesn't help either.  The
+combined gate is a **safe superset**: opt in for maximum safety,
+opt out for minimum overhead.
+
+**Use case recommendation**:
+- **Maximum safety (deployment)**: `ecology_combined=True`
+- **Minimum overhead (research / quick iteration)**: `ecology_gated_orth=True`
+- **Soft intervention only (lightweight)**: `ecology_gated_balancing=True`
+
+The gate is **purely additive** — `ecology_combined=False` (default)
+is fully back-compat.  When `ecology_combined=True`, the orchestrator
+reuses the **same sub-gate instances** as the cell attributes, so
+the diagnostic state stays consistent.  See
+`docs/research/2026-06-15_combined_gates_report.md` and the unit
+tests in `tests/test_combined_gates.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |
