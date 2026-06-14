@@ -91,6 +91,11 @@ from lnn.core.snnl import (
     expert_snnl_loss,
     soft_nearest_neighbor_loss,
 )
+from lnn.core.curvature import (
+    curvature_routing_loss,
+    mean_ollivier_ricci,
+    ollivier_ricci_curvature,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -218,6 +223,9 @@ __all__ = [
     "apply_reliability_gate",
     "soft_nearest_neighbor_loss",
     "expert_snnl_loss",
+    "ollivier_ricci_curvature",
+    "mean_ollivier_ricci",
+    "curvature_routing_loss",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

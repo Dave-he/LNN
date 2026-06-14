@@ -1177,6 +1177,58 @@ different axes.
 See `docs/research/2026-06-15_snnl_expert_disentanglement_report.md`
 and the unit tests in `tests/test_snnl.py` (15/15 pass).
 
+## Ollivier-Ricci Curvature (GeoMoE routing signal, round 101)
+
+`ollivier_ricci_curvature(points, k, sinkhorn_iters)`,
+`mean_ollivier_ricci(points, k, sinkhorn_iters)`, and
+`curvature_routing_loss(expert_features, k, lambda_coeff)` compute
+the **Ollivier-Ricci Curvature (ORC)** of the k-NN graph of expert
+features (response to arXiv:2603.22317 Cao et al. March 2026 —
+*Geometric Mixture-of-Experts with Curvature-Guided Adaptive Routing*).
+
+The ORC formula for an edge (i, j)::
+
+    ORC(i, j) = 1 - W_1(mu_i, mu_j) / d(x_i, x_j)
+
+where `mu_i` is the uniform distribution over i's k-NN (including i),
+`mu_j` similarly for j, and `W_1` is the Wasserstein-1 distance
+(approximated via Sinkhorn-Knopp).
+
+Interpretation:
+- `ORC ≈ 1`: tree-like (neighborhoods far apart, experts in different regions)
+- `ORC ≈ 0`: flat (overlap proportional to edge length)
+- `ORC < 0`: clustered (overlap > edge length, experts redundant)
+
+**Bench result (FAMECfC K=4, 100 epochs, 2 seeds)**:
+- toy_sin (smooth): task loss **+89%** REGRESSION, mean_orc -6%, div_ratio -2%
+- structured: task loss ~0% safe, mean_orc ~0%, div_ratio -2%
+- random (noisy): task loss **-6% improvement**, mean_orc +11%, div_ratio -3%
+- orc+orth on random: div_ratio **+12%** (highest in audit) at no task cost
+
+**ORC is target-dependent**: works on noisy data (helps), fails on
+smooth data (hurts task loss severely). The mechanism captures a
+**topological** property (local manifold geometry) that is **distinct
+from** weight/feature diversity. Re-classified as a **diagnostic** for
+the audit (round 91-101) rather than a default regularizer.
+
+```python
+from lnn.core.curvature import mean_ollivier_ricci, curvature_routing_loss
+# expert_features: (K, H) per-expert mean features
+# As diagnostic:
+m = mean_ollivier_ricci(expert_features, k=2, sinkhorn_iters=5)
+# As regularizer (target-dependent — only enable on noisy data):
+loss = curvature_routing_loss(expert_features, k=2, lambda_coeff=0.001)
+```
+
+**Recommendations**:
+- DO use `mean_ollivier_ricci` as a **diagnostic** to characterize
+  the local geometry of the expert manifold after training.
+- DO NOT use `curvature_routing_loss` as a default regularizer.
+- CONSIDER the orc+orth combination on noisy/non-smooth data only.
+
+See `docs/research/2026-06-15_curvature_routing_report.md` and the
+unit tests in `tests/test_curvature.py` (17/17 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
