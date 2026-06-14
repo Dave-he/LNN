@@ -99,6 +99,14 @@ tags: [LNN, reading-report, papers]
 - **方法论**：ResNet-34 encoder 早期以加性融合方式注入 3 通道 LSS 图 (μ/max/σ 表征组织均匀性、结构连续性、确定性边)；bottleneck 部署 LTC 连续时间循环 (T=4 Euler 步) 迭代式精炼全局 spatial token；提出 Boundary Alignment Loss (BAL) 用 Sobel 梯度对齐预测概率图与 LSS Mean 通道；提供 ante-hoc XAI 三通道可视化。
 - **关键成果**：在 MICCAI FUSeg 上取得 **Dice 86.96% / IoU 79.54% / HD95 8.91 px** 的 SOTA (HD95 相对次优 SegNet 提升 30%)；参数量 25.70M，相对 ResNet101-UNet 减少 10×；消融显示 BAL 是 LSS 与 LTC 协同关键——缺 BAL 时 Dice 从 85.22% 退化到 76.18%。
 
+### [2026-06-14] DLNet — When Smaller Wins: Dual-Stage Distillation & Pareto-Guided Compression of LNN for Edge Battery Prognostics
+- **独立报告**：[[docs/reports/DLNet_Dual_Stage_Distillation_Pareto_LNN_2601.06227_研读报告.md]]
+- **核心问题**：LNN 原始 ODE/CfC 形态不便部署到 Arduino Nano 33 BLE Sense (Cortex-M4 @ 64 MHz, 1 MB Flash) 等 MCU；teacher LNN 过大；单次蒸馏容易在后续压缩阶段把"时间常数"这一核心动力学指纹打掉，导致 student 比 teacher 误差反而更高 (典型 −5% 到 +20%)。需要**"先 Euler 离散 → 双阶段 KD → Pareto 选优 → int8 部署"**的端到端流水线。
+- **方法论**：三段式流水线 — (1) Euler 离散化将 LNN 重写为 MCU 友好的离散 RNN (参数语义不变),与本仓 `lnn/core/variants.py::EulerLTCNetwork` 思路完全对齐；(2) Dual-Stage KD — Stage 1 蒸馏 teacher 的输出 + 中间隐藏态时间序列,Stage 2 在 student1 基础上做激进的通道剪枝/量化感知训练后再次用 teacher 恢复式蒸馏,挽回被打掉的时序信息；(3) Pareto-guided selection 在 (预测误差, 模型大小, 推理延迟) 三维联合目标上保留前沿最优点,产出 int8 student。
+- **关键成果**：电池 SOH 数据集上 100-cycle 预测误差 **0.0066 (比 teacher 低 15.4%)**;模型 **616 kB → 94 kB (−84.7%)**;Arduino Nano 33 BLE Sense 实测 **21 ms / inference**;ICPR 2026 接收。
+- **局限**：数据集名称未公开;Stage 2 KD 温度/α 未给出;Pareto 仅 3 维 (未含内存峰值/能耗);跨域迁移仅口头声称。
+- **对本仓**：可作 `EulerLTCNetwork::to_embedded()` 入口;列入 [[docs/prds/PRD_LNN_Edge_Research|PRD_LNN_Edge_Research]] §8 #2 (MCU 部署) 候选;复用本仓 `analysis/replication/temporal_dropout/` 模板写 `analysis/paper_replication/dlnet_report.md`。
+
 
 ---
 
