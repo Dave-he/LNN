@@ -1345,6 +1345,64 @@ outputs = net(observations, times, mask=mask)  # (B, T, 2)
 See `docs/research/2026-06-15_quite_moe_routing_report.md` and the
 unit tests in `tests/test_quite_moe.py` (28/28 pass).
 
+## SDG-MoE: Signed Debate Graph Inter-Expert Deliberation (round 104)
+
+`SDGConfig(alpha_max, beta_max, n_steps, use_anchoring, anchoring_strength)`,
+`disagreement_score(expert_outs)`, `signed_debate_step(expert_outs, A_pos, A_neg, alpha, beta)`,
+`SDGLearnedInteractions(n_experts)`, `SDGQuiteMoECfCCell(...)`, and
+`SDGQuiteMoECfCNetwork(...)` implement SDG-MoE (arXiv:2605.08322 Kulibaba
+et al. May 2026) — adding inter-expert deliberation via support (A⁺) and
+critique (A⁻) signed message passing with disagreement-gated Friedkin-Johnsen
+anchoring, on top of round 103's QuITE+MoE.
+
+The idea: after top-K routing, the active experts engage in deliberation
+before their outputs are aggregated:
+```
+Active experts: e_active = gather(E, top_idx)
+Signed message passing:
+  e_k ← e_k + α · A⁺ · e_active  (support update)
+  e_k ← e_k - β · A⁻ · e_active  (critique update)
+Anchoring (Friedkin-Johnsen):
+  λ_d = anchoring_strength · disagreement(e_active)
+  e_k ← (1 - λ_d) · e_k + λ_d · e_k_updated
+Aggregated: h_new = Σ_k g_k · e_k
+```
+
+**Bench result (48 cells: 2 conds × 3 datasets × 2 K × 1 alpha × 2 seeds × 100 epochs)**:
+
+| dataset    | K,top_k | QuITE+MoE test | SDG-MoE test | Δ     | QuITE+MoE H | SDG-MoE H |
+|------------|---------|----------------|--------------|-------|-------------|-----------|
+| sin_irr    | 2,1     | 0.0872         | 0.0860       | -1.4% | 0.162       | **0.000** |
+| sin_irr    | 3,2     | 0.0877         | 0.0867       | -1.1% | 0.949       | **0.000** |
+| structured | 2,1     | 0.3919         | 0.3863       | -1.4% | 0.214       | **0.000** |
+| structured | 3,2     | 0.3930         | 0.3854       | -1.9% | 1.027       | **0.000** |
+| random     | 2,1     | 0.1970         | 0.2116       | +7.4% | 0.516       | **0.000** |
+| random     | 3,2     | **0.1294**     | 0.1594       | +23.2%| 1.002       | **0.000** |
+
+**Verdict: HONEST NEGATIVE-WITH-NUANCE**
+- **H1 REJECTED**: test_mse unchanged or worse (random K=3 +23.2%)
+- **H2 REJECTED in WRONG DIRECTION**: routing entropy **DROPPED to 0.0** in all 12 cells
+- **H4 CONFIRMED**: training stable
+
+**Key finding**: deliberation pushes experts to **consensus**, which makes the
+router degenerate. This is a NEW form of H=0 lock-in (different from FAME's
+mechanism). Multi-expert routing in time-series MoE is fundamentally hard
+because the experts all see correlated inputs.
+
+```python
+from lnn.core.sdg_moe import SDGConfig, SDGQuiteMoECfCNetwork
+cfg = SDGConfig(alpha_max=0.1, beta_max=0.1, use_anchoring=True, anchoring_strength=0.5)
+net = SDGQuiteMoECfCNetwork(
+    input_size=2, hidden_size=16, n_experts=3, top_k=2,
+    n_queries=4, d_context=16, n_heads=4, output_size=2,
+    sdg_config=cfg,
+)
+outputs = net(observations, times, mask=mask)  # (B, T, 2)
+```
+
+See `docs/research/2026-06-15_sdg_moe_deliberation_report.md` and the
+unit tests in `tests/test_sdg_moe.py` (27/27 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

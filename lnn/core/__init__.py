@@ -107,6 +107,14 @@ from lnn.core.quite_moe import (
     QuiteRouter,
     quite_context_pool,
 )
+from lnn.core.sdg_moe import (
+    SDGConfig,
+    SDGLearnedInteractions,
+    SDGQuiteMoECfCCell,
+    SDGQuiteMoECfCNetwork,
+    disagreement_score,
+    signed_debate_step,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -244,6 +252,12 @@ __all__ = [
     "QuiteMoECfCCell",
     "QuiteMoECfCNetwork",
     "quite_context_pool",
+    "SDGConfig",
+    "SDGLearnedInteractions",
+    "SDGQuiteMoECfCCell",
+    "SDGQuiteMoECfCNetwork",
+    "disagreement_score",
+    "signed_debate_step",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
