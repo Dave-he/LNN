@@ -63,6 +63,13 @@ class FAMECfCCell(nn.Module):
             0.5 (the paper's claim that E ≥ 0.5 alone is sufficient).
         ecology_warmup_steps: Don't auto-enable φ in the first N steps
             even if E < threshold (router needs time to settle).
+        ecology_gated_orth: If True (default False), automatically
+            rescale the orth loss weight λ down to ``ecology_orth_lambda_safe``
+            when E drops below threshold (PRD #10-44, round 85).  Zero
+            effect on behaviour when False.  Use ``compute_orth_loss()``
+            instead of ``orthogonality_loss()`` to get the rescaling.
+        ecology_orth_lambda_safe: Target effective λ when orth gate fires.
+            Default 0.001 (round 80 default, validated in round 83 B).
     """
 
     def __init__(
@@ -81,6 +88,8 @@ class FAMECfCCell(nn.Module):
         ecology_gated_balancing: bool = False,
         ecology_E_min: float = 0.5,
         ecology_warmup_steps: int = 0,
+        ecology_gated_orth: bool = False,
+        ecology_orth_lambda_safe: float = 0.001,
     ):
         super().__init__()
         assert n_experts >= 1
@@ -114,6 +123,18 @@ class FAMECfCCell(nn.Module):
             )
         else:
             self.ecology_gate = None
+        # Ecology-gated orth rescaling (PRD #10-44, round 85).  Only
+        # attached when ``ecology_gated_orth=True``.  Rescales user's
+        # orth λ down to ``ecology_orth_lambda_safe`` when E<threshold.
+        if ecology_gated_orth:
+            from lnn.core.ecology_gated_balancing import EcologyGatedOrth
+            self.orth_gate = EcologyGatedOrth(
+                E_min=self.ecology_E_min,
+                lambda_safe=ecology_orth_lambda_safe,
+                warmup_steps=self.ecology_warmup_steps,
+            )
+        else:
+            self.orth_gate = None
 
         self.experts = nn.ModuleList(
             [
@@ -238,7 +259,49 @@ class FAMECfCCell(nn.Module):
                 )
                 if self.router_type == "learned" and hasattr(self.router, "set_balancer"):
                     self.router.set_balancer(self.balancer)
+        # Ecology-gated orth rescaling (PRD #10-44): run the orth gate
+        # and stash its decision in the diagnostic for ``compute_orth_loss``
+        # to use.  Eval mode runs the gate but does not mutate the cell.
+        if self.orth_gate is not None:
+            orth_gate_info = self.orth_gate.step(
+                E=float(E.item()), lambda_coeff=B, step_idx=self._step_idx,
+            )
+            out["ecology_gate_orth"] = orth_gate_info
         return out
+
+    def compute_orth_loss(
+        self,
+        outs: list[torch.Tensor],
+        user_lambda: float = 0.0,
+    ) -> torch.Tensor:
+        """Compute orth loss with ecology-gated rescaling applied (PRD #10-44).
+
+        If ``ecology_gated_orth=True`` and the gate has fired, scales
+        ``user_lambda`` down to ``ecology_orth_lambda_safe``.  Otherwise
+        returns the standard ``orthogonality_loss(outs, user_lambda)``.
+
+        Callers should use this instead of ``orthogonality_loss()``
+        directly when they want the gate to apply transparently.
+
+        Args:
+            outs: List of K [B, hidden_size] per-expert hidden states
+                (typically the output of ``forward_with_aux``).
+            user_lambda: The user's original orth loss weight (e.g.,
+                1.0 or 10.0).  Pass 0 to skip the orth loss entirely.
+
+        Returns:
+            Scalar orth loss tensor (0 if user_lambda ≤ 0).
+        """
+        if user_lambda <= 0.0:
+            return torch.tensor(0.0, device=outs[0].device if outs else "cpu")
+        effective_lambda = user_lambda
+        if self.orth_gate is not None and self.training:
+            # Run the gate (uses last_g from prior forward).
+            diag = self.moe_ecology_diagnostic(B=user_lambda)
+            gate_info = diag.get("ecology_gate_orth", {})
+            effective_lambda = gate_info.get("effective_lambda", user_lambda)
+        from lnn.core.orthogonality import orthogonality_loss
+        return orthogonality_loss(outs, lambda_coeff=effective_lambda)
 
     def forward_with_aux(
         self,

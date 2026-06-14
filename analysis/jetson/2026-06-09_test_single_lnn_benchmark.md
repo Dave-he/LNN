@@ -7,18 +7,11 @@ tags: [LNN, Jetson, benchmark, edge-ai]
 # Jetson LNN 基准验证 - 2026-06-09_test_single
 
 ## 环境
-- 平台：Linux-5.15.148-tegra-aarch64-with-glibc2.35
-- 设备树型号：NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super
-- PyTorch：2.11.0+cu130
-- CUDA：False (13.0)
-- Jetson BSP：
-
-```text
-# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025
-# KERNEL_VARIANT: oot
-TARGET_USERSPACE_LIB_DIR=nvidia
-TARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia
-```
+- 平台：macOS-15.7.7-x86_64-i386-64bit
+- 设备树型号：unknown
+- PyTorch：2.2.2
+- CUDA：False (None)
+- Jetson BSP：unknown
 
 ## 任务配置
 - 数据：合成非平稳时间序列，一步预测
@@ -29,10 +22,10 @@ TARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia
 ## 结果
 | 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
 |---|---:|---:|---:|---:|
-| CfCStyle | 2521 | 0.312975 | 27512.3 | 3.26 |
-| LTC | 1321 | 0.464351 | 13247.4 | 8.58 |
-| PDNAPulse | 3170 | 0.284479 | 37587.6 | 3.14 |
-| GRU | 1969 | 0.394308 | 106361.2 | 1.60 |
+| CfCStyle | 2521 | 0.312975 | 477358.9 | 0.34 |
+| LTC | 1321 | 0.464351 | 54994.4 | 1.92 |
+| PDNAPulse | 3170 | 0.284479 | 160232.2 | 4.25 |
+| GRU | 1969 | 0.394308 | 455857.8 | 0.34 |
 
 ## Benchmark 图
 ![Jetson LNN Benchmark](2026-06-09_test_single_lnn_benchmark.png)

@@ -391,6 +391,66 @@ The gate is **purely additive** — `ecology_gated_balancing=False`
 `docs/research/2026-06-14_ecology_gated_balancing_report.md` and
 the unit tests in `tests/test_ecology_gated_balancing.py`.
 
+## Ecology-Gated Orth Rescaling (auto-reduce λ when E<0.5, optional)
+
+`EcologyGatedOrth` (PRD #10-44, round 85) is a **stronger intervention**
+than round 84's φ gate.  When E < 0.5, it **rescales the user's
+orth loss weight λ down to a safe value** (default `0.001`, the
+round 80 default).  This is the **direct fix for round 84's honest
+negative**: at λ=1.0, the round 84 gated φ did not recover (gave
+0.7302 ≈ baseline), but **the round 85 gated orth recovers to 0.6285**
+— a **-14% loss reduction** at λ=1.0 and **-55%** at λ=10.0.
+
+```python
+from lnn import FAMECfCNetwork
+
+# Auto-rescale λ → 0.001 when E drops below 0.5.
+net = FAMECfCNetwork(
+    input_size=3, hidden_size=24, output_size=1,
+    n_experts=3, top_k=1,                      # the unstable cell
+    ecology_gated_orth=True,                   # opt in
+    ecology_orth_lambda_safe=0.001,            # target effective λ
+)
+y_pred, expert_outs = net.forward_with_aux(x)
+
+# Use cell.compute_orth_loss() instead of orthogonality_loss()
+# to apply the gate transparently:
+from lnn.core import FAMECfCCell
+aux = cell.compute_orth_loss(expert_outs[-1][-1], user_lambda=1.0)
+# If gate has fired, this returns orthogonality_loss(outs, 0.001).
+# Otherwise, returns orthogonality_loss(outs, 1.0).
+```
+
+**Why orth rescaling is stronger than φ**: at high λ, the orth loss
+has gradient magnitude ~λ, which dominates the task loss.  A soft
+router bias (round 84 φ, η=0.05) cannot counteract a gradient that's
+20× larger.  Rescaling λ down to 0.001 **removes the aux loss
+domination**, letting the task loss drive the routing.  This is
+**attacking the root cause** rather than the symptom.
+
+**Round 85 smoke-bench** (2 conditions × 3 datasets × 3 λ ∈ {0.1, 1.0, 10.0}):
+
+| λ | Dataset | A baseline | B gated | Δ | Gate fired |
+|---:|---|---:|---:|---:|---|
+| 1.0 | toy_sin | 0.7302 | **0.6285** | **-14.0%** | True (λ_scale=0.001) |
+| 1.0 | structured | 2.8953 | **2.7637** | **-4.6%** | True (λ_scale=0.001) |
+| 1.0 | random | 0.9420 | 0.9420 | 0.0% | **False (no false pos)** |
+| 10.0 | toy_sin | 1.3804 | **0.6285** | **-54.5%** | True (λ_scale=0.0001) |
+| 10.0 | random | 1.3110 | **0.8931** | **-31.9%** | True (λ_scale=0.0001) |
+| 10.0 | structured | 3.6791 | **2.7637** | **-24.9%** | True (λ_scale=0.0001) |
+
+**Honest-negative risk**: users who **deliberately** want high λ for
+representation diversity will see their λ silently downgraded.  This
+is a real risk for downstream-ensembling use cases.  Mitigated by
+opt-in (`ecology_gated_orth=False` by default) and a configurable
+`ecology_E_min` (set very low to effectively disable).
+
+The gate is **purely additive** — `ecology_gated_orth=False`
+(default) makes `compute_orth_loss` identical to
+`orthogonality_loss`.  See
+`docs/research/2026-06-15_ecology_gated_orth_report.md` and the unit
+tests in `tests/test_ecology_gated_orth.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |

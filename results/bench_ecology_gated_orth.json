@@ -1,0 +1,189 @@
+{
+  "epochs": 2,
+  "wall_time_s": 1.94,
+  "runs": [
+    {
+      "orth_lambda": 0.1,
+      "A": {
+        "name": "A: baseline \u03bb=0.1",
+        "results": {
+          "ds=toy_sin": {
+            "loss_final": 0.647419810295105,
+            "E_first": 3.3534449812577805e-06,
+            "E_last": 3.3534449812577805e-06,
+            "dead_final": 2,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          },
+          "ds=random": {
+            "loss_final": 0.901898205280304,
+            "E_first": 9.991012573242188,
+            "E_last": 9.936625480651855,
+            "dead_final": 0,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          },
+          "ds=structured": {
+            "loss_final": 2.7821128368377686,
+            "E_first": 3.3534449812577805e-06,
+            "E_last": 3.3534449812577805e-06,
+            "dead_final": 2,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          }
+        }
+      },
+      "B": {
+        "name": "B: gated orth (auto-rescale to 0.001) \u03bb=0.1",
+        "results": {
+          "ds=toy_sin": {
+            "loss_final": 0.6285259127616882,
+            "E_first": 1.2657874822616577,
+            "E_last": 3.3534449812577805e-06,
+            "dead_final": 2,
+            "gate_fired": true,
+            "lambda_scale_final": 0.01
+          },
+          "ds=random": {
+            "loss_final": 0.901898205280304,
+            "E_first": 9.991012573242188,
+            "E_last": 9.936625480651855,
+            "dead_final": 0,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          },
+          "ds=structured": {
+            "loss_final": 2.7636613845825195,
+            "E_first": 3.3534449812577805e-06,
+            "E_last": 3.3534449812577805e-06,
+            "dead_final": 2,
+            "gate_fired": true,
+            "lambda_scale_final": 0.01
+          }
+        }
+      }
+    },
+    {
+      "orth_lambda": 1.0,
+      "A": {
+        "name": "A: baseline \u03bb=1.0",
+        "results": {
+          "ds=toy_sin": {
+            "loss_final": 0.730247974395752,
+            "E_first": 0.12657876312732697,
+            "E_last": 3.3534453791617125e-07,
+            "dead_final": 2,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          },
+          "ds=random": {
+            "loss_final": 0.9420318007469177,
+            "E_first": 0.9991013407707214,
+            "E_last": 0.9567630887031555,
+            "dead_final": 0,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          },
+          "ds=structured": {
+            "loss_final": 2.895315170288086,
+            "E_first": 3.3534453791617125e-07,
+            "E_last": 3.3534453791617125e-07,
+            "dead_final": 2,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          }
+        }
+      },
+      "B": {
+        "name": "B: gated orth (auto-rescale to 0.001) \u03bb=1.0",
+        "results": {
+          "ds=toy_sin": {
+            "loss_final": 0.6285259127616882,
+            "E_first": 0.12657876312732697,
+            "E_last": 3.3534453791617125e-07,
+            "dead_final": 2,
+            "gate_fired": true,
+            "lambda_scale_final": 0.001
+          },
+          "ds=random": {
+            "loss_final": 0.9420318007469177,
+            "E_first": 0.9991013407707214,
+            "E_last": 0.9567630887031555,
+            "dead_final": 0,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          },
+          "ds=structured": {
+            "loss_final": 2.7636613845825195,
+            "E_first": 3.3534453791617125e-07,
+            "E_last": 3.3534453791617125e-07,
+            "dead_final": 2,
+            "gate_fired": true,
+            "lambda_scale_final": 0.001
+          }
+        }
+      }
+    },
+    {
+      "orth_lambda": 10.0,
+      "A": {
+        "name": "A: baseline \u03bb=10.0",
+        "results": {
+          "ds=toy_sin": {
+            "loss_final": 1.3803942203521729,
+            "E_first": 0.012657876126468182,
+            "E_last": 3.3534455212702596e-08,
+            "dead_final": 2,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          },
+          "ds=random": {
+            "loss_final": 1.3109784126281738,
+            "E_first": 0.09991013258695602,
+            "E_last": 0.09567631036043167,
+            "dead_final": 0,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          },
+          "ds=structured": {
+            "loss_final": 3.6791446208953857,
+            "E_first": 3.3534455212702596e-08,
+            "E_last": 3.3534455212702596e-08,
+            "dead_final": 2,
+            "gate_fired": false,
+            "lambda_scale_final": 1.0
+          }
+        }
+      },
+      "B": {
+        "name": "B: gated orth (auto-rescale to 0.001) \u03bb=10.0",
+        "results": {
+          "ds=toy_sin": {
+            "loss_final": 0.6285259127616882,
+            "E_first": 0.012657876126468182,
+            "E_last": 3.3534455212702596e-08,
+            "dead_final": 2,
+            "gate_fired": true,
+            "lambda_scale_final": 0.0001
+          },
+          "ds=random": {
+            "loss_final": 0.8931424021720886,
+            "E_first": 0.09991013258695602,
+            "E_last": 0.09936626255512238,
+            "dead_final": 0,
+            "gate_fired": true,
+            "lambda_scale_final": 0.0001
+          },
+          "ds=structured": {
+            "loss_final": 2.7636613845825195,
+            "E_first": 3.3534455212702596e-08,
+            "E_last": 3.3534455212702596e-08,
+            "dead_final": 2,
+            "gate_fired": true,
+            "lambda_scale_final": 0.0001
+          }
+        }
+      }
+    }
+  ]
+}

@@ -7,18 +7,11 @@ tags: [LNN, Jetson, benchmark, edge-ai]
 # Jetson LNN 基准验证 - 2026-06-09_test_quick
 
 ## 环境
-- 平台：Linux-5.15.148-tegra-aarch64-with-glibc2.35
-- 设备树型号：NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super
-- PyTorch：2.11.0+cu130
-- CUDA：False (13.0)
-- Jetson BSP：
-
-```text
-# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025
-# KERNEL_VARIANT: oot
-TARGET_USERSPACE_LIB_DIR=nvidia
-TARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia
-```
+- 平台：macOS-15.7.7-x86_64-i386-64bit
+- 设备树型号：unknown
+- PyTorch：2.2.2
+- CUDA：False (None)
+- Jetson BSP：unknown
 
 ## 任务配置
 - 数据：合成非平稳时间序列，一步预测
@@ -31,22 +24,22 @@ TARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia
 ## Pareto 结果
 | Front | 模型 | Hidden | SeqLen | Seed | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| yes | PDNAPulse | 8 | 32 | 42 | 418 | 0.401337 | 38910.2 | 1.41 |
-| yes | CfCStyle | 16 | 32 | 42 | 1169 | 0.469870 | 46125.6 | 2.28 |
-| yes | GRU | 8 | 32 | 42 | 273 | 0.483972 | 230064.1 | 0.41 |
-| yes | GRU | 16 | 16 | 42 | 929 | 0.575272 | 98334.9 | 0.34 |
-| yes | GRU | 8 | 16 | 42 | 273 | 0.601254 | 132639.9 | 0.27 |
-| yes | LTC | 8 | 32 | 42 | 185 | 0.607213 | 14482.4 | 4.28 |
-| yes | LTC | 8 | 16 | 42 | 185 | 0.654613 | 17502.5 | 2.14 |
-|  | PDNAPulse | 16 | 32 | 42 | 1474 | 0.449496 | 38485.1 | 1.83 |
-|  | LTC | 16 | 32 | 42 | 625 | 0.506501 | 12951.8 | 5.56 |
-|  | PDNAPulse | 16 | 16 | 42 | 1474 | 0.525346 | 50150.2 | 1.09 |
-|  | CfCStyle | 8 | 32 | 42 | 329 | 0.562039 | 37468.2 | 1.38 |
-|  | GRU | 16 | 32 | 42 | 929 | 0.567335 | 150206.8 | 0.56 |
-|  | LTC | 16 | 16 | 42 | 625 | 0.571133 | 13652.8 | 2.58 |
-|  | CfCStyle | 8 | 16 | 42 | 329 | 0.591101 | 40371.7 | 0.68 |
-|  | CfCStyle | 16 | 16 | 42 | 1169 | 0.622324 | 40214.0 | 0.79 |
-|  | PDNAPulse | 8 | 16 | 42 | 418 | 0.721614 | 52349.2 | 0.66 |
+| yes | PDNAPulse | 8 | 32 | 42 | 418 | 0.401337 | 579441.1 | 0.18 |
+| yes | GRU | 8 | 32 | 42 | 273 | 0.483972 | 2148225.4 | 0.08 |
+| yes | GRU | 16 | 16 | 42 | 929 | 0.575272 | 1922052.4 | 0.07 |
+| yes | GRU | 8 | 16 | 42 | 273 | 0.601254 | 1938941.5 | 0.05 |
+| yes | LTC | 8 | 32 | 42 | 185 | 0.607213 | 123942.5 | 0.70 |
+| yes | LTC | 8 | 16 | 42 | 185 | 0.654613 | 112941.5 | 0.36 |
+|  | PDNAPulse | 16 | 32 | 42 | 1474 | 0.449496 | 416342.8 | 0.47 |
+|  | CfCStyle | 16 | 32 | 42 | 1169 | 0.469870 | 347246.6 | 0.25 |
+|  | LTC | 16 | 32 | 42 | 625 | 0.506501 | 77346.8 | 0.84 |
+|  | PDNAPulse | 16 | 16 | 42 | 1474 | 0.525346 | 316659.1 | 0.14 |
+|  | CfCStyle | 8 | 32 | 42 | 329 | 0.562039 | 485105.4 | 0.19 |
+|  | GRU | 16 | 32 | 42 | 929 | 0.567335 | 643211.0 | 0.10 |
+|  | LTC | 16 | 16 | 42 | 625 | 0.571133 | 89599.4 | 0.37 |
+|  | CfCStyle | 8 | 16 | 42 | 329 | 0.591101 | 573774.3 | 0.12 |
+|  | CfCStyle | 16 | 16 | 42 | 1169 | 0.622324 | 543181.1 | 0.10 |
+|  | PDNAPulse | 8 | 16 | 42 | 418 | 0.721614 | 517493.4 | 0.10 |
 
 ## Pareto 图
 ![Jetson LNN Pareto](2026-06-09_test_quick_lnn_pareto.png)
