@@ -46,9 +46,11 @@ from lnn.core.ltc import LTCCell, LTCNetwork, TransformableLTC
 from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sample
 from lnn.core.moe_ecology import (
     MoEEcologyMonitor,
+    activation_space_overlap,
     gradient_routing_sensitivity,
     moe_ecology_number,
     per_expert_gradient_norms,
+    weight_space_overlap,
 )
 from lnn.core.ecology_gated_balancing import (
     CausalityGatedOrth,
@@ -159,6 +161,8 @@ __all__ = [
     "MoEEcologyMonitor",
     "gradient_routing_sensitivity",
     "per_expert_gradient_norms",
+    "weight_space_overlap",
+    "activation_space_overlap",
     "EcologyGatedBalancer",
     "EcologyGatedOrth",
     "CombinedEcologyGate",

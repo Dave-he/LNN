@@ -652,6 +652,48 @@ is fully back-compat. When set, callers should pass
 `docs/research/2026-06-15_causality_gated_orth_report.md` and
 the unit tests in `tests/test_causality_gated_orth.py`.
 
+## Orthogonality Audit: Weights vs Activations (Kim 2026 response, opt-in)
+
+`weight_space_overlap` and `activation_space_overlap`
+(PRD #10-52, round 90) are **audit metrics** for the round 80-89
+orthogonality stack, in direct response to arXiv:2601.00457
+(Hyunjun Kim, Jan 2026) — *Geometric Regularization in
+Mixture-of-Experts: The Disconnect Between Weights and
+Activations*.
+
+```python
+from lnn import FAMECfCNetwork, weight_space_overlap, activation_space_overlap
+
+net = FAMECfCNetwork(
+    input_size=3, hidden_size=24, output_size=1,
+    n_experts=3, top_k=1,
+)
+# ... train loop ...
+outs = [o.detach() for o in last_outs]  # K activations (B, T, D)
+weights = [p.detach() for p in expert_f_gate_weights]  # K (out, in)
+act_ov = activation_space_overlap(outs)    # target metric
+wgt_ov = weight_space_overlap(weights)     # disconnect metric
+```
+
+**Kim 2026 claim**: weight-space geometric regularization causes
+weight overlap to grow (+114%) while leaving activation overlap
+unchanged (r=−0.293, p=0.523).
+
+**Our audit (12-cell bench, 5 epochs)**:
+- **H2 ✓**: `activation_overlap` drops 47-54% in toy_sin and
+  structured under our `orthogonality_loss` (we hit our target)
+- **H1 ~partial**: `weight_overlap` grows +44-48% under our orth
+  (mild version of Kim's disconnect, but much less than +114%)
+- **H4 ✗**: high orth λ (10.0) hurts task loss by 30-100% in toy
+  regime — orth loss is a **stylistic tax**
+
+**Verdict**: our round 80 orthogonality loss is functionally
+correct (H2) but with a mild version of the Kim 2026 disconnect.
+**Recommendation**: keep orth λ ≤ 0.1 in toy regime; use round 85
+E-gate to auto-rescale for real datasets. See
+`docs/research/2026-06-15_orth_weights_vs_activations_report.md`
+and the unit tests in `tests/test_orth_audit_metrics.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |

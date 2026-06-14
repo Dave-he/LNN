@@ -426,3 +426,72 @@ class MoEEcologyMonitor(nn.Module):
         self.util_ema.copy_(torch.full((self.n_experts,), 1.0 / self.n_experts))
         self.E_history.clear()
         self.dead_history.clear()
+
+
+# ---------------------------------------------------------------------------
+# Round 90 (PRD #10-52): weights-vs-activations orthogonality audit
+# (response to arXiv:2601.00457, Kim 2026).
+# ---------------------------------------------------------------------------
+
+
+def weight_space_overlap(expert_weights: list[torch.Tensor]) -> float:
+    """Mean pairwise cosine similarity between flattened expert weight matrices.
+
+    For a stack of K expert weight matrices W_0, ..., W_{K-1} (any shape,
+    flattened to 1D), returns::
+
+        (1 / (K*(K-1))) * sum_{i != j} |<W_i, W_j>| / (||W_i|| * ||W_j||)
+
+    with sign-abs so that anti-parallel weights still count as "overlap".
+
+    Returns 0.0 if K < 2.
+
+    **Kim 2026 finding**: this metric INCREASES under weight-space
+    geometric regularization (up to +114% in their experiments), the
+    "disconnect" — minimizing the loss does not minimize this.
+    """
+    K = len(expert_weights)
+    if K < 2:
+        return 0.0
+    flats = [w.detach().reshape(-1).to(torch.float32) for w in expert_weights]
+    norms = torch.stack([f.norm() for f in flats])
+    if torch.any(norms < 1e-12):
+        # Treat zero-norm expert as having 0 overlap with all others.
+        return 0.0
+    sims = []
+    for i in range(K):
+        for j in range(i + 1, K):
+            cos = (flats[i] * flats[j]).sum() / (norms[i] * norms[j])
+            sims.append(cos.abs().item())
+    return float(sum(sims) / len(sims))
+
+
+def activation_space_overlap(expert_outs: list[torch.Tensor]) -> float:
+    """Mean pairwise cosine similarity between per-expert activation tensors.
+
+    ``expert_outs[k]`` has shape (B, T, D) (or (N, D) for unbatched).
+    We flatten all non-expert dims, then compute the same pairwise
+    absolute-cosine as :func:`weight_space_overlap`.
+
+    Returns 0.0 if K < 2.
+
+    **Kim 2026 finding**: this metric stays at ~0.6 across weight-
+    space orth strengths (no effect), the "disconnect" target.
+
+    **Our claim (round 80)**: our ``orthogonality_loss`` operates
+    on these activations directly, so this metric SHOULD decrease
+    under our orth loss — by construction.
+    """
+    K = len(expert_outs)
+    if K < 2:
+        return 0.0
+    flats = [h.detach().reshape(-1).to(torch.float32) for h in expert_outs]
+    norms = torch.stack([f.norm() for f in flats])
+    if torch.any(norms < 1e-12):
+        return 0.0
+    sims = []
+    for i in range(K):
+        for j in range(i + 1, K):
+            cos = (flats[i] * flats[j]).sum() / (norms[i] * norms[j])
+            sims.append(cos.abs().item())
+    return float(sum(sims) / len(sims))
