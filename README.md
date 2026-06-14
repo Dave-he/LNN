@@ -694,6 +694,48 @@ E-gate to auto-rescale for real datasets. See
 `docs/research/2026-06-15_orth_weights_vs_activations_report.md`
 and the unit tests in `tests/test_orth_audit_metrics.py`.
 
+## CfC Temporal Smoothness (arXiv:2606.07670 response, opt-in)
+
+`total_variation`, `l2_derivative`, `max_gradient`, and
+`smoothness_summary` (PRD #10-53, round 91) are **smoothness
+metrics** for testing the claim from arXiv:2606.07670
+(Li, Pal, Tan, June 2026) — *Liquid Neural Networks as a Drop-in
+Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting*:
+
+> "CfC embeds a learned smooth response to t directly into the loss
+> landscape. Temporal smoothness is now a built-in property rather
+> than an emergent artifact."
+
+```python
+from lnn import total_variation, l2_derivative, max_gradient
+
+y = ...  # 1D tensor of model output over dense t grid
+tv = total_variation(y)        # mean |y[i+1] - y[i]|
+ld = l2_derivative(y, dt=1/255) # RMS finite-difference derivative
+mg = max_gradient(y, dt=1/255)  # max |f'(t)|
+```
+
+**Round 91 bench (1D function fitting, MLP vs CfC, 5 seeds × 100
+epochs)**:
+- **H1 PARTIAL ✓**: max_grad -44% (2.02 vs 3.62), l2_deriv -12%
+  (1.98 vs 2.24), TV +13% (0.0078 vs 0.0069, unfavorable)
+- **H2/H3/H4 ✗**: CfC has worse interpolation (mse 0.26 vs 0.17)
+  and extrapolation (ood_mse 3.03 vs 2.22) despite 2.8× more params
+
+**Verdict**: arXiv:2606.07670's smoothness claim is real at the
+max-derivative level (which is what matters for 3DGS artifacts)
+but does NOT translate to better task performance in 1D. CfC's
+output is plateau-like with sharp transitions, MLP's is
+ripple-like with smaller but more frequent changes.
+
+**Implication for our stack**: prefer CfC for control / physics
+applications (where Lipschitz bounds matter), prefer MLP /
+transformer for time-series forecasting (where MSE matters). The
+MoE-CfC variants (`FAMECfCCell`, `MRMoECfCCell`) inherit this
+property. See
+`docs/research/2026-06-15_cfc_temporal_smoothness_report.md` and
+the unit tests in `tests/test_smoothness_metrics.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |

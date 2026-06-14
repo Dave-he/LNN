@@ -60,6 +60,12 @@ from lnn.core.ecology_gated_balancing import (
 )
 from lnn.core.mr_moe_cfc import MRMoECfCCell, MRMoECfCNetwork
 from lnn.core.orthogonality import orthogonality_loss
+from lnn.core.smoothness_metrics import (
+    l2_derivative,
+    max_gradient,
+    smoothness_summary,
+    total_variation,
+)
 from lnn.core.phi_balancing import PhiBalancer
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
@@ -155,6 +161,10 @@ __all__ = [
     "FAMECfCNetwork",
     "ForecastabilityRouter",
     "orthogonality_loss",
+    "total_variation",
+    "l2_derivative",
+    "max_gradient",
+    "smoothness_summary",
     "PhiBalancer",
     "CosineRouter",
     "moe_ecology_number",
