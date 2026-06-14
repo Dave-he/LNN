@@ -1,0 +1,556 @@
+{
+  "epochs": 100,
+  "n_seeds": 3,
+  "sigma_min": 0.1,
+  "mix": 0.5,
+  "noise_sigma": 0.1,
+  "wall_time_s": 42.26,
+  "datasets": {
+    "toy_sin": {
+      "CfC_baseline": {
+        "final_train_loss_mean_std": [
+          0.14984465142091116,
+          0.02862546658030345
+        ],
+        "task_loss_noisy_mean_std": [
+          0.14800832668940225,
+          0.023363684471948747
+        ],
+        "task_loss_clean_mean_std": [
+          0.14754053950309753,
+          0.026219907243069714
+        ],
+        "clean_consistency_mean_std": [
+          0.03269844253857931,
+          0.00447086291155759
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.1293056309223175,
+            "task_loss_noisy": 0.1331452876329422,
+            "task_loss_clean": 0.12846621870994568,
+            "clean_consistency": 0.037849243730306625,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.19032570719718933,
+            "task_loss_noisy": 0.1809958666563034,
+            "task_loss_clean": 0.18461591005325317,
+            "clean_consistency": 0.033298708498477936,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.12990261614322662,
+            "task_loss_noisy": 0.12988382577896118,
+            "task_loss_clean": 0.12953948974609375,
+            "clean_consistency": 0.026947375386953354,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "CfC_gate": {
+        "final_train_loss_mean_std": [
+          0.13392265886068344,
+          0.00984769100262781
+        ],
+        "task_loss_noisy_mean_std": [
+          0.16092213988304138,
+          0.03241125489619361
+        ],
+        "task_loss_clean_mean_std": [
+          0.13208712140719095,
+          0.0068071728308910315
+        ],
+        "clean_consistency_mean_std": [
+          0.06860335543751717,
+          0.044895544814527046
+        ],
+        "gate_value_mean_std": [
+          0.24616352220376334,
+          0.004951734500045433
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.14571204781532288,
+            "task_loss_noisy": 0.1407216489315033,
+            "task_loss_clean": 0.1384851485490799,
+            "clean_consistency": 0.035354405641555786,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.13444849848747253,
+            "task_loss_noisy": 0.13538968563079834,
+            "task_loss_clean": 0.13511750102043152,
+            "clean_consistency": 0.03838452324271202,
+            "gate_value": 0.2526952922344208
+          },
+          {
+            "final_train_loss": 0.12160743027925491,
+            "task_loss_noisy": 0.2066550850868225,
+            "task_loss_clean": 0.12265871465206146,
+            "clean_consistency": 0.1320711374282837,
+            "gate_value": 0.24508430063724518
+          }
+        ]
+      },
+      "LSTM_baseline": {
+        "final_train_loss_mean_std": [
+          0.12612232069174448,
+          0.004319530554304115
+        ],
+        "task_loss_noisy_mean_std": [
+          0.14550868173440298,
+          0.009070010740259572
+        ],
+        "task_loss_clean_mean_std": [
+          0.12697972357273102,
+          0.004062504782505725
+        ],
+        "clean_consistency_mean_std": [
+          0.07808770363529523,
+          0.03830626296111769
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.132118821144104,
+            "task_loss_noisy": 0.13330812752246857,
+            "task_loss_clean": 0.13198423385620117,
+            "clean_consistency": 0.038009535521268845,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.12211461365222931,
+            "task_loss_noisy": 0.1481800377368927,
+            "task_loss_clean": 0.12203368544578552,
+            "clean_consistency": 0.06656161695718765,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.12413352727890015,
+            "task_loss_noisy": 0.15503787994384766,
+            "task_loss_clean": 0.12692125141620636,
+            "clean_consistency": 0.1296919584274292,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "LSTM_gate": {
+        "final_train_loss_mean_std": [
+          0.12325255076090495,
+          0.0010462057311589562
+        ],
+        "task_loss_noisy_mean_std": [
+          0.1306036114692688,
+          0.0029838290510823358
+        ],
+        "task_loss_clean_mean_std": [
+          0.12263724952936172,
+          0.0004736931560824733
+        ],
+        "clean_consistency_mean_std": [
+          0.04239600896835327,
+          0.0038969447276541213
+        ],
+        "gate_value_mean_std": [
+          0.24616352220376334,
+          0.004951734500045433
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.12231196463108063,
+            "task_loss_noisy": 0.1264355182647705,
+            "task_loss_clean": 0.1220468059182167,
+            "clean_consistency": 0.04145849496126175,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.12273375689983368,
+            "task_loss_noisy": 0.13211748003959656,
+            "task_loss_clean": 0.12265840917825699,
+            "clean_consistency": 0.038161568343639374,
+            "gate_value": 0.2526952922344208
+          },
+          {
+            "final_train_loss": 0.12471193075180054,
+            "task_loss_noisy": 0.13325783610343933,
+            "task_loss_clean": 0.12320653349161148,
+            "clean_consistency": 0.04756796360015869,
+            "gate_value": 0.24508430063724518
+          }
+        ]
+      }
+    },
+    "structured": {
+      "CfC_baseline": {
+        "final_train_loss_mean_std": [
+          0.4900123079617818,
+          0.005298393611097857
+        ],
+        "task_loss_noisy_mean_std": [
+          0.48937060435612995,
+          0.0032913670879589157
+        ],
+        "task_loss_clean_mean_std": [
+          0.4885711868604024,
+          0.002995239144973751
+        ],
+        "clean_consistency_mean_std": [
+          0.036763651917378105,
+          0.002331588699243043
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.49737831950187683,
+            "task_loss_noisy": 0.4851355254650116,
+            "task_loss_clean": 0.49198728799819946,
+            "clean_consistency": 0.0336267463862896,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.48751920461654663,
+            "task_loss_noisy": 0.49316078424453735,
+            "task_loss_clean": 0.48903220891952515,
+            "clean_consistency": 0.03745214641094208,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.485139399766922,
+            "task_loss_noisy": 0.48981550335884094,
+            "task_loss_clean": 0.48469406366348267,
+            "clean_consistency": 0.03921206295490265,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "CfC_gate": {
+        "final_train_loss_mean_std": [
+          0.48750118414560956,
+          0.00342268521678598
+        ],
+        "task_loss_noisy_mean_std": [
+          0.4887300431728363,
+          0.0037866986871344845
+        ],
+        "task_loss_clean_mean_std": [
+          0.4867323736349742,
+          0.0028649067630066153
+        ],
+        "clean_consistency_mean_std": [
+          0.03502566864093145,
+          0.00617390863234397
+        ],
+        "gate_value_mean_std": [
+          0.24616352220376334,
+          0.004951734500045433
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.4920378029346466,
+            "task_loss_noisy": 0.48990583419799805,
+            "task_loss_clean": 0.49004706740379333,
+            "clean_consistency": 0.03039594180881977,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.4837712049484253,
+            "task_loss_noisy": 0.4836175739765167,
+            "task_loss_clean": 0.48305732011795044,
+            "clean_consistency": 0.04375145584344864,
+            "gate_value": 0.2526952922344208
+          },
+          {
+            "final_train_loss": 0.4866945445537567,
+            "task_loss_noisy": 0.49266672134399414,
+            "task_loss_clean": 0.4870927333831787,
+            "clean_consistency": 0.030929608270525932,
+            "gate_value": 0.24508430063724518
+          }
+        ]
+      },
+      "LSTM_baseline": {
+        "final_train_loss_mean_std": [
+          0.48740850885709125,
+          0.005998433527056963
+        ],
+        "task_loss_noisy_mean_std": [
+          0.4862772822380066,
+          0.007296762257885633
+        ],
+        "task_loss_clean_mean_std": [
+          0.48468931516011554,
+          0.0022887082653874676
+        ],
+        "clean_consistency_mean_std": [
+          0.033437625194589295,
+          0.006315554287660975
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.482474148273468,
+            "task_loss_noisy": 0.47610780596733093,
+            "task_loss_clean": 0.4824172258377075,
+            "clean_consistency": 0.03335818648338318,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.4958515465259552,
+            "task_loss_noisy": 0.4928787350654602,
+            "task_loss_clean": 0.4878217279911041,
+            "clean_consistency": 0.025742707774043083,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.4838998317718506,
+            "task_loss_noisy": 0.48984530568122864,
+            "task_loss_clean": 0.48382899165153503,
+            "clean_consistency": 0.04121198132634163,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "LSTM_gate": {
+        "final_train_loss_mean_std": [
+          0.47916944821675617,
+          0.006446983377051803
+        ],
+        "task_loss_noisy_mean_std": [
+          0.47900864481925964,
+          0.0068546249493773425
+        ],
+        "task_loss_clean_mean_std": [
+          0.47885685165723163,
+          0.0068138937249328764
+        ],
+        "clean_consistency_mean_std": [
+          0.027789456769824028,
+          0.0016316786926754098
+        ],
+        "gate_value_mean_std": [
+          0.24616352220376334,
+          0.004951734500045433
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.48195287585258484,
+            "task_loss_noisy": 0.47546154260635376,
+            "task_loss_clean": 0.48192447423934937,
+            "clean_consistency": 0.028198963031172752,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.47025877237319946,
+            "task_loss_noisy": 0.4729692339897156,
+            "task_loss_clean": 0.4694119095802307,
+            "clean_consistency": 0.029551373794674873,
+            "gate_value": 0.2526952922344208
+          },
+          {
+            "final_train_loss": 0.48529669642448425,
+            "task_loss_noisy": 0.4885951578617096,
+            "task_loss_clean": 0.48523417115211487,
+            "clean_consistency": 0.02561803348362446,
+            "gate_value": 0.24508430063724518
+          }
+        ]
+      }
+    },
+    "random": {
+      "CfC_baseline": {
+        "final_train_loss_mean_std": [
+          0.827216366926829,
+          0.11314841343132101
+        ],
+        "task_loss_noisy_mean_std": [
+          0.8314101298650106,
+          0.10173579698013285
+        ],
+        "task_loss_clean_mean_std": [
+          0.8313400348027548,
+          0.10707293254357056
+        ],
+        "clean_consistency_mean_std": [
+          0.04899498075246811,
+          0.01765971459670454
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.8561609387397766,
+            "task_loss_noisy": 0.8577443361282349,
+            "task_loss_clean": 0.8555641174316406,
+            "clean_consistency": 0.06223674118518829,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.9490360617637634,
+            "task_loss_noisy": 0.9407384991645813,
+            "task_loss_clean": 0.9486761093139648,
+            "clean_consistency": 0.02403588593006134,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.676452100276947,
+            "task_loss_noisy": 0.6957475543022156,
+            "task_loss_clean": 0.6897798776626587,
+            "clean_consistency": 0.060712315142154694,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "CfC_gate": {
+        "final_train_loss_mean_std": [
+          0.8195433219273885,
+          0.09758573144658733
+        ],
+        "task_loss_noisy_mean_std": [
+          0.828865110874176,
+          0.08319902913496882
+        ],
+        "task_loss_clean_mean_std": [
+          0.8212470014890035,
+          0.09419780005168561
+        ],
+        "clean_consistency_mean_std": [
+          0.03872849668065707,
+          0.020613360508897352
+        ],
+        "gate_value_mean_std": [
+          0.24616352220376334,
+          0.004951734500045433
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.8640458583831787,
+            "task_loss_noisy": 0.8605993390083313,
+            "task_loss_clean": 0.8624691367149353,
+            "clean_consistency": 0.05250852555036545,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.9104251861572266,
+            "task_loss_noisy": 0.9111194610595703,
+            "task_loss_clean": 0.9103418588638306,
+            "clean_consistency": 0.009591031819581985,
+            "gate_value": 0.2526952922344208
+          },
+          {
+            "final_train_loss": 0.6841589212417603,
+            "task_loss_noisy": 0.7148765325546265,
+            "task_loss_clean": 0.6909300088882446,
+            "clean_consistency": 0.05408593267202377,
+            "gate_value": 0.24508430063724518
+          }
+        ]
+      },
+      "LSTM_baseline": {
+        "final_train_loss_mean_std": [
+          0.8702637751897176,
+          0.05534207713369824
+        ],
+        "task_loss_noisy_mean_std": [
+          0.8763095537821451,
+          0.044064345845775406
+        ],
+        "task_loss_clean_mean_std": [
+          0.8712486227353414,
+          0.05196778699792308
+        ],
+        "clean_consistency_mean_std": [
+          0.02523359687378009,
+          0.018012680840590576
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.9195712804794312,
+            "task_loss_noisy": 0.9171848297119141,
+            "task_loss_clean": 0.9184290766716003,
+            "clean_consistency": 0.013721505180001259,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.8982474207878113,
+            "task_loss_noisy": 0.8966077566146851,
+            "task_loss_clean": 0.8964588046073914,
+            "clean_consistency": 0.011309987865388393,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.7929726243019104,
+            "task_loss_noisy": 0.8151360750198364,
+            "task_loss_clean": 0.7988579869270325,
+            "clean_consistency": 0.05066929757595062,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "LSTM_gate": {
+        "final_train_loss_mean_std": [
+          0.8756979703903198,
+          0.06456231567771885
+        ],
+        "task_loss_noisy_mean_std": [
+          0.8533236781756083,
+          0.04622850413206401
+        ],
+        "task_loss_clean_mean_std": [
+          0.8524804512659708,
+          0.04615933781231159
+        ],
+        "clean_consistency_mean_std": [
+          0.023568670575817425,
+          0.00909550190429025
+        ],
+        "gate_value_mean_std": [
+          0.24616352220376334,
+          0.004951734500045433
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.9433929920196533,
+            "task_loss_noisy": 0.8742903470993042,
+            "task_loss_clean": 0.873511016368866,
+            "clean_consistency": 0.036277104169130325,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.894911527633667,
+            "task_loss_noisy": 0.8964678645133972,
+            "task_loss_clean": 0.895484447479248,
+            "clean_consistency": 0.01893608644604683,
+            "gate_value": 0.2526952922344208
+          },
+          {
+            "final_train_loss": 0.7887893915176392,
+            "task_loss_noisy": 0.7892128229141235,
+            "task_loss_clean": 0.7884458899497986,
+            "clean_consistency": 0.015492821112275124,
+            "gate_value": 0.24508430063724518
+          }
+        ]
+      }
+    }
+  }
+}

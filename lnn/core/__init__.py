@@ -83,6 +83,10 @@ from lnn.core.effective_rank import (
     rank_summary,
 )
 from lnn.core.phi_balancing import PhiBalancer
+from lnn.core.reliability_gate import (
+    apply_reliability_gate,
+    segment_reliability,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -206,6 +210,8 @@ __all__ = [
     "EcologyGatedOrth",
     "CombinedEcologyGate",
     "CausalityGatedOrth",
+    "segment_reliability",
+    "apply_reliability_gate",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

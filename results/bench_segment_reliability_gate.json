@@ -1,0 +1,472 @@
+{
+  "epochs": 30,
+  "n_seeds": 2,
+  "sigma_min": 0.1,
+  "mix": 1.0,
+  "noise_sigma": 0.1,
+  "wall_time_s": 9.61,
+  "datasets": {
+    "toy_sin": {
+      "CfC_baseline": {
+        "final_train_loss_mean_std": [
+          0.14511269330978394,
+          0.0004483163356781006
+        ],
+        "task_loss_noisy_mean_std": [
+          0.1565900519490242,
+          0.012924619019031525
+        ],
+        "task_loss_clean_mean_std": [
+          0.140788234770298,
+          0.0035112276673316956
+        ],
+        "clean_consistency_mean_std": [
+          0.05934666097164154,
+          0.01336948573589325
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.14466437697410583,
+            "task_loss_noisy": 0.14366543292999268,
+            "task_loss_clean": 0.1372770071029663,
+            "clean_consistency": 0.04597717523574829,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.14556100964546204,
+            "task_loss_noisy": 0.16951467096805573,
+            "task_loss_clean": 0.1442994624376297,
+            "clean_consistency": 0.07271614670753479,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "CfC_gate": {
+        "final_train_loss_mean_std": [
+          0.16497080028057098,
+          0.005187734961509705
+        ],
+        "task_loss_noisy_mean_std": [
+          0.16368118673563004,
+          0.003972090780735016
+        ],
+        "task_loss_clean_mean_std": [
+          0.16407378762960434,
+          0.002547033131122589
+        ],
+        "clean_consistency_mean_std": [
+          0.039762310683727264,
+          0.006759393960237503
+        ],
+        "gate_value_mean_std": [
+          0.2467031329870224,
+          0.0059921592473983765
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.1701585352420807,
+            "task_loss_noisy": 0.15970909595489502,
+            "task_loss_clean": 0.16152675449848175,
+            "clean_consistency": 0.04652170464396477,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.15978306531906128,
+            "task_loss_noisy": 0.16765327751636505,
+            "task_loss_clean": 0.16662082076072693,
+            "clean_consistency": 0.03300291672348976,
+            "gate_value": 0.2526952922344208
+          }
+        ]
+      },
+      "LSTM_baseline": {
+        "final_train_loss_mean_std": [
+          0.14066538959741592,
+          0.008727572858333588
+        ],
+        "task_loss_noisy_mean_std": [
+          0.14188843220472336,
+          0.011208556592464447
+        ],
+        "task_loss_clean_mean_std": [
+          0.1493559032678604,
+          0.00896310806274414
+        ],
+        "clean_consistency_mean_std": [
+          0.06281663104891777,
+          0.0029833130538463593
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.1493929624557495,
+            "task_loss_noisy": 0.1530969887971878,
+            "task_loss_clean": 0.14039279520511627,
+            "clean_consistency": 0.06579994410276413,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.13193781673908234,
+            "task_loss_noisy": 0.1306798756122589,
+            "task_loss_clean": 0.15831901133060455,
+            "clean_consistency": 0.05983331799507141,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "LSTM_gate": {
+        "final_train_loss_mean_std": [
+          0.24271933734416962,
+          0.01093156635761261
+        ],
+        "task_loss_noisy_mean_std": [
+          0.267264261841774,
+          0.02323313057422638
+        ],
+        "task_loss_clean_mean_std": [
+          0.24114040285348892,
+          0.00199078768491745
+        ],
+        "clean_consistency_mean_std": [
+          0.041695887222886086,
+          0.0054000746458768845
+        ],
+        "gate_value_mean_std": [
+          0.2467031329870224,
+          0.0059921592473983765
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.2536509037017822,
+            "task_loss_noisy": 0.2440311312675476,
+            "task_loss_clean": 0.24313119053840637,
+            "clean_consistency": 0.0362958125770092,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.231787770986557,
+            "task_loss_noisy": 0.29049739241600037,
+            "task_loss_clean": 0.23914961516857147,
+            "clean_consistency": 0.04709596186876297,
+            "gate_value": 0.2526952922344208
+          }
+        ]
+      }
+    },
+    "structured": {
+      "CfC_baseline": {
+        "final_train_loss_mean_std": [
+          0.5183320939540863,
+          2.446770668029785e-05
+        ],
+        "task_loss_noisy_mean_std": [
+          0.5073591470718384,
+          0.005053102970123291
+        ],
+        "task_loss_clean_mean_std": [
+          0.5156498551368713,
+          0.0009667873382568359
+        ],
+        "clean_consistency_mean_std": [
+          0.04153960384428501,
+          0.0010127779096364975
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.5183565616607666,
+            "task_loss_noisy": 0.5023060441017151,
+            "task_loss_clean": 0.5146830677986145,
+            "clean_consistency": 0.040526825934648514,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.518307626247406,
+            "task_loss_noisy": 0.5124122500419617,
+            "task_loss_clean": 0.5166166424751282,
+            "clean_consistency": 0.04255238175392151,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "CfC_gate": {
+        "final_train_loss_mean_std": [
+          0.5648469030857086,
+          0.004765838384628296
+        ],
+        "task_loss_noisy_mean_std": [
+          0.5563594698905945,
+          0.00529026985168457
+        ],
+        "task_loss_clean_mean_std": [
+          0.5611792206764221,
+          0.007090568542480469
+        ],
+        "clean_consistency_mean_std": [
+          0.030357598327100277,
+          0.005566776730120182
+        ],
+        "gate_value_mean_std": [
+          0.2467031329870224,
+          0.0059921592473983765
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.5696127414703369,
+            "task_loss_noisy": 0.5510692000389099,
+            "task_loss_clean": 0.5540886521339417,
+            "clean_consistency": 0.03592437505722046,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.5600810647010803,
+            "task_loss_noisy": 0.561649739742279,
+            "task_loss_clean": 0.5682697892189026,
+            "clean_consistency": 0.024790821596980095,
+            "gate_value": 0.2526952922344208
+          }
+        ]
+      },
+      "LSTM_baseline": {
+        "final_train_loss_mean_std": [
+          0.5119849592447281,
+          0.014484867453575134
+        ],
+        "task_loss_noisy_mean_std": [
+          0.4877486228942871,
+          0.003571748733520508
+        ],
+        "task_loss_clean_mean_std": [
+          0.4918045252561569,
+          0.00015063583850860596
+        ],
+        "clean_consistency_mean_std": [
+          0.03569759987294674,
+          0.0017255153506994247
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.5264698266983032,
+            "task_loss_noisy": 0.4841768741607666,
+            "task_loss_clean": 0.4916538894176483,
+            "clean_consistency": 0.033972084522247314,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.49750009179115295,
+            "task_loss_noisy": 0.4913203716278076,
+            "task_loss_clean": 0.4919551610946655,
+            "clean_consistency": 0.037423115223646164,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "LSTM_gate": {
+        "final_train_loss_mean_std": [
+          0.5553849339485168,
+          0.04123878479003906
+        ],
+        "task_loss_noisy_mean_std": [
+          0.5395269840955734,
+          0.04833902418613434
+        ],
+        "task_loss_clean_mean_std": [
+          0.546169638633728,
+          0.047785401344299316
+        ],
+        "clean_consistency_mean_std": [
+          0.025604517199099064,
+          0.003001178614795208
+        ],
+        "gate_value_mean_std": [
+          0.2467031329870224,
+          0.0059921592473983765
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.5966237187385559,
+            "task_loss_noisy": 0.5878660082817078,
+            "task_loss_clean": 0.5939550399780273,
+            "clean_consistency": 0.022603338584303856,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.5141461491584778,
+            "task_loss_noisy": 0.4911879599094391,
+            "task_loss_clean": 0.4983842372894287,
+            "clean_consistency": 0.028605695813894272,
+            "gate_value": 0.2526952922344208
+          }
+        ]
+      }
+    },
+    "random": {
+      "CfC_baseline": {
+        "final_train_loss_mean_std": [
+          0.9774227440357208,
+          0.006104081869125366
+        ],
+        "task_loss_noisy_mean_std": [
+          0.9746631681919098,
+          0.015595883131027222
+        ],
+        "task_loss_clean_mean_std": [
+          0.9783170223236084,
+          0.007815837860107422
+        ],
+        "clean_consistency_mean_std": [
+          0.0374690406024456,
+          0.0084921233355999
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 0.9835268259048462,
+            "task_loss_noisy": 0.990259051322937,
+            "task_loss_clean": 0.9861328601837158,
+            "clean_consistency": 0.0459611639380455,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.9713186621665955,
+            "task_loss_noisy": 0.9590672850608826,
+            "task_loss_clean": 0.970501184463501,
+            "clean_consistency": 0.028976917266845703,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "CfC_gate": {
+        "final_train_loss_mean_std": [
+          1.0063669085502625,
+          0.045318543910980225
+        ],
+        "task_loss_noisy_mean_std": [
+          1.0041656494140625,
+          0.04846513271331787
+        ],
+        "task_loss_clean_mean_std": [
+          1.006341129541397,
+          0.04502198100090027
+        ],
+        "clean_consistency_mean_std": [
+          0.015830247662961483,
+          0.002156372182071209
+        ],
+        "gate_value_mean_std": [
+          0.2467031329870224,
+          0.0059921592473983765
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 1.0516854524612427,
+            "task_loss_noisy": 1.0526307821273804,
+            "task_loss_clean": 1.0513631105422974,
+            "clean_consistency": 0.017986619845032692,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.9610483646392822,
+            "task_loss_noisy": 0.9557005167007446,
+            "task_loss_clean": 0.9613191485404968,
+            "clean_consistency": 0.013673875480890274,
+            "gate_value": 0.2526952922344208
+          }
+        ]
+      },
+      "LSTM_baseline": {
+        "final_train_loss_mean_std": [
+          0.9774850904941559,
+          0.06668075919151306
+        ],
+        "task_loss_noisy_mean_std": [
+          0.978863000869751,
+          0.06723141670227051
+        ],
+        "task_loss_clean_mean_std": [
+          0.9771127700805664,
+          0.06690084934234619
+        ],
+        "clean_consistency_mean_std": [
+          0.011908566113561392,
+          0.0018223416991531849
+        ],
+        "gate_value_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 1.044165849685669,
+            "task_loss_noisy": 1.0460944175720215,
+            "task_loss_clean": 1.0440136194229126,
+            "clean_consistency": 0.013730907812714577,
+            "gate_value": 1.0
+          },
+          {
+            "final_train_loss": 0.9108043313026428,
+            "task_loss_noisy": 0.9116315841674805,
+            "task_loss_clean": 0.9102119207382202,
+            "clean_consistency": 0.010086224414408207,
+            "gate_value": 1.0
+          }
+        ]
+      },
+      "LSTM_gate": {
+        "final_train_loss_mean_std": [
+          0.9983805119991302,
+          0.06621697545051575
+        ],
+        "task_loss_noisy_mean_std": [
+          0.9912521243095398,
+          0.06207519769668579
+        ],
+        "task_loss_clean_mean_std": [
+          0.9914830327033997,
+          0.0631374716758728
+        ],
+        "clean_consistency_mean_std": [
+          0.01180013851262629,
+          0.004179265117272735
+        ],
+        "gate_value_mean_std": [
+          0.2467031329870224,
+          0.0059921592473983765
+        ],
+        "per_seed": [
+          {
+            "final_train_loss": 1.064597487449646,
+            "task_loss_noisy": 1.0533273220062256,
+            "task_loss_clean": 1.0546205043792725,
+            "clean_consistency": 0.015979403629899025,
+            "gate_value": 0.24071097373962402
+          },
+          {
+            "final_train_loss": 0.9321635365486145,
+            "task_loss_noisy": 0.929176926612854,
+            "task_loss_clean": 0.9283455610275269,
+            "clean_consistency": 0.007620873395353556,
+            "gate_value": 0.2526952922344208
+          }
+        ]
+      }
+    }
+  }
+}

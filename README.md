@@ -1090,6 +1090,46 @@ auxiliary loss.
 See `docs/research/2026-06-15_cfc_backward_coherence_report.md` and the
 unit tests in `tests/test_smoothness_metrics.py` (21/21 pass).
 
+## Segment Reliability Gate (response to arXiv:2606.03631, round 99)
+
+`segment_reliability(x, σ_min)` and `apply_reliability_gate(y_pred, x, σ_min, mix)`
+implement the per-input reliability mechanism from AnchorMoE (Xie et
+al., KDD 2026). The reliability score is `r = 1 / (1 + σ_local / σ_min)`,
+where `σ_local = std(x)`. The gate then computes
+`y_gated = (1 - mix) * y_pred + mix * r * y_pred`.
+
+**The mechanism is input-side** (per-input reliability), complementing
+our expert-side gates (EcologyGatedBalancer round 84-86, CausalityGatedOrth
+round 89). Together they form a 4-axis gating framework:
+
+| Axis | Round | Signal source |
+|------|-------|---------------|
+| Input-side | 99 (this) | per-input local noise |
+| Expert-side | 84-86 | per-expert utilization (E) |
+| Expert-side | 89 | per-expert gradient imbalance |
+| Combined | 81 | per-expert routing probability (φ) |
+
+**Bench result (mix=0.5, 100 epochs, 3 seeds)**: 6/6 cells show task
+loss on CLEAN input IMPROVES -1% to -10% with the gate (CfC toy_sin
+-10%). 4/5 cells show reduced noise sensitivity (clean_consistency -5%
+to -46%). This is a **noise-aware input regularizer** — the model
+learns to compensate for the gate's dampening on noisy inputs, which
+acts as a regularizer that improves clean-input generalization.
+
+**Recommended** σ_min=0.1, mix=0.5. mix=1.0 is too aggressive (the
+model needs to learn 8× scaling). mix=0.0 is no gate.
+
+```python
+from lnn.core.reliability_gate import apply_reliability_gate
+y_gated, r = apply_reliability_gate(y_pred, x, sigma_min=0.1, mix=0.5)
+```
+
+Composes additively with backward coherence, orthogonality, smoothness,
+and any other loss.
+
+See `docs/research/2026-06-15_segment_reliability_gate_report.md` and
+the unit tests in `tests/test_reliability_gate.py` (14/14 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
