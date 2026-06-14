@@ -41,6 +41,7 @@ from lnn.core.long_sequence import (
 )
 from lnn.core.ltc import LTCCell, LTCNetwork, TransformableLTC
 from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sample
+from lnn.core.mr_moe_cfc import MRMoECfCCell, MRMoECfCNetwork
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -129,6 +130,8 @@ __all__ = [
     "CfCDTNetwork",
     "EulerLTCDTCell",
     "EulerLTCDTNetwork",
+    "MRMoECfCCell",
+    "MRMoECfCNetwork",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

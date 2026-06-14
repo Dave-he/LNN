@@ -87,6 +87,40 @@ Smoke-bench on toy sin/cos: `n_tau=3` reaches final MSE 0.0463 vs
 `docs/research/2026-06-14_cfc_n_tau_sweep_report.md` and the unit
 tests in `tests/test_cfc_n_tau.py`.
 
+## Multi-Expert MR-MoE (n_experts ≥ 2)
+
+`MRMoECfCCell` and `MRMoECfCNetwork` (PRD #10-24, round 77) wrap
+K independent `CfCCell` experts behind a softmax router that produces
+per-step mixture weights `g ∈ Δ^K`.  The cell output is
+`Σ_k g_k · expert_k(x_t, h_prev)`.  This is the minimum-viable
+implementation of the Multi-Rate Mixture-of-Experts pattern from
+arXiv:2606.12240 (Zong et al., 2026) and the pattern-routed
+heterogeneous-experts idea from arXiv:2606.13024 (CausalMoE, 2026-06-11).
+
+```python
+from lnn import MRMoECfCNetwork
+
+# 3 CfC experts, each with n_tau=1 (combine with round 76 n_tau for
+# multi-rate inside each expert: set n_tau_per_expert=3 for 3*3=9 effective τ groups).
+model = MRMoECfCNetwork(
+    input_size=3,
+    hidden_size=24,
+    output_size=1,
+    n_experts=3,
+    n_tau_per_expert=1,             # reuse round 76 n_tau per expert
+    router_hidden=0,                # 0=linear router, >0=2-layer MLP
+)
+y = model(x)                       # [B, T, 1]
+# Inspect router weights after a forward pass:
+g = model.cells[0].last_g          # [B, K] softmax weights
+```
+
+Smoke-bench on toy sin/cos: `K=3` reaches final MSE 0.0364 vs
+`K=1` 0.0525 (-30.7%, 2.3× the n_tau gain from round 76).  Router
+entropy stays at ≈ log K after 30 epochs (no expert collapse).
+See `docs/research/2026-06-14_mr_moe_cfc_sweep_report.md` and the
+unit tests in `tests/test_mr_moe_cfc.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |
