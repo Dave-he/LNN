@@ -72,6 +72,12 @@ from lnn.core.temporal_dropout import (
     input_dropout,
     temporal_dropout,
 )
+from lnn.core.effective_rank import (
+    effective_rank,
+    effective_rank_trajectory,
+    mean_effective_rank,
+    rank_summary,
+)
 from lnn.core.phi_balancing import PhiBalancer
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
@@ -175,6 +181,10 @@ __all__ = [
     "dropout_mask",
     "input_dropout",
     "apply_input_dropout_to_input",
+    "effective_rank",
+    "mean_effective_rank",
+    "effective_rank_trajectory",
+    "rank_summary",
     "PhiBalancer",
     "CosineRouter",
     "moe_ecology_number",

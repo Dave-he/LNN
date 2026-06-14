@@ -839,6 +839,55 @@ questionable.
 See `docs/research/2026-06-15_cfc_input_dropout_report.md` and
 the unit tests in `tests/test_temporal_dropout.py` (19/19 pass).
 
+## Effective Rank (arXiv:2606.00243 response, round 94)
+
+`effective_rank`, `mean_effective_rank`, `effective_rank_trajectory`,
+and `rank_summary` (PRD #10-56, round 94) test the prediction from
+arXiv:2606.00243 (Williams, Payeur, Lajoie, ICML 2026) that
+**locality-restricted learning rules find low-rank solutions**.
+
+```python
+from lnn.core import effective_rank
+import torch
+
+W = torch.randn(16, 32)
+er = effective_rank(W)  # eff_rank = (Σσᵢ)² / (Σσᵢ²)
+```
+
+**Round 94 bench (4 models × 3 seeds, 1D f(t) fitting, 100 epochs)**:
+
+| model | mse   | **weight_eff_rank** | hidden_eff_rank |
+|-------|-------|----------------------|------------------|
+| **MLP**   | 0.1721 | **3.61** (lowest) | 1.55 |
+| CfC   | 0.2591 | **8.36** (HIGHEST) | 1.93 |
+| LSTM  | 0.3366 | 4.73            | 1.73 |
+| GRU   | 0.2982 | 3.85            | 2.07 |
+
+**Verdict**:
+- **H1 ✗ (paper prediction)**: CfC has the HIGHEST weight_eff_rank
+  (8.36), not the lowest. Smoothness is NOT a low-rank bias.
+- **H2 ✗ (correlation with smoothness)**: rank and smoothness
+  rankings are **inverted** — smoothest model has highest rank.
+- **H3 PARTIAL**: CfC hidden_eff_rank = 1.93 < 4 ✓, but LSTM/GRU/MLP
+  are in the same range.
+- **H4 ✓ (no collapse)**: All models have eff_rank > 1.5.
+
+**The 4-round smoothness audit (rounds 91-94) is now complete**:
+smoothness is a **property of the function class CfC learns** but
+NOT a predictor of robustness (rounds 92, 93) or low rank (round 94).
+CfC's stack should be chosen for tasks where smooth interpolation
+matters (3DGS, irregular time-series with smooth priors), not for
+tasks where robustness or parameter efficiency are the primary
+metrics.
+
+**Verdict on arXiv:2606.00243**: the paper's theory is specific to
+**discrete-time linear RNNs with locality-restricted learning rules**
+(RFLO, tBPTT). It does NOT generalize to continuous-time CfC cells
+with full BPTT. CfC is smooth but high-rank — a distinct regime.
+
+See `docs/research/2026-06-15_cfc_effective_rank_report.md` and
+the unit tests in `tests/test_effective_rank.py` (20/20 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
