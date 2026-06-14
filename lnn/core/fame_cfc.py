@@ -27,6 +27,7 @@ import torch.nn as nn
 
 from lnn.core.cfc import CfCCell
 from lnn.core.forecastability_router import ForecastabilityRouter
+from lnn.core.phi_balancing import PhiBalancer
 from lnn.core.sequence_utils import select_step_delta, select_step_mask
 
 
@@ -43,6 +44,11 @@ class FAMECfCCell(nn.Module):
         n_tau_per_expert: Per-expert ``n_tau`` (round 76 compatibility).
         tau_scales: Per-branch initial time constants, forwarded to every expert.
         router_hidden: Width of the optional 2-layer router MLP (``0`` = linear).
+        phi_balance: If True, attach a ``PhiBalancer`` (PRD #10-40) to
+            the router and update it on every training step.  Default
+            ``False`` (back-compat with round 80).
+        ema_alpha: φ-balancing EMA decay (forwarded to ``PhiBalancer``).
+        phi_step_size: φ-balancing mirror-descent step size η.
     """
 
     def __init__(
@@ -54,6 +60,9 @@ class FAMECfCCell(nn.Module):
         n_tau_per_expert: int = 1,
         tau_scales: tuple = (0.1, 1.0, 10.0),
         router_hidden: int = 0,
+        phi_balance: bool = False,
+        ema_alpha: float = 0.01,
+        phi_step_size: float = 0.01,
     ):
         super().__init__()
         assert n_experts >= 1
@@ -65,6 +74,9 @@ class FAMECfCCell(nn.Module):
         self.n_tau_per_expert = int(n_tau_per_expert)
         self.tau_scales = tuple(tau_scales)
         self.router_hidden = int(router_hidden)
+        self.phi_balance = bool(phi_balance)
+        self.ema_alpha = float(ema_alpha)
+        self.phi_step_size = float(phi_step_size)
 
         self.experts = nn.ModuleList(
             [
@@ -77,12 +89,24 @@ class FAMECfCCell(nn.Module):
                 for _ in range(self.n_experts)
             ]
         )
+        # φ-balancing (PRD #10-40): per-layer balancer instance shared
+        # between the router (for bias add) and the cell (for EMA update).
+        # We expose it as a submodule so .to(device) etc. move the buffers.
+        if self.phi_balance:
+            self.balancer = PhiBalancer(
+                n_experts=self.n_experts,
+                ema_alpha=self.ema_alpha,
+                step_size=self.phi_step_size,
+            )
+        else:
+            self.balancer = None
         self.router = ForecastabilityRouter(
             input_size=input_size,
             hidden_size=hidden_size,
             n_experts=self.n_experts,
             top_k=self.top_k,
             router_hidden=self.router_hidden,
+            balancer=self.balancer,  # may be None — back-compat
         )
 
     def forward(
@@ -128,6 +152,12 @@ class FAMECfCCell(nn.Module):
         # Diagnostics side-channel: mixture weights and top-K indices.
         self.last_g = g.detach()
         self.last_top_idx = self.router.last_top_idx.detach()
+        # φ-balancing (PRD #10-40): update the EMA of per-expert assignment
+        # from the hard top-K indices.  Skipped in eval mode (the bias is
+        # frozen, matching the paper's protocol).  Note: the bias was
+        # already added inside router.forward() via the same instance.
+        if self.balancer is not None and self.training:
+            self.balancer.update(self.last_top_idx)
         # Run all K experts but only the top-K contribute via g.
         # (Masking rather than skipping the non-top-K forward keeps
         # autograd simple and ensures gradient flows only to activated experts.)
@@ -155,6 +185,9 @@ class FAMECfCNetwork(nn.Module):
         n_tau_per_expert: Per-expert ``n_tau`` (round 76 compatibility).
         tau_scales: Per-branch τ init, forwarded to every expert.
         router_hidden: Router MLP width (``0`` = linear).
+        phi_balance: Forward to every layer's ``FAMECfCCell``.
+        ema_alpha: Forward to every layer's balancer.
+        phi_step_size: Forward to every layer's balancer.
     """
 
     def __init__(
@@ -169,6 +202,9 @@ class FAMECfCNetwork(nn.Module):
         n_tau_per_expert: int = 1,
         tau_scales: tuple = (0.1, 1.0, 10.0),
         router_hidden: int = 0,
+        phi_balance: bool = False,
+        ema_alpha: float = 0.01,
+        phi_step_size: float = 0.01,
     ):
         super().__init__()
         self.input_size = input_size
@@ -181,6 +217,9 @@ class FAMECfCNetwork(nn.Module):
         self.n_tau_per_expert = int(n_tau_per_expert)
         self.tau_scales = tuple(tau_scales)
         self.router_hidden = int(router_hidden)
+        self.phi_balance = bool(phi_balance)
+        self.ema_alpha = float(ema_alpha)
+        self.phi_step_size = float(phi_step_size)
 
         self.cells = nn.ModuleList()
         for i in range(num_layers):
@@ -194,6 +233,9 @@ class FAMECfCNetwork(nn.Module):
                     n_tau_per_expert=self.n_tau_per_expert,
                     tau_scales=self.tau_scales,
                     router_hidden=self.router_hidden,
+                    phi_balance=self.phi_balance,
+                    ema_alpha=self.ema_alpha,
+                    phi_step_size=self.phi_step_size,
                 )
             )
         self.output_proj = nn.Linear(hidden_size, output_size)

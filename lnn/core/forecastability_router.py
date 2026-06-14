@@ -16,6 +16,12 @@ Invariants:
   (within float32 eps), so users can tune ``top_k`` without
   changing the rest of the cell.
 - ``top_k == 1`` reduces to a router-argmax single expert.
+
+Optional φ-balancing (PRD #10-40): if a ``balancer`` is supplied, the
+router adds the per-expert bias to the logits BEFORE the top-K mask
+(high-utility experts get demoted, low-utility experts get promoted).
+The caller is responsible for calling ``balancer.update(top_idx)`` after
+the top-K indices are decided (we expose ``last_top_idx`` for this).
 """
 from __future__ import annotations
 
@@ -34,6 +40,11 @@ class ForecastabilityRouter(nn.Module):
         top_k: Number of experts activated per step (K' ∈ [1, K]).
         router_hidden: Width of an optional 2-layer router MLP.
             ``0`` (default) uses a single linear layer.
+        balancer: Optional ``PhiBalancer`` for φ-balancing (PRD #10-40).
+            If supplied, the bias is added to the logits before the
+            top-K mask.  Must be the SAME instance used by the caller
+            for EMA updates (we don't track it as a sub-module to keep
+            the router's child structure simple).
     """
 
     def __init__(
@@ -43,6 +54,7 @@ class ForecastabilityRouter(nn.Module):
         n_experts: int,
         top_k: int = 2,
         router_hidden: int = 0,
+        balancer=None,
     ):
         super().__init__()
         assert n_experts >= 1, f"n_experts must be >= 1, got {n_experts}"
@@ -54,6 +66,8 @@ class ForecastabilityRouter(nn.Module):
         self.n_experts = int(n_experts)
         self.top_k = int(top_k)
         self.router_hidden = int(router_hidden)
+        # balancer is a stateful object, not a child module.  Caller owns lifecycle.
+        self.balancer = balancer
 
         router_in = input_size + hidden_size
         if self.router_hidden > 0:
@@ -64,6 +78,9 @@ class ForecastabilityRouter(nn.Module):
             )
         else:
             self.router = nn.Linear(router_in, self.n_experts)
+        # Side-channel: filled on every forward() call.  Declared as a
+        # class attribute so type-checkers don't see it as Optional[...].
+        self.last_top_idx: torch.Tensor
 
     def forward(self, x_t: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
         """Return top-K sparse mixture weights ``g ∈ Δ^K`` with K-K' zeros.
@@ -80,6 +97,10 @@ class ForecastabilityRouter(nn.Module):
         """
         combined = torch.cat([x_t, h], dim=-1)  # [B, input+hidden]
         logits = self.router(combined)          # [B, K]
+        # Optional φ-balancing bias: add BEFORE the top-K mask so that
+        # demoted experts lose their argmax spot.
+        if self.balancer is not None:
+            logits = self.balancer(logits)      # broadcast bias over batch
         if self.top_k == self.n_experts:
             # No masking needed; pure dense softmax path.
             g = F.softmax(logits, dim=-1)

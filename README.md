@@ -200,6 +200,54 @@ compute the auxiliary loss.  See
 `docs/research/2026-06-14_orthogonality_report.md` and the unit
 tests in `tests/test_orthogonality.py`.
 
+## φ-Balancing (EMA-based expert load balancing)
+
+`PhiBalancer` (PRD #10-40, round 81) implements the
+EMA-based mirror-descent bias from arXiv:2605.15403 (φ-Balancing,
+2026-05-14).  Unlike the orthogonality constraint (which is an
+auxiliary loss on hidden states), φ-balancing is a **no-grad bias
+added to the router logits** that demotes over-used experts and
+promotes under-used ones.  The two are complementary: orthogonality
+defends against **representation collapse**; φ-balancing defends
+against **routing collapse**.  Together with the round 80
+orthogonality constraint, they form the round 81 "LNN+MoE
+defence-in-depth" stack.
+
+```python
+from lnn import FAMECfCNetwork
+
+# Enable φ-balancing: per-layer balancer, EMA decay 0.05,
+# mirror-descent step size 0.05.
+net = FAMECfCNetwork(
+    input_size=3, hidden_size=24, output_size=1,
+    n_experts=3, top_k=1,                      # the unstable cell
+    phi_balance=True, ema_alpha=0.05, phi_step_size=0.05,
+)
+# Same forward() and forward_with_aux() — no extra args needed.
+# The balancer is updated in train mode and frozen in eval mode.
+opt = torch.optim.Adam(net.parameters(), lr=0.01)
+loss_fn = torch.nn.MSELoss()
+for x, y in dataloader:
+    net.train()  # balancer updates only in train mode
+    opt.zero_grad()
+    y_pred, _ = net.forward_with_aux(x)  # or net.forward(x) for back-compat
+    task_loss = loss_fn(y_pred, y)
+    task_loss.backward()
+    opt.step()
+
+# Eval mode: balancer is frozen.
+net.eval()
+with torch.no_grad():
+    y_pred = net(x)  # bias is applied but not updated
+```
+
+Smoke-bench on K=3 top_k=1 toy sin: φ-balancing alone reaches
+final MSE 0.125 (vs 0.76 baseline, **-83.5%**), comparable to
+orthogonality alone (0.11).  Setting `phi_balance=False` (default)
+gives the round 80 behaviour — fully back-compatible.  See
+`docs/research/2026-06-14_phi_balancing_report.md` and the unit
+tests in `tests/test_phi_balancing.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |
