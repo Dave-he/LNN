@@ -45,6 +45,7 @@ from lnn.core.forecastability_router import ForecastabilityRouter
 from lnn.core.ltc import LTCCell, LTCNetwork, TransformableLTC
 from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sample
 from lnn.core.moe_ecology import MoEEcologyMonitor, moe_ecology_number
+from lnn.core.ecology_gated_balancing import EcologyGatedBalancer
 from lnn.core.mr_moe_cfc import MRMoECfCCell, MRMoECfCNetwork
 from lnn.core.orthogonality import orthogonality_loss
 from lnn.core.phi_balancing import PhiBalancer
@@ -146,6 +147,7 @@ __all__ = [
     "CosineRouter",
     "moe_ecology_number",
     "MoEEcologyMonitor",
+    "EcologyGatedBalancer",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

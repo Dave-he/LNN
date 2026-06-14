@@ -337,6 +337,60 @@ The diagnostic is **purely additive** — `FAMECfCCell.forward(...)` and
 `docs/research/2026-06-14_moe_ecology_report.md` and the unit tests in
 `tests/test_moe_ecology.py`.
 
+## Ecology-Gated φ-Balancing (auto-enable φ when E < 0.5, optional)
+
+`EcologyGatedBalancer` (PRD #10-43, round 84) **closes the loop on
+the MoE ecology diagnostic**: when the live E drops below a
+configurable threshold, the cell **automatically enables φ-balancing**
+on the affected cell.  This converts the diagnostic from a passive
+monitor into an **autonomous cell-health manager** that decides
+*when* to intervene, not just *whether* to.
+
+```python
+from lnn import FAMECfCNetwork
+
+# Auto-enable φ-balancing when E drops below 0.5 (paper's threshold).
+net = FAMECfCNetwork(
+    input_size=3, hidden_size=24, output_size=1,
+    n_experts=3, top_k=1,                      # the unstable cell
+    ecology_gated_balancing=True,
+    ecology_E_min=0.5,                         # paper's threshold
+    ecology_warmup_steps=0,                    # no warmup
+    phi_step_size=0.05, ema_alpha=0.05,
+)
+# No need to set phi_balance=True — the gate attaches it on first
+# E<0.5 step (in training mode only).  At eval time, the gate is
+# silent and the diagnostic just reports E.
+y_pred = net(x)
+```
+
+**Gate semantics** (no hysteresis for round 84):
+
+- Never fires when E > `ecology_E_min` (no false positives).
+- Fires exactly once when E first drops below threshold.
+- Stays fired after that (disabling mid-training would re-collapse
+  routing, so we err on "intervene early, stay").
+- Respects `ecology_warmup_steps` (don't intervene in the first N
+  steps even if E < threshold; router needs time to settle).
+- In training mode, auto-attaches a `PhiBalancer` on first fire.
+- In eval mode, the gate runs but does NOT mutate the cell.
+
+**Round 84 smoke-bench** (3 cells × 3 datasets × orth λ=1.0 to
+force E < 0.5):
+
+- **Gate fires correctly** in toy_sin (E=0) and structured (E=0)
+  at step 16; auto-attaches a `PhiBalancer`.
+- **No false positive** in random (E=0.96): gate correctly silent.
+- **Honest negative**: gated φ does not recover from **λ=1.0
+  ortho-toxicity** (paper finding #2) — both always-φ and gated-φ
+  fail.  The orth loss is too strong for φ to counteract; a stronger
+  intervention (e.g., auto-disable orth) is a follow-up.
+
+The gate is **purely additive** — `ecology_gated_balancing=False`
+(default) is fully back-compat with rounds 78-83.  See
+`docs/research/2026-06-14_ecology_gated_balancing_report.md` and
+the unit tests in `tests/test_ecology_gated_balancing.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |

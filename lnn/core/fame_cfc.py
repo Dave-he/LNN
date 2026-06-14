@@ -55,6 +55,14 @@ class FAMECfCCell(nn.Module):
             parameter-free ``CosineRouter`` (PRD #10-41, arXiv:2605.12476).
             ``phi_balance`` is ignored when ``router_type="cosine"``
             (no learned logits to bias).
+        ecology_gated_balancing: If True (default False), automatically
+            enable φ-balancing when the live MoE ecology E drops below
+            ``ecology_E_min`` (PRD #10-43, round 84).  Zero effect on
+            behaviour when False.
+        ecology_E_min: Threshold for ecology-gated intervention.  Default
+            0.5 (the paper's claim that E ≥ 0.5 alone is sufficient).
+        ecology_warmup_steps: Don't auto-enable φ in the first N steps
+            even if E < threshold (router needs time to settle).
     """
 
     def __init__(
@@ -70,6 +78,9 @@ class FAMECfCCell(nn.Module):
         ema_alpha: float = 0.01,
         phi_step_size: float = 0.01,
         router_type: str = "learned",
+        ecology_gated_balancing: bool = False,
+        ecology_E_min: float = 0.5,
+        ecology_warmup_steps: int = 0,
     ):
         super().__init__()
         assert n_experts >= 1
@@ -88,6 +99,21 @@ class FAMECfCCell(nn.Module):
         self.ema_alpha = float(ema_alpha)
         self.phi_step_size = float(phi_step_size)
         self.router_type = router_type
+        self.ecology_E_min = float(ecology_E_min)
+        self.ecology_warmup_steps = int(ecology_warmup_steps)
+        # Step counter for ecology-gated balancing (incremented in forward).
+        self._step_idx: int = 0
+
+        # Ecology-gated balancer (PRD #10-43, round 84).  Only attached
+        # when the user opts in via ``ecology_gated_balancing=True``.
+        if ecology_gated_balancing:
+            from lnn.core.ecology_gated_balancing import EcologyGatedBalancer
+            self.ecology_gate = EcologyGatedBalancer(
+                E_min=self.ecology_E_min,
+                warmup_steps=self.ecology_warmup_steps,
+            )
+        else:
+            self.ecology_gate = None
 
         self.experts = nn.ModuleList(
             [
@@ -158,6 +184,12 @@ class FAMECfCCell(nn.Module):
         cell is in a healthy ecology regime (E ≥ 0.5 in the paper's
         setting) or has dead experts.
 
+        If ``ecology_gated_balancing=True`` was set on construction,
+        this method also runs the gate: when E < ``ecology_E_min``,
+        it attaches a ``PhiBalancer`` to the cell (if not already
+        present) and returns the gate state in the ``ecology_gate``
+        key of the returned dict (PRD #10-43, round 84).
+
         Args:
             B: Balance weight — pass ``lambda_coeff`` (orth) or
                 ``phi_step_size`` (φ) or 0 (plain).
@@ -165,9 +197,9 @@ class FAMECfCCell(nn.Module):
             O: Oracle weight.  Default 0.0.
 
         Returns:
-            Dict with ``E`` (float), ``dead_experts`` (int), and
-            ``utilization`` (list of K floats, per-expert mean over
-            the last batch).
+            Dict with ``E`` (float), ``dead_experts`` (int),
+            ``utilization`` (list of K floats), and (if ecology-gated
+            balancing is on) ``ecology_gate`` (gate state dict).
         """
         from lnn.core.moe_ecology import moe_ecology_number
         if not hasattr(self, "last_g") or self.last_g is None:
@@ -178,11 +210,35 @@ class FAMECfCCell(nn.Module):
         )
         util = self.last_g.mean(dim=0)
         dead = int((util < 0.01).sum().item())
-        return {
+        out = {
             "E": float(E.item()),
             "dead_experts": dead,
             "utilization": util.tolist(),
         }
+        # Ecology-gated balancing (PRD #10-43): run the gate, then
+        # auto-attach a PhiBalancer if the gate fires.  The attach is
+        # gated on `self.training` so eval-mode diagnostics don't
+        # mutate the cell.
+        if self.ecology_gate is not None:
+            gate_info = self.ecology_gate.step(
+                E=float(E.item()), B_active=B, step_idx=self._step_idx,
+            )
+            out["ecology_gate"] = gate_info
+            if (
+                gate_info["intervened"]
+                and self.balancer is None
+                and self.training
+            ):
+                # Auto-attach a PhiBalancer to the learned router.
+                from lnn.core.phi_balancing import PhiBalancer
+                self.balancer = PhiBalancer(
+                    n_experts=self.n_experts,
+                    ema_alpha=self.ema_alpha,
+                    step_size=self.phi_step_size,
+                )
+                if self.router_type == "learned" and hasattr(self.router, "set_balancer"):
+                    self.router.set_balancer(self.balancer)
+        return out
 
     def forward_with_aux(
         self,
@@ -204,6 +260,8 @@ class FAMECfCCell(nn.Module):
                        the orthogonality loss.
         """
         g = self.router(x_t, h)  # [B, K] with K' nonzeros
+        # Bump step counter for ecology-gated balancing (PRD #10-43).
+        self._step_idx += 1
         # Diagnostics side-channel: mixture weights and top-K indices.
         self.last_g = g.detach()
         self.last_top_idx = self.router.last_top_idx.detach()
@@ -249,6 +307,10 @@ class FAMECfCNetwork(nn.Module):
         ema_alpha: Forward to every layer's balancer / CosineRouter.
         phi_step_size: Forward to every layer's balancer.
         router_type: ``"learned"`` (default) or ``"cosine"`` (PRD #10-41).
+        ecology_gated_balancing: If True, each layer auto-enables φ when
+            E drops below ``ecology_E_min`` (PRD #10-43, round 84).
+        ecology_E_min: E threshold for ecology-gated intervention.
+        ecology_warmup_steps: Don't auto-enable in the first N steps.
     """
 
     def __init__(
@@ -267,6 +329,9 @@ class FAMECfCNetwork(nn.Module):
         ema_alpha: float = 0.01,
         phi_step_size: float = 0.01,
         router_type: str = "learned",
+        ecology_gated_balancing: bool = False,
+        ecology_E_min: float = 0.5,
+        ecology_warmup_steps: int = 0,
     ):
         super().__init__()
         self.input_size = input_size
@@ -283,6 +348,8 @@ class FAMECfCNetwork(nn.Module):
         self.ema_alpha = float(ema_alpha)
         self.phi_step_size = float(phi_step_size)
         self.router_type = router_type
+        self.ecology_E_min = float(ecology_E_min)
+        self.ecology_warmup_steps = int(ecology_warmup_steps)
 
         self.cells = nn.ModuleList()
         for i in range(num_layers):
@@ -300,6 +367,9 @@ class FAMECfCNetwork(nn.Module):
                     ema_alpha=self.ema_alpha,
                     phi_step_size=self.phi_step_size,
                     router_type=self.router_type,
+                    ecology_gated_balancing=ecology_gated_balancing,
+                    ecology_E_min=self.ecology_E_min,
+                    ecology_warmup_steps=self.ecology_warmup_steps,
                 )
             )
         self.output_proj = nn.Linear(hidden_size, output_size)
