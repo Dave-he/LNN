@@ -44,6 +44,7 @@ from lnn.core.forecastability_router import ForecastabilityRouter
 from lnn.core.ltc import LTCCell, LTCNetwork, TransformableLTC
 from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sample
 from lnn.core.mr_moe_cfc import MRMoECfCCell, MRMoECfCNetwork
+from lnn.core.orthogonality import orthogonality_loss
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -137,6 +138,7 @@ __all__ = [
     "FAMECfCCell",
     "FAMECfCNetwork",
     "ForecastabilityRouter",
+    "orthogonality_loss",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

@@ -160,6 +160,46 @@ contract honoured).  See
 `docs/research/2026-06-14_fame_cfc_sweep_report.md` and the unit
 tests in `tests/test_fame_cfc.py`.
 
+## Orthogonality Constraint (defence against expert collapse)
+
+`orthogonality_loss` (PRD #10-37, round 80) implements the
+"geometric orthogonality constraint that penalises representational
+redundancy" idea from arXiv:2606.03631 (AnchorMoE, 2026-06-02).
+Use it as an auxiliary loss to keep expert hidden states
+decorrelated — the round 79 sweep showed that the K=3 top_k=1
+(router-argmax single expert) cell is **unstable** without
+orthogonality (0.76 ± 0.79 with 1/3 seeds diverging) but
+**stable** with `lambda_coeff=0.001` (0.11 ± 0.05, 0/3 seeds
+diverging).  This addresses the Causal Audit (arXiv:2606.10703)
+warning that observational routing metrics do not predict expert
+causal importance — the orthogonality constraint directly
+intervenes in the expert representation space.
+
+```python
+from lnn import FAMECfCNetwork, orthogonality_loss
+
+net = FAMECfCNetwork(input_size=3, hidden_size=24, output_size=1,
+                    n_experts=3, top_k=1)  # unstable without orth
+opt = torch.optim.Adam(net.parameters(), lr=0.01)
+loss_fn = torch.nn.MSELoss()
+for x, y in dataloader:
+    opt.zero_grad()
+    y_pred, expert_outs = net.forward_with_aux(x)
+    task_loss = loss_fn(y_pred, y)
+    # Use only the last step's expert outputs from the first layer.
+    last_outs = expert_outs[0][-1]            # K × [B, H]
+    aux = orthogonality_loss(last_outs, lambda_coeff=0.001)
+    (task_loss + aux).backward()
+    opt.step()
+```
+
+`net.forward(...)` (the back-compat path) still returns only the
+prediction tensor; the orthogonality-aware `net.forward_with_aux(...)`
+returns the nested `[num_layers][T][K]` expert outputs needed to
+compute the auxiliary loss.  See
+`docs/research/2026-06-14_orthogonality_report.md` and the unit
+tests in `tests/test_orthogonality.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |

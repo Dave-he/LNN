@@ -101,6 +101,29 @@ class FAMECfCCell(nn.Module):
         Returns:
             h_new: [B, hidden_size] mixed expert output.
         """
+        h_new, expert_outs = self.forward_with_aux(x_t, h, dt=dt)
+        del expert_outs  # forward() doesn't expose them; use forward_with_aux
+        return h_new
+
+    def forward_with_aux(
+        self,
+        x_t: torch.Tensor,
+        h: torch.Tensor,
+        dt: float | torch.Tensor = 1.0,
+    ) -> tuple[torch.Tensor, list[torch.Tensor]]:
+        """Same as ``forward`` but also returns the per-expert outputs.
+
+        Used by ``FAMECfCNetwork.forward_with_aux`` to compute the
+        geometric orthogonality constraint (PRD #10-37, AnchorMoE
+        arXiv:2606.03631) over the K expert hidden states.
+
+        Returns:
+            (h_new, outs):
+                h_new: [B, hidden_size] mixed expert output.
+                outs:  K-element list of [B, hidden_size] per-expert outputs,
+                       in the same order as ``self.experts``.  Useful for
+                       the orthogonality loss.
+        """
         g = self.router(x_t, h)  # [B, K] with K' nonzeros
         # Diagnostics side-channel: mixture weights and top-K indices.
         self.last_g = g.detach()
@@ -110,7 +133,8 @@ class FAMECfCCell(nn.Module):
         # autograd simple and ensures gradient flows only to activated experts.)
         outs = [expert(x_t, h, dt=dt) for expert in self.experts]  # K × [B, H]
         stacked = torch.stack(outs, dim=1)  # [B, K, H]
-        return (g.unsqueeze(-1) * stacked).sum(dim=1)  # [B, H]
+        h_new = (g.unsqueeze(-1) * stacked).sum(dim=1)  # [B, H]
+        return h_new, outs
 
 
 class FAMECfCNetwork(nn.Module):
@@ -224,3 +248,62 @@ class FAMECfCNetwork(nn.Module):
         if self.return_sequences:
             return self.output_proj(layer_input)
         return self.output_proj(layer_input[:, -1, :])
+
+    def forward_with_aux(
+        self,
+        x: torch.Tensor,
+        h0: torch.Tensor | None = None,
+        dt: float | torch.Tensor | None = None,
+        mask: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, list[list[list[torch.Tensor]]]]:
+        """Like ``forward`` but also returns per-step, per-layer, per-expert outputs.
+
+        The shape of the returned nested list is
+        ``[num_layers][T][K]`` of ``[B, hidden_size]`` tensors.  The
+        final-step expert outputs (T-1) per layer are the most useful
+        for the orthogonality loss, but we keep the full trace so
+        callers can choose.
+
+        Returns:
+            (y_pred, expert_outputs):
+                y_pred: same shape as ``forward`` would return.
+                expert_outputs: nested list ``[num_layers][T][K]`` of
+                    ``[B, hidden_size]`` tensors.
+        """
+        batch_size, seq_len, _ = x.shape
+        if h0 is None:
+            h0 = torch.zeros(
+                self.num_layers, batch_size, self.hidden_size,
+                device=x.device, dtype=x.dtype,
+            )
+
+        h = h0
+        layer_input = x
+        # expert_outputs[layer_idx][t_idx] = list of K [B, H] tensors
+        expert_outputs: list[list[list[torch.Tensor]]] = [[] for _ in range(self.num_layers)]
+        for i, cell in enumerate(self.cells):
+            outputs = []
+            h_i = h[i]
+            for t in range(seq_len):
+                dt_t = select_step_delta(dt, t, batch_size, seq_len, x.device, x.dtype)
+                input_mask, update_mask = select_step_mask(
+                    mask, t, batch_size, seq_len, self.input_size, x.device, x.dtype,
+                )
+                x_t = torch.nan_to_num(layer_input[:, t, :])
+                if i == 0 and input_mask is not None:
+                    x_t = x_t * input_mask
+                h_candidate, outs_t = cell.forward_with_aux(x_t, h_i, dt=dt_t)
+                expert_outputs[i].append(outs_t)
+                h_i = h_candidate if update_mask is None else update_mask * h_candidate + (1.0 - update_mask) * h_i
+                outputs.append(h_i)
+            layer_input = torch.stack(outputs, dim=1)
+            h = torch.cat(
+                [h_i.unsqueeze(0) if j == i else h[j].unsqueeze(0) for j in range(self.num_layers)],
+                dim=0,
+            )
+
+        if self.return_sequences:
+            y_pred = self.output_proj(layer_input)
+        else:
+            y_pred = self.output_proj(layer_input[:, -1, :])
+        return y_pred, expert_outputs
