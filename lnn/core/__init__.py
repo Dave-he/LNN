@@ -66,6 +66,7 @@ from lnn.core.smoothness_metrics import (
     smoothness_summary,
     total_variation,
 )
+from lnn.core.temporal_dropout import dropout_mask, temporal_dropout
 from lnn.core.phi_balancing import PhiBalancer
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
@@ -165,6 +166,8 @@ __all__ = [
     "l2_derivative",
     "max_gradient",
     "smoothness_summary",
+    "temporal_dropout",
+    "dropout_mask",
     "PhiBalancer",
     "CosineRouter",
     "moe_ecology_number",

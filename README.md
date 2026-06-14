@@ -736,6 +736,56 @@ property. See
 `docs/research/2026-06-15_cfc_temporal_smoothness_report.md` and
 the unit tests in `tests/test_smoothness_metrics.py`.
 
+## CfC Temporal Dropout Robustness (arXiv:2605.27467 response, opt-in)
+
+`temporal_dropout` and `dropout_mask` (PRD #10-54, round 92) are
+**dropout helpers** for testing the claim from arXiv:2605.27467
+(Thu, Oo, Supnithi, May 2026) — *Comparative Analysis of Liquid
+Neural Networks and LSTM for Sequential Pattern Recognition:
+Robustness, Efficiency, and Clinical Utility*:
+
+> "LNNs consistently provide superior parameter efficiency and
+> significantly higher robustness" compared to LSTM under
+> temporal dropout (randomly missing input observations).
+
+```python
+from lnn import temporal_dropout
+
+t = torch.linspace(0, 1, 64)
+y = torch.sin(2 * 3.14159 * t)
+t_out, y_masked = temporal_dropout(t, y, p=0.4, seed=0)
+# y_masked has ~40% of its values set to 0
+```
+
+**Round 92 bench (4 models × 6 dropout p × 3 seeds, 1D f(t) fitting,
+100 epochs)**:
+
+| model | max_grad@0 | degradation@0.8 |
+|-------|------------|------------------|
+| MLP   | 3.66       | 2.96x            |
+| CfC   | 2.03       | 2.06x            |
+| LSTM  | 52.79      | **1.29x**        |
+| GRU   | 37.98      | 1.68x            |
+
+**Verdict**:
+- **H1 ✓ (stateless models)**: CfC is 30% more robust than MLP,
+  consistent with round 91's smoothness prior
+- **H2 ✗ (across architectures)**: smoothness does NOT predict
+  robustness — LSTM has 26× higher max_grad but 60% lower
+  degradation than CfC
+- **arXiv:2605.27467 claim REJECTED in 1D**: LSTM is significantly
+  more robust than CfC, opposite of the paper's claim
+
+**The 2-round chain (smoothness → robustness) is partially broken**:
+works for stateless models (MLP, CfC), fails across architectures.
+LSTM's robustness comes from gating + state, not smoothness.
+
+**Implication for our stack**: pick the right model for the right
+task. CfC's smoothness matters for 3DGS-style tasks; LSTM/GRU's
+gating + state matters for 1D function fitting under dropout.
+See `docs/research/2026-06-15_cfc_temporal_dropout_report.md` and
+the unit tests in `tests/test_temporal_dropout.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |
