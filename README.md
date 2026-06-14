@@ -786,6 +786,59 @@ gating + state matters for 1D function fitting under dropout.
 See `docs/research/2026-06-15_cfc_temporal_dropout_report.md` and
 the unit tests in `tests/test_temporal_dropout.py`.
 
+## Input-Side Temporal Dropout (arXiv:2605.27467 response, round 93)
+
+`input_dropout` and `apply_input_dropout_to_input` (PRD #10-55,
+round 93) are the **input-side counterparts** to round 92's
+`temporal_dropout`. The distinction is semantic: the caller passes
+the masked y as the **model's input** (not as the loss target).
+For stateful models (LSTM, GRU), this corrupts the running state
+with zeroed inputs, so the two dropout types have very different
+effects on the model.
+
+```python
+from lnn import input_dropout
+
+t = torch.linspace(0, 1, 64)
+y = torch.sin(2 * 3.14159 * t)
+t_out, y_input = input_dropout(t, y, p=0.4, seed=0)
+# y_input has ~40% of its values set to 0; pass y_input to the model
+```
+
+**Round 93 bench (4 models × 6 dropout p × 3 seeds, 1D f(t) fitting,
+100 epochs, 2D input `(t, y_masked)`)**:
+
+| model | max_grad@0 | degradation@0.8 |
+|-------|------------|------------------|
+| **MLP**   | 0.18       | **0.23x**        |
+| CfC   | 0.05       | 0.41x            |
+| LSTM  | 19.61      | 0.61x            |
+| GRU   | 12.40      | 0.59x            |
+
+**Verdict**:
+- **H1 ✗ (paper claim NOT rescued)**: MLP is the most robust, not
+  CfC. Paper's "CfC > LSTM" claim is firmly rejected under both
+  target-side (round 92) and input-side (round 93) dropout.
+- **H2 ✗ (stateless recovery)**: CfC improves 5x from round 92
+  to round 93. Statelessness is no longer a disadvantage.
+- **H3 PARTIAL (LSTM collapse)**: LSTM 1.39x at p=0.4, then 0.61x
+  at p=0.8. Non-monotonic state recovery at high p.
+- **H4 ✓ (regularization)**: ALL models improve under input-side
+  dropout (degradation < 1.0x at p=0.8).
+
+**The 3-round chain (smoothness → target-side → input-side
+robustness) is firmly broken**: smoothness is a *property* of the
+model but not a *predictor* of robustness. The robustness hierarchy
+depends on the dropout regime.
+
+**Implication for our stack**: **MLP** is the most robust model in
+1D for input-side dropout (cheap, simple, stateless). The clinical
+irregular-sampling scenario from the paper is untested in our
+1D bench but the result suggests CfC's advantage there is
+questionable.
+See `docs/research/2026-06-15_cfc_input_dropout_report.md` and
+the unit tests in `tests/test_temporal_dropout.py` (19/19 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

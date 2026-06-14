@@ -64,3 +64,49 @@ def dropout_mask(
         gen = torch.Generator().manual_seed(seed)
         return torch.rand(n, generator=gen) > p
     return torch.rand(n) > p
+
+
+def input_dropout(
+    t: torch.Tensor,
+    y: torch.Tensor,
+    p: float,
+    seed: int | None = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Round 93 (PRD #10-55): input-side temporal dropout.
+
+    Conceptually the caller passes the returned ``y_masked`` as INPUT
+    to the model (not as the loss target). Functionally equivalent to
+    :func:`temporal_dropout` — the distinction is semantic, indicating
+    that the caller should treat the masked values as missing
+    observations rather than missing labels.
+
+    For stateless models (MLP, CfC stateless), this is identical to
+    :func:`temporal_dropout`. For stateful models (LSTM, GRU), the
+    masked values corrupt the running state, so the two helpers are
+    NOT equivalent in their effect on the model.
+
+    Args:
+        t: 1D tensor of time values, shape (N,).
+        y: 1D tensor of input values, shape (N,).
+        p: dropout probability in [0, 1]. 0 = no dropout, 1 = all masked.
+        seed: optional RNG seed for reproducibility.
+
+    Returns:
+        (t, y_masked) where y_masked is the input y with a fraction
+        p of its values replaced by 0.
+    """
+    return temporal_dropout(t, y, p, seed=seed)
+
+
+def apply_input_dropout_to_input(
+    t: torch.Tensor,
+    y: torch.Tensor,
+    p: float,
+    seed: int | None = None,
+) -> torch.Tensor:
+    """Helper: return ONLY the masked y (caller already has t).
+
+    Convenience wrapper for callers that only need the masked y tensor.
+    """
+    _, y_masked = input_dropout(t, y, p, seed=seed)
+    return y_masked
