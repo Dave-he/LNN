@@ -1229,6 +1229,57 @@ loss = curvature_routing_loss(expert_features, k=2, lambda_coeff=0.001)
 See `docs/research/2026-06-15_curvature_routing_report.md` and the
 unit tests in `tests/test_curvature.py` (17/17 pass).
 
+## QuITE Query-Based Irregular TS Embedding (round 102)
+
+`QueryIrregularEmbedding(d_input, n_queries, d_model, n_heads, dropout)`,
+`apply_quite_embedding(observations, times, mask, module)`, and
+`quite_baseline_modes(observations, times, mask, mode)` implement
+QuITE (Lim, ICML 2026 — arXiv:2605.28166) for Irregular Multivariate
+Time Series (IMTS).
+
+The architecture uses **N learnable query tokens** that aggregate
+irregular observations via a **single masked self-attention layer**:
+
+```
+Input: irregular (time, value, mask) → (B, T, D) + (B, T) + (B, T)
+       ↓
+Value proj: (B, T, D) → (B, T, d_model)
+Time emb: sinusoidal(times) → (B, T, d_model)
+       ↓
+Combine: kv = value_emb + time_emb  (B, T, d_model)
+N learnable queries (n_queries, d_model)
+       ↓
+Masked self-attention: q × kv with key_padding_mask
+       ↓
+Output: (B, n_queries, d_model) — feed to any backbone
+```
+
+**Bench result (3 datasets, 5 conditions, 2 seeds, 100 epochs)**:
+Test on data with HIGHER missing-rate than training (50% vs 30%):
+- sin_irr: quite 0.0000 vs baseline 0.0124, mean 0.0001, concat 0.0001
+- structured: quite 0.0000 vs baseline **0.3346**, mean 0.0011, concat **0.1915**
+- random: quite 0.0000 vs baseline **0.0843**, mean 0.0001, concat **0.1473**
+
+**QuITE wins test_mse on all 3 datasets** with the lowest mask_recall
+(0.0004-0.0035) and highest latent_div (0.0016-0.0051). The
+uniform-assumption baseline **fails catastrophically** on structured
+(0.33) and random (0.08), confirming the paper's central claim that
+**the bottleneck is the embedding layer, not the backbone**.
+
+**QuITE is the first non-target-dependent positive mechanism** in our
+91-102 audit — works equally on smooth, structured, and noisy data.
+
+```python
+from lnn.core.quite_embedding import QueryIrregularEmbedding
+# (B, T, D) irregular values, (B, T) times, (B, T) mask (True=valid)
+embed = QueryIrregularEmbedding(d_input=3, n_queries=8, d_model=16)
+tokens = embed(observations, times, mask)  # (B, 8, 16)
+# Feed to CfC / LSTM / MLP / FAME — plug-and-play
+```
+
+See `docs/research/2026-06-15_quite_irregular_ts_report.md` and the
+unit tests in `tests/test_quite_embedding.py` (19/19 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

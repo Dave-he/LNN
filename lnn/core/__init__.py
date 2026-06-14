@@ -96,6 +96,11 @@ from lnn.core.curvature import (
     mean_ollivier_ricci,
     ollivier_ricci_curvature,
 )
+from lnn.core.quite_embedding import (
+    QueryIrregularEmbedding,
+    apply_quite_embedding,
+    quite_baseline_modes,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -226,6 +231,9 @@ __all__ = [
     "ollivier_ricci_curvature",
     "mean_ollivier_ricci",
     "curvature_routing_loss",
+    "QueryIrregularEmbedding",
+    "apply_quite_embedding",
+    "quite_baseline_modes",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
