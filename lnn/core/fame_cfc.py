@@ -416,6 +416,36 @@ class FAMECfCCell(nn.Module):
         from lnn.core.orthogonality import orthogonality_loss
         return orthogonality_loss(outs, lambda_coeff=effective_lambda)
 
+    def compute_weight_orth_loss(self, lambda_coeff: float = 0.001) -> torch.Tensor:
+        """Weight-level orthogonality penalty over per-expert weights (round 97).
+
+        Collects the first 2D weight matrix from each expert
+        (``f_gate.weight`` of the CfCCell, shape (1, hidden)), and
+        returns ``weight_orthogonality_loss(W_list, lambda_coeff)``.
+
+        Round 96 showed that activation-level orthogonality (round 80)
+        does NOT increase weight diversity at the safe λ=0.001 setting.
+        This function targets the weight matrices directly.  See
+        PRD #10-59 and ``docs/research/2026-06-15_fame_weight_orth_report.md``.
+
+        Args:
+            lambda_coeff: scaling factor λ.  Default 0.001 (round 83
+                safe setting).  0.0 disables the penalty.
+
+        Returns:
+            aux_loss: scalar tensor.
+        """
+        from lnn.core.orthogonality import weight_orthogonality_loss
+        W_list: list[torch.Tensor] = []
+        for expert in self.experts:
+            for _, p in expert.named_parameters():
+                if p.dim() == 2:
+                    W_list.append(p)
+                    break  # use the first 2D matrix per expert
+        if len(W_list) < 2:
+            return torch.zeros(())
+        return weight_orthogonality_loss(W_list, lambda_coeff=lambda_coeff)
+
     def compute_orth_loss_causality(
         self,
         outs: list[torch.Tensor],

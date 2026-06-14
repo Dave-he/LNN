@@ -59,7 +59,7 @@ from lnn.core.ecology_gated_balancing import (
     EcologyGatedOrth,
 )
 from lnn.core.mr_moe_cfc import MRMoECfCCell, MRMoECfCNetwork
-from lnn.core.orthogonality import orthogonality_loss
+from lnn.core.orthogonality import orthogonality_loss, weight_orthogonality_loss
 from lnn.core.smoothness_metrics import (
     l2_derivative,
     max_gradient,
@@ -176,6 +176,7 @@ __all__ = [
     "FAMECfCNetwork",
     "ForecastabilityRouter",
     "orthogonality_loss",
+    "weight_orthogonality_loss",
     "total_variation",
     "l2_derivative",
     "max_gradient",

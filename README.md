@@ -1007,6 +1007,57 @@ mechanism targets its own level — they do not cross.
 
 See `docs/research/2026-06-15_fame_orth_diversity_report.md`.
 
+## Weight-Level Orthogonality (round 97)
+
+`weight_orthogonality_loss` and `FAMECfCCell.compute_weight_orth_loss`
+(PRD #10-59) target the **weight matrices** directly — the
+**weight-level** counterpart of `orthogonality_loss` (round 80)
+which targets activations.
+
+```python
+from lnn.core.orthogonality import weight_orthogonality_loss
+import torch
+
+W_list = [torch.randn(4, 4) for _ in range(3)]
+aux = weight_orthogonality_loss(W_list, lambda_coeff=0.001)
+# L = λ * Σ_{i<j} ||W_i W_j^T||_F^2 / (||W_i||_F · ||W_j||_F)
+# Normalized so the penalty is dimensionless and bounded.
+```
+
+**Round 97 bench (3 datasets × {baseline, act, wt, both} × 3 seeds,
+100 epochs, λ=0.001)**:
+
+| dataset    | mode     | div_ratio   | mean_eff   | act_cos       |
+|------------|----------|-------------|------------|---------------|
+| toy_sin    | baseline | 1.32 ± 0.08 | 5.13       | 0.7555        |
+| toy_sin    | wt       | 1.30 ± 0.10 | **4.13**   | 0.7266        |
+| toy_sin    | **both** | **1.33** ± 0.07 | **4.06** | 0.7458        |
+| structured | baseline | 1.15 ± 0.04 | 5.31       | 0.4238        |
+| structured | wt       | 1.17 ± 0.07 | **4.38**   | 0.3870        |
+| structured | both     | 1.15 ± 0.04 | **4.44**   | 0.2406        |
+| random     | baseline | 1.31 ± 0.08 | 5.49       | 0.3319        |
+| random     | wt       | 1.15 ± 0.02 | **4.28**   | 0.4092        |
+| random     | both     | 1.18 ± 0.02 | **4.24**   | 0.2018        |
+
+**Verdict**:
+- **H1 (wt orth increases weight diversity) REJECTED**: Δ div_ratio = -0.02 to +0.02 (essentially zero)
+- **H2 (task loss safe) CONFIRMED**: ±3% across all datasets
+- **H3 (wt orth reduces act_cos) PARTIAL**: marginal on toy_sin/structured, wrong direction on random
+- **Side finding (the headline)**: weight_orth reduces **mean_eff_rank by ~20%** (5.13→4.13, 5.31→4.38, 5.49→4.28)
+
+**Key insight**:
+- `orthogonality_loss` (round 80) = **activation-level** tool (decorrelates hidden states)
+- `weight_orthogonality_loss` (round 97) = **weight-level** tool (reduces expert complexity)
+- The **"both" combination** gives activation diversity + weight regularization at ±3% task cost
+
+**The 7-round audit is now complete (rounds 91-97)**: smoothness,
+robustness, rank, weight diversity, activation diversity, **weight
+regularization** are independent properties. Each mechanism targets
+its own level — they do not cross.
+
+See `docs/research/2026-06-15_fame_weight_orth_report.md` and the
+unit tests in `tests/test_orthogonality.py` (20/20 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

@@ -190,3 +190,83 @@ class TestFAMEWithOrthogonalitySinSmoke:
         l_with_orth = _train(lambda_coeff=0.1)
         # Both should converge to < 1.0 (sanity, not strict).
         assert l_with_orth < 1.0, f"with_orth={l_with_orth} did not converge"
+
+
+# ---------------------------------------------------------------------------
+# Round 97 (PRD #10-59) — weight_orthogonality_loss + FAME.compute_weight_orth_loss
+# ---------------------------------------------------------------------------
+
+
+class TestWeightOrthogonalityInvariants:
+    def test_zero_for_fewer_than_two_matrices(self) -> None:
+        from lnn.core.orthogonality import weight_orthogonality_loss
+        W = torch.randn(4, 4)
+        out = weight_orthogonality_loss([W], lambda_coeff=1.0)
+        assert out.item() == 0.0
+
+    def test_zero_when_lambda_0(self) -> None:
+        from lnn.core.orthogonality import weight_orthogonality_loss
+        W1 = torch.randn(4, 4)
+        W2 = torch.randn(4, 4)
+        out = weight_orthogonality_loss([W1, W2], lambda_coeff=0.0)
+        assert out.item() == 0.0
+
+    def test_zero_for_orthogonal_matrices(self) -> None:
+        """W_i W_j^T = 0 → penalty ~ 0."""
+        from lnn.core.orthogonality import weight_orthogonality_loss
+        # Construct W1 = [I; 0] and W2 = [0; I] so W1 W2^T = 0.
+        W1 = torch.zeros(2, 2)
+        W1[0, 0] = 1.0
+        W2 = torch.zeros(2, 2)
+        W2[1, 1] = 1.0
+        out = weight_orthogonality_loss([W1, W2], lambda_coeff=1.0)
+        # Penalty is normalized: ||W1 W2^T||_F^2 / (||W1||_F · ||W2||_F) = 0 / 1 = 0.
+        assert out.item() < 1e-6, f"expected ~0 for orthogonal, got {out.item()}"
+
+    def test_high_for_identical_matrices(self) -> None:
+        """W_i = W_j → penalty is large (1.0 by normalization)."""
+        from lnn.core.orthogonality import weight_orthogonality_loss
+        W1 = torch.randn(4, 4)
+        W2 = W1.clone()
+        out = weight_orthogonality_loss([W1, W2], lambda_coeff=1.0)
+        # ||W1 W1^T||_F^2 / ||W1||_F^2 = ||W1 W1^T||_F^2 / ||W1||_F^2.
+        # For a random 4x4, this is O(sigma_max^2).  We just check
+        # the penalty is large (>> 0).
+        assert out.item() > 0.1, f"expected large penalty for identical, got {out.item()}"
+
+    def test_gradient_flows(self) -> None:
+        """Backward pass produces non-None, non-zero grad on inputs."""
+        from lnn.core.orthogonality import weight_orthogonality_loss
+        W1 = torch.randn(4, 4, requires_grad=True)
+        W2 = torch.randn(4, 4, requires_grad=True)
+        out = weight_orthogonality_loss([W1, W2], lambda_coeff=1.0)
+        out.backward()
+        assert W1.grad is not None
+        assert W2.grad is not None
+        assert W1.grad.abs().sum() > 0
+        assert W2.grad.abs().sum() > 0
+
+
+class TestFAMECellWeightOrth:
+    def test_compute_weight_orth_loss_returns_scalar(self) -> None:
+        """FAMECfCCell.compute_weight_orth_loss returns a 0-d tensor."""
+        torch.manual_seed(0)
+        cell = FAMECfCCell(input_size=1, hidden_size=8, n_experts=3, top_k=1)
+        loss = cell.compute_weight_orth_loss(lambda_coeff=0.001)
+        assert loss.dim() == 0
+        assert loss.item() >= 0.0
+
+    def test_compute_weight_orth_loss_zero_lambda(self) -> None:
+        """λ=0 returns 0 without reading weights."""
+        torch.manual_seed(0)
+        cell = FAMECfCCell(input_size=1, hidden_size=8, n_experts=3, top_k=1)
+        loss = cell.compute_weight_orth_loss(lambda_coeff=0.0)
+        assert loss.item() == 0.0
+
+
+class TestWeightOrthExports:
+    def test_weight_orthogonality_loss_exported(self) -> None:
+        from lnn.core import (  # noqa: F401
+            weight_orthogonality_loss as wol,
+        )
+        assert callable(wol)
