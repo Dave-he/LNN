@@ -87,6 +87,10 @@ from lnn.core.reliability_gate import (
     apply_reliability_gate,
     segment_reliability,
 )
+from lnn.core.snnl import (
+    expert_snnl_loss,
+    soft_nearest_neighbor_loss,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -212,6 +216,8 @@ __all__ = [
     "CausalityGatedOrth",
     "segment_reliability",
     "apply_reliability_gate",
+    "soft_nearest_neighbor_loss",
+    "expert_snnl_loss",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

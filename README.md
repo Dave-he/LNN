@@ -1130,6 +1130,53 @@ and any other loss.
 See `docs/research/2026-06-15_segment_reliability_gate_report.md` and
 the unit tests in `tests/test_reliability_gate.py` (14/14 pass).
 
+## Soft Nearest Neighbor Loss for Expert Disentanglement (round 100)
+
+`soft_nearest_neighbor_loss(features, labels, temperature)` and
+`expert_snnl_loss(expert_features, routing_decisions, temperature)`
+implement SNNL from Frosst et al. 2019 and apply it to MoE expert
+disentanglement (arXiv:2603.26734 Agarap & Azcarraga March 2026).
+
+The formula is a soft k-NN clustering loss:
+
+```
+L_SNNL = -1/B * Σ_i log( Σ_{j: y_i = y_j, j≠i} exp(-||f_i - f_j||²/T)
+                        / Σ_{k≠i} exp(-||f_i - f_k||²/T) )
+```
+
+**CRITICAL IMPLEMENTATION DETAIL**: with K=4 experts and top-K=1
+routing, the natural label "expert index" gives 4 unique labels → no
+positive pairs → SNNL silently returns 0. The right interpretation:
+**the input's regime/class** is the label, not the expert. For 1D
+regression, use `t > 0.5` to bin each timestep into 2 classes.
+
+**Bench result (FAMECfC K=4, 100 epochs, 3 seeds)**:
+- structured: div_ratio 1.16 → **1.36 (+17%)** — strongest diversity gain in audit
+- random: div_ratio 1.15 → **1.24 (+8%)**
+- toy_sin: div_ratio 1.19 → 1.22 (+3%) — task loss +22% (regression on smooth target)
+
+**SNNL is target-dependent**: works on multi-regime/noisy data, hurts
+on smooth single-target data. Enable only when data has natural regime
+boundaries.
+
+**SNNL is the largest diversity mechanism in our 91-100 audit** —
+bigger than FAME top-K routing (round 78, Δ=+0.03-0.24) and weight
+orthogonality (rounds 80/97, Δ=+0.00 on weight diversity).
+
+```python
+from lnn.core.snnl import soft_nearest_neighbor_loss
+# features: (B, d), labels: (B,) integer class ids
+loss = soft_nearest_neighbor_loss(features, labels, temperature=0.5)
+```
+
+**Incompatible with weight/activation orthogonality** at the
+per-timestep level (opposing forces). Compatible with reliability
+(round 99) and backward coherence (round 98) which operate on
+different axes.
+
+See `docs/research/2026-06-15_snnl_expert_disentanglement_report.md`
+and the unit tests in `tests/test_snnl.py` (15/15 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
