@@ -75,6 +75,15 @@ class FAMECfCCell(nn.Module):
             is a strict superset of ``ecology_gated_balancing=True`` and
             ``ecology_gated_orth=True`` — those flags are turned on
             automatically.  Use this for the full 2-axis adaptive policy.
+        ecology_H_mode: ``"empirical"`` (default, round 83) uses the
+            empirical routing entropy; ``"gradient"`` (round 87) uses
+            the gradient-based H (causal counterpart, replies to
+            Causal Audit arXiv:2606.10703).  When ``"gradient"`` is
+            selected, callers must pass ``task_loss`` to
+            ``moe_ecology_diagnostic()`` (else silent fallback to
+            empirical).  Default ``"empirical"`` for back-compat.
+        ecology_H_alpha: Blend weight for ``H_mode="blend"`` (round 87).
+            ``H = alpha·H_emp + (1-alpha)·H_grad``.  Default 0.5.
     """
 
     def __init__(
@@ -96,6 +105,8 @@ class FAMECfCCell(nn.Module):
         ecology_gated_orth: bool = False,
         ecology_orth_lambda_safe: float = 0.001,
         ecology_combined: bool = False,
+        ecology_H_mode: str = "empirical",
+        ecology_H_alpha: float = 0.5,
     ):
         super().__init__()
         assert n_experts >= 1
@@ -116,6 +127,12 @@ class FAMECfCCell(nn.Module):
         self.router_type = router_type
         self.ecology_E_min = float(ecology_E_min)
         self.ecology_warmup_steps = int(ecology_warmup_steps)
+        assert ecology_H_mode in ("empirical", "gradient", "blend"), (
+            f"ecology_H_mode must be 'empirical', 'gradient', or 'blend', "
+            f"got {ecology_H_mode!r}"
+        )
+        self.ecology_H_mode = str(ecology_H_mode)
+        self.ecology_H_alpha = float(ecology_H_alpha)
         # Step counter for ecology-gated balancing (incremented in forward).
         self._step_idx: int = 0
 
@@ -223,7 +240,10 @@ class FAMECfCCell(nn.Module):
         del expert_outs  # forward() doesn't expose them; use forward_with_aux
         return h_new
 
-    def moe_ecology_diagnostic(self, B: float = 0.0, T: float = 1.0, O: float = 0.0) -> dict:
+    def moe_ecology_diagnostic(
+        self, B: float = 0.0, T: float = 1.0, O: float = 0.0,
+        task_loss: torch.Tensor | None = None,
+    ) -> dict:
         """Return current MoE ecology diagnostic (PRD #10-42, Zhang 2026).
 
         Computes E = T·H/(O+B) and dead-expert count from the most
@@ -242,6 +262,10 @@ class FAMECfCCell(nn.Module):
                 ``phi_step_size`` (φ) or 0 (plain).
             T: Routing temperature.  Default 1.0 (no scaling in FAME).
             O: Oracle weight.  Default 0.0.
+            task_loss: Scalar task loss, required when
+                ``ecology_H_mode != "empirical"`` (round 87, PRD #10-49).
+                When None and H_mode is gradient/blend, falls back to
+                empirical H silently.
 
         Returns:
             Dict with ``E`` (float), ``dead_experts`` (int),
@@ -254,6 +278,9 @@ class FAMECfCCell(nn.Module):
         E = moe_ecology_number(
             router_logits=self.last_g, last_g=self.last_g,
             T=T, H=None, O=O, B=B,
+            H_mode=self.ecology_H_mode,
+            alpha=self.ecology_H_alpha,
+            task_loss=task_loss,
         )
         util = self.last_g.mean(dim=0)
         dead = int((util < 0.01).sum().item())

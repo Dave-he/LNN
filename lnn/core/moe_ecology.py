@@ -35,11 +35,69 @@ Mapping to our FAME stack (round 78-82):
 **The paper's claim**: E ≥ 0.5 ⇒ no dead experts.
 **Our extension**: E is also useful as a continuous diagnostic even
 when the paper's threshold doesn't hold (e.g., our toy data).
+
+**Round 87 (PRD #10-49)**: added ``H_mode="gradient"`` to replace
+the empirical H with a **gradient-based H** that measures the loss
+sensitivity to routing.  This addresses arXiv:2606.10703 (Causal
+Audit: observational ≠ causal).  Default remains
+``H_mode="empirical"`` for back-compat.
 """
 from __future__ import annotations
 
+import numpy as np
 import torch
 import torch.nn as nn
+
+
+def gradient_routing_sensitivity(
+    router_logits: torch.Tensor,
+    task_loss: torch.Tensor | None,
+    normalize: bool = True,
+) -> float:
+    """Compute H_grad = ||∂L_task/∂router_logits|| (Frobenius norm).
+
+    Round 87 (PRD #10-49).  This is the **causal** counterpart to the
+    empirical routing entropy H used in round 83.  Where empirical H
+    asks "how uniform does the routing look?", gradient H asks
+    "how sensitive is the loss to changes in the routing?".
+
+    A small H_grad means the loss is **insensitive** to routing
+    changes — the MoE has functionally collapsed (even if the
+    routing distribution looks diverse).  This is the Causal Audit
+    (arXiv:2606.10703) concern that observational E can mask causal
+    collapse.
+
+    Args:
+        router_logits: [B, K] raw router logits (must require_grad
+            for the gradient to be defined; returns 0.0 if not).
+        task_loss: Scalar task loss.  If None, returns 0.0 (no
+            gradient can be computed).
+        normalize: If True, divide by B·log(K) for scale-invariance
+            (so the value is roughly in [0, 1] when routing matters).
+
+    Returns:
+        Scalar H_grad ≥ 0.  Large ⇒ routing matters (healthy).  Small
+        ⇒ routing doesn't matter (collapse imminent or already
+        happened).
+    """
+    if task_loss is None or not router_logits.requires_grad:
+        return 0.0
+    try:
+        grads = torch.autograd.grad(
+            task_loss, router_logits,
+            retain_graph=True, create_graph=False,
+            allow_unused=True,
+        )[0]
+    except RuntimeError:
+        return 0.0
+    if grads is None:
+        return 0.0
+    h = float(grads.norm().item())
+    if normalize:
+        B = router_logits.shape[0]
+        K = router_logits.shape[-1]
+        h = h / max(B, 1) / max(float(np.log(max(K, 2))), 1e-8)
+    return h
 
 
 def moe_ecology_number(
@@ -50,38 +108,66 @@ def moe_ecology_number(
     O: float = 0.0,
     B: float = 0.0,
     eps: float = 1e-8,
+    H_mode: str = "empirical",
+    alpha: float = 0.5,
+    task_loss: torch.Tensor | None = None,
 ) -> torch.Tensor:
     """Compute E = T·H/(O+B) — the MoE ecology diagnostic (Zhang 2026).
 
     Args:
         router_logits: [B, K] raw router logits (or any [B, K] tensor).
             Kept for API symmetry with the paper but not used directly
-            in the empirical H approximation.
+            in the empirical H approximation.  Used by ``H_mode="gradient"``
+            and ``H_mode="blend"`` to compute H_grad.
         last_g: [B, K] mixture weights (post top-K mask + softmax).
             Used to compute the empirical routing entropy H.
         T: Routing temperature.  Default 1.0 (no temperature scaling
             in our FAME stack).
         H: Routing entropy weight.  If ``None`` (default), computed
-            empirically from ``last_g`` as ``-Σ g_mean log g_mean``,
-            normalised by ``log(K)`` so the value is in [0, 1].
+            from ``last_g`` and/or ``task_loss`` per ``H_mode``.
         O: Oracle weight.  Default 0.0 (no oracle loss in our stack).
         B: Balance weight — typically ``lambda_coeff`` (orthogonality)
             or ``phi_step_size`` (φ-balancing) or 0 (plain learned).
         eps: Numerical floor for log and denominator.
+        H_mode: ``"empirical"`` (default, round 83) uses
+            ``-Σ g_mean log g_mean / log(K)``; ``"gradient"`` (round 87)
+            uses ``||∂L_task/∂router_logits||``; ``"blend"`` uses
+            ``alpha·H_emp + (1-alpha)·H_grad``.
+        alpha: Blend weight for ``H_mode="blend"`` (ignored otherwise).
+        task_loss: Scalar task loss.  Required for
+            ``H_mode="gradient"`` and ``H_mode="blend"``; silently
+            falls back to ``H_mode="empirical"`` when None.
 
     Returns:
         Scalar ``E ∈ [0, ∞)``.  E ≥ 0.5 in the paper implies a healthy
         ecology with no dead experts.
     """
     K = last_g.shape[-1]
-    if H is None:
+    if H is not None:
+        H_val = float(H)  # user override
+    elif H_mode == "empirical":
         # Empirical routing entropy: H = -Σ g_mean log g_mean, normalised
         # by log(K) so it's in [0, 1].  When g is uniform, H = 1.
         g_mean = last_g.mean(dim=0).clamp_min(eps)  # [K]
         H_val = -(g_mean * torch.log(g_mean)).sum() / max(torch.log(torch.tensor(float(K))).item(), eps)
+    elif H_mode == "gradient":
+        if task_loss is None:
+            # Fall back to empirical if no task_loss (silent).
+            g_mean = last_g.mean(dim=0).clamp_min(eps)
+            H_val = -(g_mean * torch.log(g_mean)).sum() / max(torch.log(torch.tensor(float(K))).item(), eps)
+        else:
+            H_val = gradient_routing_sensitivity(router_logits, task_loss, normalize=True)
+    elif H_mode == "blend":
+        g_mean = last_g.mean(dim=0).clamp_min(eps)
+        h_emp = float((-(g_mean * torch.log(g_mean)).sum() / max(torch.log(torch.tensor(float(K))).item(), eps)).item())
+        h_grad = gradient_routing_sensitivity(router_logits, task_loss, normalize=True)
+        H_val = alpha * h_emp + (1.0 - alpha) * h_grad
     else:
-        H_val = float(H)
+        raise ValueError(f"H_mode must be 'empirical', 'gradient', or 'blend', got {H_mode!r}")
     denom = O + B
+    # Ensure H_val is a tensor (gradient mode returns a Python float).
+    if not isinstance(H_val, torch.Tensor):
+        H_val = torch.tensor(float(H_val))
     return T * H_val / (denom + eps)
 
 
@@ -156,6 +242,41 @@ class MoEEcologyMonitor(nn.Module):
             self.E_history = self.E_history[-1000:]
             self.dead_history = self.dead_history[-1000:]
         return {"E": e_val, "dead_experts": dead, "utilization": self.util_ema.tolist()}
+
+    def compute_gradient_H(
+        self,
+        router_logits: torch.Tensor,
+        task_loss: torch.Tensor,
+        normalize: bool = True,
+    ) -> dict:
+        """Compute gradient-based H on demand (round 87, PRD #10-49).
+
+        Args:
+            router_logits: [B, K] raw router logits (must require_grad).
+            task_loss: Scalar task loss.
+            normalize: See ``gradient_routing_sensitivity``.
+
+        Returns:
+            Dict with ``H_grad`` (float), ``H_emp`` (float),
+            ``E_emp``, ``E_grad``, and the recommended E (blend if
+            ``H_mode="blend"`` else empirical).
+        """
+        K = router_logits.shape[-1]
+        eps = 1e-8
+        g_mean = router_logits.mean(dim=0).clamp_min(eps)
+        h_emp = float(
+            (-(g_mean * torch.log(g_mean)).sum()
+             / max(torch.log(torch.tensor(float(K))).item(), eps)).item()
+        )
+        h_grad = gradient_routing_sensitivity(
+            router_logits, task_loss, normalize=normalize,
+        )
+        return {
+            "H_emp": h_emp,
+            "H_grad": h_grad,
+            "E_emp": h_emp,  # when B=0, E=H
+            "E_grad": h_grad,
+        }
 
     def summary(self) -> dict:
         """Return current state (no step)."""

@@ -497,6 +497,53 @@ the diagnostic state stays consistent.  See
 `docs/research/2026-06-15_combined_gates_report.md` and the unit
 tests in `tests/test_combined_gates.py`.
 
+## Gradient-based H (causal MoE ecology E, opt-in)
+
+`gradient_routing_sensitivity` (PRD #10-49, round 87) is the
+**causal counterpart** to the empirical routing entropy H used
+since round 83.  Where empirical H asks "how uniform does the
+routing look?", gradient H asks "how sensitive is the loss to
+changes in the routing?".
+
+```python
+from lnn import FAMECfCNetwork
+from lnn.core import moe_ecology_number
+
+net = FAMECfCNetwork(
+    input_size=3, hidden_size=24, output_size=1,
+    n_experts=3, top_k=1,
+    ecology_H_mode="gradient",  # opt in to causal H
+)
+# ... train loop ...
+task_loss = ...  # scalar, with grad
+E = moe_ecology_number(
+    router_logits=cell.last_g, last_g=cell.last_g,
+    B=0.001, H_mode="gradient", task_loss=task_loss,
+)
+```
+
+**Honest-negative headline (round 87)**: in our 3-dataset × 3-λ
+bench, **E_emp ≈ E_grad** in all 9 cells (mean |Δ| < 0.05),
+and gate-firing decisions are **identical in 9/9 cells**.  The
+empirical H is **sufficient** for gate firing in the toy regime.
+
+**Where gradient H may matter** (out of scope for round 87):
+1. **Vision / NLP data** — real-world distributions have
+   loss-flat routing pathologies that empirical H can't see
+2. **Larger K** (K=8, K=16) — more experts = more opportunities
+   for functionally-identical experts to look different
+3. **Longer training** — 2 epochs may be too short for the
+   routing distribution to fully explore the loss landscape
+4. **Self-supervised pre-training** — task loss can be
+   trivially low even with collapsed routing
+
+The gate is **purely additive** — `ecology_H_mode="empirical"`
+(default) is fully back-compat.  When `ecology_H_mode="gradient"`
+is set, callers must pass `task_loss` to
+`moe_ecology_diagnostic()` (else silent fallback to empirical).
+See `docs/research/2026-06-15_gradient_based_h_report.md` and the
+unit tests in `tests/test_gradient_based_h.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |
