@@ -76,3 +76,50 @@ def smoothness_summary(y: torch.Tensor, dt: float = 1.0) -> dict:
         "max_grad": max_gradient(y, dt=dt),
         "n": int(y.numel()),
     }
+
+
+def backward_coherence_loss(
+    states: torch.Tensor,
+    lambda_coeff: float = 0.001,
+) -> torch.Tensor:
+    """Backward-coherence penalty over a (T, d) hidden-state trajectory (round 98).
+
+    Implements the backward-coherence regularization from
+    arXiv:2606.08934 (Chang, June 2026) — *Backward Coherence and
+    Hidden-State Stability in Recurrent Neural Networks: A
+    Quasi-Reverse-Martingale Theory*.
+
+    The penalty is::
+
+        L = λ * mean_{t=0..T-2} ||h_{t+1} - h_t||^2
+
+    i.e. the mean squared backward difference of the hidden-state
+    sequence.  This is distinct from :func:`total_variation` (which
+    is on a 1D output) and from :func:`max_gradient` (which is a max
+    rather than a mean).  Backward coherence specifically penalizes
+    the **hidden state**'s tendency to jump between consecutive
+    steps — encouraging a quasi-reverse-martingale where ``h_t ≈
+    E[h_{t+1}]``.
+
+    Args:
+        states: 2D tensor of shape ``(T, d)`` — a hidden-state
+            trajectory collected from a recurrent cell over T steps.
+        lambda_coeff: scaling factor λ applied to the penalty.
+            A value of 0.0 disables the penalty entirely.
+
+    Returns:
+        aux_loss: scalar tensor ``λ * mean(||h_{t+1} - h_t||^2)``.
+        Returns a 0-d tensor so it composes with the main task loss
+        via simple addition.
+    """
+    if lambda_coeff == 0.0:
+        return torch.zeros((), device=states.device if isinstance(states, torch.Tensor) else "cpu")
+    if states.dim() == 1:
+        states = states.unsqueeze(0)
+    if states.dim() != 2:
+        raise ValueError(f"expected 2D (T, d) tensor, got {states.dim()}D")
+    if states.shape[0] < 2:
+        return torch.zeros((), device=states.device)
+    diffs = states[1:] - states[:-1]  # (T-1, d)
+    penalty = (diffs ** 2).mean()
+    return lambda_coeff * penalty

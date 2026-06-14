@@ -1,0 +1,926 @@
+{
+  "epochs": 100,
+  "n_seeds": 3,
+  "coherence_lambda": 0.1,
+  "wall_time_s": 58.51,
+  "datasets": {
+    "toy_sin": {
+      "MLP_baseline": {
+        "task_loss_mean_std": [
+          0.1854230761528015,
+          0.010652748146353119
+        ],
+        "backward_diff_std_mean_std": [
+          0.0,
+          0.0
+        ],
+        "max_grad_mean_std": [
+          0.05423065026601156,
+          0.005446380087043128
+        ],
+        "hidden_eff_rank_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.1974191963672638,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.04832315444946289,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.18731750547885895,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.05290412902832031,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.1715325266122818,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.061464667320251465,
+            "hidden_eff_rank": 1.0
+          }
+        ]
+      },
+      "MLP_coherence": {
+        "task_loss_mean_std": [
+          0.1854230761528015,
+          0.010652748146353119
+        ],
+        "backward_diff_std_mean_std": [
+          0.0,
+          0.0
+        ],
+        "max_grad_mean_std": [
+          0.05423065026601156,
+          0.005446380087043128
+        ],
+        "hidden_eff_rank_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.1974191963672638,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.04832315444946289,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.18731750547885895,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.05290412902832031,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.1715325266122818,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.061464667320251465,
+            "hidden_eff_rank": 1.0
+          }
+        ]
+      },
+      "CfC_baseline": {
+        "task_loss_mean_std": [
+          0.14984465142091116,
+          0.02862546658030345
+        ],
+        "backward_diff_std_mean_std": [
+          0.1144682268301646,
+          0.0024508693068677144
+        ],
+        "max_grad_mean_std": [
+          0.19208324948946634,
+          0.008044429815951696
+        ],
+        "hidden_eff_rank_mean_std": [
+          1.6495533249960166,
+          0.09996246897888736
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.1293056309223175,
+            "backward_diff_std": 0.11636226624250412,
+            "max_grad": 0.19671183824539185,
+            "hidden_eff_rank": 1.759452825804036
+          },
+          {
+            "task_loss": 0.19032570719718933,
+            "backward_diff_std": 0.11100732535123825,
+            "max_grad": 0.18076887726783752,
+            "hidden_eff_rank": 1.6716121299488214
+          },
+          {
+            "task_loss": 0.12990261614322662,
+            "backward_diff_std": 0.1160350888967514,
+            "max_grad": 0.19876903295516968,
+            "hidden_eff_rank": 1.517595019235192
+          }
+        ]
+      },
+      "CfC_coherence": {
+        "task_loss_mean_std": [
+          0.1351972222328186,
+          0.005422426498167335
+        ],
+        "backward_diff_std_mean_std": [
+          0.11331455161174138,
+          0.005688647601321545
+        ],
+        "max_grad_mean_std": [
+          0.18504132330417633,
+          0.017732466681841506
+        ],
+        "hidden_eff_rank_mean_std": [
+          1.6500537755720799,
+          0.11075532182508843
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.1332237869501114,
+            "backward_diff_std": 0.11871954053640366,
+            "max_grad": 0.19678634405136108,
+            "hidden_eff_rank": 1.7884368823423276
+          },
+          {
+            "task_loss": 0.1426013559103012,
+            "backward_diff_std": 0.1054515689611435,
+            "max_grad": 0.15998023748397827,
+            "hidden_eff_rank": 1.644405111555705
+          },
+          {
+            "task_loss": 0.1297665238380432,
+            "backward_diff_std": 0.115772545337677,
+            "max_grad": 0.19835738837718964,
+            "hidden_eff_rank": 1.5173193328182073
+          }
+        ]
+      },
+      "LSTM_baseline": {
+        "task_loss_mean_std": [
+          0.12612232069174448,
+          0.004319530554304115
+        ],
+        "backward_diff_std_mean_std": [
+          0.08698117733001709,
+          0.017065108768207507
+        ],
+        "max_grad_mean_std": [
+          0.24097462991873422,
+          0.03528875317022412
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.1382309984511783,
+          0.3368708460986498
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.132118821144104,
+            "backward_diff_std": 0.07593679428100586,
+            "max_grad": 0.2200184464454651,
+            "hidden_eff_rank": 2.450679274927126
+          },
+          {
+            "task_loss": 0.12211461365222931,
+            "backward_diff_std": 0.11108677834272385,
+            "max_grad": 0.29067736864089966,
+            "hidden_eff_rank": 1.6705505931029765
+          },
+          {
+            "task_loss": 0.12413352727890015,
+            "backward_diff_std": 0.07391995936632156,
+            "max_grad": 0.21222807466983795,
+            "hidden_eff_rank": 2.293463127323432
+          }
+        ]
+      },
+      "LSTM_coherence": {
+        "task_loss_mean_std": [
+          0.1302291303873062,
+          0.00892182614522435
+        ],
+        "backward_diff_std_mean_std": [
+          0.09128421048323314,
+          0.015081063276707656
+        ],
+        "max_grad_mean_std": [
+          0.24181821942329407,
+          0.03435427052301378
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.2101699447895373,
+          0.40704768341678954
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.1426544338464737,
+            "backward_diff_std": 0.08918703347444534,
+            "max_grad": 0.2222796231508255,
+            "hidden_eff_rank": 2.654167978339374
+          },
+          {
+            "task_loss": 0.12211717665195465,
+            "backward_diff_std": 0.11071374267339706,
+            "max_grad": 0.290110319852829,
+            "hidden_eff_rank": 1.6708681790265731
+          },
+          {
+            "task_loss": 0.1259157806634903,
+            "backward_diff_std": 0.073951855301857,
+            "max_grad": 0.21306471526622772,
+            "hidden_eff_rank": 2.3054736770026656
+          }
+        ]
+      },
+      "GRU_baseline": {
+        "task_loss_mean_std": [
+          0.1269387205441793,
+          0.0019967442235120426
+        ],
+        "backward_diff_std_mean_std": [
+          0.08552525192499161,
+          0.012015404211796494
+        ],
+        "max_grad_mean_std": [
+          0.20322073996067047,
+          0.01324433868112025
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.083791536902444,
+          0.04377676778967332
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.1265312135219574,
+            "backward_diff_std": 0.07093621790409088,
+            "max_grad": 0.20295196771621704,
+            "hidden_eff_rank": 2.134684188056386
+          },
+          {
+            "task_loss": 0.12472257018089294,
+            "backward_diff_std": 0.10036463290452957,
+            "max_grad": 0.21957439184188843,
+            "hidden_eff_rank": 2.0278155267372098
+          },
+          {
+            "task_loss": 0.1295623779296875,
+            "backward_diff_std": 0.08527490496635437,
+            "max_grad": 0.18713586032390594,
+            "hidden_eff_rank": 2.088874895913737
+          }
+        ]
+      },
+      "GRU_coherence": {
+        "task_loss_mean_std": [
+          0.12544768303632736,
+          0.0016748623171389243
+        ],
+        "backward_diff_std_mean_std": [
+          0.09098512679338455,
+          0.015505361707276618
+        ],
+        "max_grad_mean_std": [
+          0.2180621325969696,
+          0.014802631341031273
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.0899006018580963,
+          0.039582203008293106
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.12662187218666077,
+            "backward_diff_std": 0.07085102051496506,
+            "max_grad": 0.2027187943458557,
+            "hidden_eff_rank": 2.1335543639613803
+          },
+          {
+            "task_loss": 0.1230790987610817,
+            "backward_diff_std": 0.10857465863227844,
+            "max_grad": 0.23806722462177277,
+            "hidden_eff_rank": 2.0377275845918223
+          },
+          {
+            "task_loss": 0.12664207816123962,
+            "backward_diff_std": 0.09352970123291016,
+            "max_grad": 0.21340037882328033,
+            "hidden_eff_rank": 2.0984198570210872
+          }
+        ]
+      }
+    },
+    "structured": {
+      "MLP_baseline": {
+        "task_loss_mean_std": [
+          0.5090772112210592,
+          0.016938612434488482
+        ],
+        "backward_diff_std_mean_std": [
+          0.0,
+          0.0
+        ],
+        "max_grad_mean_std": [
+          0.03442128996054331,
+          0.012382759151073775
+        ],
+        "hidden_eff_rank_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.5185735821723938,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.026609957218170166,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.5233747363090515,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.02475358545780182,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.4852833151817322,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.05190032720565796,
+            "hidden_eff_rank": 1.0
+          }
+        ]
+      },
+      "MLP_coherence": {
+        "task_loss_mean_std": [
+          0.5090772112210592,
+          0.016938612434488482
+        ],
+        "backward_diff_std_mean_std": [
+          0.0,
+          0.0
+        ],
+        "max_grad_mean_std": [
+          0.03442128996054331,
+          0.012382759151073775
+        ],
+        "hidden_eff_rank_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.5185735821723938,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.026609957218170166,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.5233747363090515,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.02475358545780182,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.4852833151817322,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.05190032720565796,
+            "hidden_eff_rank": 1.0
+          }
+        ]
+      },
+      "CfC_baseline": {
+        "task_loss_mean_std": [
+          0.4900123079617818,
+          0.005298393611097857
+        ],
+        "backward_diff_std_mean_std": [
+          0.0582236684858799,
+          0.006745403610119361
+        ],
+        "max_grad_mean_std": [
+          0.11533374587694804,
+          0.03270277475322884
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.2254246311510815,
+          0.09653910662279104
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.49737831950187683,
+            "backward_diff_std": 0.05730707198381424,
+            "max_grad": 0.16097065806388855,
+            "hidden_eff_rank": 2.236639630664719
+          },
+          {
+            "task_loss": 0.48751920461654663,
+            "backward_diff_std": 0.050458792597055435,
+            "max_grad": 0.0990084707736969,
+            "hidden_eff_rank": 2.1019809463714867
+          },
+          {
+            "task_loss": 0.485139399766922,
+            "backward_diff_std": 0.06690514087677002,
+            "max_grad": 0.08602210879325867,
+            "hidden_eff_rank": 2.3376533164170374
+          }
+        ]
+      },
+      "CfC_coherence": {
+        "task_loss_mean_std": [
+          0.490408976872762,
+          0.005606077867338854
+        ],
+        "backward_diff_std_mean_std": [
+          0.05789032702644666,
+          0.006841412704569489
+        ],
+        "max_grad_mean_std": [
+          0.11519226431846619,
+          0.0338141319512166
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.222584121702068,
+          0.09284399052747973
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.4981948733329773,
+            "backward_diff_std": 0.05754850059747696,
+            "max_grad": 0.1624915897846222,
+            "hidden_eff_rank": 2.2215851670489664
+          },
+          {
+            "task_loss": 0.48781102895736694,
+            "backward_diff_std": 0.04968748614192009,
+            "max_grad": 0.09763962030410767,
+            "hidden_eff_rank": 2.1093766888041254
+          },
+          {
+            "task_loss": 0.4852210283279419,
+            "backward_diff_std": 0.06643499433994293,
+            "max_grad": 0.0854455828666687,
+            "hidden_eff_rank": 2.3367905092531114
+          }
+        ]
+      },
+      "LSTM_baseline": {
+        "task_loss_mean_std": [
+          0.48740850885709125,
+          0.005998433527056963
+        ],
+        "backward_diff_std_mean_std": [
+          0.056811333944400154,
+          0.02294523322117392
+        ],
+        "max_grad_mean_std": [
+          0.12177028755346934,
+          0.01088615965300428
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.4241332009925203,
+          0.608828278191587
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.482474148273468,
+            "backward_diff_std": 0.03977037966251373,
+            "max_grad": 0.10637496411800385,
+            "hidden_eff_rank": 1.922106354771547
+          },
+          {
+            "task_loss": 0.4958515465259552,
+            "backward_diff_std": 0.08924686908721924,
+            "max_grad": 0.12944111227989197,
+            "hidden_eff_rank": 3.280939156859615
+          },
+          {
+            "task_loss": 0.4838998317718506,
+            "backward_diff_std": 0.041416753083467484,
+            "max_grad": 0.1294947862625122,
+            "hidden_eff_rank": 2.069354091346399
+          }
+        ]
+      },
+      "LSTM_coherence": {
+        "task_loss_mean_std": [
+          0.4867933789889018,
+          0.005137082814270143
+        ],
+        "backward_diff_std_mean_std": [
+          0.05672489479184151,
+          0.022928513557887553
+        ],
+        "max_grad_mean_std": [
+          0.12199423213799794,
+          0.011031468577225817
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.4350558403561027,
+          0.6240948696009233
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.48246991634368896,
+            "backward_diff_std": 0.03967098519206047,
+            "max_grad": 0.10639697313308716,
+            "hidden_eff_rank": 1.922250445838448
+          },
+          {
+            "task_loss": 0.4940113127231598,
+            "backward_diff_std": 0.08913590759038925,
+            "max_grad": 0.13008283078670502,
+            "hidden_eff_rank": 3.3135634965314176
+          },
+          {
+            "task_loss": 0.48389890789985657,
+            "backward_diff_std": 0.0413677915930748,
+            "max_grad": 0.12950289249420166,
+            "hidden_eff_rank": 2.0693535786984425
+          }
+        ]
+      },
+      "GRU_baseline": {
+        "task_loss_mean_std": [
+          0.4725784758726756,
+          0.00946333441949356
+        ],
+        "backward_diff_std_mean_std": [
+          0.051524028182029724,
+          0.009207653814679896
+        ],
+        "max_grad_mean_std": [
+          0.10979235172271729,
+          0.03199689944813015
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.722151084761338,
+          0.16273601360449466
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.4591960608959198,
+            "backward_diff_std": 0.06443267315626144,
+            "max_grad": 0.15491431951522827,
+            "hidden_eff_rank": 2.9517341357330404
+          },
+          {
+            "task_loss": 0.4791460931301117,
+            "backward_diff_std": 0.04358764737844467,
+            "max_grad": 0.08428037166595459,
+            "hidden_eff_rank": 2.621260358379031
+          },
+          {
+            "task_loss": 0.47939327359199524,
+            "backward_diff_std": 0.04655176401138306,
+            "max_grad": 0.090182363986969,
+            "hidden_eff_rank": 2.593458760171944
+          }
+        ]
+      },
+      "GRU_coherence": {
+        "task_loss_mean_std": [
+          0.47428884108861286,
+          0.00695262220150216
+        ],
+        "backward_diff_std_mean_std": [
+          0.04185811306039492,
+          0.004618954851643664
+        ],
+        "max_grad_mean_std": [
+          0.0953422486782074,
+          0.011226916838346347
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.7809896967179015,
+          0.25442238650482274
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.4644564986228943,
+            "backward_diff_std": 0.035627640783786774,
+            "max_grad": 0.11069494485855103,
+            "hidden_eff_rank": 3.13991438255559
+          },
+          {
+            "task_loss": 0.479157954454422,
+            "backward_diff_std": 0.0432739295065403,
+            "max_grad": 0.0841606855392456,
+            "hidden_eff_rank": 2.6233431406162153
+          },
+          {
+            "task_loss": 0.47925207018852234,
+            "backward_diff_std": 0.0466727688908577,
+            "max_grad": 0.09117111563682556,
+            "hidden_eff_rank": 2.5797115669818997
+          }
+        ]
+      }
+    },
+    "random": {
+      "MLP_baseline": {
+        "task_loss_mean_std": [
+          0.8972999453544617,
+          0.09351044035062377
+        ],
+        "backward_diff_std_mean_std": [
+          0.0,
+          0.0
+        ],
+        "max_grad_mean_std": [
+          0.06646406402190526,
+          0.026774162354057877
+        ],
+        "hidden_eff_rank_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "task_loss": 1.0290526151657104,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.03977125883102417,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.8412840962409973,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.10306781530380249,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.8215631246566772,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.05655311793088913,
+            "hidden_eff_rank": 1.0
+          }
+        ]
+      },
+      "MLP_coherence": {
+        "task_loss_mean_std": [
+          0.8972999453544617,
+          0.09351044035062377
+        ],
+        "backward_diff_std_mean_std": [
+          0.0,
+          0.0
+        ],
+        "max_grad_mean_std": [
+          0.06646406402190526,
+          0.026774162354057877
+        ],
+        "hidden_eff_rank_mean_std": [
+          1.0,
+          0.0
+        ],
+        "per_seed": [
+          {
+            "task_loss": 1.0290526151657104,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.03977125883102417,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.8412840962409973,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.10306781530380249,
+            "hidden_eff_rank": 1.0
+          },
+          {
+            "task_loss": 0.8215631246566772,
+            "backward_diff_std": 0.0,
+            "max_grad": 0.05655311793088913,
+            "hidden_eff_rank": 1.0
+          }
+        ]
+      },
+      "CfC_baseline": {
+        "task_loss_mean_std": [
+          0.827216366926829,
+          0.11314841343132101
+        ],
+        "backward_diff_std_mean_std": [
+          0.1375249574581782,
+          0.05355287704328706
+        ],
+        "max_grad_mean_std": [
+          0.841183086236318,
+          0.5246545588353588
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.929468076950613,
+          1.3467738161812093
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.8561609387397766,
+            "backward_diff_std": 0.06606176495552063,
+            "max_grad": 0.5922380685806274,
+            "hidden_eff_rank": 2.7051837003006307
+          },
+          {
+            "task_loss": 0.9490360617637634,
+            "backward_diff_std": 0.19497348368167877,
+            "max_grad": 0.36033469438552856,
+            "hidden_eff_rank": 1.403632256656443
+          },
+          {
+            "task_loss": 0.676452100276947,
+            "backward_diff_std": 0.1515396237373352,
+            "max_grad": 1.5709764957427979,
+            "hidden_eff_rank": 4.679588273894765
+          }
+        ]
+      },
+      "CfC_coherence": {
+        "task_loss_mean_std": [
+          0.824600100517273,
+          0.11510442410592608
+        ],
+        "backward_diff_std_mean_std": [
+          0.1387303794423739,
+          0.05088368901812183
+        ],
+        "max_grad_mean_std": [
+          0.9460609555244446,
+          0.6664963815011563
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.8074374713523134,
+          1.1856383167887268
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.8530683517456055,
+            "backward_diff_std": 0.07113047689199448,
+            "max_grad": 0.6015784740447998,
+            "hidden_eff_rank": 2.715711279019666
+          },
+          {
+            "task_loss": 0.9491669535636902,
+            "backward_diff_std": 0.1938941925764084,
+            "max_grad": 0.35848313570022583,
+            "hidden_eff_rank": 1.403370549694838
+          },
+          {
+            "task_loss": 0.6715649962425232,
+            "backward_diff_std": 0.15116646885871887,
+            "max_grad": 1.878121256828308,
+            "hidden_eff_rank": 4.303230585342437
+          }
+        ]
+      },
+      "LSTM_baseline": {
+        "task_loss_mean_std": [
+          0.8702637751897176,
+          0.05534207713369824
+        ],
+        "backward_diff_std_mean_std": [
+          0.16491668174664179,
+          0.06615221322856507
+        ],
+        "max_grad_mean_std": [
+          0.4647069573402405,
+          0.23549177386961262
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.432136134234238,
+          0.7533218681932794
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.9195712804794312,
+            "backward_diff_std": 0.2570790946483612,
+            "max_grad": 0.7974019050598145,
+            "hidden_eff_rank": 2.5691538310133413
+          },
+          {
+            "task_loss": 0.8982474207878113,
+            "backward_diff_std": 0.13275453448295593,
+            "max_grad": 0.2853165864944458,
+            "hidden_eff_rank": 1.4486626041632937
+          },
+          {
+            "task_loss": 0.7929726243019104,
+            "backward_diff_std": 0.10491641610860825,
+            "max_grad": 0.3114023804664612,
+            "hidden_eff_rank": 3.278591967526078
+          }
+        ]
+      },
+      "LSTM_coherence": {
+        "task_loss_mean_std": [
+          0.8639173706372579,
+          0.04428519858589405
+        ],
+        "backward_diff_std_mean_std": [
+          0.17485656837622324,
+          0.05596832539281998
+        ],
+        "max_grad_mean_std": [
+          0.4980904261271159,
+          0.2193350663130933
+        ],
+        "hidden_eff_rank_mean_std": [
+          2.551799899085634,
+          0.7079710669828408
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.9065696001052856,
+            "backward_diff_std": 0.2355133444070816,
+            "max_grad": 0.7909362316131592,
+            "hidden_eff_rank": 2.9134001525045674
+          },
+          {
+            "task_loss": 0.882307231426239,
+            "backward_diff_std": 0.18856506049633026,
+            "max_grad": 0.4402271509170532,
+            "hidden_eff_rank": 1.5624402568964741
+          },
+          {
+            "task_loss": 0.802875280380249,
+            "backward_diff_std": 0.10049130022525787,
+            "max_grad": 0.26310789585113525,
+            "hidden_eff_rank": 3.1795592878558594
+          }
+        ]
+      },
+      "GRU_baseline": {
+        "task_loss_mean_std": [
+          0.8038673996925354,
+          0.08329332466813365
+        ],
+        "backward_diff_std_mean_std": [
+          0.17502663532892862,
+          0.033397324874074236
+        ],
+        "max_grad_mean_std": [
+          0.5014404555161794,
+          0.22580649053450522
+        ],
+        "hidden_eff_rank_mean_std": [
+          3.0452248034372196,
+          0.6377000250824045
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.8219583034515381,
+            "backward_diff_std": 0.16275478899478912,
+            "max_grad": 0.7941439747810364,
+            "hidden_eff_rank": 3.289648507907814
+          },
+          {
+            "task_loss": 0.8956247568130493,
+            "backward_diff_std": 0.14166416227817535,
+            "max_grad": 0.24451589584350586,
+            "hidden_eff_rank": 2.171225233488469
+          },
+          {
+            "task_loss": 0.6940191388130188,
+            "backward_diff_std": 0.2206609547138214,
+            "max_grad": 0.46566149592399597,
+            "hidden_eff_rank": 3.6748006689153754
+          }
+        ]
+      },
+      "GRU_coherence": {
+        "task_loss_mean_std": [
+          0.8022648692131042,
+          0.07136442613642628
+        ],
+        "backward_diff_std_mean_std": [
+          0.18328876296679178,
+          0.022367811333871817
+        ],
+        "max_grad_mean_std": [
+          0.519800066947937,
+          0.20741527459848383
+        ],
+        "hidden_eff_rank_mean_std": [
+          3.1227861984194143,
+          0.46023821996516456
+        ],
+        "per_seed": [
+          {
+            "task_loss": 0.8082213401794434,
+            "backward_diff_std": 0.1661296784877777,
+            "max_grad": 0.8012300729751587,
+            "hidden_eff_rank": 3.1768271144363234
+          },
+          {
+            "task_loss": 0.886537492275238,
+            "backward_diff_std": 0.16885411739349365,
+            "max_grad": 0.30746448040008545,
+            "hidden_eff_rank": 2.534037591550592
+          },
+          {
+            "task_loss": 0.7120357751846313,
+            "backward_diff_std": 0.214882493019104,
+            "max_grad": 0.4507056474685669,
+            "hidden_eff_rank": 3.6574938892713265
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1058,6 +1058,38 @@ its own level — they do not cross.
 See `docs/research/2026-06-15_fame_weight_orth_report.md` and the
 unit tests in `tests/test_orthogonality.py` (20/20 pass).
 
+## Backward Coherence (response to arXiv:2606.08934, round 98)
+
+`backward_coherence_loss(states, λ)` penalizes the discrete step size of
+the hidden-state trajectory: `λ * mean(||h_{t+1} - h_t||²)`. The
+intuition is a *quasi-reverse-martingale* — `h_t` should approximate
+`E[h_{t+1}]`. The paper claims stability benefits on PhysioNet ICU,
+FRED-MD, and UCI HAR; in our 1D toy regime (72-cell bench, 4 models × 3
+datasets × 2 conditions × 3 seeds, 100 epochs) the effect is small and
+target-dependent:
+
+- **H1 PARTIAL** — `bwd_std` drops in 2/9 cells, rises in 3/9
+- **H2 ✓** — task loss within ±5% in 8/9 cells (CfC toy_sin improves
+  10%)
+- **H3 ✗** — `max_grad` essentially unchanged (coherence ≠ smoothness)
+
+**Recommended λ=0.1.** PRD-original λ=0.001 is too small (gradient
+ratio ~3.6e-6 vs task loss). λ=1.0 spike task loss by 40-100%. λ=0.1 is
+the safe band where the effect is measurable.
+
+```python
+from lnn.core.smoothness_metrics import backward_coherence_loss
+# states shape (T, d); loss is a 0-d tensor
+aux = backward_coherence_loss(states, lambda_coeff=0.1)
+total = task_loss + aux
+```
+
+Composes additively with orthogonality, smoothness, and any other
+auxiliary loss.
+
+See `docs/research/2026-06-15_cfc_backward_coherence_report.md` and the
+unit tests in `tests/test_smoothness_metrics.py` (21/21 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

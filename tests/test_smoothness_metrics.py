@@ -114,3 +114,58 @@ class TestExports:
         assert callable(mg)
         assert callable(ss)
         assert callable(tv)
+
+
+# ---------------------------------------------------------------------------
+# Round 98 (PRD #10-60) — backward_coherence_loss
+# Response to arXiv:2606.08934 (Chang, June 2026).
+# ---------------------------------------------------------------------------
+
+
+class TestBackwardCoherence:
+    def test_zero_for_constant_trajectory(self) -> None:
+        from lnn.core.smoothness_metrics import backward_coherence_loss
+        h = torch.zeros(50, 8)
+        loss = backward_coherence_loss(h, lambda_coeff=1.0)
+        assert loss.item() == 0.0
+
+    def test_zero_when_lambda_0(self) -> None:
+        from lnn.core.smoothness_metrics import backward_coherence_loss
+        h = torch.randn(50, 8)
+        loss = backward_coherence_loss(h, lambda_coeff=0.0)
+        assert loss.item() == 0.0
+
+    def test_high_for_changing_trajectory(self) -> None:
+        from lnn.core.smoothness_metrics import backward_coherence_loss
+        # Trajectory that jumps 1.0 each step
+        h = torch.arange(50, dtype=torch.float32).unsqueeze(-1).expand(50, 8)
+        loss = backward_coherence_loss(h, lambda_coeff=1.0)
+        # mean(||h_{t+1} - h_t||^2) = 1.0 for unit jumps
+        assert loss.item() == 1.0
+
+    def test_gradient_flows(self) -> None:
+        from lnn.core.smoothness_metrics import backward_coherence_loss
+        h = torch.randn(20, 4, requires_grad=True)
+        loss = backward_coherence_loss(h, lambda_coeff=0.5)
+        loss.backward()
+        assert h.grad is not None
+        assert h.grad.abs().sum() > 0
+
+    def test_backward_coherence_exported(self) -> None:
+        from lnn.core import backward_coherence_loss as bcl  # noqa: F401
+        assert callable(bcl)
+
+    def test_rejects_3d(self) -> None:
+        from lnn.core.smoothness_metrics import backward_coherence_loss
+        try:
+            backward_coherence_loss(torch.randn(2, 3, 4), lambda_coeff=1.0)
+            assert False, "should have raised"
+        except ValueError:
+            pass
+
+    def test_short_trajectory_returns_zero(self) -> None:
+        """T=1 → no diffs → 0."""
+        from lnn.core.smoothness_metrics import backward_coherence_loss
+        h = torch.randn(1, 8)
+        loss = backward_coherence_loss(h, lambda_coeff=1.0)
+        assert loss.item() == 0.0
