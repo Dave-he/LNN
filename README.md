@@ -200,6 +200,40 @@ compute the auxiliary loss.  See
 `docs/research/2026-06-14_orthogonality_report.md` and the unit
 tests in `tests/test_orthogonality.py`.
 
+## CosineRouter (parameter-free geometric-coupling routing, optional)
+
+`CosineRouter` (PRD #10-41, round 82) implements the parameter-free
+online K-Means router from arXiv:2605.12476 (Routers Learn the
+Geometry of Their Experts, 2026-05-12).  It maintains per-expert
+running hidden-state means and assigns tokens by cosine similarity.
+Unlike `ForecastabilityRouter`, it has **zero learned parameters**.
+
+```python
+from lnn import FAMECfCNetwork
+
+# Switch to the parameter-free cosine router.  No learned router,
+# no φ-balancing, just cosine similarity to per-expert means.
+net = FAMECfCNetwork(
+    input_size=3, hidden_size=24, output_size=1,
+    n_experts=3, top_k=1,
+    router_type="cosine", ema_alpha=0.05,
+)
+y = net(x)  # forward and forward_with_aux unchanged
+```
+
+**Honest negative result on toy K=3 top_k=1** (round 82 smoke-bench):
+the cosine router alone reaches 0.96 ± 0.35 with 3/3 seeds diverging
+(worse than the learned-router baseline 0.76 ± 0.79 with 1/3 diverging).
+Root cause: zero-init expert means → uniform softmax → EMA needs
+many consistent routing events to learn cluster centers, which a tiny
+toy sin problem (3 experts, 64 samples × 32 steps) cannot provide.
+The paper's claim ("lowest load imbalance") is from a **1B SMoE** with
+millions of tokens per expert — the cosine router is **scale-dependent**.
+For toy / small-data problems, keep `router_type="learned"` (default)
+and combine with `phi_balance=True` + `orthogonality_loss` instead.
+See `docs/research/2026-06-14_cosine_router_report.md` and
+`tests/test_cosine_router.py`.
+
 ## φ-Balancing (EMA-based expert load balancing)
 
 `PhiBalancer` (PRD #10-40, round 81) implements the

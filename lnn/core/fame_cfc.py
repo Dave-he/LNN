@@ -26,6 +26,7 @@ import torch
 import torch.nn as nn
 
 from lnn.core.cfc import CfCCell
+from lnn.core.cosine_router import CosineRouter
 from lnn.core.forecastability_router import ForecastabilityRouter
 from lnn.core.phi_balancing import PhiBalancer
 from lnn.core.sequence_utils import select_step_delta, select_step_mask
@@ -49,6 +50,11 @@ class FAMECfCCell(nn.Module):
             ``False`` (back-compat with round 80).
         ema_alpha: φ-balancing EMA decay (forwarded to ``PhiBalancer``).
         phi_step_size: φ-balancing mirror-descent step size η.
+        router_type: ``"learned"`` (default, back-compat) uses
+            ``ForecastabilityRouter``; ``"cosine"`` uses the
+            parameter-free ``CosineRouter`` (PRD #10-41, arXiv:2605.12476).
+            ``phi_balance`` is ignored when ``router_type="cosine"``
+            (no learned logits to bias).
     """
 
     def __init__(
@@ -63,10 +69,14 @@ class FAMECfCCell(nn.Module):
         phi_balance: bool = False,
         ema_alpha: float = 0.01,
         phi_step_size: float = 0.01,
+        router_type: str = "learned",
     ):
         super().__init__()
         assert n_experts >= 1
         assert 1 <= top_k <= n_experts
+        assert router_type in ("learned", "cosine"), (
+            f"router_type must be 'learned' or 'cosine', got {router_type!r}"
+        )
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.n_experts = int(n_experts)
@@ -77,6 +87,7 @@ class FAMECfCCell(nn.Module):
         self.phi_balance = bool(phi_balance)
         self.ema_alpha = float(ema_alpha)
         self.phi_step_size = float(phi_step_size)
+        self.router_type = router_type
 
         self.experts = nn.ModuleList(
             [
@@ -92,7 +103,8 @@ class FAMECfCCell(nn.Module):
         # φ-balancing (PRD #10-40): per-layer balancer instance shared
         # between the router (for bias add) and the cell (for EMA update).
         # We expose it as a submodule so .to(device) etc. move the buffers.
-        if self.phi_balance:
+        # Note: φ-balancing only makes sense with the learned router.
+        if self.phi_balance and router_type == "learned":
             self.balancer = PhiBalancer(
                 n_experts=self.n_experts,
                 ema_alpha=self.ema_alpha,
@@ -100,14 +112,23 @@ class FAMECfCCell(nn.Module):
             )
         else:
             self.balancer = None
-        self.router = ForecastabilityRouter(
-            input_size=input_size,
-            hidden_size=hidden_size,
-            n_experts=self.n_experts,
-            top_k=self.top_k,
-            router_hidden=self.router_hidden,
-            balancer=self.balancer,  # may be None — back-compat
-        )
+        if router_type == "learned":
+            self.router = ForecastabilityRouter(
+                input_size=input_size,
+                hidden_size=hidden_size,
+                n_experts=self.n_experts,
+                top_k=self.top_k,
+                router_hidden=self.router_hidden,
+                balancer=self.balancer,  # may be None — back-compat
+            )
+        else:  # "cosine" — parameter-free
+            self.router = CosineRouter(
+                input_size=input_size,
+                hidden_size=hidden_size,
+                n_experts=self.n_experts,
+                top_k=self.top_k,
+                ema_alpha=self.ema_alpha,
+            )
 
     def forward(
         self,
@@ -158,6 +179,11 @@ class FAMECfCCell(nn.Module):
         # already added inside router.forward() via the same instance.
         if self.balancer is not None and self.training:
             self.balancer.update(self.last_top_idx)
+        # CosineRouter (PRD #10-41): update per-expert running hidden-state
+        # mean from the just-routed [x_t; h].  Same train/eval gate.
+        if self.router_type == "cosine" and self.training:
+            combined = torch.cat([x_t, h], dim=-1)
+            self.router.update(combined, self.last_top_idx)
         # Run all K experts but only the top-K contribute via g.
         # (Masking rather than skipping the non-top-K forward keeps
         # autograd simple and ensures gradient flows only to activated experts.)
@@ -186,8 +212,9 @@ class FAMECfCNetwork(nn.Module):
         tau_scales: Per-branch τ init, forwarded to every expert.
         router_hidden: Router MLP width (``0`` = linear).
         phi_balance: Forward to every layer's ``FAMECfCCell``.
-        ema_alpha: Forward to every layer's balancer.
+        ema_alpha: Forward to every layer's balancer / CosineRouter.
         phi_step_size: Forward to every layer's balancer.
+        router_type: ``"learned"`` (default) or ``"cosine"`` (PRD #10-41).
     """
 
     def __init__(
@@ -205,6 +232,7 @@ class FAMECfCNetwork(nn.Module):
         phi_balance: bool = False,
         ema_alpha: float = 0.01,
         phi_step_size: float = 0.01,
+        router_type: str = "learned",
     ):
         super().__init__()
         self.input_size = input_size
@@ -220,6 +248,7 @@ class FAMECfCNetwork(nn.Module):
         self.phi_balance = bool(phi_balance)
         self.ema_alpha = float(ema_alpha)
         self.phi_step_size = float(phi_step_size)
+        self.router_type = router_type
 
         self.cells = nn.ModuleList()
         for i in range(num_layers):
@@ -236,6 +265,7 @@ class FAMECfCNetwork(nn.Module):
                     phi_balance=self.phi_balance,
                     ema_alpha=self.ema_alpha,
                     phi_step_size=self.phi_step_size,
+                    router_type=self.router_type,
                 )
             )
         self.output_proj = nn.Linear(hidden_size, output_size)

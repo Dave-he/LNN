@@ -40,6 +40,7 @@ from lnn.core.long_sequence import (
     parallel_liquid_relaxation,
 )
 from lnn.core.fame_cfc import FAMECfCCell, FAMECfCNetwork
+from lnn.core.cosine_router import CosineRouter
 from lnn.core.forecastability_router import ForecastabilityRouter
 from lnn.core.ltc import LTCCell, LTCNetwork, TransformableLTC
 from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sample
@@ -141,6 +142,7 @@ __all__ = [
     "ForecastabilityRouter",
     "orthogonality_loss",
     "PhiBalancer",
+    "CosineRouter",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
