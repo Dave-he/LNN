@@ -39,6 +39,8 @@ from lnn.core.long_sequence import (
     LongSequenceLiquidClassifier,
     parallel_liquid_relaxation,
 )
+from lnn.core.fame_cfc import FAMECfCCell, FAMECfCNetwork
+from lnn.core.forecastability_router import ForecastabilityRouter
 from lnn.core.ltc import LTCCell, LTCNetwork, TransformableLTC
 from lnn.core.mdn import MDNHead, mdn_mean, mdn_negative_log_likelihood, mdn_sample
 from lnn.core.mr_moe_cfc import MRMoECfCCell, MRMoECfCNetwork
@@ -132,6 +134,9 @@ __all__ = [
     "EulerLTCDTNetwork",
     "MRMoECfCCell",
     "MRMoECfCNetwork",
+    "FAMECfCCell",
+    "FAMECfCNetwork",
+    "ForecastabilityRouter",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

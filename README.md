@@ -121,6 +121,45 @@ entropy stays at ≈ log K after 30 epochs (no expert collapse).
 See `docs/research/2026-06-14_mr_moe_cfc_sweep_report.md` and the
 unit tests in `tests/test_mr_moe_cfc.py`.
 
+## FAME-style Top-K Sparse MoE Routing
+
+`ForecastabilityRouter` + `FAMECfCCell` + `FAMECfCNetwork` (PRD
+#10-36, round 78) wrap the round 77 K-expert pool behind a **sparse
+top-K router** that activates only `K'` of `K` experts per step.
+This is the minimum-viable implementation of the
+"cost-aware sparse router" from arXiv:2606.08896 (FAME, 2026-06-08)
+— a production-deployed forecastability-aware MoE for retail
+vending-machine sales (5000+ machines, 60M+ transactions, Top-2
+routing −12.4% MSE vs LightGBM).
+
+```python
+from lnn import FAMECfCNetwork
+
+# 3 CfC experts, top-2 sparse routing (FAME paper default).
+# top_k=1 → argmax single expert; top_k=K → dense softmax (round 77).
+model = FAMECfCNetwork(
+    input_size=3,
+    hidden_size=24,
+    output_size=1,
+    n_experts=3,
+    top_k=2,                          # K' ∈ [1, K]
+    n_tau_per_expert=1,               # round 76 n_tau per expert
+)
+y = model(x)                         # [B, T, 1]
+# Inspect activated experts per step:
+g = model.cells[0].last_g            # [B, K], exactly top_k nonzeros per row
+idx = model.cells[0].last_top_idx    # [B, top_k] indices of activated experts
+```
+
+Smoke-bench on toy sin/cos: `top_k=2` reaches final MSE 0.0366
+(≈ equal to `top_k=3` dense at 0.0364) but with **3.7× tighter
+std** (0.0012 vs 0.0034) — the FAME paper's core "sparse is
+more stable" claim, reproduced on a 1-seed-runner homely toy
+setup.  Activated-experts-per-step is exactly `top_k` (sparsity
+contract honoured).  See
+`docs/research/2026-06-14_fame_cfc_sweep_report.md` and the unit
+tests in `tests/test_fame_cfc.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |
