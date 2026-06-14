@@ -282,6 +282,61 @@ gives the round 80 behaviour — fully back-compatible.  See
 `docs/research/2026-06-14_phi_balancing_report.md` and the unit
 tests in `tests/test_phi_balancing.py`.
 
+## MoE Ecology Diagnostic (E = T·H/(O+B), optional)
+
+`moe_ecology_number` and `MoEEcologyMonitor` (PRD #10-42, round 83)
+implement the **dimensionless control parameter** for MoE health from
+arXiv:2605.06415 (Zhang, 2026).  The paper's central claim:
+
+> E = T·H / (O + B) ≥ 0.5  ⇒  zero dead experts, no aux loss needed.
+
+where T = routing temperature, H = routing entropy weight, O = oracle
+weight, B = balance (load-balancing aux loss) weight.  This is the
+**first theoretical diagnostic** for our LNN+MoE stack — used to
+monitor whether a cell is in a healthy ecology regime.
+
+```python
+from lnn import FAMECfCCell, MoEEcologyMonitor
+import torch
+
+cell = FAMECfCCell(input_size=3, hidden_size=24, n_experts=3, top_k=1)
+monitor = MoEEcologyMonitor(n_experts=3, ema_alpha=0.01)
+
+# Run training step.
+cell.train()
+x_t = torch.randn(8, 3)
+h = torch.randn(8, 24)
+h_new = cell(x_t, h, dt=1.0)
+
+# Step the monitor with the cell's last-g (mixture weights) and
+# the active aux-loss weight (orth λ or φ η or 0).
+info = monitor.step(cell.last_g, T=1.0, B=0.001)
+# info == {"E": 213.4, "dead_experts": 0, "utilization": [0.27, 0.35, 0.38]}
+
+# Or one-shot diagnostic straight from the cell:
+diag = cell.moe_ecology_diagnostic(B=0.001)  # pass lambda_coeff or phi_step_size
+# diag == {"E": 213.4, "dead_experts": 0, "utilization": [...]}
+```
+
+**Round 83 smoke-bench** (16-cell FAME grid + ortho toxicity test):
+
+- **12/12 toy 16-cell grid configs** have **dead=0** — paper's
+  E ≥ 0.5 ⇒ no dead experts claim **reproduced** on our FAME stack.
+- **K=3 top_k=2 n_tau=2 wins** (0.538) — round 79 K=5 dense finding
+  replicated at K=3 with longer time-scale.
+- **Ortho toxicity confirmed at high λ** on all 3 synthetic datasets
+  (toy sin / random / structured): λ=1.0 hurts loss by 4.7% to 16.4%
+  vs λ=0.  Round 80's default **λ=0.001 is safe** (loss change
+  < 0.1% vs λ=0 on all 3 datasets).
+- **E scales as 1/λ** (E = 1/(B+eps) in our no-T setting): when
+  λ=1.0, E drops to 0.34-0.96, **crossing the paper's 0.5 threshold**
+  for toy_sin and structured.
+
+The diagnostic is **purely additive** — `FAMECfCCell.forward(...)` and
+`FAMECfCCell.forward_with_aux(...)` are unchanged.  See
+`docs/research/2026-06-14_moe_ecology_report.md` and the unit tests in
+`tests/test_moe_ecology.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |

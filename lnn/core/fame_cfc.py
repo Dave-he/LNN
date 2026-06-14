@@ -150,6 +150,40 @@ class FAMECfCCell(nn.Module):
         del expert_outs  # forward() doesn't expose them; use forward_with_aux
         return h_new
 
+    def moe_ecology_diagnostic(self, B: float = 0.0, T: float = 1.0, O: float = 0.0) -> dict:
+        """Return current MoE ecology diagnostic (PRD #10-42, Zhang 2026).
+
+        Computes E = T·H/(O+B) and dead-expert count from the most
+        recent ``last_g``.  Useful for live-monitoring whether the
+        cell is in a healthy ecology regime (E ≥ 0.5 in the paper's
+        setting) or has dead experts.
+
+        Args:
+            B: Balance weight — pass ``lambda_coeff`` (orth) or
+                ``phi_step_size`` (φ) or 0 (plain).
+            T: Routing temperature.  Default 1.0 (no scaling in FAME).
+            O: Oracle weight.  Default 0.0.
+
+        Returns:
+            Dict with ``E`` (float), ``dead_experts`` (int), and
+            ``utilization`` (list of K floats, per-expert mean over
+            the last batch).
+        """
+        from lnn.core.moe_ecology import moe_ecology_number
+        if not hasattr(self, "last_g") or self.last_g is None:
+            return {"E": float("nan"), "dead_experts": -1, "utilization": []}
+        E = moe_ecology_number(
+            router_logits=self.last_g, last_g=self.last_g,
+            T=T, H=None, O=O, B=B,
+        )
+        util = self.last_g.mean(dim=0)
+        dead = int((util < 0.01).sum().item())
+        return {
+            "E": float(E.item()),
+            "dead_experts": dead,
+            "utilization": util.tolist(),
+        }
+
     def forward_with_aux(
         self,
         x_t: torch.Tensor,
