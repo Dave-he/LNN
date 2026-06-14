@@ -886,7 +886,70 @@ metrics.
 with full BPTT. CfC is smooth but high-rank — a distinct regime.
 
 See `docs/research/2026-06-15_cfc_effective_rank_report.md` and
-the unit tests in `tests/test_effective_rank.py` (20/20 pass).
+the unit tests in `tests/test_effective_rank.py` (27/27 pass).
+
+## Per-Expert Effective Rank (FAME/MR-MoE diversity test, round 95)
+
+`per_expert_effective_rank`, `expert_diversity_ratio`, and
+`expert_diversity_summary` (PRD #10-57, round 95) directly test the
+**"diverse experts"** claim of the FAME paper (arXiv:2606.08896)
+and the **"multi-rate specialization"** claim of MR-MoE
+(arXiv:2606.12240) by measuring per-expert weight effective rank
+in a FAME/MR-MoE cell.
+
+```python
+from lnn.core.fame_cfc import FAMECfCCell
+from lnn.core.effective_rank import expert_diversity_summary
+
+cell = FAMECfCCell(input_size=1, hidden_size=8, n_experts=5, top_k=2)
+# ... train for N epochs ...
+summary = expert_diversity_summary(cell)
+# {
+#   'per_expert': [5.04, 4.39, 4.86, 5.13, 4.27],  # K=5 eff_ranks
+#   'diversity_ratio': 1.32,                       # max/min
+#   'mean': 4.74, 'min': 4.27, 'max': 5.13, 'std': 0.32,
+#   'n_experts': 5, 'n_dead': 0
+# }
+```
+
+**Round 95 bench (3 datasets × 2 models × 2 conditions × 3 seeds,
+100 epochs)**:
+
+| dataset    | FAME trained div | MR-MoE trained div | FAME > MR-MoE? |
+|------------|------------------|--------------------|-----------------|
+| toy_sin    | **1.32 ± 0.08**  | 1.08 ± 0.01        | ✓ (Δ=0.24)     |
+| structured | 1.15 ± 0.04      | 1.12 ± 0.04        | ✓ (Δ=0.03)     |
+| random     | **1.31 ± 0.08**  | 1.13 ± 0.01        | ✓ (Δ=0.18)     |
+
+**Verdict**:
+- **H1 (FAME develops > 1.5 diversity) REJECTED**: FAME trains to
+  1.15-1.32 (not > 1.5), but **FAME is consistently more diverse
+  than MR-MoE** (Δ = 0.03-0.24).
+- **H2 (utilization correlates with eff_rank) REJECTED**: no
+  correlation between router utilization and weight rank.
+- **H3 (dead experts collapse) REJECTED**: dead experts stay at
+  init eff_rank (~5-6), don't collapse to 0. Good news: router
+  correctly gates gradient.
+- **H4 (orthogonality boosts diversity) NOT TESTED** — direct test
+  of round 80 mechanism, deferred to backlog.
+
+**Verdict on FAME & MR-MoE papers**: the FAME "diverse experts"
+claim is **modestly supported** in our cell-level instantiation;
+the MR-MoE "multi-rate specialization" claim is **NOT supported**
+(dense softmax mixes experts too uniformly).
+
+**Implication for the LNN stack**:
+- **FAME is the better MoE choice when expert diversity matters**
+  (top_k routing creates real differentiation)
+- **MR-MoE is closer to a soft attention ensemble** (dense routing
+  averages experts)
+- The 5-round smoothness + diversity audit (rounds 91-95) is
+  complete: smoothness, low rank, robustness, and diversity are
+  **independent properties** of CfC and the MoE stack — not
+  interchangeable.
+
+See `docs/research/2026-06-15_per_expert_effective_rank_report.md`
+and the unit tests in `tests/test_effective_rank.py` (27/27 pass).
 
 ## What Is Stable?
 

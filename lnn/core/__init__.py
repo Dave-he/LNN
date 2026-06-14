@@ -75,7 +75,10 @@ from lnn.core.temporal_dropout import (
 from lnn.core.effective_rank import (
     effective_rank,
     effective_rank_trajectory,
+    expert_diversity_ratio,
+    expert_diversity_summary,
     mean_effective_rank,
+    per_expert_effective_rank,
     rank_summary,
 )
 from lnn.core.phi_balancing import PhiBalancer
@@ -185,6 +188,9 @@ __all__ = [
     "mean_effective_rank",
     "effective_rank_trajectory",
     "rank_summary",
+    "per_expert_effective_rank",
+    "expert_diversity_ratio",
+    "expert_diversity_summary",
     "PhiBalancer",
     "CosineRouter",
     "moe_ecology_number",

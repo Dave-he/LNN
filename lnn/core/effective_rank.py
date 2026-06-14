@@ -108,3 +108,118 @@ def rank_summary(
     else:
         out["hidden_eff_rank"] = None
     return out
+
+
+def per_expert_effective_rank(cell) -> list[float]:
+    """Compute the mean effective rank of each expert's 2D weight matrices.
+
+    Iterates over ``cell.experts[i]`` (assumed to be an ``nn.ModuleList``)
+    and, for each expert, collects every 2D weight parameter, calls
+    ``effective_rank`` on it, and returns the **mean** across matrices
+    for that expert.
+
+    This is the round 95 (PRD #10-57) diagnostic for FAME/MR-MoE —
+    direct measurement of whether the experts have **distinct** weight
+    signatures after training (the "diverse experts" claim of the FAME
+    paper, arXiv:2606.08896).
+
+    Args:
+        cell: An ``nn.Module`` with an ``experts: nn.ModuleList``
+            attribute (FAMECfCCell, MRMoECfCCell, etc.).
+
+    Returns:
+        List of K floats, one per expert (K = len(cell.experts)).
+        Each value is the mean eff_rank across that expert's 2D
+        weight matrices.  Returns ``[]`` if the cell has no experts
+        or no 2D weights.
+    """
+    if not hasattr(cell, "experts"):
+        return []
+    experts = cell.experts
+    out: list[float] = []
+    for expert in experts:
+        per_weight: list[float] = []
+        for _, p in expert.named_parameters():
+            if p.dim() == 2:
+                per_weight.append(effective_rank(p.detach()))
+        if per_weight:
+            out.append(sum(per_weight) / len(per_weight))
+        else:
+            out.append(0.0)
+    return out
+
+
+def expert_diversity_ratio(per_expert_ranks: list[float]) -> float:
+    """Max/min ratio of per-expert effective ranks.
+
+    A simple diversity measure: 1.0 means all experts have the
+    same eff_rank (uniform / collapsed), > 1.5 means the experts
+    are clearly distinct.
+
+    Args:
+        per_expert_ranks: list of K floats, one per expert.
+
+    Returns:
+        max(ranks) / min(ranks), or 0.0 if all ranks are zero.
+    """
+    if not per_expert_ranks:
+        return 0.0
+    mn = min(per_expert_ranks)
+    mx = max(per_expert_ranks)
+    if mn < 1e-12:
+        # All-zero or near-zero → degenerate; return inf so callers
+        # can flag it but never silently see 0/0 = nan.
+        return float("inf") if mx > 1e-12 else 0.0
+    return mx / mn
+
+
+def expert_diversity_summary(cell) -> dict:
+    """Combined per-expert effective rank diagnostic (round 95, PRD #10-57).
+
+    Returns a dict with:
+      - 'per_expert': list of K eff_rank values (one per expert)
+      - 'mean': mean across experts
+      - 'min': minimum across experts
+      - 'max': maximum across experts
+      - 'std': std across experts
+      - 'diversity_ratio': max/min ratio
+      - 'n_experts': K
+      - 'n_dead': number of experts with eff_rank < 0.5 (collapsed)
+
+    Args:
+        cell: An ``nn.Module`` with ``experts: nn.ModuleList`` attribute.
+
+    Returns:
+        Dict as above. Empty cell → dict with zeros and n_experts=0.
+    """
+    per = per_expert_effective_rank(cell)
+    if not per:
+        return {
+            "per_expert": [],
+            "mean": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "std": 0.0,
+            "diversity_ratio": 0.0,
+            "n_experts": 0,
+            "n_dead": 0,
+        }
+    n_dead = sum(1 for r in per if r < 0.5)
+    return {
+        "per_expert": per,
+        "mean": sum(per) / len(per),
+        "min": min(per),
+        "max": max(per),
+        "std": _std(per),
+        "diversity_ratio": expert_diversity_ratio(per),
+        "n_experts": len(per),
+        "n_dead": n_dead,
+    }
+
+
+def _std(xs: list[float]) -> float:
+    """Population std (no Bessel correction) — tiny helper, avoids numpy import."""
+    if len(xs) < 2:
+        return 0.0
+    m = sum(xs) / len(xs)
+    return (sum((x - m) ** 2 for x in xs) / len(xs)) ** 0.5
