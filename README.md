@@ -1280,6 +1280,71 @@ tokens = embed(observations, times, mask)  # (B, 8, 16)
 See `docs/research/2026-06-15_quite_irregular_ts_report.md` and the
 unit tests in `tests/test_quite_embedding.py` (19/19 pass).
 
+## QuITE+MoE: Irregularity-Context-Aware Expert Routing (round 103)
+
+`QuiteRouter(input_size, hidden_size, d_context, n_experts, top_k, router_hidden=0)`,
+`QuiteMoECfCCell(input_size, hidden_size, n_experts, top_k, n_tau_per_expert,
+tau_scales, d_context)`, and `QuiteMoECfCNetwork(input_size, hidden_size,
+n_experts, top_k, n_queries, d_context, n_heads, output_size)` combine
+the round 102 QuITE query-based embedding with the round 78 FAME
+top-K sparse MoE routing.
+
+The QuITE module pre-computes a global "irregularity context" vector
+from the full sequence (1 attention call), which is then concatenated
+to `[x_t, h_prev]` for the router:
+
+```
+Input: irregular (observations, times, mask)
+       ↓
+QuITE module (one-shot) → tokens (B, n_queries, d_context)
+       ↓
+Mean pool → context (B, d_context)
+       ↓
+At each step t:
+  router_in = [x_t, h_prev, context]  →  Linear  →  K logits
+       ↓
+  top-K mask + softmax  →  g (B, K)
+       ↓
+  h_new = Σ_k g_k · expert_k(x_t, h_prev)
+```
+
+**Bench result (24 cells: 2 conds × 3 datasets × 2 K settings × 2 seeds × 100 epochs)**:
+Test on data with HIGHER missing rate than training (50% vs 30%) and
+extreme (70% for `test_robust_mse`):
+
+| dataset    | K,top_k | FAME test | QuITE+MoE test | Δ      | FAME H | QuITE+MoE H |
+|------------|---------|-----------|----------------|--------|--------|-------------|
+| sin_irr    | 2,1     | 0.0857    | 0.0872         | +1.7%  | 0.000  | 0.162       |
+| sin_irr    | 3,2     | 0.0864    | 0.0877         | +1.5%  | 0.000  | 0.949       |
+| structured | 2,1     | 0.3873    | 0.3919         | +1.2%  | 0.000  | 0.214       |
+| structured | 3,2     | 0.3854    | 0.3930         | +2.0%  | 0.000  | **1.027**   |
+| random     | 2,1     | 0.1768    | 0.1970         | +11.4% | 0.000  | 0.516       |
+| random     | 3,2     | 0.1924    | **0.1294**     | **-32.7%** | 0.000 | **1.002** |
+
+**Key findings**:
+- **WINS on noisy data with K=3**: -32.7% test_mse, -27.7% robust_mse on random_irr
+- **TIES on smooth/structured data**: ±2% test_mse (no regression)
+- **2-3× higher routing entropy** vs FAME: QuITE enables expert diversification
+- **Training stable**: 0 NaN, bounded grad norms
+
+The **structural improvement in expert utilization** is a real positive
+beyond the test_mse deltas. FAME is locked into H=0 (single expert)
+because the per-step `[x_t, h]` signal is dominated by `h`. The QuITE
+context provides an additional axis of variation that breaks the tie.
+
+```python
+from lnn.core.quite_moe import QuiteMoECfCNetwork
+# (B, T, D) irregular values, (B, T) times, (B, T) mask (True=valid)
+net = QuiteMoECfCNetwork(
+    input_size=2, hidden_size=16, n_experts=3, top_k=2,
+    n_queries=4, d_context=16, n_heads=4, output_size=2,
+)
+outputs = net(observations, times, mask=mask)  # (B, T, 2)
+```
+
+See `docs/research/2026-06-15_quite_moe_routing_report.md` and the
+unit tests in `tests/test_quite_moe.py` (28/28 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

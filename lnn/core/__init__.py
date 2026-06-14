@@ -101,6 +101,12 @@ from lnn.core.quite_embedding import (
     apply_quite_embedding,
     quite_baseline_modes,
 )
+from lnn.core.quite_moe import (
+    QuiteMoECfCCell,
+    QuiteMoECfCNetwork,
+    QuiteRouter,
+    quite_context_pool,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -234,6 +240,10 @@ __all__ = [
     "QueryIrregularEmbedding",
     "apply_quite_embedding",
     "quite_baseline_modes",
+    "QuiteRouter",
+    "QuiteMoECfCCell",
+    "QuiteMoECfCNetwork",
+    "quite_context_pool",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
