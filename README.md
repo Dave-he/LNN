@@ -951,6 +951,62 @@ the MR-MoE "multi-rate specialization" claim is **NOT supported**
 See `docs/research/2026-06-15_per_expert_effective_rank_report.md`
 and the unit tests in `tests/test_effective_rank.py` (27/27 pass).
 
+## FAME + Orthogonality Diversity Test (round 80 mechanism, round 96)
+
+`scripts/bench_fame_orth_diversity.py` (PRD #10-58) tests the open
+H4 from round 95: does the round 80 `orthogonality_loss`
+(arXiv:2606.03631 AnchorMoE) at the safe λ=0.001 setting
+actually increase FAME's expert diversity?
+
+```python
+# Compare baseline vs +orth at λ=0.001, 100 epochs, 3 seeds
+from lnn.core.orthogonality import orthogonality_loss
+from lnn.core.fame_cfc import FAMECfCCell
+from lnn.core.effective_rank import expert_diversity_summary
+
+cell = FAMECfCCell(input_size=1, hidden_size=8, n_experts=5, top_k=2)
+# Train with:  h_new, expert_outs = cell.forward_with_aux(x, h, dt=1.0)
+#              orth = orthogonality_loss(expert_outs, lambda_coeff=0.001)
+#              loss = task_loss + orth
+summary = expert_diversity_summary(cell)
+# 'diversity_ratio' = max/min per-expert eff_rank
+```
+
+**Round 96 bench (3 datasets × {baseline, +orth λ=0.001} × 3 seeds,
+100 epochs)**:
+
+| dataset    | cond     | div_ratio   | act_cos       |
+|------------|----------|-------------|---------------|
+| toy_sin    | baseline | 1.32 ± 0.08 | 0.7555        |
+| toy_sin    | +orth    | 1.31 ± 0.06 | 0.7337        |
+| structured | baseline | 1.15 ± 0.04 | 0.4238        |
+| structured | +orth    | 1.16 ± 0.03 | **0.2600**    |
+| random     | baseline | 1.31 ± 0.08 | 0.3319        |
+| random     | +orth    | 1.24 ± 0.04 | **0.2472**    |
+
+**Verdict**:
+- **H1 (orth increases weight diversity) REJECTED**: Δ div_ratio = -0.07 to +0.01, all within noise
+- **H2 (task loss safe at λ=0.001) CONFIRMED**: Δ = 0% / -2% / +3%
+- **H3 (orth reduces activation cos_sim) PARTIAL**: structured -0.164, random -0.085, toy_sin -0.022
+
+**Key insight — activation vs weight diversity**:
+- **Activation diversity** = expert hidden states are decorrelated on the same input
+- **Weight diversity** = expert weight matrices have different singular value spectra
+- `orthogonality_loss` targets **activation** diversity directly. It does NOT target weight diversity.
+- To boost weight diversity, we'd need a penalty on the **Gram matrix of weight matrices** (e.g. `||W_i W_j^T||_F^2`).
+
+**Verdict on arXiv:2606.03631 (AnchorMoE)**:
+- Orthogonality constraint decorrelates expert representations: **CONFIRMED** (H3, structured/random)
+- Constraint is safe for task loss at small λ: **CONFIRMED** (H2, ±3%)
+- Constraint increases weight diversity: **REJECTED** (H1) — orthogonality is activation-level only
+
+**The 6-round audit (rounds 91-96) is now complete**:
+smoothness, robustness, rank, weight diversity, activation diversity
+are **independent properties** of CfC and the MoE stack. Each
+mechanism targets its own level — they do not cross.
+
+See `docs/research/2026-06-15_fame_orth_diversity_report.md`.
+
 ## What Is Stable?
 
 | Area | Path | Status |
