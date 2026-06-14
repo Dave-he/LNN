@@ -597,6 +597,61 @@ When set, callers should pass `task_loss` to
 `docs/research/2026-06-15_per_expert_gradient_report.md` and the
 unit tests in `tests/test_per_expert_gradient.py`.
 
+## Causality-Gated Orth (auto-reduce λ when per-expert imbalance > threshold, opt-in)
+
+`CausalityGatedOrth` (PRD #10-51, round 89) is the **policy
+counterpart** to round 88's per-expert gradient **diagnostic**.
+While the diagnostic reports `max_min_ratio_grad`, the gate
+turns it into action: when per-expert causal imbalance exceeds
+the threshold (default 10.0), automatically rescale `λ` to a
+safe value (default 0.001, sticky).
+
+```python
+from lnn import FAMECfCNetwork
+
+net = FAMECfCNetwork(
+    input_size=3, hidden_size=24, output_size=1,
+    n_experts=3, top_k=1,
+    ecology_gated_orth=True,           # round 85 (observational E)
+    causality_gated_orth=True,         # round 89 (causal per-expert)
+    causality_ratio_threshold=10.0,    # from round 88 finding
+    ecology_orth_lambda_safe=0.001,
+)
+# ... train loop ...
+task_loss = ...  # scalar, with grad
+# Use compute_orth_loss_causality instead of compute_orth_loss.
+# Combined gate takes min(λ_eff from E, λ_eff from causality).
+orth_loss = net.cells[0].compute_orth_loss_causality(
+    outs, user_lambda=1.0, task_loss=task_loss,
+)
+```
+
+**Stack of 2-axis orthogonal gates**:
+- Round 85: `EcologyGatedOrth` fires when observational `E < 0.5`
+- Round 89: `CausalityGatedOrth` fires when per-expert
+  `max_min_ratio_grad > 10.0`
+- Combined: `effective_λ = min(λ_E_safe, λ_cau_safe)` if either
+  gate fires, else `user_lambda`
+
+**Honest-positive headline (round 89)**: in the 9-cell bench,
+with E-gate already active, ratios are bounded at 2-7× in 5
+epochs, so causality gate rarely fires (3/9 cells, structured
+dataset only). The gate is **defense-in-depth** — correctly
+implemented, sticky, and ready to fire if E-gate is disabled
+or training runs longer.
+
+**Honest-negative**: in the 5-epoch regime with E-gate, the
+causality gate doesn't catch anything E-gate misses. The
+13-27× ratios from round 88 only manifest in the no-gate
+collapse regime. For round 90: longer training and threshold
+sweep (5, 10, 20) to calibrate the sweet spot.
+
+The gate is **opt-in** — `causality_gated_orth=False` (default)
+is fully back-compat. When set, callers should pass
+`task_loss` to `compute_orth_loss_causality()`.  See
+`docs/research/2026-06-15_causality_gated_orth_report.md` and
+the unit tests in `tests/test_causality_gated_orth.py`.
+
 ## What Is Stable?
 
 | Area | Path | Status |

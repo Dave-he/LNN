@@ -109,6 +109,8 @@ class FAMECfCCell(nn.Module):
         ecology_H_alpha: float = 0.5,
         ecology_per_expert_grad: bool = False,
         ecology_dead_grad_threshold: float = 1e-6,
+        causality_gated_orth: bool = False,
+        causality_ratio_threshold: float = 10.0,
     ):
         super().__init__()
         assert n_experts >= 1
@@ -137,6 +139,17 @@ class FAMECfCCell(nn.Module):
         self.ecology_H_alpha = float(ecology_H_alpha)
         self.ecology_per_expert_grad = bool(ecology_per_expert_grad)
         self.ecology_dead_grad_threshold = float(ecology_dead_grad_threshold)
+        self.causality_ratio_threshold = float(causality_ratio_threshold)
+        # Round 89 (PRD #10-51): causality-gated orth policy.
+        if causality_gated_orth:
+            from lnn.core.ecology_gated_balancing import CausalityGatedOrth
+            self.causality_gate = CausalityGatedOrth(
+                ratio_threshold=self.causality_ratio_threshold,
+                lambda_safe=ecology_orth_lambda_safe,
+                warmup_steps=self.ecology_warmup_steps,
+            )
+        else:
+            self.causality_gate = None
         # Step counter for ecology-gated balancing (incremented in forward).
         self._step_idx: int = 0
 
@@ -400,6 +413,63 @@ class FAMECfCCell(nn.Module):
             diag = self.moe_ecology_diagnostic(B=user_lambda)
             gate_info = diag.get("ecology_gate_orth", {})
             effective_lambda = gate_info.get("effective_lambda", user_lambda)
+        from lnn.core.orthogonality import orthogonality_loss
+        return orthogonality_loss(outs, lambda_coeff=effective_lambda)
+
+    def compute_orth_loss_causality(
+        self,
+        outs: list[torch.Tensor],
+        user_lambda: float = 0.0,
+        task_loss: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Compute orth loss with causality-gated rescaling (PRD #10-51).
+
+        Round 89.  If ``causality_gated_orth=True`` and the gate has
+        fired (per-expert gradient imbalance > threshold), scales
+        ``user_lambda`` down to ``ecology_orth_lambda_safe``.
+
+        Unlike ``compute_orth_loss`` (round 85) which uses
+        observational E, this uses **causal per-expert gradient
+        imbalance** (round 88).  The two can be complementary.
+
+        Args:
+            outs: List of K [B, hidden_size] per-expert hidden states.
+            user_lambda: User's original orth λ.
+            task_loss: Scalar task loss (required to compute
+                per-expert gradient diagnostic).  If None, falls
+                back to observational E-gate behavior (via the
+                orth_gate if also enabled).
+
+        Returns:
+            Scalar orth loss (possibly rescaled).
+        """
+        effective_lambda = user_lambda
+        if self.causality_gate is not None and self.training:
+            # Compute max_min_ratio_grad via per_expert_gradient_norms
+            # (with the current task_loss, if any).
+            from lnn.core.moe_ecology import per_expert_gradient_norms
+            router_for_grad = getattr(self, "last_router_logits", self.last_g)
+            per_expert = per_expert_gradient_norms(
+                router_for_grad, task_loss, normalize=True,
+            )
+            if per_expert.numel() > 0 and per_expert.max() > 0:
+                ratio = float(per_expert.max().item() / (per_expert.min().item() + 1e-8))
+            else:
+                ratio = 1.0
+            state = self.causality_gate.step(
+                max_min_ratio_grad=ratio, step_idx=self._step_idx,
+            )
+            if state["intervened"]:
+                # effective_lambda = user_lambda * scale
+                effective_lambda = user_lambda * state["effective_lambda_scale"]
+        # Also run orth_gate (round 85) if both are enabled.
+        if self.orth_gate is not None and self.training:
+            diag = self.moe_ecology_diagnostic(B=user_lambda)
+            gate_info = diag.get("ecology_gate_orth", {})
+            e_lambda = gate_info.get("effective_lambda", user_lambda)
+            # Take the more conservative (smaller) of the two.
+            if e_lambda < effective_lambda:
+                effective_lambda = e_lambda
         from lnn.core.orthogonality import orthogonality_loss
         return orthogonality_loss(outs, lambda_coeff=effective_lambda)
 

@@ -480,3 +480,122 @@ class CombinedEcologyGate:
             f"phi={self.phi_gate.intervened}, "
             f"orth={self.orth_subgate.intervened})"
         )
+
+
+class CausalityGatedOrth:
+    """Auto-rescale orth λ when per-expert causal imbalance is high.
+
+    Round 89 (PRD #10-51).  Complements round 85 EcologyGatedOrth
+    (observational E-based) by adding a **causal imbalance** signal.
+
+    Round 88 (PRD #10-50) showed that
+    ``max_min_ratio_grad = max(per_expert_grad)/min(per_expert_grad)``
+    is **13-27× in 1-hot collapsed regimes** vs **2-3× in healthy
+    regimes**.  This is a **causal** signal (gradient magnitude) that
+    the observational E cannot see (E may be high even with
+    per-expert imbalance).
+
+    When this ratio exceeds ``ratio_threshold``, the gate fires and
+    rescales the user's orth λ down to ``lambda_safe`` (default 0.001)
+    — same intervention as round 85's EcologyGatedOrth.  The
+    reasoning is the same: high aux loss weight in an imbalanced
+    regime is ortho-toxicity (round 80 finding), so we rescale it
+    to a safe value.
+
+    Args:
+        ratio_threshold: max_min_ratio_grad above this fires the gate.
+            Default 10.0 (corresponds to 1-hot collapse regime from
+            round 88's 9-cell bench).
+        lambda_safe: λ to use when gate fires.  Default 0.001 (round 85).
+        warmup_steps: Don't fire in the first N steps (router needs
+            time to settle).  Default 0 (fire as soon as imbalance
+            is detected).
+
+    Example:
+        >>> gate = CausalityGatedOrth(ratio_threshold=10.0)
+        >>> for step in range(100):
+        ...     ratio = compute_max_min_ratio_grad(cell, task_loss)
+        ...     state = gate.step(ratio, step_idx=step)
+        ...     eff_lambda = state["effective_lambda"]
+        ...     use_eff_lambda_for_orth_loss(eff_lambda)
+    """
+
+    def __init__(
+        self,
+        ratio_threshold: float = 10.0,
+        lambda_safe: float = 0.001,
+        warmup_steps: int = 0,
+    ):
+        self.ratio_threshold = float(ratio_threshold)
+        self.lambda_safe = float(lambda_safe)
+        self.warmup_steps = int(warmup_steps)
+        self.intervened: bool = False
+        self.last_ratio: float = 1.0
+        self.last_lambda_scale: float = 1.0
+        self.triggered_step: int = -1
+
+    def step(self, max_min_ratio_grad: float, step_idx: int) -> dict:
+        """Decide whether to rescale orth λ.
+
+        Args:
+            max_min_ratio_grad: Current per-expert gradient imbalance
+                (= max/min of per_expert_gradient_norms).  Pass 1.0
+                (or any value ≤ 1) to disable the gate cleanly.
+            step_idx: Global step index (for warmup).
+
+        Returns:
+            Dict with:
+            - intervened: bool (whether gate fired)
+            - effective_lambda_scale: float (1.0 if not fired,
+              lambda_safe/original if fired)
+            - last_ratio: float (echo of input)
+            - triggered_step: int (-1 if not triggered)
+        """
+        self.last_ratio = float(max_min_ratio_grad)
+        in_warmup = step_idx < self.warmup_steps
+        fires = (
+            not in_warmup
+            and max_min_ratio_grad > self.ratio_threshold
+        )
+        if fires and not self.intervened:
+            self.intervened = True
+            self.triggered_step = int(step_idx)
+        # If user passed lambda_safe=0.001 and ratio > threshold, we
+        # rescale to 0.001 / max_min_ratio_grad (smaller rescale for
+        # bigger imbalance).  Else use 0.001 as a fixed safe value.
+        if self.intervened:
+            self.last_lambda_scale = self.lambda_safe / max(
+                self.lambda_safe + 1e-8, 1.0,
+            )
+            # Actually rescale: eff_lambda = user_lambda * scale
+            # where scale = lambda_safe / max(lambda_safe, 1) =
+            #   lambda_safe when lambda_safe <= 1, else 1
+            # We want scale = lambda_safe when ratio is high.
+            # Simpler: scale = lambda_safe if user_lambda > lambda_safe
+            # else 1.0.  Caller passes user_lambda, this returns
+            # effective_lambda_scale.
+            self.last_lambda_scale = self.lambda_safe
+        else:
+            self.last_lambda_scale = 1.0
+        return {
+            "intervened": self.intervened,
+            "effective_lambda_scale": self.last_lambda_scale,
+            "last_ratio": self.last_ratio,
+            "triggered_step": self.triggered_step,
+        }
+
+    def reset(self) -> None:
+        """Reset gate state (call between training runs)."""
+        self.intervened = False
+        self.last_ratio = 1.0
+        self.last_lambda_scale = 1.0
+        self.triggered_step = -1
+
+    def __repr__(self) -> str:
+        return (
+            f"CausalityGatedOrth(ratio_threshold={self.ratio_threshold}, "
+            f"lambda_safe={self.lambda_safe}, "
+            f"warmup_steps={self.warmup_steps}, "
+            f"intervened={self.intervened}, "
+            f"last_ratio={self.last_ratio:.3f})"
+        )

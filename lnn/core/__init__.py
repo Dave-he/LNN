@@ -51,6 +51,7 @@ from lnn.core.moe_ecology import (
     per_expert_gradient_norms,
 )
 from lnn.core.ecology_gated_balancing import (
+    CausalityGatedOrth,
     CombinedEcologyGate,
     EcologyGatedBalancer,
     EcologyGatedOrth,
@@ -161,6 +162,7 @@ __all__ = [
     "EcologyGatedBalancer",
     "EcologyGatedOrth",
     "CombinedEcologyGate",
+    "CausalityGatedOrth",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
