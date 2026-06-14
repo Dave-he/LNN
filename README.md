@@ -1403,6 +1403,82 @@ outputs = net(observations, times, mask=mask)  # (B, T, 2)
 See `docs/research/2026-06-15_sdg_moe_deliberation_report.md` and the
 unit tests in `tests/test_sdg_moe.py` (27/27 pass).
 
+## SETA: Sparse Shared + Unique Experts (round 105)
+
+`SETAConfig(n_shared, n_unique, top_k, elastic_lambda, routing_lambda, target_routing_entropy, use_ema_anchor, ema_decay)`,
+`elastic_anchoring_loss(shared_experts, anchor_state, lambda_val)`,
+`routing_regularization(router, target_entropy, lambda_val)`,
+`snapshot_expert_weights(shared_experts)`, `update_ema_anchors(current_anchors, shared_experts, decay)`,
+`SETARouter(...)`, `SETAMoECfCCell(...)`, and `SETAMoECfCNetwork(...)`
+implement SETA (arXiv:2606.07500 Siddika et al. June 2026) — a **structural
+fix** to the H=0 lock-in problem discovered in rounds 103-104.
+
+The idea: decompose K experts into two disjoint groups:
+- **S = n_shared** shared experts (always active, output averaged)
+- **U = n_unique** unique experts (top-k routed among themselves)
+
+The shared experts provide a **baseline of multi-expert utilization by
+construction** that is independent of the routing decision.
+```
+input: x_t, h, context
+│
+├── Shared branch (S experts, ALWAYS ACTIVE)
+│   ├── expert_0(x_t, h) ────┐
+│   ├── expert_1(x_t, h) ────┤ mean → shared_out
+│   └── ...                  ┘
+│
+├── Unique branch (U experts, top-k routed)
+│   ├── expert_S(x_t, h) ──┐
+│   ├── expert_S+1(x_t, h) ─┤ top-k via router + softmax → unique_out
+│   └── ...                ┘
+│
+└── output = shared_out + unique_out
+```
+
+SETA's two regularizers (re-interpreted for time-series):
+- **Elastic anchoring**: `L_anchor = λ_e · Σ_i ||θ_i^shared - θ_i^anchor||²` (EMA-snapshotted)
+- **Routing regularization**: `L_route = λ_r · (H_unique - log(top_k))²` (anti-H=0)
+
+**Bench result (36 cells: 3 conds × 3 datasets × 2 K × 2 seeds × 100 epochs)**:
+
+| cond | dataset | test_mse | shared_H | unique_H |
+|------|---------|----------|----------|----------|
+| quite_moe (round 103) | sin_irr | 0.0863 | 0.000 | **0.000** |
+| quite_moe (round 103) | structured | 0.3903 | 0.000 | **0.000** |
+| quite_moe (round 103) | random | 0.1726 | 0.000 | **0.000** |
+| seta_only_shared | sin_irr | 0.0871 | 0.693 | **0.480** |
+| seta_only_shared | structured | 0.3884 | 0.693 | **0.443** |
+| seta_only_shared | random | **0.1564** | 0.693 | **0.580** |
+| seta_full | random | **0.1563** | 0.693 | **0.580** |
+
+**Verdict: STRICTLY POSITIVE** (first mechanism in 91-105 audit to break H=0 lock-in)
+- **H1 ✓ CONFIRMED**: H=0 lock-in broken — unique_H jumps from 0 → 0.4-0.6
+- **H2 ✓ CONFIRMED**: test_mse preserved on smooth, **-9% on random_irr**
+- **H3/H4 PARTIAL**: SETA regularizers have no measurable effect — architecture alone is sufficient
+- **Architectural fix > routing fix**: SETA succeeds where FAME/SDG-MoE failed because it changes the structure (always-active shared) rather than tweaking the router
+
+```python
+from lnn.core.seta_moe import SETAConfig, SETAMoECfCNetwork
+cfg = SETAConfig(
+    n_shared=2, n_unique=3, top_k=2,
+    elastic_lambda=1e-3, routing_lambda=1e-2,
+    use_ema_anchor=True, ema_decay=0.99,
+)
+net = SETAMoECfCNetwork(
+    input_size=2, hidden_size=16,
+    sdta_config=cfg, n_queries=4, d_context=16,
+    n_heads=4, output_size=2,
+)
+outputs = net(observations, times, mask=mask)  # (B, T, 2)
+# After loss:
+reg_loss = net.regularization_loss()
+total_loss = task_loss + reg_loss
+total_loss.backward()
+```
+
+See `docs/research/2026-06-15_seta_sparse_shared_experts_report.md` and the
+unit tests in `tests/test_seta_moe.py` (29/29 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

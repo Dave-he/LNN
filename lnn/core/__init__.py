@@ -115,6 +115,16 @@ from lnn.core.sdg_moe import (
     disagreement_score,
     signed_debate_step,
 )
+from lnn.core.seta_moe import (
+    SETAConfig,
+    SETAMoECfCCell,
+    SETAMoECfCNetwork,
+    SETARouter,
+    elastic_anchoring_loss,
+    routing_regularization,
+    snapshot_expert_weights,
+    update_ema_anchors,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -258,6 +268,14 @@ __all__ = [
     "SDGQuiteMoECfCNetwork",
     "disagreement_score",
     "signed_debate_step",
+    "SETAConfig",
+    "SETAMoECfCCell",
+    "SETAMoECfCNetwork",
+    "SETARouter",
+    "elastic_anchoring_loss",
+    "routing_regularization",
+    "snapshot_expert_weights",
+    "update_ema_anchors",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
