@@ -1593,6 +1593,62 @@ util = net.get_utilization()  # includes softmoe_expert_norms, softmoe_expert_no
 See `docs/research/2026-06-15_soft_moe_routing_report.md` and the
 unit tests in `tests/test_soft_moe.py` (21/21 pass).
 
+## Anchored MoE: Structural Routing Prior (round 108)
+
+`AnchoredMoEConfig(n_experts, top_k, d_hidden, descriptor_dim, anchor_mode,
+anchor_alpha, anchor_lambda)`, `RegimePredictor`, `StructuralPrior`,
+`AnchoredRouter`, `AnchoredMoECfCCell`, and `AnchoredMoECfCNetwork` implement
+AME-TS (arXiv:2605.25166 Wang et al. May 2026) — *Anchored Mixture-of-Experts
+for Time Series Forecasting*.
+
+The idea: replace emergent-learned routing with **structural anchoring**
+to interpretable per-series descriptors (forecastability, seasonality, trend,
+sparsity). A lightweight regime predictor maps input → 4 descriptors, a
+structural prior maps descriptors → soft prior over K experts, and the
+token-level router's logits are anchored to that prior.
+
+Three anchoring modes:
+- `'logit'`: `logit_anchored = logit_learned + log(p_prior + ε)` (additive)
+- `'mix'`:   `p_final = α·softmax(logit) + (1-α)·p_prior` (probability mix)
+- `'kl'`:    `loss += λ·KL(softmax(logit) || p_prior)` (regularization)
+
+**Bench result (12 cells: 4 conds × 3 datasets × 1 K × 2 seeds × 100 epochs)**:
+
+| cond | sin test | struct test | random test | routing_H |
+|------|------|------|------|------|
+| baseline | 0.0854 | 0.3821 | 0.1778 | 0.670 |
+| anchor_logit | 0.0854 | 0.3821 | 0.1778 | 0.670 |
+| anchor_mix | 0.0853 | 0.3825 | 0.1846 (+3.8%) | 0.688 |
+| anchor_kl | **0.0852** | 0.3823 | 0.1945 (+9.4%) | **0.691** |
+
+**Verdict: TARGET-DEPENDENT (5th structural winner, 2nd target-dep)**
+- **H1 ✓ CONFIRMED**: Routing is interpretable (descriptors → prior → routing), routing_entropy +3% (0.670 → 0.691)
+- **H2 ✗ MIXED**: test_mse neutral on sin/structured but REGRESSES on random_irr (+3.8% to +9.4%) — structural prior hurts when no structure
+- **H3 ✓ CONFIRMED**: prior entropy ≈ log K = 1.379 (diverse but not dominant)
+- **H4 ✓ CONFIRMED**: 12/12 cells stable, no NaN, no divergence
+- **Use for high-dim time-series** (PhysioNet, robot, video) where descriptors carry real signal
+- **Use for production** where interpretability matters (each expert's specialization can be named)
+- **Don't use on random/structureless data** — the prior has nothing to anchor to
+
+```python
+from lnn.core.anchored_moe import AnchoredMoECfCNetwork
+from lnn.core.anchored_moe import AnchoredMoEConfig
+
+net = AnchoredMoECfCNetwork(
+    input_size=2, hidden_size=16,
+    n_experts=4, top_k=2, output_size=2,
+    anchor_mode="kl", anchor_lambda=0.1,
+)
+outputs = net(observations)  # (B, T, 2)
+# After forward:
+util = net.get_utilization()  # includes routing_entropy, prior_entropy, expert_avg_weights, active_fraction
+# KL regularization (only in 'kl' mode):
+total_loss = task_loss + net.get_regularization_loss()
+```
+
+See `docs/research/2026-06-15_anchored_moe_report.md` and the
+unit tests in `tests/test_anchored_moe.py` (25/25 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

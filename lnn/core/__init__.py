@@ -140,6 +140,14 @@ from lnn.core.soft_moe import (
     SoftMoESETAMoECfCCell,
     SoftMoESETAMoECfCNetwork,
 )
+from lnn.core.anchored_moe import (
+    AnchoredMoEConfig,
+    AnchoredMoECfCCell,
+    AnchoredMoECfCNetwork,
+    AnchoredRouter,
+    RegimePredictor,
+    StructuralPrior,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -302,6 +310,12 @@ __all__ = [
     "SoftMoECfCCell",
     "SoftMoESETAMoECfCCell",
     "SoftMoESETAMoECfCNetwork",
+    "AnchoredMoEConfig",
+    "AnchoredMoECfCCell",
+    "AnchoredMoECfCNetwork",
+    "AnchoredRouter",
+    "RegimePredictor",
+    "StructuralPrior",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
