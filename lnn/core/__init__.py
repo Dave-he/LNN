@@ -160,6 +160,14 @@ from lnn.core.dynamic_tmoe import (
     TemporalMemoryRouterConfig,
     mmd_rbf,
 )
+from lnn.core.freq_experts import (
+    FrequencyExpert,
+    FrequencyExpertConfig,
+    FrequencyMoEConfig,
+    FrequencyRouter,
+    TimeFreqMoECfCCell,
+    TimeFreqMoECfCNetwork,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -338,6 +346,12 @@ __all__ = [
     "DynamicTMoEConfig",
     "DynamicTMoECfCCell",
     "DynamicTMoECfCNetwork",
+    "FrequencyExpertConfig",
+    "FrequencyExpert",
+    "FrequencyMoEConfig",
+    "FrequencyRouter",
+    "TimeFreqMoECfCCell",
+    "TimeFreqMoECfCNetwork",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

@@ -1710,6 +1710,62 @@ util = net.get_utilization()  # pool_size, routing_H, max_min, active_fraction
 See `docs/research/2026-06-15_dynamic_tmoe_report.md` and the
 unit tests in `tests/test_dynamic_tmoe.py` (37/37 pass).
 
+## Frequency-Domain Experts (round 110)
+
+`FrequencyExpertConfig`, `FrequencyExpert`, `FrequencyMoEConfig`,
+`FrequencyRouter`, `TimeFreqMoECfCCell`, and `TimeFreqMoECfCNetwork`
+implement MoFE-Time (arXiv:2507.06502 Liu et al. Jul 2025) — *Mixture
+of Frequency Domain Experts for Time-Series Forecasting Models*.
+
+The idea: each expert is a **learnable Fourier reconstructor** with its
+own harmonic frequencies and learnable amplitudes (via input projection).
+The Fourier transform is **implicit and learnable** (not pre-computed via
+FFT). Per expert:
+- `omega_raw` — learnable frequencies, sigmoid-clamped to [0, 2π]
+- `to_freq` — Linear projection of input to "frequency space"
+- `to_hidden` — Linear projection of basis-weighted freq to output
+
+This is a NEW structural axis (frequency domain) in our 91-110 audit.
+
+**Bench result (24 cells: 4 conds × 3 datasets × 2 seeds × 100 epochs)**:
+
+| cond | sin test | struct test | random test | H |
+|------|------|------|------|------|
+| baseline_mlp | 0.0001-0.0004 | 0.0000-0.0001 | 0.0000-0.0008 | 0.50 |
+| freq_fixed | 0.0000-0.0008 | 0.0000-0.0006 | 0.0000-0.0001 | 0.99 |
+| freq_learned | 0.0000-0.0010 | 0.0000-0.0003 | 0.0000-0.0001 | 0.99 |
+| freq_no_time | 0.0232-0.0291 | 0.0124-0.0425 | 0.0561-0.1238 | 0.93-0.98 |
+
+**Verdict: NEGATIVE-WITH-NUANCE (4th target-dep in 91-110)**
+- **H1 ✗ REJECTED**: Frequency experts do NOT improve over MLP on any dataset in 1D
+- **H4 ✓ CONFIRMED**: Competitive on random_irr
+- **Time branch is critical** — freq_no_time is 30-100× WORSE (0.012-0.124 vs 0.0001-0.001)
+- **Learnable vs fixed frequencies**: NO MEANINGFUL DIFFERENCE in 1D (data too simple)
+- **NEW INSIGHT**: structural > routing-only only when the change DOESN'T depend on data
+  structure. 5 STRUCTURAL winners (99, 102, 105, 107) all don't depend on data structure.
+  3 STRUCTURAL failures (108, 109, 110) all depend on data structure that doesn't exist in 1D.
+- **Don't use in 1D synthetic** — use MLP (or SETA, Soft MoE) instead
+- **Use in high-dim real-world time series** (electricity, traffic, weather) with overlapping frequencies
+
+```python
+from lnn.core.freq_experts import TimeFreqMoECfCNetwork, FrequencyMoEConfig
+
+cfg = FrequencyMoEConfig(
+    n_experts=4, top_k=2, n_freqs=4,
+    use_complex_basis=True,  # cos + sin basis
+    use_time_branch=True,    # critical for non-periodic data
+)
+net = TimeFreqMoECfCNetwork(input_size=2, hidden_size=16, output_size=1, config=cfg)
+outputs, aux_loss, info = net(x)  # aux_loss for load balancing
+total_loss = task_loss + 0.01 * aux_loss
+# Inspect learned frequencies
+omegas = net.get_omegas()  # (K, n_freqs) in [0, 2π]
+util = net.get_utilization()  # routing_H, max_min, active_fraction
+```
+
+See `docs/research/2026-06-15_freq_experts_report.md` and the
+unit tests in `tests/test_freq_experts.py` (23/23 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
