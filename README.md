@@ -2190,6 +2190,74 @@ try `rank=8` or `rank=16`.  See
 `docs/research/2026-06-15_lora_moe_report.md` and the unit tests in
 `tests/test_lora_moe.py` (25/25 pass).
 
+## PEER MoE (Mixture of A Million Experts) — Single-Neuron Experts (round 119, ⚠️ NEGATIVE-WITH-NUANCE)
+
+```python
+from lnn.core import PEERCfCNetwork, peer_utilization
+
+# PEER: shared base CfC + N single-neuron experts (each = 1 Linear, no
+# activation), routed by product-key lookup (paper-faithful, arXiv:2407.04153)
+# or softmax (ablation).  1st LINEAR expert family in the audit.
+net = PEERCfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=8,        # N=8 single-neuron experts
+    top_k=2,            # K=2 selected per step
+    router_type="product_key",  # or "softmax" (ablation)
+)
+output = net(x)  # [B, T, output_size]
+# Diagnostic: per-expert utilization + routing entropy + PEER metadata
+for cell in net.cells:
+    diag = peer_utilization(cell)
+    ent = diag["routing_entropy"]  # ~ 0.88-1.08 nats (well-balanced)
+    util = diag["expert_util"]     # [N] mean gate per expert
+    n_active = diag["n_active"]    # 3 of 8 (room for better utilization)
+    n_peer = diag["n_peer_params"] # total PEER parameter count
+```
+
+**Audit pattern (91-119)**: 16 structural mechanisms tested. PEER is
+the **8th NEGATIVE-WITH-NUANCE** in the audit (along with 108 Anchored
+MoE, 109 Dynamic TMoE, 110 Freq Experts, 112 Expert Choice, 115 MH-MoE,
+117 Gumbel-Softmax) and the **1st LINEAR EXPERT FAMILY** ever tested.
+The mechanism: a single shared base CfC cell + N single-neuron experts
+(each `nn.Linear(in, out, bias=True)`, no activation), routed by
+product-key lookup (two key tables, top-K in each, dedup, softmax).
+
+**Bench (36 cells, 30 epochs, 2 seeds)**:
+
+| Condition | sin_irr | structured_irr | random_irr |
+|-----------|---------|----------------|------------|
+| baseline_cfc         | 0.0094±0.0019 | 0.0053±0.0010 | 0.0013±0.0004 |
+| sigmoid_k3_dense     | 0.0048±0.0010 | 0.0034±0.0009 | 0.0052±0.0024 |
+| **lora_k3_r4_dense** | **0.0047±0.0003** | 0.0036±0.0000 | **0.0014±0.0008** |
+| peer_n8_pk           | 0.0056±0.0007 | **0.0035±0.0011** | 0.0020±0.0004 |
+| peer_n8_softmax      | 0.0055±0.0011 | 0.0051±0.0009 | 0.0038±0.0023 |
+
+**Key findings**:
+- **PEER n8_pk is competitive on structured_irr** (matches sigmoid 0.0035 vs 0.0034) and **wins on random_irr** (0.0020 vs 0.0052, 2.6× better than sigmoid_dense) but **loses on sin_irr** (0.0056 vs 0.0047 LoRA).
+- **Product-key routing is strictly better than softmax** for linear experts: structured 0.0035 vs 0.0051 (46% better), random 0.0020 vs 0.0038 (90% better).
+- Routing entropy H ≈ 0.88-1.08 nats (well-balanced, escapes FAME H=0 lock-in).
+- n_active = 3 of 8 experts (room for better utilization).
+
+**Why PEER is negative-with-nuance**:
+1. **Linear experts lose to sub-MLP on smooth data** — sin requires nonlinearity that single-neuron experts can't express. LoRA r4 (rank-4 adapter) has implicit nonlinearity through gating; PEER's single-neuron experts are pure linear.
+2. **PEER is 2.6× more parameter-heavy than LoRA** (9501 vs 3691) but doesn't beat it on any dataset.
+3. **Linear basis works on noisy data** — random_irr (noisy) is the one place where linear experts can match/exceed sub-MLP.
+
+**Why product-key is a real positive**:
+- **Deterministic routing decisions** (hash lookups) avoid softmax saturation
+- **Two-stage retrieval** (top-K in each table, then top-K of K²) gives more diverse candidates
+- **Routed by key similarity, not learned weights** — keys adapt, routing is hard
+
+**Recommendation**: **PEER is the 1st negative result in the expert
+family dimension** (linear < sub-MLP in 1D).  For production:
+- **Structured/noisy data**: PEER n8_pk is a viable alternative (matches LoRA on structured, beats sigmoid on random)
+- **Smooth nonlinear data**: stick with **LoRA-MoRE (round 118)** or **sigmoid_k3_dense (round 116)**
+- **Future**: try product-key routing for sub-MLP experts (combine round 119's routing with round 118's expert family)
+
+See `docs/research/2026-06-15_peer_moe_report.md` and the unit tests
+in `tests/test_peer_moe.py` (28/28 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

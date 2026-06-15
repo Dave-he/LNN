@@ -216,6 +216,14 @@ from lnn.core.lora_moe import (
     LoRAExpert,
     lora_moe_utilization,
 )
+from lnn.core.peer_moe import (
+    LinearSoftmaxRouter,
+    PEERCfCCell,
+    PEERCfCNetwork,
+    ProductKeyRouter,
+    SingleNeuronExpert,
+    peer_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -432,6 +440,12 @@ __all__ = [
     "LoRACfCCell",
     "LoRACfCNetwork",
     "lora_moe_utilization",
+    "SingleNeuronExpert",
+    "ProductKeyRouter",
+    "LinearSoftmaxRouter",
+    "PEERCfCCell",
+    "PEERCfCNetwork",
+    "peer_utilization",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
