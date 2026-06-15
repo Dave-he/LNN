@@ -231,6 +231,12 @@ from lnn.core.peer_moe import (
     SingleNeuronExpert,
     peer_utilization,
 )
+from lnn.core.prob_moe import (
+    ProbMoECfCCell,
+    ProbMoECfCNetwork,
+    ProbMoERouter,
+    prob_moe_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -458,6 +464,10 @@ __all__ = [
     "PEERCfCCell",
     "PEERCfCNetwork",
     "peer_utilization",
+    "ProbMoERouter",
+    "ProbMoECfCCell",
+    "ProbMoECfCNetwork",
+    "prob_moe_utilization",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

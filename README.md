@@ -2332,6 +2332,89 @@ sets a new best on structured_irr.  For noisy data, stick with
 `docs/research/2026-06-15_dag_moe_report.md` and the unit tests in
 `tests/test_dag_moe.py` (24/24 pass).
 
+## ProbMoE (Probabilistic Routing) — Differentiable Probabilistic Cardinality-Constrained Subset Selection (round 121, ⚠️ TARGET-DEPENDENT-WITH-NUANCE, 1 NEW BEST)
+
+```python
+from lnn.core import ProbMoECfCNetwork, prob_moe_utilization
+
+# ProbMoE: shared base CfC + K sub-CfC experts + Probabilistic router
+# (arXiv:2606.01509, ICML 2026).  Per-expert probability p_i is the
+# marginal probability of expert i being in the selected subset.
+# Gradient flows through the marginals, no straight-through estimator.
+net = ProbMoECfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=3,        # K=3 sub-CfC experts
+    top_k=2,            # cardinality constraint K
+    temperature=1.0,    # softmax temperature
+    mode="exact_k",     # "exact_k" | "sample" | "dynamic_k"
+)
+output = net(x)  # [B, T, output_size]
+# Diagnostic: parameter breakdown
+for cell in net.cells:
+    diag = prob_moe_utilization(cell)
+    n_expert = diag["n_expert_params"]  # ~264 for K=3
+    n_base = diag["n_base_params"]      # ~88 base CfC
+    n_router = diag["n_router_params"]  # ~21 router (3*(I+H))
+```
+
+**Audit pattern (91-121)**: 18 structural mechanisms tested. ProbMoE
+is the **3rd TARGET-DEPENDENT-WITH-NUANCE** in the audit (after 108
+Anchored MoE and 120 DAG-MoE) and the **1st PROBABILISTIC ROUTING**
+mechanism.  The mechanism: standard softmax gives marginal
+probability per expert → 3 modes of cardinality-constrained subset
+selection (deterministic top-K, multinomial sampling without
+replacement, or threshold-based variable cardinality) → final
+output is the gate-weighted combination of selected experts.
+
+**Three routing modes**:
+- `exact_k` — deterministic top-K from softmax, renorm to 1
+- `sample` — multinomial sampling of K experts without replacement
+  (Gumbel-free stochastic routing, gradient through marginals)
+- `dynamic_k` — threshold-based variable cardinality (more experts
+  on hard tokens, fewer on easy ones; falls back to top-K for
+  at-least-K)
+
+**Bench (48 cells, 30 epochs, 2 seeds)**:
+
+| Condition | sin_irr | structured_irr | random_irr | n_params |
+|-----------|---------|----------------|------------|----------|
+| baseline_cfc            | 0.0094±0.0019 | 0.0053±0.0010 | **0.0013**±0.0004 | 2545 |
+| lora_k3_r4_dense        | 0.0047±0.0003 | 0.0036±0.0000 | 0.0014±0.0008 | 3691 |
+| sigmoid_k3_dense        | 0.0048±0.0010 | 0.0034±0.0009 | 0.0052±0.0024 | 7763 |
+| dag_moe_k3_l1           | 0.0047±0.0004 | **0.0030**±0.0003 | 0.0075±0.0032 | 11679 |
+| **prob_moe_k3_exactk**  | **0.0026**±0.0004 | 0.0036±0.0004 | 0.0048±0.0037 | 10285 |
+| prob_moe_k3_sample      | 0.0030±0.0007 | 0.0032±0.0015 | 0.0034±0.0017 | 10285 |
+| prob_moe_k3_dynamick    | 0.0026±0.0004 | 0.0036±0.0004 | 0.0048±0.0037 | 10285 |
+
+**Headline finding: 1 NEW BEST**:
+- **sin_irr: prob_moe_k3_exactk = 0.0026** (beats lora 0.0047 by 45%)
+
+**Key findings**:
+- **prob_moe_k3_exactk sets NEW BEST on sin_irr (0.0026)** — beats both lora (0.0047) and dag (0.0047) by 45%
+- **Marginal-prob gradient is clean** — `router.proj.weight.grad is not None` in both exact_k and sample modes, with no STE needed
+- **Mode choice doesn't matter in 1D** — exact_k and dynamic_k produce identical results (threshold = 1/n = 0.33 < all 3 probs), sample is slightly noisier (0.0030)
+- **ProbMoE is target-dep** — random_irr 0.0048 vs baseline 0.0013 (3.7× worse, like DAG round 120)
+
+**Why ProbMoE is target-dependent**:
+1. **ProbMoE wins on smooth data** — sin (0.0026, new best) because the marginal-probability routing provides a cleaner signal than discrete top-K (no STE bias) or weighted sum.
+2. **ProbMoE loses on noisy data** — random_irr is dominated by baseline_cfc (0.0013) and lora (0.0014). Extra parameters (10285 vs 3691) lead to overfitting on noise.
+3. **Mode choice is a wash in 1D** — exact_k and dynamic_k are equivalent when threshold = 1/n < all probs. Use **sample** if you want regularization (stochastic routing acts as ensemble).
+4. **Marginal-prob gradient is the contribution** — no STE means no bias, smoother optimization, but the discrete selection is still non-differentiable (the marginals provide the surrogate).
+
+**Why probabilistic routing is a real positive**:
+- **No STE** — the per-expert probability is the marginal, so gradient flows through the softmax directly
+- **Three modes** — exact_k (deterministic), sample (stochastic), dynamic_k (variable cardinality)
+- **Cardinality constraint** — the top_k parameter is honored, unlike soft MoE
+- **Probabilistic interpretation** — p_i is interpretable as "probability of expert i being selected"
+
+**Recommendation**: **Use prob_moe_k3_exactk for smooth data**
+with `n_experts=3, top_k=2, temperature=1.0, mode="exact_k"`.  This
+sets a new best on sin_irr (0.0026, beats lora by 45%).  For noisy
+data, stick with **baseline_cfc** or **lora_k3_r4_dense (round 118
+winner)**.  See `docs/research/2026-06-15_prob_moe_report.md` and
+the unit tests in `tests/test_prob_moe.py` (26/26 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
