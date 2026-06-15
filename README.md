@@ -1936,6 +1936,62 @@ is the critical trick that prevents the convergence failure of pure
 ReLU routing. See `docs/research/2026-06-15_remoe_report.md` and the
 unit tests in `tests/test_remoe.py` (30/30 pass).
 
+## Multi-Head MoE (MH-MoE) — Sub-Token Routing (round 115, **HONEST NEGATIVE**)
+
+```python
+from lnn.core import MHMoECfCNetwork, mhmoe_utilization
+
+# MH-MoE: split each input into H sub-tokens (feature chunks), route each
+# sub-token to its own top-K experts, concatenate back.  Fixes the FAME
+# H=0 collapse by ensuring every sub-token gets its own routing decision.
+# NOTE: input_size must be divisible by n_heads.
+net = MHMoECfCNetwork(
+    input_size=4, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=4,    # K=4 experts
+    n_heads=2,      # H=2 sub-tokens (input_size / n_heads = 2 features per sub-token)
+    top_k=1,        # each sub-token picks 1 expert
+)
+output = net(x)  # [B, T, output_size]
+# Diagnostic: per-expert utilization + routing entropy
+for cell in net.cells:
+    diag = mhmoe_utilization(cell)
+    ent = diag["routing_entropy"]  # ~ log K = 1.39 if balanced
+    util = diag["expert_util"]     # [K] fraction of sub-tokens routed to each
+```
+
+**Audit pattern (91-115)**: 12 structural mechanisms tested. MH-MoE is
+the **5th NEGATIVE/TARGET-DEP** in the audit (along with 108 Anchored
+MoE, 109 Dynamic TMoE, 110 Freq Experts, 112 Expert Choice). The
+mechanism: H sub-tokens × K experts = K·H parallel paths, so on
+average each expert gets H·(B/K) sub-tokens per step (balanced load).
+FAME H=0 collapse is fixed because every sub-token picks its own expert.
+
+**Bench (30 cells, 50 epochs, 2 seeds)**:
+- sin_irr:       mhmoe_k4_h2_t1 = 0.0179, baseline 0.0070, FAME 0.0089
+- structured_irr: mhmoe_k4_h2_t1 = 0.0266, baseline 0.0045, FAME 0.0101
+- random_irr:    mhmoe_k4_h2_t1 = 0.1245, baseline 0.0026, FAME 0.0014
+- MH-MoE does NOT beat FAME on any dataset (2-3× worse on sin/structured, 10-100× worse on random)
+- H=4 is consistently worse than H=2 (more sub-tokens = more routing noise)
+- Routing entropy H = 0.7-1.3 is reasonable (close to log 4 = 1.39)
+
+**Why MH-MoE failed on CfC**:
+- The mechanism is right for **transformers** (D ≥ 4096) but **wrong for low-D time-series** (D = 2-4)
+- Each sub-token has only D/H = 2 (H=2) or 1 (H=4) features → softmax routing is noisy
+- "Load distribution" property works (all K experts used) but routing is bad → experts learn poorly
+- The 7 winners preserve the full input dimension when computing routing decisions;
+  MH-MoE breaks this rule (router sees only D/H features, not the full D)
+
+**Recommendation**: **DO NOT use MH-MoE for low-D time-series MoE**.
+The multi-head split loses information when D is small. Consider MH-MoE
+only for high-D time-series (D ≥ 64, e.g. multivariate PhysioNet with
+36 features) where D/H ≥ 16 features per sub-token is enough for
+meaningful routing. For low-D, use **DeepSeek (round 113)** or
+**ReMoE (round 114)** instead — both preserve the full input dimension
+and are STRICTLY POSITIVE in the 91-114 audit. See
+`docs/research/2026-06-15_mhmoe_report.md` and the unit tests in
+`tests/test_mhmoe.py` (28/28 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

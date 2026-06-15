@@ -192,6 +192,12 @@ from lnn.core.remoe import (
     remoe_load_balancing_loss,
     remoe_utilization,
 )
+from lnn.core.mhmoe import (
+    MHMoECfCCell,
+    MHMoECfCNetwork,
+    MHRouter,
+    mhmoe_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -392,6 +398,10 @@ __all__ = [
     "ReMoECfCNetwork",
     "remoe_utilization",
     "remoe_load_balancing_loss",
+    "MHRouter",
+    "MHMoECfCCell",
+    "MHMoECfCNetwork",
+    "mhmoe_utilization",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
