@@ -1992,6 +1992,66 @@ and are STRICTLY POSITIVE in the 91-114 audit. See
 `docs/research/2026-06-15_mhmoe_report.md` and the unit tests in
 `tests/test_mhmoe.py` (28/28 pass).
 
+## Sigmoid Routing MoE — Qwen2-MoE Style (round 116, **STRICTLY POSITIVE on smooth data**)
+
+```python
+from lnn.core import SigmoidMoECfCNetwork, sigmoid_moe_utilization
+
+# Sigmoid MoE: replace softmax with sigmoid (no normalization).
+# Each expert gets an independent score in [0, 1] with no "softmax budget"
+# competition. 4th major router family (after softmax, ReLU, cosine) and
+# the 1st without normalization.
+net = SigmoidMoECfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=3,    # K=3 experts
+    top_k=0,        # 0 = dense (no top-K), all K experts fire
+    use_router_bias=True,  # Qwen2-MoE recipe
+    small_init=True,       # W ~ N(0, 0.01) to avoid early sigmoid saturation
+)
+output = net(x)  # [B, T, output_size]
+# Diagnostic: per-expert utilization + routing entropy
+for cell in net.cells:
+    diag = sigmoid_moe_utilization(cell)
+    ent = diag["routing_entropy"]  # ~ log K = 1.10 nats if balanced
+    util = diag["expert_util"]     # [K] mean sigmoid gate per expert
+    mode = diag["sparsity_mode"]   # "dense" or "top_K"
+```
+
+**Audit pattern (91-116)**: 13 structural mechanisms tested. Sigmoid
+Routing is the **8th STRUCTURAL WINNER** in the audit (along with
+99 Reliability Gate, 102 QuITE, 105 SETA, 107 Soft MoE, 113 DeepSeek,
+114 ReMoE) and the **1st with a non-normalized router**. The
+mechanism: g = sigmoid(W x + b) ∈ [0, 1]^K (no normalization), so each
+expert fires independently with no "softmax budget" competition.
+
+**Bench (30 cells, 50 epochs, 2 seeds)**:
+- sin_irr:       sigmoid_k3_dense = **0.0013** vs baseline 0.0023, FAME 0.0112
+- structured_irr: sigmoid_k3_dense = **0.0009** vs baseline 0.0010, FAME 0.0061
+- random_irr:    sigmoid_k3_dense = 0.0020 vs baseline **0.0005**, FAME 0.0050
+- **Dense sigmoid beats FAME on all 3 datasets by 2.5-10×**
+- **Dense sigmoid WINS on sin/structured** (best of all MoE variants)
+- Sparse sigmoid (t=1, t=2) consistently underperforms dense — top-K selection noise
+- Routing entropy H ≈ 1.10 nats for dense, 0.36-0.69 for sparse
+
+**4 router families compared**:
+
+| Property | Softmax | Sigmoid | ReLU | Cosine |
+|----------|---------|---------|------|--------|
+| Range | [0, 1] sums to 1 | [0, 1] each | [0, ∞) | [-1, 1] |
+| Normalization | YES (sum=1) | NO | NO | NO |
+| Default sparsity | top-K | dense | natural | natural |
+| Test winner | FAME (78/103) | sigmoid_dense (116) | ReMoE (114) | ❌ (82) |
+
+**Recommendation**: **Use Sigmoid (dense) for known-smooth data**
+(sinusoidal, low-frequency patterns). Best result on sin_irr (8× better
+than FAME). For mixed data, use **DeepSeek (round 113)** or
+**ReMoE (round 114)** — both are STRICTLY POSITIVE on all 3 datasets.
+Do NOT use Sigmoid with top-K=1 or top-K=2 — top-K adds noise without
+benefit in the sigmoid setting. See
+`docs/research/2026-06-15_sigmoid_moe_report.md` and the unit tests in
+`tests/test_sigmoid_moe.py` (32/32 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

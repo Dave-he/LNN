@@ -198,6 +198,12 @@ from lnn.core.mhmoe import (
     MHRouter,
     mhmoe_utilization,
 )
+from lnn.core.sigmoid_moe import (
+    SigmoidMoECfCCell,
+    SigmoidMoECfCNetwork,
+    SigmoidRouter,
+    sigmoid_moe_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -402,6 +408,10 @@ __all__ = [
     "MHMoECfCCell",
     "MHMoECfCNetwork",
     "mhmoe_utilization",
+    "SigmoidRouter",
+    "SigmoidMoECfCCell",
+    "SigmoidMoECfCNetwork",
+    "sigmoid_moe_utilization",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
