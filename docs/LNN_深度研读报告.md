@@ -210,6 +210,25 @@ tags: [LNN, reading-report, papers]
 - **关键成果**：D-NeRF 6/8 场景匹配或超过 MLP（均值 38.25 vs 38.26 dB）；NeRF-DS **均值 PSNR 23.86 vs 23.39 (+0.47), SSIM 0.8491 vs 0.8403, LPIPS 0.1891 vs 0.2011 全指标领先**；最 specular 场景 As 单点 +2.74 dB、LPIPS −41%；默认配置 **0.33M params / 6.0G MACs**，比 D-3DGS MLP 小 36%；CfC 在均值 PSNR 上超过 specular-aware NeRF-DS baseline，是**唯一一个做到这点的通用方法**。
 - **局限**：跨帧递归被主动放弃，长程时间记忆未激活；评估集偏短 / 偏受控；未做 $\partial F_\theta/\partial t$ 派生的物理一致性辅助损失（inertia / ARAP）；作者明示外推与重噪声场景仍属 ODE-GS / SDE 主场。
 
+### [2026-06-16] 今日候选论文覆盖率复盘
+- **digest 入口**：[[docs/daily/2026-06-16_LNN_research_digest.md|每日追踪]]
+- **挑选结果**：`scripts/select_papers_for_report.py --date 2026-06-16 --top 3` 输出候选 0 篇（n_total_arxiv=12, n_skipped_reported=12）。
+- **覆盖率审计**：当日 12 篇 arXiv 候选均已被既有独立报告覆盖，按 arXiv ID 命中：
+  - `2606.12240` (Multi-Rate MoE for LNN) → [[docs/reports/Liquid_NN_MR_MoE_Sepsis_2606.12240_研读报告.md]] + [[docs/reports/Multi-Rate_MoE_Accelerating_LNN_Training_2606.12240_研读报告.md]]
+  - `2606.07670` (CfC as 3DGS Deformation Field) → [[docs/reports/Liquid_NN_3DGS_Deformation_Field_2606.07670_研读报告.md]] + [[docs/reports/Liquid_Neural_Networks_3DGS_Deformation_Field_2606.07670_研读报告.md]]
+  - `2605.27467` (Comparative Analysis LNN vs LSTM) → [[docs/reports/Comparative_Analysis_of_LNN_and_LSTM_研读报告.md]]
+  - `2605.24047` (EMMA Multimodal) → [[docs/reports/EMMA_Multimodal_Dynamical_Parameter_Extraction_2605.24047_研读报告.md]]
+  - `2605.08176` (DynPMNN) → [[docs/reports/Physics-Modeled_Neural_Networks_DynPMNN_研读报告.md]]
+  - `2604.24788` (Natural Gas LNN) → [[docs/reports/LNN_Natural_Gas_Forecasting_2604.24788_研读报告.md]] + [[docs/reports/LNN_for_Natural_Gas_Forecasting_研读报告.md]]
+  - `2604.18274` (LiquidTAD) → [[docs/reports/LiquidTAD_Efficient_Temporal_Action_Detection_研读报告.md]]
+  - `2604.14484` (Nonasymptotic BC) → [[docs/reports/Nonasymptotic_BC_Error_Dynamics_2604.14484_研读报告.md]]
+  - `2604.10815` (MeloTune CfC) → [[docs/reports/MeloTune_CfC_Proactive_Music_Curation_研读报告.md]] + [[docs/reports/Symbolic-Vector_Attention_Fusion_SVAF_研读报告.md]]
+  - `2604.07219` (Liquid Crystal Antenna LNN) → [[docs/reports/Liquid_Crystal_Antennas_LNN_6G_Beamforming_研读报告.md]]
+  - `2604.03955` (SVAF Collective Intelligence) → [[docs/reports/Symbolic-Vector_Attention_Fusion_SVAF_研读报告.md]]
+  - `2604.02149` (AEGIS TVD-HL-SSM) → [[docs/reports/AEGIS_TVD-HL-SSM_2604.02149_研读报告.md]]
+- **结论**：本日 LNN 检索关键词面已饱和，无新增独立研读任务；研读产能保留给后续新论文或非 arXiv 来源（GitHub/HF 高质量仓库复现报告）。
+- **GitHub 命中率注意**：`daily_lnn_research.py` 报 "GitHub query failed (403 rate limit)" — 已记入 logs/pipeline/${RUN_DATE}_pipeline.log，次日换 token / 限速后自动恢复；不影响今日 digest 整体有效性。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
