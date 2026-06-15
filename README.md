@@ -2638,6 +2638,38 @@ axes. See
 **Use `mor_d4` standalone** for parameter-efficient CfC. **Do
 NOT combine with the 4-axis hybrid** — the 4-axis dominates.
 
+## K_r (Routed Multiplicity) Sweep on Triple Hybrid (round 127, 2026-06-15)
+
+**1 NEW BEST on structured_irr** (the symmetric counterpart of
+round 125's K_s sweep). Tested K_r ∈ {2, 3, 4, 6} on the triple
+hybrid with K_s=2. The winning config `kr2_ks2` (K_r=2, K_s=2)
+achieves **0.0015 on structured_irr** (vs prior 0.0020 from
+round 125's `lora_dag_shared_ks2`, **25% improvement**).
+
+```python
+from lnn.core.lora_dag_shared_moe import LoRADAGSharedMoECfCNetwork
+
+net = LoRADAGSharedMoECfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=2, top_k=2, rank=4, alpha=1.0,  # K_r=2
+    n_dag_iterations=1, router_type="learned",
+    use_shared=True, n_shared=2,              # K_s=2
+)
+```
+
+**Bench (30 epochs, 2 seeds)**: K_r=2 → K_r=3 → K_r=4 → K_r=6 is
+monotonically **worse** on structured_irr (0.0015 → 0.0020 →
+0.0044 → 0.0430). The K_r=K_s=2 **symmetric** configuration is
+the Pareto frontier for structured data. K_r=6 diverges due to
+sparse routing signal at batch_size=8. See
+`docs/research/2026-06-15_kr_sweep_report.md`.
+
+**Key insight (91-127 audit)**: The 4-axis stack is the Pareto
+frontier. K_r is the symmetric counterpart of K_s — both should
+be tuned together, with K_r=K_s=2 being the optimum for structured
+multi-regime data. 12 STRICTLY POSITIVE winners in 91-127 audit.
+
 ## What Is Stable?
 
 | Area | Path | Status |
