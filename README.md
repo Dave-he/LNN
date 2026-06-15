@@ -2487,6 +2487,44 @@ data** and **lora_k3_r4_dense (round 118) for structured data**.
 its components.  See `docs/research/2026-06-15_problora_moe_report.md`
 and the unit tests in `tests/test_problora_moe.py` (25/25 pass).
 
+## LoRA-DAG-MoE (Hybrid) — LoRA Experts + DAG Aggregation (round 123, 2026-06-15)
+
+The **first STRICTLY POSITIVE hybrid** in the 91-123 audit (1 NEW
+BEST on structured_irr). Combines LoRA-MoRE (round 118) low-rank
+expert deltas with DAG-MoE (round 120) aggregation over selected
+experts. The combination is **expert family × aggregation** — two
+orthogonal mechanism dimensions (vs round 122's coupled routing ×
+expert family which failed).
+
+```python
+from lnn.core import LoRADAGMoECfCNetwork, lora_dag_moe_utilization
+
+net = LoRADAGMoECfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=3, top_k=3, rank=1, alpha=1.0,
+    n_dag_iterations=1, router_type="learned",
+)
+# Forward: h_new = base(x, h) + DAG(top_g * LoRA_i(x, h))
+```
+
+**Bench (30 epochs, 2 seeds)**: `lora_dag_k3_r1_l1` = **0.0021 on
+structured_irr** (vs prior 0.0030 from `dag_moe_k3_l1`) — **30%
+improvement** at 4341 vs 11679 params (**2.7× smaller**). L=1 is
+the sweet spot (L=2+ destabilizes). r=1 (extreme low-rank) is
+competitive — the LoRA bottleneck is beneficial for DAG
+amplification. See
+`docs/research/2026-06-15_lora_dag_moe_report.md` and the unit
+tests in `tests/test_lora_dag_moe.py` (26/26 pass).
+
+**Key insight (91-123 audit)**: Hybrid of 2 winners DOES beat best
+of components **when mechanisms are orthogonal**. Round 122
+(ProbLoRA = routing × expert) was coupled and failed. Round 123
+(LoRA × DAG = expert × aggregation) is orthogonal and succeeds.
+The 9 winners (99, 102, 105, 107, 113, 114, 116, 118, 123) form a
+Pareto frontier with multiplicative combinations possible across
+orthogonal dimensions.
+
 ## What Is Stable?
 
 | Area | Path | Status |

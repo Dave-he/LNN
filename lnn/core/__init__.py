@@ -243,6 +243,12 @@ from lnn.core.problora_moe import (
     ProbLoRAExpert,
     problora_moe_utilization,
 )
+from lnn.core.lora_dag_moe import (
+    LoRADAGAggregation,
+    LoRADAGMoECfCCell,
+    LoRADAGMoECfCNetwork,
+    lora_dag_moe_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -478,6 +484,10 @@ __all__ = [
     "ProbLoRACfCCell",
     "ProbLoRACfCNetwork",
     "problora_moe_utilization",
+    "LoRADAGAggregation",
+    "LoRADAGMoECfCCell",
+    "LoRADAGMoECfCNetwork",
+    "lora_dag_moe_utilization",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
