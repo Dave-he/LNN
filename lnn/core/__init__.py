@@ -249,6 +249,12 @@ from lnn.core.lora_dag_moe import (
     LoRADAGMoECfCNetwork,
     lora_dag_moe_utilization,
 )
+from lnn.core.lora_dag_shared_moe import (
+    LoRADAGSharedAggregation,
+    LoRADAGSharedMoECfCCell,
+    LoRADAGSharedMoECfCNetwork,
+    lora_dag_shared_moe_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -488,6 +494,10 @@ __all__ = [
     "LoRADAGMoECfCCell",
     "LoRADAGMoECfCNetwork",
     "lora_dag_moe_utilization",
+    "LoRADAGSharedAggregation",
+    "LoRADAGSharedMoECfCCell",
+    "LoRADAGSharedMoECfCNetwork",
+    "lora_dag_shared_moe_utilization",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

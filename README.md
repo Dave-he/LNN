@@ -2525,6 +2525,47 @@ The 9 winners (99, 102, 105, 107, 113, 114, 116, 118, 123) form a
 Pareto frontier with multiplicative combinations possible across
 orthogonal dimensions.
 
+## LoRA-DAG-Shared-MoE (TRIPLE hybrid) — LoRA + DAG + DeepSeek Shared (round 124, 2026-06-15)
+
+The **first 3-mechanism winner** in the 91-124 audit (1 NEW BEST on
+sin_irr). Combines three orthogonal winners:
+- **LoRA experts (round 118)**: low-rank expert deltas
+- **DAG aggregation (round 120)**: structural aggregation over routed experts
+- **DeepSeek shared (round 113)**: always-on shared expert pathway
+
+This is **expert family × aggregation × shared pathway** — three
+orthogonal mechanism dimensions. Round 123 (2 dimensions) succeeded
+on structured; round 124 (3 dimensions) succeeds on smooth.
+
+```python
+from lnn.core import LoRADAGSharedMoECfCNetwork, lora_dag_shared_moe_utilization
+
+net = LoRADAGSharedMoECfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=3, top_k=3, rank=4, alpha=1.0,
+    n_dag_iterations=1, router_type="learned",
+    use_shared=True,  # DeepSeek pattern
+)
+# Forward: h_new = base(x, h) + h_shared + DAG(top_g * LoRA_i(x, h))
+```
+
+**Bench (30 epochs, 2 seeds)**: `lora_dag_shared_k3_r4_l1` =
+**0.0017 on sin_irr** (vs prior 0.0026 from `prob_moe_k3_exactk`
+round 121, AND vs 0.0037 from round 123's `lora_dag_k3_r4_l1`) —
+**35% improvement**. The shared pathway is target-dependent: helps
+smooth data (-54% on sin) but neutral on structured (+33% on
+struct). See `docs/research/2026-06-15_lora_dag_shared_moe_report.md`
+and the unit tests in `tests/test_lora_dag_shared_moe.py` (26/26 pass).
+
+**Key insight (91-124 audit)**: The orthogonal mechanism stack can
+grow to 3 dimensions. Round 122 (routing × expert) failed (coupled).
+Rounds 123-124 (expert × aggregation, expert × aggregation × shared)
+succeed. The 10 winners (99, 102, 105, 107, 113, 114, 116, 118, 123,
+124) form a Pareto frontier with multiplicative combinations across
+3 orthogonal dimensions: **expert family, aggregation, shared
+pathway**.
+
 ## What Is Stable?
 
 | Area | Path | Status |
