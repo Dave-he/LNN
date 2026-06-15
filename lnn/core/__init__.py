@@ -210,6 +210,12 @@ from lnn.core.gumbel_moe import (
     GumbelRouter,
     gumbel_moe_utilization,
 )
+from lnn.core.lora_moe import (
+    LoRACfCCell,
+    LoRACfCNetwork,
+    LoRAExpert,
+    lora_moe_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -422,6 +428,10 @@ __all__ = [
     "GumbelMoECfCCell",
     "GumbelMoECfCNetwork",
     "gumbel_moe_utilization",
+    "LoRAExpert",
+    "LoRACfCCell",
+    "LoRACfCNetwork",
+    "lora_moe_utilization",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
