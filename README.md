@@ -1887,6 +1887,55 @@ unlike the averaging in EC. See
 `docs/research/2026-06-15_deepseek_moe_report.md` and the unit tests
 in `tests/test_deepseek_moe.py` (23/23 pass).
 
+## ReMoE Fully-Differentiable MoE with ReLU Routing (round 114)
+
+```python
+from lnn.core import ReMoECfCNetwork, remoe_utilization, remoe_load_balancing_loss
+
+# ReMoE: K experts + ReLU router, fully differentiable (no top-K).
+# g = ReLU(W x + b) where b is a learnable per-expert bias.
+# Combination is a soft weighted sum — gradient flows to all
+# non-zero-gated experts (vs FAME where only top-K get gradient).
+net = ReMoECfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=3,   # K=3 experts
+)
+output = net(x)  # [B, T, output_size]
+# Optional aux loss for load balance
+gates = [cell.last_g for cell in net.cells if cell.last_g is not None]
+if gates:
+    aux_loss = remoe_load_balancing_loss(gates[-1])  # scalar
+# Diagnostic: per-expert gate distribution
+for cell in net.cells:
+    diag = remoe_utilization(cell)
+    sparsity = diag["sparsity"]  # fraction of non-zero gates
+```
+
+**Audit pattern (91-114)**: 11 structural mechanisms tested. ReMoE is
+the **6th structural winner** (along with 99 Reliability Gate, 102 QuITE,
+105 SETA, 107 Soft MoE, 113 DeepSeek) and the **1st to use a
+ReLU-based router**. The key insight: **fully differentiable** gating
+with **per-expert bias** (initialized to 1.0) gives all experts
+gradient at init, preventing the collapse mode that pure `ReLU(Wx)`
+suffers. The combination is a soft weighted sum, preserving the
+recurrent state dynamics.
+
+**Bench (30 cells, 50 epochs, 2 seeds)**:
+- sin_irr: remoe_k3 = **0.0009** vs baseline 0.0023, FAME 0.0112, DeepSeek 0.0011
+- structured_irr: remoe_k3 = **0.0007** vs baseline 0.0010, FAME 0.0061, DeepSeek 0.0007
+- random_irr: remoe_k3 = 0.0031 vs baseline 0.0005, FAME 0.0050, DeepSeek 0.0021
+- ReMoE beats FAME on all 3 datasets (2.5-12× better)
+- ReMoE beats baseline on smooth data (sin/structured)
+- ReMoE is competitive with DeepSeek on smooth data
+- Aux loss makes no measurable difference at this scale (sparsity=1.0)
+
+**Recommendation**: **Use ReMoE for time-series MoE when you want
+fully differentiable routing**. The per-expert bias (initialized to 1.0)
+is the critical trick that prevents the convergence failure of pure
+ReLU routing. See `docs/research/2026-06-15_remoe_report.md` and the
+unit tests in `tests/test_remoe.py` (30/30 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

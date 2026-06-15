@@ -185,6 +185,13 @@ from lnn.core.deepseek_moe import (
     DeepSeekCfCNetwork,
     deepseek_utilization,
 )
+from lnn.core.remoe import (
+    ReMoECfCCell,
+    ReMoECfCNetwork,
+    ReMoERouter,
+    remoe_load_balancing_loss,
+    remoe_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -380,6 +387,11 @@ __all__ = [
     "DeepSeekCfCCell",
     "DeepSeekCfCNetwork",
     "deepseek_utilization",
+    "ReMoERouter",
+    "ReMoECfCCell",
+    "ReMoECfCNetwork",
+    "remoe_utilization",
+    "remoe_load_balancing_loss",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
