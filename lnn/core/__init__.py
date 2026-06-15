@@ -132,6 +132,14 @@ from lnn.core.auxlf import (
     AuxLFSETAMoECfCNetwork,
     update_load_balancing_bias,
 )
+from lnn.core.soft_moe import (
+    SoftMoEConfig,
+    SoftMoERouter,
+    SoftMoESETARouter,
+    SoftMoECfCCell,
+    SoftMoESETAMoECfCCell,
+    SoftMoESETAMoECfCNetwork,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -288,6 +296,12 @@ __all__ = [
     "AuxLFSETAMoECfCCell",
     "AuxLFSETAMoECfCNetwork",
     "update_load_balancing_bias",
+    "SoftMoEConfig",
+    "SoftMoERouter",
+    "SoftMoESETARouter",
+    "SoftMoECfCCell",
+    "SoftMoESETAMoECfCCell",
+    "SoftMoESETAMoECfCNetwork",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
