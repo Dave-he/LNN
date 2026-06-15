@@ -1,0 +1,68 @@
+{
+  "args": {
+    "epochs": 30,
+    "seeds": 2,
+    "batch": 32,
+    "T": 32,
+    "hidden": 16,
+    "lr": 0.01,
+    "gamma": 0.1,
+    "out": "results/bench_energy_distance_loss_cfc.json"
+  },
+  "results": {
+    "lbps_lnkhlfft_5_3_2_mse": {
+      "n_params": 21434,
+      "sin_irr": {
+        "mean": 0.002558,
+        "std": 0.000143,
+        "raw": [
+          0.002701,
+          0.002415
+        ]
+      },
+      "structured_irr": {
+        "mean": 0.005895,
+        "std": 0.002278,
+        "raw": [
+          0.008174,
+          0.003617
+        ]
+      },
+      "random_irr": {
+        "mean": 0.146224,
+        "std": 0.010732,
+        "raw": [
+          0.135491,
+          0.156956
+        ]
+      }
+    },
+    "lbps_lnkhlfft_5_3_2_ed": {
+      "n_params": 21434,
+      "sin_irr": {
+        "mean": 0.007192,
+        "std": 0.002463,
+        "raw": [
+          0.009655,
+          0.004729
+        ]
+      },
+      "structured_irr": {
+        "mean": 0.015615,
+        "std": 0.005598,
+        "raw": [
+          0.021213,
+          0.010017
+        ]
+      },
+      "random_irr": {
+        "mean": 0.155448,
+        "std": 0.017649,
+        "raw": [
+          0.137799,
+          0.173097
+        ]
+      }
+    }
+  }
+}
