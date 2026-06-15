@@ -2415,6 +2415,78 @@ data, stick with **baseline_cfc** or **lora_k3_r4_dense (round 118
 winner)**.  See `docs/research/2026-06-15_prob_moe_report.md` and
 the unit tests in `tests/test_prob_moe.py` (26/26 pass).
 
+## ProbLoRA-MoE (Hybrid) — Probabilistic Routing + LoRA-rank-r Deltas (round 122, ⚠️ NEGATIVE-WITH-NUANCE, no NEW BEST)
+
+```python
+from lnn.core import ProbLoRACfCNetwork, problora_moe_utilization
+
+# ProbLoRA-MoE: shared base CfC + K low-rank LoRA adapters + ProbMoE router
+# Hybrid of round 121 (ProbMoE routing) + round 118 (LoRA-MoRE experts).
+# Combines the 1st probabilistic routing with the most parameter-efficient
+# expert family.  B initialized to zero for warm start.
+net = ProbLoRACfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=3,        # K=3 low-rank LoRA adapters
+    top_k=2,            # cardinality constraint K
+    rank=4,             # LoRA rank r (default 4)
+    alpha=1.0,          # LoRA scaling alpha
+    temperature=1.0,    # softmax temperature
+    mode="exact_k",     # "exact_k" | "sample" | "dynamic_k"
+)
+output = net(x)  # [B, T, output_size]
+# Diagnostic: parameter breakdown
+for cell in net.cells:
+    diag = problora_moe_utilization(cell)
+    n_expert = diag["n_expert_params"]  # K*r*(I+H+H) = 60 for r=2
+    n_base = diag["n_base_params"]      # ~88 base CfC
+    n_router = diag["n_router_params"]  # ~21 router (3*(I+H))
+```
+
+**Audit pattern (91-122)**: 19 structural mechanisms tested. ProbLoRA-MoE
+is the **11th NEGATIVE-WITH-NUANCE** in the audit (after rounds 108, 109,
+110, 112, 115, 117, 119, 120, 121) and the **2nd PROBABILISTIC ROUTING
+HYBRID** (after round 121).  The mechanism: low-rank LoRA adapter experts
+(rank r, B-init-zero) → ProbMoE probabilistic router picks K experts →
+final output is the gate-weighted combination of selected deltas.
+
+**Bench (54 cells, 30 epochs, 2 seeds)**:
+
+| Condition | sin_irr | structured_irr | random_irr | n_params |
+|-----------|---------|----------------|------------|----------|
+| baseline_cfc            | 0.0094±0.0019 | 0.0053±0.0010 | **0.0013**±0.0004 | 2545 |
+| lora_k3_r4_dense        | 0.0047±0.0003 | **0.0036**±0.0000 | 0.0014±0.0008 | 3691 |
+| **prob_moe_k3_exactk**  | **0.0026**±0.0004 | 0.0036±0.0004 | 0.0048±0.0037 | 10285 |
+| problora_k3_r2_exactk   | 0.0050±0.0006 | 0.0044±0.0021 | 0.0035±0.0024 | **3193** |
+| problora_k3_r4_exactk   | 0.0029±0.0001 | 0.0045±0.0015 | 0.0029±0.0019 | 3685 |
+| problora_k3_r2_sample   | 0.0050±0.0008 | 0.0044±0.0016 | 0.0033±0.0022 | 3193 |
+| problora_k3_r4_dynamick | 0.0029±0.0001 | 0.0045±0.0015 | 0.0029±0.0019 | 3685 |
+
+**Headline finding: no NEW BESTS** — hybrid doesn't beat best of components.
+
+**Key findings**:
+- **Hybrid doesn't beat best of components** — ProbMoE wins sin (0.0026 vs 0.0029 for ProbLoRA r=4), LoRA wins struct (0.0036 vs 0.0044 for ProbLoRA r=2)
+- **ProbLoRA r=2 is the smallest MoE variant (3193 params)** — 8× smaller per expert than full sub-MLP
+- **Mode choice doesn't matter** — exact_k and dynamic_k produce identical results (threshold = 1/n = 0.33 < all 3 probs), sample is slightly noisier
+- **Routing and expert family are not orthogonal** — switching the router changes the optimal expert family
+
+**Why ProbLoRA-MoE is NEGATIVE-WITH-NUANCE**:
+1. **ProbMoE alone (round 121) wins on sin_irr** — 0.0026 vs 0.0029 for ProbLoRA r=4. The sub-MLP experts of round 121 are not bottlenecks on smooth data.
+2. **LoRA alone (round 118) wins on structured_irr** — 0.0036 vs 0.0044 for ProbLoRA r=2. The FAME top-K router has a "forecastability" bias that ProbMoE doesn't replicate.
+3. **Parameter efficiency is real but doesn't help** — ProbLoRA r=2 is 3193 params (smallest MoE), but the lower capacity hurts test_mse.
+4. **Mode choice is a wash in 1D** — exact_k and dynamic_k are equivalent when threshold = 1/n < all probs. Use **sample** if you want regularization.
+
+**Why probabilistic + low-rank doesn't combine**:
+- **Routing choice and expert family are coupled** — switching the router changes the optimal expert family
+- **ProbMoE's marginal probabilities need sub-MLP experts to fit** — LoRA rank-2 is too restrictive
+- **LoRA's B-init-zero warm start biases toward base-only** — at init, ProbLoRA behaves like baseline_cfc, which has higher random_irr error
+
+**Recommendation**: **Use prob_moe_k3_exactk (round 121) for smooth
+data** and **lora_k3_r4_dense (round 118) for structured data**.
+**Do NOT use ProbLoRA-MoE** — the hybrid doesn't beat the best of
+its components.  See `docs/research/2026-06-15_problora_moe_report.md`
+and the unit tests in `tests/test_problora_moe.py` (25/25 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

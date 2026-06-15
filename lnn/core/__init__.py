@@ -237,6 +237,12 @@ from lnn.core.prob_moe import (
     ProbMoERouter,
     prob_moe_utilization,
 )
+from lnn.core.problora_moe import (
+    ProbLoRACfCCell,
+    ProbLoRACfCNetwork,
+    ProbLoRAExpert,
+    problora_moe_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -468,6 +474,10 @@ __all__ = [
     "ProbMoECfCCell",
     "ProbMoECfCNetwork",
     "prob_moe_utilization",
+    "ProbLoRAExpert",
+    "ProbLoRACfCCell",
+    "ProbLoRACfCNetwork",
+    "problora_moe_utilization",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
