@@ -174,6 +174,12 @@ from lnn.core.mod_routing import (
     MoDRouter,
     compute_mod_aux_loss,
 )
+from lnn.core.expert_choice import (
+    ExpertChoiceCfCCell,
+    ExpertChoiceCfCNetwork,
+    ExpertChoiceRouter,
+    expert_choice_load,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -362,6 +368,10 @@ __all__ = [
     "MoDCfCCell",
     "MoDCfCNetwork",
     "compute_mod_aux_loss",
+    "ExpertChoiceRouter",
+    "ExpertChoiceCfCCell",
+    "ExpertChoiceCfCNetwork",
+    "expert_choice_load",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

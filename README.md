@@ -1804,6 +1804,41 @@ reduce the per-forward FLOPs.
 `docs/research/2026-06-15_mod_routing_report.md` and the unit tests
 in `tests/test_mod_routing.py` (28/28 pass).
 
+## Expert Choice Routing (round 112)
+
+```python
+from lnn.core import ExpertChoiceCfCNetwork, expert_choice_load
+
+# Expert Choice: each EXPERT picks its top-k tokens (not the reverse).
+# This gives perfect load balance by construction (no aux loss).
+net = ExpertChoiceCfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=4, cap_k_frac=0.5,  # each expert processes 50% of tokens
+)
+output = net(x)  # [B, T, output_size]
+# No aux loss needed — perfect load balance is structural.
+# Per-expert load diagnostic:
+for cell in net.cells:
+    load = expert_choice_load(cell)  # [K] — should be exactly cap_k per expert
+```
+
+**Audit pattern (91-112)**: 9 structural mechanisms tested. EC is
+the **CRITICAL STRUCTURAL NEGATIVE** for round 112. The EC mixing
+step (averaging expert contributions) **washes out the recurrent
+state** — confirmed in our bench. Use EC for parallel-input MoE
+(LLMs, vision), NOT for recurrent MoE (CfC, LSTM, GRU).
+
+**Bench (24 cells, 50 epochs, 2 seeds)**:
+- sin_irr: ec_dense 0.0107±0.0021 (4.6× worse than baseline)
+- structured_irr: ec_dense 0.0062±0.0014 (6.2× worse)
+- random_irr: ec_dense 0.0042±0.0043 (8.4× worse)
+- All EC variants worse than baseline — the mixing itself is harmful
+
+**Recommendation**: **DO NOT use EC for time-series MoE in production**. The mechanism is theoretically sound for LLM tokens but breaks for recurrent hidden states. See
+`docs/research/2026-06-15_expert_choice_report.md` and the unit tests
+in `tests/test_expert_choice.py` (27/27 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
