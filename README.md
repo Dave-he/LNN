@@ -2258,6 +2258,80 @@ family dimension** (linear < sub-MLP in 1D).  For production:
 See `docs/research/2026-06-15_peer_moe_report.md` and the unit tests
 in `tests/test_peer_moe.py` (28/28 pass).
 
+## DAG-MoE (Structural Aggregation) — Directed Acyclic Graph over Experts (round 120, ⚠️ TARGET-DEPENDENT-WITH-NUANCE, 2 NEW BESTS)
+
+```python
+from lnn.core import DAGMoECfCNetwork, dag_moe_utilization
+
+# DAG-MoE: shared base CfC + K sub-CfC experts + L-step DAG aggregation
+# (arXiv:2606.01062, ICML 2026).  1st STRUCTURAL AGGREGATION in the
+# audit — replaces weighted summation with a learned DAG over experts.
+net = DAGMoECfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=3,        # K=3 sub-CfC experts
+    top_k=3,            # K=K (all experts in DAG)
+    n_dag_iterations=1, # L=1 (L=2 destabilizes)
+    dag_down_dim=8,     # DAG down-projection dim
+)
+output = net(x)  # [B, T, output_size]
+# Diagnostic: parameter breakdown
+for cell in net.cells:
+    diag = dag_moe_utilization(cell)
+    n_dag = diag["n_dag_params"]      # ~290 for L=1, K=3, H=4
+    n_expert = diag["n_expert_params"] # ~264 for K=3
+    n_base = diag["n_base_params"]     # ~88 base CfC
+    n_router = diag["n_router_params"] # ~21 router
+```
+
+**Audit pattern (91-120)**: 17 structural mechanisms tested. DAG-MoE
+is the **2nd TARGET-DEPENDENT-WITH-NUANCE** in the audit (after 108
+Anchored MoE) and the **1st STRUCTURAL AGGREGATION** ever tested. The
+mechanism: standard router picks K experts → each expert's output
+is weighted by its gate → a DAG refines the K weighted outputs over
+L iterations with learned edge gates → final output is the sum of
+depth-L node representations.
+
+**Bench (42 cells, 30 epochs, 2 seeds)**:
+
+| Condition | sin_irr | structured_irr | random_irr | n_params |
+|-----------|---------|----------------|------------|----------|
+| baseline_cfc         | 0.0094±0.0019 | 0.0053±0.0010 | 0.0013±0.0004 | 2545 |
+| **lora_k3_r4_dense** | **0.0047±0.0003** | 0.0036±0.0000 | **0.0014±0.0008** | 3691 |
+| sigmoid_k3_dense     | 0.0048±0.0010 | 0.0034±0.0009 | 0.0052±0.0024 | 7763 |
+| **dag_moe_k3_l1**    | **0.0047±0.0004** | **0.0030±0.0003** | 0.0075±0.0032 | 11679 |
+| **dag_moe_k4_l2_top2** | **0.0042±0.0017** | 0.0055±0.0036 | 0.0118±0.0016 | 15653 |
+| dag_moe_k3_l2        | 0.0282±0.0107 | 0.0066±0.0044 | 0.0258±0.0084 | 13073 |
+
+**Headline finding: 2 NEW BESTS**:
+- **sin_irr: dag_moe_k4_l2_top2 = 0.0042** (beats lora 0.0047 by 11%)
+- **structured_irr: dag_moe_k3_l1 = 0.0030** (beats lora 0.0036 by 17%)
+
+**Key findings**:
+- **dag_moe_k3_l1 sets NEW BEST on structured_irr (0.0030)** — beats both lora (0.0036) and sigmoid (0.0034)
+- **dag_moe_k4_l2_top2 sets NEW BEST on sin_irr (0.0042)** — beats lora 0.0047 and sigmoid 0.0048
+- **DAG-MoE loses on random_irr** — structural aggregation can't help with noise-dominated data
+- **L=2 is unstable** — sin 0.0282, random 0.0258 (much worse than L=1)
+- **L=1 is the sweet spot** — single iteration of DAG refinement is enough
+
+**Why DAG-MoE is target-dependent**:
+1. **L=1 wins on smooth/structured data** — sin (tied 0.0047) and struct (new best 0.0030) because the DAG edge gates add a non-linear blend layer that's strictly more expressive than weighted summation.
+2. **L=1 loses on noisy data** — random_irr is dominated by baseline_cfc (0.0013) and lora (0.0014). Extra parameters (11679 vs 3691) lead to overfitting on noise.
+3. **L=2 destabilizes** — 2 iterations amplify early-training noise into the final output. Paper used L=2 but in 1D L=1 is much more stable.
+4. **Sparse K=4 top_k=2 wins on sin only** — beats lora on sin (0.0042 vs 0.0047) but loses elsewhere.
+
+**Why structural aggregation is a real positive**:
+- **Non-linear blend** — edge gates (sigmoid) + W_node + W_up gives a strictly more expressive combination than `sum g_i * E_i(x)`
+- **DAG structure** — multi-step reasoning within a single MoE layer
+- **Zero-init W_up** — at init, DAG refinement is the identity function (well-behaved)
+
+**Recommendation**: **Use dag_moe_k3_l1 for smooth/structured data**
+with `n_experts=3, top_k=3, n_dag_iterations=1, dag_down_dim=8`.  This
+sets a new best on structured_irr.  For noisy data, stick with
+**lora_k3_r4_dense (round 118 winner)**.  See
+`docs/research/2026-06-15_dag_moe_report.md` and the unit tests in
+`tests/test_dag_moe.py` (24/24 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |

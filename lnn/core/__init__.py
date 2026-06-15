@@ -216,6 +216,13 @@ from lnn.core.lora_moe import (
     LoRAExpert,
     lora_moe_utilization,
 )
+from lnn.core.dag_moe import (
+    DAGEdgeGate,
+    DAGAggregation,
+    DAGMoECfCCell,
+    DAGMoECfCNetwork,
+    dag_moe_utilization,
+)
 from lnn.core.peer_moe import (
     LinearSoftmaxRouter,
     PEERCfCCell,
@@ -440,6 +447,11 @@ __all__ = [
     "LoRACfCCell",
     "LoRACfCNetwork",
     "lora_moe_utilization",
+    "DAGEdgeGate",
+    "DAGAggregation",
+    "DAGMoECfCCell",
+    "DAGMoECfCNetwork",
+    "dag_moe_utilization",
     "SingleNeuronExpert",
     "ProductKeyRouter",
     "LinearSoftmaxRouter",
