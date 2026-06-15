@@ -168,6 +168,12 @@ from lnn.core.freq_experts import (
     TimeFreqMoECfCCell,
     TimeFreqMoECfCNetwork,
 )
+from lnn.core.mod_routing import (
+    MoDCfCCell,
+    MoDCfCNetwork,
+    MoDRouter,
+    compute_mod_aux_loss,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -352,6 +358,10 @@ __all__ = [
     "FrequencyRouter",
     "TimeFreqMoECfCCell",
     "TimeFreqMoECfCNetwork",
+    "MoDRouter",
+    "MoDCfCCell",
+    "MoDCfCNetwork",
+    "compute_mod_aux_loss",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

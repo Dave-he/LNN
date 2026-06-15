@@ -1766,6 +1766,44 @@ util = net.get_utilization()  # routing_H, max_min, active_fraction
 See `docs/research/2026-06-15_freq_experts_report.md` and the
 unit tests in `tests/test_freq_experts.py` (23/23 pass).
 
+## Mixture-of-Depths Routing (round 111)
+
+```python
+from lnn.core import MoDCfCNetwork, compute_mod_aux_loss
+
+# MoD: at each cell step, route over a fixed budget k of timesteps
+# to process through the heavy CfC block; the rest are skipped
+# (residual passthrough).  1st compute-saving structural mechanism
+# in 91-111 audit.
+net = MoDCfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    cap_k_frac=0.5,  # process 50% of timesteps, skip 50% via residual
+)
+output = net(x)  # [B, T, output_size]
+aux = compute_mod_aux_loss(net)
+total_loss = task_loss + 0.01 * aux  # Switch-Transformer-style aux loss
+```
+
+**Audit pattern (91-111)**: 8 structural mechanisms tested. MoD is
+the **only one that saves compute** — the other 7 (Reliability Gate
+99, QuITE 102, SETA 105, Soft MoE 107, Anchored 108, Dynamic TMoE 109,
+Freq Experts 110) all add parameters or change routing, but don't
+reduce the per-forward FLOPs.
+
+**Bench (24 cells, 50 epochs, 2 seeds)**:
+- sin_irr: 0.0023±0.0002 (matches baseline) at 50% compute
+- structured_irr: 0.0010±0.0001 (matches baseline) at 50% compute
+- random_irr: 0.0010±0.0007 (2× worse than baseline) at 50% compute
+- 100% → 50% → 25% compute has **0% test_mse change** on 2 of 3 datasets
+
+**Recommendation**: Use MoD in production for smooth time series with
+`cap_k_frac=0.5` (50% compute, no quality loss on smooth data) or
+`cap_k_frac=0.25` for extreme compute savings. For noisy data, use
+`cap_k=None` (always process, equivalent to standard CfC). See
+`docs/research/2026-06-15_mod_routing_report.md` and the unit tests
+in `tests/test_mod_routing.py` (28/28 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
