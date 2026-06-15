@@ -2670,6 +2670,51 @@ frontier. K_r is the symmetric counterpart of K_s — both should
 be tuned together, with K_r=K_s=2 being the optimum for structured
 multi-regime data. 12 STRICTLY POSITIVE winners in 91-127 audit.
 
+## OscillatorCfC — 2nd-Order Damped Harmonic Oscillator Closed-Form (round 128, 2026-06-15)
+
+The **first HONEST-NEGATIVE-WITH-NUANCE on a 4th ODE family**
+(tested: 1st-order CfC/LTC, recursion-depth MoR, 2nd-order
+Oscillator). The OscillatorCfC replaces the ODE backbone with
+a damped harmonic oscillator that admits a closed-form matrix
+exponential (arXiv:2602.12139, Shende et al. Ashoka University
+February 2026).
+
+```python
+from lnn.core.oscillator_cfc import OscillatorCfCNetwork
+
+net = OscillatorCfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    omega_init_lo=0.5, omega_init_hi=5.0,
+    zeta_init=-1.5,                  # sigmoid(-1.5) ≈ 0.18
+    force_activation="tanh",         # REQUIRED for stability
+)
+```
+
+**Bench (12 cells, 30 epochs, 2 seeds)**: OscillatorCfC has
+**6.3× fewer parameters** (401 vs 2545) but loses to CfC on
+ALL 3 datasets:
+- sin: 0.0313 vs 0.0094 (3.3× worse)
+- structured: 0.0607 vs 0.0053 (11.4× worse)
+- random: 0.0505 vs 0.0013 (38.8× worse)
+
+With **200 epochs**, vanilla OscillatorCfC **diverges**
+(test_mse 48-58). Tanh-bounded forcing is required for
+stability, but even then 8-46× worse than CfC.
+
+**Critical design constraint**: The closed-form solution
+requires **F = W_x·x + b** (no h-term). This destroys the
+recurrent nonlinearity that CfC gets from W_h·h + sigmoid +
+tanh. The paper's "orders of magnitude faster" claim likely
+holds for **transformer attention** settings, not **recurrent
+RNN** settings. See
+`docs/research/2026-06-15_oscillator_cfc_report.md` and the
+unit tests in `tests/test_oscillator_cfc.py` (13/13 pass).
+
+**Verdict**: 13th negative in 91-128 audit. The 2nd-order
+oscillator closed-form is mathematically beautiful but
+architecturally too restrictive for our 1D recurrent setting.
+
 ## What Is Stable?
 
 | Area | Path | Status |
