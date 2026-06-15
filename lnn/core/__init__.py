@@ -148,6 +148,18 @@ from lnn.core.anchored_moe import (
     RegimePredictor,
     StructuralPrior,
 )
+from lnn.core.dynamic_tmoe import (
+    DriftDetector,
+    DynamicExpertPool,
+    DynamicExpertPoolConfig,
+    DynamicTMoECfCCell,
+    DynamicTMoECfCNetwork,
+    DynamicTMoEConfig,
+    ExpertModule,
+    TemporalMemoryRouter,
+    TemporalMemoryRouterConfig,
+    mmd_rbf,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -316,6 +328,16 @@ __all__ = [
     "AnchoredRouter",
     "RegimePredictor",
     "StructuralPrior",
+    "mmd_rbf",
+    "DriftDetector",
+    "DynamicExpertPoolConfig",
+    "ExpertModule",
+    "DynamicExpertPool",
+    "TemporalMemoryRouterConfig",
+    "TemporalMemoryRouter",
+    "DynamicTMoEConfig",
+    "DynamicTMoECfCCell",
+    "DynamicTMoECfCNetwork",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",

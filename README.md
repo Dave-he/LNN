@@ -1649,6 +1649,67 @@ total_loss = task_loss + net.get_regularization_loss()
 See `docs/research/2026-06-15_anchored_moe_report.md` and the
 unit tests in `tests/test_anchored_moe.py` (25/25 pass).
 
+## Dynamic TMoE: Drift-Aware Dynamic MoE (round 109)
+
+`mmd_rbf`, `DriftDetector`, `DynamicExpertPool`, `TemporalMemoryRouter`,
+`DynamicTMoECfCCell`, and `DynamicTMoECfCNetwork` implement Dynamic TMoE
+(arXiv:2605.20678 Zhu/Liu/Weng/Wu May 2026, ICML 2026) — *Drift-Aware
+Dynamic Mixture of Experts for Non-Stationary Time Series Forecasting*.
+
+The idea: the **expert pool itself evolves** in response to detected
+distribution shifts. Three structural mechanisms:
+1. **MMD drift detector**: Maximum Mean Discrepancy between two windows
+2. **Dynamic expert pool**: add (on drift) / prune (least-used)
+3. **Temporal memory router**: recurrent state + anomaly repository
+
+This is the most structural change in the 91-109 audit — the architecture
+literally changes during training.
+
+**Bench result (24 cells: 4 conds × 3 datasets × 2 seeds × 100 epochs, all start at K=4)**:
+
+| cond | sin test | struct test | random test | pool_final | drifts |
+|------|------|------|------|------|------|
+| baseline_fixed | 0.0002-0.0033 | 0.0002-0.0025 | 0.0001-0.0003 | 4 | 0 |
+| dynamic_add | 0.0011-0.0025 | 0.0039-0.0042 | 0.0000-0.0160 | 4→8 | 10-27 |
+| dynamic_full | 0.167-0.186 | 0.014-0.182 | 0.0003-0.066 | 4→8 | 6-27 |
+| dynamic_tiny | 0.0002-0.0033 | 0.0002-0.0025 | 0.0001-0.0003 | 4 | 0-15 |
+
+**Verdict: NEGATIVE-WITH-NUANCE (3rd target-dep in 91-109)**
+- **H1 ✓ CONFIRMED**: Drift detection fires 10-27 times per pass — MMD mechanism works
+- **H2 ✗ REJECTED**: structured_irr worse (dynamic_add +60-150%, dynamic_full 10-100× worse)
+- **H3 PARTIAL**: sin_irr OK with add-only, CATASTROPHIC with full (prune kills experts)
+- **H4 ✓ CONFIRMED**: random_irr competitive
+- **NEW INSIGHT**: structural > routing-only only when the structural change is constructive.
+  The "add" is constructive (more capacity, no destruction). The "prune" is destructive
+  in 1D (kills experts before they specialize).
+- **Use dynamic_add for safe capacity scaling** (no prune) on real drift data
+- **Don't use dynamic_full in 1D synthetic** — prune-every-50 is too aggressive
+- **Don't use for structureless data** — drift is mostly noise, no real benefit
+
+```python
+from lnn.core.dynamic_tmoe import (
+    DynamicTMoECfCNetwork,
+    DynamicTMoEConfig,
+    DynamicExpertPoolConfig,
+    TemporalMemoryRouterConfig,
+)
+
+# Add-only mode (safe in 1D)
+cfg = DynamicTMoEConfig(
+    input_size=2, hidden_size=16, output_size=1,
+    pool=DynamicExpertPoolConfig(init_size=4, max_size=8, min_size=4),
+    router=TemporalMemoryRouterConfig(memory_dim=8, anomaly_dim=4, top_k=2),
+    drift_threshold=0.05,
+    prune_every=10**9,  # disable prune
+)
+net = DynamicTMoECfCNetwork(input_size=2, hidden_size=16, output_size=1, config=cfg)
+outputs, info = net(x)  # info: drift_count, pool_size_initial, pool_size_final, n_adds
+util = net.get_utilization()  # pool_size, routing_H, max_min, active_fraction
+```
+
+See `docs/research/2026-06-15_dynamic_tmoe_report.md` and the
+unit tests in `tests/test_dynamic_tmoe.py` (37/37 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
