@@ -87,6 +87,7 @@ class LoRADAGSharedMoECfCCell(nn.Module):
         small_init: bool = True,
         use_residual: bool = True,
         use_shared: bool = True,
+        n_shared: int = 1,           # K_s shared experts (DeepSeek pattern)
     ):
         super().__init__()
         if top_k > n_experts:
@@ -97,6 +98,10 @@ class LoRADAGSharedMoECfCCell(nn.Module):
         )
         if router_type == "learned":
             assert top_k >= 1, "learned router requires top_k >= 1"
+        if use_shared:
+            assert n_shared >= 1, f"n_shared must be >= 1 when use_shared=True, got {n_shared}"
+        else:
+            n_shared = 0
         self.input_size = int(input_size)
         self.hidden_size = int(hidden_size)
         self.n_experts = int(n_experts)
@@ -106,6 +111,7 @@ class LoRADAGSharedMoECfCCell(nn.Module):
         self.router_type = str(router_type)
         self.use_residual = bool(use_residual)
         self.use_shared = bool(use_shared)
+        self.n_shared = int(n_shared)
         self.adapter_dim = self.input_size + self.hidden_size
 
         # Shared base CfC
@@ -116,18 +122,23 @@ class LoRADAGSharedMoECfCCell(nn.Module):
             tau_scales=tau_scales,
         )
 
-        # Always-on shared LoRA expert (DeepSeek pattern)
+        # Always-on shared LoRA experts (DeepSeek pattern, K_s = n_shared)
         if use_shared:
-            self.shared_expert = LoRAExpert(
-                in_features=self.adapter_dim,
-                out_features=self.hidden_size,
-                rank=self.rank,
-                alpha=self.alpha,
-                dropout=lora_dropout,
-                small_init=small_init,
+            self.shared_experts = nn.ModuleList(
+                [
+                    LoRAExpert(
+                        in_features=self.adapter_dim,
+                        out_features=self.hidden_size,
+                        rank=self.rank,
+                        alpha=self.alpha,
+                        dropout=lora_dropout,
+                        small_init=small_init,
+                    )
+                    for _ in range(self.n_shared)
+                ]
             )
         else:
-            self.shared_expert = None
+            self.shared_experts = nn.ModuleList()
 
         # K routed LoRA experts (B-init-zero warm start)
         self.experts = nn.ModuleList(
@@ -195,9 +206,10 @@ class LoRADAGSharedMoECfCCell(nn.Module):
 
         combined = torch.cat([x_t, h], dim=-1)  # [B, I+H]
 
-        # 1) Shared pathway: always-on LoRA
-        if self.shared_expert is not None:
-            h_shared = self.shared_expert(combined)  # [B, H]
+        # 1) Shared pathway: always-on LoRA (K_s experts, mean-aggregated)
+        if len(self.shared_experts) > 0:
+            shared_outs = [expert(combined) for expert in self.shared_experts]
+            h_shared = torch.stack(shared_outs, dim=1).mean(dim=1)  # [B, H]
         else:
             h_shared = torch.zeros(B, self.hidden_size, device=x_t.device, dtype=x_t.dtype)
 
@@ -241,7 +253,7 @@ class LoRADAGSharedMoECfCCell(nn.Module):
         self.last_top_idx = top_idx.detach() if top_idx is not None else None
         if top_g.dim() == 2 and top_g.size(0) == B:
             self.last_expert_util = top_g.mean(dim=0).detach()
-        self.last_shared_delta = h_shared.detach() if self.shared_expert is not None else None
+        self.last_shared_delta = h_shared.detach() if len(self.shared_experts) > 0 else None
 
         return h_new, {
             "all_deltas": all_deltas,
@@ -281,6 +293,7 @@ class LoRADAGSharedMoECfCNetwork(nn.Module):
         small_init: bool = True,
         use_residual: bool = True,
         use_shared: bool = True,
+        n_shared: int = 1,
     ):
         super().__init__()
         self.input_size = int(input_size)
@@ -309,6 +322,7 @@ class LoRADAGSharedMoECfCNetwork(nn.Module):
                     small_init=small_init,
                     use_residual=use_residual,
                     use_shared=use_shared,
+                    n_shared=n_shared,
                 )
             )
         self.head = nn.Linear(hidden_size, output_size)
@@ -344,9 +358,8 @@ def lora_dag_shared_moe_utilization(cell: LoRADAGSharedMoECfCCell) -> dict:
     n_total = sum(p.numel() for p in cell.parameters())
     n_dag = sum(p.numel() for p in cell.dag.parameters())
     n_lora_routed = sum(p.numel() for e in cell.experts for p in e.parameters())
-    n_lora_shared = (
-        sum(p.numel() for p in cell.shared_expert.parameters())
-        if cell.shared_expert is not None else 0
+    n_lora_shared = sum(
+        p.numel() for e in cell.shared_experts for p in e.parameters()
     )
     n_base = sum(p.numel() for p in cell.base_cfc.parameters())
     n_router = sum(p.numel() for p in cell.router.parameters())
@@ -358,6 +371,7 @@ def lora_dag_shared_moe_utilization(cell: LoRADAGSharedMoECfCCell) -> dict:
         "scaling": cell.alpha / cell.rank,
         "n_dag_iterations": cell.dag.n_iterations,
         "use_shared": cell.use_shared,
+        "n_shared": cell.n_shared,
         "n_params": n_total,
         "n_dag_params": n_dag,
         "n_lora_routed_params": n_lora_routed,

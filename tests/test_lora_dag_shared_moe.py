@@ -25,7 +25,7 @@ def test_cell_init_default():
     assert cell.top_k == 3
     assert cell.rank == 4
     assert len(cell.experts) == 3
-    assert cell.shared_expert is not None
+    assert len(cell.shared_experts) == 1
     assert cell.use_shared is True
     assert cell.dag.n_iterations == 2
 
@@ -33,8 +33,28 @@ def test_cell_init_default():
 def test_cell_init_no_shared():
     cell = LoRADAGSharedMoECfCCell(input_size=2, hidden_size=8, n_experts=3, top_k=2,
                                    rank=4, router_type="learned", use_shared=False)
-    assert cell.shared_expert is None
+    assert len(cell.shared_experts) == 0
     assert cell.use_shared is False
+
+
+def test_cell_init_n_shared_2():
+    cell = LoRADAGSharedMoECfCCell(input_size=2, hidden_size=8, n_experts=3, top_k=3,
+                                   rank=4, router_type="learned", n_shared=2)
+    assert len(cell.shared_experts) == 2
+    assert cell.n_shared == 2
+
+
+def test_cell_init_n_shared_3():
+    cell = LoRADAGSharedMoECfCCell(input_size=2, hidden_size=8, n_experts=3, top_k=3,
+                                   rank=4, router_type="learned", n_shared=3)
+    assert len(cell.shared_experts) == 3
+    assert cell.n_shared == 3
+
+
+def test_cell_invalid_n_shared():
+    with pytest.raises(AssertionError):
+        LoRADAGSharedMoECfCCell(input_size=2, hidden_size=8, n_experts=3, top_k=2,
+                                n_shared=0)
 
 
 def test_cell_init_sigmoid_dense():
@@ -128,9 +148,10 @@ def test_cell_gradient_flow_learned():
     for expert in cell.experts:
         assert expert.lora_A.grad is not None
         assert expert.lora_B.grad is not None
-    # Shared expert got grad
-    assert cell.shared_expert.lora_A.grad is not None
-    assert cell.shared_expert.lora_B.grad is not None
+    # Shared expert(s) got grad
+    for shared in cell.shared_experts:
+        assert shared.lora_A.grad is not None
+        assert shared.lora_B.grad is not None
     # DAG params
     assert any(p.grad is not None and p.grad.abs().sum() > 0
                for p in cell.dag.parameters())
@@ -142,7 +163,33 @@ def test_cell_warm_start_zero_lora():
                                    rank=4, router_type="learned")
     for expert in cell.experts:
         assert torch.all(expert.lora_B == 0)
-    assert torch.all(cell.shared_expert.lora_B == 0)
+    for shared in cell.shared_experts:
+        assert torch.all(shared.lora_B == 0)
+
+
+def test_cell_n_shared_2_forward():
+    cell = LoRADAGSharedMoECfCCell(input_size=2, hidden_size=16, n_experts=3, top_k=2,
+                                   rank=4, router_type="learned", n_shared=2)
+    x = torch.randn(4, 2)
+    h = torch.zeros(4, 16)
+    h_new, info = cell.forward_with_aux(x, h)
+    assert h_new.shape == (4, 16)
+    # Shared is mean of 2 experts
+    assert info["h_shared"].shape == (4, 16)
+
+
+def test_cell_n_shared_3_gradient_flow():
+    cell = LoRADAGSharedMoECfCCell(input_size=2, hidden_size=16, n_experts=3, top_k=2,
+                                   rank=4, router_type="learned", n_shared=3)
+    x = torch.randn(4, 2, requires_grad=True)
+    h = torch.zeros(4, 16)
+    h_new = cell(x, h)
+    loss = h_new.sum()
+    loss.backward()
+    # All 3 shared experts got grad
+    for shared in cell.shared_experts:
+        assert shared.lora_A.grad is not None
+        assert shared.lora_B.grad is not None
 
 
 def test_cell_smoke_sin_learns():
@@ -336,8 +383,8 @@ def test_alpha_scaling():
                                          rank=4, alpha=2.0, router_type="learned", n_dag_iterations=1)
     assert cell_small.experts[0].scaling == 0.5 / 4
     assert cell_large.experts[0].scaling == 2.0 / 4
-    assert cell_small.shared_expert.scaling == 0.5 / 4
-    assert cell_large.shared_expert.scaling == 2.0 / 4
+    assert cell_small.shared_experts[0].scaling == 0.5 / 4
+    assert cell_large.shared_experts[0].scaling == 2.0 / 4
 
 
 def test_no_shared_equals_lora_dag():
@@ -358,6 +405,9 @@ def test_no_shared_equals_lora_dag():
 if __name__ == "__main__":
     test_cell_init_default()
     test_cell_init_no_shared()
+    test_cell_init_n_shared_2()
+    test_cell_init_n_shared_3()
+    test_cell_invalid_n_shared()
     test_cell_init_sigmoid_dense()
     test_cell_invalid_top_k()
     test_cell_invalid_rank()
@@ -370,6 +420,8 @@ if __name__ == "__main__":
     test_cell_gradient_flow_learned()
     test_cell_warm_start_zero_lora()
     test_cell_smoke_sin_learns()
+    test_cell_n_shared_2_forward()
+    test_cell_n_shared_3_gradient_flow()
     test_cell_three_pathways_additive()
     test_cell_no_residual()
     test_network_forward()

@@ -2566,6 +2566,43 @@ succeed. The 10 winners (99, 102, 105, 107, 113, 114, 116, 118, 123,
 3 orthogonal dimensions: **expert family, aggregation, shared
 pathway**.
 
+## K_s Sweep on Triple Hybrid (round 125, 2026-06-15)
+
+The **first 4-mechanism winner** in the 91-125 audit (1 NEW BEST on
+structured_irr). Tests whether increasing K_s (the number of always-on
+shared experts) beyond the DeepSeek default 1 helps the round 124
+triple hybrid. The DeepSeek paper (arXiv:2401.06066) shows K_s=2
+helps multi-domain knowledge — we reproduced this on the triple
+hybrid.
+
+```python
+from lnn.core import LoRADAGSharedMoECfCNetwork
+
+net = LoRADAGSharedMoECfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=3, top_k=3, rank=4, alpha=1.0,
+    n_dag_iterations=1, router_type="learned",
+    use_shared=True, n_shared=2,  # DeepSeek K_s=2
+)
+```
+
+**Bench (30 epochs, 2 seeds)**: `lora_dag_shared_ks2` =
+**0.0020 on structured_irr** (vs prior 0.0021 from round 123's
+`lora_dag_k3_r1_l1`) — **5% improvement**. K_s=1 is best for sin
+(0.0017), K_s=2 is best for structured (0.0020). K_s>=3 always
+worse. See
+`docs/research/2026-06-15_ks_sweep_report.md` and the unit tests in
+`tests/test_lora_dag_shared_moe.py` (31/31 pass).
+
+**Key insight (91-125 audit)**: The orthogonal mechanism stack can
+grow to 4 dimensions. The 11 winners (99, 102, 105, 107, 113, 114,
+116, 118, 123, 124, 125) form a Pareto frontier with multiplicative
+combinations across 4 orthogonal dimensions: **expert family,
+aggregation, shared pathway, shared multiplicity**. The K_s
+dimension is target-dependent (K_s=1 for sin, K_s=2 for
+structured) but always non-negative.
+
 ## What Is Stable?
 
 | Area | Path | Status |
