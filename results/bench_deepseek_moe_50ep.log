@@ -1,0 +1,41 @@
+=== Round 113 DeepSeekMoE bench: 3 datasets × 5 conds × 2 seeds = 30 cells, 50 epochs ===
+  [1/30] sin_irr/baseline_cfc/s0 -> test_mse=0.0022 loss=0.0017 shared=0.00 routed=0.000 (2s)
+  [2/30] sin_irr/baseline_cfc/s1 -> test_mse=0.0024 loss=0.0024 shared=0.00 routed=0.000 (3s)
+  [3/30] sin_irr/fame_k3_t1/s0 -> test_mse=0.0128 loss=0.0087 shared=0.00 routed=0.000 (7s)
+  [4/30] sin_irr/fame_k3_t1/s1 -> test_mse=0.0096 loss=0.0090 shared=0.00 routed=0.000 (11s)
+  [5/30] sin_irr/deepseek_1s_3r_t1/s0 -> test_mse=0.0009 loss=0.0006 shared=1.00 routed=0.333 (21s)
+  [6/30] sin_irr/deepseek_1s_3r_t1/s1 -> test_mse=0.0025 loss=0.0017 shared=1.00 routed=0.333 (28s)
+  [7/30] sin_irr/deepseek_1s_3r_t2/s0 -> test_mse=0.0010 loss=0.0010 shared=1.00 routed=0.333 (34s)
+  [8/30] sin_irr/deepseek_1s_3r_t2/s1 -> test_mse=0.0011 loss=0.0011 shared=1.00 routed=0.333 (40s)
+  [9/30] sin_irr/deepseek_2s_3r_t2/s0 -> test_mse=0.0012 loss=0.0007 shared=1.00 routed=0.333 (47s)
+  [10/30] sin_irr/deepseek_2s_3r_t2/s1 -> test_mse=0.0015 loss=0.0011 shared=1.00 routed=0.333 (54s)
+  [11/30] structured_irr/baseline_cfc/s0 -> test_mse=0.0009 loss=0.0010 shared=0.00 routed=0.000 (55s)
+  [12/30] structured_irr/baseline_cfc/s1 -> test_mse=0.0011 loss=0.0009 shared=0.00 routed=0.000 (56s)
+  [13/30] structured_irr/fame_k3_t1/s0 -> test_mse=0.0081 loss=0.0061 shared=0.00 routed=0.000 (61s)
+  [14/30] structured_irr/fame_k3_t1/s1 -> test_mse=0.0040 loss=0.0029 shared=0.00 routed=0.000 (65s)
+  [15/30] structured_irr/deepseek_1s_3r_t1/s0 -> test_mse=0.0010 loss=0.0007 shared=1.00 routed=0.333 (71s)
+  [16/30] structured_irr/deepseek_1s_3r_t1/s1 -> test_mse=0.0020 loss=0.0012 shared=1.00 routed=0.333 (77s)
+  [17/30] structured_irr/deepseek_1s_3r_t2/s0 -> test_mse=0.0008 loss=0.0007 shared=1.00 routed=0.333 (83s)
+  [18/30] structured_irr/deepseek_1s_3r_t2/s1 -> test_mse=0.0006 loss=0.0008 shared=1.00 routed=0.333 (89s)
+  [19/30] structured_irr/deepseek_2s_3r_t2/s0 -> test_mse=0.0018 loss=0.0014 shared=1.00 routed=0.333 (96s)
+  [20/30] structured_irr/deepseek_2s_3r_t2/s1 -> test_mse=0.0006 loss=0.0005 shared=1.00 routed=0.333 (103s)
+  [21/30] random_irr/baseline_cfc/s0 -> test_mse=0.0008 loss=0.0005 shared=0.00 routed=0.000 (104s)
+  [22/30] random_irr/baseline_cfc/s1 -> test_mse=0.0003 loss=0.0002 shared=0.00 routed=0.000 (105s)
+  [23/30] random_irr/fame_k3_t1/s0 -> test_mse=0.0091 loss=0.0019 shared=0.00 routed=0.000 (110s)
+  [24/30] random_irr/fame_k3_t1/s1 -> test_mse=0.0009 loss=0.0002 shared=0.00 routed=0.000 (114s)
+  [25/30] random_irr/deepseek_1s_3r_t1/s0 -> test_mse=0.0037 loss=0.0003 shared=1.00 routed=0.333 (120s)
+  [26/30] random_irr/deepseek_1s_3r_t1/s1 -> test_mse=0.0037 loss=0.0010 shared=1.00 routed=0.333 (126s)
+  [27/30] random_irr/deepseek_1s_3r_t2/s0 -> test_mse=0.0032 loss=0.0002 shared=1.00 routed=0.333 (133s)
+  [28/30] random_irr/deepseek_1s_3r_t2/s1 -> test_mse=0.0010 loss=0.0004 shared=1.00 routed=0.333 (140s)
+  [29/30] random_irr/deepseek_2s_3r_t2/s0 -> test_mse=0.0002 loss=0.0001 shared=1.00 routed=0.333 (148s)
+  [30/30] random_irr/deepseek_2s_3r_t2/s1 -> test_mse=0.0071 loss=0.0006 shared=1.00 routed=0.333 (155s)
+
+=== Summary (test_mse mean ± std) ===
+cond                   | sin_irr        | structured_irr | random_irr    
+baseline_cfc   | 0.0023±0.0001 | 0.0010±0.0001 | 0.0005±0.0002
+fame_k3_t1     | 0.0112±0.0016 | 0.0061±0.0021 | 0.0050±0.0041
+deepseek_1s_3r_t1 | 0.0017±0.0008 | 0.0015±0.0005 | 0.0037±0.0000
+deepseek_1s_3r_t2 | 0.0011±0.0000 | 0.0007±0.0001 | 0.0021±0.0011
+deepseek_2s_3r_t2 | 0.0014±0.0002 | 0.0012±0.0006 | 0.0036±0.0035
+
+Saved results/bench_deepseek_moe.json

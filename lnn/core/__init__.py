@@ -180,6 +180,11 @@ from lnn.core.expert_choice import (
     ExpertChoiceRouter,
     expert_choice_load,
 )
+from lnn.core.deepseek_moe import (
+    DeepSeekCfCCell,
+    DeepSeekCfCNetwork,
+    deepseek_utilization,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -372,6 +377,9 @@ __all__ = [
     "ExpertChoiceCfCCell",
     "ExpertChoiceCfCNetwork",
     "expert_choice_load",
+    "DeepSeekCfCCell",
+    "DeepSeekCfCNetwork",
+    "deepseek_utilization",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
