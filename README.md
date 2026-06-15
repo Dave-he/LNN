@@ -2715,6 +2715,48 @@ unit tests in `tests/test_oscillator_cfc.py` (13/13 pass).
 oscillator closed-form is mathematically beautiful but
 architecturally too restrictive for our 1D recurrent setting.
 
+## ELMCfC — Expressive Leaky Memory (round 129, 2026-06-15)
+
+The **second HONEST-NEGATIVE-WITH-NUANCE on a neuron-family**
+(tested: 1st-order CfC/LTC, recursion-depth MoR, 2nd-order
+Oscillator, multi-timescale ELM). The ELM cell replaces
+CfC's single-τ gate with a cortical-inspired recurrent
+neuron (arXiv:2605.12049, Spieler/Martius/Levina, 12 May 2026).
+
+```python
+from lnn.core.elm_cfc import ELMCfCNetwork
+
+net = ELMCfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    d_m=4,         # Pareto recipe: d_m ~ sqrt(N) = 4 for H=16
+    d_mlp=8,       # Pareto recipe: d_mlp = 2*d_m
+    tau_m_lo=0.5, tau_m_hi=5.0,  # memory timescale init range
+    tau_r=1.0,                    # readout EMA timescale
+)
+```
+
+**Bench (12 cells, 30 epochs, 2 seeds)**: ELMCfC has 1.56×
+more parameters (3977 vs 2545) but loses to CfC on ALL 3
+datasets:
+- sin: 0.0916 vs 0.0094 (9.7× worse)
+- structured: 0.1064 vs 0.0053 (20.1× worse)
+- random: 0.1996 vs 0.0013 (153× worse)
+
+**Ablation (sin_irr only)**: removing the high-pass filter
+recovers ~50% of the gap (0.0916 → 0.0172). The high-pass
+output `a = ReLU(b + w_r^T m - r)` destroys the DC component
+of our targets (sin, structured, random walk all have
+significant DC content).
+
+**Verdict**: 14th negative in 91-129 audit. The ELM paper's
+biological motivation (cortical adaptive gain control) is
+**task-specific** to spike-based classification (SHD, Enwik8)
+and language modeling — actively HURTS continuous-valued
+regression. See
+`docs/research/2026-06-15_elm_cfc_report.md` and the unit
+tests in `tests/test_elm_cfc.py` (11/11 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
