@@ -2603,6 +2603,41 @@ aggregation, shared pathway, shared multiplicity**. The K_s
 dimension is target-dependent (K_s=1 for sin, K_s=2 for
 structured) but always non-negative.
 
+## Mixture-of-Recursions for CfC (round 126, 2026-06-15)
+
+The **first HONEST-NEGATIVE-WITH-NUANCE on the 5th orthogonal
+dimension**. Tested whether per-timestep variable recursion depth
+(arXiv:2507.10524, MoR) helps the CfC cell. The MoR paper shows
+variable depth can match baseline quality at lower compute. We
+adapt MoR to the recurrent CfC: a per-step softmax router
+predicts weights over {1, 2, ..., max_depth} depths, and we mix
+h_1, h_2, ..., h_max_depth with those weights (continuous
+relaxation).
+
+```python
+from lnn.core.mor_cfc import MoRCfCNetwork
+
+net = MoRCfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    max_depth=4,  # standalone best (vs 1, 2, 3)
+)
+```
+
+**Bench (30 epochs, 2 seeds)**: `mor_d4` is the **best standalone
+CfC variant** (0.0067 sin, 0.0033 struct, 0.0012 random) at
+HALF the parameters of the triple hybrid (2753 vs 5407).
+**However, the 5-axis hybrid (MoR+LoRA-DAG-Shared) does NOT beat
+the 4-axis hybrid** — same coupling failure as round 122 ProbLoRA.
+The 4-axis stack is the **Pareto frontier**: adding a 5th axis
+(here, recursion depth) creates interference with the existing
+axes. See
+`docs/research/2026-06-15_mor_cfc_report.md` and the unit tests in
+`tests/test_mor_cfc.py` (23/23 pass).
+
+**Use `mor_d4` standalone** for parameter-efficient CfC. **Do
+NOT combine with the 4-axis hybrid** — the 4-axis dominates.
+
 ## What Is Stable?
 
 | Area | Path | Status |
