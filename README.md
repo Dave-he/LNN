@@ -2052,6 +2052,65 @@ benefit in the sigmoid setting. See
 `docs/research/2026-06-15_sigmoid_moe_report.md` and the unit tests in
 `tests/test_sigmoid_moe.py` (32/32 pass).
 
+## Gumbel-Softmax Routing MoE — Stochastic MoE (round 117, **NEGATIVE-WITH-NUANCE**)
+
+```python
+from lnn.core import GumbelMoECfCNetwork, gumbel_moe_utilization
+
+# Gumbel-Softmax MoE: add Gumbel noise to router logits before softmax.
+# 5th major router family (after softmax, sigmoid, ReLU, cosine) and
+# the 1st STOCHASTIC router.  Stochastic at training time, deterministic
+# at inference.  Temperature T anneals from 1.0 (exploration) to 0.1 (exploitation).
+net = GumbelMoECfCNetwork(
+    input_size=2, hidden_size=16, output_size=1,
+    num_layers=2, return_sequences=True,
+    n_experts=3,
+    temperature=1.0,      # initial temperature
+    anneal_rate=0.95,     # T <- T * 0.95 per anneal_step()
+    min_temperature=0.1,  # floor for T
+)
+# After each epoch:
+net.anneal_step()
+output = net(x)  # [B, T, output_size]
+# Diagnostic: per-expert utilization + routing entropy + temperature
+for cell in net.cells:
+    diag = gumbel_moe_utilization(cell)
+    ent = diag["routing_entropy"]  # ~ 1.07-1.09 nats (well-balanced)
+    util = diag["expert_util"]     # [K] mean gate per expert
+    temp = diag["temperature"]      # current T
+```
+
+**Audit pattern (91-117)**: 14 structural mechanisms tested. Gumbel
+Routing is the **6th NEGATIVE/TARGET-DEP** in the audit (along with
+108 Anchored MoE, 109 Dynamic TMoE, 110 Freq Experts, 112 Expert
+Choice, 115 MH-MoE). The 5th router family, 1st stochastic.
+
+**Bench (30 cells, 50 epochs, 2 seeds)**:
+- sin_irr:       gumbel_k3_anneal = 0.0038, baseline 0.0023, FAME 0.0112, sigmoid **0.0013**
+- structured_irr: gumbel_k3_anneal = 0.0012, baseline 0.0010, FAME 0.0061, sigmoid **0.0009**
+- random_irr:    gumbel_k3_anneal = 0.0030, baseline **0.0005**, FAME 0.0050, sigmoid 0.0020
+- **Gumbel beats FAME on all 3 datasets** (1.7-3.1×)
+- **Gumbel loses to sigmoid_dense on all 3 datasets** (1.5-2.8×)
+- **Annealing has no effect at 50 epochs** — T converges to 0.1 in 25 epochs
+- Routing entropy H ≈ 1.07-1.09 nats (well-balanced)
+
+**5 router families compared**:
+
+| Property | Softmax | Sigmoid | ReLU | Cosine | Gumbel |
+|----------|---------|---------|------|--------|--------|
+| Range | [0, 1] sums to 1 | [0, 1] each | [0, ∞) | [-1, 1] | [0, 1] sums to 1 |
+| Normalization | YES (sum=1) | NO | NO | NO | YES (sum=1) |
+| Stochastic | NO | NO | NO | NO | **YES (Gumbel)** |
+| Test winner | FAME (78/103) | sigmoid_dense (116) | ReMoE (114) | ❌ (82) | ❌ (117) |
+
+**Recommendation**: **DO NOT use Gumbel-Softmax in production** in
+1D time-series. The noise adds variance without signal. Consider at
+high T on higher-dimensional data (PhysioNet 36D) or with longer
+annealing (200+ epochs). For 1D production, use **Sigmoid (round 116)**,
+**DeepSeek (round 113)**, or **ReMoE (round 114)**. See
+`docs/research/2026-06-15_gumbel_moe_report.md` and the unit tests in
+`tests/test_gumbel_moe.py` (31/31 pass).
+
 ## What Is Stable?
 
 | Area | Path | Status |
