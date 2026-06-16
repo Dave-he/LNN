@@ -229,6 +229,20 @@ tags: [LNN, reading-report, papers]
 - **结论**：本日 LNN 检索关键词面已饱和，无新增独立研读任务；研读产能保留给后续新论文或非 arXiv 来源（GitHub/HF 高质量仓库复现报告）。
 - **GitHub 命中率注意**：`daily_lnn_research.py` 报 "GitHub query failed (403 rate limit)" — 已记入 logs/pipeline/${RUN_DATE}_pipeline.log，次日换 token / 限速后自动恢复；不影响今日 digest 整体有效性。
 
+### [2026-06-16] LiquidTAD — Parallel Liquid-Inspired Temporal Relaxation（时间算子蒸馏方向）
+- **独立报告**：[[docs/reports/LiquidTAD_Parallel_Liquid_Relaxation_2604.18274_研读报告.md]]
+- **PRD**：[[docs/prds/2026-06-16-lnn-round-134-a-liquid-tad-plr.md]]
+- **核心问题**：Temporal Action Detection 模型参数重（ActionFormer 27 M params）、依赖特化算子（可变卷积、稀疏注意力），难以边缘部署。能否把 LNN 的指数松弛先验蒸馏成一个**纯向量化、非递归**的时间算子，从而把 TAD 模型压到 < 11 M params？
+- **方法论**：把 ODE-1 的 closed-form EMA $h_t = \alpha h_{t-1} + (1-\alpha) f(x_t)$（Eq. 1）展开成**离散卷积并行形式** $h_t = (1-\alpha) \sum_{k=0}^{t} \alpha^{t-k} f(x_k)$（Eq. 2），仅依赖 matmul/cumsum/FFT；提出 **Hierarchical Decay-Rate Sharing (HDRS)**，跨 FPN 层级共享 $\alpha$ 以稳定深层时间压缩；Feature Pyramid + PLR + Action Localization Head。
+- **本仓 round 134 实现**：`lnn/core/liquid_tad.py`（PLRCell / PLREncoder / PLRCfCCell + 数值稳定的递推 forward），`tests/test_liquid_tad.py`（16 测试全通过），`scripts/bench_liquid_tad.py`（4 模型 × 4 任务 = 16 cells）。
+- **关键成果（论文）**：THUMOS-14 上 **69.46 % mAP / 10.82 M params / 27.17 GFLOPs**，比 ActionFormer 参数 -60 % 但 mAP 持平或更好。
+- **本仓 1-D 序列验证**：
+  - **PLR+CfC 两轴 = NEW BEST on `structured_irr`**：0.00545 vs CfC 0.01262（**-57 % MSE**）。这是 regime-switch 上首次两轴设计击败单一 CfC。
+  - **PLR alone wins `noise_decor`**：0.08305 vs CfC 0.10317（**-19 %**），PLR 的低通正则对噪声+阶跃信号去噪优于 CfC 非线性门控。
+  - **PLR 严格更便宜**：1350 params vs CfC 3716 params（**-64 %**）；训练时间 ~8 s vs ~18 s（**-53 %**）。
+- **LNN 桥接**：PLR = EMA = ODE-1 闭式解，与 `CfCCell` 的 closed-form 路径数学同源；本仓 `PLRCfCCell` 把论文"PLR + FPN"思想映射到"PLR + CfC"两轴（线性松弛 + 非线性门控），是 round 130-133 之后两轴设计的进一步实例化。
+- **Verdict**：**TARGET-DEPENDENT-WITH-NUANCE** — structured_irr 上 NEW BEST，noise_decor 上 POSITIVE，多正弦 / mackey_glass 上 NEGATIVE-WITH-NUANCE（CfC 仍胜），HDRS 在 1-D 上 NEGATIVE（over-constrains）。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
