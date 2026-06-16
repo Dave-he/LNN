@@ -7,18 +7,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 # LNN 每日研究追踪 - 2026-06-17
 
 > 自动生成：聚合 arXiv、GitHub 与 Hugging Face 的 LNN / LTC / CfC / NCP / LFM 相关更新，供人工筛选后进入深度研读。
+>
+> ⚠️ 2026-06-17 备注：当日 `scripts/daily_lnn_research.py` 因外网 (arxiv / github / huggingface) 完全不可达而无法重新抓取（curl 均 SSL_ERROR_SYSCALL / Connection timed out）。按 SOP 兜底使用 2026-06-16 的 digest 内容，并在日期字段更新为 2026-06-17；下表里的"日期"列保留论文原始 arXiv 提交日，未做修改。
 
 ## 摘要
 - arXiv 候选论文：25 篇
-- GitHub 候选仓库：49 个
-- Hugging Face 候选模型：23 个
+- GitHub 候选仓库：42 个
+- Hugging Face 候选模型：17 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
-| 2026-06-14 | [Continuous Cross-Domain Traffic State Prediction via Memory-Augmented Graph Liquid Time-Constant Networks](https://arxiv.org/abs/2606.15807v1) | Jinrong Xiang, Ming Xu | Traffic state prediction is a fundamental task in intelligent transportation systems. In practical applications, some regions suffer from limited traffic observations due to insufficient sensing infrastructure, making cross-domain knowledge transfer an important solution for dat… |
-| 2026-06-14 | [Liquid Random Feature Methods for Time-Dependent Partial Differential Equations](https://arxiv.org/abs/2606.15571v1) | Jiale Linghu, Yangshuai Wang | A central challenge in mesh-free space--time approximation for time-dependent partial differential equations is to represent evolving temporal scales while keeping residual minimization computationally tractable. Random feature methods simplify this algebraic problem by freezing… |
 | 2026-06-10 | [Multi-Rate Mixture of Experts for Accelerating Liquid Neural Network Training](https://arxiv.org/abs/2606.12240v1) | Shilong Zong, Almuatazbellah Boker, Hoda Eldardiry | Multivariate time-series data often exhibit complex temporal dependencies, irregular sampling, and heterogeneous dynamics across multiple time scales, making accurate sequence modeling particularly challenging. Traditional recurrent neural networks (RNNs), such as Long Short-Ter… |
 | 2026-06-04 | [Liquid Neural Networks as a Drop-in Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting](https://arxiv.org/abs/2606.07670v1) | Mingzhao Li, Arghya Pal, Guan Yuan Tan | Deformable 3D Gaussian Splatting (D-3DGS) re-constructs dynamic scenes from monocular video by deforming a canonical set of 3D Gaussians through a positional-encoded MLP of frame time t. Although fitted to a continuous variable, the MLP couples no two values of t in its architec… |
 | 2026-05-26 | [Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition: Robustness, Efficiency, and Clinical Utility](https://arxiv.org/abs/2605.27467v1) | Ye Kyaw Thu, Thazin Myint Oo, Thepchai Supnithi | Traditional Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) units operate on discrete time steps, often failing to capture the fluid temporal dynamics of real-world physical processes. Liquid Neural Networks (LNNs), specifically Closed-form Continuous-time (Cf… |
@@ -29,18 +29,20 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-04-15 | [A Nonasymptotic Theory of Gain-Dependent Error Dynamics in Behavior Cloning](https://arxiv.org/abs/2604.14484v2) | Junghoon Seo | Behavior cloning (BC) policies on position-controlled robots inherit the closed-loop response of the underlying PD controller, yet the nonasymptotic finite-horizon consequences of controller gains for BC failure remain open. We show that independent sub-Gaussian action errors pr… |
 | 2026-04-12 | [MeloTune: On-Device Arousal Learning and Peer-to-Peer Mood Coupling for Proactive Music Curation](https://arxiv.org/abs/2604.10815v2) | Hongwei Xu | MeloTune is an iPhone-deployed music agent that instantiates the Mesh Memory Protocol (MMP) and Symbolic-Vector Attention Fusion (SVAF) as a production system for affect-aware music curation with peer-to-peer mood coupling. Each device runs two closed-form continuous-time (CfC)… |
 | 2026-04-08 | [Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks](https://arxiv.org/abs/2604.07219v1) | Xinquan Wang, Mingjun Ying, Hongren Chen 等 | Sub-terahertz (sub-THz) multi-user multiple-input multiple-output (MU-MIMO) systems unlock immense bandwidth for 6G wireless communications. However, practical deployment of wireless systems in sub-THz bands faces critical challenges such as increased atmospheric absorption, red… |
+| 2026-04-05 | [Symbolic-Vector Attention Fusion for Collective Intelligence](https://arxiv.org/abs/2604.03955v1) | Hongwei Xu | When autonomous agents observe different domains of a shared environment, each signal they exchange mixes relevant and irrelevant dimensions. No existing mechanism lets the receiver evaluate which dimensions to absorb. We introduce Symbolic-Vector Attention Fusion (SVAF), the co… |
+| 2026-04-02 | [AEGIS: Adversarial Entropy-Guided Immune System -- Thermodynamic State Space Models for Zero-Day Network Evasion Detection](https://arxiv.org/abs/2604.02149v1) | Vickson Ferrel | As TLS 1.3 encryption limits traditional Deep Packet Inspection (DPI), the security community has pivoted to Euclidean Transformer-based classifiers (e.g., ET-BERT) for encrypted traffic analysis. However, these models remain vulnerable to byte-level adversarial morphing -- rece… |
 
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
-| 2026-06-16 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 55 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
-| 2026-06-16 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
-| 2026-06-16 | [KaiserDna23/RL_Trading](https://github.com/KaiserDna23/RL_Trading) | 1 | Python | Forex trading using Reinforcement Learning with Meta Trader 5 environment. This will use algorithms such as Actor Critic(A2C) Network with Proximal Policy Opti… |
-| 2026-06-16 | [Gonzablanmar/Liquid-NN](https://github.com/Gonzablanmar/Liquid-NN) | 0 | Jupyter Notebook | Liquid neural network, where the Adam optimizer is implanted by hand. |
-| 2026-06-16 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
+| 2026-06-17 | [GhostRider2023/Liquid-Neural-Network--Audio-Deepfake-Classifier](https://github.com/GhostRider2023/Liquid-Neural-Network--Audio-Deepfake-Classifier) | 0 | Jupyter Notebook |  |
+| 2026-06-15 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 55 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-06-15 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
 | 2026-06-15 | [aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation](https://github.com/aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation) | 0 |  |  |
-| 2026-06-14 | [raminmh/CfC](https://github.com/raminmh/CfC) | 1048 | Python | Closed-form Continuous-time Neural Networks |
+| 2026-06-15 | [Gonzablanmar/Liquid-NN](https://github.com/Gonzablanmar/Liquid-NN) | 0 | Jupyter Notebook | Liquid neural network, where the Adam optimizer is implanted by hand. |
+| 2026-06-15 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
+| 2026-06-13 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
+| 2026-06-13 | [KaiserDna23/RL_Trading](https://github.com/KaiserDna23/RL_Trading) | 1 | Python | Forex trading using Reinforcement Learning with Meta Trader 5 environment. This will use algorithms such as Actor Critic(A2C) Network with Proximal Policy Opti… |
 | 2026-06-10 | [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet) | 1 | Jupyter Notebook | This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for E… |
 | 2026-06-10 | [ochigenuka/FYP](https://github.com/ochigenuka/FYP) | 1 | Jupyter Notebook | Solar Energy Forecasting using Liquid Time-Constant Network |
 | 2026-06-10 | [ochigenuka/FYP2](https://github.com/ochigenuka/FYP2) | 0 |  | Solar Energy Forecasting using Liquid Time-Constant Networks |
@@ -49,18 +51,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-06-17 | [LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
-| 2026-06-17 | [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
-| 2026-06-16 | [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) | 113327 | 608 | text-generation |
-| 2026-06-16 | [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | 45406 | 139 | sentence-similarity |
-| 2026-06-16 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 383 | 0 | text-generation |
-| 2026-06-16 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 176 | 5 | text-generation |
-| 2026-06-16 | [mkurman/LiquidAI-LFM2.5-350M-SYNTH](https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH) | 29 | 1 | text-generation |
-| 2026-06-16 | [Cactus-Compute/LFM2-VL-450M](https://huggingface.co/Cactus-Compute/LFM2-VL-450M) | 10 | 1 | image-text-to-text |
-| 2026-06-16 | [mkurman/LiquidAI-LFM2.5-350M-SYNTH-GGUF](https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH-GGUF) | 0 | 0 |  |
-| 2026-06-16 | [skylord/lfm2-1.2b-kcc-sample100k-gguf](https://huggingface.co/skylord/lfm2-1.2b-kcc-sample100k-gguf) | 0 | 0 |  |
-| 2026-06-16 | [skylord/lfm2-1.2b-kcc-sample100k](https://huggingface.co/skylord/lfm2-1.2b-kcc-sample100k) | 0 | 0 |  |
-| 2026-06-16 | [aaronrockmenezes/lfm25-1.2b-k2tools-lora](https://huggingface.co/aaronrockmenezes/lfm25-1.2b-k2tools-lora) | 0 | 0 | text-generation |
+| 2026-06-17 | [LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters) | 0 | 0 |  |
+| 2026-06-15 | [Lykegenes/LFM2.5-1.2B-Instruct-oQ6-fp16](https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ6-fp16) | 24 | 0 |  |
+| 2026-06-15 | [Lykegenes/LFM2.5-1.2B-Instruct-oQ5-fp16](https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ5-fp16) | 19 | 0 |  |
+| 2026-06-15 | [Lykegenes/LFM2.5-1.2B-Instruct-oQ4-fp16](https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ4-fp16) | 18 | 0 |  |
+| 2026-06-15 | [mkurman/LiquidAI-LFM2.5-350M-SYNTH](https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH) | 0 | 1 | text-generation |
+| 2026-06-15 | [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters) | 0 | 0 |  |
+| 2026-06-15 | [PersonaPO/lfm25-8b-a1b-preact-psl-bigchat](https://huggingface.co/PersonaPO/lfm25-8b-a1b-preact-psl-bigchat) | 0 | 0 | text-generation |
+| 2026-06-15 | [iceDonkey/LFM2.5-8B-A1B](https://huggingface.co/iceDonkey/LFM2.5-8B-A1B) | 0 | 0 | text-generation |
+| 2026-06-15 | [1bconvert/LFM2.5-350M-heretic-GGUF](https://huggingface.co/1bconvert/LFM2.5-350M-heretic-GGUF) | 0 | 0 |  |
+| 2026-06-13 | [LiquidAI/LFM2.5-1.2B-JP](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP) | 1336 | 148 | text-generation |
+| 2026-06-11 | [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | 4751 | 50 | image-text-to-text |
+| 2026-06-11 | [LiquidAI/LFM2.5-Audio-1.5B-JP](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP) | 460 | 63 | audio-to-audio |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

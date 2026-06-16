@@ -259,11 +259,18 @@ tags: [LNN, reading-report, papers]
 - **LNN 桥接**：PLR = EMA = ODE-1 闭式解，与 `CfCCell` 的 closed-form 路径数学同源；本仓 `PLRCfCCell` 把论文"PLR + FPN"思想映射到"PLR + CfC"两轴（线性松弛 + 非线性门控），是 round 130-133 之后两轴设计的进一步实例化。
 - **Verdict**：**TARGET-DEPENDENT-WITH-NUANCE** — structured_irr 上 NEW BEST，noise_decor 上 POSITIVE，多正弦 / mackey_glass 上 NEGATIVE-WITH-NUANCE（CfC 仍胜），HDRS 在 1-D 上 NEGATIVE（over-constrains）。
 
+### [2026-06-17] 今日候选论文覆盖率复盘
+- **digest 入口**：[[docs/daily/2026-06-17_LNN_research_digest.md|每日追踪]]
+- **抓取异常**：外网出口级失败（curl 测得 arxiv / api.github.com / huggingface 全部 `SSL_ERROR_SYSCALL` 或 `Connection timed out`），`scripts/daily_lnn_research.py` 实际未重新跑。按 SOP "若 digest 失败但有历史 digest, 直接用历史" 兜底，复用 2026-06-16 的 digest 内容并把日期字段刷新为 2026-06-17；论文原始 arXiv 提交日未做修改。日志：`logs/pipeline/2026-06-17_pipeline.log`。
+- **git 远端**：origin 已切回 `git@github.com:Dave-he/LNN.git`；`git fetch` 仍因 SSH 代理 (192.168.6.25:7890) 不可达而失败（`Connection closed by UNKNOWN port 65535`），本地领先 master 4 commit，待网络恢复后再 push。
+- **挑选结果**：`python3 scripts/select_papers_for_report.py --date 2026-06-17 --top 3` 输出候选 0 篇（n_total_arxiv=12, n_skipped_reported=12）；12 篇 arXiv 候选 arXiv ID 与 2026-06-16 完全相同且全部已被既有独立报告覆盖（映射见 6/16 复盘段落）。`paper-analyzer` 技能在本次 cron 中缺失（已警告），但因无新增候选，并未阻塞报告生成。
+- **结论**：本日 LNN 关键词面已饱和 + 外网抓取中断，无新增独立研读任务；产能保留给恢复后 arXiv 新论文或 GitHub/HF 高质量仓库复现报告。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-06-17**：[[docs/daily/2026-06-17_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 49 个，模型 23 个。
 - **2026-06-18**：[[docs/daily/2026-06-18_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
+- **2026-06-17**：[[docs/daily/2026-06-17_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 49 个，模型 23 个。
 - **2026-06-16**：[[docs/daily/2026-06-16_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 21 个。
 - **2026-06-15**：[[docs/daily/2026-06-15_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 17 个。
 - **2026-06-14**：[[docs/daily/2026-06-14_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 42 个，模型 19 个。
