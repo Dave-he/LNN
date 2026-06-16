@@ -1,8 +1,44 @@
 {
   "date": "2026-06-16",
-  "generated_at": "2026-06-16T00:13:02.395983+00:00",
+  "generated_at": "2026-06-16T23:57:47.033619+00:00",
   "errors": [],
   "papers": [
+    {
+      "id": "2606.15807v1",
+      "title": "Continuous Cross-Domain Traffic State Prediction via Memory-Augmented Graph Liquid Time-Constant Networks",
+      "authors": [
+        "Jinrong Xiang",
+        "Ming Xu"
+      ],
+      "published": "2026-06-14",
+      "updated": "2026-06-14",
+      "summary": "Traffic state prediction is a fundamental task in intelligent transportation systems. In practical applications, some regions suffer from limited traffic observations due to insufficient sensing infrastructure, making cross-domain knowledge transfer an important solution for data-scarce traffic prediction. However, existing cross-domain traffic prediction methods still face several limitations, including coarse-grained source-target adaptation, limited capability in handling unseen target-domain patterns, and insufficient modeling of continuous traffic dynamics under irregular or heterogeneous temporal conditions. To address these issues, this paper proposes a continuous cross-domain traffic prediction framework, termed Memory-Augmented Graph Liquid Time-Constant Network (MA-GLTC). Specifically, we first construct spatio-temporal units (STUs) to decompose traffic networks into transferable local units, enabling fine-grained knowledge alignment across domains. Then, a graph liquid time-constant network (GLTC) is developed to model graph-coupled traffic evolution in continuous time. Different from generic graph neural ODE-based models, GLTC introduces graph-coupled recurrent conductance into liquid time-constant dynamics, allowing node states to evolve with leakage, adaptive time constants, and neighborhood-aware feedback. Furthermore, a Memory-based Transfer Storage (MTS) mechanism is designed to preserve source-domain knowledge, retrieve matched traffic patterns, and update reliable target-domain patterns when unseen states emerge. Experiments on five public traffic datasets demonstrate that MA-GLTC consistently outperforms representative innerdomain and cross-domain baselines in both short-term and longterm prediction tasks. Compared with the second-best method, MA-GLTC reduces the average prediction errors by 3.02%, 0.33%, 8.92%, 10.09%, and 2.11%, respectively.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.15807v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.15807v1",
+      "keyword_score": 5
+    },
+    {
+      "id": "2606.15571v1",
+      "title": "Liquid Random Feature Methods for Time-Dependent Partial Differential Equations",
+      "authors": [
+        "Jiale Linghu",
+        "Yangshuai Wang"
+      ],
+      "published": "2026-06-14",
+      "updated": "2026-06-14",
+      "summary": "A central challenge in mesh-free space--time approximation for time-dependent partial differential equations is to represent evolving temporal scales while keeping residual minimization computationally tractable. Random feature methods simplify this algebraic problem by freezing nonlinear trial functions and fitting only a linear readout, but standard static space--time activations provide no explicit relaxation-scale mechanism, making temporal-scale resolution a finite-dimensional bottleneck in stiff, dispersive, or multi-scale regimes. We introduce liquid random feature methods (L-RFM), which replace static temporal activations by closed-form liquid time-constant responses with sampled relaxation scales. The resulting frozen features form temporally structured local or global trial spaces with analytic space--time derivatives for residual least-squares assembly. A density theorem proves density of the deterministic trial spaces in the continuous space--time function class, and a temporal-rank calculation clarifies the role of sampled relaxation scales. Ablation and finite-feature tests identify the liquid temporal response as the primary source of the observed accuracy improvement. Across stiff reaction--diffusion, nonlinear transport, dispersive, complex-valued, and multidimensional benchmarks, L-RFM improves finite-feature accuracy in regimes where temporal-scale representation controls the approximation. By embedding relaxation scales directly into frozen trial functions, L-RFM provides a route to high-accuracy continuous space--time surrogates for evolutionary PDEs while preserving the simplicity of linear least-squares solvers.",
+      "categories": [
+        "physics.comp-ph",
+        "math.NA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.15571v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.15571v1",
+      "keyword_score": 1
+    },
     {
       "id": "2606.12240v1",
       "title": "Multi-Rate Mixture of Experts for Accelerating Liquid Neural Network Training",
@@ -442,44 +478,6 @@
       ],
       "abs_url": "https://arxiv.org/abs/2512.05158v1",
       "pdf_url": "https://arxiv.org/pdf/2512.05158v1",
-      "keyword_score": 1
-    },
-    {
-      "id": "2511.18014v1",
-      "title": "Modeling Retinal Ganglion Cells with Neural Differential Equations",
-      "authors": [
-        "Kacper Dobek",
-        "Daniel Jankowski",
-        "Krzysztof Krawiec"
-      ],
-      "published": "2025-11-22",
-      "updated": "2025-11-22",
-      "summary": "This work explores Liquid Time-Constant Networks (LTCs) and Closed-form Continuous-time Networks (CfCs) for modeling retinal ganglion cell activity in tiger salamanders across three datasets. Compared to a convolutional baseline and an LSTM, both architectures achieved lower MAE, faster convergence, smaller model sizes, and favorable query times, though with slightly lower Pearson correlation. Their efficiency and adaptability make them well suited for scenarios with limited data and frequent retraining, such as edge deployments in vision prosthetics.",
-      "categories": [
-        "cs.CV",
-        "cs.AI"
-      ],
-      "abs_url": "https://arxiv.org/abs/2511.18014v1",
-      "pdf_url": "https://arxiv.org/pdf/2511.18014v1",
-      "keyword_score": 5
-    },
-    {
-      "id": "2511.09909v1",
-      "title": "Simulating Distribution Dynamics: Liquid Temporal Feature Evolution for Single-Domain Generalized Object Detection",
-      "authors": [
-        "Zihao Zhang",
-        "Yang Li",
-        "Aming Wu",
-        "Yahong Han"
-      ],
-      "published": "2025-11-13",
-      "updated": "2025-11-13",
-      "summary": "In this paper, we focus on Single-Domain Generalized Object Detection (Single-DGOD), aiming to transfer a detector trained on one source domain to multiple unknown domains. Existing methods for Single-DGOD typically rely on discrete data augmentation or static perturbation methods to expand data diversity, thereby mitigating the lack of access to target domain data. However, in real-world scenarios such as changes in weather or lighting conditions, domain shifts often occur continuously and gradually. Discrete augmentations and static perturbations fail to effectively capture the dynamic variation of feature distributions, thereby limiting the model's ability to perceive fine-grained cross-domain differences. To this end, we propose a new method, Liquid Temporal Feature Evolution, which simulates the progressive evolution of features from the source domain to simulated latent distributions by incorporating temporal modeling and liquid neural network-driven parameter adjustment. Specifically, we introduce controllable Gaussian noise injection and multi-scale Gaussian blurring to simulate initial feature perturbations, followed by temporal modeling and a liquid parameter adjustment mechanism to generate adaptive modulation parameters, enabling a smooth and continuous adaptation across domains. By capturing progressive cross-domain feature evolution and dynamically regulating adaptation paths, our method bridges the source-unknown domain distribution gap, significantly boosting generalization and robustness to unseen shifts. Significant performance improvements on the Diverse Weather dataset and Real-to-Art benchmark demonstrate the superiority of our method. Our code is available at https://github.com/2490o/LTFE.",
-      "categories": [
-        "cs.CV"
-      ],
-      "abs_url": "https://arxiv.org/abs/2511.09909v1",
-      "pdf_url": "https://arxiv.org/pdf/2511.09909v1",
       "keyword_score": 1
     }
   ],
@@ -1050,11 +1048,189 @@
   ],
   "huggingface_models": [
     {
-      "model_id": "LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters",
+      "model_id": "LiquidAI/LFM2.5-1.2B-Instruct",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 113327,
+      "likes": 609,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2",
+        "text-generation",
+        "liquid",
+        "lfm2.5",
+        "edge",
+        "conversational",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko",
+        "es"
+      ],
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct",
+      "query": "LiquidAI"
+    },
+    {
+      "model_id": "LiquidAI/LFM2-ColBERT-350M",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 45406,
+      "likes": 138,
+      "pipeline_tag": "sentence-similarity",
+      "tags": [
+        "PyLate",
+        "safetensors",
+        "lfm2",
+        "liquid",
+        "edge",
+        "ColBERT",
+        "sentence-transformers",
+        "sentence-similarity",
+        "feature-extraction",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko"
+      ],
+      "url": "https://huggingface.co/LiquidAI/LFM2-ColBERT-350M",
+      "query": "LiquidAI"
+    },
+    {
+      "model_id": "reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 383,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2",
+        "text-generation",
+        "causal-lm",
+        "distillation",
+        "knowledge-distillation",
+        "sft",
+        "reasoning",
+        "chain-of-thought",
+        "mathematics",
+        "physics",
+        "stem",
+        "logic",
+        "logical-inference",
+        "hybrid"
+      ],
+      "url": "https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT",
+      "query": "LFM2.5"
+    },
+    {
+      "model_id": "reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 176,
+      "likes": 5,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2_moe",
+        "text-generation",
+        "causal-lm",
+        "lfm",
+        "liquid-ai",
+        "reasoning",
+        "instruction-tuning",
+        "cixopt",
+        "sparse-finetuning",
+        "conversational",
+        "en",
+        "dataset:angrygiraffe/claude-opus-4.6-4.7-reasoning-8.7k",
+        "base_model:LiquidAI/LFM2.5-8B-A1B",
+        "base_model:finetune:LiquidAI/LFM2.5-8B-A1B"
+      ],
+      "url": "https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "mkurman/LiquidAI-LFM2.5-350M-SYNTH",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 29,
+      "likes": 1,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2",
+        "text-generation",
+        "synth",
+        "synthlabs",
+        "lfm",
+        "reasoning",
+        "conversational",
+        "en",
+        "dataset:PleIAs/SYNTH",
+        "dataset:mkurman/medical-reasoning-synthlabs-I",
+        "dataset:mkurman/gsm8k-SynthLabs-reasoning",
+        "base_model:LiquidAI/LFM2.5-350M",
+        "base_model:finetune:LiquidAI/LFM2.5-350M",
+        "license:other"
+      ],
+      "url": "https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH",
+      "query": "LiquidAI"
+    },
+    {
+      "model_id": "Cactus-Compute/LFM2-VL-450M",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 10,
+      "likes": 1,
+      "pipeline_tag": "image-text-to-text",
+      "tags": [
+        "LFM2-VL-450M",
+        "vision",
+        "text-embed",
+        "image-embed",
+        "apple-npu",
+        "image-text-to-text",
+        "base_model:LiquidAI/LFM2-VL-450M",
+        "base_model:finetune:LiquidAI/LFM2-VL-450M",
+        "license:other",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/Cactus-Compute/LFM2-VL-450M",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "mkurman/LiquidAI-LFM2.5-350M-SYNTH-GGUF",
       "author": null,
       "last_modified": "2026-06-16",
       "downloads": 0,
       "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "gguf",
+        "endpoints_compatible",
+        "region:us",
+        "conversational"
+      ],
+      "url": "https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH-GGUF",
+      "query": "LiquidAI"
+    },
+    {
+      "model_id": "LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 0,
+      "likes": 1,
       "pipeline_tag": null,
       "tags": [
         "safetensors",
@@ -1075,100 +1251,11 @@
       "query": "LFM2"
     },
     {
-      "model_id": "Lykegenes/LFM2.5-1.2B-Instruct-oQ6-fp16",
-      "author": null,
-      "last_modified": "2026-06-15",
-      "downloads": 24,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "mlx",
-        "safetensors",
-        "lfm2",
-        "oq",
-        "quantized",
-        "base_model:LiquidAI/LFM2.5-1.2B-Instruct",
-        "base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct",
-        "6-bit",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ6-fp16",
-      "query": "LFM2.5"
-    },
-    {
-      "model_id": "Lykegenes/LFM2.5-1.2B-Instruct-oQ5-fp16",
-      "author": null,
-      "last_modified": "2026-06-15",
-      "downloads": 19,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "mlx",
-        "safetensors",
-        "lfm2",
-        "oq",
-        "quantized",
-        "base_model:LiquidAI/LFM2.5-1.2B-Instruct",
-        "base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct",
-        "5-bit",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ5-fp16",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "Lykegenes/LFM2.5-1.2B-Instruct-oQ4-fp16",
-      "author": null,
-      "last_modified": "2026-06-15",
-      "downloads": 18,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "mlx",
-        "safetensors",
-        "lfm2",
-        "oq",
-        "quantized",
-        "base_model:LiquidAI/LFM2.5-1.2B-Instruct",
-        "base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct",
-        "4-bit",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ4-fp16",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "mkurman/LiquidAI-LFM2.5-350M-SYNTH",
-      "author": null,
-      "last_modified": "2026-06-15",
-      "downloads": 0,
-      "likes": 1,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2",
-        "text-generation",
-        "synth",
-        "synthlabs",
-        "lfm",
-        "reasoning",
-        "conversational",
-        "base_model:LiquidAI/LFM2.5-350M",
-        "base_model:finetune:LiquidAI/LFM2.5-350M",
-        "license:other",
-        "endpoints_compatible",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH",
-      "query": "LiquidAI"
-    },
-    {
       "model_id": "LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters",
       "author": null,
-      "last_modified": "2026-06-15",
+      "last_modified": "2026-06-16",
       "downloads": 0,
-      "likes": 0,
+      "likes": 1,
       "pipeline_tag": null,
       "tags": [
         "safetensors",
@@ -1189,76 +1276,160 @@
       "query": "LFM2"
     },
     {
-      "model_id": "PersonaPO/lfm25-8b-a1b-preact-psl-bigchat",
+      "model_id": "skylord/lfm2-1.2b-kcc-sample100k-gguf",
       "author": null,
-      "last_modified": "2026-06-15",
+      "last_modified": "2026-06-16",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "gguf",
+        "lfm2",
+        "llama.cpp",
+        "unsloth",
+        "endpoints_compatible",
+        "region:us",
+        "conversational"
+      ],
+      "url": "https://huggingface.co/skylord/lfm2-1.2b-kcc-sample100k-gguf",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "skylord/lfm2-1.2b-kcc-sample100k",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "transformers",
+        "safetensors",
+        "text-generation-inference",
+        "unsloth",
+        "lfm2",
+        "trl",
+        "en",
+        "base_model:unsloth/LFM2.5-1.2B-Instruct",
+        "base_model:finetune:unsloth/LFM2.5-1.2B-Instruct",
+        "license:apache-2.0",
+        "endpoints_compatible",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/skylord/lfm2-1.2b-kcc-sample100k",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "aaronrockmenezes/lfm25-1.2b-k2tools-lora",
+      "author": null,
+      "last_modified": "2026-06-16",
       "downloads": 0,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
         "peft",
         "safetensors",
-        "base_model:adapter:LiquidAI/LFM2.5-8B-A1B-Base",
+        "base_model:adapter:LiquidAI/LFM2.5-1.2B-Instruct",
         "lora",
         "transformers",
         "text-generation",
         "conversational",
         "arxiv:1910.09700",
-        "base_model:LiquidAI/LFM2.5-8B-A1B-Base",
+        "base_model:LiquidAI/LFM2.5-1.2B-Instruct",
         "region:us"
       ],
-      "url": "https://huggingface.co/PersonaPO/lfm25-8b-a1b-preact-psl-bigchat",
+      "url": "https://huggingface.co/aaronrockmenezes/lfm25-1.2b-k2tools-lora",
       "query": "LFM2"
     },
     {
-      "model_id": "iceDonkey/LFM2.5-8B-A1B",
+      "model_id": "AlexAtomic/lfm25-8b-a1b-GGUF",
       "author": null,
-      "last_modified": "2026-06-15",
+      "last_modified": "2026-06-16",
       "downloads": 0,
-      "likes": 0,
+      "likes": 1,
       "pipeline_tag": "text-generation",
       "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2_moe",
-        "text-generation",
+        "gguf",
+        "atomic-chat",
+        "lfm",
         "liquid",
-        "lfm2.5",
-        "edge",
-        "conversational",
+        "lfm2",
+        "imatrix",
+        "quantized",
+        "llama.cpp",
+        "text-generation",
         "en",
         "ar",
         "zh",
         "fr",
         "de",
         "ja",
-        "ko",
-        "es"
+        "ko"
       ],
-      "url": "https://huggingface.co/iceDonkey/LFM2.5-8B-A1B",
+      "url": "https://huggingface.co/AlexAtomic/lfm25-8b-a1b-GGUF",
       "query": "LFM2"
     },
     {
-      "model_id": "1bconvert/LFM2.5-350M-heretic-GGUF",
+      "model_id": "Parallax-labs-1/LFM2.5-Bible-Lora_GGUF",
       "author": null,
-      "last_modified": "2026-06-15",
+      "last_modified": "2026-06-16",
       "downloads": 0,
       "likes": 0,
       "pipeline_tag": null,
       "tags": [
         "gguf",
-        "endpoints_compatible",
-        "region:us",
-        "conversational"
+        "lora",
+        "en",
+        "base_model:LiquidAI/LFM2.5-350M",
+        "base_model:adapter:LiquidAI/LFM2.5-350M",
+        "license:apache-2.0",
+        "region:us"
       ],
-      "url": "https://huggingface.co/1bconvert/LFM2.5-350M-heretic-GGUF",
-      "query": "LFM2"
+      "url": "https://huggingface.co/Parallax-labs-1/LFM2.5-Bible-Lora_GGUF",
+      "query": "LFM2.5"
+    },
+    {
+      "model_id": "Erkan/LFM2.5-8B-A1B-oQ4",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "mlx",
+        "safetensors",
+        "lfm2_moe",
+        "oq",
+        "quantized",
+        "4-bit",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/Erkan/LFM2.5-8B-A1B-oQ4",
+      "query": "LFM2.5"
+    },
+    {
+      "model_id": "Erkan/LFM2.5-8B-A1B-oQ8",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "mlx",
+        "safetensors",
+        "lfm2_moe",
+        "oq",
+        "quantized",
+        "8-bit",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/Erkan/LFM2.5-8B-A1B-oQ8",
+      "query": "LFM2.5"
     },
     {
       "model_id": "LiquidAI/LFM2.5-1.2B-JP",
       "author": null,
       "last_modified": "2026-06-13",
-      "downloads": 1336,
+      "downloads": 1354,
       "likes": 148,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -1286,8 +1457,8 @@
       "model_id": "LiquidAI/LFM2.5-VL-450M-GGUF",
       "author": null,
       "last_modified": "2026-06-11",
-      "downloads": 4751,
-      "likes": 50,
+      "downloads": 4880,
+      "likes": 51,
       "pipeline_tag": "image-text-to-text",
       "tags": [
         "gguf",
@@ -1314,7 +1485,7 @@
       "model_id": "LiquidAI/LFM2.5-Audio-1.5B-JP",
       "author": null,
       "last_modified": "2026-06-11",
-      "downloads": 460,
+      "downloads": 491,
       "likes": 63,
       "pipeline_tag": "audio-to-audio",
       "tags": [
@@ -1334,34 +1505,6 @@
         "region:us"
       ],
       "url": "https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP",
-      "query": "LiquidAI"
-    },
-    {
-      "model_id": "LiquidAI/LFM2.5-8B-A1B",
-      "author": null,
-      "last_modified": "2026-06-10",
-      "downloads": 65537,
-      "likes": 613,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2_moe",
-        "text-generation",
-        "liquid",
-        "lfm2.5",
-        "edge",
-        "conversational",
-        "en",
-        "ar",
-        "zh",
-        "fr",
-        "de",
-        "ja",
-        "ko",
-        "es"
-      ],
-      "url": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B",
       "query": "LiquidAI"
     },
     {
@@ -1385,62 +1528,6 @@
         "region:us"
       ],
       "url": "https://huggingface.co/LiquidAI/LFM2-8B-A1B-smoltalk-LoRA",
-      "query": "LiquidAI"
-    },
-    {
-      "model_id": "LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF",
-      "author": null,
-      "last_modified": "2026-06-07",
-      "downloads": 2593,
-      "likes": 22,
-      "pipeline_tag": "audio-to-audio",
-      "tags": [
-        "llama.cpp",
-        "gguf",
-        "liquid",
-        "lfm2.5",
-        "edge",
-        "audio",
-        "speech",
-        "speech-to-speech",
-        "liquid-audio",
-        "audio-to-audio",
-        "ja",
-        "arxiv:2511.23404",
-        "base_model:LiquidAI/LFM2.5-Audio-1.5B-JP",
-        "base_model:quantized:LiquidAI/LFM2.5-Audio-1.5B-JP",
-        "license:other",
-        "endpoints_compatible"
-      ],
-      "url": "https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF",
-      "query": "LiquidAI"
-    },
-    {
-      "model_id": "LiquidAI/LFM2.5-VL-450M-Extract",
-      "author": null,
-      "last_modified": "2026-06-06",
-      "downloads": 944,
-      "likes": 48,
-      "pipeline_tag": "image-text-to-text",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2_vl",
-        "image-text-to-text",
-        "liquid",
-        "lfm2.5",
-        "lfm2",
-        "edge",
-        "vision",
-        "conversational",
-        "en",
-        "arxiv:2502.14786",
-        "arxiv:2511.23404",
-        "base_model:LiquidAI/LFM2.5-VL-450M",
-        "base_model:finetune:LiquidAI/LFM2.5-VL-450M",
-        "license:other"
-      ],
-      "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-Extract",
       "query": "LiquidAI"
     },
     {

@@ -148,104 +148,122 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Bearing fault diagnosis with a Transformer where multi-head attention is replaced by a bidirectional Closed-form Continuous-time (CfC) liquid neural network. PyTorch implementation, evaluated on CWRU / MFPT / SEU.
 
 ## Hugging Face 模型
-### [LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters)
+### [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct)
 - 更新：2026-06-16
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
+- 下载 / Likes：113327 / 609
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
-### [Lykegenes/LFM2.5-1.2B-Instruct-oQ6-fp16](https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ6-fp16)
-- 更新：2026-06-15
-- 下载 / Likes：24 / 0
-- 任务：unknown
-- Tags：mlx, safetensors, lfm2, oq, quantized, base_model:LiquidAI/LFM2.5-1.2B-Instruct, base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct, 6-bit
+### [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M)
+- 更新：2026-06-16
+- 下载 / Likes：45406 / 138
+- 任务：sentence-similarity
+- Tags：PyLate, safetensors, lfm2, liquid, edge, ColBERT, sentence-transformers, sentence-similarity
 
-### [Lykegenes/LFM2.5-1.2B-Instruct-oQ5-fp16](https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ5-fp16)
-- 更新：2026-06-15
-- 下载 / Likes：19 / 0
-- 任务：unknown
-- Tags：mlx, safetensors, lfm2, oq, quantized, base_model:LiquidAI/LFM2.5-1.2B-Instruct, base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct, 5-bit
+### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
+- 更新：2026-06-16
+- 下载 / Likes：383 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
 
-### [Lykegenes/LFM2.5-1.2B-Instruct-oQ4-fp16](https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ4-fp16)
-- 更新：2026-06-15
-- 下载 / Likes：18 / 0
-- 任务：unknown
-- Tags：mlx, safetensors, lfm2, oq, quantized, base_model:LiquidAI/LFM2.5-1.2B-Instruct, base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct, 4-bit
+### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
+- 更新：2026-06-16
+- 下载 / Likes：176 / 5
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
 
 ### [mkurman/LiquidAI-LFM2.5-350M-SYNTH](https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH)
-- 更新：2026-06-15
-- 下载 / Likes：0 / 1
+- 更新：2026-06-16
+- 下载 / Likes：29 / 1
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, synth, synthlabs, lfm, reasoning
 
-### [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters)
-- 更新：2026-06-15
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
+### [Cactus-Compute/LFM2-VL-450M](https://huggingface.co/Cactus-Compute/LFM2-VL-450M)
+- 更新：2026-06-16
+- 下载 / Likes：10 / 1
+- 任务：image-text-to-text
+- Tags：LFM2-VL-450M, vision, text-embed, image-embed, apple-npu, image-text-to-text, base_model:LiquidAI/LFM2-VL-450M, base_model:finetune:LiquidAI/LFM2-VL-450M
 
-### [PersonaPO/lfm25-8b-a1b-preact-psl-bigchat](https://huggingface.co/PersonaPO/lfm25-8b-a1b-preact-psl-bigchat)
-- 更新：2026-06-15
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：peft, safetensors, base_model:adapter:LiquidAI/LFM2.5-8B-A1B-Base, lora, transformers, text-generation, conversational, arxiv:1910.09700
-
-### [iceDonkey/LFM2.5-8B-A1B](https://huggingface.co/iceDonkey/LFM2.5-8B-A1B)
-- 更新：2026-06-15
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
-
-### [1bconvert/LFM2.5-350M-heretic-GGUF](https://huggingface.co/1bconvert/LFM2.5-350M-heretic-GGUF)
-- 更新：2026-06-15
+### [mkurman/LiquidAI-LFM2.5-350M-SYNTH-GGUF](https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH-GGUF)
+- 更新：2026-06-16
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：gguf, endpoints_compatible, region:us, conversational
 
+### [LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters)
+- 更新：2026-06-16
+- 下载 / Likes：0 / 1
+- 任务：unknown
+- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
+
+### [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters)
+- 更新：2026-06-16
+- 下载 / Likes：0 / 1
+- 任务：unknown
+- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
+
+### [skylord/lfm2-1.2b-kcc-sample100k-gguf](https://huggingface.co/skylord/lfm2-1.2b-kcc-sample100k-gguf)
+- 更新：2026-06-16
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, lfm2, llama.cpp, unsloth, endpoints_compatible, region:us, conversational
+
+### [skylord/lfm2-1.2b-kcc-sample100k](https://huggingface.co/skylord/lfm2-1.2b-kcc-sample100k)
+- 更新：2026-06-16
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, safetensors, text-generation-inference, unsloth, lfm2, trl, en, base_model:unsloth/LFM2.5-1.2B-Instruct
+
+### [aaronrockmenezes/lfm25-1.2b-k2tools-lora](https://huggingface.co/aaronrockmenezes/lfm25-1.2b-k2tools-lora)
+- 更新：2026-06-16
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：peft, safetensors, base_model:adapter:LiquidAI/LFM2.5-1.2B-Instruct, lora, transformers, text-generation, conversational, arxiv:1910.09700
+
+### [AlexAtomic/lfm25-8b-a1b-GGUF](https://huggingface.co/AlexAtomic/lfm25-8b-a1b-GGUF)
+- 更新：2026-06-16
+- 下载 / Likes：0 / 1
+- 任务：text-generation
+- Tags：gguf, atomic-chat, lfm, liquid, lfm2, imatrix, quantized, llama.cpp
+
+### [Parallax-labs-1/LFM2.5-Bible-Lora_GGUF](https://huggingface.co/Parallax-labs-1/LFM2.5-Bible-Lora_GGUF)
+- 更新：2026-06-16
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, lora, en, base_model:LiquidAI/LFM2.5-350M, base_model:adapter:LiquidAI/LFM2.5-350M, license:apache-2.0, region:us
+
+### [Erkan/LFM2.5-8B-A1B-oQ4](https://huggingface.co/Erkan/LFM2.5-8B-A1B-oQ4)
+- 更新：2026-06-16
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：mlx, safetensors, lfm2_moe, oq, quantized, 4-bit, region:us
+
+### [Erkan/LFM2.5-8B-A1B-oQ8](https://huggingface.co/Erkan/LFM2.5-8B-A1B-oQ8)
+- 更新：2026-06-16
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：mlx, safetensors, lfm2_moe, oq, quantized, 8-bit, region:us
+
 ### [LiquidAI/LFM2.5-1.2B-JP](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP)
 - 更新：2026-06-13
-- 下载 / Likes：1336 / 148
+- 下载 / Likes：1354 / 148
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF)
 - 更新：2026-06-11
-- 下载 / Likes：4751 / 50
+- 下载 / Likes：4880 / 51
 - 任务：image-text-to-text
 - Tags：gguf, vision, vlm, liquid, lfm2, lfm2-vl, edge, llama.cpp
 
 ### [LiquidAI/LFM2.5-Audio-1.5B-JP](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP)
 - 更新：2026-06-11
-- 下载 / Likes：460 / 63
+- 下载 / Likes：491 / 63
 - 任务：audio-to-audio
 - Tags：liquid-audio, safetensors, liquid, lfm2, audio, lfm2-audio, speech-to-speech, audio-to-audio
-
-### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
-- 更新：2026-06-10
-- 下载 / Likes：65537 / 613
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2-8B-A1B-smoltalk-LoRA](https://huggingface.co/LiquidAI/LFM2-8B-A1B-smoltalk-LoRA)
 - 更新：2026-06-10
 - 下载 / Likes：50 / 3
 - 任务：unknown
 - Tags：peft, safetensors, lora, lfm, liquid, moe, dataset:HuggingFaceTB/smoltalk, base_model:LiquidAI/LFM2-8B-A1B
-
-### [LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF)
-- 更新：2026-06-07
-- 下载 / Likes：2593 / 22
-- 任务：audio-to-audio
-- Tags：llama.cpp, gguf, liquid, lfm2.5, edge, audio, speech, speech-to-speech
-
-### [LiquidAI/LFM2.5-VL-450M-Extract](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-Extract)
-- 更新：2026-06-06
-- 下载 / Likes：944 / 48
-- 任务：image-text-to-text
-- Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, lfm2, edge
-
-### [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE)
-- 更新：2026-05-06
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
