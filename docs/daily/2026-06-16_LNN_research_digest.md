@@ -10,8 +10,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：25 篇
-- GitHub 候选仓库：17 个
-- Hugging Face 候选模型：16 个
+- GitHub 候选仓库：42 个
+- Hugging Face 候选模型：17 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -33,8 +33,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-06-16 | [GhostRider2023/Liquid-Neural-Network--Audio-Deepfake-Classifier](https://github.com/GhostRider2023/Liquid-Neural-Network--Audio-Deepfake-Classifier) | 0 | Jupyter Notebook |  |
+| 2026-06-15 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 55 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-06-15 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
-| 2026-06-15 | [GhostRider2023/Liquid-Neural-Network--Audio-Deepfake-Classifier](https://github.com/GhostRider2023/Liquid-Neural-Network--Audio-Deepfake-Classifier) | 0 | Jupyter Notebook |  |
 | 2026-06-15 | [aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation](https://github.com/aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation) | 0 |  |  |
 | 2026-06-15 | [Gonzablanmar/Liquid-NN](https://github.com/Gonzablanmar/Liquid-NN) | 0 | Jupyter Notebook | Liquid neural network, where the Adam optimizer is implanted by hand. |
 | 2026-06-15 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
@@ -43,24 +44,23 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-06-10 | [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet) | 1 | Jupyter Notebook | This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for E… |
 | 2026-06-10 | [ochigenuka/FYP](https://github.com/ochigenuka/FYP) | 1 | Jupyter Notebook | Solar Energy Forecasting using Liquid Time-Constant Network |
 | 2026-06-10 | [ochigenuka/FYP2](https://github.com/ochigenuka/FYP2) | 0 |  | Solar Energy Forecasting using Liquid Time-Constant Networks |
-| 2026-06-07 | [patel-om/liquid-neural-networks](https://github.com/patel-om/liquid-neural-networks) | 0 |  |  |
-| 2026-06-05 | [Gonzablanmar/Hybrid-Neural-network-for-double-pendulum-simulation](https://github.com/Gonzablanmar/Hybrid-Neural-network-for-double-pendulum-simulation) | 0 | Jupyter Notebook | Mix of a Lagrangian neural network and Liquid neural network to predict the dynamics of the double pendulum with |
+| 2026-06-08 | [g023/cuda_inf](https://github.com/g023/cuda_inf) | 1 | Cuda | A self-contained CUDA inference engine for LiquidAI/LFM2.5-8B-A1B (hybrid conv + GQA-attention MoE, 8.5B params, 1B active) targeting a single RTX 3060 (12 GB)… |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
+| 2026-06-16 | [LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters) | 0 | 0 |  |
 | 2026-06-15 | [Lykegenes/LFM2.5-1.2B-Instruct-oQ6-fp16](https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ6-fp16) | 24 | 0 |  |
 | 2026-06-15 | [Lykegenes/LFM2.5-1.2B-Instruct-oQ5-fp16](https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ5-fp16) | 19 | 0 |  |
 | 2026-06-15 | [Lykegenes/LFM2.5-1.2B-Instruct-oQ4-fp16](https://huggingface.co/Lykegenes/LFM2.5-1.2B-Instruct-oQ4-fp16) | 18 | 0 |  |
 | 2026-06-15 | [mkurman/LiquidAI-LFM2.5-350M-SYNTH](https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH) | 0 | 1 | text-generation |
-| 2026-06-15 | [LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters) | 0 | 0 |  |
 | 2026-06-15 | [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters) | 0 | 0 |  |
+| 2026-06-15 | [PersonaPO/lfm25-8b-a1b-preact-psl-bigchat](https://huggingface.co/PersonaPO/lfm25-8b-a1b-preact-psl-bigchat) | 0 | 0 | text-generation |
 | 2026-06-15 | [iceDonkey/LFM2.5-8B-A1B](https://huggingface.co/iceDonkey/LFM2.5-8B-A1B) | 0 | 0 | text-generation |
 | 2026-06-15 | [1bconvert/LFM2.5-350M-heretic-GGUF](https://huggingface.co/1bconvert/LFM2.5-350M-heretic-GGUF) | 0 | 0 |  |
 | 2026-06-13 | [LiquidAI/LFM2.5-1.2B-JP](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP) | 1336 | 148 | text-generation |
 | 2026-06-11 | [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | 4751 | 50 | image-text-to-text |
 | 2026-06-11 | [LiquidAI/LFM2.5-Audio-1.5B-JP](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP) | 460 | 63 | audio-to-audio |
-| 2026-06-10 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 65537 | 612 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
