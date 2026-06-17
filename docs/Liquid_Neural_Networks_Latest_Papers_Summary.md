@@ -92,6 +92,22 @@ date: 2026-05-25
 - **独立研读**:[[docs/reports/DLNet_Dual_Stage_Distillation_Pareto_LNN_2601.06227_研读报告.md]] (2026-06-14, 8 节 ~116 行)
 - **链接**:https://arxiv.org/abs/2601.06227; 代码仓库 https://github.com/Dhivya-DD17/DLNet
 
+### 2.11 跨域交通状态预测 — Graph LTC + Memory-Augmented Transfer (MA-GLTC)
+**论文名称**：*Continuous Cross-Domain Traffic State Prediction via Memory-Augmented Graph Liquid Time-Constant Networks* (arXiv:2606.15807, 2026-06-14)
+- **主要内容**：把 LTC 从节点级扩展到图结构，提出 **MA-GLTC = STU + GLTC + MTS**：(1) **Spatio-Temporal Units** 把路网拆为可迁移局部单元，做细粒度跨域对齐；(2) **Graph LTC** 首次把 graph-coupled conductance 嵌入到 LTC 的**时间常数 $\tau$ 本身**（不是右端项 message passing），让节点同时具备 leakage、adaptive $\tau$、neighborhood-aware feedback 三种动力学；(3) **Memory-based Transfer Storage** 非参数化 key-value 外部记忆，做源域 STU 表征的 preserve / retrieve / selective update。
+- **核心成果**：5 个公开交通数据集上对 inner-domain（STGCN/DCRNN/GMAN/PDFormer）与 cross-domain（RegionTrans/STAGNN）强 baseline，**平均预测误差 -3.02 % / -0.33 % / -8.92 % / -10.09 % / -2.11 % 全 SOTA**，长时窗 + 主干道场景提升最大。
+- **本仓关联**：GLTC 的"图耦合 $\tau$"是干净的扩展点，可在 `lnn/core/glc.py` 实现 `GraphLiquidCell`；MTS 抽象与 `moe_ecology.expert_register` 同源；评测脚本可参考 `scripts/bench_liquid_tad.py`（round 134）。**Verdict**: TARGET-DEPENDENT-WITH-NUANCE — 图结构 POSITIVE，单节点 NEGATIVE-WITH-NUANCE，边缘实时 NEGATIVE-WITH-NUANCE。
+- **独立研读**：[[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross_Domain_Traffic_2606.15807_研读报告.md]] (2026-06-17, 7 节)
+- **链接**：https://arxiv.org/abs/2606.15807
+
+### 2.12 多 agent 集体智能 — Symbolic-Vector Attention Fusion + CfC Layer 6 (SVAF)
+**论文名称**：*Symbolic-Vector Attention Fusion for Collective Intelligence* (arXiv:2604.03955, 2026-04-05)
+- **主要内容**：multi-agent 集体智能中，接收方对"对方信号的哪些维度值得吸收"做 per-field 评估。**SVAF = 7-field decomposition + fusion gate + band-pass 4-outcome**：每条 inter-agent signal 拆成 7 typed fields（claim/source/confidence/valence/arousal/scope/timestamp），每个 field 独立 gate $g_i \in [0,1]$；band-pass 给出 4 类判定（redundant/aligned/guarded/rejected）**统一解决"选择性 + 去冗余"**；与 **MMP Layer 6 的 CfC** 协同，fast neurons 同步 affect、slow neurons 保留 domain expertise。
+- **核心成果**：237K 样本 / 273 narrative scenarios 上**三分类准确率 78.7 %**；**mood field 在 epoch 1 就成为最高权重**（远早于 accuracy 收敛）—— LLM 情感表征沿 valence-arousal 轴结构性嵌入的独立证据；**7 节点（macOS + iOS + web）真实多端部署**端到端验证完整 mesh cognition loop。
+- **本仓关联**：**band-pass 4-outcome** 可作 `lnn/perception/band_pass_filter.py` 落地；**per-field gate** 可作 `lnn/perception/field_gate.py`，与 `moe_ecology` 路由形成 per-expert（粗）vs per-field（细）对照；与 CfC Layer 6 协同的范式为"多源 + 连续时间"提供路径。**Verdict**: TARGET-DEPENDENT-WITH-NUANCE — 多源/multi-agent POSITIVE，单源 NEGATIVE，端侧多端部署 POSITIVE，生产级分类 NEGATIVE-WITH-NUANCE。
+- **独立研读**：[[docs/reports/SVAF_Symbolic_Vector_Attention_Fusion_Collective_Intelligence_2604.03955_研读报告.md]] (2026-06-17, 7 节)
+- **链接**：https://arxiv.org/abs/2604.03955
+
 ## 3. 总结与未来展望
 
 截至 2026 年，液态神经网络（LNN）正逐步成为边缘计算（Edge AI）、自动驾驶、医疗实时监控（如心电图异常检测）及高频金融交易等时间敏感型领域的新标准。虽然大规模 Transformer 继续在云端主导静态大语言模型任务，但极其紧凑且高效的液态神经网络正在成为各类物联网及机器人等边缘设备的“数字神经系统”。

@@ -99,6 +99,22 @@ tags: [LNN, reading-report, papers]
 - **方法论**：ResNet-34 encoder 早期以加性融合方式注入 3 通道 LSS 图 (μ/max/σ 表征组织均匀性、结构连续性、确定性边)；bottleneck 部署 LTC 连续时间循环 (T=4 Euler 步) 迭代式精炼全局 spatial token；提出 Boundary Alignment Loss (BAL) 用 Sobel 梯度对齐预测概率图与 LSS Mean 通道；提供 ante-hoc XAI 三通道可视化。
 - **关键成果**：在 MICCAI FUSeg 上取得 **Dice 86.96% / IoU 79.54% / HD95 8.91 px** 的 SOTA (HD95 相对次优 SegNet 提升 30%)；参数量 25.70M，相对 ResNet101-UNet 减少 10×；消融显示 BAL 是 LSS 与 LTC 协同关键——缺 BAL 时 Dice 从 85.22% 退化到 76.18%。
 
+### [2026-06-17] MA-GLTC — Memory-Augmented Graph Liquid Time-Constant Networks for Cross-Domain Traffic State Prediction
+- **独立报告**：[[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross_Domain_Traffic_2606.15807_研读报告.md]]
+- **核心问题**：跨域交通状态预测中，部分 target domain 传感稀疏 + 源/目标域拓扑结构不同 + 不规则/异构时间采样三难，传统 graph neural ODE 对 leaky/adaptive 动力学建模弱、跨域对齐粒度粗。
+- **方法论**：三段式 **MA-GLTC = STU + GLTC + MTS**：(1) **Spatio-Temporal Units (STU)** 把全局路网拆成可迁移的局部时空单元，做细粒度跨域对齐；(2) **Graph LTC (GLTC)** 首次把"图耦合"嵌入到 LTC 的**时间常数 $\tau$ 本身**（不是右端项 message passing），用 graph-coupled recurrent conductance 调制 $\tau_{\text{eff},i}$，让节点同时具备 leakage、adaptive $\tau$、neighborhood-aware feedback 三种动力学；(3) **Memory-based Transfer Storage (MTS)** 非参数化 key-value 外部记忆，对源域 STU 表征做 preserve / retrieve / selective update，避免灾难性遗忘。
+- **关键成果**：5 个公开交通数据集上对比 inner-domain（STGCN/DCRNN/GMAN/PDFormer）与 cross-domain（RegionTrans/STAGNN）强 baseline，**平均预测误差 -3.02 % / -0.33 % / -8.92 % / -10.09 % / -2.11 %**（5 数据集全 SOTA），长时窗 + 主干道场景提升最大（10 % 量级），与 LTC 长程依赖 + 动态 $\tau$ 的优势一致。
+- **局限**：数据集全在交通领域，跨**领域**（如交通→医疗）未验证；MTS memory bank 容量无 scaling law；graph conductance 可解释性未深入；论文摘要未披露 STU / GLTC / MTS 各自 ablation 贡献；未报告推理延迟（ITS 实时部署关键）。
+- **对本仓**：GLTC 的"图耦合 $\tau$"是干净的扩展点，可在 `lnn/core/glc.py` 实现 `GraphLiquidCell`，对照 `LTCNetwork` / `CfCCell` 提供 `mode="ode"` 与 `mode="cfc"` 两种选项；MTS 抽象与本仓 `moe_ecology.expert_register` 同源，可作 `MemoryBank` 抽象复用；评测脚本可参考 `scripts/bench_liquid_tad.py`（round 134）。**Verdict**: TARGET-DEPENDENT-WITH-NUANCE — 图结构 + 跨域时序 POSITIVE，单节点 NEGATIVE-WITH-NUANCE，边缘实时 NEGATIVE-WITH-NUANCE（ODE solver + memory 检索是隐性成本，CfC 闭式解可消解前者）。
+
+### [2026-06-17] SVAF — Symbolic-Vector Attention Fusion for Collective Intelligence
+- **独立报告**：[[docs/reports/SVAF_Symbolic_Vector_Attention_Fusion_Collective_Intelligence_2604.03955_研读报告.md]]
+- **核心问题**：multi-agent 集体智能中，接收方需判断"对方信号的哪些维度值得吸收"。现状三大痛点：(1) 缺乏 per-field 维度评估机制；(2) "选择性吸收"与"去冗余"耦合难解；(3) 异构模态（视觉/文本/音频）语义对齐困难。
+- **方法论**：**SVAF = 7-field decomposition + fusion gate + band-pass 4-outcome**。每条 inter-agent signal 拆成 7 typed semantic fields（claim / source / confidence / valence / arousal / scope / timestamp），每个 field 独立学习一个 fusion gate $g_i \in [0,1]$；band-pass 模型对每条 signal 给出 4 类判定（redundant / aligned / guarded / rejected），**统一解决"选择性"与"去冗余"**；与 **MMP Layer 6 的 CfC** 协同（参见 [[docs/reports/MeloTune_CfC_Proactive_Music_Curation_研读报告]]），fast neurons 同步 affect、slow neurons 保留 domain expertise。
+- **关键成果**：237K 样本 / 273 narrative scenarios 上**三分类准确率 78.7 %**；**mood field 在 epoch 1 就成为最高权重**（远早于 accuracy 收敛）—— LLM 情感表征沿 valence-arousal 轴结构性嵌入的独立证据；**7 节点（macOS + iOS + web）真实多端部署**端到端验证完整 mesh cognition loop，是少有的把 collective intelligence 理论在真机上跑通的论文。
+- **局限**：7 fields 是手工 magic number，未做 5/7/9 fields ablation；三分类 78.7 % 对生产是边际水平；mood 优先只在一个任务族验证；fast/slow neuron 角色是观察性结论，未做因果干预实验；7 节点规模小，70/700 节点时延迟未报告。
+- **对本仓**：**band-pass 4-outcome** 可作 `lnn/perception/band_pass_filter.py` 立即落地；**per-field gate** 可作 `lnn/perception/field_gate.py`，与 `moe_ecology` 路由形成 per-expert（粗）vs per-field（细）对照；与 CfC Layer 6 协同的范式为"多源 + 连续时间"提供干净路径；mood 优先假设可在 `analysis/emma_rover/` 物理多模态数据上验证。**Verdict**: TARGET-DEPENDENT-WITH-NUANCE — 多源/multi-agent POSITIVE，单源/单时序 NEGATIVE，端侧多端部署 POSITIVE，生产级分类 NEGATIVE-WITH-NUANCE。
+
 ### [2026-06-14] DLNet — When Smaller Wins: Dual-Stage Distillation & Pareto-Guided Compression of LNN for Edge Battery Prognostics
 - **独立报告**：[[docs/reports/DLNet_Dual_Stage_Distillation_Pareto_LNN_2601.06227_研读报告.md]]
 - **核心问题**：LNN 原始 ODE/CfC 形态不便部署到 Arduino Nano 33 BLE Sense (Cortex-M4 @ 64 MHz, 1 MB Flash) 等 MCU；teacher LNN 过大；单次蒸馏容易在后续压缩阶段把"时间常数"这一核心动力学指纹打掉，导致 student 比 teacher 误差反而更高 (典型 −5% 到 +20%)。需要**"先 Euler 离散 → 双阶段 KD → Pareto 选优 → int8 部署"**的端到端流水线。
