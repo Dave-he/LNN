@@ -14,10 +14,6 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - Hugging Face 候选模型：23 个
 - 已下载 PDF：0 个
 
-## 数据源状态
-- `arXiv fetch failed: The read operation timed out`
-- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
-
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
@@ -70,60 +66,6 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
 - 对最近更新且 Star 较高的仓库，优先记录复现成本、依赖栈和 Jetson 部署可行性。
 - 对 LFM2/LFM2.5 相关模型，优先筛选 350M、450M、1.2B 等边缘友好规格，进入 Jetson 量化/推理验证队列。
-
-## 人工研判更新
-
-复核时间：2026-06-17 11:19 北京时间 (UTC+8)。
-
-数据口径：
-- 论文池沿用 2026-06-17 06:32 北京时间 (UTC+8) 成功抓取的 arXiv 快照；11:18-11:19 北京时间 (UTC+8) 连续两次重试 arXiv API 均超时，已保留在 `papers/daily/2026-06-17_lnn_research.json` 的 `errors` 字段中。
-- GitHub / Hugging Face 已在 11:19 北京时间 (UTC+8) 刷新，候选规模从早间的 41 / 21 更新为 49 / 23。
-- 原始机器数据：`papers/daily/2026-06-17_lnn_research.json`。
-- 开源观察表：`analysis/repo_watchlist/2026-06-17_lnn_open_source_watchlist.md`。
-
-### 今日结论
-
-1. **MA-GLTC 是今日最强 `read_now` 项**：它把 LTC 的 adaptive time constant 扩展到图结构，核心不只是 message passing，而是把邻居反馈注入 $\tau_{\text{eff}}$，对本仓的 `LTCNetwork` / `CfCCell` / `moe_ecology` 都有直接扩展价值。
-2. **L-RFM 是相关但不应归入 LNN 主线的 `watch` 项**：论文使用 liquid temporal response / relaxation scales 做 PDE 随机特征，不是 Liquid Neural Network / LTC / CfC。可作为“连续时间基函数/解析导数/least-squares surrogate”的相邻数学线索保留。
-3. **开源生态今天的重点从论文转向 LFM2.5 部署**：`maximecb/bebelm`、`g023/cuda_inf`、LFM2.5 GGUF / ONNX / MLX / ColBERT 生态都指向一个共同趋势：Liquid AI 路线正在从模型发布进入边缘推理与本地 RAG 工程化。
-4. **高 Star 旧仓库仍要保留作基准**：`raminmh/CfC` 今天被搜索刷新捕获，虽然不是新项目，但 Star 最高，应该继续作为 CfC 复现与 API 对照的参考基线，而不是按“旧”过滤掉。
-
-### 候选分级
-
-| 候选 | 类型 | 状态 | 理由 | 下一步 |
-|---|---|---|---|---|
-| [MA-GLTC](https://arxiv.org/abs/2606.15807) | paper | `read_now` / `experiment` | 直接提出 Graph LTC + MTS，主题相关性高；arXiv 摘要报告 5 个公开交通数据集均优于代表性域内/跨域基线。 | 已生成 [[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross_Domain_Traffic_2606.15807_研读报告.md]]；下一步读 PDF 全文补 ablation 与延迟。 |
-| [Liquid Random Feature Methods](https://arxiv.org/abs/2606.15571) | paper | `watch` | 命中 liquid，但主体是 PDE 随机特征与松弛尺度，不是 LNN/LTC/CfC；可为连续时间 surrogate 提供数学借鉴。 | 暂不生成 LNN 研读报告；周度整理时放入“相邻方法”小节。 |
-| [Multi-Rate MoE for LNN Training](https://arxiv.org/abs/2606.12240) | paper | `experiment` | 直指多时间尺度 LNN 训练加速，和本仓 MoE / router 资产强相关。 | 复查 [[docs/reports/Multi-Rate_MoE_Accelerating_LNN_Training_2606.12240_研读报告.md]] 后设计 MR-MoE vs CfC / LTC 微基准。 |
-| [LNN as 3DGS Deformation Field](https://arxiv.org/abs/2606.07670) | paper | `watch` / `experiment` | 连续时间形变场是 LNN 的新应用面，但本仓当前缺 3DGS 数据管线。 | 保留报告链接；暂不进入近期代码实现。 |
-| [maximecb/bebelm](https://github.com/maximecb/bebelm) | repo | `repo_analyze` | Rust CPU-only LFM2.5-8B-A1B Q4_K_M，本地推理链路清晰，适合作边缘推理工程调研。 | 建议输出 `analysis/repo_watchlist/2026-06-17_bebelm_repo_notes.md`，记录构建、权重、吞吐、内存。 |
-| [g023/cuda_inf](https://github.com/g023/cuda_inf) | repo | `repo_analyze` | 单 `.cu` LFM2.5-8B-A1B 推理实现，适合和 Rust CPU 线形成 GPU/CPU 对照。 | 若有 CUDA 环境，测 tokens/s、显存峰值、prefill/decode 分离。 |
-| [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) | model | `experiment` | 1.2B 指令模型，模型卡标注 32k 上下文、GGUF/ONNX/MLX 等部署格式，符合边缘验证路线。 | 复用 `analysis/llm_micro_eval/` 模板，补 2026-06-17 版本地吞吐与 RAG/agentic 小测。 |
-| [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | model | `experiment` | 350M late-interaction retriever，适合把 `docs/reports/` 做本地多语 RAG 索引。 | 建议新增 `analysis/lfm_retrieval/2026-06-17_colbert_docs_rag.md`，指标用 NDCG@10、索引大小、查询延迟。 |
-
-### 已完成深读与索引
-
-- 已完成 MA-GLTC 深读：[[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross_Domain_Traffic_2606.15807_研读报告.md]]。
-- 已完成 SVAF 补充深读：[[docs/reports/SVAF_Symbolic_Vector_Attention_Fusion_Collective_Intelligence_2604.03955_研读报告.md]]。
-- 两篇已追加到全局索引：[[docs/LNN_深度研读报告.md]]。
-- 今日自动追踪条目也已追加到 `docs/Liquid_Neural_Networks_Latest_Papers_Summary.md` 与 [[docs/LNN_深度研读报告.md]] 的自动化队列区。
-
-### 下一步实验队列
-
-| 优先级 | 实验 | 目标 | 指标 | 输出路径 |
-|---|---|---|---|---|
-| P0 | Graph-LTC synthetic benchmark | 验证 graph-coupled $\tau$ 是否在跨图/稀疏观测下优于 GCN-LSTM、DCRNN-lite、普通 LTC。 | MSE、MAE、推理延迟、参数量、$\tau_{\text{eff}}$ 分布。 | `analysis/graph_ltc/2026-06-17_gltc_synthetic_benchmark.md` |
-| P1 | LFM2.5 本地推理对照 | 对比 `bebelm` CPU、GGUF llama.cpp、CUDA 单文件路线的部署成本。 | tokens/s、prefill/decode 拆分、内存/显存峰值、构建复杂度。 | `analysis/lfm_edge/2026-06-17_lfm25_edge_inference.md` |
-| P1 | LFM2-ColBERT 文档检索 | 用 350M retriever 索引本仓 `docs/reports/`，验证 LNN 知识库 RAG 可用性。 | NDCG@10、Recall@5、查询延迟、索引大小。 | `analysis/lfm_retrieval/2026-06-17_colbert_docs_rag.md` |
-| P2 | SVAF band-pass 4-outcome | 把 per-field gate 与 CfC Layer 6 接到多源时序融合任务。 | aligned / guarded / rejected precision-recall、OOD 拒绝率、误拒率。 | `analysis/svaf/2026-06-17_band_pass_gate.md` |
-
-### 外部复核来源
-
-- arXiv: [MA-GLTC / arXiv:2606.15807](https://arxiv.org/abs/2606.15807)。
-- arXiv: [Liquid Random Feature Methods / arXiv:2606.15571](https://arxiv.org/abs/2606.15571)。
-- GitHub: [maximecb/bebelm](https://github.com/maximecb/bebelm)。
-- Hugging Face: [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct)。
-- Hugging Face: [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M)。
 
 ## 数据源
 - arXiv API: https://export.arxiv.org/api/query
