@@ -56,6 +56,13 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：无
 
+### [raminmh/CfC](https://github.com/raminmh/CfC)
+- 更新：2026-06-14
+- Star / Fork：1048 / 161
+- 语言：Python
+- Topics：deep-learning, neural-ode, pytorch, recurrent-neural-networks, sequence-models, tensorflow
+- 说明：Closed-form Continuous-time Neural Networks
+
 ### [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet)
 - 更新：2026-06-10
 - Star / Fork：1 / 0
@@ -98,6 +105,13 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Mix of a Lagrangian neural network and Liquid neural network to predict the dynamics of the double pendulum with
 
+### [infinition/LSTN](https://github.com/infinition/LSTN)
+- 更新：2026-06-03
+- Star / Fork：2 / 1
+- 语言：Rust
+- Topics：未标注
+- 说明：LSTN is an experimental text generation engine that models language not as static probabilities, but as a dynamic and "liquid" neural network. Each trigram (3-character sequence) acts as an individual neuron within a continuous temporal dynamic system.
+
 ### [Linlab2026/GCN-CfC](https://github.com/Linlab2026/GCN-CfC)
 - 更新：2026-06-03
 - Star / Fork：0 / 0
@@ -119,6 +133,13 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：We introduce Event-Driven State Space Models (EDSSM), a framework that propagates latent state through exact closed-form continuous-time linear dynamics—implemented via the matrix exponential e^AΔt—and applies updates only at informative event times.
 
+### [2841649220/LSHN](https://github.com/2841649220/LSHN)
+- 更新：2026-05-29
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：About A bionic neural network that combines liquid neural networks, spiking neural networks, and hypergraph neural networks
+
 ### [rohitsalesforce132/lfm-finetune-suite](https://github.com/rohitsalesforce132/lfm-finetune-suite)
 - 更新：2026-05-23
 - Star / Fork：1 / 0
@@ -126,37 +147,28 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Fine-tune LiquidAI/LFM2.5-350M for 7 use cases — Medical QA, Code Gen, Telecom SRE, Financial Literacy, Education, Sentiment, Summarization. LoRA/QLoRA pipeline with GGUF/ONNX export.
 
-### [R-Liebert/LOKI-G](https://github.com/R-Liebert/LOKI-G)
-- 更新：2026-05-21
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：il, ncps, rl, robotics
-- 说明：LOKI-G is a machine learning project designed for physical machines, enabling edge AI capabilities. It adapts the LOKI algorithm for training via imitation and reinforcement learning using Closed-form Continuous-Time Neural Networks and Neural Circuit Policies.
-
-### [sxlxbo/CTDFormer](https://github.com/sxlxbo/CTDFormer)
-- 更新：2026-05-17
-- Star / Fork：1 / 1
-- 语言：unknown
-- Topics：未标注
-- 说明：Bearing fault diagnosis with a Transformer where multi-head attention is replaced by a bidirectional Closed-form Continuous-time (CfC) liquid neural network. PyTorch implementation, evaluated on CWRU / MFPT / SEU.
-
-### [anu-bhav-18/liquid_time_constant_model](https://github.com/anu-bhav-18/liquid_time_constant_model)
-- 更新：2026-05-13
-- Star / Fork：0 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：无
-
 ## Hugging Face 模型
+### [LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters)
+- 更新：2026-06-17
+- 下载 / Likes：0 / 1
+- 任务：unknown
+- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
+
+### [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters)
+- 更新：2026-06-17
+- 下载 / Likes：0 / 1
+- 任务：unknown
+- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
+
 ### [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct)
 - 更新：2026-06-16
-- 下载 / Likes：113327 / 609
+- 下载 / Likes：113327 / 608
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M)
 - 更新：2026-06-16
-- 下载 / Likes：45406 / 138
+- 下载 / Likes：45406 / 139
 - 任务：sentence-similarity
 - Tags：PyLate, safetensors, lfm2, liquid, edge, ColBERT, sentence-transformers, sentence-similarity
 
@@ -189,18 +201,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：gguf, endpoints_compatible, region:us, conversational
-
-### [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters)
-- 更新：2026-06-16
-- 下载 / Likes：0 / 1
-- 任务：unknown
-- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
-
-### [LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-SFT1-Online-ECHO-RLVR-GRPO-Adapters)
-- 更新：2026-06-16
-- 下载 / Likes：0 / 1
-- 任务：unknown
-- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
 
 ### [skylord/lfm2-1.2b-kcc-sample100k-gguf](https://huggingface.co/skylord/lfm2-1.2b-kcc-sample100k-gguf)
 - 更新：2026-06-16
@@ -262,8 +262,8 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：audio-to-audio
 - Tags：liquid-audio, safetensors, liquid, lfm2, audio, lfm2-audio, speech-to-speech, audio-to-audio
 
-### [LiquidAI/LFM2-8B-A1B-smoltalk-LoRA](https://huggingface.co/LiquidAI/LFM2-8B-A1B-smoltalk-LoRA)
+### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
 - 更新：2026-06-10
-- 下载 / Likes：50 / 3
-- 任务：unknown
-- Tags：peft, safetensors, lora, lfm, liquid, moe, dataset:HuggingFaceTB/smoltalk, base_model:LiquidAI/LFM2-8B-A1B
+- 下载 / Likes：67417 / 617
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
