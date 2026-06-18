@@ -245,6 +245,17 @@ tags: [LNN, reading-report, papers]
 - **结论**：本日 LNN 检索关键词面已饱和，无新增独立研读任务；研读产能保留给后续新论文或非 arXiv 来源（GitHub/HF 高质量仓库复现报告）。
 - **GitHub 命中率注意**：`daily_lnn_research.py` 报 "GitHub query failed (403 rate limit)" — 已记入 logs/pipeline/${RUN_DATE}_pipeline.log，次日换 token / 限速后自动恢复；不影响今日 digest 整体有效性。
 
+### [2026-06-19] L-RFM — Liquid Random Feature Methods for Time-Dependent PDEs（算子代理方向）
+- **独立报告**：[[docs/reports/Liquid_Random_Feature_Methods_TD-PDE_2606.15571_研读报告.md]]
+- **arXiv**：[2606.15571v1](https://arxiv.org/abs/2606.15571v1)（Jiale Linghu, Yangshuai Wang；2026-06-14 提交，5 天前）
+- **核心问题**：mesh-free 残差最小二乘解 PDE 时，静态 frozen activation（random Fourier / ridge）的时间成分没有显式松弛尺度机制，在 stiff / dispersive / multi-scale 时间依赖 PDE 上成为有限维瓶颈。
+- **方法论**：把 LTC 的闭式时序响应 $\phi=h_0 e^{-\alpha t}+gA\eta_0$ **作为 frozen feature primitive**，参数 $\tau$ 用 **log-uniform 多尺度采样**，加上 partition-of-unity 空间局部化（L-RFM-Local）或全局仿射坐标（L-RFM-Global），用解析闭式导数（一阶/二阶/三阶）+ 行加权 truncated-SVD 最小二乘拟合 readout；非线性用 Picard 线性化，长时窗口用 block marching。
+- **关键成果（论文 1-D matched-P）**：Allen-Cahn $\epsilon{=}10^{-4}$ 上 $L_2$ 误差 $5.98\!\times\!10^{-8}$ vs 静态基最优 $3.22\!\times\!10^{-6}$（**-54×**）；Burgers $1.81\!\times\!10^{-6}$（best）；KdV $1.61\!\times\!10^{-3}$（**-3×**）；NLS $8.64\!\times\!10^{-5}$（**-10×**）。**LS 矩阵条件数** L-RFM-Local 比静态基小 **2-5 个数量级**（e.g. NLS 1D $\kappa\approx 10^{11}$ vs $10^{16}$）。多尺度 $\tau$ 消融（Section 4.4.3）证明 ODE 时序响应是绝对主导，去掉它所有 benchmark 退化 5-8 个数量级；log-uniform 主要提升对未知时序尺度的鲁棒性。
+- **理论保证**：密度定理（Thm. 1, App. A.1）证明 $\mathcal{A}_{\text{loc}}$ 与 $\mathcal{A}_{\text{glob}}$ 均在 $\mathcal{C}(X\times[0,T])$ 中稠密；时序秩命题（Prop. 1）严格说明"多尺度 $\tau$ 采样能扩展时序表示"的代数依据。
+- **LNN 桥接**：L-RFM 的核心方程与本仓 `CfCCell` / `PLR` 数学同源（同一族 ODE-1 / LTC 闭式解），本质差异是"参数**学 vs 冻结+线性 LS readout**"。L-RFM 把 LTC 思想从序列神经元搬到 PDE 算子代理；与本仓序列建模 + 边缘部署方向互补但不直接复用。
+- **局限与方向**：多维非线性 benchmark 缺失；缺有限 $M$ 误差估计与条件数理论；Picard 收敛性边界未刻画；当前 dense LS 无稀疏 block 装配与分解复用，工程上仍有 10×-100× 加速空间。
+- **本仓建议**：不进入 round 立即落地，但纳入"算子代理方向"作为未来 round 候选；论文的"多尺度 log-uniform $\tau$ + 局部 PoU 抑制列对齐"思路对"两轴 + 多尺度 + 局部化"研究路径有概念启发价值。
+
 ### [2026-06-16] LiquidTAD — Parallel Liquid-Inspired Temporal Relaxation（时间算子蒸馏方向）
 - **独立报告**：[[docs/reports/LiquidTAD_Parallel_Liquid_Relaxation_2604.18274_研读报告.md]]
 - **PRD**：[[docs/prds/2026-06-16-lnn-round-134-a-liquid-tad-plr.md]]
