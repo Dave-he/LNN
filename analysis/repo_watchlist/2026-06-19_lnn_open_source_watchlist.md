@@ -7,26 +7,26 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-06-19
 
 ## GitHub 仓库
+### [maximecb/bebelm](https://github.com/maximecb/bebelm)
+- 更新：2026-06-19
+- Star / Fork：57 / 5
+- 语言：Rust
+- Topics：cpu, inference, llm, local-ai, local-llm, rust
+- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
+
+### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
+- 更新：2026-06-19
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
+
 ### [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet)
 - 更新：2026-06-18
 - Star / Fork：1 / 0
 - 语言：Jupyter Notebook
 - Topics：未标注
 - 说明：This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics", International Conference on Pattern Recognition, ICPR 2026.
-
-### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-06-18
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
-
-### [maximecb/bebelm](https://github.com/maximecb/bebelm)
-- 更新：2026-06-17
-- Star / Fork：56 / 5
-- 语言：Rust
-- Topics：cpu, inference, llm, local-ai, local-llm, rust
-- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
 
 ### [Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data](https://github.com/Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data)
 - 更新：2026-06-17
@@ -148,93 +148,111 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：无
 
 ## Hugging Face 模型
+### [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M)
+- 更新：2026-06-19
+- 下载 / Likes：65302 / 142
+- 任务：sentence-similarity
+- Tags：PyLate, safetensors, lfm2, liquid, edge, ColBERT, sentence-transformers, sentence-similarity
+
+### [LiquidAI/LFM2.5-Embedding-350M](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M)
+- 更新：2026-06-19
+- 下载 / Likes：4825 / 68
+- 任务：sentence-similarity
+- Tags：sentence-transformers, safetensors, lfm2, liquid, lfm2.5, edge, sentence-similarity, feature-extraction
+
+### [LiquidAI/LFM2.5-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M)
+- 更新：2026-06-19
+- 下载 / Likes：267 / 58
+- 任务：sentence-similarity
+- Tags：PyLate, safetensors, lfm2, liquid, lfm2.5, edge, ColBERT, sentence-transformers
+
 ### [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters)
 - 更新：2026-06-19
 - 下载 / Likes：0 / 1
 - 任务：unknown
 - Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
 
-### [LiquidAI/LFM2.5-Embedding-350M](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M)
-- 更新：2026-06-18
-- 下载 / Likes：3734 / 52
-- 任务：sentence-similarity
-- Tags：sentence-transformers, safetensors, lfm2, liquid, lfm2.5, edge, sentence-similarity, feature-extraction
+### [PersonaPO/lfm25-8b-a1b-pvlora-extraversion-low](https://huggingface.co/PersonaPO/lfm25-8b-a1b-pvlora-extraversion-low)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, safetensors, generated_from_trainer, sft, trl, base_model:LiquidAI/LFM2.5-8B-A1B-Base, base_model:finetune:LiquidAI/LFM2.5-8B-A1B-Base, endpoints_compatible
 
-### [LiquidAI/LFM2.5-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M)
-- 更新：2026-06-18
-- 下载 / Likes：103 / 48
-- 任务：sentence-similarity
-- Tags：PyLate, safetensors, lfm2, liquid, lfm2.5, edge, ColBERT, sentence-transformers
+### [burtenshaw/lfm25-350m-commonsenseqa-sft-lr1e4-r16-2k](https://huggingface.co/burtenshaw/lfm25-350m-commonsenseqa-sft-lr1e4-r16-2k)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：peft, safetensors, trl, sft, lora, commonsenseqa, liquid-ai, trackio
 
-### [LiquidAI/LFM2.5-ColBERT-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M-GGUF)
-- 更新：2026-06-18
-- 下载 / Likes：1 / 14
-- 任务：sentence-similarity
-- Tags：sentence-transformers, gguf, liquid, lfm2, lfm2.5, edge, ColBERT, PyLate
+### [konradjr007/LFM2.5-VL-450M-twinx-gguf](https://huggingface.co/konradjr007/LFM2.5-VL-450M-twinx-gguf)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, lfm2_vl, llama.cpp, unsloth, vision-language-model, endpoints_compatible, region:us, conversational
+
+### [konradjr007/LFM2.5-VL-450M-twinx](https://huggingface.co/konradjr007/LFM2.5-VL-450M-twinx)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：image-text-to-text
+- Tags：transformers, safetensors, lfm2_vl, image-text-to-text, text-generation-inference, unsloth, conversational, en
+
+### [PersonaPO/lfm25-8b-a1b-pvlora-neuroticism-high](https://huggingface.co/PersonaPO/lfm25-8b-a1b-pvlora-neuroticism-high)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, safetensors, generated_from_trainer, trl, sft, base_model:LiquidAI/LFM2.5-8B-A1B-Base, base_model:finetune:LiquidAI/LFM2.5-8B-A1B-Base, endpoints_compatible
+
+### [PersonaPO/lfm25-8b-a1b-pvlora-neuroticism-low](https://huggingface.co/PersonaPO/lfm25-8b-a1b-pvlora-neuroticism-low)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, safetensors, generated_from_trainer, trl, sft, base_model:LiquidAI/LFM2.5-8B-A1B-Base, base_model:finetune:LiquidAI/LFM2.5-8B-A1B-Base, endpoints_compatible
+
+### [PersonaPO/lfm25-8b-a1b-pvlora-agreeableness-low](https://huggingface.co/PersonaPO/lfm25-8b-a1b-pvlora-agreeableness-low)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, safetensors, generated_from_trainer, trl, sft, base_model:LiquidAI/LFM2.5-8B-A1B-Base, base_model:finetune:LiquidAI/LFM2.5-8B-A1B-Base, endpoints_compatible
+
+### [Mouryace200405/lfm2.5-prompt-enhancer](https://huggingface.co/Mouryace200405/lfm2.5-prompt-enhancer)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, lfm2, license:other, region:us
+
+### [software-mansion/react-native-executorch-lfm2.5-embedding-350m](https://huggingface.co/software-mansion/react-native-executorch-lfm2.5-embedding-350m)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：executorch, license:other, region:us
+
+### [aruntemme/LFM2.5-350M-M3-Distill](https://huggingface.co/aruntemme/LFM2.5-350M-M3-Distill)
+- 更新：2026-06-19
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, gguf, lfm2, text-generation, distillation, synthetic-data, edge
 
 ### [LiquidAI/LFM2.5-Embedding-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M-GGUF)
 - 更新：2026-06-18
-- 下载 / Likes：1 / 18
+- 下载 / Likes：23 / 22
 - 任务：sentence-similarity
 - Tags：sentence-transformers, gguf, liquid, lfm2, lfm2.5, edge, sentence-similarity, feature-extraction
 
-### [iRanadheer/CARDS-Wind-LFM2.5-8B-A1B](https://huggingface.co/iRanadheer/CARDS-Wind-LFM2.5-8B-A1B)
+### [LiquidAI/LFM2.5-ColBERT-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M-GGUF)
 - 更新：2026-06-18
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：safetensors, lfm2_moe, region:us
-
-### [bkideas/LFM2.5-8B-A1B-nvfp4](https://huggingface.co/bkideas/LFM2.5-8B-A1B-nvfp4)
-- 更新：2026-06-18
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：mlx, safetensors, lfm2_moe, text-generation-inference, base_model:LiquidAI/LFM2.5-8B-A1B-MLX-bf16, base_model:quantized:LiquidAI/LFM2.5-8B-A1B-MLX-bf16, license:other, 4-bit
-
-### [iRanadheer/CARDS-Wind-LFM2.5-8B-A1B-lora](https://huggingface.co/iRanadheer/CARDS-Wind-LFM2.5-8B-A1B-lora)
-- 更新：2026-06-18
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, tensorboard, safetensors, generated_from_trainer, trl, hf_jobs, sft, unsloth
-
-### [sahilchachra/LFM2.5-ColBERT-350M-int8](https://huggingface.co/sahilchachra/LFM2.5-ColBERT-350M-int8)
-- 更新：2026-06-18
-- 下载 / Likes：0 / 0
-- 任务：feature-extraction
-- Tags：mlx, safetensors, lfm2, liquid, lfm2.5, retrieval, colbert, quantized
-
-### [sahilchachra/LFM2.5-ColBERT-350M-int4](https://huggingface.co/sahilchachra/LFM2.5-ColBERT-350M-int4)
-- 更新：2026-06-18
-- 下载 / Likes：0 / 0
-- 任务：feature-extraction
-- Tags：mlx, safetensors, lfm2, liquid, lfm2.5, retrieval, colbert, quantized
-
-### [sahilchachra/LFM2.5-Embedding-350M-int8](https://huggingface.co/sahilchachra/LFM2.5-Embedding-350M-int8)
-- 更新：2026-06-18
-- 下载 / Likes：0 / 0
+- 下载 / Likes：19 / 18
 - 任务：sentence-similarity
-- Tags：mlx, safetensors, lfm2, liquid, lfm2.5, retrieval, sentence-similarity, quantized
-
-### [sahilchachra/LFM2.5-Embedding-350M-int4](https://huggingface.co/sahilchachra/LFM2.5-Embedding-350M-int4)
-- 更新：2026-06-18
-- 下载 / Likes：0 / 0
-- 任务：sentence-similarity
-- Tags：mlx, safetensors, lfm2, liquid, lfm2.5, retrieval, sentence-similarity, quantized
+- Tags：sentence-transformers, gguf, liquid, lfm2, lfm2.5, edge, ColBERT, PyLate
 
 ### [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct)
 - 更新：2026-06-16
-- 下载 / Likes：134423 / 611
+- 下载 / Likes：143163 / 613
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
-### [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M)
-- 更新：2026-06-16
-- 下载 / Likes：57598 / 140
-- 任务：sentence-similarity
-- Tags：PyLate, safetensors, lfm2, liquid, edge, ColBERT, sentence-transformers, sentence-similarity
-
 ### [mkurman/LiquidAI-LFM2.5-350M-SYNTH](https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH)
 - 更新：2026-06-16
-- 下载 / Likes：80 / 1
+- 下载 / Likes：81 / 1
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, synth, synthlabs, lfm, reasoning
 
