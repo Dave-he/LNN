@@ -49,11 +49,11 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-06-18 | [LiquidAI/LFM2.5-Embedding-350M](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M) | 3734 | 51 | sentence-similarity |
-| 2026-06-18 | [LiquidAI/LFM2.5-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M) | 103 | 47 | sentence-similarity |
+| 2026-06-19 | [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
+| 2026-06-18 | [LiquidAI/LFM2.5-Embedding-350M](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M) | 3734 | 52 | sentence-similarity |
+| 2026-06-18 | [LiquidAI/LFM2.5-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M) | 103 | 48 | sentence-similarity |
 | 2026-06-18 | [LiquidAI/LFM2.5-ColBERT-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M-GGUF) | 1 | 14 | sentence-similarity |
 | 2026-06-18 | [LiquidAI/LFM2.5-Embedding-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M-GGUF) | 1 | 18 | sentence-similarity |
-| 2026-06-18 | [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
 | 2026-06-18 | [iRanadheer/CARDS-Wind-LFM2.5-8B-A1B](https://huggingface.co/iRanadheer/CARDS-Wind-LFM2.5-8B-A1B) | 0 | 0 |  |
 | 2026-06-18 | [bkideas/LFM2.5-8B-A1B-nvfp4](https://huggingface.co/bkideas/LFM2.5-8B-A1B-nvfp4) | 0 | 0 |  |
 | 2026-06-18 | [iRanadheer/CARDS-Wind-LFM2.5-8B-A1B-lora](https://huggingface.co/iRanadheer/CARDS-Wind-LFM2.5-8B-A1B-lora) | 0 | 0 |  |
