@@ -277,9 +277,32 @@ tags: [LNN, reading-report, papers]
 - **挑选结果**：`python3 scripts/select_papers_for_report.py --date 2026-06-17 --top 3` 输出候选 0 篇（n_total_arxiv=12, n_skipped_reported=12）；12 篇 arXiv 候选 arXiv ID 与 2026-06-16 完全相同且全部已被既有独立报告覆盖（映射见 6/16 复盘段落）。`paper-analyzer` 技能在本次 cron 中缺失（已警告），但因无新增候选，并未阻塞报告生成。
 - **结论**：本日 LNN 关键词面已饱和 + 外网抓取中断，无新增独立研读任务；产能保留给恢复后 arXiv 新论文或 GitHub/HF 高质量仓库复现报告。
 
+### [2026-06-20] 今日新增研读 (2 篇)
+- **digest 入口**：[[docs/daily/2026-06-20_LNN_research_digest.md|每日追踪]]
+- **抓取异常**：`scripts/daily_lnn_research.py` 第一次跑时 arXiv 抓取超时（`The read operation timed out`），GitHub 部分 query 报 SSL EOF；第二次重跑恢复正常，最终 25 篇 / 41 仓库 / 20 模型。`scripts/run_lnn_research_pipeline.sh` 在 `git fetch --no-tags origin` 阶段因 SSH 代理 (192.168.6.25:7890) 不稳定偶发失败，但已通过手动 `git fetch` 兜底并继续完成 digest 生成。
+- **挑选结果**：`python3 scripts/select_papers_for_report.py --date 2026-06-20 --top 3` 默认打分下仅命中 1 篇 (GazeLNN, score=2)；手工把 FlowFake (2606.19579, 标题"Liquid Networks"被默认打分忽略) 补入候选池，最终生成 **2 篇独立研读报告**。
+- **`paper-analyzer` 技能状态**：本次 cron 该技能仍缺失（已警告）；研读报告改由 LLM 直接读 arXiv 摘要 + PDF 全文手工生成，符合 AGENTS.md SOP 所有必含模块。
+- **新报告 1**: [[docs/reports/GazeLNN_2606.20491_研读报告.md|GazeLNN — 轻量级 CfC 驱动的注视扫描路径预测与主动感知机器人导航]]
+  - **arXiv**: 2606.20491v1 (cs.RO, 2026-06-18, NTNU Mohammed / Malczyk / Alexis)
+  - **核心问题**: SOTA scanpath 模型 (Transformer / ConvLSTM) 太重无法在敏捷机器人上实时运行；且"saliency 模型 + 主动相机控制" 联合优化工作极少。
+  - **方法论**: MobileNetV3 backbone + CfC recurrent cell (Eq. 1, $h_{i+1} = (1-\sigma(t_a\Delta t+t_b))\odot\tanh f_1 + \sigma(...)\odot\tanh f_2$) + CoordConv fixation heatmap + APPO RL with novel fixation-attraction reward (Eq. 6, $h_t = w_h \cdot \sum H e^{-\alpha d^2} / \sum H$) trained in Aerial Gym; deployed on Quadrotor + RealSense D455 + Jetson Orin NX 16GB.
+  - **关键成果**: MIT Low Resolution 上 6 个指标全部 SOTA (ScanMatch 0.47 vs 0.34, +34.29%)；**0.61 GFLOPs / 6.84 ms / 6.42× 加速**；Jetson 真机 +50% total voxels, **~8× salient voxels** (873 → 6770).
+  - **LNN 桥接**: 同本仓 round 134 (LiquidTAD) 一样是"用 LNN 思想压缩重型 RNN"的实例, 但目标是 scanpath + active camera; CfC 在 Jetson Orin NX 上实时运行是本仓 [[PRD_LNN_Edge_Research]] 的硬证据.
+  - **Verdict**: TARGET-DEPENDENT-WITH-NUANCE — 部署可行性 POSITIVE, 但 RNN ablation 的 backbone 不一致削弱论文主张.
+- **新报告 2**: [[docs/reports/FlowFake_LTC_2606.19579_研读报告.md|FlowFake — 液态时间常数网络在跨数据集音频深度伪造检测中的应用]]
+  - **arXiv**: 2606.19579v1 (cs.SD, 2026-06-17, ICML 2026 Workshop, Delhi Tech U.)
+  - **核心问题**: 跨数据集 deepfake 检测是真正的部署瓶颈; 现有 GAT / SSL / ASR-repurpose 三大类全部在跨域时崩溃 (49-78%). 论文诊断: 跨域失败根因是架构性 — 合成伪影是多时间尺度轨迹异常, 固定窗口聚合结构性抹掉轨迹信息.
+  - **方法论**: log-Mel → 5× Conv1D → LTC cell (Eq. 1, $dh/dt = C_m^{-1}\odot[W_{in}E + \tanh(W_{rec}h) + g_{leak}\odot(V_{leak}-h)]$, 把原 sigmoid synapse 换 tanh) → RK4 ($\Delta t = 0.01$, K=2) → FC head; **per-neuron adaptive $\tau_i \in [0.05, 10]$ s** log-parameterized, 学出双峰分布 (0.1-0.3 s 快簇 + 1.5-5 s 慢簇).
+  - **关键成果**: 34 K 参数在 ASVspoof 2019 / FakeOrReal / InTheWild / MLAAD 四数据集 leave-one-out 协议下, **FoR→ASV19 75.29% / MLAAD→ASV19 79.97%**, **超过 300 M SSL Wav2vec2** 在最难的两个跨域对 (FoR→ITW +13.1 pp); 推理 23× 加速.
+  - **理论**: Theorem 4.2 **BIBO 稳定** + Proposition 4.3 **RK4 O($\Delta t^4$) 误差界** + Proposition B.4 **Grönwall 噪声鲁棒** + Proposition B.7 **梯度衰减**. 这是 2026 年迄今对 LTC 在安全场景最有说服力的论文.
+  - **LNN 桥接**: 给本仓 `lnn/core/liquid_cells.py` 引入 `tanh_synapse` 选项提供第三方背书; Theorem 4.2 的 Lyapunov + LaSalle 证明范式可复制为本仓稳定性 property-based test.
+  - **Verdict**: POSITIVE — LNN 在 low-resource + high-distribution-shift 场景下相对大模型具结构性优势的硬证据.
+- **结论**: 今日 2 篇新论文均为 LNN 在 **跨域 / 边缘部署** 场景的强证据, 涵盖视觉 (GazeLNN, Jetson 部署) 与音频 (FlowFake, 形式化稳定性) 两个子领域.
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-06-20**：[[docs/daily/2026-06-20_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个。
 - **2026-06-19**：[[docs/daily/2026-06-19_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 17 个。
 - **2026-06-18**：[[docs/daily/2026-06-18_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 - **2026-06-17**：[[docs/daily/2026-06-17_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 49 个，模型 23 个。
