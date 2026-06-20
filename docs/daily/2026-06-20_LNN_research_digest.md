@@ -33,8 +33,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
-| 2026-06-19 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 57 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
-| 2026-06-19 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
+| 2026-06-20 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 58 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-06-20 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 |  | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
+| 2026-06-20 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
 | 2026-06-18 | [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet) | 1 | Jupyter Notebook | This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for E… |
 | 2026-06-17 | [Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data](https://github.com/Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data) | 0 | Python | A hybrid deep learning framework for breast cancer prognosis prediction using genomic and clinical data. The model combines Liquid Neural Networks (LNN) and De… |
 | 2026-06-17 | [CatalaniCD/liquid-neural-network](https://github.com/CatalaniCD/liquid-neural-network) | 0 |  | Implementation for a Liquid Neural Network using Liquid ODE |
@@ -44,7 +45,6 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-06-15 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
 | 2026-06-15 | [aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation](https://github.com/aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation) | 0 |  |  |
 | 2026-06-10 | [ochigenuka/FYP](https://github.com/ochigenuka/FYP) | 1 | Jupyter Notebook | Solar Energy Forecasting using Liquid Time-Constant Network |
-| 2026-06-10 | [ochigenuka/FYP2](https://github.com/ochigenuka/FYP2) | 0 |  | Solar Energy Forecasting using Liquid Time-Constant Networks |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |

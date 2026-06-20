@@ -8,14 +8,21 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [maximecb/bebelm](https://github.com/maximecb/bebelm)
-- 更新：2026-06-19
-- Star / Fork：57 / 5
+- 更新：2026-06-20
+- Star / Fork：58 / 5
 - 语言：Rust
 - Topics：cpu, inference, llm, local-ai, local-llm, rust
 - 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
 
+### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
+- 更新：2026-06-20
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
+
 ### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-06-19
+- 更新：2026-06-20
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
@@ -97,13 +104,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Cuda
 - Topics：3060, ai, c, cpp, cuda, fast-inference, gpu, inference
 - 说明：A self-contained CUDA inference engine for LiquidAI/LFM2.5-8B-A1B (hybrid conv + GQA-attention MoE, 8.5B params, 1B active) targeting a single RTX 3060 (12 GB). No Python, no frameworks at runtime: a single .cu engine + a header-only byte-level BPE tokenizer.
-
-### [patel-om/liquid-neural-networks](https://github.com/patel-om/liquid-neural-networks)
-- 更新：2026-06-07
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：无
 
 ### [Linlab2026/GCN-CfC](https://github.com/Linlab2026/GCN-CfC)
 - 更新：2026-06-03
