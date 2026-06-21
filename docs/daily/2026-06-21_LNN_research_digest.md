@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：41 个
-- Hugging Face 候选模型：17 个
+- Hugging Face 候选模型：19 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -33,9 +33,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-06-21 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
+| 2026-06-21 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
+| 2026-06-21 | [RacineAI-comp/lfm2-embedding-fp8-engine](https://github.com/RacineAI-comp/lfm2-embedding-fp8-engine) | 0 | Cuda | Fast FP8 C++/CUDA inference engine for LiquidAI/LFM2.5-Embedding-350M (H100) |
 | 2026-06-20 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 58 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
-| 2026-06-20 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 |  | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
-| 2026-06-20 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
 | 2026-06-18 | [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet) | 1 | Jupyter Notebook | This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for E… |
 | 2026-06-17 | [Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data](https://github.com/Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data) | 0 | Python | A hybrid deep learning framework for breast cancer prognosis prediction using genomic and clinical data. The model combines Liquid Neural Networks (LNN) and De… |
 | 2026-06-17 | [CatalaniCD/liquid-neural-network](https://github.com/CatalaniCD/liquid-neural-network) | 0 |  | Implementation for a Liquid Neural Network using Liquid ODE |
@@ -44,23 +45,22 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-06-16 | [KaiserDna23/RL_Trading](https://github.com/KaiserDna23/RL_Trading) | 1 | Python | Forex trading using Reinforcement Learning with Meta Trader 5 environment. This will use algorithms such as Actor Critic(A2C) Network with Proximal Policy Opti… |
 | 2026-06-15 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
 | 2026-06-15 | [aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation](https://github.com/aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation) | 0 |  |  |
-| 2026-06-10 | [ochigenuka/FYP](https://github.com/ochigenuka/FYP) | 1 | Jupyter Notebook | Solar Energy Forecasting using Liquid Time-Constant Network |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-06-20 | [LiquidAI/LFM2.5-Embedding-350M](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M) | 6128 | 80 | sentence-similarity |
-| 2026-06-20 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 470 | 0 | text-generation |
-| 2026-06-20 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 416 | 5 | text-generation |
-| 2026-06-20 | [AyoubChLin/lfm2.5-8b-saudi-dialect](https://huggingface.co/AyoubChLin/lfm2.5-8b-saudi-dialect) | 119 | 0 | text-generation |
-| 2026-06-20 | [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
-| 2026-06-20 | [omarSorour123/lfm2.5_mntp_arabic](https://huggingface.co/omarSorour123/lfm2.5_mntp_arabic) | 0 | 0 |  |
-| 2026-06-20 | [Redvodk/LFM2.5-VL-450M-heretic](https://huggingface.co/Redvodk/LFM2.5-VL-450M-heretic) | 0 | 0 | image-text-to-text |
-| 2026-06-20 | [simaai/LFM2-VL-450M-a16w4](https://huggingface.co/simaai/LFM2-VL-450M-a16w4) | 0 | 0 | image-text-to-text |
-| 2026-06-20 | [mradermacher/CARDS-Wind-LFM2.5-8B-A1B-GGUF](https://huggingface.co/mradermacher/CARDS-Wind-LFM2.5-8B-A1B-GGUF) | 0 | 0 |  |
-| 2026-06-19 | [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | 64238 | 142 | sentence-similarity |
-| 2026-06-19 | [LiquidAI/LFM2.5-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M) | 593 | 63 | sentence-similarity |
-| 2026-06-18 | [LiquidAI/LFM2.5-Embedding-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M-GGUF) | 437 | 24 | sentence-similarity |
+| 2026-06-21 | [AyoubChLin/lfm2.5-8b-saudi-dialect](https://huggingface.co/AyoubChLin/lfm2.5-8b-saudi-dialect) | 121 | 0 | text-generation |
+| 2026-06-21 | [bkideas/LFM2.5-8B-A1B-MLX-nvfp4](https://huggingface.co/bkideas/LFM2.5-8B-A1B-MLX-nvfp4) | 67 | 0 |  |
+| 2026-06-21 | [OrdenWills/LFM2.5-VL-450M-MolmoWeb-SFT](https://huggingface.co/OrdenWills/LFM2.5-VL-450M-MolmoWeb-SFT) | 26 | 0 | image-text-to-text |
+| 2026-06-21 | [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
+| 2026-06-21 | [omarSorour123/lfm2.5_mntp_arabic](https://huggingface.co/omarSorour123/lfm2.5_mntp_arabic) | 0 | 0 |  |
+| 2026-06-21 | [eliem/kira-lfm2](https://huggingface.co/eliem/kira-lfm2) | 0 | 0 |  |
+| 2026-06-21 | [Rcarvalo/lfm25-tc-en-s2s-adapter](https://huggingface.co/Rcarvalo/lfm25-tc-en-s2s-adapter) | 0 | 0 |  |
+| 2026-06-21 | [bobbrysonn/LFM2.5-8B-A1B-oQ8-fp16](https://huggingface.co/bobbrysonn/LFM2.5-8B-A1B-oQ8-fp16) | 0 | 0 |  |
+| 2026-06-20 | [LiquidAI/LFM2.5-Embedding-350M](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M) | 7726 | 89 | sentence-similarity |
+| 2026-06-20 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 462 | 0 | text-generation |
+| 2026-06-20 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 417 | 5 | text-generation |
+| 2026-06-19 | [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | 63150 | 142 | sentence-similarity |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
