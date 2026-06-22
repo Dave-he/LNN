@@ -7,19 +7,40 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-06-22
 
 ## GitHub 仓库
+### [shareef65/TLTO-Net](https://github.com/shareef65/TLTO-Net)
+- 更新：2026-06-22
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：TLTO-Net: A Trust and Energy-Efficient Routing Framework for Wireless Sensor Networks using Liquid Neural Networks and Termite Life Cycle Optimization
+
+### [Gonzablanmar/Liquid-NN](https://github.com/Gonzablanmar/Liquid-NN)
+- 更新：2026-06-22
+- Star / Fork：0 / 0
+- 语言：Jupyter Notebook
+- Topics：未标注
+- 说明：Liquid neural network, where the Adam optimizer is implanted by hand.
+
+### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
+- 更新：2026-06-22
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
+
+### [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection)
+- 更新：2026-06-22
+- Star / Fork：0 / 0
+- 语言：Swift
+- Topics：未标注
+- 说明：On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm
+
 ### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
 - 更新：2026-06-21
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
-
-### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-06-21
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
 
 ### [RacineAI-comp/lfm2-embedding-fp8-engine](https://github.com/RacineAI-comp/lfm2-embedding-fp8-engine)
 - 更新：2026-06-21
@@ -55,20 +76,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：unknown
 - Topics：未标注
 - 说明：Implementation for a Liquid Neural Network using Liquid ODE
-
-### [Gonzablanmar/Liquid-NN](https://github.com/Gonzablanmar/Liquid-NN)
-- 更新：2026-06-17
-- Star / Fork：0 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：Liquid neural network, where the Adam optimizer is implanted by hand.
-
-### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
-- 更新：2026-06-16
-- Star / Fork：1 / 0
-- 语言：C
-- Topics：未标注
-- 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
 
 ### [KaiserDna23/RL_Trading](https://github.com/KaiserDna23/RL_Trading)
 - 更新：2026-06-16
@@ -139,13 +146,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：il, ncps, rl, robotics
 - 说明：LOKI-G is a machine learning project designed for physical machines, enabling edge AI capabilities. It adapts the LOKI algorithm for training via imitation and reinforcement learning using Closed-form Continuous-Time Neural Networks and Neural Circuit Policies.
-
-### [sxlxbo/CTDFormer](https://github.com/sxlxbo/CTDFormer)
-- 更新：2026-05-17
-- Star / Fork：1 / 1
-- 语言：unknown
-- Topics：未标注
-- 说明：Bearing fault diagnosis with a Transformer where multi-head attention is replaced by a bidirectional Closed-form Continuous-time (CfC) liquid neural network. PyTorch implementation, evaluated on CWRU / MFPT / SEU.
 
 ## Hugging Face 模型
 ### [AyoubChLin/lfm2.5-8b-saudi-dialect](https://huggingface.co/AyoubChLin/lfm2.5-8b-saudi-dialect)

@@ -33,18 +33,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-06-22 | [shareef65/TLTO-Net](https://github.com/shareef65/TLTO-Net) | 0 | Python | TLTO-Net: A Trust and Energy-Efficient Routing Framework for Wireless Sensor Networks using Liquid Neural Networks and Termite Life Cycle Optimization |
+| 2026-06-22 | [Gonzablanmar/Liquid-NN](https://github.com/Gonzablanmar/Liquid-NN) | 0 | Jupyter Notebook | Liquid neural network, where the Adam optimizer is implanted by hand. |
+| 2026-06-22 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
+| 2026-06-22 | [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection) | 0 | Swift | On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm |
 | 2026-06-21 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
-| 2026-06-21 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
 | 2026-06-21 | [RacineAI-comp/lfm2-embedding-fp8-engine](https://github.com/RacineAI-comp/lfm2-embedding-fp8-engine) | 0 | Cuda | Fast FP8 C++/CUDA inference engine for LiquidAI/LFM2.5-Embedding-350M (H100) |
 | 2026-06-20 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 58 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-06-18 | [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet) | 1 | Jupyter Notebook | This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for E… |
 | 2026-06-17 | [Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data](https://github.com/Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data) | 0 | Python | A hybrid deep learning framework for breast cancer prognosis prediction using genomic and clinical data. The model combines Liquid Neural Networks (LNN) and De… |
 | 2026-06-17 | [CatalaniCD/liquid-neural-network](https://github.com/CatalaniCD/liquid-neural-network) | 0 |  | Implementation for a Liquid Neural Network using Liquid ODE |
-| 2026-06-17 | [Gonzablanmar/Liquid-NN](https://github.com/Gonzablanmar/Liquid-NN) | 0 | Jupyter Notebook | Liquid neural network, where the Adam optimizer is implanted by hand. |
-| 2026-06-16 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
 | 2026-06-16 | [KaiserDna23/RL_Trading](https://github.com/KaiserDna23/RL_Trading) | 1 | Python | Forex trading using Reinforcement Learning with Meta Trader 5 environment. This will use algorithms such as Actor Critic(A2C) Network with Proximal Policy Opti… |
 | 2026-06-15 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
-| 2026-06-15 | [aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation](https://github.com/aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation) | 0 |  |  |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
