@@ -1,24 +1,24 @@
 {
   "date": "2026-06-24",
-  "generated_at": "2026-06-23T22:30:50.651892+00:00",
+  "generated_at": "2026-06-24T05:01:06.498569+00:00",
   "errors": [],
   "papers": [
     {
-      "id": "2606.21295v1",
+      "id": "2606.21295v2",
       "title": "Topological Neural Dynamics: A Neuron-wise Framework for Sequence Modeling",
       "authors": [
         "Borui Cai",
         "Yao Zhao"
       ],
       "published": "2026-06-19",
-      "updated": "2026-06-19",
+      "updated": "2026-06-23",
       "summary": "Existing sequence models, including RNNs, LSTMs, continuous-time networks, and Transformers, share a common structural principle: layer-wise dynamics, where all neurons in the same layer co-evolve through a shared parameterized operator, leaving individual neurons no freedom to evolve independently. Yet in many complex dynamical systems, rich global behavior emerges precisely from locally evolving units interacting through structured connectivity. Inspired by this principle, we introduce Topological Neural Dynamics (TND), a sequence modeling framework that shifts computation from layer-wise to neuron-wise dynamics. TND represents a neural system as a directed neuron graph, an interaction operator, and a local dynamics function, where each neuron evolves independently and collective computation emerges from interactions through the explicit graph topology. We instantiate TND as a discrete-time graph-coupled dynamical system and evaluate it as a case study on a behavior cloning task in single-player Pong. Compared with Vanilla RNN, Sparse RNN, LSTM, Closed-form continuous-time neural network (CfC), and Transformer baselines, TND achieves the best catch rate and a mean of 17.47 consecutive catches per round, more than three times that of the strongest baseline. These results suggest that shifting from layer-wise to neuron-wise dynamics provides an effective inductive bias for sequence modeling.",
       "categories": [
         "cs.LG",
         "cs.AI"
       ],
-      "abs_url": "https://arxiv.org/abs/2606.21295v1",
-      "pdf_url": "https://arxiv.org/pdf/2606.21295v1",
+      "abs_url": "https://arxiv.org/abs/2606.21295v2",
+      "pdf_url": "https://arxiv.org/pdf/2606.21295",
       "keyword_score": 4
     },
     {
@@ -37,7 +37,7 @@
         "cs.CV"
       ],
       "abs_url": "https://arxiv.org/abs/2606.20491v1",
-      "pdf_url": "https://arxiv.org/pdf/2606.20491v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.20491",
       "keyword_score": 1
     },
     {
@@ -483,9 +483,133 @@
       "abs_url": "https://arxiv.org/abs/2512.14323v3",
       "pdf_url": "https://arxiv.org/pdf/2512.14323v3",
       "keyword_score": 1
+    },
+    {
+      "id": "2512.14112v1",
+      "title": "Optimizing Multi-Tier Supply Chain Ordering with a Hybrid Liquid Neural Network and Extreme Gradient Boosting Model",
+      "authors": [
+        "Chunan Tong"
+      ],
+      "published": "2025-12-16",
+      "updated": "2025-12-16",
+      "summary": "Supply chain management (SCM) faces significant challenges like demand fluctuations and the bullwhip effect. Traditional methods and even state-of-the-art LLMs struggle with benchmarks like the Vending Machine Test, failing to handle SCM's complex continuous time-series data. While ML approaches like LSTM and XGBoost offer solutions, they are often limited by computational inefficiency. Liquid Neural Networks (LNN), known for their adaptability and efficiency in robotics, remain untapped in SCM. This study proposes a hybrid LNN+XGBoost model for multi-tier supply chains. By combining LNN's dynamic feature extraction with XGBoost's global optimization, the model aims to minimize the bullwhip effect and increase profitability. This innovative approach addresses the need for efficiency and adaptability, filling a critical gap in intelligent SCM.",
+      "categories": [
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2512.14112v1",
+      "pdf_url": "https://arxiv.org/pdf/2512.14112v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2512.05158v1",
+      "title": "Continuous-Time Homeostatic Dynamics for Reentrant Inference Models",
+      "authors": [
+        "Byung Gyu Chae"
+      ],
+      "published": "2025-12-04",
+      "updated": "2025-12-04",
+      "summary": "We formulate the Fast-Weights Homeostatic Reentry Network (FHRN) as a continuous-time neural-ODE system, revealing its role as a norm-regulated reentrant dynamical process. Starting from the discrete reentry rule $x_t = x_t^{(\\mathrm{ex})} + γ\\, W_r\\, g(\\|y_{t-1}\\|)\\, y_{t-1}$, we derive the coupled system $\\dot{y}=-y+f(W_ry;\\,x,\\,A)+g_{\\mathrm{h}}(y)$ showing that the network couples fast associative memory with global radial homeostasis. The dynamics admit bounded attractors governed by an energy functional, yielding a ring-like manifold. A Jacobian spectral analysis identifies a \\emph{reflective regime} in which reentry induces stable oscillatory trajectories rather than divergence or collapse. Unlike continuous-time recurrent neural networks or liquid neural networks, FHRN achieves stability through population-level gain modulation rather than fixed recurrence or neuron-local time adaptation. These results establish the reentry network as a distinct class of self-referential neural dynamics supporting recursive yet bounded computation.",
+      "categories": [
+        "math.DS",
+        "cs.LG",
+        "stat.ML"
+      ],
+      "abs_url": "https://arxiv.org/abs/2512.05158v1",
+      "pdf_url": "https://arxiv.org/pdf/2512.05158v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2511.18014v1",
+      "title": "Modeling Retinal Ganglion Cells with Neural Differential Equations",
+      "authors": [
+        "Kacper Dobek",
+        "Daniel Jankowski",
+        "Krzysztof Krawiec"
+      ],
+      "published": "2025-11-22",
+      "updated": "2025-11-22",
+      "summary": "This work explores Liquid Time-Constant Networks (LTCs) and Closed-form Continuous-time Networks (CfCs) for modeling retinal ganglion cell activity in tiger salamanders across three datasets. Compared to a convolutional baseline and an LSTM, both architectures achieved lower MAE, faster convergence, smaller model sizes, and favorable query times, though with slightly lower Pearson correlation. Their efficiency and adaptability make them well suited for scenarios with limited data and frequent retraining, such as edge deployments in vision prosthetics.",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2511.18014v1",
+      "pdf_url": "https://arxiv.org/pdf/2511.18014v1",
+      "keyword_score": 5
+    },
+    {
+      "id": "2511.09909v1",
+      "title": "Simulating Distribution Dynamics: Liquid Temporal Feature Evolution for Single-Domain Generalized Object Detection",
+      "authors": [
+        "Zihao Zhang",
+        "Yang Li",
+        "Aming Wu",
+        "Yahong Han"
+      ],
+      "published": "2025-11-13",
+      "updated": "2025-11-13",
+      "summary": "In this paper, we focus on Single-Domain Generalized Object Detection (Single-DGOD), aiming to transfer a detector trained on one source domain to multiple unknown domains. Existing methods for Single-DGOD typically rely on discrete data augmentation or static perturbation methods to expand data diversity, thereby mitigating the lack of access to target domain data. However, in real-world scenarios such as changes in weather or lighting conditions, domain shifts often occur continuously and gradually. Discrete augmentations and static perturbations fail to effectively capture the dynamic variation of feature distributions, thereby limiting the model's ability to perceive fine-grained cross-domain differences. To this end, we propose a new method, Liquid Temporal Feature Evolution, which simulates the progressive evolution of features from the source domain to simulated latent distributions by incorporating temporal modeling and liquid neural network-driven parameter adjustment. Specifically, we introduce controllable Gaussian noise injection and multi-scale Gaussian blurring to simulate initial feature perturbations, followed by temporal modeling and a liquid parameter adjustment mechanism to generate adaptive modulation parameters, enabling a smooth and continuous adaptation across domains. By capturing progressive cross-domain feature evolution and dynamically regulating adaptation paths, our method bridges the source-unknown domain distribution gap, significantly boosting generalization and robustness to unseen shifts. Significant performance improvements on the Diverse Weather dataset and Real-to-Art benchmark demonstrate the superiority of our method. Our code is available at https://github.com/2490o/LTFE.",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2511.09909v1",
+      "pdf_url": "https://arxiv.org/pdf/2511.09909v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2510.25020v1",
+      "title": "Hybrid Liquid Neural Network-Random Finite Set Filtering for Robust Maneuvering Object Tracking",
+      "authors": [
+        "Minti Liu",
+        "Qinghua Guo",
+        "Cao Zeng",
+        "Yanguang Yu",
+        "Jun Li",
+        "Ming Jin"
+      ],
+      "published": "2025-10-28",
+      "updated": "2025-10-28",
+      "summary": "This work addresses the problem of tracking maneuvering objects with complex motion patterns, a task in which conventional methods often struggle due to their reliance on predefined motion models. We integrate a data-driven liquid neural network (LNN) into the random finite set (RFS) framework, leading to two LNN-RFS filters. By learning continuous-time dynamics directly from data, the LNN enables the filters to adapt to complex, nonlinear motion and achieve accurate tracking of highly maneuvering objects in clutter. This hybrid approach preserves the inherent multi-object tracking strengths of the RFS framework while improving flexibility and robustness. Simulation results on challenging maneuvering scenarios demonstrate substantial gains of the proposed hybrid approach in tracking accuracy.",
+      "categories": [
+        "eess.SP"
+      ],
+      "abs_url": "https://arxiv.org/abs/2510.25020v1",
+      "pdf_url": "https://arxiv.org/pdf/2510.25020v1",
+      "keyword_score": 2
     }
   ],
   "github_repos": [
+    {
+      "full_name": "heimdilon/sncp-ppo-crowdnav",
+      "description": "PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.",
+      "html_url": "https://github.com/heimdilon/sncp-ppo-crowdnav",
+      "stars": 0,
+      "forks": 0,
+      "language": "Python",
+      "updated_at": "2026-06-24",
+      "pushed_at": "2026-06-24",
+      "topics": [],
+      "query": "\"liquid time constant\""
+    },
+    {
+      "full_name": "raminmh/CfC",
+      "description": "Closed-form Continuous-time Neural Networks",
+      "html_url": "https://github.com/raminmh/CfC",
+      "stars": 1048,
+      "forks": 161,
+      "language": "Python",
+      "updated_at": "2026-06-23",
+      "pushed_at": "2024-07-05",
+      "topics": [
+        "deep-learning",
+        "neural-ode",
+        "pytorch",
+        "recurrent-neural-networks",
+        "sequence-models",
+        "tensorflow"
+      ],
+      "query": "\"closed-form continuous-time\""
+    },
     {
       "full_name": "maximecb/bebelm",
       "description": "CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM",
@@ -547,23 +671,11 @@
       "html_url": "https://github.com/Jdka1/liquidgrad",
       "stars": 0,
       "forks": 0,
-      "language": null,
-      "updated_at": "2026-06-23",
-      "pushed_at": "2026-06-23",
-      "topics": [],
-      "query": "\"liquid neural network\""
-    },
-    {
-      "full_name": "heimdilon/sncp-ppo-crowdnav",
-      "description": "PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.",
-      "html_url": "https://github.com/heimdilon/sncp-ppo-crowdnav",
-      "stars": 0,
-      "forks": 0,
       "language": "Python",
       "updated_at": "2026-06-23",
       "pushed_at": "2026-06-23",
       "topics": [],
-      "query": "\"liquid time constant\""
+      "query": "\"liquid neural network\""
     },
     {
       "full_name": "shareef65/TLTO-Net",
@@ -664,6 +776,30 @@
         "reinforcement-learning-agent"
       ],
       "query": "\"liquid time constant\""
+    },
+    {
+      "full_name": "404reese/XWormNet",
+      "description": "Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks",
+      "html_url": "https://github.com/404reese/XWormNet",
+      "stars": 0,
+      "forks": 0,
+      "language": "Python",
+      "updated_at": "2026-06-15",
+      "pushed_at": "2026-06-15",
+      "topics": [],
+      "query": "\"liquid neural network\""
+    },
+    {
+      "full_name": "aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation",
+      "description": "",
+      "html_url": "https://github.com/aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation",
+      "stars": 0,
+      "forks": 0,
+      "language": null,
+      "updated_at": "2026-06-15",
+      "pushed_at": "2026-06-15",
+      "topics": [],
+      "query": "\"liquid neural network\""
     },
     {
       "full_name": "ochigenuka/FYP",
@@ -882,6 +1018,30 @@
       "query": "\"liquid time constant\""
     },
     {
+      "full_name": "Riksev/gnn_lab1_finetuning",
+      "description": "Fine-tuning of model LiquidAI/LFM2-1.2B. The goal was to achieve Yoda-style text. Based on MIT Lab 3 with changes from KhNURE.",
+      "html_url": "https://github.com/Riksev/gnn_lab1_finetuning",
+      "stars": 0,
+      "forks": 0,
+      "language": "Jupyter Notebook",
+      "updated_at": "2026-04-28",
+      "pushed_at": "2026-04-28",
+      "topics": [
+        "adapter",
+        "batch",
+        "fine-tuning",
+        "finetuning",
+        "finetuning-llms",
+        "gnn",
+        "gnn-model",
+        "lora",
+        "tokenization",
+        "tokenizer",
+        "yoda"
+      ],
+      "query": "LiquidAI LFM2"
+    },
+    {
       "full_name": "SaiSudanV/mahoraga-lite",
       "description": "A 91M parameter Liquid Time-Constant Transformer optimized for local python coding.",
       "html_url": "https://github.com/SaiSudanV/mahoraga-lite",
@@ -918,6 +1078,18 @@
       "query": "\"liquid time constant\""
     },
     {
+      "full_name": "Jewelzufo/liquid-granite",
+      "description": "Liquid-Granite is a lightweight, privacy-first implementation of the Researcher–Critic pattern that runs entirely offline via Ollama. It pairs IBM Granite-4.0 as the generator with LiquidAI LFM2.5-1.2B-thinking as the critic to create self-correcting, iteratively refined AI responses on edge hardware.",
+      "html_url": "https://github.com/Jewelzufo/liquid-granite",
+      "stars": 1,
+      "forks": 0,
+      "language": "Python",
+      "updated_at": "2026-03-27",
+      "pushed_at": "2026-03-27",
+      "topics": [],
+      "query": "LiquidAI LFM2"
+    },
+    {
       "full_name": "Crispy26/Neural-Circuit-Policy-Based-Intrusion-Detection-System-for-Industrial-Control-Systems",
       "description": "",
       "html_url": "https://github.com/Crispy26/Neural-Circuit-Policy-Based-Intrusion-Detection-System-for-Industrial-Control-Systems",
@@ -928,6 +1100,18 @@
       "pushed_at": "2026-03-19",
       "topics": [],
       "query": "\"neural circuit policy\""
+    },
+    {
+      "full_name": "Rayan-Ghosh/GridBalance",
+      "description": "A scalable Liquid Time-Constant (LTC) neural network to predict real-time smart grid stability on streaming time-series data.",
+      "html_url": "https://github.com/Rayan-Ghosh/GridBalance",
+      "stars": 0,
+      "forks": 0,
+      "language": "Jupyter Notebook",
+      "updated_at": "2026-03-12",
+      "pushed_at": "2026-03-12",
+      "topics": [],
+      "query": "\"liquid time constant\""
     },
     {
       "full_name": "feracero/liquid-neural-nets-locomotion",
@@ -951,7 +1135,19 @@
       "updated_at": "2026-01-27",
       "pushed_at": "2026-01-27",
       "topics": [],
-      "query": "\"neural circuit policy\""
+      "query": "\"liquid time constant\""
+    },
+    {
+      "full_name": "KPEKEP/CfCTutorial",
+      "description": "Implemention Closed-form Continuous-time Neural Net from scratch",
+      "html_url": "https://github.com/KPEKEP/CfCTutorial",
+      "stars": 6,
+      "forks": 1,
+      "language": "Jupyter Notebook",
+      "updated_at": "2026-01-03",
+      "pushed_at": "2024-05-24",
+      "topics": [],
+      "query": "\"closed-form continuous-time\""
     },
     {
       "full_name": "siddharthk27/Neural-Circuit-Policies",
@@ -976,6 +1172,18 @@
       "pushed_at": "2025-10-30",
       "topics": [],
       "query": "\"closed-form continuous-time\""
+    },
+    {
+      "full_name": "SynapticSage/keras-ncp",
+      "description": "Code repository of the paper Neural circuit policies enabling auditable autonomy published in Nature Machine Intelligence",
+      "html_url": "https://github.com/SynapticSage/keras-ncp",
+      "stars": 0,
+      "forks": 0,
+      "language": null,
+      "updated_at": "2025-09-01",
+      "pushed_at": "2021-09-30",
+      "topics": [],
+      "query": "\"neural circuit policy\""
     },
     {
       "full_name": "dimarkov/ncpax",
@@ -1042,7 +1250,7 @@
     {
       "model_id": "OrdenWills/LFM2.5-350M-home-assistant-sft",
       "author": null,
-      "last_modified": "2026-06-23",
+      "last_modified": "2026-06-24",
       "downloads": 3372,
       "likes": 4,
       "pipeline_tag": "text-generation",
@@ -1065,6 +1273,53 @@
         "base_model:LiquidAI/LFM2.5-350M"
       ],
       "url": "https://huggingface.co/OrdenWills/LFM2.5-350M-home-assistant-sft",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters",
+      "author": null,
+      "last_modified": "2026-06-24",
+      "downloads": 0,
+      "likes": 1,
+      "pipeline_tag": null,
+      "tags": [
+        "safetensors",
+        "liquid-ai",
+        "lfm2.5",
+        "terminal-agent",
+        "rlvr",
+        "echo",
+        "grpo",
+        "lora",
+        "adapter",
+        "base_model:LiquidAI/LFM2.5-8B-A1B",
+        "base_model:adapter:LiquidAI/LFM2.5-8B-A1B",
+        "license:apache-2.0",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "PersonaPO/lfm25-8b-a1b-structdpo-bigchat",
+      "author": null,
+      "last_modified": "2026-06-24",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2_moe",
+        "text-generation",
+        "generated_from_trainer",
+        "conversational",
+        "base_model:PersonaPO/lfm25-8b-a1b-sft-bigchat",
+        "base_model:finetune:PersonaPO/lfm25-8b-a1b-sft-bigchat",
+        "endpoints_compatible",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/PersonaPO/lfm25-8b-a1b-structdpo-bigchat",
       "query": "LFM2"
     },
     {
@@ -1151,44 +1406,6 @@
       "query": "LFM2"
     },
     {
-      "model_id": "PersonaPO/lfm25-8b-a1b-structdpo-bigchat",
-      "author": null,
-      "last_modified": "2026-06-23",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "region:us"
-      ],
-      "url": "https://huggingface.co/PersonaPO/lfm25-8b-a1b-structdpo-bigchat",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters",
-      "author": null,
-      "last_modified": "2026-06-23",
-      "downloads": 0,
-      "likes": 1,
-      "pipeline_tag": null,
-      "tags": [
-        "safetensors",
-        "liquid-ai",
-        "lfm2.5",
-        "terminal-agent",
-        "rlvr",
-        "echo",
-        "grpo",
-        "lora",
-        "adapter",
-        "base_model:LiquidAI/LFM2.5-8B-A1B",
-        "base_model:adapter:LiquidAI/LFM2.5-8B-A1B",
-        "license:apache-2.0",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters",
-      "query": "LFM2"
-    },
-    {
       "model_id": "gfp78/lfm2-bund-onnx",
       "author": null,
       "last_modified": "2026-06-23",
@@ -1226,6 +1443,28 @@
       "query": "LFM2"
     },
     {
+      "model_id": "vsuhas9/LFM2-VL-450M-32",
+      "author": null,
+      "last_modified": "2026-06-23",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "image-text-to-text",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2_vl",
+        "image-text-to-text",
+        "trl",
+        "sft",
+        "conversational",
+        "arxiv:1910.09700",
+        "endpoints_compatible",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/vsuhas9/LFM2-VL-450M-32",
+      "query": "LFM2"
+    },
+    {
       "model_id": "LiquidAI/LFM2.5-Embedding-350M-GGUF",
       "author": null,
       "last_modified": "2026-06-22",
@@ -1258,7 +1497,7 @@
       "author": null,
       "last_modified": "2026-06-22",
       "downloads": 2174,
-      "likes": 20,
+      "likes": 21,
       "pipeline_tag": "sentence-similarity",
       "tags": [
         "sentence-transformers",
@@ -1299,7 +1538,7 @@
         "region:us"
       ],
       "url": "https://huggingface.co/OrdenWills/LFM2.5-VL-450M-MolmoWeb-SFT",
-      "query": "LFM2.5"
+      "query": "LFM2"
     },
     {
       "model_id": "Parallax-labs-1/LFM2.5v350M-Planner-Lora",
@@ -1426,11 +1665,67 @@
       "query": "LFM2.5"
     },
     {
+      "model_id": "mlx-community/LFM2.5-Embedding-350M-8bit",
+      "author": null,
+      "last_modified": "2026-06-22",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "sentence-similarity",
+      "tags": [
+        "mlx",
+        "safetensors",
+        "lfm2",
+        "lfm2.5",
+        "embeddings",
+        "sentence-similarity",
+        "feature-extraction",
+        "retrieval",
+        "8-bit",
+        "quantized",
+        "custom_code",
+        "en",
+        "es",
+        "de",
+        "fr",
+        "it"
+      ],
+      "url": "https://huggingface.co/mlx-community/LFM2.5-Embedding-350M-8bit",
+      "query": "LFM2.5"
+    },
+    {
+      "model_id": "mlx-community/LFM2.5-Embedding-350M-4bit",
+      "author": null,
+      "last_modified": "2026-06-22",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "sentence-similarity",
+      "tags": [
+        "mlx",
+        "safetensors",
+        "lfm2",
+        "lfm2.5",
+        "embeddings",
+        "sentence-similarity",
+        "feature-extraction",
+        "retrieval",
+        "4-bit",
+        "quantized",
+        "custom_code",
+        "en",
+        "es",
+        "de",
+        "fr",
+        "it"
+      ],
+      "url": "https://huggingface.co/mlx-community/LFM2.5-Embedding-350M-4bit",
+      "query": "LFM2.5"
+    },
+    {
       "model_id": "LiquidAI/LFM2.5-Embedding-350M",
       "author": null,
       "last_modified": "2026-06-20",
       "downloads": 10117,
-      "likes": 113,
+      "likes": 115,
       "pipeline_tag": "sentence-similarity",
       "tags": [
         "sentence-transformers",
@@ -1510,6 +1805,50 @@
       "query": "LiquidAI"
     },
     {
+      "model_id": "mkurman/LiquidAI-LFM2.5-350M-SYNTH",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 101,
+      "likes": 1,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm2",
+        "text-generation",
+        "synth",
+        "synthlabs",
+        "lfm",
+        "reasoning",
+        "conversational",
+        "en",
+        "dataset:PleIAs/SYNTH",
+        "dataset:mkurman/medical-reasoning-synthlabs-I",
+        "dataset:mkurman/gsm8k-SynthLabs-reasoning",
+        "base_model:LiquidAI/LFM2.5-350M",
+        "base_model:finetune:LiquidAI/LFM2.5-350M",
+        "license:other"
+      ],
+      "url": "https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH",
+      "query": "LiquidAI"
+    },
+    {
+      "model_id": "mkurman/LiquidAI-LFM2.5-350M-SYNTH-GGUF",
+      "author": null,
+      "last_modified": "2026-06-16",
+      "downloads": 17,
+      "likes": 0,
+      "pipeline_tag": null,
+      "tags": [
+        "gguf",
+        "endpoints_compatible",
+        "region:us",
+        "conversational"
+      ],
+      "url": "https://huggingface.co/mkurman/LiquidAI-LFM2.5-350M-SYNTH-GGUF",
+      "query": "LiquidAI"
+    },
+    {
       "model_id": "P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE",
       "author": null,
       "last_modified": "2026-05-06",
@@ -1523,5 +1862,8 @@
       "query": "liquid neural"
     }
   ],
-  "downloaded_pdfs": []
+  "downloaded_pdfs": [
+    "papers/daily/2026-06-24/2026-06-19_Topological_Neural_Dynamics_2606.21295.pdf",
+    "papers/daily/2026-06-24/2026-06-18_GazeLNN_Fast_Human_Attention_Prediction_2606.20491.pdf"
+  ]
 }

@@ -7,6 +7,20 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-06-24
 
 ## GitHub 仓库
+### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
+- 更新：2026-06-24
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
+
+### [raminmh/CfC](https://github.com/raminmh/CfC)
+- 更新：2026-06-23
+- Star / Fork：1048 / 161
+- 语言：Python
+- Topics：deep-learning, neural-ode, pytorch, recurrent-neural-networks, sequence-models, tensorflow
+- 说明：Closed-form Continuous-time Neural Networks
+
 ### [maximecb/bebelm](https://github.com/maximecb/bebelm)
 - 更新：2026-06-23
 - Star / Fork：59 / 5
@@ -31,16 +45,9 @@ tags: [LNN, repo-watchlist, automation]
 ### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
 - 更新：2026-06-23
 - Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：A liquid neural network framework built from first principles to model the human brain 🌊
-
-### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-06-23
-- Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
-- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
+- 说明：A liquid neural network framework built from first principles to model the human brain 🌊
 
 ### [shareef65/TLTO-Net](https://github.com/shareef65/TLTO-Net)
 - 更新：2026-06-22
@@ -98,6 +105,20 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：metatrader5, python, reinforcement-learning-agent
 - 说明：Forex trading using Reinforcement Learning with Meta Trader 5 environment. This will use algorithms such as Actor Critic(A2C) Network with Proximal Policy Optimization (PPO). Subsequently the goal is to be able change the underlying network to Liquid Time Constant Network (Liquid nets), which are far greater at task dealing with timeseries
 
+### [404reese/XWormNet](https://github.com/404reese/XWormNet)
+- 更新：2026-06-15
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks
+
+### [aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation](https://github.com/aliobaidbt/Liquid-neural-networks-for-adaptive-perception-and-control-in-autonomous-drone-navigation)
+- 更新：2026-06-15
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：无
+
 ### [ochigenuka/FYP](https://github.com/ochigenuka/FYP)
 - 更新：2026-06-10
 - Star / Fork：1 / 0
@@ -126,33 +147,24 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Official implementation of "Graph continuous molecular screening for noncovalent inhibitor discovery". A graph-continuous model coupling GCN with closed-form continuous-time (CfC) refinement for PAD4 screening.
 
-### [Alexng2024/EDSSM](https://github.com/Alexng2024/EDSSM)
-- 更新：2026-06-01
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：We introduce Event-Driven State Space Models (EDSSM), a framework that propagates latent state through exact closed-form continuous-time linear dynamics—implemented via the matrix exponential e^AΔt—and applies updates only at informative event times.
-
-### [rohitsalesforce132/lfm-finetune-suite](https://github.com/rohitsalesforce132/lfm-finetune-suite)
-- 更新：2026-05-23
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Fine-tune LiquidAI/LFM2.5-350M for 7 use cases — Medical QA, Code Gen, Telecom SRE, Financial Literacy, Education, Sentiment, Summarization. LoRA/QLoRA pipeline with GGUF/ONNX export.
-
-### [R-Liebert/LOKI-G](https://github.com/R-Liebert/LOKI-G)
-- 更新：2026-05-21
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：il, ncps, rl, robotics
-- 说明：LOKI-G is a machine learning project designed for physical machines, enabling edge AI capabilities. It adapts the LOKI algorithm for training via imitation and reinforcement learning using Closed-form Continuous-Time Neural Networks and Neural Circuit Policies.
-
 ## Hugging Face 模型
 ### [OrdenWills/LFM2.5-350M-home-assistant-sft](https://huggingface.co/OrdenWills/LFM2.5-350M-home-assistant-sft)
-- 更新：2026-06-23
+- 更新：2026-06-24
 - 下载 / Likes：3372 / 4
 - 任务：text-generation
 - Tags：safetensors, gguf, lfm2, smart-home, home-automation, tool-calling, function-calling, iot
+
+### [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters)
+- 更新：2026-06-24
+- 下载 / Likes：0 / 1
+- 任务：unknown
+- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
+
+### [PersonaPO/lfm25-8b-a1b-structdpo-bigchat](https://huggingface.co/PersonaPO/lfm25-8b-a1b-structdpo-bigchat)
+- 更新：2026-06-24
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, generated_from_trainer, conversational, base_model:PersonaPO/lfm25-8b-a1b-sft-bigchat, base_model:finetune:PersonaPO/lfm25-8b-a1b-sft-bigchat
 
 ### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
 - 更新：2026-06-23
@@ -172,18 +184,6 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, text-generation-inference, unsloth, trl, sft
 
-### [PersonaPO/lfm25-8b-a1b-structdpo-bigchat](https://huggingface.co/PersonaPO/lfm25-8b-a1b-structdpo-bigchat)
-- 更新：2026-06-23
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
-
-### [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters)
-- 更新：2026-06-23
-- 下载 / Likes：0 / 1
-- 任务：unknown
-- Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
-
 ### [gfp78/lfm2-bund-onnx](https://huggingface.co/gfp78/lfm2-bund-onnx)
 - 更新：2026-06-23
 - 下载 / Likes：0 / 0
@@ -191,6 +191,12 @@ tags: [LNN, repo-watchlist, automation]
 - Tags：onnx, lfm2, region:us
 
 ### [vsuhas9/LFM2-VL-450M-64](https://huggingface.co/vsuhas9/LFM2-VL-450M-64)
+- 更新：2026-06-23
+- 下载 / Likes：0 / 0
+- 任务：image-text-to-text
+- Tags：transformers, safetensors, lfm2_vl, image-text-to-text, trl, sft, conversational, arxiv:1910.09700
+
+### [vsuhas9/LFM2-VL-450M-32](https://huggingface.co/vsuhas9/LFM2-VL-450M-32)
 - 更新：2026-06-23
 - 下载 / Likes：0 / 0
 - 任务：image-text-to-text
@@ -204,7 +210,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-ColBERT-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M-GGUF)
 - 更新：2026-06-22
-- 下载 / Likes：2174 / 20
+- 下载 / Likes：2174 / 21
 - 任务：sentence-similarity
 - Tags：sentence-transformers, gguf, liquid, lfm2, lfm2.5, edge, ColBERT, PyLate
 
@@ -244,26 +250,20 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：sentence-similarity
 - Tags：mlx, safetensors, lfm2, lfm2.5, embeddings, sentence-similarity, feature-extraction, retrieval
 
+### [mlx-community/LFM2.5-Embedding-350M-8bit](https://huggingface.co/mlx-community/LFM2.5-Embedding-350M-8bit)
+- 更新：2026-06-22
+- 下载 / Likes：0 / 0
+- 任务：sentence-similarity
+- Tags：mlx, safetensors, lfm2, lfm2.5, embeddings, sentence-similarity, feature-extraction, retrieval
+
+### [mlx-community/LFM2.5-Embedding-350M-4bit](https://huggingface.co/mlx-community/LFM2.5-Embedding-350M-4bit)
+- 更新：2026-06-22
+- 下载 / Likes：0 / 0
+- 任务：sentence-similarity
+- Tags：mlx, safetensors, lfm2, lfm2.5, embeddings, sentence-similarity, feature-extraction, retrieval
+
 ### [LiquidAI/LFM2.5-Embedding-350M](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M)
 - 更新：2026-06-20
-- 下载 / Likes：10117 / 113
+- 下载 / Likes：10117 / 115
 - 任务：sentence-similarity
 - Tags：sentence-transformers, safetensors, lfm2, liquid, lfm2.5, edge, sentence-similarity, feature-extraction
-
-### [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M)
-- 更新：2026-06-19
-- 下载 / Likes：63989 / 142
-- 任务：sentence-similarity
-- Tags：PyLate, safetensors, lfm2, liquid, edge, ColBERT, sentence-transformers, sentence-similarity
-
-### [LiquidAI/LFM2.5-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M)
-- 更新：2026-06-19
-- 下载 / Likes：2534 / 87
-- 任务：sentence-similarity
-- Tags：PyLate, safetensors, lfm2, liquid, lfm2.5, edge, ColBERT, sentence-transformers
-
-### [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE)
-- 更新：2026-05-06
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us

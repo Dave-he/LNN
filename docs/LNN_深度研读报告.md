@@ -299,10 +299,30 @@ tags: [LNN, reading-report, papers]
   - **Verdict**: POSITIVE — LNN 在 low-resource + high-distribution-shift 场景下相对大模型具结构性优势的硬证据.
 - **结论**: 今日 2 篇新论文均为 LNN 在 **跨域 / 边缘部署** 场景的强证据, 涵盖视觉 (GazeLNN, Jetson 部署) 与音频 (FlowFake, 形式化稳定性) 两个子领域.
 
+### [2026-06-24] Topological Neural Dynamics（拓扑化神经元动力学方向）
+- **独立报告**：[[docs/reports/Topological_Neural_Dynamics_2606.21295_研读报告.md]]
+- **digest 入口**：[[docs/daily/2026-06-24_LNN_research_digest.md|每日追踪]]
+- **核心问题**：RNN/LSTM/CfC/Transformer 虽机制不同，但多数仍按 layer-wise shared operator 更新整层状态，导致单个神经元缺少独立局部轨迹；复杂动力系统中常见的"局部动力学 + 拓扑交互 + 全局涌现"没有被显式建模。
+- **方法论**：提出 $T=(G,I,F)$ 三元组：有向神经元图 $G$ 定义 input/hidden/output neurons 与边，交互算子 $I(i,v^t)=\sum_{j\in N_G(i)}W_{ij}v_j^t$ 聚合入邻居信号，局部动力学用 leaky-integrator 更新 $h_i^{t+1}=(1-\tau)h_i^t+\tau\tanh(\sum_jW_{ij}v_j^t+w_i^{in}e_i^{t+1}+b_i+\alpha_i h_i^t)$。拓扑路径长度自然产生 propagation delay 与多尺度记忆。
+- **关键成果**：Pong behavior cloning 中，TND 在 $l=40$ 下 catch rate 0.95、mean consecutive catches 17.47、max 68；强于 CfC 的 0.84 / 5.41 / 53。参数量 0.36M，接近 Vanilla/Sparse RNN，远低于 CfC 1.50M、LSTM 3.20M、Transformer 6.34M。
+- **本仓价值**：不把它视作 CfC 替代品，而是视作 Graph-CfC 设计提示：保留 CfC closed-form 时间门，在 hidden units 之间加入稀疏有向图交互，测试 topology sweep 是否能改善长程控制和非平稳序列。
+- **局限**：当前只在小状态空间 Pong 上验证；拓扑选择敏感且随机图 seed sensitivity 未充分审计；与 CfC 的比较不能外推到不规则采样、连续时间外推或高噪声任务。
+- **下一步**：将状态标为 `experiment`，建议输出 `analysis/tnd_cfc/2026-06-24_graph_cfc_pong.md`，先做 Graph-CfC smoke test。
+
+### [2026-06-24] GazeLNN（机器人主动感知与边缘 CfC 方向）
+- **独立报告**：[[docs/reports/GazeLNN_Fast_Human_Attention_Prediction_2606.20491_研读报告.md]]
+- **digest 入口**：[[docs/daily/2026-06-24_LNN_research_digest.md|每日追踪]]
+- **核心问题**：自主机器人处理全视野高分辨率视觉成本高；已有 scanpath prediction 多依赖 Transformer / ConvLSTM 重模型，不适合 Jetson 级实时主动感知。
+- **方法论**：GazeLNN 用 MobileNetV3 提取图像特征，将上一 fixation heatmap + CoordConv 坐标通道 + hidden state 输入 CfC recurrent module，自回归预测 8-step fixation heatmap；再把 heatmap 接入 APPO 主动相机策略，奖励 $R=r_t+l_t+p_t+h_t$ 中的 $h_t$ 鼓励相机中心对准 GazeLNN 预测显著区域。
+- **关键成果**：MIT Low Resolution 上 ScanMatch 0.47，优于 tSPM-Net 0.34；MobileNetV3 配置仅 15.24M params / 0.61 GFLOPs / 6.84 ms。真机 quadrotor + Jetson Orin NX 验证中，active camera full voxel 55,524 vs static 37,067；fixation grid voxels 6,770 vs 873，接近 8 倍提升。
+- **本仓价值**：这是 CfC 进入真实机器人 perception loop 的直接证据。建议先实现 GazeLNN-lite synthetic heatmap 自回归和 Jetson latency probe，再考虑 active perception toy，不直接触发真机闭环。
+- **局限**：OSIE/MIT 静态图像与机器人 RGB-D 运动视角有 domain gap；训练时 $\Delta t$ 来自真实 fixation duration，部署时固定为 1；仿真 RL heatmap 是 proxy，和部署时 GazeLNN heatmap 分布未充分量化。
+- **下一步**：状态标为 `experiment`，建议输出 `analysis/jetson/2026-06-24_gazelnn_latency.md` 与 `analysis/gazelnn/2026-06-24_synthetic_heatmap.md`。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-06-24**：[[docs/daily/2026-06-24_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个。
+- **2026-06-24**：[[docs/daily/2026-06-24_LNN_research_digest.md|每日追踪]]，候选论文 30 篇，仓库 49 个，模型 25 个。
 - **2026-06-23**：[[docs/daily/2026-06-23_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个。
 - **2026-06-22**：[[docs/daily/2026-06-22_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
 - **2026-06-21**：[[docs/daily/2026-06-21_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
