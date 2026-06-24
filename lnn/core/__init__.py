@@ -17,6 +17,10 @@ from lnn.core.bench_suite import (
     load_dataset,
     run_suite,
 )
+from lnn.core.adaptive_gated_multitau_cfc import (
+    AdaptiveGatedMultiTauCfCCell,
+    gated_fusion_entropy,
+)
 from lnn.core.cfc import CfCCell, CfCNetwork
 from lnn.core.controllability_cfc import (
     ControllabilityCfCCell,
@@ -523,6 +527,8 @@ __all__ = [
     "LoRADAGSharedMoECfCCell",
     "LoRADAGSharedMoECfCNetwork",
     "lora_dag_shared_moe_utilization",
+    "AdaptiveGatedMultiTauCfCCell",
+    "gated_fusion_entropy",
     "LyapunovStableCfCCell",
     "lyapunov_decay_loss",
     "lyapunov_value",
