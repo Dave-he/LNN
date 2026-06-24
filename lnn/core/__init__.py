@@ -286,6 +286,10 @@ from lnn.core.multi_basin_lyapunov_cfc import (
     multi_basin_lyapunov_value,
 )
 from lnn.core.hierarchical_multitau_cfc import HierarchicalMultiTauCfCCell
+from lnn.core.frozen_sampled_multitau_cfc import (
+    FrozenSampledMultiTauCfCCell,
+    sample_log_uniform,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -550,6 +554,8 @@ __all__ = [
     "multi_basin_iss_decay_loss",
     "basin_assignment_entropy",
     "HierarchicalMultiTauCfCCell",
+    "FrozenSampledMultiTauCfCCell",
+    "sample_log_uniform",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
