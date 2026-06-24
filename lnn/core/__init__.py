@@ -24,6 +24,11 @@ from lnn.core.controllability_cfc import (
     input_jacobian_norm,
     input_sensitivity,
 )
+from lnn.core.iss_stable_cfc import (
+    ISSStableCfCCell,
+    input_bound_ratio,
+    iss_decay_loss,
+)
 from lnn.core.control import LNNImitationPolicy
 from lnn.core.dss_cell import DiagonalSSMCell, DiagonalSSMNetwork
 from lnn.core.noise_adaptive_cfc import (
@@ -310,6 +315,9 @@ __all__ = [
     "controllability_loss",
     "input_jacobian_norm",
     "input_sensitivity",
+    "ISSStableCfCCell",
+    "iss_decay_loss",
+    "input_bound_ratio",
     "NoiseAdaptiveCfCCell",
     "NoiseAdaptiveCfCNetwork",
     "BidirectionalNoiseAdaptiveCfC",
