@@ -277,6 +277,14 @@ from lnn.core.lyapunov_stable_cfc import (
     make_lyapunov_matrix,
     positive_definite_loss,
 )
+from lnn.core.multi_basin_lyapunov_cfc import (
+    MultiBasinLyapunovStableCfCCell,
+    basin_assignment_entropy,
+    multi_basin_distance,
+    multi_basin_iss_decay_loss,
+    multi_basin_lyap_decay_loss,
+    multi_basin_lyapunov_value,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -534,6 +542,12 @@ __all__ = [
     "lyapunov_value",
     "make_lyapunov_matrix",
     "positive_definite_loss",
+    "MultiBasinLyapunovStableCfCCell",
+    "multi_basin_distance",
+    "multi_basin_lyapunov_value",
+    "multi_basin_lyap_decay_loss",
+    "multi_basin_iss_decay_loss",
+    "basin_assignment_entropy",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
