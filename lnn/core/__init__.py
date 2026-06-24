@@ -255,6 +255,13 @@ from lnn.core.lora_dag_shared_moe import (
     LoRADAGSharedMoECfCNetwork,
     lora_dag_shared_moe_utilization,
 )
+from lnn.core.lyapunov_stable_cfc import (
+    LyapunovStableCfCCell,
+    lyapunov_decay_loss,
+    lyapunov_value,
+    make_lyapunov_matrix,
+    positive_definite_loss,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -498,6 +505,11 @@ __all__ = [
     "LoRADAGSharedMoECfCCell",
     "LoRADAGSharedMoECfCNetwork",
     "lora_dag_shared_moe_utilization",
+    "LyapunovStableCfCCell",
+    "lyapunov_decay_loss",
+    "lyapunov_value",
+    "make_lyapunov_matrix",
+    "positive_definite_loss",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
