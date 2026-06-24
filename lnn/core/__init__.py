@@ -18,6 +18,12 @@ from lnn.core.bench_suite import (
     run_suite,
 )
 from lnn.core.cfc import CfCCell, CfCNetwork
+from lnn.core.controllability_cfc import (
+    ControllabilityCfCCell,
+    controllability_loss,
+    input_jacobian_norm,
+    input_sensitivity,
+)
 from lnn.core.control import LNNImitationPolicy
 from lnn.core.dss_cell import DiagonalSSMCell, DiagonalSSMNetwork
 from lnn.core.noise_adaptive_cfc import (
@@ -300,6 +306,10 @@ __all__ = [
     "TransformableLTC",
     "CfCCell",
     "CfCNetwork",
+    "ControllabilityCfCCell",
+    "controllability_loss",
+    "input_jacobian_norm",
+    "input_sensitivity",
     "NoiseAdaptiveCfCCell",
     "NoiseAdaptiveCfCNetwork",
     "BidirectionalNoiseAdaptiveCfC",
