@@ -7,27 +7,6 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-06-25
 
 ## GitHub 仓库
-### [maximecb/bebelm](https://github.com/maximecb/bebelm)
-- 更新：2026-06-25
-- Star / Fork：60 / 6
-- 语言：Rust
-- Topics：cpu, inference, llm, local-ai, local-llm, rust
-- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
-
-### [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection)
-- 更新：2026-06-25
-- Star / Fork：2 / 0
-- 语言：Swift
-- Topics：未标注
-- 说明：On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm
-
-### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-06-25
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
-
 ### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
 - 更新：2026-06-24
 - Star / Fork：0 / 0
@@ -35,12 +14,33 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
 
+### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
+- 更新：2026-06-24
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
+
+### [maximecb/bebelm](https://github.com/maximecb/bebelm)
+- 更新：2026-06-23
+- Star / Fork：59 / 5
+- 语言：Rust
+- Topics：cpu, inference, llm, local-ai, local-llm, rust
+- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
+
 ### [everest-an/O1](https://github.com/everest-an/O1)
 - 更新：2026-06-23
 - Star / Fork：2 / 0
 - 语言：Python
 - Topics：anesthesia-validation, brain-inspired, deep-learning, liquid-neural-network, llm, long-context, microtubule, mt-lnn
 - 说明：MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).
+
+### [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection)
+- 更新：2026-06-23
+- Star / Fork：1 / 0
+- 语言：Swift
+- Topics：未标注
+- 说明：On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm
 
 ### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
 - 更新：2026-06-23

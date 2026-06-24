@@ -369,13 +369,16 @@ python scripts/jetson_lnn_benchmark.py --pareto --seeds 3
 # 2) 设备操控 4 case 引用 harness
 python scripts/experiment_device_control_cases.py --case all --quick
 
-# 3) SNCP-PPO 群导航 curriculum ablation
+# 3) 本地部署模拟(不触发真机, 仅 sim:// + filesystem)
+python scripts/local_deployment_sim.py --case all --target local_cpu_smoke --quick --steps 8
+
+# 4) SNCP-PPO 群导航 curriculum ablation
 python scripts/experiment_sncp_ppo_lite.py --curriculum --ppo-updates-per-stage 20
 
-# 4) 跨 task backbone 矩阵
+# 5) 跨 task backbone 矩阵
 python scripts/build_backbone_matrix.py --include-jetson
 
-# 5) 周线自动 CI
+# 6) 周线自动 CI
 # .github/workflows/lnn_weekly_verify.yml 周一 03:07 UTC 跑全套
 ```
 
@@ -383,6 +386,9 @@ python scripts/build_backbone_matrix.py --include-jetson
 
 1. **设备操控真机实验桥接**:`experiment_device_control_cases.py`
    4 case 加真机 stub(MIT mini-cheetah simulator / Crazyflie / Gazebo / BMS)
+   - 2026-06-24 增量:已先落地 `scripts/local_deployment_sim.py` 作为
+     **本地部署模拟**边界层,只生成 `sim://` manifest / audit / budget gate,
+     不触发真机接口;使用说明见 [[docs/recipes/local_deployment_simulation]]。
 2. **T=64/128 压力测试 + nan_count guard**:防止长 horizon ODE 发散
    (案例 B 已知失败模式)
 3. **EntroLnn 公式落地**:`LTCNetwork` 加 `transformable_mode`,实现参考电池
@@ -424,6 +430,7 @@ lnn/data/
 
 scripts/
   ├── experiment_device_control_cases.py  # ★ 本 iter 新增 — 4 case 引用 harness
+  ├── local_deployment_sim.py              # 本地部署模拟 — sim:// manifest + audit + budget gate
   ├── experiment_sncp_ppo_lite.py          # 案例 A 群导航
   ├── benchmark_emma_drone_synth.py        # 案例 B 无人机
   ├── scan_emma_rover_hidden_size.py       # 案例 A hidden 扫描
@@ -444,4 +451,3 @@ scripts/
 - iter#31: RLSTG 黎曼流形扩展(调研)
 - iter#34: EntroLnn 公式同构(案例 D 入口)
 - iter#35: Retinal LNN 视神经假体(案例 B 视觉扩展调研)
-

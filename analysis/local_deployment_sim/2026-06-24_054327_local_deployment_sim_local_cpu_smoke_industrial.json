@@ -1,0 +1,174 @@
+{
+  "schema": {
+    "version": 1,
+    "fields": [
+      "case",
+      "target",
+      "source_report",
+      "manifest",
+      "audit",
+      "budget_check",
+      "status"
+    ]
+  },
+  "case": "industrial",
+  "target": "local_cpu_smoke",
+  "source_report": {
+    "case": "industrial",
+    "per_seed": [
+      {
+        "case": "industrial",
+        "seed": 42,
+        "steps": 8,
+        "wall_time_s": 1.1324257850646973,
+        "params": 133,
+        "inference_ms": 12.85409927368164,
+        "primary_metric": "il_mse",
+        "primary_metric_value": 0.11582840234041214,
+        "status": "ok",
+        "notes": "LTC recurrent; NCP sparse wiring not yet active (recurrent_type='ltc')."
+      }
+    ],
+    "summary": {
+      "ok_seeds": 1,
+      "total_seeds": 1,
+      "mean_primary_metric_value": 0.11582840234041214,
+      "mean_inference_ms": 12.85409927368164,
+      "mean_params": 133.0
+    }
+  },
+  "manifest": {
+    "schema_version": 1,
+    "generated_utc": "2026-06-24T05:43:27Z",
+    "mode": "local_simulation",
+    "artifact": {
+      "uri": "sim://lnn/industrial/local_cpu_smoke",
+      "format": "torch-in-memory-smoke",
+      "case": "industrial",
+      "parameter_count": 133,
+      "estimated_fp32_memory_kb": 0.51953125
+    },
+    "target": {
+      "name": "local_cpu_smoke",
+      "arch": "x86_64/aarch64-host",
+      "accelerator": "cpu",
+      "latency_budget_ms": 250.0,
+      "memory_budget_kb": 131072,
+      "supported_cases": [
+        "quadruped",
+        "drone",
+        "industrial",
+        "battery"
+      ],
+      "notes": "Generous local smoke target; proves packaging and local inference path."
+    },
+    "safety": {
+      "real_device_access": false,
+      "submit_allowed": false,
+      "network_device_calls": false,
+      "forbidden_interfaces": [
+        "adb",
+        "xcrun devicectl",
+        "ros2",
+        "mavlink",
+        "can",
+        "serial",
+        "bluetooth",
+        "payment",
+        "sms"
+      ],
+      "note": "This manifest is a local rehearsal only; it is not a hardware deployment ticket."
+    }
+  },
+  "audit": [
+    {
+      "ts_utc": "2026-06-24T05:43:27Z",
+      "stage": "package",
+      "status": "ok",
+      "detail": "sealed sim://lnn/industrial/local_cpu_smoke manifest",
+      "real_device_access": false,
+      "interfaces_used": [
+        "python",
+        "filesystem",
+        "sim://"
+      ]
+    },
+    {
+      "ts_utc": "2026-06-24T05:43:27Z",
+      "stage": "transfer",
+      "status": "ok",
+      "detail": "mock transfer to local sandbox namespace",
+      "real_device_access": false,
+      "interfaces_used": [
+        "python",
+        "filesystem",
+        "sim://"
+      ]
+    },
+    {
+      "ts_utc": "2026-06-24T05:43:27Z",
+      "stage": "load",
+      "status": "ok",
+      "detail": "mock runtime loaded in current Python process",
+      "real_device_access": false,
+      "interfaces_used": [
+        "python",
+        "filesystem",
+        "sim://"
+      ]
+    },
+    {
+      "ts_utc": "2026-06-24T05:43:27Z",
+      "stage": "warmup",
+      "status": "ok",
+      "detail": "single synthetic warmup request replayed",
+      "real_device_access": false,
+      "interfaces_used": [
+        "python",
+        "filesystem",
+        "sim://"
+      ]
+    },
+    {
+      "ts_utc": "2026-06-24T05:43:27Z",
+      "stage": "inference_loop",
+      "status": "ok",
+      "detail": "synthetic inference metrics read from source report",
+      "real_device_access": false,
+      "interfaces_used": [
+        "python",
+        "filesystem",
+        "sim://"
+      ]
+    },
+    {
+      "ts_utc": "2026-06-24T05:43:27Z",
+      "stage": "rollback_check",
+      "status": "ok",
+      "detail": "mock rollback available; no persistent state changed",
+      "real_device_access": false,
+      "interfaces_used": [
+        "python",
+        "filesystem",
+        "sim://"
+      ]
+    }
+  ],
+  "budget_check": {
+    "status": "pass",
+    "checks": {
+      "case_supported": true,
+      "latency_ms": {
+        "observed": 12.85409927368164,
+        "budget": 250.0,
+        "pass": true
+      },
+      "memory_kb": {
+        "observed": 0.51953125,
+        "budget": 131072,
+        "pass": true
+      }
+    }
+  },
+  "status": "pass"
+}
