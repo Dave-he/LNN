@@ -291,6 +291,9 @@ from lnn.core.frozen_sampled_multitau_cfc import (
     sample_log_uniform,
 )
 from lnn.core.frozen_multibasin_lyapunov_cfc import FrozenMultiBasinLyapunovCfCCell
+from lnn.core.per_branch_multibasin_lyapunov_cfc import (
+    PerBranchMultiBasinLyapunovCfCCell,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -558,6 +561,7 @@ __all__ = [
     "FrozenSampledMultiTauCfCCell",
     "sample_log_uniform",
     "FrozenMultiBasinLyapunovCfCCell",
+    "PerBranchMultiBasinLyapunovCfCCell",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
