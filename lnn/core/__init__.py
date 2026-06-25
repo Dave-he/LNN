@@ -298,6 +298,9 @@ from lnn.core.input_geometry_gated_per_branch_cfc import (
     InputGeometryGatedPerBranchCfCCell,
 )
 from lnn.core.frozen_random_basin_cfc import FrozenRandomBasinCfCCell
+from lnn.core.aux_supervised_frozen_basin_cfc import (
+    AuxSupervisedFrozenRandomBasinCfCCell,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -568,6 +571,7 @@ __all__ = [
     "PerBranchMultiBasinLyapunovCfCCell",
     "InputGeometryGatedPerBranchCfCCell",
     "FrozenRandomBasinCfCCell",
+    "AuxSupervisedFrozenRandomBasinCfCCell",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
