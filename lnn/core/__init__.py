@@ -313,6 +313,9 @@ from lnn.core.per_step_adaptive_aux_cfc import (
 from lnn.core.combined_per_branch_per_step_aux_cfc import (
     CombinedPerBranchPerStepAuxMultiBasinLyapunovCfCCell,
 )
+from lnn.core.annealed_per_branch_aux_cfc import (
+    AnnealedPerBranchMultiBasinLyapunovCfCCell,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -588,6 +591,7 @@ __all__ = [
     "AdaptiveAuxPerBranchMultiBasinLyapunovCfCCell",
     "PerStepAdaptiveAuxMultiBasinLyapunovCfCCell",
     "CombinedPerBranchPerStepAuxMultiBasinLyapunovCfCCell",
+    "AnnealedPerBranchMultiBasinLyapunovCfCCell",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
