@@ -339,6 +339,9 @@ from lnn.core.mix_static_inter_basin_graph_cfc import (
     MixStaticInterBasinGraphCfCCell,
     mix_static_and_input,
 )
+from lnn.core.channel_projection_cfc import (
+    ChannelProjectionCfCCell,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -628,6 +631,7 @@ __all__ = [
     "batched_graph_mix",
     "MixStaticInterBasinGraphCfCCell",
     "mix_static_and_input",
+    "ChannelProjectionCfCCell",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
