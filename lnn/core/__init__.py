@@ -321,6 +321,12 @@ from lnn.core.inter_basin_distance_cfc import (
     cross_branch_repulsion_loss,
     inter_basin_repulsion_loss,
 )
+from lnn.core.inter_basin_graph_cfc import (
+    InterBasinGraphCfCCell,
+    basin_assignment_prob,
+    inter_basin_graph_mix,
+    inter_basin_graph_regularizer,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -600,6 +606,10 @@ __all__ = [
     "InterBasinDistanceCfCCell",
     "inter_basin_repulsion_loss",
     "cross_branch_repulsion_loss",
+    "InterBasinGraphCfCCell",
+    "basin_assignment_prob",
+    "inter_basin_graph_mix",
+    "inter_basin_graph_regularizer",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
