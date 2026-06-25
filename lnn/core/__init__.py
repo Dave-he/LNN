@@ -335,6 +335,10 @@ from lnn.core.per_step_inter_basin_graph_cfc import (
     input_dependent_adjacency,
     batched_graph_mix,
 )
+from lnn.core.mix_static_inter_basin_graph_cfc import (
+    MixStaticInterBasinGraphCfCCell,
+    mix_static_and_input,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -622,6 +626,8 @@ __all__ = [
     "PerStepInterBasinGraphCfCCell",
     "input_dependent_adjacency",
     "batched_graph_mix",
+    "MixStaticInterBasinGraphCfCCell",
+    "mix_static_and_input",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
