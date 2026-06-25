@@ -316,6 +316,11 @@ from lnn.core.combined_per_branch_per_step_aux_cfc import (
 from lnn.core.annealed_per_branch_aux_cfc import (
     AnnealedPerBranchMultiBasinLyapunovCfCCell,
 )
+from lnn.core.inter_basin_distance_cfc import (
+    InterBasinDistanceCfCCell,
+    cross_branch_repulsion_loss,
+    inter_basin_repulsion_loss,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -592,6 +597,9 @@ __all__ = [
     "PerStepAdaptiveAuxMultiBasinLyapunovCfCCell",
     "CombinedPerBranchPerStepAuxMultiBasinLyapunovCfCCell",
     "AnnealedPerBranchMultiBasinLyapunovCfCCell",
+    "InterBasinDistanceCfCCell",
+    "inter_basin_repulsion_loss",
+    "cross_branch_repulsion_loss",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
