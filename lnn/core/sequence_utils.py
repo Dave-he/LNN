@@ -143,5 +143,7 @@ def select_step_mask(
         raise ValueError(f"mask must have 1-3 dimensions, got {mask.dim()}")
 
     input_mask = (input_mask > 0).to(dtype=dtype, device=device)
-    update_mask = (input_mask > 0).any(dim=-1, keepdim=True).to(dtype=dtype)
+    # `input_mask` is already a 0/1 tensor, so reuse it directly for the
+    # update mask — saves one full boolean comparison per step.
+    update_mask = input_mask.any(dim=-1, keepdim=True).to(dtype=dtype)
     return input_mask, update_mask

@@ -35,14 +35,17 @@ def effective_rank(W: torch.Tensor) -> float:
     """
     if W.dim() != 2:
         raise ValueError(f"expected 2D tensor, got {W.dim()}D")
-    s = torch.linalg.svdvals(W.float())
+    # Avoid the unconditional `.float()` copy when W is already float32 —
+    # saves one full-sized allocation per call on the hot diagnostic path.
+    s = torch.linalg.svdvals(W) if W.dtype == torch.float32 else torch.linalg.svdvals(W.float())
     if s.numel() == 0:
         return 0.0
-    s_sum = float(s.sum().item())
-    s_sq_sum = float((s ** 2).sum().item())
-    if s_sq_sum < 1e-12:
+    # Single GPU sync via stacked reductions; `s.dot(s)` avoids the
+    # intermediate `s ** 2` tensor that `(s ** 2).sum()` would allocate.
+    s_sum, s_sq_sum = (s.sum(), s.dot(s))
+    if s_sq_sum.item() < 1e-12:
         return 0.0
-    return (s_sum ** 2) / s_sq_sum
+    return (s_sum.item() ** 2) / s_sq_sum.item()
 
 
 def mean_effective_rank(weights: list[torch.Tensor]) -> float:
