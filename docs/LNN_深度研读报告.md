@@ -123,6 +123,14 @@ tags: [LNN, reading-report, papers]
 - **局限**：数据集名称未公开;Stage 2 KD 温度/α 未给出;Pareto 仅 3 维 (未含内存峰值/能耗);跨域迁移仅口头声称。
 - **对本仓**：可作 `EulerLTCNetwork::to_embedded()` 入口;列入 [[docs/prds/PRD_LNN_Edge_Research|PRD_LNN_Edge_Research]] §8 #2 (MCU 部署) 候选;复用本仓 `analysis/replication/temporal_dropout/` 模板写 `analysis/paper_replication/dlnet_report.md`。
 
+### [2026-06-25] LFNet — Liquid Fusion of Heterogeneous Representations for General Salient Object Detection
+- **独立报告**：[[docs/reports/LFNet_Liquid_Fusion_Heterogeneous_Representations_SOD_2606.26849_研读报告.md]]
+- **核心问题**：单一神经网络范式 (CNN 或 SSM) 在显著性目标检测 (SOD) 上各有先天频谱偏好 — CNN 偏中-高频纹理, SSM 偏低频全局语义, 任何单流都无法在五个 SOD 子任务 (RGB / RGB-D / RGB-T / VSOD / VDT) 同时 SOTA; 此外主流上采样 (双线性 / 转置卷积) 会引入边界模糊与频谱混叠, 对 SOD 这种边界敏感任务尤其致命。
+- **方法论**：**LFNet = 异质混合编码器 (VMamba-Small + ConvNeXt-Pico) + LFM (液态融合模块) + SGU (显著性引导上采样)**。三步创新：(1) **频谱互补实证** — 首次在 5 个数据集上做 CNN/SSM 层级 × 范式 FFT 分析, 揭示二者在归一化频率能量上严格互补; (2) **LFM 闭式门控** — 把 LTC ODE (Eq.1) 平移到空间异质特征融合, 用 Eq.2 $x_{\text{out}} = (1-\sigma)\odot h + \sigma \odot \tilde{\ell}$ 作为 "记忆 (VMamba) - 刺激 (ConvNeXt)" 闭式门控, 配上 Eq.3 通道调制 + Eq.4 空间门 + Eq.5 闭式融合, 完全摆脱 ODE 数值积分开销; (3) **SGU 频谱-空间双分支上采样** — 复数权重 $w_i$ 在 FFT 域调制 + 两层 3×3 卷积捕获高频边缘, 残差保留主干梯度; 多尺度 BCE+IoU 损失。
+- **关键成果**：43.23M 参数下在五大 SOD 任务上同时 SOTA (Table 1-5)：DUTS $S_m$=93.6 (优于 Samba 93.2 / VSCode-S 92.6), NJUD $S_m$=95.0 (优于 SP-Net 92.5 / DCF 90.4), VDT-2048 $S_m$=94.2 (优于 MFFNet 92.1); 消融 (Table 6) 显示 LFM 相对 cross-attention 高 0.4 $S_m$, SGU 相对 transposed conv 高 0.4 $S_m$, 三类 ablation 都"小而确定"地累积增益。
+- **局限**：43.23M 参数对边缘设备仍偏重, 论文未报告 Jetson / 移动端延迟 (结论段自陈 "future work ... for lightweight edge applications"); 频谱分析仅 5 个数据集, 跨域泛化未验证; VDT 三模态级联 LFM 的级联顺序未消融; 复数频谱权重的相位稳定性无可视化消融。
+- **对本仓**：**LFM 的 `(1-σ)·h + σ·ℓ` 公式是通用异质流融合模板**, 可立即嫁接到本仓 `bench_film_cfc`、`bench_combined_gates` 等脚本, 与 `ModeInterleaveCfCCell` 形成对照; 论文"CNN vs SSM 频谱互补"分析脚本化后可作为 CfC cell 的新 ablation axis (类似 r262 ChannelProjectionCfC 的"通道维度扩展")。**Verdict**: TARGET-POSITIVE — 异质融合 POSITIVE, 多模态扩展 POSITIVE, 边缘部署 NEGATIVE-WITH-NUANCE。
+
 ### [2026-06-24] 今日候选论文覆盖率复盘（无新增研读）
 - **digest 入口**：[[docs/daily/2026-06-24_LNN_research_digest.md|每日追踪]]
 - **抓取异常**：`scripts/daily_lnn_research.py` 跑完后 arXiv / GitHub / Hugging Face 三方全失败 — arXiv 报 `SSL: UNEXPECTED_EOF_WHILE_READING`，GitHub 与 HF 报相同 TLS EOF；`scripts/run_lnn_research_pipeline.sh` 的 `git fetch --no-tags origin` 阶段因 SSH 代理 `192.168.6.25:7890` 不可达 + DNS 被劫持到 `198.18.0.x` (非路由段) 而失败。诊断日志：`logs/pipeline/2026-06-24_git_fetch_failed.log`。按 SOP "若 digest 失败但有历史 digest, 直接用历史" 兜底，本轮复用 2026-06-22 的 arXiv 候选池 (25 篇) 作为参考；其全部 12 篇核心命中论文已被 2026-06-20 / 2026-06-23 历次 round 覆盖（MA-GLTC, FlowFake, GazeLNN, Multi-Rate MoE, Liquid Random Features, Liquid 3DGS, EMMA, Comparative LNN-LSTM, Natural Gas LNN, Physics-Modeled NN, LiquidTAD, Nonasymptotic BC）。
@@ -310,7 +318,8 @@ tags: [LNN, reading-report, papers]
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-06-27**：[[docs/daily/2026-06-27_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
+- **2026-06-27**：[[docs/daily/2026-06-27_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。本轮挑选出 1 篇高价值候选 ([Liquid Fusion of Heterogeneous Representations (LFNet, 2606.26849)](docs/reports/LFNet_Liquid_Fusion_Heterogeneous_Representations_SOD_2606.26849_研读报告.md)), 已生成研读报告。
+- **2026-06-26**：[[docs/daily/2026-06-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 - **2026-06-26**：[[docs/daily/2026-06-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 - **2026-06-24**：[[docs/daily/2026-06-24_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
 - **2026-06-25**：[[docs/daily/2026-06-25_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
