@@ -14,6 +14,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - Hugging Face 候选模型：19 个
 - 已下载 PDF：0 个
 
+## 数据源状态
+- `arXiv fetch failed: HTTP Error 406: Not Acceptable`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
+
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
@@ -33,18 +37,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-06-27 | [everest-an/O1](https://github.com/everest-an/O1) | 2 | Python | MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development… |
+| 2026-06-27 | [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad) | 0 | Python | A liquid neural network framework built from first principles to model the human brain 🌊 |
+| 2026-06-27 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
+| 2026-06-27 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-06-26 | [AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices](https://github.com/AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices) | 0 | C |  |
 | 2026-06-26 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
 | 2026-06-25 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 60 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-06-25 | [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection) | 2 | Swift | On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm |
-| 2026-06-24 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
-| 2026-06-23 | [everest-an/O1](https://github.com/everest-an/O1) | 2 | Python | MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development… |
-| 2026-06-23 | [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad) | 0 | Python | A liquid neural network framework built from first principles to model the human brain 🌊 |
+| 2026-06-24 | [raminmh/CfC](https://github.com/raminmh/CfC) | 1047 | Python | Closed-form Continuous-time Neural Networks |
 | 2026-06-22 | [shareef65/TLTO-Net](https://github.com/shareef65/TLTO-Net) | 0 | Python | TLTO-Net: A Trust and Energy-Efficient Routing Framework for Wireless Sensor Networks using Liquid Neural Networks and Termite Life Cycle Optimization |
 | 2026-06-22 | [Gonzablanmar/Liquid-NN](https://github.com/Gonzablanmar/Liquid-NN) | 0 | Jupyter Notebook | Liquid neural network, where the Adam optimizer is implanted by hand. |
 | 2026-06-21 | [RacineAI-comp/lfm2-embedding-fp8-engine](https://github.com/RacineAI-comp/lfm2-embedding-fp8-engine) | 0 | Cuda | Fast FP8 C++/CUDA inference engine for LiquidAI/LFM2.5-Embedding-350M (H100) |
-| 2026-06-18 | [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet) | 1 | Jupyter Notebook | This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for E… |
-| 2026-06-17 | [Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data](https://github.com/Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data) | 0 | Python | A hybrid deep learning framework for breast cancer prognosis prediction using genomic and clinical data. The model combines Liquid Neural Networks (LNN) and De… |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |

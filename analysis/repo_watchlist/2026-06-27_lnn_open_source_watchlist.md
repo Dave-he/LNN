@@ -7,6 +7,34 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-06-27
 
 ## GitHub 仓库
+### [everest-an/O1](https://github.com/everest-an/O1)
+- 更新：2026-06-27
+- Star / Fork：2 / 0
+- 语言：Python
+- Topics：anesthesia-validation, brain-inspired, deep-learning, liquid-neural-network, llm, long-context, microtubule, mt-lnn
+- 说明：MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).
+
+### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
+- 更新：2026-06-27
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：A liquid neural network framework built from first principles to model the human brain 🌊
+
+### [404reese/XWormNet](https://github.com/404reese/XWormNet)
+- 更新：2026-06-27
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks
+
+### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
+- 更新：2026-06-27
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
+
 ### [AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices](https://github.com/AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices)
 - 更新：2026-06-26
 - Star / Fork：0 / 0
@@ -35,26 +63,12 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm
 
-### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
+### [raminmh/CfC](https://github.com/raminmh/CfC)
 - 更新：2026-06-24
-- Star / Fork：0 / 0
+- Star / Fork：1047 / 161
 - 语言：Python
-- Topics：未标注
-- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
-
-### [everest-an/O1](https://github.com/everest-an/O1)
-- 更新：2026-06-23
-- Star / Fork：2 / 0
-- 语言：Python
-- Topics：anesthesia-validation, brain-inspired, deep-learning, liquid-neural-network, llm, long-context, microtubule, mt-lnn
-- 说明：MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).
-
-### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
-- 更新：2026-06-23
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：A liquid neural network framework built from first principles to model the human brain 🌊
+- Topics：deep-learning, neural-ode, pytorch, recurrent-neural-networks, sequence-models, tensorflow
+- 说明：Closed-form Continuous-time Neural Networks
 
 ### [shareef65/TLTO-Net](https://github.com/shareef65/TLTO-Net)
 - 更新：2026-06-22
@@ -84,13 +98,6 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics", International Conference on Pattern Recognition, ICPR 2026.
 
-### [Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data](https://github.com/Ankita-Sahani/design_of_hybrid_dl_framework_for_cancer_prognosis_by_integrating_genomic_-_clinical_data)
-- 更新：2026-06-17
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：A hybrid deep learning framework for breast cancer prognosis prediction using genomic and clinical data. The model combines Liquid Neural Networks (LNN) and Deep Neural Networks (DNN) to learn complex biological patterns from the METABRIC dataset and achieve high prediction accuracy for patient survival outcomes. Built using PyTorch , Scikit-Learn.
-
 ### [KaiserDna23/RL_Trading](https://github.com/KaiserDna23/RL_Trading)
 - 更新：2026-06-16
 - Star / Fork：1 / 0
@@ -118,13 +125,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Cuda
 - Topics：3060, ai, c, cpp, cuda, fast-inference, gpu, inference
 - 说明：A self-contained CUDA inference engine for LiquidAI/LFM2.5-8B-A1B (hybrid conv + GQA-attention MoE, 8.5B params, 1B active) targeting a single RTX 3060 (12 GB). No Python, no frameworks at runtime: a single .cu engine + a header-only byte-level BPE tokenizer.
-
-### [Linlab2026/GCN-CfC](https://github.com/Linlab2026/GCN-CfC)
-- 更新：2026-06-03
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Official implementation of "Graph continuous molecular screening for noncovalent inhibitor discovery". A graph-continuous model coupling GCN with closed-form continuous-time (CfC) refinement for PAD4 screening.
 
 ### [Alexng2024/EDSSM](https://github.com/Alexng2024/EDSSM)
 - 更新：2026-06-01
