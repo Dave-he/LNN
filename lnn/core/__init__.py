@@ -349,6 +349,9 @@ from lnn.core.neuron_wise_cfc import (
 from lnn.core.soft_neuron_attention_cfc import (
     SoftNeuronAttentionCfCCell,
 )
+from lnn.core.ste_neuron_wise_cfc import (
+    STENeuronWiseCfCCell,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
