@@ -342,6 +342,10 @@ from lnn.core.mix_static_inter_basin_graph_cfc import (
 from lnn.core.channel_projection_cfc import (
     ChannelProjectionCfCCell,
 )
+from lnn.core.neuron_wise_cfc import (
+    NeuronWiseCfCCell,
+    sparse_topk_mask,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
@@ -632,6 +636,8 @@ __all__ = [
     "MixStaticInterBasinGraphCfCCell",
     "mix_static_and_input",
     "ChannelProjectionCfCCell",
+    "NeuronWiseCfCCell",
+    "sparse_topk_mask",
     "ArxivCatalog",
     "CatalogEntry",
     "VerifyResult",
