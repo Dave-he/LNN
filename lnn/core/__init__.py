@@ -355,6 +355,9 @@ from lnn.core.ste_neuron_wise_cfc import (
 from lnn.core.ste_l1_neuron_wise_cfc import (
     STEWithL1,
 )
+from lnn.core.ste_entropy_neuron_wise_cfc import (
+    STEWithEntropy,
+)
 from lnn.core.multimodal import MultimodalFusionLNN
 from lnn.core.multimodal_physreg import (
     CrossModalAttnBiCfCNADWithMDN,
