@@ -7,6 +7,20 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-06-28
 
 ## GitHub 仓库
+### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
+- 更新：2026-06-28
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
+
+### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
+- 更新：2026-06-28
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
+
 ### [everest-an/O1](https://github.com/everest-an/O1)
 - 更新：2026-06-27
 - Star / Fork：2 / 0
@@ -28,26 +42,12 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks
 
-### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
-- 更新：2026-06-27
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
-
 ### [AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices](https://github.com/AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices)
 - 更新：2026-06-26
 - Star / Fork：0 / 0
 - 语言：C
 - Topics：未标注
 - 说明：无
-
-### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-06-26
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
 
 ### [maximecb/bebelm](https://github.com/maximecb/bebelm)
 - 更新：2026-06-25
@@ -148,87 +148,105 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：LOKI-G is a machine learning project designed for physical machines, enabling edge AI capabilities. It adapts the LOKI algorithm for training via imitation and reinforcement learning using Closed-form Continuous-Time Neural Networks and Neural Circuit Policies.
 
 ## Hugging Face 模型
-### [AKMESSI/lfm2.5-230m-fable-5](https://huggingface.co/AKMESSI/lfm2.5-230m-fable-5)
-- 更新：2026-06-27
-- 下载 / Likes：11 / 8
+### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
+- 更新：2026-06-28
+- 下载 / Likes：484 / 5
 - 任务：text-generation
-- Tags：peft, gguf, lfm2.5, liquid-ai, fable-5, coding-agent, tool-use, lora
+- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
+
+### [FadedRedStar/LFM2.5-8B-A1B-heretic-GGUF](https://huggingface.co/FadedRedStar/LFM2.5-8B-A1B-heretic-GGUF)
+- 更新：2026-06-28
+- 下载 / Likes：27 / 0
+- 任务：text-generation
+- Tags：gguf, text-generation, agentic, abliterated, uncensored, lfm2moe, q4_k_m, conversational
+
+### [FadedRedStar/LFM2.5-8B-A1B-heretic-imatrix-GGUF](https://huggingface.co/FadedRedStar/LFM2.5-8B-A1B-heretic-imatrix-GGUF)
+- 更新：2026-06-28
+- 下载 / Likes：26 / 0
+- 任务：text-generation
+- Tags：gguf, text-generation, agentic, abliterated, uncensored, lfm2moe, q4_k_m, imatrix
 
 ### [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters)
-- 更新：2026-06-27
+- 更新：2026-06-28
 - 下载 / Likes：0 / 1
 - 任务：unknown
 - Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
 
-### [ermiaazarkhalili/LFM2.5-350M-SFT-Fable5-Glint-GGUF](https://huggingface.co/ermiaazarkhalili/LFM2.5-350M-SFT-Fable5-Glint-GGUF)
-- 更新：2026-06-27
+### [usermma/LFM2.5-230M-ECE-OBLITERATED](https://huggingface.co/usermma/LFM2.5-230M-ECE-OBLITERATED)
+- 更新：2026-06-28
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, lfm2, obliteratus, abliteration, uncensored, obliterate, en, base_model:usermma/LFM2.5-230M-ECE
+
+### [runanywhere/lfm2_5_350m_HNPU](https://huggingface.co/runanywhere/lfm2_5_350m_HNPU)
+- 更新：2026-06-28
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：gguf, quantized, llama-cpp, ollama, lm-studio, sft, distillation, fable
+- Tags：qhexrt, lfm2, hexagon, npu, qnn, text-generation, en, base_model:LiquidAI/LFM2.5-350M-Base
 
-### [ermiaazarkhalili/LFM2.5-1.2B-SFT-Fable5-Glint-GGUF](https://huggingface.co/ermiaazarkhalili/LFM2.5-1.2B-SFT-Fable5-Glint-GGUF)
-- 更新：2026-06-27
+### [runanywhere/lfm2_5_230m_HNPU](https://huggingface.co/runanywhere/lfm2_5_230m_HNPU)
+- 更新：2026-06-28
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：gguf, quantized, llama-cpp, ollama, lm-studio, sft, distillation, fable
+- Tags：qhexrt, qualcomm, hexagon, npu, qnn, on-device, lfm2, text-generation
 
-### [qikp/LFM2.5-230M-Thinking-GGUF](https://huggingface.co/qikp/LFM2.5-230M-Thinking-GGUF)
-- 更新：2026-06-27
+### [mbotta/trippet-lfm2-1.2b-edit-ONNX](https://huggingface.co/mbotta/trippet-lfm2-1.2b-edit-ONNX)
+- 更新：2026-06-28
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：gguf, text-generation, base_model:qikp/LFM2.5-230M-Thinking, base_model:quantized:qikp/LFM2.5-230M-Thinking, endpoints_compatible, region:us, conversational
+- Tags：transformers.js, onnx, lfm2, text-generation, trippet, tool-calling, on-device, webgpu
 
-### [qikp/LFM2.5-230M-Thinking](https://huggingface.co/qikp/LFM2.5-230M-Thinking)
-- 更新：2026-06-27
+### [Kerassy/LFM2.5-1.2b-smoltalk-q4_k_m](https://huggingface.co/Kerassy/LFM2.5-1.2b-smoltalk-q4_k_m)
+- 更新：2026-06-28
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, lfm2, llama.cpp, unsloth, endpoints_compatible, region:us, conversational
+
+### [Kerassy/LFM2.5-1.2b-smoltalk](https://huggingface.co/Kerassy/LFM2.5-1.2b-smoltalk)
+- 更新：2026-06-28
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, generated_from_trainer, trl, sft, conversational
+- Tags：transformers, safetensors, lfm2, text-generation, text-generation-inference, unsloth, conversational, en
 
-### [MarshallHD/LFM2.5-230M-NVFP4](https://huggingface.co/MarshallHD/LFM2.5-230M-NVFP4)
-- 更新：2026-06-27
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：Model Optimizer, safetensors, lfm2, liquid, lfm2.5, edge, modelopt, nvfp4
-
-### [LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-FULL](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-FULL)
-- 更新：2026-06-27
+### [LLM-OS-Models/LFM2.5-8B-A1B-KO-SFT](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-KO-SFT)
+- 更新：2026-06-28
 - 下载 / Likes：0 / 1
 - 任务：text-generation
-- Tags：transformers, liquid-ai, lfm2.5, korean, continued-pretraining, full-finetuning, legal, finance
+- Tags：safetensors, lfm2_moe, lfm, korean, legal, finance, tool-use, terminal
 
 ### [LiquidAI/LFM2.5-230M](https://huggingface.co/LiquidAI/LFM2.5-230M)
 - 更新：2026-06-26
-- 下载 / Likes：9791 / 128
+- 下载 / Likes：12384 / 141
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [prithivMLmods/LiquidAI-LFM2.5-230M-GGUF](https://huggingface.co/prithivMLmods/LiquidAI-LFM2.5-230M-GGUF)
 - 更新：2026-06-26
-- 下载 / Likes：374 / 1
+- 下载 / Likes：442 / 1
 - 任务：text-generation
 - Tags：transformers, gguf, liquid, lfm2.5, edge, text-generation, en, ar
 
 ### [LiquidAI/LFM2.5-230M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-230M-GGUF)
 - 更新：2026-06-24
-- 下载 / Likes：3467 / 41
+- 下载 / Likes：8505 / 48
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2.5, llama.cpp, text-generation, en, ar, zh
 
 ### [LiquidAI/LFM2.5-230M-ONNX](https://huggingface.co/LiquidAI/LFM2.5-230M-ONNX)
 - 更新：2026-06-24
-- 下载 / Likes：52 / 6
+- 下载 / Likes：83 / 6
 - 任务：text-generation
 - Tags：onnx, lfm2, liquid, edge, lfm2.5, onnxruntime, webgpu, text-generation
 
 ### [LiquidAI/LFM2.5-Embedding-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Embedding-350M-GGUF)
 - 更新：2026-06-22
-- 下载 / Likes：3875 / 29
+- 下载 / Likes：4147 / 29
 - 任务：sentence-similarity
 - Tags：sentence-transformers, gguf, liquid, lfm2, lfm2.5, edge, sentence-similarity, feature-extraction
 
 ### [LiquidAI/LFM2.5-ColBERT-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M-GGUF)
 - 更新：2026-06-22
-- 下载 / Likes：3373 / 23
+- 下载 / Likes：3488 / 23
 - 任务：sentence-similarity
 - Tags：sentence-transformers, gguf, liquid, lfm2, lfm2.5, edge, ColBERT, PyLate
 
