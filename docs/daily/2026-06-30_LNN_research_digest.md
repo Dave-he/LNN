@@ -33,34 +33,34 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-06-30 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
 | 2026-06-30 | [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad) | 0 | Python | A liquid neural network framework built from first principles to model the human brain 🌊 |
+| 2026-06-30 | [lajosbencz/lfm-train](https://github.com/lajosbencz/lfm-train) | 0 | Python | SFT of LiquidAI LFM2.5 models |
 | 2026-06-29 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-06-29 | [AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices](https://github.com/AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices) | 0 | C |  |
 | 2026-06-29 | [Amir4572/LNN-with-XGBoost-Stock-Volatility-Prediction](https://github.com/Amir4572/LNN-with-XGBoost-Stock-Volatility-Prediction) | 0 |  | Developed a stock market volatility prediction system by combining Liquid Neural Networks (LNN) and XGBoost. Used yFinance API data to forecast volatility and… |
 | 2026-06-28 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
 | 2026-06-27 | [everest-an/O1](https://github.com/everest-an/O1) | 2 | Python | MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development… |
-| 2026-06-27 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
 | 2026-06-25 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 60 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-06-25 | [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection) | 2 | Swift | On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm |
 | 2026-06-24 | [raminmh/CfC](https://github.com/raminmh/CfC) | 1047 | Python | Closed-form Continuous-time Neural Networks |
 | 2026-06-22 | [shareef65/TLTO-Net](https://github.com/shareef65/TLTO-Net) | 0 | Python | TLTO-Net: A Trust and Energy-Efficient Routing Framework for Wireless Sensor Networks using Liquid Neural Networks and Termite Life Cycle Optimization |
-| 2026-06-22 | [Gonzablanmar/Liquid-NN](https://github.com/Gonzablanmar/Liquid-NN) | 0 | Jupyter Notebook | Liquid neural network, where the Adam optimizer is implanted by hand. |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-06-30 | [LLM-OS-Models/LFM2.5-8B-A1B-KO-SFT](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-KO-SFT) | 20 | 1 | text-generation |
+| 2026-06-30 | [mudler/LFM2.5-8B-A1B-APEX-GGUF](https://huggingface.co/mudler/LFM2.5-8B-A1B-APEX-GGUF) | 4108 | 11 |  |
+| 2026-06-30 | [FadedRedStar/LFM2.5-8B-A1B-heretic-GGUF](https://huggingface.co/FadedRedStar/LFM2.5-8B-A1B-heretic-GGUF) | 129 | 0 | text-generation |
+| 2026-06-30 | [FadedRedStar/LFM2.5-8B-A1B-heretic-imatrix-GGUF](https://huggingface.co/FadedRedStar/LFM2.5-8B-A1B-heretic-imatrix-GGUF) | 123 | 0 | text-generation |
+| 2026-06-30 | [ray0rf1re/lfm2.5-CT-230m](https://huggingface.co/ray0rf1re/lfm2.5-CT-230m) | 0 | 0 | audio-text-to-text |
 | 2026-06-30 | [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters) | 0 | 1 |  |
-| 2026-06-30 | [mradermacher/LFM2.5-230M-abliterated1-GGUF](https://huggingface.co/mradermacher/LFM2.5-230M-abliterated1-GGUF) | 0 | 0 |  |
-| 2026-06-30 | [runanywhere/lfm2_5_230m_HNPU](https://huggingface.co/runanywhere/lfm2_5_230m_HNPU) | 0 | 0 | text-generation |
-| 2026-06-30 | [mradermacher/LFM2.5-ColBERT-350M-GGUF](https://huggingface.co/mradermacher/LFM2.5-ColBERT-350M-GGUF) | 0 | 0 | feature-extraction |
-| 2026-06-30 | [mradermacher/LFM2.5-Embedding-350M-GGUF](https://huggingface.co/mradermacher/LFM2.5-Embedding-350M-GGUF) | 0 | 0 | feature-extraction |
-| 2026-06-30 | [LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-Repair-BarExamV5-SFT](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-Repair-BarExamV5-SFT) | 0 | 0 | text-generation |
-| 2026-06-30 | [LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-Repair-SFT](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-Repair-SFT) | 0 | 0 | text-generation |
-| 2026-06-30 | [mradermacher/LFM2.5-230M-ECE-GGUF](https://huggingface.co/mradermacher/LFM2.5-230M-ECE-GGUF) | 0 | 0 |  |
-| 2026-06-29 | [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | 62124 | 143 | sentence-similarity |
-| 2026-06-29 | [LiquidAI/LFM2-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-450M-GGUF) | 4609 | 42 | image-text-to-text |
-| 2026-06-29 | [LiquidAI/LFM2-350M-GGUF](https://huggingface.co/LiquidAI/LFM2-350M-GGUF) | 3680 | 58 | text-generation |
+| 2026-06-30 | [lazos/lfm2.5-350m-promql](https://huggingface.co/lazos/lfm2.5-350m-promql) | 0 | 0 | text-generation |
+| 2026-06-30 | [mbotta/trippet-lfm2-1.2b-edit-c2-ONNX](https://huggingface.co/mbotta/trippet-lfm2-1.2b-edit-c2-ONNX) | 0 | 0 | text-generation |
+| 2026-06-30 | [flackzz/LFM2.5-8B-A1B-ONNX-Q4F16-sym-resharded](https://huggingface.co/flackzz/LFM2.5-8B-A1B-ONNX-Q4F16-sym-resharded) | 0 | 0 | text-generation |
+| 2026-06-30 | [baldtree/LFM2.5-230M-bin](https://huggingface.co/baldtree/LFM2.5-230M-bin) | 0 | 0 |  |
+| 2026-06-29 | [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | 62048 | 143 | sentence-similarity |
+| 2026-06-29 | [LiquidAI/LFM2-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-450M-GGUF) | 4535 | 42 | image-text-to-text |
+| 2026-06-29 | [LiquidAI/LFM2-350M-GGUF](https://huggingface.co/LiquidAI/LFM2-350M-GGUF) | 3717 | 58 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

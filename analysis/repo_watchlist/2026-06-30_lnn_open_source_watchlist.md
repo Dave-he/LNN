@@ -7,12 +7,26 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-06-30
 
 ## GitHub 仓库
+### [404reese/XWormNet](https://github.com/404reese/XWormNet)
+- 更新：2026-06-30
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks
+
 ### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
 - 更新：2026-06-30
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：A liquid neural network framework built from first principles to model the human brain 🌊
+
+### [lajosbencz/lfm-train](https://github.com/lajosbencz/lfm-train)
+- 更新：2026-06-30
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：SFT of LiquidAI LFM2.5 models
 
 ### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
 - 更新：2026-06-29
@@ -48,13 +62,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：anesthesia-validation, brain-inspired, deep-learning, liquid-neural-network, llm, long-context, microtubule, mt-lnn
 - 说明：MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).
-
-### [404reese/XWormNet](https://github.com/404reese/XWormNet)
-- 更新：2026-06-27
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks
 
 ### [maximecb/bebelm](https://github.com/maximecb/bebelm)
 - 更新：2026-06-25
@@ -140,19 +147,30 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Fine-tune LiquidAI/LFM2.5-350M for 7 use cases — Medical QA, Code Gen, Telecom SRE, Financial Literacy, Education, Sentiment, Summarization. LoRA/QLoRA pipeline with GGUF/ONNX export.
 
-### [R-Liebert/LOKI-G](https://github.com/R-Liebert/LOKI-G)
-- 更新：2026-05-21
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：il, ncps, rl, robotics
-- 说明：LOKI-G is a machine learning project designed for physical machines, enabling edge AI capabilities. It adapts the LOKI algorithm for training via imitation and reinforcement learning using Closed-form Continuous-Time Neural Networks and Neural Circuit Policies.
-
 ## Hugging Face 模型
-### [LLM-OS-Models/LFM2.5-8B-A1B-KO-SFT](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-KO-SFT)
+### [mudler/LFM2.5-8B-A1B-APEX-GGUF](https://huggingface.co/mudler/LFM2.5-8B-A1B-APEX-GGUF)
 - 更新：2026-06-30
-- 下载 / Likes：20 / 1
+- 下载 / Likes：4108 / 11
+- 任务：unknown
+- Tags：gguf, quantized, apex, moe, mixture-of-experts, lfm2, base_model:LiquidAI/LFM2.5-8B-A1B, base_model:quantized:LiquidAI/LFM2.5-8B-A1B
+
+### [FadedRedStar/LFM2.5-8B-A1B-heretic-GGUF](https://huggingface.co/FadedRedStar/LFM2.5-8B-A1B-heretic-GGUF)
+- 更新：2026-06-30
+- 下载 / Likes：129 / 0
 - 任务：text-generation
-- Tags：safetensors, lfm2_moe, lfm, korean, legal, finance, tool-use, terminal
+- Tags：gguf, text-generation, reasoning, instruction-following, agentic, tool-use, abliterated, uncensored
+
+### [FadedRedStar/LFM2.5-8B-A1B-heretic-imatrix-GGUF](https://huggingface.co/FadedRedStar/LFM2.5-8B-A1B-heretic-imatrix-GGUF)
+- 更新：2026-06-30
+- 下载 / Likes：123 / 0
+- 任务：text-generation
+- Tags：gguf, text-generation, reasoning, instruction-following, agentic, tool-use, abliterated, uncensored
+
+### [ray0rf1re/lfm2.5-CT-230m](https://huggingface.co/ray0rf1re/lfm2.5-CT-230m)
+- 更新：2026-06-30
+- 下载 / Likes：0 / 0
+- 任务：audio-text-to-text
+- Tags：safetensors, lfm25_ct, audio, fusion, liquid-fm, liquidai, audio-text-to-text, custom_code
 
 ### [LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-Raw-ECHO-RLVR-GRPO-Adapters)
 - 更新：2026-06-30
@@ -160,93 +178,75 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：unknown
 - Tags：safetensors, liquid-ai, lfm2.5, terminal-agent, rlvr, echo, grpo, lora
 
-### [mradermacher/LFM2.5-230M-abliterated1-GGUF](https://huggingface.co/mradermacher/LFM2.5-230M-abliterated1-GGUF)
+### [lazos/lfm2.5-350m-promql](https://huggingface.co/lazos/lfm2.5-350m-promql)
+- 更新：2026-06-30
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, gguf, lfm2, text-generation, lora, qlora, fine-tuned
+
+### [mbotta/trippet-lfm2-1.2b-edit-c2-ONNX](https://huggingface.co/mbotta/trippet-lfm2-1.2b-edit-c2-ONNX)
+- 更新：2026-06-30
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers.js, onnx, lfm2, text-generation, trippet, tool-calling, on-device, webgpu
+
+### [flackzz/LFM2.5-8B-A1B-ONNX-Q4F16-sym-resharded](https://huggingface.co/flackzz/LFM2.5-8B-A1B-ONNX-Q4F16-sym-resharded)
+- 更新：2026-06-30
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：onnx, lfm2_moe, liquid, edge, lfm2, lfm2.5, moe, mixture-of-experts
+
+### [baldtree/LFM2.5-230M-bin](https://huggingface.co/baldtree/LFM2.5-230M-bin)
 - 更新：2026-06-30
 - 下载 / Likes：0 / 0
 - 任务：unknown
-- Tags：transformers, gguf, en, base_model:dummy9996/LFM2.5-230M-abliterated1, base_model:quantized:dummy9996/LFM2.5-230M-abliterated1, endpoints_compatible, region:us, conversational
-
-### [runanywhere/lfm2_5_230m_HNPU](https://huggingface.co/runanywhere/lfm2_5_230m_HNPU)
-- 更新：2026-06-30
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：qhexrt, qualcomm, hexagon, npu, qnn, on-device, lfm2, text-generation
-
-### [mradermacher/LFM2.5-ColBERT-350M-GGUF](https://huggingface.co/mradermacher/LFM2.5-ColBERT-350M-GGUF)
-- 更新：2026-06-30
-- 下载 / Likes：0 / 0
-- 任务：feature-extraction
-- Tags：transformers, gguf, liquid, lfm2, lfm2.5, edge, ColBERT, PyLate
-
-### [mradermacher/LFM2.5-Embedding-350M-GGUF](https://huggingface.co/mradermacher/LFM2.5-Embedding-350M-GGUF)
-- 更新：2026-06-30
-- 下载 / Likes：0 / 0
-- 任务：feature-extraction
-- Tags：transformers, gguf, liquid, lfm2, lfm2.5, edge, sentence-transformers, sentence-similarity
-
-### [LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-Repair-BarExamV5-SFT](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-Repair-BarExamV5-SFT)
-- 更新：2026-06-30
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：safetensors, lfm2_moe, lfm, korean, sft, legal, bar-exam, diagnostic
-
-### [LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-Repair-SFT](https://huggingface.co/LLM-OS-Models/LFM2.5-8B-A1B-KO-CPT-Repair-SFT)
-- 更新：2026-06-30
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：safetensors, lfm2_moe, lfm, korean, sft, diagnostic, legal, text-generation
-
-### [mradermacher/LFM2.5-230M-ECE-GGUF](https://huggingface.co/mradermacher/LFM2.5-230M-ECE-GGUF)
-- 更新：2026-06-30
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, text-generation-inference, unsloth, lfm2, en, dataset:usermma/executive-channel-ethics, base_model:usermma/LFM2.5-230M-ECE
+- Tags：safetensors, lfm2, region:us
 
 ### [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M)
 - 更新：2026-06-29
-- 下载 / Likes：62124 / 143
+- 下载 / Likes：62048 / 143
 - 任务：sentence-similarity
 - Tags：PyLate, safetensors, lfm2, liquid, edge, ColBERT, sentence-transformers, sentence-similarity
 
 ### [LiquidAI/LFM2-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-450M-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：4609 / 42
+- 下载 / Likes：4535 / 42
 - 任务：image-text-to-text
 - Tags：gguf, vision, vlm, liquid, lfm2, lfm2-vl, edge, llama.cpp
 
 ### [LiquidAI/LFM2-350M-GGUF](https://huggingface.co/LiquidAI/LFM2-350M-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：3680 / 58
+- 下载 / Likes：3717 / 58
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2, edge, llama.cpp, text-generation, en, ar
 
 ### [LiquidAI/LFM2-8B-A1B-GGUF](https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：3303 / 111
+- 下载 / Likes：3138 / 111
 - 任务：text-generation
 - Tags：transformers, gguf, liquid, lfm2, edge, moe, llama.cpp, text-generation
 
 ### [LiquidAI/LFM2-VL-1.6B-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-1.6B-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：1788 / 58
+- 下载 / Likes：1780 / 58
 - 任务：image-text-to-text
 - Tags：gguf, vision, vlm, liquid, lfm2, lfm2-vl, edge, llama.cpp
 
 ### [LiquidAI/LFM2-Audio-1.5B-GGUF](https://huggingface.co/LiquidAI/LFM2-Audio-1.5B-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：536 / 32
+- 下载 / Likes：532 / 32
 - 任务：unknown
 - Tags：gguf, audio, liquid, lfm2, edge, llama.cpp, base_model:LiquidAI/LFM2-Audio-1.5B, base_model:quantized:LiquidAI/LFM2-Audio-1.5B
 
 ### [LiquidAI/LFM2-ColBERT-350M-GGUF](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：367 / 15
+- 下载 / Likes：370 / 15
 - 任务：sentence-similarity
 - Tags：sentence-transformers, gguf, liquid, lfm2, edge, ColBERT, PyLate, sentence-similarity
 
 ### [LiquidAI/LFM2-8B-A1B-ONNX](https://huggingface.co/LiquidAI/LFM2-8B-A1B-ONNX)
 - 更新：2026-06-29
-- 下载 / Likes：171 / 5
+- 下载 / Likes：167 / 5
 - 任务：text-generation
 - Tags：onnx, lfm2_moe, liquid, edge, lfm2, moe, mixture-of-experts, onnxruntime
 
