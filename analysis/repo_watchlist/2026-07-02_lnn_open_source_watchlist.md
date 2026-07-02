@@ -7,6 +7,27 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-07-02
 
 ## GitHub 仓库
+### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
+- 更新：2026-07-02
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：A liquid neural network framework built from first principles to model the human brain 🌊
+
+### [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab)
+- 更新：2026-07-02
+- Star / Fork：0 / 0
+- 语言：JavaScript
+- Topics：未标注
+- 说明：Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab.
+
+### [sufirumii/LiquiMedThink-1.2B](https://github.com/sufirumii/LiquiMedThink-1.2B)
+- 更新：2026-07-02
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：A Fine Tuned version of LiquidAI/LFM2.5-1.2B-Thinking on a medical reasoning thinking dataset
+
 ### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
 - 更新：2026-07-01
 - Star / Fork：1 / 0
@@ -34,13 +55,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：liquidai, liquidai-lfm25, sft
 - 说明：SFT of LiquidAI LFM2.5 models
-
-### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
-- 更新：2026-06-30
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：A liquid neural network framework built from first principles to model the human brain 🌊
 
 ### [AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices](https://github.com/AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices)
 - 更新：2026-06-29
@@ -132,20 +146,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Cuda
 - Topics：3060, ai, c, cpp, cuda, fast-inference, gpu, inference
 - 说明：A self-contained CUDA inference engine for LiquidAI/LFM2.5-8B-A1B (hybrid conv + GQA-attention MoE, 8.5B params, 1B active) targeting a single RTX 3060 (12 GB). No Python, no frameworks at runtime: a single .cu engine + a header-only byte-level BPE tokenizer.
-
-### [Alexng2024/EDSSM](https://github.com/Alexng2024/EDSSM)
-- 更新：2026-06-01
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：We introduce Event-Driven State Space Models (EDSSM), a framework that propagates latent state through exact closed-form continuous-time linear dynamics—implemented via the matrix exponential e^AΔt—and applies updates only at informative event times.
-
-### [rohitsalesforce132/lfm-finetune-suite](https://github.com/rohitsalesforce132/lfm-finetune-suite)
-- 更新：2026-05-23
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Fine-tune LiquidAI/LFM2.5-350M for 7 use cases — Medical QA, Code Gen, Telecom SRE, Financial Literacy, Education, Sentiment, Summarization. LoRA/QLoRA pipeline with GGUF/ONNX export.
 
 ## Hugging Face 模型
 ### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
