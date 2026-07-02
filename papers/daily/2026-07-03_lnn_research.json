@@ -1,10 +1,488 @@
 {
   "date": "2026-07-03",
-  "generated_at": "2026-07-02T22:31:33.560058+00:00",
-  "errors": [
-    "arXiv fetch failed: Remote end closed connection without response"
+  "generated_at": "2026-07-02T22:33:39.277882+00:00",
+  "errors": [],
+  "papers": [
+    {
+      "id": "2606.26849v1",
+      "title": "Liquid Fusion of Heterogeneous Representations Towards General Salient Object Detection",
+      "authors": [
+        "Ke Chen",
+        "Ling Zhou",
+        "Guangqi Jiang",
+        "Gengshen Wu",
+        "Yi Liu",
+        "Shoukun Xu"
+      ],
+      "published": "2026-06-25",
+      "updated": "2026-06-25",
+      "summary": "General Salient Object Detection (SOD) aims to identify and segment visually interesting objects from uni-modality or multi-modality scenes, recently advanced by cutting-edge State Space Models (SSMs). However, a critical limitation of current approaches is their neglect of the inherent spectral biases exhibited by different neural network paradigms. By digging to the dataset-level spectral analysis of Convolutional Neural Networks (CNNs) and SSMs, their semantic representations are inherently complementary based on their complementary frequency preferences. Inspired by this, we harmonize heterogeneous representations from SSMs and CNNs to bridge their spectral biases for general salient object detection. To this end, inspired by the dynamic information propagation of Liquid Neural Networks (LNNs), we introduce a liquid fusion to dynamically integrates features from two backbones, including VMamba and ConvNeXt, referred to Liquid Fusion Network (LFNet). Concretely, by treating the continuous VMamba features and ConvNeXt features as evolving states and exogenous stimulus, respectively, LFNet employs a dynamic gating mechanism for content-aware feature aggregation. Crucially, this state-stimulus paradigm enables to scale to multi-modal cues, resulting in flexibility in general SOD. Besides, a Saliency-Guided Upsampling (SGU) operator to propagate the features to the shallow layer, which leverages a spectral-spatial co-design to suppress upsampling artifacts while preserving semantics. Extensive experiments across five diverse tasks (RGB, RGB-D, RGB-T, VSOD, and VDT) demonstrate that LFNet achieves state-of-the-art performance, offering a superior trade-off between detection accuracy and model efficiency. Code has been released at https://github.com/cke520/LFNet.",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.26849v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.26849v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2606.21295v5",
+      "title": "Topological Neural Dynamics: A Neuron-wise Framework for Sequence Modeling",
+      "authors": [
+        "Borui Cai",
+        "Yao Zhao"
+      ],
+      "published": "2026-06-19",
+      "updated": "2026-07-01",
+      "summary": "Existing sequence models, including RNNs, LSTMs, continuous-time networks, and Transformers, share a common structural principle: layer-wise dynamics, where all neurons in the same layer co-evolve through a shared parameterized operator, leaving individual neurons no freedom to evolve independently. Yet in many complex dynamical systems, rich global behavior emerges precisely from locally evolving units interacting through structured connectivity. Inspired by this principle, we introduce Topological Neural Dynamics (TND), a sequence modeling framework that shifts computation from layer-wise to neuron-wise dynamics. TND represents a neural system as a directed neuron graph, an interaction operator, and a local dynamics function, where each neuron evolves independently and collective computation emerges from interactions through the explicit graph topology. We instantiate TND as a discrete-time graph-coupled dynamical system and evaluate it as a case study on a behavior cloning task in single-player Pong. Compared with Vanilla RNN, Sparse RNN, LSTM, Closed-form continuous-time neural network (CfC), and Transformer baselines, TND achieves the best catch rate and a mean of 17.47 consecutive catches per round, more than three times that of the strongest baseline. These results suggest that shifting from layer-wise to neuron-wise dynamics provides an effective inductive bias for sequence modeling.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.21295v5",
+      "pdf_url": "https://arxiv.org/pdf/2606.21295v5",
+      "keyword_score": 4
+    },
+    {
+      "id": "2606.20491v1",
+      "title": "Fast Human Attention Prediction for Fixation-guided Active Perception in Autonomous Navigation",
+      "authors": [
+        "Fatma Youssef Mohammed",
+        "Grzegorz Malczyk",
+        "Kostas Alexis"
+      ],
+      "published": "2026-06-18",
+      "updated": "2026-06-18",
+      "summary": "Human visual attention relies on structured scanpaths to efficiently process scenes, yet instilling this behavior into robot autonomy is in its infancy and hindered by the high,computational costs of existing predictive models. To address this, we introduce GazeLNN, a computationally lightweight,scanpath prediction model that leverages Liquid Neural Networks as its recurrent engine and employs MobileNetV3 for feature extraction. Operating auto-regressively, the architecture predicts sequential fixation heatmaps conditioned on the current visual stimulus and fixation history. Despite requiring only 0.61 GFLOPs, GazeLNN achieves state-of-the-art performance on the MIT Low Resolution dataset achieving 0.47 ScanMatch score. It outperforms existing recurrent baselines across diverse evaluation metrics, while reducing computational costs by 99.40% and accelerating inference by up to six times. To investigate the role of human attention modeling in robot autonomy and demonstrate the practical utility of this highly efficient architecture, we integrate GazeLNN into an active camera-robot control policy trained via Reinforcement Learning. This integration enables human-fixation-guided perception during autonomous navigation, validated through successful real-world deployments on an aerial robot.",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.20491v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.20491v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2606.19579v1",
+      "title": "FlowFake: Liquid Networks for Audio Deepfake Detection",
+      "authors": [
+        "Shivaay Dhondiyal",
+        "Divyansh Sharma",
+        "Dinesh Kumar Vishwakarma"
+      ],
+      "published": "2026-06-17",
+      "updated": "2026-06-17",
+      "summary": "Audio deepfakes generated by neural text-to-speech and voice-cloning systems threaten speaker verification and public discourse at scale. The core challenge is cross-dataset generalization: detectors trained on one synthesis pipeline collapse on unseen forgeries. We argue that this failure is primarily because of structural synthetic speech artifacts which are multi-timescale trajectory anomalies. Though every existing detector aggregates a fixed-window frame statistics, this misaligns the architecture with the signal. We propose FlowFake, a Liquid Time-Constant (LTC) architecture whose hidden state evolves via a learned ODE, with per-neuron adaptive time constants simultaneously resolving spectral (10ms) and prosodic (2s) cues. At only 34K parameters FlowFake achieves formal BIBO stability and O(dt^4) integration error. On a four-dataset cross domain benchmark (ASVspoof2019-LA, FakeOrReal, InTheWild, MLAAD), FlowFake reaches 75.29% on ASVspoof2019 trained only on FakeOrReal and 79.97% trained only on MLAAD. It outperforms RawGAT-ST and Whisper-DF on every evaluated pair and matching SSL Wav2vec2 (300x larger) at 0.01% of its parameter count. The source code is available on : https://github.com/GhostRider2023/FlowFake",
+      "categories": [
+        "cs.SD",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.19579v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.19579v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2606.15807v1",
+      "title": "Continuous Cross-Domain Traffic State Prediction via Memory-Augmented Graph Liquid Time-Constant Networks",
+      "authors": [
+        "Jinrong Xiang",
+        "Ming Xu"
+      ],
+      "published": "2026-06-14",
+      "updated": "2026-06-14",
+      "summary": "Traffic state prediction is a fundamental task in intelligent transportation systems. In practical applications, some regions suffer from limited traffic observations due to insufficient sensing infrastructure, making cross-domain knowledge transfer an important solution for data-scarce traffic prediction. However, existing cross-domain traffic prediction methods still face several limitations, including coarse-grained source-target adaptation, limited capability in handling unseen target-domain patterns, and insufficient modeling of continuous traffic dynamics under irregular or heterogeneous temporal conditions. To address these issues, this paper proposes a continuous cross-domain traffic prediction framework, termed Memory-Augmented Graph Liquid Time-Constant Network (MA-GLTC). Specifically, we first construct spatio-temporal units (STUs) to decompose traffic networks into transferable local units, enabling fine-grained knowledge alignment across domains. Then, a graph liquid time-constant network (GLTC) is developed to model graph-coupled traffic evolution in continuous time. Different from generic graph neural ODE-based models, GLTC introduces graph-coupled recurrent conductance into liquid time-constant dynamics, allowing node states to evolve with leakage, adaptive time constants, and neighborhood-aware feedback. Furthermore, a Memory-based Transfer Storage (MTS) mechanism is designed to preserve source-domain knowledge, retrieve matched traffic patterns, and update reliable target-domain patterns when unseen states emerge. Experiments on five public traffic datasets demonstrate that MA-GLTC consistently outperforms representative innerdomain and cross-domain baselines in both short-term and longterm prediction tasks. Compared with the second-best method, MA-GLTC reduces the average prediction errors by 3.02%, 0.33%, 8.92%, 10.09%, and 2.11%, respectively.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.15807v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.15807v1",
+      "keyword_score": 5
+    },
+    {
+      "id": "2606.15571v1",
+      "title": "Liquid Random Feature Methods for Time-Dependent Partial Differential Equations",
+      "authors": [
+        "Jiale Linghu",
+        "Yangshuai Wang"
+      ],
+      "published": "2026-06-14",
+      "updated": "2026-06-14",
+      "summary": "A central challenge in mesh-free space--time approximation for time-dependent partial differential equations is to represent evolving temporal scales while keeping residual minimization computationally tractable. Random feature methods simplify this algebraic problem by freezing nonlinear trial functions and fitting only a linear readout, but standard static space--time activations provide no explicit relaxation-scale mechanism, making temporal-scale resolution a finite-dimensional bottleneck in stiff, dispersive, or multi-scale regimes. We introduce liquid random feature methods (L-RFM), which replace static temporal activations by closed-form liquid time-constant responses with sampled relaxation scales. The resulting frozen features form temporally structured local or global trial spaces with analytic space--time derivatives for residual least-squares assembly. A density theorem proves density of the deterministic trial spaces in the continuous space--time function class, and a temporal-rank calculation clarifies the role of sampled relaxation scales. Ablation and finite-feature tests identify the liquid temporal response as the primary source of the observed accuracy improvement. Across stiff reaction--diffusion, nonlinear transport, dispersive, complex-valued, and multidimensional benchmarks, L-RFM improves finite-feature accuracy in regimes where temporal-scale representation controls the approximation. By embedding relaxation scales directly into frozen trial functions, L-RFM provides a route to high-accuracy continuous space--time surrogates for evolutionary PDEs while preserving the simplicity of linear least-squares solvers.",
+      "categories": [
+        "physics.comp-ph",
+        "math.NA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.15571v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.15571v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2606.12240v1",
+      "title": "Multi-Rate Mixture of Experts for Accelerating Liquid Neural Network Training",
+      "authors": [
+        "Shilong Zong",
+        "Almuatazbellah Boker",
+        "Hoda Eldardiry"
+      ],
+      "published": "2026-06-10",
+      "updated": "2026-06-10",
+      "summary": "Multivariate time-series data often exhibit complex temporal dependencies, irregular sampling, and heterogeneous dynamics across multiple time scales, making accurate sequence modeling particularly challenging. Traditional recurrent neural networks (RNNs), such as Long Short-Term Memory (LSTM) networks, operate in discrete time and may struggle to effectively capture continuous and irregular temporal behaviors. Liquid Neural Networks (LNNs) address some of these limitations through continuous-time dynamics, but standard LNN architectures typically rely on a single dynamical system, limiting their ability to model heterogeneous temporal patterns. To address these challenges, we propose a Multi-Rate Mixture-of-Experts (MR-MoE) framework built on top of Liquid Neural Networks. In the proposed architecture, multiple LNN-based experts operate at distinct time scales, enabling the model to explicitly separate fast-changing dynamics from slow-evolving temporal trends. A gating network further enables adaptive expert specialization based on input conditions. In addition, we incorporate both feature-level and temporal attention mechanisms to improve robustness, interpretability, and long-range dependency modeling. Feature-level attention suppresses noisy or irrelevant variables, while temporal attention selectively focuses on informative historical states. We evaluate the proposed framework on a complex multivariate time-series prediction task and compare it against strong baselines, including LSTM, monolithic LNN, and standard MoE models. Experimental results demonstrate that the proposed MR-MoE framework consistently achieves improved AUROC and AUPRC performance while maintaining favorable computational efficiency. These results highlight the effectiveness of combining continuous-time dynamics, multi-scale expert decomposition, and adaptive attention mechanisms for time-series modeling.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.12240v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.12240v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2606.07670v1",
+      "title": "Liquid Neural Networks as a Drop-in Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting",
+      "authors": [
+        "Mingzhao Li",
+        "Arghya Pal",
+        "Guan Yuan Tan"
+      ],
+      "published": "2026-06-04",
+      "updated": "2026-06-04",
+      "summary": "Deformable 3D Gaussian Splatting (D-3DGS) re-constructs dynamic scenes from monocular video by deforming a canonical set of 3D Gaussians through a positional-encoded MLP of frame time t. Although fitted to a continuous variable, the MLP couples no two values of t in its architecture and effectively predicts discrete per-frame offsets, leaving temporal smoothness to emerge only as a byproduct of optimisation. We redesign the deformation field as a stack of Closed-form Continuous-time (CfC) cells, a Liquid Neural Network (LNN), that is the closed-form solution of the Liquid Time-constant ODE while preserving every other part of the D-3DGS pipeline. Each cell exposes a sigmoidal time gate that interpolates between two candidate hidden states, baking a learned smooth response to t into the loss landscape without invoking any numerical solver. On the eight D-NeRF and seven NeRF-DS scenes the liquid field matches or exceeds the MLP baseline in aggregate, with its largest gains concentrated on the scenes with the most high-frequency articulated motion. The result is a near-zero-friction architectural design that turns the discrete MLP deformation field into an explicit continuous-time function of t.",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2606.07670v1",
+      "pdf_url": "https://arxiv.org/pdf/2606.07670v1",
+      "keyword_score": 7
+    },
+    {
+      "id": "2605.27467v1",
+      "title": "Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition: Robustness, Efficiency, and Clinical Utility",
+      "authors": [
+        "Ye Kyaw Thu",
+        "Thazin Myint Oo",
+        "Thepchai Supnithi"
+      ],
+      "published": "2026-05-26",
+      "updated": "2026-05-26",
+      "summary": "Traditional Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) units operate on discrete time steps, often failing to capture the fluid temporal dynamics of real-world physical processes. Liquid Neural Networks (LNNs), specifically Closed-form Continuous-time (CfC) networks, address this by modeling the hidden state evolution as a continuous differential equation. In this paper, we conduct a comprehensive benchmarking study across four distinct sequential modalities: neuromorphic event-based data (N-MNIST), stroke-based drawing (QuickDraw), visual handwriting (IAM), and physiological time-series (PhysioNet Sepsis-3). Furthermore, we perform a rigorous stress test using temporal dropout to evaluate model robustness against missing data. Our findings reveal that LNNs consistently provide superior parameter efficiency and significantly higher robustness in natively temporal domains and clinical environments where data sparsity is prevalent. This extended preprint provides additional background on related datasets and the LNN theoretical lineage, supplemented with a detailed appendix documenting our full implementation and experimental settings.",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2605.27467v1",
+      "pdf_url": "https://arxiv.org/pdf/2605.27467v1",
+      "keyword_score": 6
+    },
+    {
+      "id": "2605.24047v1",
+      "title": "EMMA: Extracting Multiple physical parameters from Multimodal Data",
+      "authors": [
+        "Farhat Shaikh",
+        "Ayan Banerjee",
+        "Sandeep Gupta"
+      ],
+      "published": "2026-05-21",
+      "updated": "2026-05-21",
+      "summary": "We introduce EMMA, a physics-informed multimodal framework that recovers all identifiable dynamical parameters of a system directly from raw video, audio, and image-based time-series observations. Unlike prior video-only approaches that struggle with occluded states, hidden actuation inputs, or assumptions about known initial conditions and coordinate frames, EMMA performs joint inference of explicit parameters, implicit dynamical components, and calibration invariants within a unified continuous-time model. EMMA leverages a Liquid Time-Constant (LTC) network to learn latent dynamics from heterogeneous modalities while a physics-constrained loss enforces consistency with the governing differential equations. A unified feature pipeline enables consistent alignment across video trajectories, acoustic signatures, and chart-derived measurements, allowing EMMA to estimate parameters under forced, implicit, and multivariate dynamics without requiring segmentation masks, differentiable rendering, or specialized sensors. Across 100+ scenarios including five standard dynamical benchmarks (75 Delfys videos), real-world rover and quadrotor systems with hidden inputs, and simulation-chart case studies spanning biological and chaotic systems, EMMA delivers robust multi-parameter recovery and significantly outperforms existing single-modality and equation-discovery baselines. Our results establish EMMA as a general, scalable solution for physics-consistent model extraction from opportunistic multimodal data. Code and data are available at: https://github.com/ImpactLabASU/EMMA-CVPR2026",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2605.24047v1",
+      "pdf_url": "https://arxiv.org/pdf/2605.24047v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2605.08176v1",
+      "title": "Physics-Modeled Neural Networks",
+      "authors": [
+        "Raul Felipe-Sosa",
+        "Angel Martin del Rey",
+        "Maria Flores Ceballos"
+      ],
+      "published": "2026-05-05",
+      "updated": "2026-05-05",
+      "summary": "We introduce \\emph{Dynamical Physics-Modeled Neural Networks} (DynPMNNs), a continuous-time deep learning architecture in which each hidden layer is defined as the solution of an ordinary differential equation. Unlike classical feed-forward networks, this approach replaces static activation functions with time-evolving dynamical systems, providing a biologically inspired interpretation of hidden-layer behavior and enabling the integration of physically meaningful models. The framework is rigorously grounded in Reproducing Kernel Banach Spaces (RKBSs), allowing DynPMNNs to be characterized as finite-dimensional solutions of an abstract training problem and revealing structural connections with standard neural networks. We present a concrete implementation based on the FitzHugh--Nagumo model for neuronal activation, where numerical ODE solvers are embedded into the computational graph via Euler-type schemes. Both network weights and dynamical parameters are trained jointly. Through experiments on the California Housing dataset, we compare DynPMNNs with Neural ODEs (NODEs) and Closed-form Continuous-Time Networks (CfCs). Despite using fewer trainable parameters, DynPMNNs achieve competitive performance. These results position DynPMNNs as a principled bridge between dynamical systems and deep learning, with promising directions for further research in expressivity, stability, and physics-based modeling.",
+      "categories": [
+        "cs.LG",
+        "cs.NE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2605.08176v1",
+      "pdf_url": "https://arxiv.org/pdf/2605.08176v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2604.24788v1",
+      "title": "Liquid Neural Network Models for Natural Gas Spot Price Time-Series Forecasting",
+      "authors": [
+        "Yiqian Liu",
+        "Jiayi Niu",
+        "Adam Kelleher",
+        "Subhabrata Das"
+      ],
+      "published": "2026-04-24",
+      "updated": "2026-04-24",
+      "summary": "Natural gas is undoubtedly an essential component of the global energy system. Accurate short-term forecasting of natural gas price is challenging due to pronounced volatility driven by seasonal demand patterns, geopolitical developments, and shifting macroeconomic conditions. The nonlinear dynamics and frequent regime changes can limit the effectiveness of traditional time-series models. In this study, we explore the use of Liquid Neural Networks (LNNs) for short-horizon forecasting of the Henry Hub spot price, a primary benchmark for pricing. LNNs are designed to adapt continuously to evolving temporal patterns through dynamic internal state updates, making them well suited for nonstationary price behavior. By improving forecast accuracy in volatile market conditions, this work aims to reduce uncertainty and enhance decision support across energy trading and power market applications.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.24788v1",
+      "pdf_url": "https://arxiv.org/pdf/2604.24788v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2604.18274v2",
+      "title": "LiquidTAD: Efficient Temporal Action Detection via Parallel Liquid-Inspired Temporal Relaxation",
+      "authors": [
+        "Zepeng Sun",
+        "Naichuan Zheng",
+        "Hailun Xia",
+        "Junjie Wu",
+        "Liwei Bao",
+        "Xiaotai Zhang"
+      ],
+      "published": "2026-04-20",
+      "updated": "2026-04-27",
+      "summary": "Temporal Action Detection (TAD) requires precise localization of action boundaries within long, untrimmed video sequences. While current high-performing methods achieve strong accuracy, they are often characterized by excessive parameter counts, substantial computational overhead, and a reliance on specialized operators that hinder deployment across diverse hardware platforms. This paper presents LiquidTAD, a framework that distills the exponential relaxation prior of liquid neural dynamics into a parallel temporal operator, rather than reproducing full Liquid Neural Network (LNN) dynamics. By introducing a Parallel Liquid-inspired Relaxation mechanism, sequential ODE solving is avoided through a fully vectorized, non-recursive formulation built entirely upon standard neural operations, enabling hardware-agnostic deployment with linear complexity with respect to the temporal length. A complementary Hierarchical Decay-Rate Sharing Strategy further adapts this relaxation prior across feature pyramid levels, stabilizing optimization and implicitly compensating for temporal compression in deeper layers. Experimental evaluations on THUMOS-14 and ActivityNet-1.3 demonstrate that LiquidTAD achieves accuracy competitive with strong baselines while substantially lowering the model footprint. Specifically, on THUMOS-14, LiquidTAD achieves 69.46\\% average mAP with only 10.82M parameters and 27.17G FLOPs, reducing the parameter count by over 60\\% compared with ActionFormer.",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.18274v2",
+      "pdf_url": "https://arxiv.org/pdf/2604.18274v2",
+      "keyword_score": 2
+    },
+    {
+      "id": "2604.10815v2",
+      "title": "MeloTune: On-Device Arousal Learning and Peer-to-Peer Mood Coupling for Proactive Music Curation",
+      "authors": [
+        "Hongwei Xu"
+      ],
+      "published": "2026-04-12",
+      "updated": "2026-04-14",
+      "summary": "MeloTune is an iPhone-deployed music agent that instantiates the Mesh Memory Protocol (MMP) and Symbolic-Vector Attention Fusion (SVAF) as a production system for affect-aware music curation with peer-to-peer mood coupling. Each device runs two closed-form continuous-time (CfC) networks: a private listener-level CfC that predicts a short-horizon affective trajectory on Russell's circumplex and drives proactive curation, and a shared mesh-runtime CfC at MMP Layer 6 that integrates Cognitive Memory Blocks (CMBs) from co-listening peers. CfC hidden states never cross the wire; only structured CMBs do. A Personal Arousal Function (PAF) replaces the standard linear mapping from audio intensity to psychological arousal with a per-listener learned adjustment, trained from behavioral signals (skip, completion, favorite, volume) and from drift between user-declared mood and machine inference. The same track receives different arousal predictions for different listeners. The model (94,552 parameters) achieves trajectory MAE 0.414, pattern accuracy 96.6%, and intent accuracy 69.4% on held-out validation. PAF evidence from a live deployment session (46 observations across 11 genres) demonstrates that the learning loop operates end-to-end, with pop reaching full confidence after 22 observations. All inference runs on-device via CoreML. To our knowledge, this is the first production deployment of MMP/SVAF on consumer mobile hardware. The accompanying SDK (sym-swift v0.3.78, SYMCore v0.3.7) enforces strict protocol conformance. Music is the case study; the substrate is the contribution.",
+      "categories": [
+        "cs.SD",
+        "cs.AI",
+        "cs.MA"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.10815v2",
+      "pdf_url": "https://arxiv.org/pdf/2604.10815v2",
+      "keyword_score": 7
+    },
+    {
+      "id": "2604.07219v1",
+      "title": "Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks",
+      "authors": [
+        "Xinquan Wang",
+        "Mingjun Ying",
+        "Hongren Chen",
+        "Guanyue Qian",
+        "Xingchen Liu",
+        "Peijie Ma",
+        "Dipankar Shakya",
+        "Christos Argyropoulos",
+        "Theodore S. Rappaport"
+      ],
+      "published": "2026-04-08",
+      "updated": "2026-04-08",
+      "summary": "Sub-terahertz (sub-THz) multi-user multiple-input multiple-output (MU-MIMO) systems unlock immense bandwidth for 6G wireless communications. However, practical deployment of wireless systems in sub-THz bands faces critical challenges such as increased atmospheric absorption, reduced channel coherence time due to increased Doppler spread at higher carrier frequencies, and hardware bottlenecks as low-loss sub-THz phase shifters are difficult to realize. To overcome the hardware and channel estimation challenges of sub-THz systems, this paper proposes a hybrid beamforming (BF) framework that integrates reconfigurable liquid crystal (LC) antennas with a liquid neural network (LNN) for transmitter. Specifically, we employ an LC antenna as the analog BF stage of a hybrid BF architecture, exploiting its voltage-driven permittivity tunability to achieve high-gain beam steering without the need for lossy phase shifters. For digital BF, we utilize an ordinary differential equations-defined LNN to learn temporal channel dynamics, and use a manifold optimization technique to compress the search space. We validated the proposed method on simulated site-specific 108 GHz ray-tracing channels in an urban scenario using NYURay, a ray-tracing simulator validated against 142 GHz propagation measurements. The 108 GHz carrier frequency matches the operating band of the LC antenna hardware. The proposed method achieves an 88.6\\% spectral efficiency (SE) gain and higher robustness to imperfect channel estimation compared to the learning-aided gradient descent and gated recurrent unit machine learning baselines, and 1.9 times higher SE than the 3GPP TR~38.901 standard antenna model, highlighting the potential of LC-based hardware for sub-THz communications.",
+      "categories": [
+        "cs.IT",
+        "eess.SP"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.07219v1",
+      "pdf_url": "https://arxiv.org/pdf/2604.07219v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2604.03955v1",
+      "title": "Symbolic-Vector Attention Fusion for Collective Intelligence",
+      "authors": [
+        "Hongwei Xu"
+      ],
+      "published": "2026-04-05",
+      "updated": "2026-04-05",
+      "summary": "When autonomous agents observe different domains of a shared environment, each signal they exchange mixes relevant and irrelevant dimensions. No existing mechanism lets the receiver evaluate which dimensions to absorb. We introduce Symbolic-Vector Attention Fusion (SVAF), the content-evaluation half of a two-level coupling engine for collective intelligence. SVAF decomposes each inter-agent signal into 7 typed semantic fields, evaluates each through a learned fusion gate, and produces a remix -- new knowledge from the intersection of two domains. A band-pass model yields four outcomes (redundant, aligned, guarded, rejected), solving both selectivity and redundancy. The fusion gate independently discovers a cross-domain relevance hierarchy: mood emerges as the highest-weight field by epoch 1, before accuracy plateaus -- consistent with independent mechanistic evidence that LLM emotion representations are structurally embedded along valence-arousal axes. SVAF forms Layer 4 of the Mesh Memory Protocol (MMP); the other half of the coupling engine is a per-agent Closed-form Continuous-time (CfC) neural network at Layer 6, whose learned per-neuron time constants (tau) create the temporal dynamics from which collective intelligence emerges: fast neurons synchronise affect across agents in seconds, while slow neurons preserve domain expertise indefinitely. SVAF determines what enters each agent's cognitive state; CfC determines how that state evolves. Trained on 237K samples from 273 narrative scenarios, SVAF achieves 78.7% three-class accuracy. We verify the complete mesh cognition loop -- from per-field evaluation through remix, CfC state evolution, tau-modulated peer blending, and autonomous action -- in a live deployment with 7 nodes across macOS, iOS, and web.",
+      "categories": [
+        "cs.MA",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.03955v1",
+      "pdf_url": "https://arxiv.org/pdf/2604.03955v1",
+      "keyword_score": 6
+    },
+    {
+      "id": "2604.02149v1",
+      "title": "AEGIS: Adversarial Entropy-Guided Immune System -- Thermodynamic State Space Models for Zero-Day Network Evasion Detection",
+      "authors": [
+        "Vickson Ferrel"
+      ],
+      "published": "2026-04-02",
+      "updated": "2026-04-02",
+      "summary": "As TLS 1.3 encryption limits traditional Deep Packet Inspection (DPI), the security community has pivoted to Euclidean Transformer-based classifiers (e.g., ET-BERT) for encrypted traffic analysis. However, these models remain vulnerable to byte-level adversarial morphing -- recent pre-padding attacks reduced ET-BERT accuracy to 25.68%, while VLESS Reality bypasses certificate-based detection entirely. We introduce AEGIS: an Adversarial Entropy-Guided Immune System powered by a Thermodynamic Variance-Guided Hyperbolic Liquid State Space Model (TVD-HL-SSM). Rather than competing in the Euclidean payload-reading domain, AEGIS discards payload bytes in favor of 6-dimensional continuous-time flow physics projected into a non-Euclidean Poincare manifold. Liquid Time-Constants measure microsecond IAT decay, and a Thermodynamic Variance Detector computes sequence-wide Shannon Entropy to expose automated C2 tunnel anomalies. A pure C++ eBPF Harvester with zero-copy IPC bypasses the Python GIL, enabling a linear-time O(N) Mamba-3 core to process 64,000-packet swarms at line-rate. Evaluated on a 400GB, 4-tier adversarial corpus spanning backbone traffic, IoT botnets, zero-days, and proprietary VLESS Reality tunnels, AEGIS achieves an F1-score of 0.9952 and 99.50% True Positive Rate at 262 us inference latency on an RTX 4090, establishing a new state-of-the-art for physics-based adversarial network defense.",
+      "categories": [
+        "cs.CR",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2604.02149v1",
+      "pdf_url": "https://arxiv.org/pdf/2604.02149v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2603.27058v1",
+      "title": "Liquid Networks with Mixture Density Heads for Efficient Imitation Learning",
+      "authors": [
+        "Nikolaus Correll"
+      ],
+      "published": "2026-03-28",
+      "updated": "2026-03-28",
+      "summary": "We compare liquid neural networks with mixture density heads against diffusion policies on Push-T, RoboMimic Can, and PointMaze under a shared-backbone comparison protocol that isolates policy-head effects under matched inputs, training budgets, and evaluation settings. Across tasks, liquid policies use roughly half the parameters (4.3M vs. 8.6M), achieve 2.4x lower offline prediction error, and run 1.8 faster at inference. In sample-efficiency experiments spanning 1% to 46.42% of training data, liquid models remain consistently more robust, with especially large gains in low-data and medium-data regimes. Closed-loop results on Push-T and PointMaze are directionally consistent with offline rankings but noisier, indicating that strong offline density modeling helps deployment while not fully determining closed-loop success. Overall, liquid recurrent multimodal policies provide a compact and practical alternative to iterative denoising for imitation learning.",
+      "categories": [
+        "cs.LG",
+        "cs.RO"
+      ],
+      "abs_url": "https://arxiv.org/abs/2603.27058v1",
+      "pdf_url": "https://arxiv.org/pdf/2603.27058v1",
+      "keyword_score": 1
+    },
+    {
+      "id": "2603.00459v1",
+      "title": "Explainable Continuous-Time Mask Refinement with Local Self-Similarity Priors for Medical Image Segmentation",
+      "authors": [
+        "Rajdeep Chatterjee",
+        "Sudip Chakrabarty",
+        "Trishaani Acharjee"
+      ],
+      "published": "2026-02-28",
+      "updated": "2026-02-28",
+      "summary": "Accurate semantic segmentation of foot ulcers is essential for automated wound monitoring, yet boundary delineation remains challenging due to tissue heterogeneity and poor contrast with surrounding skin. To overcome the limitations of standard intensity-based networks, we present LSS-LTCNet:an ante-hoc explainable framework synergizing deterministic structural priors with continuous-time neural dynamics. Our architecture departs from traditional black-box models by employing a Local Self-Similarity (LSS) mechanism that extracts dense, illumination-invariant texture descriptors to explicitly disentangle necrotic tissue from background artifacts. To enforce topological precision, we introduce a Liquid Time-Constant (LTC) refinement module that treats boundary evolution as an ODEgoverned dynamic system, iteratively refining masks over continuous time-steps. Comprehensive evaluation on the MICCAI FUSeg dataset demonstrates that LSS-LTCNet achieves state-of-the-art boundary alignment, securing a peak Dice score of 86.96% and an exceptional 95th percentile Hausdorff Distance (HD95) of 8.91 pixels. Requiring merely 25.70M parameters, the model significantly outperforms heavier U-Net and transformer baselines in efficiency. By providing inherent visual audit trails alongside high-fidelity predictions, LSS-LTCNet offers a robust and transparent solution for computer-aided diagnosis in mobile healthcare (mHealth) settings.",
+      "categories": [
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2603.00459v1",
+      "pdf_url": "https://arxiv.org/pdf/2603.00459v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2603.00153v1",
+      "title": "Pulse-Driven Neural Architecture: Learnable Oscillatory Dynamics for Robust Continuous-Time Sequence Processing",
+      "authors": [
+        "Paras Sharma"
+      ],
+      "published": "2026-02-25",
+      "updated": "2026-02-25",
+      "summary": "We introduce PDNA (Pulse-Driven Neural Architecture), a method for augmenting continuous-time recurrent networks with learnable oscillatory dynamics that maintain internal state evolution independently of external input. Built on Closed-form Continuous-time (CfC) networks, PDNA adds two components: (1) a pulse module that generates structured oscillations $A \\cdot \\sin(ωt + \\varphi(h))$ with learnable frequencies and state-dependent phase, and (2) a self-attend module that applies recurrent self-attention to the hidden state. Through a controlled ablation study on sequential MNIST (sMNIST) with five random seeds, we evaluate gap robustness -- the ability to maintain performance when portions of the input sequence are removed at test time. Our key finding is that structured oscillatory dynamics significantly improve robustness to input interruptions: the self-attend variant achieves a statistically significant 2.78 percentage point multi-gap advantage over baseline ($p = 0.041$), while the pulse variant shows a 4.62 pp advantage with large effect size (Cohen's $d = 0.87$). A noise control (random perturbation of equal magnitude) provides no benefit, confirming that the advantage is structural rather than merely dynamic. These results provide evidence that continuous-time models can benefit from biologically-inspired internal oscillatory mechanisms for temporal robustness.",
+      "categories": [
+        "cs.NE",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "abs_url": "https://arxiv.org/abs/2603.00153v1",
+      "pdf_url": "https://arxiv.org/pdf/2603.00153v1",
+      "keyword_score": 4
+    },
+    {
+      "id": "2602.06997v1",
+      "title": "Adaptive Temporal Dynamics for Personalized Emotion Recognition: A Liquid Neural Network Approach",
+      "authors": [
+        "Anindya Bhattacharjee",
+        "Nittya Ananda Biswas",
+        "K. A. Shahriar",
+        "Adib Rahman"
+      ],
+      "published": "2026-01-28",
+      "updated": "2026-01-28",
+      "summary": "Emotion recognition from physiological signals remains challenging due to their non-stationary, noisy, and subject-dependent characteristics. This work presents, to the best of our knowledge, the first comprehensive application of liquid neural networks for EEG-based emotion recognition. The proposed multimodal framework combines convolutional feature extraction, liquid neural networks with learnable time constants, and attention-guided fusion to model temporal EEG dynamics with complementary peripheral physiological and personality features. Dedicated subnetworks are used to process EEG features and auxiliary modalities, and a shared autoencoder-based fusion module is used to learn discriminative latent representations before classification. Subject-dependent experiments conducted on the PhyMER dataset across seven emotional classes achieve an accuracy of 95.45%, surpassing previously reported results. Furthermore, temporal attention analysis provides interpretable insights into emotion-specific temporal relevance, and t-SNE visualizations demonstrate enhanced class separability, highlighting the effectiveness of the proposed approach. Finally, statistical analysis of temporal dynamics confirms that the network self-organizes into distinct functional groups with specialized fast and slow neurons, proving it independently tunes learnable time constants and memory dominance to effectively capture complex emotion artifacts.",
+      "categories": [
+        "eess.SP",
+        "cs.AI",
+        "cs.LG",
+        "cs.NE"
+      ],
+      "abs_url": "https://arxiv.org/abs/2602.06997v1",
+      "pdf_url": "https://arxiv.org/pdf/2602.06997v1",
+      "keyword_score": 3
+    },
+    {
+      "id": "2601.14115v1",
+      "title": "Riemannian Liquid Spatio-Temporal Graph Network",
+      "authors": [
+        "Liangsi Lu",
+        "Jingchao Wang",
+        "Zhaorong Dai",
+        "Hanqian Liu",
+        "Yang Shi"
+      ],
+      "published": "2026-01-20",
+      "updated": "2026-01-20",
+      "summary": "Liquid Time-Constant networks (LTCs), a type of continuous-time graph neural network, excel at modeling irregularly-sampled dynamics but are fundamentally confined to Euclidean space. This limitation introduces significant geometric distortion when representing real-world graphs with inherent non-Euclidean structures (e.g., hierarchies and cycles), degrading representation quality. To overcome this limitation, we introduce the Riemannian Liquid Spatio-Temporal Graph Network (RLSTG), a framework that unifies continuous-time liquid dynamics with the geometric inductive biases of Riemannian manifolds. RLSTG models graph evolution through an Ordinary Differential Equation (ODE) formulated directly on a curved manifold, enabling it to faithfully capture the intrinsic geometry of both structurally static and dynamic spatio-temporal graphs. Moreover, we provide rigorous theoretical guarantees for RLSTG, extending stability theorems of LTCs to the Riemannian domain and quantifying its expressive power via state trajectory analysis. Extensive experiments on real-world benchmarks demonstrate that, by combining advanced temporal dynamics with a Riemannian spatial representation, RLSTG achieves superior performance on graphs with complex structures. Project Page: https://rlstg.github.io",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2601.14115v1",
+      "pdf_url": "https://arxiv.org/pdf/2601.14115v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2601.06227v3",
+      "title": "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics",
+      "authors": [
+        "Dhivya Dharshini Kannan",
+        "Wei Li",
+        "Wei Zhang",
+        "Jianbiao Wang",
+        "Zhi Wei Seh",
+        "Man-Fai Ng"
+      ],
+      "published": "2026-01-09",
+      "updated": "2026-06-11",
+      "summary": "Battery management systems increasingly require accurate battery health prognostics under strict on-device constraints. This paper presents DLNet, a practical framework with dual-stage distillation of liquid neural networks that turns a high-capacity model into compact and edge-deployable models for battery health prediction. DLNet first applies Euler discretization to reformulate liquid dynamics for embedded compatibility. It then performs dual-stage knowledge distillation to transfer the teacher model's temporal behavior and recover it after further compression. Pareto-guided selection under joint error-cost objectives retains student models that balance accuracy and efficiency. We evaluate DLNet on a widely used dataset and validate real-device feasibility on an Arduino Nano 33 BLE Sense using int8 deployment. The final deployed student achieves a low error of 0.0066 when predicting battery health over the next 100 cycles, which is 15.4% lower than the teacher model. It reduces the model size from 616 kB to 94 kB with 84.7% reduction and takes 21 ms per inference on the device. These results support a practical smaller wins observation that a small model can match or exceed a large teacher for edge-based prognostics with proper supervision and selection. Beyond batteries, the DLNet framework can extend to other industrial analytics tasks with strict hardware constraints.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2601.06227v3",
+      "pdf_url": "https://arxiv.org/pdf/2601.06227v3",
+      "keyword_score": 2
+    },
+    {
+      "id": "2601.06195v1",
+      "title": "EntroLnn: Entropy-Guided Liquid Neural Networks for Operando Refinement of Battery Capacity Fade Trajectories",
+      "authors": [
+        "Wei Li",
+        "Wei Zhang",
+        "Qingyu Yan"
+      ],
+      "published": "2026-01-08",
+      "updated": "2026-01-08",
+      "summary": "Battery capacity degradation prediction has long been a central topic in battery health analytics, and most studies focus on state of health (SoH) estimation and end of life (EoL) prediction. This study extends the scope to online refinement of the entire capacity fade trajectory (CFT) through EntroLnn, a framework based on entropy-guided transformable liquid neural networks (LNNs). EntroLnn treats CFT refinement as an integrated process rather than two independent tasks for pointwise SoH and EoL. We introduce entropy-based features derived from online temperature fields, applied for the first time in battery analytics, and combine them with customized LNNs that model temporal battery dynamics effectively. The framework enhances both static and dynamic adaptability of LNNs and achieves robust and generalizable CFT refinement across different batteries and operating conditions. The approach provides a high fidelity battery health model with lightweight computation, achieving mean absolute errors of only 0.004577 for CFT and 18 cycles for EoL prediction. This work establishes a foundation for entropy-informed learning in battery analytics and enables self-adaptive, lightweight, and interpretable battery health prediction in practical battery management systems.",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "abs_url": "https://arxiv.org/abs/2601.06195v1",
+      "pdf_url": "https://arxiv.org/pdf/2601.06195v1",
+      "keyword_score": 2
+    },
+    {
+      "id": "2512.22500v4",
+      "title": "Bidirectional Neural Networks for Global Nucleon-Nucleus Optical Model Calculations",
+      "authors": [
+        "Jin Lei"
+      ],
+      "published": "2025-12-27",
+      "updated": "2026-06-16",
+      "summary": "Modern nuclear data evaluation increasingly requires not only accurate scattering calculations, but also efficient methods for uncertainty quantification and parameter optimization, tasks that benefit from differentiable solvers amenable to gradient-based algorithms. I present a neural network emulator based on Bidirectional Liquid Neural Networks (BiLNN) that provides a fully differentiable mapping from optical potential parameters to scattering wave functions. The key innovation enabling generalization across the parameter space is the use of phase-space coordinates $ρ= kr$ that normalize the oscillation wavelength regardless of projectile energy, allowing a single network to span 1 to 200~MeV. Trained on Numerov solutions for twelve target nuclei (\\nuc{12}{C} to \\nuc{208}{Pb}), both protons and neutrons, and partial waves up to $l=30$, the network achieves an overall relative error of 1.2\\%. The predicted wave functions yield accurate $S$-matrix elements and elastic scattering cross sections, reproducing diffraction patterns spanning four orders of magnitude. Importantly, the model extrapolates successfully to nuclei not included in training (\\nuc{24}{Mg}, \\nuc{63}{Cu}, \\nuc{184}{W}) with comparable accuracy, demonstrating that it has learned the physics of the optical model rather than memorizing specific targets. The differentiable nature of the trained model opens the door to gradient-based optimization of optical model parameters and efficient uncertainty quantification.",
+      "categories": [
+        "nucl-th"
+      ],
+      "abs_url": "https://arxiv.org/abs/2512.22500v4",
+      "pdf_url": "https://arxiv.org/pdf/2512.22500v4",
+      "keyword_score": 1
+    }
   ],
-  "papers": [],
   "github_repos": [
     {
       "full_name": "Jdka1/liquidgrad",
