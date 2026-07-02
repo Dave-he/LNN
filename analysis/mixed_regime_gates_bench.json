@@ -1,0 +1,295 @@
+{
+  "config": {
+    "epochs": 100,
+    "lr": 0.01,
+    "batch_size": 16,
+    "seg_len": 32,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "datasets": [
+      "mixed_regime"
+    ],
+    "modes": [
+      "static_tau",
+      "liquid_tau",
+      "gated_vel",
+      "gated_accel",
+      "gated_blend"
+    ]
+  },
+  "cells": [
+    {
+      "mode": "static_tau",
+      "dataset": "mixed_regime",
+      "seed": 0,
+      "test_mse": 0.09271545708179474,
+      "per_segment": {
+        "smooth": 0.011218677274882793,
+        "noise": 0.25422608852386475,
+        "structured": 0.012701614759862423
+      },
+      "train_loss_last": 0.0810366290119978,
+      "elapsed_sec": 44.37,
+      "diagnostics": {
+        "n_params": 74881,
+        "gate_mean": NaN,
+        "tau_temporal_std": 0.0
+      }
+    },
+    {
+      "mode": "static_tau",
+      "dataset": "mixed_regime",
+      "seed": 1,
+      "test_mse": 0.08916476368904114,
+      "per_segment": {
+        "smooth": 0.009225609712302685,
+        "noise": 0.2439005970954895,
+        "structured": 0.014368128031492233
+      },
+      "train_loss_last": 0.09013544023036957,
+      "elapsed_sec": 43.33,
+      "diagnostics": {
+        "n_params": 74881,
+        "gate_mean": NaN,
+        "tau_temporal_std": 0.0
+      }
+    },
+    {
+      "mode": "static_tau",
+      "dataset": "mixed_regime",
+      "seed": 2,
+      "test_mse": 0.09268803149461746,
+      "per_segment": {
+        "smooth": 0.010158966295421124,
+        "noise": 0.25689318776130676,
+        "structured": 0.011011914350092411
+      },
+      "train_loss_last": 0.08291791207515277,
+      "elapsed_sec": 42.88,
+      "diagnostics": {
+        "n_params": 74881,
+        "gate_mean": NaN,
+        "tau_temporal_std": 0.0
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "dataset": "mixed_regime",
+      "seed": 0,
+      "test_mse": 0.11697597801685333,
+      "per_segment": {
+        "smooth": 0.009720897302031517,
+        "noise": 0.32412564754486084,
+        "structured": 0.01708144135773182
+      },
+      "train_loss_last": 0.05515524916923963,
+      "elapsed_sec": 66.27,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 1.0,
+        "tau_temporal_std": 0.3108753263950348
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "dataset": "mixed_regime",
+      "seed": 1,
+      "test_mse": 0.10039068758487701,
+      "per_segment": {
+        "smooth": 0.008601480163633823,
+        "noise": 0.2803506553173065,
+        "structured": 0.01221993938088417
+      },
+      "train_loss_last": 0.0729932882464849,
+      "elapsed_sec": 66.32,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 1.0,
+        "tau_temporal_std": 0.31446316838264465
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "dataset": "mixed_regime",
+      "seed": 2,
+      "test_mse": 0.10916736721992493,
+      "per_segment": {
+        "smooth": 0.009233140386641026,
+        "noise": 0.30861517786979675,
+        "structured": 0.009653775952756405
+      },
+      "train_loss_last": 0.06033539227568186,
+      "elapsed_sec": 67.06,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 1.0,
+        "tau_temporal_std": 0.2857287526130676
+      }
+    },
+    {
+      "mode": "gated_vel",
+      "dataset": "mixed_regime",
+      "seed": 0,
+      "test_mse": 0.09710343927145004,
+      "per_segment": {
+        "smooth": 0.00923741515725851,
+        "noise": 0.27740809321403503,
+        "structured": 0.004664805717766285
+      },
+      "train_loss_last": 0.07669292390346527,
+      "elapsed_sec": 73.58,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 0.41211459040641785,
+        "tau_temporal_std": 0.23334868252277374
+      }
+    },
+    {
+      "mode": "gated_vel",
+      "dataset": "mixed_regime",
+      "seed": 1,
+      "test_mse": 0.0896395817399025,
+      "per_segment": {
+        "smooth": 0.008200395852327347,
+        "noise": 0.24913984537124634,
+        "structured": 0.01157849095761776
+      },
+      "train_loss_last": 0.08216103968711999,
+      "elapsed_sec": 73.77,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 0.40811875462532043,
+        "tau_temporal_std": 0.2232288271188736
+      }
+    },
+    {
+      "mode": "gated_vel",
+      "dataset": "mixed_regime",
+      "seed": 2,
+      "test_mse": 0.09222720563411713,
+      "per_segment": {
+        "smooth": 0.010786071419715881,
+        "noise": 0.25854718685150146,
+        "structured": 0.007348316255956888
+      },
+      "train_loss_last": 0.08117181521195632,
+      "elapsed_sec": 73.77,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 0.4109461009502411,
+        "tau_temporal_std": 0.23600773513317108
+      }
+    },
+    {
+      "mode": "gated_accel",
+      "dataset": "mixed_regime",
+      "seed": 0,
+      "test_mse": 0.08792944252490997,
+      "per_segment": {
+        "smooth": 0.008272062055766582,
+        "noise": 0.25182420015335083,
+        "structured": 0.003692053258419037
+      },
+      "train_loss_last": 0.08279149979352951,
+      "elapsed_sec": 75.39,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 0.41382503509521484,
+        "tau_temporal_std": 0.21171806752681732
+      }
+    },
+    {
+      "mode": "gated_accel",
+      "dataset": "mixed_regime",
+      "seed": 1,
+      "test_mse": 0.08613492548465729,
+      "per_segment": {
+        "smooth": 0.007946421392261982,
+        "noise": 0.23927466571331024,
+        "structured": 0.011183654889464378
+      },
+      "train_loss_last": 0.08583893454991855,
+      "elapsed_sec": 75.32,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 0.41196417808532715,
+        "tau_temporal_std": 0.20253057777881622
+      }
+    },
+    {
+      "mode": "gated_accel",
+      "dataset": "mixed_regime",
+      "seed": 2,
+      "test_mse": 0.09109169244766235,
+      "per_segment": {
+        "smooth": 0.010142148472368717,
+        "noise": 0.2583564221858978,
+        "structured": 0.004776534158736467
+      },
+      "train_loss_last": 0.07929994624394637,
+      "elapsed_sec": 75.32,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 0.4114619195461273,
+        "tau_temporal_std": 0.2159145325422287
+      }
+    },
+    {
+      "mode": "gated_blend",
+      "dataset": "mixed_regime",
+      "seed": 0,
+      "test_mse": 0.09560031443834305,
+      "per_segment": {
+        "smooth": 0.009043939411640167,
+        "noise": 0.27058860659599304,
+        "structured": 0.0071683600544929504
+      },
+      "train_loss_last": 0.07857926304523762,
+      "elapsed_sec": 81.39,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 0.5077714323997498,
+        "tau_temporal_std": 0.2355499416589737
+      }
+    },
+    {
+      "mode": "gated_blend",
+      "dataset": "mixed_regime",
+      "seed": 1,
+      "test_mse": 0.08774124085903168,
+      "per_segment": {
+        "smooth": 0.00939473882317543,
+        "noise": 0.24641259014606476,
+        "structured": 0.0074163940735161304
+      },
+      "train_loss_last": 0.08336627082182811,
+      "elapsed_sec": 85.79,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 0.5029121041297913,
+        "tau_temporal_std": 0.22108012437820435
+      }
+    },
+    {
+      "mode": "gated_blend",
+      "dataset": "mixed_regime",
+      "seed": 2,
+      "test_mse": 0.09654781967401505,
+      "per_segment": {
+        "smooth": 0.011139048263430595,
+        "noise": 0.26083213090896606,
+        "structured": 0.01767231896519661
+      },
+      "train_loss_last": 0.08084765191261585,
+      "elapsed_sec": 86.47,
+      "diagnostics": {
+        "n_params": 111937,
+        "gate_mean": 0.505160391330719,
+        "tau_temporal_std": 0.22437971830368042
+      }
+    }
+  ]
+}
