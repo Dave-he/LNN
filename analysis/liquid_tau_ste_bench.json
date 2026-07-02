@@ -1,0 +1,295 @@
+{
+  "config": {
+    "epochs": 100,
+    "lr": 0.01,
+    "batch_size": 16,
+    "T": 64,
+    "n_samples": 256,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "datasets": [
+      "toy_sin",
+      "structured",
+      "random"
+    ],
+    "modes": [
+      "static_tau",
+      "liquid_tau"
+    ]
+  },
+  "cells": [
+    {
+      "mode": "static_tau",
+      "kind": "static",
+      "dataset": "toy_sin",
+      "seed": 0,
+      "test_mse": 1.3791112678518402e-06,
+      "train_loss_last": 8.288403626885645e-06,
+      "elapsed_sec": 56.06,
+      "diagnostics": {
+        "n_params": 74881,
+        "tau_temporal_std": 0.0,
+        "tau_dynamic_mean": 0.5111257433891296
+      }
+    },
+    {
+      "mode": "static_tau",
+      "kind": "static",
+      "dataset": "toy_sin",
+      "seed": 1,
+      "test_mse": 8.503217941324692e-06,
+      "train_loss_last": 1.7493585180370876e-05,
+      "elapsed_sec": 44.2,
+      "diagnostics": {
+        "n_params": 74881,
+        "tau_temporal_std": 0.0,
+        "tau_dynamic_mean": 0.5102991461753845
+      }
+    },
+    {
+      "mode": "static_tau",
+      "kind": "static",
+      "dataset": "toy_sin",
+      "seed": 2,
+      "test_mse": 8.275164873339236e-05,
+      "train_loss_last": 3.7981836053054743e-05,
+      "elapsed_sec": 43.67,
+      "diagnostics": {
+        "n_params": 74881,
+        "tau_temporal_std": 0.0,
+        "tau_dynamic_mean": 0.5099176168441772
+      }
+    },
+    {
+      "mode": "static_tau",
+      "kind": "static",
+      "dataset": "structured",
+      "seed": 0,
+      "test_mse": 0.00018075932166539133,
+      "train_loss_last": 0.00017073225843397758,
+      "elapsed_sec": 43.7,
+      "diagnostics": {
+        "n_params": 74881,
+        "tau_temporal_std": 0.0,
+        "tau_dynamic_mean": 0.46021994948387146
+      }
+    },
+    {
+      "mode": "static_tau",
+      "kind": "static",
+      "dataset": "structured",
+      "seed": 1,
+      "test_mse": 0.00019117903138976544,
+      "train_loss_last": 0.00039028096496342466,
+      "elapsed_sec": 44.0,
+      "diagnostics": {
+        "n_params": 74881,
+        "tau_temporal_std": 0.0,
+        "tau_dynamic_mean": 0.40995916724205017
+      }
+    },
+    {
+      "mode": "static_tau",
+      "kind": "static",
+      "dataset": "structured",
+      "seed": 2,
+      "test_mse": 0.00014134553202893585,
+      "train_loss_last": 0.00031815499152379256,
+      "elapsed_sec": 43.85,
+      "diagnostics": {
+        "n_params": 74881,
+        "tau_temporal_std": 0.0,
+        "tau_dynamic_mean": 0.4602409899234772
+      }
+    },
+    {
+      "mode": "static_tau",
+      "kind": "static",
+      "dataset": "random",
+      "seed": 0,
+      "test_mse": 1.0103155374526978,
+      "train_loss_last": 1.009943989607004,
+      "elapsed_sec": 43.86,
+      "diagnostics": {
+        "n_params": 74881,
+        "tau_temporal_std": 0.0,
+        "tau_dynamic_mean": 0.3172534704208374
+      }
+    },
+    {
+      "mode": "static_tau",
+      "kind": "static",
+      "dataset": "random",
+      "seed": 1,
+      "test_mse": 0.979002833366394,
+      "train_loss_last": 1.0095855593681335,
+      "elapsed_sec": 43.64,
+      "diagnostics": {
+        "n_params": 74881,
+        "tau_temporal_std": 0.0,
+        "tau_dynamic_mean": 0.326477974653244
+      }
+    },
+    {
+      "mode": "static_tau",
+      "kind": "static",
+      "dataset": "random",
+      "seed": 2,
+      "test_mse": 1.0180882215499878,
+      "train_loss_last": 0.9937397791789129,
+      "elapsed_sec": 43.63,
+      "diagnostics": {
+        "n_params": 74881,
+        "tau_temporal_std": 0.0,
+        "tau_dynamic_mean": 0.32997140288352966
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "kind": "liquid",
+      "dataset": "toy_sin",
+      "seed": 0,
+      "test_mse": 1.4885494238114916e-05,
+      "train_loss_last": 4.976808996231669e-06,
+      "elapsed_sec": 68.99,
+      "diagnostics": {
+        "n_params": 111937,
+        "tau_temporal_std": 0.05657358095049858,
+        "tau_dynamic_mean": 0.530347466468811,
+        "tau_dynamic_min": 0.18659044802188873,
+        "tau_dynamic_max": 0.7943589091300964
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "kind": "liquid",
+      "dataset": "toy_sin",
+      "seed": 1,
+      "test_mse": 5.942107236478478e-06,
+      "train_loss_last": 4.779619698725723e-06,
+      "elapsed_sec": 68.79,
+      "diagnostics": {
+        "n_params": 111937,
+        "tau_temporal_std": 0.060545433312654495,
+        "tau_dynamic_mean": 0.5220174789428711,
+        "tau_dynamic_min": 0.17552430927753448,
+        "tau_dynamic_max": 0.8292278051376343
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "kind": "liquid",
+      "dataset": "toy_sin",
+      "seed": 2,
+      "test_mse": 1.699935455690138e-05,
+      "train_loss_last": 1.479596070252088e-05,
+      "elapsed_sec": 69.39,
+      "diagnostics": {
+        "n_params": 111937,
+        "tau_temporal_std": 0.06040694937109947,
+        "tau_dynamic_mean": 0.5128875970840454,
+        "tau_dynamic_min": 0.13828329741954803,
+        "tau_dynamic_max": 0.8168551325798035
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "kind": "liquid",
+      "dataset": "structured",
+      "seed": 0,
+      "test_mse": 0.00015317386714741588,
+      "train_loss_last": 0.00015392945631622121,
+      "elapsed_sec": 68.9,
+      "diagnostics": {
+        "n_params": 111937,
+        "tau_temporal_std": 0.21761858463287354,
+        "tau_dynamic_mean": 0.41476622223854065,
+        "tau_dynamic_min": 0.050019968301057816,
+        "tau_dynamic_max": 0.9494144916534424
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "kind": "liquid",
+      "dataset": "structured",
+      "seed": 1,
+      "test_mse": 0.00015109352534636855,
+      "train_loss_last": 0.0001496881338355776,
+      "elapsed_sec": 68.83,
+      "diagnostics": {
+        "n_params": 111937,
+        "tau_temporal_std": 0.14124596118927002,
+        "tau_dynamic_mean": 0.21967798471450806,
+        "tau_dynamic_min": 0.05000771954655647,
+        "tau_dynamic_max": 0.9490676522254944
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "kind": "liquid",
+      "dataset": "structured",
+      "seed": 2,
+      "test_mse": 0.00014589146303478628,
+      "train_loss_last": 0.00014431644208693446,
+      "elapsed_sec": 69.28,
+      "diagnostics": {
+        "n_params": 111937,
+        "tau_temporal_std": 0.21027915179729462,
+        "tau_dynamic_mean": 0.25304797291755676,
+        "tau_dynamic_min": 0.05000108480453491,
+        "tau_dynamic_max": 0.9499872326850891
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "kind": "liquid",
+      "dataset": "random",
+      "seed": 0,
+      "test_mse": 1.0494158267974854,
+      "train_loss_last": 1.034737256857065,
+      "elapsed_sec": 69.13,
+      "diagnostics": {
+        "n_params": 111937,
+        "tau_temporal_std": 0.09891169518232346,
+        "tau_dynamic_mean": 0.40363097190856934,
+        "tau_dynamic_min": 0.05000000074505806,
+        "tau_dynamic_max": 0.949999988079071
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "kind": "liquid",
+      "dataset": "random",
+      "seed": 1,
+      "test_mse": 1.2240817546844482,
+      "train_loss_last": 0.686552671285776,
+      "elapsed_sec": 68.7,
+      "diagnostics": {
+        "n_params": 111937,
+        "tau_temporal_std": 0.1084870919585228,
+        "tau_dynamic_mean": 0.16403014957904816,
+        "tau_dynamic_min": 0.05000048503279686,
+        "tau_dynamic_max": 0.949809193611145
+      }
+    },
+    {
+      "mode": "liquid_tau",
+      "kind": "liquid",
+      "dataset": "random",
+      "seed": 2,
+      "test_mse": 3.9264872074127197,
+      "train_loss_last": 1.8528115841058583,
+      "elapsed_sec": 69.11,
+      "diagnostics": {
+        "n_params": 111937,
+        "tau_temporal_std": 0.2893745005130768,
+        "tau_dynamic_mean": 0.4007840156555176,
+        "tau_dynamic_min": 0.05000000074505806,
+        "tau_dynamic_max": 0.949999988079071
+      }
+    }
+  ]
+}
