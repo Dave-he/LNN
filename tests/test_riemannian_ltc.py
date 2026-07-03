@@ -20,6 +20,10 @@ starting from the origin, which is a stage-B smoke simplification).
 import pytest
 import torch
 
+# RiemannianLTC requires the optional `geoopt` dependency. Skip the whole
+# module gracefully when it is not installed instead of failing collection.
+pytest.importorskip("geoopt")
+
 from lnn.core.riemannian_ltc import (
     RiemannianLTC,
     RiemannianLTCNetwork,
