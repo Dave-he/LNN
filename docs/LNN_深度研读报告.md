@@ -315,6 +315,16 @@ tags: [LNN, reading-report, papers]
   - **Verdict**: POSITIVE — LNN 在 low-resource + high-distribution-shift 场景下相对大模型具结构性优势的硬证据.
 - **结论**: 今日 2 篇新论文均为 LNN 在 **跨域 / 边缘部署** 场景的强证据, 涵盖视觉 (GazeLNN, Jetson 部署) 与音频 (FlowFake, 形式化稳定性) 两个子领域.
 
+### [2026-07-04] Liquid Latent State Dynamics for Interpretable Turbofan Degradation Modeling（latent-dynamics + 因子化退化状态）
+- **独立报告**：[[docs/reports/Liquid_Latent_State_Dynamics_Turbofan_2607.01986_研读报告.md]]
+- **arXiv**：2607.01986v1 (cs.LG, 2026-07-02, Tianjin University)
+- **核心问题**：prognostics 模型在 C-MAPSS 上常"预测准但隐藏状态不可检视"；多工况子集 (FD002/FD004) 中 sensor 读数被工况漂移污染，GRU 等单一隐藏向量把 degradation 与 operating condition 缠绕在一起，无法提供可解释的健康轨迹。
+- **方法论**：Encoder (GRU) → 因子化 latent `z = [z_deg, z_cond]` → 用 LTC cell 作 transition operator (`m, τ, γ, Δz` Eqs. 5–9) 在 5 步 rollout 上递推 `z_deg`；`z_cond` 仅承担 operating context；多任务损失 `L = L_sensor + λ_rul L_RUL + λ_latent L_latent + λ_mono L_mono + λ_cond L_cond + λ_decor L_decor + λ_smooth L_smooth` (Eq. 19)，其中 RUL / monotonic risk / latent-consistency 监督只施加在 `z_deg`。
+- **关键成果**：C-MAPSS FD001–FD004 上 sensor forecasting overall RMSE 0.2438 (GRU) → 0.2266 (Dis+RUL)，提升完全集中在 multi-condition 子集 —— FD002 0.1058→0.0627 (−40.7%)，FD004 0.0936→0.0625 (−33.2%)；可检视性度量 **speed ρ (latent 增量幅度 vs 退化 Spearman)** 从 basic liquid 0.285 → full Dis+RUL **0.596** (FD004 单子集 0.011 → 0.634)；PCA 可视化显示 `z_deg` 沿一条明显带状结构分布，`z_cond` 散布 —— 视觉证实 `z_deg` 起到了"退化坐标"作用。
+- **LNN 桥接**：与本仓 `bench_adaptive_time_constant_cfc.py` / `bench_cfc_n_tau.py` 等"自适应 τ-gated liquid dynamics"研究线同根；本文把 `Δz_deg` 作为 latent-trajectory-aware 检视信号，开辟了"把 LTC 用作 prognostic latent state transition operator"的新应用范式。
+- **局限**：4/4 子集 RUL RMSE 仍弱于 GRU (作者坦诚把当前模型定位为 "interpretable latent world model" 而非 "calibrated lifetime regressor")；`z_cond` 仍有 degradation leakage；C-MAPSS 为仿真干净数据，未覆盖 maintenance events / sensor drift / 真实异质工况。
+- **Verdict**：POSITIVE-with-honest-scope — 在多工况子集上同时拿到 forecasting 提升 + 沿退化轴有序 latent trajectory，是"LTC 不是更好 RNN 而是可检视状态演化器"立场的强证据。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
