@@ -8,18 +8,32 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
-- 更新：2026-07-03
+- 更新：2026-07-04
 - Star / Fork：1 / 0
 - 语言：C
 - Topics：未标注
 - 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
 
 ### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
-- 更新：2026-07-03
+- 更新：2026-07-04
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
+
+### [kakopappa/proxy-kd-lfm2](https://github.com/kakopappa/proxy-kd-lfm2)
+- 更新：2026-07-04
+- Star / Fork：0 / 0
+- 语言：Jupyter Notebook
+- Topics：未标注
+- 说明：From-scratch Proxy-KD (arXiv:2401.07013): black-box distillation of Claude into LiquidAI LFM2.5-350M on the Sharp AC-manual Q&A task, with findings.
+
+### [moudook/rtx-2050-kernel-optim](https://github.com/moudook/rtx-2050-kernel-optim)
+- 更新：2026-07-04
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：i will try to optimize the kernel for a slm(here LiquidAI/LFM2.5-1.2B-Thinking) no ai will be used
 
 ### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
 - 更新：2026-07-02
@@ -132,20 +146,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Jupyter Notebook
 - Topics：未标注
 - 说明：Solar Energy Forecasting using Liquid Time-Constant Network
-
-### [ochigenuka/FYP2](https://github.com/ochigenuka/FYP2)
-- 更新：2026-06-10
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：Solar Energy Forecasting using Liquid Time-Constant Networks
-
-### [g023/cuda_inf](https://github.com/g023/cuda_inf)
-- 更新：2026-06-08
-- Star / Fork：1 / 0
-- 语言：Cuda
-- Topics：3060, ai, c, cpp, cuda, fast-inference, gpu, inference
-- 说明：A self-contained CUDA inference engine for LiquidAI/LFM2.5-8B-A1B (hybrid conv + GQA-attention MoE, 8.5B params, 1B active) targeting a single RTX 3060 (12 GB). No Python, no frameworks at runtime: a single .cu engine + a header-only byte-level BPE tokenizer.
 
 ## Hugging Face 模型
 ### [cyankiwi/LFM2.5-8B-A1B-AWQ-INT4](https://huggingface.co/cyankiwi/LFM2.5-8B-A1B-AWQ-INT4)
