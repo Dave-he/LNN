@@ -325,10 +325,23 @@ tags: [LNN, reading-report, papers]
 - **局限**：4/4 子集 RUL RMSE 仍弱于 GRU (作者坦诚把当前模型定位为 "interpretable latent world model" 而非 "calibrated lifetime regressor")；`z_cond` 仍有 degradation leakage；C-MAPSS 为仿真干净数据，未覆盖 maintenance events / sensor drift / 真实异质工况。
 - **Verdict**：POSITIVE-with-honest-scope — 在多工况子集上同时拿到 forecasting 提升 + 沿退化轴有序 latent trajectory，是"LTC 不是更好 RNN 而是可检视状态演化器"立场的强证据。
 
+### [2026-07-06] 候选清空：所有 score>0 论文均已研读过（n_candidates=0）
+- **arXiv 命中**：25 篇；**score>0 候选**：7 篇；**已报告**：7 篇；**新增**：0 篇
+- **arXiv 候选 score 榜**（保留作存档）：
+  1. `2605.27467v1` Comparative Analysis of LNN and LSTM (score=18) — 已有 [[docs/reports/Comparative_Analysis_of_LNN_and_LSTM_研读报告.md]]
+  2. `2607.01986v1` Liquid Latent State Dynamics for Turbofan (score=10) — 已有 [[docs/reports/Liquid_Latent_State_Dynamics_Turbofan_2607.01986_研读报告.md]]
+  3. `2606.12240v1` Multi-Rate MoE for Accelerating LNN Training (score=10) — 已有 [[docs/reports/Multi-Rate_MoE_Accelerating_LNN_Training_2606.12240_研读报告.md]]
+  4. `2606.07670v1` Liquid NN as Drop-in Continuous-Time Deformation Field (score=8) — 已有 [[docs/reports/Liquid_Neural_Networks_3DGS_Deformation_Field_2606.07670_研读报告.md]]
+  5. `2606.15807v1` Memory-Augmented Graph LTC for Cross-Domain Traffic (score=5) — 已有 [[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross_Domain_Traffic_2606.15807_研读报告.md]]
+  6. `2606.26849v1` LFNet: Liquid Fusion for SOD (score=4) — 已有 [[docs/reports/LFNet_Liquid_Fusion_Heterogeneous_Representations_SOD_2606.26849_研读报告.md]]
+  7. `2606.20491v1` GazeLNN (score=2) — 已有 [[docs/reports/GazeLNN_2606.20491_研读报告.md]]
+- **唯一 score=0 且未报告**：`2606.21295v5` Topological Neural Dynamics（关键词中性，跳过）
+- **结论**：今日 digest 实质为 07-04 / 07-05 的延续；研读库对 2026 上半年的 LNN / CfC / LTC 主题覆盖已饱和。下一波新主题等待 07-07+ digest。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-07-06**：[[docs/daily/2026-07-06_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 17 个。
+- **2026-07-06**：[[docs/daily/2026-07-06_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 17 个。 (no new candidates — all 7 score>0 papers already reported)
 - **2026-07-04**：[[docs/daily/2026-07-04_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 - **2026-07-05**：[[docs/daily/2026-07-05_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 0 个，模型 17 个。
 - **2026-07-03**：[[docs/daily/2026-07-03_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
