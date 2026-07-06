@@ -49,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
+| 2026-07-06 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 965 | 5 | text-generation |
+| 2026-07-06 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 950 | 0 | text-generation |
+| 2026-07-06 | [wabibito/onyx-LFM2-VL-1.6B-4bit](https://huggingface.co/wabibito/onyx-LFM2-VL-1.6B-4bit) | 0 | 0 | image-text-to-text |
+| 2026-07-06 | [wabibito/onyx-LFM2-1.2B-4bit](https://huggingface.co/wabibito/onyx-LFM2-1.2B-4bit) | 0 | 0 | text-generation |
+| 2026-07-06 | [yrrhall/LFM2.5-230M-GGUF](https://huggingface.co/yrrhall/LFM2.5-230M-GGUF) | 0 | 0 | text-generation |
+| 2026-07-06 | [yrrhall/LFM2.5-230M](https://huggingface.co/yrrhall/LFM2.5-230M) | 0 | 0 | text-generation |
 | 2026-07-06 | [HoangThe/LFM2.5-VL-1.6B-Finetuned-PeopleCounter](https://huggingface.co/HoangThe/LFM2.5-VL-1.6B-Finetuned-PeopleCounter) | 0 | 0 |  |
 | 2026-07-06 | [Cheuv/LFM2.5-230M-Luth-French](https://huggingface.co/Cheuv/LFM2.5-230M-Luth-French) | 0 | 0 |  |
-| 2026-07-06 | [mahamhamid06/financial-analyst-lfm2-lora](https://huggingface.co/mahamhamid06/financial-analyst-lfm2-lora) | 0 | 0 |  |
-| 2026-07-06 | [borkiss/lfm2-350m-webgpu](https://huggingface.co/borkiss/lfm2-350m-webgpu) | 0 | 0 | text-generation |
 | 2026-07-06 | [huzpsb/LFM2.5-350M-CN-202607](https://huggingface.co/huzpsb/LFM2.5-350M-CN-202607) | 0 | 0 |  |
 | 2026-07-06 | [maxcurrent/LFM2.5-230M-FT-mythos-coder](https://huggingface.co/maxcurrent/LFM2.5-230M-FT-mythos-coder) | 0 | 0 |  |
-| 2026-07-06 | [Prataykarali/my-lfm2.5-artifacts](https://huggingface.co/Prataykarali/my-lfm2.5-artifacts) | 0 | 0 |  |
-| 2026-07-06 | [BenjaminHelle/LFM2.5-1.2B-Instruct-Code-V1.1](https://huggingface.co/BenjaminHelle/LFM2.5-1.2B-Instruct-Code-V1.1) | 0 | 0 |  |
-| 2026-07-05 | [dummy9996/LFM2.5-230M-abliterated1-gguf](https://huggingface.co/dummy9996/LFM2.5-230M-abliterated1-gguf) | 209 | 0 | text-generation |
-| 2026-07-05 | [Panga-Azazia/LFM2.5-350M-TTS](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS) | 151 | 0 | text-generation |
-| 2026-07-02 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 116118 | 658 | text-generation |
-| 2026-07-02 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 80542 | 362 | text-generation |
+| 2026-07-02 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 116118 | 659 | text-generation |
+| 2026-07-02 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 80542 | 363 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
