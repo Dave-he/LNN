@@ -325,6 +325,25 @@ tags: [LNN, reading-report, papers]
 - **局限**：4/4 子集 RUL RMSE 仍弱于 GRU (作者坦诚把当前模型定位为 "interpretable latent world model" 而非 "calibrated lifetime regressor")；`z_cond` 仍有 degradation leakage；C-MAPSS 为仿真干净数据，未覆盖 maintenance events / sensor drift / 真实异质工况。
 - **Verdict**：POSITIVE-with-honest-scope — 在多工况子集上同时拿到 forecasting 提升 + 沿退化轴有序 latent trajectory，是"LTC 不是更好 RNN 而是可检视状态演化器"立场的强证据。
 
+### [2026-07-07] 候选清空：所有 score>0 论文均已研读过（n_candidates=0）
+- **digest 入口**：[[docs/daily/2026-07-07_LNN_research_digest.md|每日追踪]]
+- **arXiv 命中**：25 篇；**本表 arXiv 候选**：12 篇；**score>0 候选**：9 篇；**已报告**：9 篇；**新增**：0 篇
+- **GitHub/HF 侧**：41 仓库 / 19 模型；本日仓库新命中 0 篇（LiquidAI LFM2 / Liquid Time-Constant / Liquidgrad / LNN-LowLight / proxy-kd-lfm2 等已在 07-04~07-06 复盘过）。
+- **本表 arXiv 候选 score 榜**（保留作存档，仅列 score>0）：
+  1. `2605.27467v1` Comparative Analysis of LNN and LSTM (score=18) — 已有 [[docs/reports/Comparative_Analysis_of_LNN_and_LSTM_研读报告.md]]
+  2. `2606.12240v1` Multi-Rate MoE for Accelerating LNN Training (score=10) — 已有 [[docs/reports/Multi-Rate_MoE_Accelerating_LNN_Training_2606.12240_研读报告.md]]
+  3. `2607.01986v1` Liquid Latent State Dynamics for Turbofan (score=10) — 已有 [[docs/reports/Liquid_Latent_State_Dynamics_Turbofan_2607.01986_研读报告.md]]
+  4. `2606.07670v1` Liquid NN as Drop-in Continuous-Time Deformation Field (score=8) — 已有 [[docs/reports/Liquid_Neural_Networks_3DGS_Deformation_Field_2606.07670_研读报告.md]]
+  5. `2606.15807v1` Memory-Augmented Graph LTC for Cross-Domain Traffic (score=5) — 已有 [[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross-Domain_Traffic_2606.15807_研读报告.md]]
+  6. `2606.26849v1` LFNet: Liquid Fusion for SOD (score=4) — 已有 [[docs/reports/LFNet_Liquid_Fusion_Heterogeneous_Representations_SOD_2606.26849_研读报告.md]]
+  7. `2605.24047v1` EMMA Multimodal (score=2) — 已有 [[docs/reports/EMMA_Multimodal_Dynamical_Parameter_Extraction_2605.24047_研读报告.md]]
+  8. `2606.20491v1` GazeLNN (score=2) — 已有 [[docs/reports/GazeLNN_2606.20491_研读报告.md]]
+  9. `2606.19579v1` FlowFake (score=0, 关键词"deepfake"主导) — 已有 [[docs/reports/FlowFake_LTC_2606.19579_研读报告.md]]
+- **score=0 跳过**：`2605.08176v1` DynPMNN, `2606.15571v1` Liquid Random Feature Methods (TD-PDE), `2606.21295v5` Topological Neural Dynamics — 三篇均已有独立报告，仅 score 函数未加权。
+- **`paper-analyzer` 技能状态**：本次 cron 该技能仍缺失（系统级 SKILL 未加载，已在开篇声明），采用"LLM 直读 digest 摘要 + 既有报告命中比对"的兜底路径，与 07-06 一致。
+- **`run_lnn_research_pipeline.sh` 行为**：本日探测到一个隐性 bug —— 脚本第 50–56 行无条件 `export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes"`，但本机的 GitHub remote `git@github-dave:Dave-he/LNN.git` 在 `~/.ssh/config` 中绑定的 IdentityFile 是 `id_github_dave-he`。脚本会强制覆盖环境变量，导致 `git fetch` / `git pull` / `git push` 全部失败。**本次 cron 通过临时将 `~/.ssh/id_ed25519` 重命名让脚本的 `[[ -r ... ]]` 判定失败而跳过 export，再用 `GIT_SSH_COMMAND="ssh -o IdentitiesOnly=yes -o BatchMode=yes"` 走 SSH config 默认密钥**，详情见 `logs/pipeline/2026-07-07_pipeline.log`。
+- **结论**：今日 LNN 关键词面仍饱和；产能保留给后续 arXiv 新论文或 GitHub/HF 高质量仓库复现报告。
+
 ### [2026-07-06] 候选清空：所有 score>0 论文均已研读过（n_candidates=0）
 - **arXiv 命中**：25 篇；**score>0 候选**：7 篇；**已报告**：7 篇；**新增**：0 篇
 - **arXiv 候选 score 榜**（保留作存档）：
