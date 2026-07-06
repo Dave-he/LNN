@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：41 个
-- Hugging Face 候选模型：17 个
+- Hugging Face 候选模型：19 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -33,9 +33,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
-| 2026-07-05 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 61 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
-| 2026-07-05 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
-| 2026-07-05 | [raddy666/Liquid-Time-Constant-Networks-](https://github.com/raddy666/Liquid-Time-Constant-Networks-) | 0 | Python | Can Liquid Time-Constant Networks Learn to See? |
+| 2026-07-06 | [maximecb/bebelm](https://github.com/maximecb/bebelm) | 62 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-07-06 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
+| 2026-07-06 | [raddy666/Liquid-Time-Constant-Networks](https://github.com/raddy666/Liquid-Time-Constant-Networks) | 0 | Python | Can Liquid Time-Constant Networks Learn to See? |
 | 2026-07-05 | [sufirumii/LiquiMedThink-1.2B](https://github.com/sufirumii/LiquiMedThink-1.2B) | 0 | Python | A Fine Tuned version of LiquidAI/LFM2.5-1.2B-Thinking on a medical reasoning thinking dataset |
 | 2026-07-04 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-07-04 | [kakopappa/proxy-kd-lfm2](https://github.com/kakopappa/proxy-kd-lfm2) | 0 | Jupyter Notebook | From-scratch Proxy-KD (arXiv:2401.07013): black-box distillation of Claude into LiquidAI LFM2.5-350M on the Sharp AC-manual Q&A task, with findings. |
@@ -49,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-07-05 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 793 | 5 | text-generation |
-| 2026-07-05 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 789 | 0 | text-generation |
-| 2026-07-05 | [dummy9996/LFM2.5-230M-abliterated1-gguf](https://huggingface.co/dummy9996/LFM2.5-230M-abliterated1-gguf) | 194 | 0 | text-generation |
-| 2026-07-05 | [huzpsb/LFM2.5-350M-CN-202607](https://huggingface.co/huzpsb/LFM2.5-350M-CN-202607) | 0 | 0 |  |
-| 2026-07-05 | [Panga-Azazia/LFM2.5-350M-TTS](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS) | 0 | 0 | text-generation |
-| 2026-07-05 | [mradermacher/LFM-2.5-1.2b-Instruct-roleplay-tuned-i1-GGUF](https://huggingface.co/mradermacher/LFM-2.5-1.2b-Instruct-roleplay-tuned-i1-GGUF) | 0 | 0 |  |
-| 2026-07-05 | [mradermacher/LFM2.5-8B-A1B-SOMPOA-heresy-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-SOMPOA-heresy-i1-GGUF) | 0 | 0 |  |
-| 2026-07-05 | [mradermacher/LFM2.5-8B-A1B-SOMPOA-heresy-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-SOMPOA-heresy-GGUF) | 0 | 0 |  |
-| 2026-07-02 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 134749 | 658 | text-generation |
-| 2026-07-02 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 80753 | 361 | text-generation |
-| 2026-06-29 | [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | 65495 | 144 | sentence-similarity |
-| 2026-06-29 | [LiquidAI/LFM2-350M-GGUF](https://huggingface.co/LiquidAI/LFM2-350M-GGUF) | 4994 | 58 | text-generation |
+| 2026-07-06 | [HoangThe/LFM2.5-VL-1.6B-Finetuned-PeopleCounter](https://huggingface.co/HoangThe/LFM2.5-VL-1.6B-Finetuned-PeopleCounter) | 0 | 0 |  |
+| 2026-07-06 | [Cheuv/LFM2.5-230M-Luth-French](https://huggingface.co/Cheuv/LFM2.5-230M-Luth-French) | 0 | 0 |  |
+| 2026-07-06 | [mahamhamid06/financial-analyst-lfm2-lora](https://huggingface.co/mahamhamid06/financial-analyst-lfm2-lora) | 0 | 0 |  |
+| 2026-07-06 | [borkiss/lfm2-350m-webgpu](https://huggingface.co/borkiss/lfm2-350m-webgpu) | 0 | 0 | text-generation |
+| 2026-07-06 | [huzpsb/LFM2.5-350M-CN-202607](https://huggingface.co/huzpsb/LFM2.5-350M-CN-202607) | 0 | 0 |  |
+| 2026-07-06 | [maxcurrent/LFM2.5-230M-FT-mythos-coder](https://huggingface.co/maxcurrent/LFM2.5-230M-FT-mythos-coder) | 0 | 0 |  |
+| 2026-07-06 | [Prataykarali/my-lfm2.5-artifacts](https://huggingface.co/Prataykarali/my-lfm2.5-artifacts) | 0 | 0 |  |
+| 2026-07-06 | [BenjaminHelle/LFM2.5-1.2B-Instruct-Code-V1.1](https://huggingface.co/BenjaminHelle/LFM2.5-1.2B-Instruct-Code-V1.1) | 0 | 0 |  |
+| 2026-07-05 | [dummy9996/LFM2.5-230M-abliterated1-gguf](https://huggingface.co/dummy9996/LFM2.5-230M-abliterated1-gguf) | 209 | 0 | text-generation |
+| 2026-07-05 | [Panga-Azazia/LFM2.5-350M-TTS](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS) | 151 | 0 | text-generation |
+| 2026-07-02 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 116118 | 658 | text-generation |
+| 2026-07-02 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 80542 | 362 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

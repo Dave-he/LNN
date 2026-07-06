@@ -8,24 +8,24 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [maximecb/bebelm](https://github.com/maximecb/bebelm)
-- 更新：2026-07-05
-- Star / Fork：61 / 6
+- 更新：2026-07-06
+- Star / Fork：62 / 6
 - 语言：Rust
 - Topics：cpu, inference, llm, local-ai, local-llm, rust
 - 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
 
 ### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
-- 更新：2026-07-05
+- 更新：2026-07-06
 - Star / Fork：1 / 0
 - 语言：C
 - Topics：未标注
 - 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
 
-### [raddy666/Liquid-Time-Constant-Networks-](https://github.com/raddy666/Liquid-Time-Constant-Networks-)
-- 更新：2026-07-05
+### [raddy666/Liquid-Time-Constant-Networks](https://github.com/raddy666/Liquid-Time-Constant-Networks)
+- 更新：2026-07-06
 - Star / Fork：0 / 0
 - 语言：Python
-- Topics：未标注
+- Topics：attention-mechanism, cnn, computer-vision, deep-learning, image-classification, liquid-neural-networks, neural-ode, pytorch
 - 说明：Can Liquid Time-Constant Networks Learn to See?
 
 ### [sufirumii/LiquiMedThink-1.2B](https://github.com/sufirumii/LiquiMedThink-1.2B)
@@ -148,99 +148,111 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Forex trading using Reinforcement Learning with Meta Trader 5 environment. This will use algorithms such as Actor Critic(A2C) Network with Proximal Policy Optimization (PPO). Subsequently the goal is to be able change the underlying network to Liquid Time Constant Network (Liquid nets), which are far greater at task dealing with timeseries
 
 ## Hugging Face 模型
-### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
-- 更新：2026-07-05
-- 下载 / Likes：793 / 5
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
+### [HoangThe/LFM2.5-VL-1.6B-Finetuned-PeopleCounter](https://huggingface.co/HoangThe/LFM2.5-VL-1.6B-Finetuned-PeopleCounter)
+- 更新：2026-07-06
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, lfm2_vl, region:us
 
-### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
-- 更新：2026-07-05
-- 下载 / Likes：789 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
+### [Cheuv/LFM2.5-230M-Luth-French](https://huggingface.co/Cheuv/LFM2.5-230M-Luth-French)
+- 更新：2026-07-06
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
 
-### [dummy9996/LFM2.5-230M-abliterated1-gguf](https://huggingface.co/dummy9996/LFM2.5-230M-abliterated1-gguf)
-- 更新：2026-07-05
-- 下载 / Likes：194 / 0
+### [mahamhamid06/financial-analyst-lfm2-lora](https://huggingface.co/mahamhamid06/financial-analyst-lfm2-lora)
+- 更新：2026-07-06
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, region:us
+
+### [borkiss/lfm2-350m-webgpu](https://huggingface.co/borkiss/lfm2-350m-webgpu)
+- 更新：2026-07-06
+- 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：gguf, text-generation, base_model:dummy9996/LFM2.5-230M-abliterated1, base_model:quantized:dummy9996/LFM2.5-230M-abliterated1, endpoints_compatible, region:us, conversational
+- Tags：webgpu, wgsl, gptq, int4, browser, text-generation, base_model:LiquidAI/LFM2-350M, base_model:finetune:LiquidAI/LFM2-350M
 
 ### [huzpsb/LFM2.5-350M-CN-202607](https://huggingface.co/huzpsb/LFM2.5-350M-CN-202607)
-- 更新：2026-07-05
+- 更新：2026-07-06
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：gguf, license:mit, endpoints_compatible, region:us, conversational
 
+### [maxcurrent/LFM2.5-230M-FT-mythos-coder](https://huggingface.co/maxcurrent/LFM2.5-230M-FT-mythos-coder)
+- 更新：2026-07-06
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, lfm2, base_model:qikp/LFM2.5-230M-Thinking, base_model:finetune:qikp/LFM2.5-230M-Thinking, region:us
+
+### [Prataykarali/my-lfm2.5-artifacts](https://huggingface.co/Prataykarali/my-lfm2.5-artifacts)
+- 更新：2026-07-06
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, endpoints_compatible, region:us, conversational
+
+### [BenjaminHelle/LFM2.5-1.2B-Instruct-Code-V1.1](https://huggingface.co/BenjaminHelle/LFM2.5-1.2B-Instruct-Code-V1.1)
+- 更新：2026-07-06
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, lfm2, llama.cpp, unsloth, endpoints_compatible, region:us, conversational
+
+### [dummy9996/LFM2.5-230M-abliterated1-gguf](https://huggingface.co/dummy9996/LFM2.5-230M-abliterated1-gguf)
+- 更新：2026-07-05
+- 下载 / Likes：209 / 0
+- 任务：text-generation
+- Tags：gguf, text-generation, base_model:dummy9996/LFM2.5-230M-abliterated1, base_model:quantized:dummy9996/LFM2.5-230M-abliterated1, endpoints_compatible, region:us, conversational
+
 ### [Panga-Azazia/LFM2.5-350M-TTS](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS)
 - 更新：2026-07-05
-- 下载 / Likes：0 / 0
+- 下载 / Likes：151 / 0
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, generated_from_trainer, sft, unsloth, trl
 
-### [mradermacher/LFM-2.5-1.2b-Instruct-roleplay-tuned-i1-GGUF](https://huggingface.co/mradermacher/LFM-2.5-1.2b-Instruct-roleplay-tuned-i1-GGUF)
-- 更新：2026-07-05
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, Roleplay, creative, lora, experimental, finetune, lfm2.5
-
-### [mradermacher/LFM2.5-8B-A1B-SOMPOA-heresy-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-SOMPOA-heresy-i1-GGUF)
-- 更新：2026-07-05
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, liquid, lfm2.5, edge, heretic, uncensored, decensored
-
-### [mradermacher/LFM2.5-8B-A1B-SOMPOA-heresy-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-SOMPOA-heresy-GGUF)
-- 更新：2026-07-05
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, liquid, lfm2.5, edge, heretic, uncensored, decensored
-
 ### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
 - 更新：2026-07-02
-- 下载 / Likes：134749 / 658
+- 下载 / Likes：116118 / 658
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M)
 - 更新：2026-07-02
-- 下载 / Likes：80753 / 361
+- 下载 / Likes：80542 / 362
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M)
 - 更新：2026-06-29
-- 下载 / Likes：65495 / 144
+- 下载 / Likes：66015 / 145
 - 任务：sentence-similarity
 - Tags：PyLate, safetensors, lfm2, liquid, edge, ColBERT, sentence-transformers, sentence-similarity
 
 ### [LiquidAI/LFM2-350M-GGUF](https://huggingface.co/LiquidAI/LFM2-350M-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：4994 / 58
+- 下载 / Likes：4979 / 58
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2, edge, llama.cpp, text-generation, en, ar
 
 ### [LiquidAI/LFM2-8B-A1B-GGUF](https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：3800 / 111
+- 下载 / Likes：3674 / 111
 - 任务：text-generation
 - Tags：transformers, gguf, liquid, lfm2, edge, moe, llama.cpp, text-generation
 
 ### [LiquidAI/LFM2-Audio-1.5B-GGUF](https://huggingface.co/LiquidAI/LFM2-Audio-1.5B-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：1480 / 35
+- 下载 / Likes：1494 / 35
 - 任务：unknown
 - Tags：gguf, audio, liquid, lfm2, edge, llama.cpp, base_model:LiquidAI/LFM2-Audio-1.5B, base_model:quantized:LiquidAI/LFM2-Audio-1.5B
 
 ### [LiquidAI/LFM2-ColBERT-350M-GGUF](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：472 / 16
+- 下载 / Likes：473 / 16
 - 任务：sentence-similarity
 - Tags：sentence-transformers, gguf, liquid, lfm2, edge, ColBERT, PyLate, sentence-similarity
 
 ### [LiquidAI/LFM2-8B-A1B-ONNX](https://huggingface.co/LiquidAI/LFM2-8B-A1B-ONNX)
 - 更新：2026-06-29
-- 下载 / Likes：192 / 5
+- 下载 / Likes：201 / 5
 - 任务：text-generation
 - Tags：onnx, lfm2_moe, liquid, edge, lfm2, moe, mixture-of-experts, onnxruntime
 
