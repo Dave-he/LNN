@@ -160,6 +160,18 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
 
+### [wabibito/onyx-LFM2-VL-1.6B-4bit](https://huggingface.co/wabibito/onyx-LFM2-VL-1.6B-4bit)
+- 更新：2026-07-06
+- 下载 / Likes：0 / 0
+- 任务：image-text-to-text
+- Tags：transformers, safetensors, lfm2-vl, image-text-to-text, liquid, lfm2, edge, mlx
+
+### [wabibito/onyx-LFM2-1.2B-4bit](https://huggingface.co/wabibito/onyx-LFM2-1.2B-4bit)
+- 更新：2026-07-06
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：mlx, safetensors, lfm2, liquid, edge, text-generation, conversational, en
+
 ### [yrrhall/LFM2.5-230M-GGUF](https://huggingface.co/yrrhall/LFM2.5-230M-GGUF)
 - 更新：2026-07-06
 - 下载 / Likes：0 / 0
@@ -184,18 +196,6 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：unknown
 - Tags：region:us
 
-### [mahamhamid06/financial-analyst-lfm2-lora](https://huggingface.co/mahamhamid06/financial-analyst-lfm2-lora)
-- 更新：2026-07-06
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：safetensors, region:us
-
-### [borkiss/lfm2-350m-webgpu](https://huggingface.co/borkiss/lfm2-350m-webgpu)
-- 更新：2026-07-06
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：webgpu, wgsl, gptq, int4, browser, text-generation, base_model:LiquidAI/LFM2-350M, base_model:finetune:LiquidAI/LFM2-350M
-
 ### [huzpsb/LFM2.5-350M-CN-202607](https://huggingface.co/huzpsb/LFM2.5-350M-CN-202607)
 - 更新：2026-07-06
 - 下载 / Likes：0 / 0
@@ -210,7 +210,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
 - 更新：2026-07-02
-- 下载 / Likes：116118 / 658
+- 下载 / Likes：116118 / 659
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
 

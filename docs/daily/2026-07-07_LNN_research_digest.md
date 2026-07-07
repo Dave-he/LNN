@@ -14,6 +14,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - Hugging Face 候选模型：19 个
 - 已下载 PDF：0 个
 
+## 数据源状态
+- `arXiv fetch failed: HTTP Error 429: Unknown Error`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
+
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
@@ -51,15 +55,15 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 |---|---|---:|---:|---|
 | 2026-07-06 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 965 | 5 | text-generation |
 | 2026-07-06 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 950 | 0 | text-generation |
+| 2026-07-06 | [wabibito/onyx-LFM2-VL-1.6B-4bit](https://huggingface.co/wabibito/onyx-LFM2-VL-1.6B-4bit) | 0 | 0 | image-text-to-text |
+| 2026-07-06 | [wabibito/onyx-LFM2-1.2B-4bit](https://huggingface.co/wabibito/onyx-LFM2-1.2B-4bit) | 0 | 0 | text-generation |
 | 2026-07-06 | [yrrhall/LFM2.5-230M-GGUF](https://huggingface.co/yrrhall/LFM2.5-230M-GGUF) | 0 | 0 | text-generation |
 | 2026-07-06 | [yrrhall/LFM2.5-230M](https://huggingface.co/yrrhall/LFM2.5-230M) | 0 | 0 | text-generation |
 | 2026-07-06 | [HoangThe/LFM2.5-VL-1.6B-Finetuned-PeopleCounter](https://huggingface.co/HoangThe/LFM2.5-VL-1.6B-Finetuned-PeopleCounter) | 0 | 0 |  |
 | 2026-07-06 | [Cheuv/LFM2.5-230M-Luth-French](https://huggingface.co/Cheuv/LFM2.5-230M-Luth-French) | 0 | 0 |  |
-| 2026-07-06 | [mahamhamid06/financial-analyst-lfm2-lora](https://huggingface.co/mahamhamid06/financial-analyst-lfm2-lora) | 0 | 0 |  |
-| 2026-07-06 | [borkiss/lfm2-350m-webgpu](https://huggingface.co/borkiss/lfm2-350m-webgpu) | 0 | 0 | text-generation |
 | 2026-07-06 | [huzpsb/LFM2.5-350M-CN-202607](https://huggingface.co/huzpsb/LFM2.5-350M-CN-202607) | 0 | 0 |  |
 | 2026-07-06 | [maxcurrent/LFM2.5-230M-FT-mythos-coder](https://huggingface.co/maxcurrent/LFM2.5-230M-FT-mythos-coder) | 0 | 0 |  |
-| 2026-07-02 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 116118 | 658 | text-generation |
+| 2026-07-02 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 116118 | 659 | text-generation |
 | 2026-07-02 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 80542 | 363 | text-generation |
 
 ## 建议动作
