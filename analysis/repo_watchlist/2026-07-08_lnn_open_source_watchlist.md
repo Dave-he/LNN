@@ -7,12 +7,33 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-07-08
 
 ## GitHub 仓库
+### [raminmh/CfC](https://github.com/raminmh/CfC)
+- 更新：2026-07-08
+- Star / Fork：1048 / 162
+- 语言：Python
+- Topics：deep-learning, neural-ode, pytorch, recurrent-neural-networks, sequence-models, tensorflow
+- 说明：Closed-form Continuous-time Neural Networks
+
 ### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
-- 更新：2026-07-07
+- 更新：2026-07-08
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：A liquid neural network framework built from first principles to model the human brain 🌊
+
+### [bluevisor/liquid-nn-demo](https://github.com/bluevisor/liquid-nn-demo)
+- 更新：2026-07-08
+- Star / Fork：0 / 0
+- 语言：HTML
+- Topics：未标注
+- 说明：A Liquid Time-Constant neural network built from scratch — a browser digit recognizer that runs the ODE solver in JS, an illustrated explainer, and an interactive lab.
+
+### [kakopappa/proxy-kd-lfm2](https://github.com/kakopappa/proxy-kd-lfm2)
+- 更新：2026-07-08
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：From-scratch Proxy-KD (arXiv:2401.07013): black-box distillation of Claude into LiquidAI LFM2.5-350M on the Sharp AC-manual Q&A task, with findings.
 
 ### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
 - 更新：2026-07-07
@@ -48,13 +69,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：attention-mechanism, cnn, computer-vision, deep-learning, image-classification, liquid-neural-networks, neural-ode, pytorch
 - 说明：Can Liquid Time-Constant Networks Learn to See?
-
-### [kakopappa/proxy-kd-lfm2](https://github.com/kakopappa/proxy-kd-lfm2)
-- 更新：2026-07-04
-- Star / Fork：0 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：From-scratch Proxy-KD (arXiv:2401.07013): black-box distillation of Claude into LiquidAI LFM2.5-350M on the Sharp AC-manual Q&A task, with findings.
 
 ### [moudook/rtx-2050-kernel-optim](https://github.com/moudook/rtx-2050-kernel-optim)
 - 更新：2026-07-04
@@ -119,13 +133,6 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm
 
-### [raminmh/CfC](https://github.com/raminmh/CfC)
-- 更新：2026-06-24
-- Star / Fork：1047 / 161
-- 语言：Python
-- Topics：deep-learning, neural-ode, pytorch, recurrent-neural-networks, sequence-models, tensorflow
-- 说明：Closed-form Continuous-time Neural Networks
-
 ### [shareef65/TLTO-Net](https://github.com/shareef65/TLTO-Net)
 - 更新：2026-06-22
 - Star / Fork：0 / 0
@@ -139,13 +146,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Cuda
 - Topics：未标注
 - 说明：Fast FP8 C++/CUDA inference engine for LiquidAI/LFM2.5-Embedding-350M (H100)
-
-### [KaiserDna23/RL_Trading](https://github.com/KaiserDna23/RL_Trading)
-- 更新：2026-06-16
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：metatrader5, python, reinforcement-learning-agent
-- 说明：Forex trading using Reinforcement Learning with Meta Trader 5 environment. This will use algorithms such as Actor Critic(A2C) Network with Proximal Policy Optimization (PPO). Subsequently the goal is to be able change the underlying network to Liquid Time Constant Network (Liquid nets), which are far greater at task dealing with timeseries
 
 ## Hugging Face 模型
 ### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
