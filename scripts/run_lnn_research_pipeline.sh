@@ -46,13 +46,40 @@ prun() {
   fi
 }
 
+# Retry 帮助: GitHub SSH 经常出现 "Connection closed by remote host / flush packet" 抖动,
+# prun_retry 默认重试 5 次, 每次间隔递增, 用于 git fetch / git pull / git push 等.
+prun_retry() {
+  local max_attempts="${RETRY_ATTEMPTS:-5}"
+  local attempt=1
+  local sleep_s=4
+  while (( attempt <= max_attempts )); do
+    if prun "$@"; then
+      return 0
+    fi
+    plog "  retry $attempt/$max_attempts after ${sleep_s}s ..."
+    sleep "$sleep_s"
+    attempt=$((attempt+1))
+    sleep_s=$((sleep_s+3))
+  done
+  plog "  [error] command failed after $max_attempts attempts: $*"
+  return 1
+}
+
 # SSH key 推送: 显式指定私钥 + IdentitiesOnly, 避免 cron / 非交互 shell 找不到 key
-SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
-if [[ -r "$SSH_KEY" ]]; then
-  export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+# 优先用 id_github_dave-he (本仓库专用 key), 回退到 id_ed25519, 再不行尝试其他常见 key
+SSH_KEY_OVERRIDE="${SSH_KEY_OVERRIDE:-}"
+SSH_KEY=""
+for _candidate in "$SSH_KEY_OVERRIDE" "$HOME/.ssh/id_github_dave-he" "$HOME/.ssh/id_ed25519" "$HOME/.ssh/github_rsa" "$HOME/.ssh/id_rsa"; do
+  if [[ -n "$_candidate" && -r "$_candidate" ]]; then
+    SSH_KEY="$_candidate"
+    break
+  fi
+done
+if [[ -n "$SSH_KEY" ]]; then
+  export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ProxyCommand=none"
   plog "ssh key: $SSH_KEY"
 else
-  plog "[warn] SSH key 不可读 ($SSH_KEY), git push 可能失败"
+  plog "[warn] 没找到任何可读 SSH key ($SSH_KEY_OVERRIDE / id_github_dave-he / id_ed25519 / github_rsa / id_rsa), git push 可能失败"
 fi
 
 mkdir -p "$LOG_DIR"
@@ -66,8 +93,8 @@ plog "skip: digest=$SKIP_DIGEST report=$SKIP_REPORT commit=$SKIP_COMMIT repro=$S
 
 if [[ "$SKIP_COMMIT" != "1" ]]; then
   if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
-    prun "git fetch --no-tags origin"
-    prun "git pull --ff-only origin HEAD || true"
+    prun_retry "git fetch --no-tags origin" || plog "[warn] git fetch 失败, 继续 (后续 pull 用 --rebase 兜底)"
+    prun_retry "git pull --ff-only origin HEAD" || prun "git pull --rebase origin HEAD" || plog "[warn] git pull 也失败, 继续 (本地提交可能产生非快进)"
   fi
 fi
 
@@ -105,10 +132,10 @@ if [[ "$SKIP_COMMIT" != "1" ]]; then
   plog "[3/4] commit: 提交当日 docs/ papers/ 变更"
   prun "git add docs papers"
   if git diff --cached --quiet; then
-    log "  无 staged 变更, 跳过 commit"
+    plog "  无 staged 变更, 跳过 commit"
   else
     prun "git commit -m 'chore(daily): LNN digest + 研读报告 ${RUN_DATE}'"
-    prun "git push origin HEAD"
+    prun_retry "git push origin HEAD" || plog "[warn] git push 失败, 留待后续重试"
   fi
 else
   plog "[3/4] commit: SKIPPED"
