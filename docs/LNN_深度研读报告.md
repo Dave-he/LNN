@@ -357,6 +357,24 @@ tags: [LNN, reading-report, papers]
 - **唯一 score=0 且未报告**：`2606.21295v5` Topological Neural Dynamics（关键词中性，跳过）
 - **结论**：今日 digest 实质为 07-04 / 07-05 的延续；研读库对 2026 上半年的 LNN / CfC / LTC 主题覆盖已饱和。下一波新主题等待 07-07+ digest。
 
+### [2026-07-10] 候选清空：所有 score>0 论文均已研读过（n_candidates=0）
+- **digest 入口**：[[docs/daily/2026-07-10_LNN_research_digest.md|每日追踪]]
+- **arXiv 命中**：25 篇；**本表 arXiv 候选**：12 篇；**score>0 候选**：7 篇；**已报告**：7 篇；**新增**：0 篇
+- **GitHub/HF 侧**：41 仓库 / 18 模型；本日仓库新命中 0 篇（`raminmh/CfC` 1048★、LiquidAI/LFM2.5-{350M,1.2B,8B-A1B} 家族 已在 07-04~07-09 历次复盘过；`AlexanderRumyantcev/LNN-LowLight` 0★、`kakopappa/proxy-kd-lfm2` 0★ 属边缘 LFM 蒸馏 / 低光增强子领域，star=0 且与本仓主线交集小，本轮不展开）。
+- **本表 arXiv 候选 score 榜**（保留作存档，仅列 score>0）：
+  1. `2605.27467v1` Comparative Analysis of LNN and LSTM (score=18) — 已有 [[docs/reports/Comparative_Analysis_of_LNN_and_LSTM_研读报告.md]]
+  2. `2607.01986v1` Liquid Latent State Dynamics for Turbofan (score=10) — 已有 [[docs/reports/Liquid_Latent_State_Dynamics_Turbofan_2607.01986_研读报告.md]]
+  3. `2606.12240v1` Multi-Rate MoE for Accelerating LNN Training (score=10) — 已有 [[docs/reports/Multi-Rate_MoE_Accelerating_LNN_Training_2606.12240_研读报告.md]]
+  4. `2606.07670v1` Liquid NN as Drop-in Continuous-Time Deformation Field (score=8) — 已有 [[docs/reports/Liquid_Neural_Networks_3DGS_Deformation_Field_2606.07670_研读报告.md]]
+  5. `2606.15807v1` Memory-Augmented Graph LTC for Cross-Domain Traffic (score=5) — 已有 [[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross_Domain_Traffic_2606.15807_研读报告.md]]
+  6. `2606.26849v1` LFNet: Liquid Fusion for SOD (score=4) — 已有 [[docs/reports/LFNet_Liquid_Fusion_Heterogeneous_Representations_SOD_2606.26849_研读报告.md]]
+  7. `2606.20491v1` GazeLNN (score=2) — 已有 [[docs/reports/GazeLNN_2606.20491_研读报告.md]]
+- **score=0 跳过**（已报告或关键词中性）：`2605.08176v1` DynPMNN、`2606.15571v1` Liquid Random Feature Methods (TD-PDE)、`2606.19579v1` FlowFake — 前两者本表摘要不含 LNN/CfC 强关键词但已被 2026 上半月 round 单独研读；FlowFake 标题 "Liquid Networks" 在 digest 截断摘要里不显式出现于正则窗口内，被已生成的独立报告覆盖。
+- **唯一 score=0 且未报告**：`2606.21295v6` Topological Neural Dynamics。注：完整 arXiv 摘要里出现 "Closed-form continuous-time neural network (CfC)" 关键词（CfC 作为 baseline 之一），但 digest 截断摘要里只保留前 ~190 字符，刚好把这句挤出去；selector 严格依赖 digest 摘要 → score=0 → 跳过。v2 已有 [[docs/reports/Topological_Neural_Dynamics_2606.21295_研读报告.md]]，v6 是同一论文的版本更新（追加扩展实验 / 修订），未触发新增独立报告。
+- **`paper-analyzer` 技能状态**：本次 cron 该技能仍缺失（系统级 SKILL 未加载，开篇已警告）。由于本日 selector 返回 `candidates=[]`，未阻塞任何报告生成流程；后续如遇 selector 返回非空但 paper-analyzer 仍缺失，需在 cron prompt 走 "LLM 直读 digest 摘要 + arXiv 全文 + PDF" 兜底路径。
+- **`run_lnn_research_pipeline.sh` 行为**：本日脚本的 SSH key 探测路径（`id_github_dave-he` 优先）正常识别 `~/.ssh/id_github_dave-he`，`git fetch` 一次重连抖动后 (Connection closed by remote host) 自动 retry 成功；`git push` 同样一次重连抖动后 retry 成功（详见 `logs/pipeline/2026-07-10_pipeline.log`）。这是 07-07 修复后的稳定行为。
+- **结论**：今日 LNN 关键词面仍饱和（连续第 4 天 n_candidates=0）；2026 上半年 LNN / CfC / LTC / NCP / LFM2 主题覆盖已闭合。下一波新主题等待 arXiv 7 月中旬（07-13 之后）的 continuous-depth / 神经动力学新一批投稿。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
