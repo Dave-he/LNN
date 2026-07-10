@@ -1,0 +1,1718 @@
+TFP: Temporally Conditioned Memory-Fusion
+Policies for Visuomotor Learning
+Yushen Liang1,†, Yue Peng1,†, Baosheng Jin1,†, Tianluo Zhang1,
+Xinyu Zhang2, Shuyi Zhou3, Zhuoran Chen1, Xinqi Liu1, Shenji Wan1
+1NYU Shanghai, Shanghai, China
+2University of Electronic Science and Technology of China, Chengdu, China
+3Beijing Institute of Technology, Beijing, China
+†Equal contribution
+§ Code: github.com/Mirage415/TFP-Temporally-conditioned-Memory-Fusion-Policies-for-Visuomotor-Learning
+Abstract—Vision–Language–Action (VLA) policies such as π0.5
+and OpenVLA perform well on many manipulation tasks, but
+they are often reactive: the next action is predicted from the
+current observation, instruction, and proprioceptive state. This
+assumption breaks down in stage-dependent manipulation, where
+visually similar states may require different actions depending
+on latent task progress and previous interaction outcomes. We
+argue that such tasks require not only memory, but dynamics-
+aware belief updates: the policy should preserve task progress
+during stable or occluded phases and revise its belief near
+contact, release, or subgoal transitions. We introduce Tempo-
+rally Conditioned Memory-Fusion Policies (TFP), a lightweight
+memory-action framework for VLA backbones. TFP maintains
+an episode-local task-progress belief with Liquid Time-Constant
+dynamics and injects the updated belief directly into the flow-
+matching action decoder through adaptive modulation. This
+lets temporally accumulated context shape the generated action
+chunk, rather than serving only as passive history context. With
+a 3.3B-parameter model, TFP improves the average success rate
+from 96.9% to 98.75% on LIBERO and from 91.4% to 93.77%
+on LIBERO-plus. On the memory-focused MIKASA ShellGame-
+Touch diagnostic, TFP achieves success up to 75.0%. Mechanistic
+analyses show that write-gain changes near manipulation events
+are about 6× larger than far non-event phases, and hidden-state
+interventions show that the belief causally modulates generated
+action chunks. These results suggest that compact, event-sensitive
+memory dynamics can improve VLA policies under occlusion,
+visual perturbation, and stage-dependent task structure.
+Index Terms—Imitation Learning, Manipulation, Memory-
+Augmented VLA
+I. INTRODUCTION
+Vision–Language–Action (VLA) models, such as π0.5,
+OpenVLA, and Octo, have achieved strong performance in
+robotic manipulation by mapping language instructions and
+multimodal observations directly to actions [2, 3, 8, 16, 22].
+However, many VLA policies remain largely reactive: each
+action is predicted from the current observation, instruc-
+tion, and proprioceptive state. This is insufficient for stage-
+dependent manipulation, where the same visible scene may
+require different actions depending on latent task progress
+and previous interaction outcomes. For example, in object
+swapping, a visually similar state may correspond to moving
+the first object to a buffer, moving the second object into the
+first object’s original location, or terminating the task.
+This motivates adding memory, or task belief, to VLA
+policies. We use “belief” to denote a learned latent memory
+state that summarizes hidden task progress relevant to future
+actions. However, robotic manipulation requires more than
+storing past observations. A useful belief must also decide
+when to change. During stable transport or occlusion, the
+policy should preserve task-progress information despite am-
+biguous visual evidence; near contact, release, or subgoal
+completion, it should rapidly incorporate new evidence. Thus,
+the key question is not only whether a VLA has memory, but
+whether its memory update follows the event structure and
+temporal dynamics of manipulation.
+Existing memory-aware robot policies mainly either retrieve
+from history buffers or maintain recurrent latent states [27,
+26, 30, 33, 18]. History-based methods preserve rich episodic
+detail but do not explicitly form a compact task-progress
+state; recurrent methods provide such a state, but updates are
+typically indexed by policy updates rather than manipulation
+events and elapsed physical time.
+We argue that chunked visuomotor control calls for a
+dynamics-aware belief update. A practical controller may re-
+query earlier when a chunk becomes unreliable, unstable, or
+requires correction after contact. Thus, the interval between
+policy queries is a physical-time variable, not merely a discrete
+step index. Liquid Time-Constant (LTC) networks provide a
+natural mechanism for such belief tracking. Their hidden states
+evolve through input-dependent time constants, allowing the
+model to retain information when task context should persist
+and to update more rapidly when new evidence appears [13,
+14]. This continuous-time inductive bias is well matched to
+memory-dependent manipulation, where completed subgoals,
+prior contacts, and interaction outcomes may remain relevant
+across multiple action chunks.
+We introduce Temporally Conditioned Memory-Fusion
+Policies (TFP), a belief-conditioned VLA framework for
+robotic manipulation. TFP maintains an episode-local latent
+belief with LTC dynamics: the previous hidden state carries
+retained task context, the current visual and proprioceptive
+observation proposes an update, and elapsed time controls how
+strongly the belief is retained or revised. The updated belief is
+projected into the action-head conditioning space and injected
+arXiv:2607.08283v1  [cs.RO]  9 Jul 2026
+
+Fig. 1: Overview illustrating the motivation for memory-conditioned visuomotor control.
+through AdaLN-style modulation, allowing temporal context
+to directly shape the flow-matching action distribution rather
+than serve only as passive historical context.
+We evaluate TFP on simulation benchmarks and real-world
+memory-dependent manipulation tasks. TFP consistently im-
+proves over reactive, history-based, and latent-state baselines.
+Mechanistic analyses further show that the learned belief
+stabilizes task-progress representations and causally modulates
+generated action chunks. Our contributions are:
+• We formulate stage-dependent manipulation as dynamics-
+aware belief tracking, where the correct action depends
+not only on latent task progress and interaction history,
+but also on when the internal belief should be revised or
+preserved.
+• We propose TFP, a belief-conditioned VLA frame-
+work that maintains a continuous-time latent belief us-
+ing LTC dynamics and injects this belief directly into
+flow-matching action generation. We further introduce
+Episode-Aware Temporal Batching (EATB) to train re-
+current belief states efficiently while preserving episode-
+local hidden-state continuity.
+• We show that TFP improves memory-dependent control
+in simulation and on a real Galaxea A1 robot, and
+provide mechanistic analyses showing that the learned be-
+lief stabilizes task-progress representations and causally
+modulates generated action chunks.
+II. RELATED WORK
+a) Memory in vision-language-action policies.: Recent
+VLA policies such as RT-2, OpenVLA, Octo, and π0 map
+language, visual observations, and robot states directly to
+actions
+[3, 16, 22, 2]. Since many manipulation tasks are
+partially observable, several works augment such policies with
+history or memory. One class stores past observations, actions,
+or semantic summaries and retrieves or attends to them at
+decision time, as in HAMLET, MemoryVLA, and Causal
+Diffusion Policy [17, 27, 20]. These methods improve access
+to past context, but memory is mainly used as a retrieval
+source rather than as an explicit state of task progress. A
+second class maintains a compact latent state. AVA-VLA uses
+a recurrent belief state to modulate visual processing, and
+ReMem-VLA propagates recurrent memory queries across
+frames and action chunks [33, 18]. These methods provide
+explicit memory, but their updates are typically tied to frames,
+policy steps, or chunks. In chunked receding-horizon control,
+however, the interval between policy queries can vary with
+execution progress, contact, or instability. The memory update
+should therefore depend on physical elapsed time, not only on
+a discrete step index.
+b) Continuous-time belief for chunked control.: Liquid
+Time-Constant networks and closed-form continuous-time net-
+works model hidden-state evolution with input-dependent time
+constants [13, 14]. TFP uses this continuous-time mechanism
+as a task-belief filter for chunked VLA control. The belief re-
+tains slow task-progress information, updates when new visual
+and proprioceptive evidence arrives, and directly modulates the
+flow-matching action decoder through AdaLN-style condition-
+ing. Thus, memory in TFP is not only retrieved context or an
+auxiliary perception signal, but a compact physical-time belief
+state that directly shapes action generation. More discussion
+
+on broader related work can be found in Appendix A.
+III. METHOD
+TFP augments a chunked VLA policy with an episode-
+local latent belief over task progress and interaction history.
+At each policy query, the current visual and proprioceptive
+observations update this belief through Liquid Time-Constant
+(LTC) dynamics, and the updated belief directly conditions the
+flow-matching action head through AdaLN-style modulation.
+This couples memory and action generation: temporal context
+is not stored as a passive history buffer, but as a persistent
+state that modulates the next generated action chunk.
+A. Problem Setting and Notation
+At policy query t, the agent receives a visual observation
+It, robot state st ∈Rds, elapsed time ∆tt ∈R≥0 since
+the previous query, language instruction ℓ, and previous belief
+ht−1 ∈Rdh. A vision encoder maps It to visual tokens
+Vt = [vt,1, . . . , vt,N] ∈RN×dv.
+(1)
+The policy updates the latent belief ht and predicts an action
+chunk conditioned on the current observation, robot state,
+instruction, and belief.
+B. Continuous-Time Belief Update
+We first form a compact observation representation xt =
+[ϕvision(Vt); ϕstate(st)], where ϕvision(·) pools or projects
+visual tokens and ϕstate(·) embeds the robot state. TFP updates
+the latent belief with an LTC-style recurrence:
+ˆht = tanh(Wh[xt; ht−1] + bh) ,
+τt = softplus(Wτ[xt; ht−1] + bτ) + ϵ.
+(2)
+kt = exp(−∆tt/τt) ,
+ht = kt ⊙ht−1 + (1 −kt) ⊙ˆht.
+(3)
+Here ˆht is the candidate belief induced by the current ob-
+servation and previous belief, τt ∈Rdh
+>0 is a vector of input-
+dependent time constants, and kt controls how much of the
+previous belief is retained over the elapsed interval ∆tt.
+Equivalently, with write gain gt = 1 −kt, the update can
+be written as
+ht −ht−1 = gt ⊙(ˆht −ht−1).
+(4)
+Thus, memory changes only when the candidate belief differs
+from the retained belief and the elapsed-time-dependent write
+gain permits the update. This is useful for manipulation: slow
+channels can preserve task context across action chunks, while
+faster channels can absorb new perceptual evidence when the
+scene changes. We use belief in a functional sense: ht is a
+learned latent state summarizing task progress and interaction
+history, rather than an explicit Bayesian posterior or a raw
+buffer of past observations.
+This shows that memory changes only when the current
+candidate belief differs from the retained belief and the write
+gain allows new evidence to be incorporated. In manipulation,
+this is useful because observations can be noisy, partially
+occluded, or locally ambiguous. Once the policy has formed
+a task-conditioned belief, later observations may produce
+candidate beliefs that are already consistent with the retained
+state, yielding small updates without making the memory
+uninformative.
+The vector-valued time constant τt allows different latent
+channels to operate at different effective time scales. We do
+not assume that individual coordinates correspond to human-
+defined events; rather, task progress, object state, contact ev-
+idence, and occlusion-related information may be represented
+as distributed latent patterns. Some subspaces can therefore
+behave as high-retention channels for slow task context, while
+others can update more quickly with local perceptual evidence.
+For each latent dimension j, the update unrolls as
+ht,j =
+ tY
+r=1
+kr,j
+!
+h0,j+
+t
+X
+i=1
+(1−ki,j)
+ 
+tY
+r=i+1
+kr,j
+!
+ˆhi,j. (5)
+Thus, the memory forms a path-dependent mixture of past
+candidate beliefs: a candidate contributes only if it is written
+when observed and retained by later updates. This explains the
+write-then-stabilize behavior observed in our diagnostics. A
+useful memory trajectory need not keep changing throughout a
+rollout; after informative observations establish the task belief,
+high retention can preserve it through occlusion, contact noise,
+or visually ambiguous stages.
+C. Belief-Conditioned Action Generation
+TFP injects the updated belief into the flow-matching action
+decoder through adaptive normalization rather than explicit
+memory-token cross-attention. Given ht, we project it into the
+decoder conditioning space:
+mt = Wmht + bm ∈Rdc.
+(6)
+The flow-matching timestep is embedded as
+eτ = PE(τ),
+zτ = W2σ(W1eτ + b1) + b2,
+(7)
+where σ(·) is a swish nonlinearity. We combine timestep and
+belief conditioning by
+ct = zτ + mt,
+ˆx(ℓ) = AdaLN(x(ℓ), ct),
+(8)
+where x(ℓ) is the hidden state of decoder layer ℓ. AdaLN
+predicts feature-wise affine modulation parameters from ct and
+applies them to normalized decoder activations [23, 24]. The
+resulting action head predicts the memory-conditioned flow
+velocity
+vθ(aτ, τ | It, st, ℓ, ht).
+(9)
+This interface makes the belief directly modulate the generated
+action chunk, instead of requiring the decoder to retrieve and
+interpret a separate memory token sequence. Consequently,
+visually similar observations can produce different actions
+when their retained task beliefs differ. Additional discussion of
+this adaptive-conditioning interface is given in Appendix B-A.
+
+Fig. 2: TFP maintains a continuous-time latent belief and injects it into the action decoder through adaptive modulation.
+D. Training with Episode-Aware Temporal Batching
+Training TFP requires preserving hidden-state continuity
+within each demonstration episode. Randomly shuffling indi-
+vidual chunks breaks this continuity, while full-episode back-
+propagation is memory-intensive for large VLA backbones.
+We therefore introduce Episode-Aware Temporal Batching
+(EATB), which trains on temporally contiguous chunks from
+multiple episodes in parallel while maintaining a separate
+hidden state for each active episode.
+For each episode e, EATB keeps an episode-local hidden
+state h(e)
+t
+= fθ(h(e)
+t−1, o(e)
+t , ∆t(e)
+t ) and resets it only at episode
+boundaries. At each training step, we sample B active episodes
+and unroll each for K consecutive chunks. If episode eb starts
+from chunk index τb, its stored hidden state is retrieved as
+hb,0 = ˜h(eb)
+τb
+and updated through the segment. We optimize
+the average flow-matching imitation loss over the resulting
+BK chunks,
+Ls =
+1
+BK
+B
+X
+b=1
+K
+X
+k=1
+ℓ(b,k)
+flow .
+(10)
+After the parameter update, the final hidden state is written
+back with gradient truncation:
+˜h(eb)
+τb+K ←stopgrad(hb,K).
+(11)
+Thus, hidden states persist numerically across training seg-
+ments, while gradients are truncated at segment boundaries.
+EATB preserves long-horizon forward memory without the
+cost of full-episode backpropagation. Further implementation
+details are described in Appendix B.
+E. Adaptive Receding-Horizon Execution
+To evaluate TFP under irregular policy-query intervals, we
+use an inference-time adaptive receding-horizon executor. The
+policy always predicts an action chunk of horizon H, but the
+executor selects a prefix length Et ∈[Emin, H] to execute
+before the next policy query. The next memory update receives
+the actual elapsed interval
+∆tt+1 = Etδtctrl.
+(12)
+The executor executes the full horizon by default and shortens
+the prefix only when the predicted chunk contains a gripper-
+transition boundary or a sustained high-risk region. The per-
+step chunk risk is
+Rt,r = λjJt,r + λbBt,r + λcCt,r,
+(13)
+where Jt,r measures action jerk, Bt,r indicates gripper-
+transition boundaries, and Ct,r measures continuity with the
+previously executed action. This changes only the inference-
+time execution schedule; the policy network, predicted action
+horizon, and model weights are unchanged.
+IV. COMPARISON TO RECURRENT AND STATE-SPACE
+BASELINES
+A. Relation to GRUs
+A standard GRU updates its hidden state as
+ht = zt⊙ht−1+(1−zt)⊙˜ht,
+zt = σ(Wz[xt, ht−1] + bz) .
+(14)
+This update resembles the interpolation form used by TFP,
+but its retention gate is indexed by recurrent steps rather
+than physical time. In particular, when elapsed time is not
+provided as an input, two updates with the same observation
+and previous hidden state necessarily produce the same gate,
+even if they occur after different physical intervals.
+This differs from continuous-time belief dynamics. For
+example, in the absence of new evidence, exponential decay
+evolves as
+ht = exp(−λ∆tt)ht−1,
+λ > 0,
+(15)
+and therefore produces different retained states for different
+values of ∆tt. A standard step-indexed GRU without access
+to ∆tt does not enforce this elapsed-time dependence. In
+contrast, TFP explicitly parameterizes its retention as
+kt = exp(−∆tt/τt),
+(16)
+so the belief update remains calibrated to the physical interval
+between policy queries.
+This distinction does not imply that GRUs or LSTMs are
+incapable of representing temporal history. Rather, elapsed-
+time consistency must be learned from additional timing inputs
+
+or introduced through architectural constraints, whereas it is
+built directly into the TFP update.
+B. Relation to Fixed-Decay Memory
+A fixed-decay memory updates its state according to
+ht = exp(−∆tt/τ0)⊙ht−1+(1 −exp(−∆tt/τ0))⊙ˆht, (17)
+where τ0 is a constant time scale. This model is a special case
+of the TFP update obtained by setting τt = τ0. TFP instead
+predicts
+τt = τθ(xt, ht−1),
+(18)
+allowing the effective retention time to depend on both the
+current evidence and the retained belief. Consequently, TFP
+preserves the elapsed-time structure of exponential retention
+while adapting how quickly individual memory channels up-
+date across different task states and interaction events.
+C. Relation to State-Space Models
+Linear state-space models provide efficient long-horizon
+sequence modeling through structured linear recurrences [12,
+11]. Continuous- time SSMs can also implement elapsed-time-
+dependent transitions, for example
+ht = exp(A∆tt)ht−1 + B(∆tt)xt.
+Therefore, we do not claim that LTC is more time-consistent
+than all SSMs. Instead, the distinction is functional: TFP uses
+LTC as a nonlinear, input-dependent belief fuser whose state
+directly conditions a generative action decoder. This makes
+the memory update both time-calibrated and action-relevant
+for chunked manipulation policies.
+D. Computational Overhead
+The LTC update costs O(dh(dx + dh)), where dx is the
+compact observation dimension and dh is the memory dimen-
+sion. The memory projection costs O(dhdc), and AdaLN adds
+only lightweight affine modulation in the action decoder. These
+costs are small relative to the vision-language backbone and
+transformer-based action decoder; the main computational cost
+of TFP comes from recurrent training over multiple contiguous
+chunks.
+V. EXPERIMENTS
+Evaluation Questions. Our experiments ask whether TFP
+(i) improves standard and robustness-oriented manipulation
+benchmarks, (ii) improves real-world stage-dependent manip-
+ulation where the current observation alone is insufficient,
+(iii) encodes action-relevant task progress that causally affects
+action generation, and (iv) benefits from continuous-time LTC
+dynamics and real elapsed-time conditioning under irregular
+control intervals.
+a) Experimental Setup.: We evaluate TFP with π0.5
+as the primary VLA backbone on LIBERO, LIBERO-plus,
+MIKASA-Robo, and two Galaxea A1 real-world tasks: object
+swapping and counting pick-and-place. For our controlled
+same-backbone experiments, all reproduced variants use the
+same demonstrations, action horizon, optimizer, and rollout
+protocol. Published baselines are reported as literature ref-
+erences when available. Across experiments, TFP receives a
+language prompt, two RGB observations, and proprioceptive
+state at each policy query, and maintains an episode-local 256-
+dimensional memory state ht. For recurrent methods, EATB is
+applied during training, memory states are episode-local and
+reset only at episode boundaries during inference.
+For comparisons to published baselines, we report their
+original fixed-horizon numbers when available and mark them
+as literature references. For our controlled same-backbone
+ablations, including recurrent variants, TFP w/o ∆t, and TFP,
+we use the same adaptive receding-horizon executor. Thus,
+policy queries occur after variable executed prefixes, and all
+controlled memory variants are evaluated under the same
+irregular-query schedule. The only difference between TFP
+and TFP w/o ∆t is whether the memory update receives the
+measured elapsed interval or a constant step interval. The real-
+world setup uses a single-arm Galaxea A1 platform with a
+parallel gripper, a wrist-mounted fisheye camera, and a static
+Intel RealSense D435 camera. Predicted action chunks are
+executed as joint-angle commands through ROS1 Noetic.
+Statistical reliability for the reproduced LIBERO and real-
+world results is reported in Appendix E.
+A. Main Benchmark Results
+We organize our evaluation around different benchmark
+purposes. LIBERO and LIBERO-plus measure online roll-
+out performance and general manipulation quality, includ-
+ing long-horizon and multi-stage tasks. This is important
+because real-world manipulation is not always explicitly
+memory-dependent; a memory-augmented VLA should im-
+prove memory-sensitive behavior without sacrificing general
+task execution. Tables I summarizes the results on simulation
+benchmarks.
+We then use memory-focused benchmarks and real-world
+experiments as sanity checks for whether the proposed mem-
+ory state is used. MIKASA-Robo ShellGameTouch isolates
+belief-state filtering under occlusion in simulation, while our
+real-world A1 experiments evaluate memory-dependent ma-
+nipulation on hardware. Thus, LIBERO benchmark tests gen-
+erality and rollout quality, whereas MIKASA-Robo and real-
+world A1 experiments test the intended memory mechanism,
+and LIBERO-plus further evaluates zero-shot generality under
+occlusion and visual perturbations, where the belief state is
+expected to stabilize action generation when the current ob-
+servation is incomplete or unreliable. Ablations with recurrent,
+SSM-based variants are reported in Sec. V-C.
+LIBERO. On LIBERO, TFP improves the average success
+rate from 96.9% for the reactive π0.5 baseline to 98.75%.
+The improvement is most visible on the long split, where
+
+Fig. 3: Episode-Aware Temporal Batching trains on contiguous chunks while carrying episode-local hidden states across truncated segments.
+TABLE I: Success rate (%) on LIBERO, LIBERO-plus, and MIKASA-Robo ShellGameTouch. TFP obtains the best average success rate
+on both LIBERO and LIBERO-plus while remaining in the 3.3B-parameter-only regime. Numbers for prior methods are reported results
+from published work and are not necessarily reproduced under our training pipeline. We use ShellGameTouch as a diagnostic rather than a
+state-of-the-art comparison.
+LIBERO
+LIBERO-plus
+MIKASA-Robo
+Policy
+Spatial Object Goal Long-10
+Avg.
+Noise Light Backgr.
+Avg.
+ShellGameTouch
+π0.5 (3.3B)
+98.8
+98.0
+98.2
+92.4
+96.85
+85.2
+93.9
+95.1
+91.4
+–
+π0 (3.3B)
+94.2
+96.4
+96.8
+87.6
+93.8
+79.0
+85.0
+81.4
+81.8
+33
+OpenVLA (7B)
+84.7
+88.4
+79.2
+53.7
+76.5
+15.2
+8.1
+34.8
+19.37
+12
+OpenVLA-OFT (7.3B)
+97.6
+98.4
+97.9
+94.5
+97.1
+75.8
+88.7
+93.3
+85.93
+47
+HAMLET (3B)
+99.0
+100.0
+99.2
+92.2
+97.6
+–
+–
+–
+–
+–
+AVA-VLA [33] (7.3B)
+97.4
+99.4
+97.4
+97.6
+98.0
+78.0
+95.5
+88.9
+87.47
+–
+MemoryVLA (7.3B)
+98.4
+98.4
+96.4
+93.4
+96.65
+–
+–
+–
+–
+88
+TFP (ours) (3.3B)
+99.6
+99.0
+99.4
+97.0
+98.75
+88.5
+96.1
+96.7
+93.77
+75
+TFP reaches 97.0% compared with 92.4% for π0.5. This
+supports our hypothesis that maintaining latent task progress
+is especially beneficial for long-horizon manipulation, where
+the current observation alone may be insufficient for selecting
+the correct action.
+LIBERO-plus. On LIBERO-plus, TFP achieves the best av-
+erage robustness score of 93.77%, outperforming π0.5 by 2.37
+percentage points. The gains are most notable under noise and
+lighting perturbations, where TFP improves from 85.2% to
+88.5% and from 93.9% to 96.1%, respectively.
+MIKASA-Robo. On MIKASA-Robo ShellGameTouch, TFP
+achieves a success rate of 75.0%, substantially improving
+over the reported OpenVLA-OFT reference result at 47.0%.
+ShellGameTouch isolates belief-state filtering under occlusion:
+after the ball is hidden by visually identical mugs, the policy
+must remember the hidden ball location and use that belief
+to touch the correct mug. Since the Touch variant minimizes
+additional pushing or grasping requirements, the improvement
+more directly reflects memory-conditioned action selection
+rather than low-level manipulation skill. We do not present
+this result as a state-of-the-art claim: MemoryVLA reports
+88.0% on this task. Instead, we use ShellGameTouch as a
+diagnostic showing that TFP improves hidden-state reasoning
+in a reactive VLA, while the remaining gap points to a comple-
+mentary need for object-centric hidden-location binding; see
+Appendix D-B.
+Real-world A1. Table II reports real-robot success counts and
+dominant failure types among unsuccessful trials.
+TABLE II: Real-world Galaxea A1 results and failure analysis.
+Task
+Method
+Success
+Stage
+Repeat
+Target
+Exec.
+Object swap
+π0.5
+3/20
+✓
+✓
+◦
+–
+TFP
+15/20
+–
+–
+◦
+✓
+Counting pick-place
+π0.5
+8/20
+✓
+✓
+–
+◦
+TFP
+18/20
+–
+◦
+◦
+✓
+Failure tags: Stage = wrong phase/forgotten progress; Repeat = completed subtask
+repeated; Target = wrong object/placement grounding; Exec. = low-level grasp,
+placement, or contact instability.
+Table II shows that TFP primarily reduces stage-level mem-
+ory failures: the reactive baseline often repeats completed
+subtasks or switches to the wrong stage, whereas TFP failures
+shift toward target grounding and low-level execution errors.
+This suggests that the learned belief improves task-progress
+tracking rather than merely improving low-level manipulation.
+B. Event-Sensitive Belief Dynamics
+a) Irregular-query
+diagnostic.:
+We
+next
+examine
+whether the LTC memory learns an event-sensitive belief
+
+Fig. 4: LTC belief update gain gt during a rollout. Frames, dimension-wise gate heatmaps, and summary statistics show gate changes around
+reaching, carrying, releasing, and pushing events.
+update rather than a generic step-indexed recurrence. For
+this diagnostic, we run TFP with adaptive receding-horizon
+execution: the policy predicts an action chunk, but the
+executor may re-query after a variable executed prefix when
+the chunk crosses a gripper transition, contact-sensitive phase,
+or unstable region. The memory update therefore receives the
+elapsed interval between policy queries. This setting exposes
+the memory module to irregular physical time, so the learned
+update gain can reflect both manipulation events and elapsed
+time rather than a fixed recurrent step index.
+At each policy query, we record the internal LTC variables
+during LIBERO rollouts: the time constant τt, retention gate
+kt, update gain gt = 1 −kt, hidden state ht, and candidate
+belief ˆht. Larger values of gt indicate stronger writing from the
+current observation, whereas smaller values indicate stronger
+retention of the previous task belief. Thus, the temporal pattern
+of gt directly reveals when the model chooses to revise or
+preserve its latent belief.
+For interpretation only, we extract privileged simulator
+states such as gripper state, end-effector position, object poses,
+object height, and task success; these signals are never pro-
+vided to the policy.
+Figure 4 shows nonuniform LTC updates: some dimen-
+sions remain stable during transport, while others change
+near task transitions. To quantify this event sensitivity, we
+measure write-gain changes Dg
+t =
+1
+dh
+P
+i |gt,i −gt−1,i|. For
+each simulator-side event, we take the largest Dg
+t within ±6
+queries and compare it with a far non-event baseline excluding
+±8-query neighborhoods. Table III shows that gain-pattern
+changes near events are about 6× larger than the far non-event
+baseline, indicating that the policy often adjusts its write/retain
+schedule slightly before the simulator-side event label.
+TABLE III: Lagged alignment of LTC write-gain dynamics on
+LIBERO mug-in-microwave, using 224 events from 30 successful
+rollouts.
+Metric
+Center/base Best ±6/base
+95% CI
+Lag
+Mean dim. |∆gt|
+0.42×
+5.97×
+[4.61, 7.54] −1.64
+Top-10% dim. |∆gt|
+0.48×
+5.90×
+[4.57, 7.44] −2.13
+|∆¯gt|
+0.34×
+6.24×
+[4.81, 7.88] −1.78
+∥∆gt∥2/√dh
+0.35×
+6.14×
+[4.65, 7.88] −1.88
+Following prior analyses of policy dynamics and task-relevant
+factors [32], we use event labels only post hoc: they are not
+provided to the policy, but reveal whether LTC update gains
+track manipulation changes.
+b) Same Observation, Different Memory States.: Fixing
+the observation, robot state, and instruction while replacing
+only the LTC hidden state substantially changes the pre-
+dicted 10-step action chunks: mean pairwise action distance is
+0.0442, maximum 0.1303, while temporally adjacent hidden
+states have median distance 0.0108. Thus, the LTC belief
+actively conditions actions; see Appendix D-A.
+C. Ablation Studies
+We ablate whether TFP’s gains come merely from adding
+temporal state, and whether elapsed-time conditioning in the
+LTC update is necessary.
+1) Memory Dynamics: We compare TFP with GRU and
+S4D memory variants under the same π0.5 backbone, training
+data, action horizon, and LIBERO evaluation protocol. This
+tests whether gains come from generic recurrence or from
+continuous-time memory coupled to action-head conditioning.
+GRU performs competitively on spatial tasks but degrades
+on object, goal, and long-horizon tasks; S4D improves over
+GRU but remains below TFP, especially on the long-horizon
+
+TABLE IV: Controlled memory-dynamics ablations under the same adaptive receding-horizon executor. All same-backbone variants use the
+same demonstrations, action horizon, optimizer, rollout protocol, and irregular-query execution schedule. TFP w/o ∆t uses the same LTC
+and AdaLN architecture as TFP but replaces the measured elapsed interval with a constant step size.
+(a) LIBERO [19]
+Method
+Spatial
+Object
+Goal
+Long
+Avg.
+π0.5
+98.8
+98.0
+98.2
+92.4
+96.9
+π0.5 + GRU
+99.0
+98.5
+95.5
+89.0
+95.5
+π0.5 + SSM (S4D)
+98.5
+98.5
+97.0
+92.5
+96.625
+TFP w/o ∆t
+98.5
+97.5
+97.5
+94.0
+96.9
+TFP (ours)
+99.6
+99.0
+99.4
+97.0
+98.75
+(b) LIBERO-plus [9]
+Method
+Noise
+Light
+Bg.
+Avg.
+π0.5
+85.2
+93.9
+95.1
+91.4
+π0.5 + GRU
+85.9
+91.5
+96.1
+91.2
+π0.5 + SSM (S4D)
+82.6
+95.0
+92.3
+90.0
+TFP w/o ∆t
+82.5
+93.8
+94.1
+90.1
+TFP (ours)
+88.5
+96.1
+96.7
+93.8
+split. Thus, gains are not from memory alone: the state must
+be temporally stable and directly coupled to action generation.
+a) Elapsed-time
+conditioning.:
+Because
+adaptive
+receding-horizon execution re-queries the policy after variable
+executed prefixes, the interval between memory updates is
+nonuniform. We isolate the role of measured elapsed time
+by comparing TFP with TFP w/o ∆t, which keeps the same
+LTC update, AdaLN action conditioning, training data, and
+adaptive executor, but replaces the measured interval with
+a constant step size. The drop from TFP to TFP w/o ∆t,
+especially on LIBERO Long and LIBERO-plus, shows that
+the gain is not only from adding a recurrent state or adaptive
+execution; the memory update benefits from receiving the
+actual elapsed time between policy queries.
+On LIBERO-plus, GRU improves some perturbations but
+lowers average robustness relative to π0.5, while TFP improves
+the average from 91.4% to 93.8%, mainly under noise and
+lighting. Memory must therefore stabilize action generation
+rather than merely add recurrent state.
+D. Limitations
+Although LTC and AdaLN add little inference overhead,
+recurrent full fine-tuning is costly because training must unroll
+across action chunks to preserve hidden-state continuity and
+credit assignment. EATB truncates gradients across contiguous
+chunks, but our largest LIBERO runs still used K = 8, batch
+size 128, over 100GB GPU memory, and about 80 hours on 4
+H200 GPUs to reach imitation loss near 0.003. Our real-world
+evaluation is also limited to tabletop single-arm manipulation,
+leaving mobile manipulators, humanoids, and dexterous hands
+for future work.
+VI. CONCLUSION
+We presented Temporally Conditioned Memory-Fusion
+Policies (TFP), a framework for extending reactive VLA
+policies with an explicit task-progress belief for history-
+dependent manipulation. TFP maintains this belief with Liquid
+Time-Constant dynamics and injects it directly into the flow-
+matching action decoder through AdaLN-style conditioning,
+allowing the learned belief to shape action generation rather
+than serve as passive history context. Across simulation and
+real-world tasks, TFP improves performance most clearly
+when the current observation alone is insufficient, includ-
+ing long-horizon, visually perturbed, occluded, and stage-
+dependent manipulation settings. Mechanistic analyses show
+that the learned write-gain dynamics change sharply near
+manipulation-event boundaries, while hidden-memory inter-
+ventions show that changing only the belief can alter the gen-
+erated action chunk and end-effector trajectory. These results
+suggest that memory in VLA policies should act as an event-
+sensitive action-conditioning state: retaining task progress dur-
+ing stable or ambiguous phases, and revising the belief when
+task-relevant evidence changes. Future work should combine
+such dynamics-aware memory with stronger object-centric
+grounding, spatial generalization, and compositional planning,
+while developing more efficient recurrent fine-tuning schemes.
+
+REFERENCES
+[1] Inci M Baytas, Cao Xiao, Xi Zhang, Fei Wang, Anil K
+Jain, and Jiayu Zhou. Patient subtyping via time-aware
+lstm networks. In Proceedings of the 23rd ACM SIGKDD
+international conference on knowledge discovery and
+data mining, pages 65–74, 2017.
+[2] Kevin Black et al.
+π0: A flow-matching policy
+for generalist robot manipulation.
+arXiv preprint
+arXiv:2410.24164, 2024. Physical Intelligence.
+[3] Anthony Brohan, Noah Brown, Justice Carbajal, Yev-
+gen Chebotar, Joseph Dabis, Chelsea Finn, Keerthana
+Gopalakrishnan, Karol Hausman, Alexander Herzog, Jas-
+mine Hsu, et al. RT-2: Vision-language-action models
+transfer web knowledge to robotic control. arXiv preprint
+arXiv:2307.15818, 2023.
+[4] Zhengping Che, Sanjay Purushotham, Kyunghyun Cho,
+David Sontag, and Yan Liu. Recurrent neural networks
+for multivariate time series with missing values. Scientific
+reports, 8(1):6085, 2018.
+[5] Ricky T. Q. Chen, Yulia Rubanova, Jesse Bettencourt,
+and David Duvenaud. Neural ordinary differential equa-
+tions.
+In Advances in Neural Information Processing
+Systems, volume 31, 2018.
+[6] Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau,
+Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran
+Song. Diffusion policy: Visuomotor policy learning via
+action diffusion. arXiv preprint arXiv:2303.04137, 2023.
+[7] Kyunghyun
+Cho,
+Bart
+Van
+Merri¨enboer,
+C¸ a˘glar
+Gulc¸ehre, Dzmitry Bahdanau, Fethi Bougares, Holger
+Schwenk,
+and
+Yoshua
+Bengio.
+Learning
+phrase
+representations using rnn encoder–decoder for statistical
+machine translation.
+In Proceedings of the 2014
+conference on empirical methods in natural language
+processing (EMNLP), pages 1724–1734, 2014.
+[8] Danny Driess, Fei Xia, Mehdi S. M. Sajjadi, Corey
+Lynch, Aakanksha Chowdhery, Brian Ichter, Ayzaan
+Wahid, Jonathan Tompson, Quan Vuong, Tianhe Yu,
+et al.
+PaLM-E: An embodied multimodal language
+model. arXiv preprint arXiv:2303.03378, 2023.
+[9] Senyu Fei, Siyin Wang, Junhao Shi, Zihao Dai, Jikun Cai,
+Pengfang Qian, Ji Li, Xinzhe He, Shiduo Zhang, Zhaoye
+Fei, Jinlan Fu, Jingjing Gong, and Xipeng Qiu. LIBERO-
+Plus: In-depth robustness analysis of vision-language-
+action models. arXiv preprint arXiv:2510.13626, 2025.
+[10] Ken-ichi Funahashi and Yuichi Nakamura. Approxima-
+tion of dynamical systems by continuous time recurrent
+neural networks. Neural networks, 6(6):801–806, 1993.
+[11] Albert Gu and Tri Dao. Mamba: Linear-time sequence
+modeling with selective state spaces.
+arXiv preprint
+arXiv:2312.00752, 2023.
+[12] Albert Gu, Karan Goel, and Christopher R´e. Efficiently
+modeling long sequences with structured state spaces. In
+International Conference on Learning Representations,
+2022.
+[13] Ramin Hasani, Mathias Lechner, Alexander Amini,
+Daniela Rus, and Radu Grosu.
+Liquid time-constant
+networks.
+In Proceedings of the AAAI Conference
+on Artificial Intelligence, volume 35, pages 7657–7666,
+2021.
+[14] Ramin Hasani, Mathias Lechner, Alexander Amini,
+Hongxu Sun, Arash Mehrjou, Radu Grosu, and Daniela
+Rus.
+Closed-form continuous-time neural networks.
+Nature Machine Intelligence, 4(11):992–1003, 2022. doi:
+10.1038/s42256-022-00556-7.
+[15] Sepp Hochreiter and J¨urgen Schmidhuber. Long short-
+term memory.
+Neural Computation, 9(8):1735–1780,
+1997. doi: 10.1162/neco.1997.9.8.1735.
+[16] Moo
+Jin
+Kim
+et
+al.
+OpenVLA:
+An
+open-
+source vision-language-action model.
+arXiv preprint
+arXiv:2406.09246, 2024.
+[17] Myungkyu Koo, Daewon Choi, Taeyoung Kim, Kyung-
+min Lee, Changyeon Kim, Younggyo Seo, and Jin-
+woo Shin. Hamlet: Switch your vision-language-action
+model into a history-aware policy.
+arXiv preprint
+arXiv:2510.00695, 2025.
+[18] Hang Li, Fengyi Shen, Dong Chen, Liudi Yang, Xudong
+Wang, Jinkui Shi, Zhenshan Bing, Ziyuan Liu, and Alois
+Knoll. Remem-vla: Empowering vision-language-action
+model with memory via dual-level recurrent queries.
+arXiv preprint arXiv:2603.12942, 2026. doi: 10.48550/
+arXiv.2603.12942.
+[19] Bo Liu, Yifeng Zhu, Chongkai Gao, Yihao Feng, Qiang
+Liu, Yuke Zhu, and Peter Stone. LIBERO: Benchmarking
+knowledge transfer for lifelong robot learning.
+arXiv
+preprint arXiv:2306.03310, 2023.
+[20] Jiahua Ma et al.
+CDP: Towards robust autoregressive
+visuomotor policy learning via causal diffusion. arXiv
+preprint arXiv:2506.14769, 2025.
+[21] Daniel Neil, Michael Pfeiffer, and Shih-Chii Liu. Phased
+lstm: Accelerating recurrent network training for long or
+event-based sequences. Advances in neural information
+processing systems, 29, 2016.
+[22] Octo Model Team, Dibya Ghosh, Homer Walke, Karl
+Pertsch, Kevin Black, Oier Mees, Sudeep Dasari, Joey
+Hejna, Charles Xu, Jianlan Luo, et al.
+Octo: An
+open-source generalist robot policy.
+arXiv preprint
+arXiv:2405.12213, 2024.
+[23] William Peebles and Saining Xie.
+Scalable diffu-
+sion models with transformers.
+In Proceedings of the
+IEEE/CVF International Conference on Computer Vision
+(ICCV), pages 4195–4205, October 2023.
+[24] Ethan Perez, Florian Strub, Harm de Vries, Vincent
+Dumoulin, and Aaron Courville. FiLM: Visual reasoning
+with a general conditioning layer. In Proceedings of the
+AAAI Conference on Artificial Intelligence, 2018.
+[25] Yulia Rubanova, Ricky T. Q. Chen, and David Duvenaud.
+Latent ordinary differential equations for irregularly-
+sampled time series. In Advances in Neural Information
+Processing Systems, volume 32, 2019.
+[26] Rutav Shah, Rajat Kumar Jenamani, Xiaohan Zhang,
+Lingfeng Sun, Roberto Mart´ın-Mart´ın, Yuke Zhu, Deva
+
+Ramanan, and Karl Schmeckpeper.
+Scaling short-
+term memory of visuomotor policies for long-horizon
+tasks, 2026.
+URL https://openreview.net/forum?id=
+5SMNtmJFGa. Submitted to ICLR 2026.
+[27] Hao Shi, Bin Xie, Yingfei Liu, Lin Sun, Fengrong
+Liu, Tiancai Wang, Erjin Zhou, Haoqiang Fan, Xi-
+angyu Zhang, and Gao Huang. Memoryvla: Perceptual-
+cognitive memory in vision-language-action models for
+robotic manipulation. arXiv preprint arXiv:2508.19236,
+2025.
+[28] Mohit
+Shridhar,
+Lucas
+Manuelli,
+and
+Dieter
+Fox.
+Perceiver-actor: A multi-task transformer for robotic ma-
+nipulation. In Conference on Robot Learning, pages 785–
+799. PMLR, 2023.
+[29] Qingxiong Tan, Mang Ye, Baoyao Yang, Siqi Liu,
+Andy Jinhua Ma, Terry Cheuk-Fung Yip, Grace Lai-
+Hung Wong, and PongChi Yuen.
+Data-gru: Dual-
+attention time-aware gated recurrent unit for irregular
+multivariate time series.
+In Proceedings of the AAAI
+conference on artificial intelligence, volume 34, pages
+930–937, 2020.
+[30] Marcel Torne, Karl Pertsch, Homer Walke, Kyle Ved-
+der, Suraj Nair, Brian Ichter, Allen Z. Ren, Haohuan
+Wang, Jiaming Tang, Kyle Stachowicz, Karan Dhabalia,
+Michael Equi, Quan Vuong, Jost Tobias Springenberg,
+Sergey Levine, Chelsea Finn, and Danny Driess. Mem:
+Multi-scale embodied memory for vision language action
+models.
+arXiv preprint arXiv:2603.03596, 2026.
+doi:
+10.48550/arXiv.2603.03596.
+[31] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob
+Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser,
+and Illia Polosukhin. Attention is all you need. Advances
+in Neural Information Processing Systems, 30, 2017.
+[32] Tsun-Hsuan Wang, Wei Xiao, Tim Seyde, Ramin Hasani,
+and Daniela Rus.
+Measuring interpretability of neural
+policies of robots with disentangled representation. In
+7th Annual Conference on Robot Learning, 2023. URL
+https://openreview.net/forum?id=6kSohKYYTn0.
+[33] Lei Xiao, Jifeng Li, Juntao Gao, Feiyang Ye, Yan
+Jin, Jingjing Qian, Jing Zhang, Yong Wu, and Xi-
+aoyuan Yu.
+AVA-VLA: Improving vision-language-
+action models with active visual attention. arXiv preprint
+arXiv:2511.18960, 2025.
+doi: 10.48550/arXiv.2511.
+18960.
+[34] Tony Z. Zhao, Vikash Kumar, Sergey Levine, and
+Chelsea Finn. Learning fine-grained bimanual manipu-
+lation with low-cost hardware. In Robotics: Science and
+Systems, 2023.
+
+The appendix provides additional material omitted from the
+main paper for space. Appendix A gives a broader discussion
+of related work. Appendix B describes implementation and
+execution details. Appendix C formalizes the continuous-time
+belief interpretation of LTC memory. Appendix IV compares
+TFP with recurrent, fixed-decay, and state-space alternatives.
+Appendix D provides additional experimental details, in-
+cluding hidden-state interventions and MIKASA-Robo failure
+analysis. Appendix E reports statistical reliability results for
+simulation and real-world rollouts.
+APPENDIX A
+ADDITIONAL RELATED WORK
+a) Vision-language-conditioned robot policies.: Robot
+manipulation has increasingly moved from task-specific be-
+havior cloning toward vision-language-conditioned policies
+that map images, language instructions, and robot states to
+actions. RT-2, OpenVLA, Octo, and π0 extend this direction
+to generalist VLA policies trained with large-scale robot and
+vision-language data [3, 16, 22, 2]. Related architectures
+such as PerAct further show the benefit of structured visual
+representations for language-conditioned manipulation [28].
+TFP builds on this family of policies, but targets a different
+failure mode: in stage-dependent manipulation, the current
+observation and instruction may not uniquely determine the
+correct action without an internal belief over task progress,
+hidden object state, or previous interaction outcomes.
+b) Chunked generative action policies.: Recent imitation
+policies often predict action chunks rather than single-step
+actions. ACT learns sequence-level action prediction for fine-
+grained manipulation, Diffusion Policy represents visuomotor
+control as conditional denoising over action trajectories, and
+π0 uses flow matching for generalist action generation [34,
+6, 2].Action chunking improves temporal consistency and
+reduces policy-query frequency, but it also creates a memory
+problem: after executing part of a chunk, the policy must
+decide what task-progress information should persist to the
+next query. TFP addresses this by maintaining a latent belief
+across policy queries and injecting it directly into the action
+decoder.
+c) Temporal and continuous-time memory models.: Tem-
+poral context can be modeled with recurrent networks, self-
+attention,state-space models, and continuous-time recurrent
+dynamics. RNNs, LSTMs, and GRUs provide compact re-
+current states for history aggregation, with LSTMs designed
+for long time-lag dependencies and GRUs offering a gated
+recurrence [15, 7]. Time-aware variants further incorporate
+elapsed time through decay mechanisms or temporal gates, in-
+cluding GRU-D,T-LSTM, DATA-GRU, and Phased LSTM [4,
+1, 29, 21].These models are natural baselines for history-
+dependent control, but in chunked visuomotor policies they
+still require sequential unrolling over policy queries. Because
+each recurrent step may involve a large VLA backbone, an
+action-generation decoder, and a full action-horizon imitation
+loss, repeatedly calling the policy across many memory steps
+can substantially increase training cost and limit temporal
+parallelism.
+Self-attention provides parallel content-based access to his-
+tory, but using past observations and action chunks as an
+ever-growing token set increases context length and does
+not by itself impose a physical-time belief dynamics [31].
+Structured state-space models such as S4 and selective SSMs
+such as Mamba offer efficient long-sequence modeling with
+linearor near-linear scaling [12, 11]. These methods are strong
+sequence encoders, but our setting requires more than long-
+context compression:the policy must maintain an online task-
+progress belief whose retention is calibrated by elapsed time
+and whose state directly conditions action generation.
+Continuous-time recurrent models provide another route
+to temporal memory.Classical continuous-time recurrent neu-
+ral networks model hidden-state evolution with differential
+equations, while Neural ODEs, ODE-RNNs, and LatentODEs
+evolve hidden states continuously between irregular observa-
+tions [10, 5, 25].Liquid Time-Constant networks and closed-
+form continuous-time networks further parameterize input-
+dependent time constants for adaptive continuous-time se-
+quence modeling [13, 14]. TFP builds on this continuous-time
+memory family, but uses LTC not as a standalone sequence
+model:we use it as a compact belief filter for chunked VLA
+control, with vector-valued, input-dependent time constants
+and closed-form elapsed-time retention. The resulting memory
+is then projected into the action-head conditioning space, so
+temporal belief directly modulates the generated action chunk
+instead of remaining a passive history representation.
+d) Memory-augmented and history-aware visuomotor
+policies.: Several recent works augment robot policies with
+history or memory to address partial observability and long-
+horizon manipulation. HAMLET adapts pretrained VLAs into
+history-aware policies by introducing moment tokens and a
+lightweight memory module that aggregates historical con-
+text for action prediction [17]. This provides an efficient
+alternative to naively appending multiple past frames, but its
+memory primarily serves as a token-level history compression
+and retrieval interface. MemoryVLA introduces a cognition-
+memory-action framework, where perceptual and cognitive
+tokens form working memory, retrieve decision-relevant en-
+tries from a memory bank, and condition a diffusion action
+expert [27]. This design preserves richer historical details,
+but the temporal state is organized around memory storage,
+retrieval, and consolidation rather than an explicit elapsed-
+time-conditioned task dynamics. AVA-VLA reformulates VLA
+control from a POMDP perspective and uses a recurrent belief
+state to actively modulate visual token processing [33]. How-
+ever, its memory is mainly used to guide perception, whereas
+the action-generation pathway is not explicitly conditioned by
+a continuous-time task-progress belief.
+History-aware diffusion policies are also related. Causal Dif-
+fusion Policy conditions diffusion-based visuomotor control
+on historical action sequences through a causal transformer,
+improving temporal coherence and robustness under degraded
+observations [20]. Its focus is autoregressive action history
+
+modeling rather than language-conditioned VLA control, and
+its own limitation notes that extremely long-horizon tasks
+requiring sustained planning remain unresolved. These meth-
+ods show that exposing the policy to better,richer, or more
+retrievable history is valuable. TFP addresses a complementary
+problem: the policy should not only access history, but should
+maintain a compact latent belief whose evolution follows
+temporal-conditioned task dynamics.
+Concretely, TFP compresses history into a fixed-size
+continuous-time belief state with input-dependent LTC reten-
+tion and injects this belief directly into the generative action
+decoder through AdaLN-style modulation. Thus, memory is
+not only a retrieved context or an auxiliary visual-attention
+signal; it directly modulates the decoder activations and there-
+fore the flow-matching velocity field over the predicted action
+chunk. This makes TFP better aligned with real manipulation
+dynamics, where the correct action depends on how task
+progress evolves over physical time, not merely on whether
+the model can attend to a more complete history.
+APPENDIX B
+ADDITIONAL METHOD DETAILS
+A. Memory-Conditioning Interface
+TFP conditions the action decoder through adaptive modula-
+tion rather than explicit memory-token cross-attention. Cross-
+attention-based memory injection requires the decoder to
+retrieve and interpret a separate set of memory tokens. In
+contrast, adaptive conditioning compresses temporal context
+into a single modulation vector that directly shapes decoder
+activations. The timestep embedding captures where the de-
+noising process is, while the memory condition captures what
+temporal context is relevant. Their additive fusion lets the
+decoder jointly adapt to diffusion phase and retained task
+belief without adding an extra attention pathway.
+This choice reflects the role of LTC memory as a compact
+time-consistent belief state rather than a retrievable history
+buffer. We do not claim that cross-attention is inherently in-
+ferior; instead, AdaLN provides a simpler fixed-size interface
+for injecting belief into every action-decoder layer. A compu-
+tational overhead discussion is provided in Appendix IV-D.
+B. Episode-Aware Temporal Batching Details
+For each episode e, EATB keeps an episode-local hidden
+state h(e)
+t
+= fθ(h(e)
+t−1, o(e)
+t , ∆t(e)
+t ), with h(e)
+0
+= 0, and resets it
+only at episode boundaries. At training step s, we sample B
+active episodes and unroll each for K consecutive chunks. If
+episode eb starts from chunk index τb, its stored hidden state
+is retrieved as hb,0 = ˜h(eb)
+τb
+and updated as
+hb,k = fθ(hb,k−1, xb,k, ∆tb,k),
+k = 1, . . . , K.
+(19)
+The optimization objective is
+Ls =
+1
+BK
+B
+X
+b=1
+K
+X
+k=1
+ℓ(b,k)
+flow .
+(20)
+After the parameter update, the final hidden state is written
+back with gradient truncation,
+˜h(eb)
+τb+K ←stopgrad(hb,K).
+(21)
+This preserves forward memory across training segments while
+bounding the backpropagation length.
+APPENDIX C
+CONTINUOUS-TIME BELIEF INTERPRETATION
+This section formalizes the connection between Liquid
+Time-Constant (LTC) memory and belief filtering in partially
+observable manipulation. We do not claim that LTCs are
+universally more expressive than all recurrent models. A
+sufficiently large recurrent network with access to elapsed time
+may approximate many belief-update functions. Instead, our
+claim is more specific: LTC provides a structural inductive bias
+that matches a class of continuous-time, multi-timescale belief
+dynamics. This class is particularly relevant for chunked robot
+manipulation, where policy queries may occur after variable
+execution intervals.
+a) Claim.: For manipulation tasks that can be modeled
+as partially observable decision processes with latent task
+state, the desired memory should behave as a time-consistent
+belief state. LTC implements the exact discretization of a
+first-order continuous-time belief relaxation process, and its
+exponential retention gate is the unique continuous scalar re-
+tention rule satisfying elapsed-time consistency. Step-indexed
+recurrent baselines such as GRUs or LSTMs do not enforce
+this property unless elapsed time is explicitly provided and the
+gate is constrained to satisfy the same exponential semigroup
+structure.
+A. Belief Filtering in a Continuous-Time POMDP
+Let zt denote the latent task state, which may include task
+phase, object state, object-in-hand status, subgoal completion,
+and other variables not fully observable from the current
+image. Let ot denote the observation, including visual and pro-
+prioceptive inputs. In a partially observable Markov decision
+process, the sufficient statistic for optimal decision making is
+the belief state
+bt(z) = p(zt = z | o1:t, a1:t−1).
+(22)
+The standard discrete-time Bayes filter updates the belief by
+combining a prediction step with an observation likelihood:
+bt(zt) = η p(ot | zt)
+X
+zt−1
+p(zt | zt−1, at−1)bt−1(zt−1),
+(23)
+where η is a normalization constant.
+In continuous time, if the latent Markov dynamics have
+generator Q, the prediction step over an elapsed interval ∆tt
+is
+¯bt = exp(Q∆tt)bt−1.
+(24)
+Thus, belief evolution depends on elapsed physical time, not
+only on the number of policy queries. This motivates memory
+updates whose retention is explicitly a function of ∆tt.
+
+In TFP, we do not represent the full probabilistic belief
+bt. Instead, the memory state ht ∈Rdh is a learned belief
+embedding that summarizes task progress and interaction
+history.
+B. LTC as First-Order Belief Relaxation
+Assume that, at query t, the current observation and prior
+memory induce a candidate belief
+ˆht = Cθ(xt, ht−1),
+(25)
+where xt is the compact observation representation. Consider
+the following continuous-time relaxation dynamics for each
+latent belief coordinate j:
+dhj(u)
+du
+= −1
+τt,j
+
+hj(u) −ˆht,j
+
+,
+u ∈[t −∆tt, t], (26)
+where τt,j > 0 is the time constant for memory channel j. We
+assume that ˆht and τt are held fixed over the interval between
+two policy queries.
+a) Proposition 1.: The exact solution of Eq. (26) over
+elapsed time ∆tt is
+ht,j = exp(−∆tt/τt,j)ht−1,j + (1 −exp(−∆tt/τt,j)) ˆht,j.
+(27)
+Equivalently, in vector form,
+ht = kt⊙ht−1+(1−kt)⊙ˆht,
+kt = exp(−∆tt/τt). (28)
+b) Proof.: For each dimension j, Eq. (26) is a linear
+first-order ODE:
+dhj(u)
+du
+= −1
+τt,j
+hj(u) + 1
+τt,j
+ˆht,j.
+Let the initial value at the beginning of the interval be hj(t −
+∆tt) = ht−1,j. Solving the ODE gives
+hj(u) −ˆht,j = exp
+
+−u −(t −∆tt)
+τt,j
+ 
+ht−1,j −ˆht,j
+
+.
+Setting u = t yields
+ht,j −ˆht,j = exp(−∆tt/τt,j)
+
+ht−1,j −ˆht,j
+
+.
+Rearranging gives Eq. (27). Applying this coordinate-wise
+gives Eq. (28). □
+This shows that the LTC update is not an arbitrary in-
+terpolation rule: it is the exact discrete-time update of a
+continuous-time belief relaxation process. The candidate ˆht
+acts as evidence induced by the current observation, the
+previous memory ht−1 acts as the retained prior belief, and
+the time-dependent retention kt determines how strongly the
+prior persists over the elapsed interval.
+C. Elapsed-Time Consistency of Exponential Retention
+The exponential form in Eq. (28) is also the natural form
+required by elapsed-time consistency. Consider a scalar mem-
+ory channel whose retention over elapsed time ∆is k(∆). If
+the same interval is split into two sub-intervals, ∆1 and ∆2,
+then applying retention over ∆1 and then over ∆2 should be
+equivalent to applying it once over ∆1 + ∆2. Therefore, a
+time-consistent retention function must satisfy
+k(∆1 + ∆2) = k(∆1)k(∆2).
+(29)
+a) Proposition 2.: Assume k : [0, ∞) →(0, 1] is
+continuous, satisfies k(0) = 1, and obeys Eq. (29). Then
+k(∆) = exp(−λ∆)
+(30)
+for some λ ≥0. Equivalently,
+k(∆) = exp(−∆/τ)
+for τ = 1/λ, with τ = ∞when λ = 0.
+b) Proof.: Since k(∆) > 0, define r(∆) = log k(∆).
+Taking logarithms of Eq. (29) gives
+r(∆1 + ∆2) = r(∆1) + r(∆2).
+Because k is continuous, r is continuous. The continuous
+solutions to Cauchy’s additive functional equation on [0, ∞)
+are linear:
+r(∆) = c∆.
+Since k(∆) ∈(0, 1], we have r(∆) ≤0, so c = −λ for some
+λ ≥0. Thus,
+k(∆) = exp(r(∆)) = exp(−λ∆).
+□
+Thus, exponential retention is not an arbitrary design choice.
+It is the unique continuous scalar retention rule that is con-
+sistent with elapsed-time composition. LTC parameterizes this
+retention with an input-dependent time constant,
+τt = τθ(xt, ht−1),
+allowing each memory channel to adapt its effective time scale
+to the current belief and evidence.
+D. Belief Stabilization Is Not Memory Collapse
+The LTC update also explains why low update gain does
+not necessarily indicate memory degeneration. Suppose that
+within a manipulation stage, the relevant latent belief is
+approximately constant:
+zt = z.
+Assume that the candidate belief produced from the current
+observation is noisy:
+ˆht = z + ϵt,
+E[ϵt] = 0,
+Var(ϵt) = σ2.
+(31)
+For a scalar memory channel with constant retention k, the
+update is
+ht = kht−1 + (1 −k)(z + ϵt).
+(32)
+a) Proposition 3.: Under the assumptions above and with
+h0 = 0, the mean and variance of ht are
+E[ht] = (1 −kt)z,
+(33)
+and
+Var(ht) = (1 −k)2σ2 1 −k2t
+1 −k2 .
+(34)
+For large t,
+Var(ht) ≈σ2 1 −k
+1 + k .
+(35)
+
+b) Proof.: Unrolling Eq. (32) gives
+ht = kth0 + (1 −k)
+t
+X
+i=1
+kt−i(z + ϵi).
+With h0 = 0,
+ht = (1 −k)
+t
+X
+i=1
+kt−iz + (1 −k)
+t
+X
+i=1
+kt−iϵi.
+Since E[ϵi] = 0,
+E[ht] = (1 −k)
+t
+X
+i=1
+kt−iz = (1 −k)(1 + k + · · · + kt−1)z.
+Using the geometric series identity,
+1 + k + · · · + kt−1 = 1 −kt
+1 −k ,
+we obtain
+E[ht] = (1 −kt)z.
+For the variance, only the noise term contributes:
+Var(ht) = Var
+"
+(1 −k)
+t
+X
+i=1
+kt−iϵi
+#
+.
+Assuming the noise terms are independent with variance σ2,
+Var(ht) = (1 −k)2
+t
+X
+i=1
+k2(t−i)σ2.
+The remaining sum is
+t
+X
+i=1
+k2(t−i) = 1 + k2 + · · · + k2(t−1) = 1 −k2t
+1 −k2 .
+Thus,
+Var(ht) = (1 −k)2σ2 1 −k2t
+1 −k2 .
+For large t, k2t →0 when |k| < 1, and since 1 −k2 =
+(1 −k)(1 + k), we get
+Var(ht) ≈σ2 1 −k
+1 + k .
+□
+Equation (35) shows that when the candidate belief is noisy
+but the underlying task belief is stable, larger retention k
+reduces the variance of the memory state. Therefore, a high-
+retention regime can represent belief stabilization rather than
+collapse. In manipulation, this is desirable when slow variables
+such as task progress, target identity, or object-in-hand status
+should persist across occlusion, contact noise, and action
+chunks.
+TABLE V: Hidden-state inter-
+vention under a fixed observa-
+tion.
+Metric
+Value
+Hidden conditions
+25
+Pairwise comparisons
+300
+Mean pairwise dist.
+0.0442
+Median pairwise dist.
+0.0363
+Max pairwise dist.
+0.1303
+Ref. distance, mean
+0.0324
+Ref. distance, max
+0.1209
+Adjacent dist., median
+0.0108
+Fig. 5: Action-chunk variation
+caused by changing only the LTC
+hidden state under the same ob-
+servation.
+APPENDIX D
+ADDITIONAL EXPERIMENTAL DETAILS
+A. Same-Observation Hidden-State Intervention
+To isolate the effect of the LTC memory from perception,
+we conduct a controlled hidden-state intervention. We select
+one query from a LIBERO rollout and fix its observation,
+robot state, and language instruction. We then evaluate the
+policy multiple times while replacing only the LTC hidden
+state ht with hidden states collected from 25 different rollout
+timesteps. All other inputs are kept unchanged. For each
+hidden condition, the policy predicts a 10-step action chunk
+in the environment action space.
+Given two predicted action chunks Ai, Aj ∈RH×da, we
+compute their normalized L2 distance:
+D(i, j) = 1
+H
+H
+X
+r=1
+∥Ai,r −Aj,r∥2.
+We report pairwise distances across all hidden-state pairs,
+distances to a reference hidden state, and distances between
+temporally adjacent hidden states. Since the observation, robot
+state, and instruction are fixed, any action variation is caused
+by the memory intervention.
+B. Failure Modes on MIKASA-Robo ShellGameTouch
+MIKASA-Robo ShellGameTouch provides a useful diag-
+nostic for testing whether a policy can preserve information
+that is no longer visible in the current observation. In our same-
+backbone evaluation, TFP achieves the success rate of 75.0%,
+indicating that the learned belief state provides useful memory
+under occlusion. However, the remaining failures also reveal
+an important boundary of the proposed method: ShellGame-
+Touch requires a memory regime that is only partially aligned
+with the event-sensitive manipulation dynamics targeted by
+TFP.
+a) A complementary memory regime.: TFP is designed
+to model continuous task-progress dynamics in manipulation.
+Its LTC belief update is most useful when the policy must
+decide when to preserve slow task variables and when to
+revise them around interaction events such as contact, grasp,
+release, placement, or subgoal completion. ShellGameTouch
+has a different structure. The decisive variable is a discrete
+hidden object-location binding: which visually identical mug
+
+hides the ball. Once the ball is occluded, the current ob-
+servation provides little corrective evidence about this latent
+identity-location association. The policy must therefore write
+the correct binding early and retrieve it at the final touch
+decision. This is closer to object-centric episodic memory or
+key-value binding than to continuously evolving manipulation-
+stage dynamics.
+b) Sparse opportunities for belief correction.: In many
+manipulation tasks, the belief can be refined as new contact,
+motion, object-state, or subgoal-completion evidence appears.
+For example, after a grasp, release, or placement event, the
+observation gives new evidence about task progress, and an
+event-sensitive memory update can revise the internal state
+accordingly. In ShellGameTouch, by contrast, the crucial infor-
+mation is available only before and during occlusion. After the
+mugs become visually ambiguous, later observations mainly
+support execution rather than correction of the hidden ball-
+location belief. As a result, a weak or incorrect initial memory
+write is difficult to repair through subsequent LTC updates.
+c) Representation mismatch.: This failure mode can also
+be viewed through a representation-learning lens. Prior work
+on interpreting neural robot policies argues that useful policy
+representations often align with task-relevant factors of vari-
+ation, such as skills, behaviors, or strategies [32]. Under this
+view, ShellGameTouch stresses a different dominant factor of
+variation from the one most directly targeted by TFP. The task-
+relevant factor in ShellGameTouch is a persistent categorical
+object-location variable, whereas the factor targeted by TFP is
+event-sensitive task-progress dynamics. TFP can still improve
+ShellGameTouch because its belief state preserves useful latent
+context, but the memory is not explicitly structured as a
+symbolic object map, slot memory, or key-value store over
+hidden cup identities.
+d) Failure categories.: Qualitatively, we observe four
+main failure modes. First, the policy may fail to encode the
+correct ball–mug association before occlusion, especially when
+the relevant visual cue is brief or spatially small. Second, the
+memory may retain a coarse task-progress signal but not a
+sufficiently precise object-location binding, causing the final
+touch to target the wrong mug. Third, the retained belief may
+be correct, but the action decoder may fail to ground that belief
+into the correct end-effector target under visually similar mugs.
+Finally, some failures are low-level execution errors near the
+final target rather than clear memory errors. These categories
+suggest that ShellGameTouch requires both persistent memory
+and precise object-centric grounding.
+e) Interpretation.: We therefore treat ShellGameTouch as
+a same-backbone diagnostic rather than a direct state-of-the-
+art comparison. The improvement over the reactive baselines
+shows that TFP provides useful memory under occlusion,
+but the absolute success rate reflects the mismatch between
+ShellGameTouch’s categorical hidden-location memory and
+TFP’s primary design target: continuous-time, event-sensitive
+manipulation belief dynamics. A natural future direction is to
+combine TFP with an object-centric memory module, such as
+a slot-based belief map or a retrieval mechanism for discrete
+hidden-state bindings. Such a hybrid would allow the policy
+to retain symbolic object-location facts while still using LTC
+dynamics to update task-progress belief around manipulation
+events.
+APPENDIX E
+STATISTICAL RELIABILITY OF ROLLOUT RESULTS
+Because several LIBERO splits are close to saturation, we
+report confidence intervals for reproduced rollout results. For
+standard LIBERO, each suite contains 10 tasks and each task
+is evaluated with 50 rollout trials, giving 500 rollouts per suite.
+For each success rate, we compute a Wilson 95% confidence
+interval from the number of successful rollouts. For method
+differences on standard LIBERO, we report approximate two-
+proportion 95% confidence intervals against the reproduced
+π0.5 baseline. We report intervals only for our reproduced
+methods; published prior-method numbers in Table I are not
+necessarily evaluated under the same rollout protocol.
+TABLE VI: Statistical reliability of reproduced LIBERO rollout
+results. Each LIBERO suite contains 10 tasks, and each task is eval-
+uated with 50 rollout trials, giving 500 rollouts per suite. We report
+success counts, Wilson 95% confidence intervals for success rates,
+and approximate 95% confidence intervals for absolute improvements
+over π0.5.
+Benchmark
+Split
+π0.5
+TFP
+∆vs. π0.5
+LIBERO
+Spatial
+494/500 = 98.8% [97.4, 99.4]
+498/500 = 99.6% [98.6, 99.9]
++0.8 pp [−0.3, +1.9]
+LIBERO
+Object
+490/500 = 98.0% [96.4, 98.9]
+495/500 = 99.0% [97.7, 99.6]
++1.0 pp [−0.5, +2.5]
+LIBERO
+Goal
+491/500 = 98.2% [96.6, 99.1]
+497/500 = 99.4% [98.3, 99.8]
++1.2 pp [−0.1, +2.5]
+LIBERO
+Long
+462/500 = 92.4% [89.7, 94.4]
+485/500 = 97.0% [95.1, 98.2]
++4.6 pp [+1.8, +7.4]
+LIBERO
+Avg.
+1937/2000 = 96.85% [96.0, 97.5]
+1975/2000 = 98.75% [98.2, 99.2]
++1.90 pp [+0.99, +2.81]
+TABLE VII: Statistical reliability of real-world Galaxea A1 results.
+We report Wilson 95% confidence intervals for success rates over 20
+trials per method and task.
+Task
+Method
+Success rate
+Object swap
+π0.5
+3/20 = 15.0% [5.2, 36.0]
+Object swap
+TFP
+15/20 = 75.0% [53.1, 88.8]
+Counting pick-place
+π0.5
+8/20 = 40.0% [21.9, 61.3]
+Counting pick-place
+TFP
+18/20 = 90.0% [69.9, 97.2]

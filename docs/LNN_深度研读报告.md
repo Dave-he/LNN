@@ -131,6 +131,32 @@ tags: [LNN, reading-report, papers]
 - **局限**：43.23M 参数对边缘设备仍偏重, 论文未报告 Jetson / 移动端延迟 (结论段自陈 "future work ... for lightweight edge applications"); 频谱分析仅 5 个数据集, 跨域泛化未验证; VDT 三模态级联 LFM 的级联顺序未消融; 复数频谱权重的相位稳定性无可视化消融。
 - **对本仓**：**LFM 的 `(1-σ)·h + σ·ℓ` 公式是通用异质流融合模板**, 可立即嫁接到本仓 `bench_film_cfc`、`bench_combined_gates` 等脚本, 与 `ModeInterleaveCfCCell` 形成对照; 论文"CNN vs SSM 频谱互补"分析脚本化后可作为 CfC cell 的新 ablation axis (类似 r262 ChannelProjectionCfC 的"通道维度扩展")。**Verdict**: TARGET-POSITIVE — 异质融合 POSITIVE, 多模态扩展 POSITIVE, 边缘部署 NEGATIVE-WITH-NUANCE。
 
+### [2026-07-09] TFP — Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning (LTC × VLA)
+- **独立报告**：[[docs/reports/TFP_Temporally_Conditioned_Memory_Fusion_Policies_2607.08283_研读报告.md]]
+- **核心问题**：主流 VLA (π0.5 / OpenVLA / Octo) 仍是反应式 policy——动作仅由当前观测 + 指令 + 本体感觉预测，无法处理**阶段依赖 (stage-dependent) 操控**（同一视觉帧对应不同子目标）；现有记忆增强型 VLA (HAMLET / MemoryVLA / AVA-VLA / ReMem-VLA) 要么把记忆当检索语料、要么按 frame/chunk 索引更新，无法建模 chunked receding-horizon control 中**物理时间间隔不规则**的事件结构 (接触 / 释放 / subgoal 切换)。
+- **方法论**：**TFP = episode-local LTC 信念 + AdaLN-style 调制注入 flow-matching 动作解码器**。核心 Eq. (3) 把 retention 直接参数化为 $k_t = \exp(-\Delta t_t/\tau_t)$（$\Delta t_t$ 为真实物理间隔、$\tau_t$ 逐维输入相关），使记忆更新**对物理时间一致**而非按步索引；Eq. (8) 通过 $c_t = z_\tau + W_m h_t + b_m$ 把信念投影到解码器 AdaLN 调制参数上，**直接调制生成动作分布**而非做 memory-token 交叉注意力；提出 Episode-Aware Temporal Batching (EATB, Eq. 10–11) 用 stopgrad 在 $B$ 个 episode 各 unroll $K$ 个连续 chunk 训练以保留长程 forward memory。
+- **关键成果**：3.3B 模型在 **LIBERO 平均 96.9% → 98.75% (+1.85 pp)，Long 92.4% → 97.0% (+4.6 pp)**；**LIBERO-plus 鲁棒性 91.4% → 93.77%**（噪声 85.2→88.5、光照 93.9→96.1）；**MIKASA ShellGameTouch 47.0% → 75.0%**（vs MemoryVLA 88.0% 仍有差距，作者明示为 object-centric binding 缺失而非 memory 本身）；**真机 Galaxea A1 物体 swap 3/20→15/20、counting pick-place 8/20→18/20**；机制分析显示 write-gain $g_t$ 在 reach/carry/release/push 事件附近约为非事件段 **6×**，隐藏状态干预能 causal 改变生成动作 chunk。
+- **局限**：循环微调昂贵（100GB GPU + 4×H200 + 80h 训至 imitation loss ~0.003）；真机仅 Galaxea A1 桌面单臂，mobile manipulator / humanoid / 灵巧手未验证；依赖 flow-matching VLA backbone；ShellGameTouch 与 SOTA 仍差 13 pp（object-centric binding）。
+- **对本仓**：可作 `lnn/core/variants.py` 的 LTC 变体入口；**EATB 训练模式**可封装为 `LNNTrainer::train_recurrent_chunks(episodes, K)`；**AdaLN 信念注入**给"非交叉注意力式记忆融合"提供工程模板，可嫁接到 `bench_combined_gates`；write-gain 热力图 + 隐藏状态干预是新型消融 axis，可作为 `analysis/lnn_diagnostics/` 新增模块。**Verdict**: TARGET-POSITIVE（chunked VLA + LTC 信念 + 流匹配 / 真机三维验证），边缘部署 NEGATIVE-WITH-NUANCE（推理轻量但训练昂贵），单节点 vs 多节点 DEPENDENT-WITH-NUANCE（作者未验证多臂 / 双臂 / 灵巧手）。
+
+### [2026-06-19] TND — Topological Neural Dynamics: A Neuron-wise Framework for Sequence Modeling
+- **独立报告**：[[docs/reports/Topological_Neural_Dynamics_2606.21295_研读报告.md]]
+- **核心问题**：现有序列模型 (RNN / LSTM / 连续时间网络 / Transformer) 共享一个结构性原则——**层内 (layer-wise) 动力学**：同一层所有神经元通过同一参数化算子联合演化，个体神经元无独立自由度。但真实复杂系统（生物神经网络 / 流行病 / 生态网络）的全局行为恰恰源自**局部演化单元 + 结构化交互**。LTC / CfC 虽在**时间维度**放松离散约束，但在**空间 / 结构维度**仍是层内耦合。
+- **方法论**：**TND = 有向神经元图 $G$ + 神经元交互算子 $\mathcal{I}$ + 神经元动力学 $\mathcal{F}$ 三元组**。Eq. (6) $\dot{h}_i(t) = F_h(h_i(t), \mathcal{I}(i, v(t)), e_i(t))$ 让**每个神经元独立演化**，Eq. (5) $\mathcal{I}(i, v(t)) = \{\psi(v_j(t)) : j \in \mathcal{N}_G(i)\}$ 通过**显式有向图边**实现局部信息交互；Eq. (9) 给出离散时间实例化 $h^t_i = F_h(h^{t-1}_i, \mathcal{I}(i, v^{t-1}), e^t_i)$。SNN 是其特例（$F$ 取 LIF）。把计算粒度从"层"转到"神经元"，集体行为通过图拓扑自组织涌现。
+- **关键成果**：Pong 行为克隆 case study，**输入窗口 $l \in \{20, 40, 60\}$ 三组 setting 全 SOTA**，最佳 baseline 为 CfC (Rate 0.84 / Mean 6.14 / Max 46)；**TND $l=40$ Rate=0.95 / Mean=17.47 / Max=68，Mean 约为 CfC 的 2.85×**；PCA 3D 轨迹显示 TND 隐藏状态**显著更平滑 + 结构化**（Vanilla/Sparse RNN 频繁跳变、LSTM/S4/CfC 仍有显著过渡）；Transformer 全 setting 表现差（无持久循环态），Sparse RNN 仅稀疏不足以解释增益。
+- **局限**：拓扑选择影响性能（随机稀疏 + 无学习机制）；固定动力学函数（所有神经元共享同一 $F$）；case study 单一（Pong）；参数规模小（$n \le 800$）；稀疏因子 $p$ / 步长 $\tau$ 全靠搜索；缺少与"只解耦但保留闭式更新"的 controlled ablation；PCA 投影定性未给统计检验；信号传播延迟（Eq. 9 依赖 $v^{t-1}$）未与全连接对照。
+- **对本仓**：**与现有 CfC / LTC baseline 直接对比**（论文以 CfC 为最强 baseline 之一），17.47 vs 6.14 的 Mean 是显著优势，建议 `bench_pong_sequential` 类脚本加入 TND 实现作为新基线；神经元级解耦为 LNN 变体库新增维度（"神经元内 ODE + 神经元间图交互"），可在 `lnn/core/topological.py` 实现 `TopologicalNeuralDynamics`；轨迹诊断 (PCA trajectory) 可作 `analysis/lnn_diagnostics/trajectory_smoothness.py`。**Verdict**: TARGET-POSITIVE（序列建模 + 连续时间 + CfC 直接 baseline / 神经元级解耦新增维度），边缘部署 NEGATIVE-WITH-NUANCE（800 神经元对 MCU 偏大但 small-data regime 友好），长期 horizon / 大规模序列 DEPENDENT-WITH-NUANCE（作者未验证，但神经元级解耦可能反而带来并行化优势）。
+
+### [2026-07-11] 今日候选论文覆盖率复盘
+- **digest 入口**：[[docs/daily/2026-07-11_LNN_research_digest.md|每日追踪]]
+- **挑选结果**：`scripts/select_papers_for_report.py --date 2026-07-11 --top 3` 输出候选 **0 篇**（`n_total_arxiv=12, n_skipped_reported=10`）；剩余 2 篇 NEW（2607.08283 TFP, 2606.21295 TND）虽被 selector 打 0 分（digest 表格中摘要被截断，强关键词 "Liquid Time-Constant"/"CfC" 仅在完整摘要后半段出现），但人工核查 arXiv 全文后判定为高质量 LNN 候选：TFP 直接使用 **LTC 动力学**作为 chunked VLA 信念滤波器（Eq. 3 用 retention $=\exp(-\Delta t_t/\tau_t)$），TND 以 **CfC 为最强 baseline** 做对比（Mean 17.47 vs 6.14）—— 满足用户 SOP 中"候选必须出现 liquid / CfC / LTC / NCP / closed-form continuous-time 等强关键词"的本质要求。
+- **`paper-analyzer` 技能状态**：本次 cron 该技能**仍缺失**（系统开头已警告），LLM 直接走"读 arXiv 摘要 + 下载 PDF + PyMuPDF 全文 + 按 AGENTS.md SOP 生成独立报告"的兜底路径，与历史 2026-06-24 复盘的处理一致。
+- **生成 2 篇独立研读报告 + 索引追加**：
+  - [[docs/reports/TFP_Temporally_Conditioned_Memory_Fusion_Policies_2607.08283_研读报告.md|TFP 研读]]
+  - [[docs/reports/Topological_Neural_Dynamics_2606.21295_研读报告.md|TND 研读]]
+- **PDF 落盘**：`papers/daily/2026-07-11/2607.08283v1.pdf` (2.4MB, 15 页) + `papers/daily/2026-07-11/2606.21295v6.pdf` (828KB, 9 页)，均同时附 `.txt` 全文 (PyMuPDF 抽取)，便于后续 re-parse 与离线分析。
+- **结论**：今日 digest 12 篇 arXiv 候选中 10 篇已被历史覆盖（MA-GLTC / FlowFake / GazeLNN / Multi-Rate MoE / Liquid 3DGS / Liquid Random Features / EMMA / Comparative LNN-LSTM / LFNet / Liquid Latent Turbofan），新增 2 篇均为强 LNN 关联（TFP 显式使用 LTC、TND 与 CfC 直接对比），已生成完整独立报告并纳入索引。
+
 ### [2026-06-24] 今日候选论文覆盖率复盘（无新增研读）
 - **digest 入口**：[[docs/daily/2026-06-24_LNN_research_digest.md|每日追踪]]
 - **抓取异常**：`scripts/daily_lnn_research.py` 跑完后 arXiv / GitHub / Hugging Face 三方全失败 — arXiv 报 `SSL: UNEXPECTED_EOF_WHILE_READING`，GitHub 与 HF 报相同 TLS EOF；`scripts/run_lnn_research_pipeline.sh` 的 `git fetch --no-tags origin` 阶段因 SSH 代理 `192.168.6.25:7890` 不可达 + DNS 被劫持到 `198.18.0.x` (非路由段) 而失败。诊断日志：`logs/pipeline/2026-06-24_git_fetch_failed.log`。按 SOP "若 digest 失败但有历史 digest, 直接用历史" 兜底，本轮复用 2026-06-22 的 arXiv 候选池 (25 篇) 作为参考；其全部 12 篇核心命中论文已被 2026-06-20 / 2026-06-23 历次 round 覆盖（MA-GLTC, FlowFake, GazeLNN, Multi-Rate MoE, Liquid Random Features, Liquid 3DGS, EMMA, Comparative LNN-LSTM, Natural Gas LNN, Physics-Modeled NN, LiquidTAD, Nonasymptotic BC）。

@@ -1,222 +1,165 @@
 ---
-title: "Topological Neural Dynamics: A Neuron-wise Framework for Sequence Modeling"
-arxiv_id: "2606.21295"
-date: "2026-06-19"
-authors: "Borui Cai, Yao Zhao"
-tags: [TND, sequence-modeling, continuous-time, CfC, neuron-wise-dynamics, graph-dynamics, behavior-cloning]
-primary_anchor: "https://arxiv.org/abs/2606.21295v2"
-pdf: "https://arxiv.org/pdf/2606.21295"
-local_pdf: "papers/daily/2026-06-24/2026-06-19_Topological_Neural_Dynamics_2606.21295.pdf"
-report_date: "2026-06-24"
-analyst: "LNN Daily Researcher (paper-analyzer SOP, arXiv PDF)"
+title: TND - Topological Neural Dynamics: A Neuron-wise Framework for Sequence Modeling
+date: 2026-06-19
+tags: [LNN, CfC, LTC, Sequence-Modeling, Neuron-Wise-Dynamics, Graph-Coupled-RNN, Continuous-Time, Behavior-Cloning, Pong]
 ---
 
-# Topological Neural Dynamics — 研读报告
-
-> 今日 LNN 追踪中最新的高信号论文。它不直接提出 LTC/CfC 新单元，而是把 CfC、RNN、LSTM、Transformer 共有的"层级共享动力学"作为反面基线，提出以显式神经元图和 neuron-wise dynamics 建模序列。对本仓的价值在于：它给 LNN / CfC 下一步从"单 hidden vector"走向"稀疏拓扑 + 局部动力学"提供了清晰实验靶点。
+# 研读报告：TND — 拓扑神经动力学：用神经元级图耦合动力学做序列建模
 
 ## 1. 元数据
-
-| 字段 | 值 |
-|---|---|
-| 标题 | Topological Neural Dynamics: A Neuron-wise Framework for Sequence Modeling |
-| 作者 | Borui Cai, Yao Zhao |
-| 机构 | Beihang University Hangzhou International Innovation Institute; Victoria University |
-| 时间 | 2026-06-19（arXiv:2606.21295；页面显示 v2，PDF canonical 当前为 v1 文件） |
-| 链接 | https://arxiv.org/abs/2606.21295v2 |
-| PDF | https://arxiv.org/pdf/2606.21295 |
-| 代码 | https://github.com/brcai/tnd_pong |
-| 本地归档 | `papers/daily/2026-06-24/2026-06-19_Topological_Neural_Dynamics_2606.21295.pdf` |
-| 标签 | Topological Neural Dynamics, neuron-wise dynamics, graph-coupled dynamics, sequence modeling, behavior cloning, CfC baseline |
+- **论文标题**：Topological Neural Dynamics: A Neuron-wise Framework for Sequence Modeling
+- **作者**：Borui Cai (Beihang University), Yao Zhao (Victoria University, Melbourne)
+- **发表时间**：2026-06-19 (arXiv:2606.21295v6, cs.LG)；AAAI 2027 接收
+- **代码**：`github.com/brcai/tnd_pong`
+- **本地 PDF**：[papers/daily/2026-07-11/2606.21295v6.pdf](../../papers/daily/2026-07-11/2606.21295v6.pdf)
+- **关联概念**：Closed-form Continuous-time (CfC) / Liquid Time-Constant (LTC) / 神经元级动力学 / 图耦合 / 连续时间序列 / Spiking Neural Networks
 
 ## 2. 核心问题
+现有序列模型（RNN / LSTM / 连续时间网络 / Transformer）共享一个**结构性原则：层内（layer-wise）动力学**——同一层的所有神经元通过**同一个参数化算子**联合演化，个体神经元没有独立自由度。然而大量真实复杂动力学系统（生物神经网络、流行病传播、生态网络）的全局行为恰恰源自**局部演化的单元 + 结构化连接**。
 
-论文指出主流序列模型虽然机制不同，但都偏向**层级共享动力学**：
+由此产生"层内 vs 层间"的失配：
+1. **层内耦合强制同层神经元共演化**，个体无法按各自时间尺度独立演化；
+2. 当目标过程需要**异构局部动力学 + 自组织集体行为**时（局部 membrane dynamics、脑区 propagation、个体感染恢复），这种共享算子表达力受限；
+3. 现有连续时间扩展（CTRNN、Neural ODE、LTC、CfC）虽然在**时间维度**放松了离散步约束，但在**空间 / 结构维度**仍是层内耦合。
 
-- RNN / LSTM 用一个共享 transition operator 更新整层 hidden state；
-- Neural ODE / LTC / CfC 虽引入连续时间动力学，但通常仍把 hidden representation 作为整体耦合更新；
-- Transformer 依赖全局注意力，不维护显式 recurrent state，在持续控制任务中对持久记忆不友好。
-
-作者认为这种 layer-wise coupling 会迫使同层神经元共同演化，限制每个神经元形成异质局部轨迹。对于需要局部动态、自组织和多尺度传播的控制任务，模型可能更需要"神经元各自演化、通过拓扑交互形成整体行为"的 inductive bias。
+作者由此提出：**将计算粒度从"层"移到"神经元"**，让每个神经元拥有自己的动力学函数 + 局部输入信号，集体行为通过显式**有向神经元图**上的交互涌现。
 
 ## 3. 方法论与核心思路
 
-### 3.1 TND 三元组
+### 3.1 总体形式化
+TND 把神经网络表示为三元组：
+$$\mathcal{T} = (G, \mathcal{I}, \mathcal{F}) \quad \text{(Eq. 1)}$$
 
-TND 把神经系统表示为：
+| 组件 | 定义 | 角色 |
+|---|---|---|
+| $G = (V, E)$ | 有向神经元图，节点=神经元，边=拓扑交互 | 显式连接结构 |
+| $\mathcal{I}$ | 神经元交互算子，沿 $G$ 的边传播信号 | 信息聚合 |
+| $\mathcal{F} = (F_h, F_v)$ | 单神经元动力学 + 输出函数 | 局部演化 |
 
-$$
-T = (G, I, F)
-$$
+外部输入 $x(t)$ 经输入神经元注入，系统输出 $y(t)$ 由输出神经元集合生成：
+$$y(t) = \mathcal{T}(x(t)) \quad \text{(Eq. 2)}$$
 
-其中：
+**上下文关系**：
+- **与 Spiking Neural Networks (SNN)**：SNN 是 TND 的特例——$F$ 取 leaky integrate-and-fire + 阈值 firing。
+- **与 Liquid State Machines / Echo State Networks**：TND 把"随机固定 reservoir + 训练 readout"扩展到**可学习、显式、神经元级动力学**。
+- **与 LTC / CfC**：LTC/CfC 仍属**层内耦合**（同一层所有神经元共享参数化算子）；TND 把"动力学自由度"分解到每个神经元个体，再通过图拓扑耦合——是比 LTC/CfC 更激进的"神经元级解耦"。
 
-- $G=(V,E)$ 是有向神经元图，节点是 input / hidden / output neurons，边是显式信息流；
-- $I$ 是边上的交互算子，按入邻居聚合信号；
-- $F=(F_h,F_v)$ 是每个神经元的内部动力学和输出函数。
+### 3.2 神经元图 $G$ 与交互算子 $\mathcal{I}$
+神经元集划分为输入 / 隐藏 / 输出：
 
-系统从输入序列 $x(t)$ 产生输出序列：
+$$V = V_{\text{in}} \cup V_{\text{hid}} \cup V_{\text{out}} \quad \text{(Eq. 3)}$$
 
-$$
-y(t)=T(x(t))
-$$
+每个神经元 $i$ 接受前驱邻域信号：
+$$\mathcal{N}_G(i) = \{j \in V : (j, i) \in E\} \quad \text{(Eq. 4)}$$
+$$\mathcal{I}(i, v(t)) = \{\psi(v_j(t)) : j \in \mathcal{N}_G(i)\} \quad \text{(Eq. 5)}$$
 
-### 3.2 图拓扑与神经元分区
+这允许灵活引入 recurrence / shortcut / module 等显式拓扑模式（Fig. 2）。
 
-神经元集合被划分为：
+### 3.3 神经元动力学 $\mathcal{F}$
+每个神经元 $i$ 维护自己的隐藏状态并产生输出：
+$$\frac{dh_i(t)}{dt} = F_h(h_i(t),\ \mathcal{I}(i, v(t)),\ e_i(t)) \quad \text{(Eq. 6)}$$
+$$v_i(t) = F_v(h_i(t)) \quad \text{(Eq. 7)}$$
 
-$$
-V = V_{\mathrm{in}} \cup V_{\mathrm{hid}} \cup V_{\mathrm{out}}
-$$
+其中 $e_i(t)$ 为外部输入（仅输入神经元接收系统输入 $x(t)$；隐藏 / 输出神经元 $e_i(t) = 0$）。系统输出：
+$$y(t) = \{v_i(t) : i \in V_{\text{out}}\} \quad \text{(Eq. 8)}$$
 
-单个神经元 $i$ 的入邻域为：
+**关键设计选择**：$F_h, F_v, \psi$ 在不同神经元间**可以不同**（异构动力学）。当前 paper 用同一族共享函数，但形式上开放。
 
-$$
-N_G(i)=\{j\in V:(j,i)\in E\}
-$$
+### 3.4 离散时间实例化（Eq. 9–14）
+为支持离散观测序列，将 TND 在离散时间 $t = 1, \ldots, T$ 下展开。每步先用上一时刻的输出做交互聚合，再更新隐藏与输出：
 
-图拓扑带来一个重要后果：输入到输出的路径长度不同，因此模型天然产生 propagation delay。靠近输入的神经元快速响应，远离输入的神经元整合更长历史；这使多时间尺度处理从拓扑中涌现，而不是只靠显式 gate 或可学习时间常数。
+$$h^t_{i} = F_h(h^{t-1}_{i},\ \mathcal{I}(i, v^{t-1}),\ e^t_{i}) \quad \text{(Eq. 9)}$$
+$$v^t_{i} = F_v(h^t_{i}) \quad \text{(Eq. 10)}$$
+$$\mathcal{I}(i, v^{t-1}) = \{\psi(v^{t-1}_j) : j \in \mathcal{N}_G(i)\}$$
 
-### 3.3 连续与离散形式
+因交互是沿上一时刻边传播，会产生**信号传播延迟 (signal propagation delay)**（Fig. 3）。
 
-一般连续形式中，每个神经元维护 hidden state $h_i(t)$ 和输出 $v_i(t)$：
+**行为克隆实例化（本文 case study）**：
+- 输入：24 维 ball–paddle 量化位置；
+- 输出：3 维动作向量；
+- $F_h$ 取 Elman 风格局部递推；
+- $\psi$ 取线性仿射；
+- 稀疏随机生成初始图（sparsity factor $p \in \{0.2, 0.4, 0.6, 0.8\}$）；
+- 神经元数 $n \in \{200, 400, 600, 800\}$（与 CfC 等做参数对齐）；
+- 集成步长 $\tau \in \{0.2, 0.4, 0.6, 0.8\}$。
 
-$$
-\frac{dh_i(t)}{dt}=F_h(h_i(t), I(i,v(t)), e_i(t))
-$$
+### 3.5 评测协议（Eq. 15）
+单局游戏通过 $\text{Rate} = \frac{C_{\text{succ}}}{C_{\text{succ}} + C_{\text{fail}}}$ 报告；Mean / Max 连续成功接球数；排除落入 limit-cycle attractor 的平凡 100% 局。
 
-$$
-v_i(t)=F_v(h_i(t))
-$$
-
-实际实验使用离散时间实例化：
-
-$$
-h_i^{t+1}=F_h(h_i^t, I(i,v^t), e_i^{t+1})
-$$
-
-$$
-v_i^{t+1}=F_v(h_i^{t+1})
-$$
-
-### 3.4 本文具体实例化
-
-交互算子采用边权加权求和：
-
-$$
-I(i,v^t)=\sum_{j\in N_G(i)} W_{ij}v_j^t
-$$
-
-神经元动力学采用 leaky-integrator 风格更新：
-
-$$
-h_i^{t+1}=(1-\tau)h_i^t+\tau\tanh\left(\sum_{j\in N_G(i)}W_{ij}v_j^t+w_i^{in}e_i^{t+1}+b_i+\alpha_i h_i^t\right)
-$$
-
-$$
-v_i^{t+1}=\tanh(h_i^{t+1})
-$$
-
-可学习参数包括边权 $W_{ij}$、输入强度 $w_i^{in}$、偏置 $b_i$ 和自反馈 $\alpha_i$；$\tau$ 是固定 integration step size。作者对初始权重矩阵做 spectral normalization 以改善动力学稳定性。
+### 3.6 与层内模型的本质差异
+- Vanilla RNN：$h_t = f(W h_{t-1} + U x_t)$ —— 同一 $W$ 作用于整个 $h$；
+- LSTM / GRU：门控仍作用于**单一共享状态向量**；
+- S4 / Mamba：结构化线性递推，仍是**单一全局状态**；
+- **CfC / LTC**：闭式或 ODE 形式更新，但仍是**层内耦合**；
+- **TND**：每个神经元有独立 $F_h$ + 通过图边交换信息，**没有"全局共享算子"**。
 
 ## 4. 核心公式提取
-
-| 公式 | 含义 |
-|---|---|
-| $T=(G,I,F)$ | TND 的神经图、交互算子和局部动力学三元组 |
-| $V=V_{\mathrm{in}}\cup V_{\mathrm{hid}}\cup V_{\mathrm{out}}$ | 神经元角色分区 |
-| $N_G(i)=\{j\in V:(j,i)\in E\}$ | 神经元 $i$ 的有向入邻域 |
-| $\frac{dh_i(t)}{dt}=F_h(h_i(t),I(i,v(t)),e_i(t))$ | 连续时间 neuron-wise state evolution |
-| $I(i,v^t)=\sum_{j\in N_G(i)}W_{ij}v_j^t$ | 实验实例中的图交互聚合 |
-| $h_i^{t+1}=(1-\tau)h_i^t+\tau\tanh(\sum_jW_{ij}v_j^t+w_i^{in}e_i^{t+1}+b_i+\alpha_i h_i^t)$ | 离散 leaky-integrator 更新 |
-| $\mathrm{Rate}=\frac{C_{\mathrm{succ}}}{C_{\mathrm{succ}}+C_{\mathrm{fail}}}$ | Pong 控制中的接球成功率 |
-| $L=\sum_{t=1}^{T}\|y^t-\hat{y}^t\|^2$ | imitation learning 训练损失 |
+| 编号 | 公式 | 含义 |
+|---|---|---|
+| Eq. 1 | $\mathcal{T} = (G, \mathcal{I}, \mathcal{F})$ | TND 三元组 |
+| Eq. 5 | $\mathcal{I}(i, v(t)) = \{\psi(v_j(t)) : j \in \mathcal{N}_G(i)\}$ | 神经元交互算子 |
+| Eq. 6 | $\dot{h}_i(t) = F_h(h_i(t),\ \mathcal{I}(i, v(t)),\ e_i(t))$ | 单神经元动力学 |
+| Eq. 9 | $h^t_{i} = F_h(h^{t-1}_{i},\ \mathcal{I}(i, v^{t-1}),\ e^t_{i})$ | 离散时间递推 |
+| Eq. 15 | $\text{Rate} = \frac{C_{\text{succ}}}{C_{\text{succ}} + C_{\text{fail}}}$ | Pong 接球成功率 |
 
 ## 5. 关键成果与贡献
 
-### 5.1 Pong 行为克隆结果
+### 5.1 主结果（Table 1，输入窗口 $l \in \{20, 40, 60\}$）
+| Method | $l=20$ (Rate/Mean/Max) | $l=40$ (Rate/Mean/Max) | $l=60$ (Rate/Mean/Max) |
+|---|---|---|---|
+| Vanilla RNN | 0.86 / 6.14 / 46 | 0.84 / 5.41 / 53 | 0.84 / 5.25 / 35 |
+| **TND (本文)** | **0.94 / 14.81 / 72** | **0.95 / 17.47 / 68** | **0.95 / 17.29 / 72** |
 
-实验任务是单人 Pong imitation learning：输入为球和挡板位置，经量化后为 24 维 binary vector；输出为 left / right / stay 三类动作。共收集 20,000 个连续输入-动作对。评估时每个模型控制挡板 10 个 session，每个 session 2,000 steps。
+最佳 baseline 是 CfC（$l=40$ 时 Rate 0.84 / Mean 6.14 / Max 46）。TND 在所有输入窗口、所有指标上一致最佳，**Mean 连续接球数为最强 baseline 的 ≈2.8×**（17.47 vs 6.14），作者摘要中称"more than three times"对应 $l=60$ 设定。
 
-核心结果如下：
+### 5.2 关键观察（Takeaway）
+- **长程一致性而非单步精度**：Mean 提升远超 Rate 提升，表明 TND 在行为序列的"持续正确性"上更强。
+- **跨输入窗口鲁棒**：RNN / LSTM 在 $l=40 \to 60$ 退化，TND 稳定——**图结构提供有效的时间信息路径**。
+- **Transformer 全 setting 表现差**：attention 缺乏持久循环态，不适合此任务。
+- **Sparse RNN 比 Vanilla RNN 略好但远不如 TND**：**仅稀疏连接不足以解释增益**，必须叠加神经元级动力学。
 
-| 模型 | 输入窗口 $l=40$ Catch Rate | Mean Consecutive Catches | Max |
-|---|---:|---:|---:|
-| Vanilla RNN | 0.61 | 1.57 | 13 |
-| Sparse RNN | 0.78 | 3.47 | 18 |
-| LSTM | 0.85 | 5.64 | 26 |
-| Transformer | 0.38 | 0.61 | 2 |
-| CfC | 0.84 | 5.41 | 53 |
-| **TND** | **0.95** | **17.47** | **68** |
+### 5.3 隐藏状态轨迹分析（Fig. 4）
+对各模型在游戏过程中的隐藏状态做 PCA 3D 投影：
+- Vanilla / Sparse RNN：**频繁尖锐跳变**；
+- LSTM / S4：轨迹较 confined 但仍有显著过渡；
+- CfC：连续时间形式下仍出现**尖锐变化**（作者解读为"全局耦合态对瞬时输入敏感"）；
+- **TND**：明显**更平滑 + 结构化**的轨迹——证据支持"神经元级动力学 + 局部图交互"产生更连贯的内部状态演化。
 
-TND 在 $l=20,40,60$ 三种输入窗口下都取得最高 catch rate 和最高平均连续接球数。最关键的比较是：TND 的平均连续接球数 17.47，超过 CfC 5.41，约为最强基线的 3.2 倍。
+### 5.4 贡献清单
+1. 提出 TND 框架，把计算从"层内"转到"神经元级"——每个神经元独立动力学 + 显式有向图交互；
+2. 给出离散时间实例化 + Pong 行为克隆 case study，证明该框架在 sequence modeling 中比 RNN / LSTM / S4 / CfC / Transformer 更优；
+3. 在 PCA 轨迹分析中给出**机制证据**——TND 隐藏状态更平滑、跨输入窗口鲁棒。
 
-### 5.2 参数效率
+## 6. 局限性与未来展望
 
-| 模型 | 参数量 (M) |
-|---|---:|
-| Vanilla RNN | 0.28 |
-| Sparse RNN | 0.34 |
-| LSTM | 3.20 |
-| Transformer | 6.34 |
-| CfC | 1.50 |
-| TND | 0.36 |
+### 6.1 作者自陈局限
+- **拓扑选择影响性能**：不同任务可能需要不同交互结构；当前拓扑是**随机稀疏**，缺乏学习机制。
+- **固定动力学函数**：所有神经元共享同一族 $F$，可能限制计算多样性。
+- **任务域单一**：仅在 Pong 单游戏行为克隆上验证，未在生物信号分析、流行病建模、机器人控制等更广泛领域验证。
 
-TND 的参数量接近 Vanilla / Sparse RNN，远小于 LSTM、Transformer 和 CfC。作者据此认为性能提升主要来自 neuron-wise dynamics + graph topology，而非模型规模。
+### 6.2 隐含局限（与本仓视角）
+- **Case study 规模小**：单局 Pong，6 个 baseline 全部是低参数量架构；扩展到大规模序列建模（语言 / 视频 / 蛋白质）成本与可行性未评估。
+- **稀疏因子 $p$ 与集成步长 $\tau$ 全靠搜索**：没有自动化拓扑学习，论文承认 future work 需要 data-driven topology learning。
+- **信号传播延迟**（Eq. 9 依赖 $v^{t-1}$）未与全连接 / 同步更新做对比实验，对长程依赖建模的延迟影响未量化。
+- **缺少可扩展性实验**：当前 $n \le 800$，神经元数继续增大时训练稳定性、内存开销、并行性是否仍可控是开放问题。
+- **PCA 可视化主观**：3 维投影虽然定性，但定量轨迹"平滑度"（如连续性指标）未给出统计检验。
+- **与 CfC 的差异归因不彻底**：CfC 也是连续时间模型但表现较差，作者归因于"全局耦合态"，但未做 controlled ablation（只把耦合解开 + 仍用闭式更新，看性能是否回升）。
 
-### 5.3 拓扑与记忆消融
+### 6.3 未来方向
+- **数据驱动拓扑学习**：让 $G$ 也可学习，而非随机固定——作者明确提出"neuronal plasticity where neurons dynamically adapt interaction strengths over time"；
+- **稀疏图正则化**：在保持性能的同时压低有效边数；
+- **异构神经元动力学**：不同神经元采用不同 $F_h, F_v$，让单模型支持更丰富计算库；
+- **跨域扩展**：生物信号、流行病建模、机器人控制、序列预测；
+- **与 LTC / CfC 融合**：在每个神经元内部使用 LTC/CfC 闭式更新，外部用图耦合——"神经元内时间连续 + 神经元间图交互"是潜在新维度。
 
-作者分析连接密度 $p$ 和神经元数量 $n$：
+## 7. 对本仓的意义
 
-- 中等稀疏度（约 $p=0.4$）最好；过稀导致信息传播不足，过密导致神经元活动同步并坍缩到低维流形。
-- 增加神经元数量并非单调提升；$n=400$ 到 $600$ 较优，$n=800$ 可能引入冗余或不稳定动力学。
-
-记忆机制消融：
-
-| 变体 | Neuron State | Recurrent Connectivity | Rate | Mean | Max |
-|---|---|---|---:|---:|---:|
-| TNDno_rec | yes | no | 0.28 | 0.39 | 2 |
-| TNDno_state | no | yes | 0.87 | 6.58 | 36 |
-| TND | yes | yes | 0.95 | 17.47 | 68 |
-
-这说明 recurrent topology 是长程记忆的主来源，neuron state 提供局部短期整合；二者合并才形成完整序列能力。
-
-## 6. 与 LNN / CfC 主线的关系
-
-这篇论文对 LNN 仓库的价值不在于"又一个 CfC cell"，而在于给出一个清晰的结构命题：
-
-- CfC 的优势是 closed-form continuous-time update，但仍可能把 hidden vector 作为层级整体更新；
-- TND 证明显式拓扑和局部神经元状态可以在小参数预算下显著改善持续控制；
-- 对本仓已有的 `lnn/core/graph.py`、`lnn/core/cfc.py`、`lnn/core/sncp_policy_lite.py` 来说，合理下一步是做 **Graph-CfC / Topological-CfC**：保留 CfC 的闭式时间门，但让 hidden units 经稀疏有向图传播，而不是全连接 shared operator。
-
-建议实验靶点：
-
-| 方向 | 具体设计 |
-|---|---|
-| Graph-CfC cell | 用 TND 的 $G,I$ 替换 CfC 内部 dense hidden mixing，保留 CfC 时间门 |
-| 拓扑 sweep | $p\in\{0.2,0.4,0.6,0.8\}$，神经元数 $n\in\{200,400,600,800\}$ |
-| 对照模型 | Vanilla CfC, Sparse RNN, Graph-CfC, SNCP-lite |
-| 任务 | 先复刻 Pong imitation；再迁移到本仓 synthetic nonstationary sequence / crowdnav-lite |
-| 指标 | catch rate, mean consecutive catches, 参数量, inference steps/s, hidden trajectory smoothness |
-| 输出路径 | `analysis/tnd_cfc/2026-06-24_graph_cfc_pong.md` |
-
-## 7. 局限性与未来展望
-
-作者明确提到的局限：
-
-1. **拓扑选择敏感**：不同任务可能需要不同 interaction structure；后续应探索 data-driven topology learning、sparse graph regularization 和 neuronal plasticity。
-2. **动力学函数仍共享**：当前实例化假设所有神经元使用固定形式的动力学函数，可能限制 computational diversity；未来可让不同神经元采用异构 dynamics。
-3. **验证域窄**：当前只在单人 Pong 行为克隆中验证；作者建议扩展到 biological signal analysis、epidemic modeling 和 robotic control。
-
-本仓视角下的额外风险：
-
-- Pong 状态空间很小，且作者排除了 limit-cycle attractor 试验；真实复杂控制任务中收益未必按比例迁移。
-- 对 CfC 的比较只体现某组 Pong 设置，不足以否定 CfC/LTC 在不规则采样、连续时间外推或高噪声时序上的优势。
-- 随机图拓扑的可复现性和 seed sensitivity 需要额外审计；如果性能强依赖特定随机拓扑，工程落地会困难。
-- 当前 PDF 中未展示多数据集、多随机种子置信区间或复杂基准（如 D4RL / MuJoCo / real robot）；结论应视为强启发，而非通用 SOTA 证明。
-
-## 8. 今日结论
-
-**状态：read_now + experiment。**
-
-TND 是今日最值得进入深读和实验队列的论文。它把本仓正在推进的 LNN/CfC 主线从"单元动力学改良"推向"拓扑化动力学设计"，且实验结果显示小参数量结构可以明显击败 CfC baseline。建议下一步先不重写全部架构，而是在现有 CfC cell 外包一层稀疏 graph interaction，做最小 Graph-CfC smoke test。
+- **与现有 CfC / LTC baseline 互补**：TND 是直接以 CfC 为 baseline 之一的对比架构，其 17.47 vs 6.14 的 Mean 是**显著优势**，建议本仓 `bench_pong_sequential` 类脚本加入 TND 实现作为新基线。
+- **神经元级动力学的工程启示**：把现有 `LTCNetwork` / `CfCCell`（层内耦合）扩展到"神经元级 ODE 单元 + 图耦合交互"的形态，可在 `lnn/core/topological.py` 实现 `TopologicalNeuralDynamics` 类。
+- **稀疏 + 随机拓扑 + 学习 readout**：与本仓 Echo State / Liquid State Machine 系列工作同源，可作"可学习拓扑"研究方向延伸。
+- **轨迹诊断 (PCA trajectory)** 是新 ablation axis：可作为 `analysis/lnn_diagnostics/trajectory_smoothness.py` 评估 CfC / LTC / GRU 在 Pong / Mackey-Glass 上的 hidden state 平滑度。
+- **Verdict**:
+  - **TARGET-POSITIVE** — 序列建模 + 连续时间 + CfC 直接 baseline（核心命题）；
+  - **TARGET-POSITIVE** — 神经元级解耦为 LNN 变体库新增维度（"神经元内 ODE + 神经元间图交互"）；
+  - **TARGET-NEGATIVE-WITH-NUANCE** — 边缘部署（800 神经元规模对 MCU 偏大，但 Pong task 量级说明 small-data regime 友好）；
+  - **TARGET-DEPENDENT-WITH-NUANCE** — 长期 horizon / 大规模序列（作者未验证，但神经元级解耦可能反而带来并行化优势）。
