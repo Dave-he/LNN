@@ -33,12 +33,12 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-07-11 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
+| 2026-07-11 | [liuyhoo/F-CfC](https://github.com/liuyhoo/F-CfC) | 0 |  | Open source implementation of F-CfC: Fractional Closed-form Continuous-time Networks |
+| 2026-07-11 | [lajosbencz/lfm-train-image](https://github.com/lajosbencz/lfm-train-image) | 0 | Dockerfile | Optimized base image for training LiquidAI LFM2.5 models |
 | 2026-07-10 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
 | 2026-07-10 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 |  | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
-| 2026-07-10 | [lajosbencz/lfm-train-image](https://github.com/lajosbencz/lfm-train-image) | 0 | Dockerfile | Optimized base image for training LiquidAI LFM2.5 models |
-| 2026-07-09 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-07-09 | [kakopappa/proxy-kd-lfm2](https://github.com/kakopappa/proxy-kd-lfm2) | 0 | Python | From-scratch Proxy-KD (arXiv:2401.07013): black-box distillation of Claude into LiquidAI LFM2.5-350M on the Sharp AC-manual Q&A task, with findings. |
-| 2026-07-08 | [raminmh/CfC](https://github.com/raminmh/CfC) | 1048 | Python | Closed-form Continuous-time Neural Networks |
 | 2026-07-08 | [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad) | 0 | Python | A liquid neural network framework built from first principles to model the human brain 🌊 |
 | 2026-07-08 | [bluevisor/liquid-nn-demo](https://github.com/bluevisor/liquid-nn-demo) | 0 | HTML | A Liquid Time-Constant neural network built from scratch — a browser digit recognizer that runs the ODE solver in JS, an illustrated explainer, and an interact… |
 | 2026-07-07 | [sufirumii/LiquiMedThink-1.2B](https://github.com/sufirumii/LiquiMedThink-1.2B) | 0 | Python | A Fine Tuned version of LiquidAI/LFM2.5-1.2B-Thinking on a medical reasoning thinking dataset |

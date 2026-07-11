@@ -7,6 +7,27 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-07-11
 
 ## GitHub 仓库
+### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
+- 更新：2026-07-11
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
+
+### [liuyhoo/F-CfC](https://github.com/liuyhoo/F-CfC)
+- 更新：2026-07-11
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：Open source implementation of F-CfC: Fractional Closed-form Continuous-time Networks
+
+### [lajosbencz/lfm-train-image](https://github.com/lajosbencz/lfm-train-image)
+- 更新：2026-07-11
+- Star / Fork：0 / 0
+- 语言：Dockerfile
+- Topics：未标注
+- 说明：Optimized base image for training LiquidAI LFM2.5 models
+
 ### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
 - 更新：2026-07-10
 - Star / Fork：1 / 0
@@ -21,33 +42,12 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
 
-### [lajosbencz/lfm-train-image](https://github.com/lajosbencz/lfm-train-image)
-- 更新：2026-07-10
-- Star / Fork：0 / 0
-- 语言：Dockerfile
-- Topics：未标注
-- 说明：Optimized base image for training LiquidAI LFM2.5 models
-
-### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
-- 更新：2026-07-09
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
-
 ### [kakopappa/proxy-kd-lfm2](https://github.com/kakopappa/proxy-kd-lfm2)
 - 更新：2026-07-09
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：From-scratch Proxy-KD (arXiv:2401.07013): black-box distillation of Claude into LiquidAI LFM2.5-350M on the Sharp AC-manual Q&A task, with findings.
-
-### [raminmh/CfC](https://github.com/raminmh/CfC)
-- 更新：2026-07-08
-- Star / Fork：1048 / 162
-- 语言：Python
-- Topics：deep-learning, neural-ode, pytorch, recurrent-neural-networks, sequence-models, tensorflow
-- 说明：Closed-form Continuous-time Neural Networks
 
 ### [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad)
 - 更新：2026-07-08
