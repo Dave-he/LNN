@@ -1,0 +1,171 @@
+{
+  "config": {
+    "epochs": 20,
+    "lr": 0.01,
+    "T": 32,
+    "D": 2,
+    "n_train": 64,
+    "n_test": 32,
+    "seeds": [
+      0,
+      1
+    ],
+    "datasets": [
+      "sin_irr",
+      "structured_irr",
+      "random_irr"
+    ],
+    "modes": [
+      "static_tau",
+      "blend_off",
+      "blend_default"
+    ],
+    "out": "analysis/irregular_decorrelation_bench.json"
+  },
+  "cells": [
+    {
+      "mode": "static_tau",
+      "dataset": "sin_irr",
+      "seed": 0,
+      "test_mse": 4.397854285353997e-06,
+      "train_loss_last": 6.128488050194392e-05,
+      "elapsed_sec": 11.65
+    },
+    {
+      "mode": "static_tau",
+      "dataset": "sin_irr",
+      "seed": 1,
+      "test_mse": 4.4182838782325096e-06,
+      "train_loss_last": 2.7564167478288937e-05,
+      "elapsed_sec": 10.99
+    },
+    {
+      "mode": "static_tau",
+      "dataset": "structured_irr",
+      "seed": 0,
+      "test_mse": 0.20829698254237883,
+      "train_loss_last": 0.20018027001060545,
+      "elapsed_sec": 10.92
+    },
+    {
+      "mode": "static_tau",
+      "dataset": "structured_irr",
+      "seed": 1,
+      "test_mse": 0.21596012823283672,
+      "train_loss_last": 0.22134866449050605,
+      "elapsed_sec": 11.03
+    },
+    {
+      "mode": "static_tau",
+      "dataset": "random_irr",
+      "seed": 0,
+      "test_mse": 0.3637926491064718,
+      "train_loss_last": 0.36608315969476735,
+      "elapsed_sec": 11.07
+    },
+    {
+      "mode": "static_tau",
+      "dataset": "random_irr",
+      "seed": 1,
+      "test_mse": 0.47299452786319307,
+      "train_loss_last": 0.4111610127893073,
+      "elapsed_sec": 10.96
+    },
+    {
+      "mode": "blend_off",
+      "dataset": "sin_irr",
+      "seed": 0,
+      "test_mse": 3.052436531447711e-05,
+      "train_loss_last": 4.396689915398726e-06,
+      "elapsed_sec": 19.4
+    },
+    {
+      "mode": "blend_off",
+      "dataset": "sin_irr",
+      "seed": 1,
+      "test_mse": 5.703529586753575e-05,
+      "train_loss_last": 1.767660219975653e-05,
+      "elapsed_sec": 19.42
+    },
+    {
+      "mode": "blend_off",
+      "dataset": "structured_irr",
+      "seed": 0,
+      "test_mse": 0.20462790680176113,
+      "train_loss_last": 0.1925306696888356,
+      "elapsed_sec": 19.43
+    },
+    {
+      "mode": "blend_off",
+      "dataset": "structured_irr",
+      "seed": 1,
+      "test_mse": 0.1916133959821309,
+      "train_loss_last": 0.21549591998082462,
+      "elapsed_sec": 19.47
+    },
+    {
+      "mode": "blend_off",
+      "dataset": "random_irr",
+      "seed": 0,
+      "test_mse": 0.5096423742070328,
+      "train_loss_last": 0.337683513863567,
+      "elapsed_sec": 19.37
+    },
+    {
+      "mode": "blend_off",
+      "dataset": "random_irr",
+      "seed": 1,
+      "test_mse": 0.4861293345747981,
+      "train_loss_last": 0.4048162707128462,
+      "elapsed_sec": 19.45
+    },
+    {
+      "mode": "blend_default",
+      "dataset": "sin_irr",
+      "seed": 0,
+      "test_mse": 5.3671274315547635e-05,
+      "train_loss_last": 1.940708229142274e-05,
+      "elapsed_sec": 21.05
+    },
+    {
+      "mode": "blend_default",
+      "dataset": "sin_irr",
+      "seed": 1,
+      "test_mse": 5.400373703423611e-05,
+      "train_loss_last": 1.243623975977215e-05,
+      "elapsed_sec": 21.04
+    },
+    {
+      "mode": "blend_default",
+      "dataset": "structured_irr",
+      "seed": 0,
+      "test_mse": 0.20451405938365497,
+      "train_loss_last": 0.1926546740037054,
+      "elapsed_sec": 21.02
+    },
+    {
+      "mode": "blend_default",
+      "dataset": "structured_irr",
+      "seed": 1,
+      "test_mse": 0.19167525796910923,
+      "train_loss_last": 0.2155212838165088,
+      "elapsed_sec": 21.04
+    },
+    {
+      "mode": "blend_default",
+      "dataset": "random_irr",
+      "seed": 0,
+      "test_mse": 0.40004437367315404,
+      "train_loss_last": 0.3377877874006714,
+      "elapsed_sec": 21.02
+    },
+    {
+      "mode": "blend_default",
+      "dataset": "random_irr",
+      "seed": 1,
+      "test_mse": 0.48655075320857577,
+      "train_loss_last": 0.40478691341899875,
+      "elapsed_sec": 21.03
+    }
+  ]
+}
