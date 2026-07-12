@@ -26,9 +26,10 @@ def _sine(B=4, T=64, freq=3.0):
 class TestR293Defaults(unittest.TestCase):
 
     def test_default_decorr_lambda(self):
-        # r293 default is 0.0 (opt-in) — see cell docstring for why.
+        # r294 default is 1e-5 — matches r291 toy SP scale and r294
+        # Henry Hub validation (-1.3% / -2.6% in-cell).
         cell = BlendGatedLiquidTauCfCCell(input_size=1, hidden_size=8)
-        self.assertEqual(cell.decorr_lambda, 0.0)
+        self.assertEqual(cell.decorr_lambda, 1e-5)
 
     def test_decorr_lambda_validation(self):
         with self.assertRaises(ValueError):

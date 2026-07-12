@@ -103,7 +103,7 @@ class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
         init_rec_scale: float | None = None,
         input_strength_init: float = 0.1,
         seed: int = 42,
-        decorr_lambda: float = 0.0,
+        decorr_lambda: float = 1e-5,
     ):
         # diff_order is irrelevant for blend (we compute both), but the
         # parent needs a valid value; use 2 so 'acceleration' delegation
@@ -132,13 +132,12 @@ class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
         if decorr_lambda < 0:
             raise ValueError("decorr_lambda must be ≥ 0")
         self.gate_mode = gate_mode
-        # Default 0.0 (opt-in): r293 found that the in-cell
-        # decorrelation default at λ=1e-4 actually REGRESSES Henry Hub
-        # by ~5% (vs r292's opt-in path which used a fresh forward
-        # inside extra_loss and gave -0.3% / -1.0%). The discrepancy
-        # is that in-cell decorrelation adds its gradient to the same
-        # task-loss graph, whereas opt-in uses a separate graph.
-        # Users can opt in by setting decorr_lambda > 0.
+        # Default 1e-5 (r294): the in-cell decorrelation at λ=1e-5
+        # gives overall -1.3%, hi_vol -2.6% on Henry Hub (BETTER than
+        # r292's opt-in path -0.3%/-1.0%). r293 found λ=1e-4 was too
+        # large for Henry Hub baseline MSE ~2.6; λ=1e-5 matches the
+        # toy_sin relative scale (~1e-5 / 1 ≈ 1e-5). Pass
+        # decorr_lambda=0.0 to opt out (≡ r280).
         self.decorr_lambda = float(decorr_lambda)
         # Tracks the per-step hidden states from the most recent forward
         # so extra_loss() can compute decorrelation without re-running.

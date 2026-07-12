@@ -87,9 +87,11 @@ class SeqModel(nn.Module):
 
 MODES = {
     "static_tau": dict(kind="static"),
-    "blend_old": dict(kind="blend", decorr=0.0),       # r280 baseline (no decor)
-    "blend_new_default": dict(kind="blend", decorr=1e-4),  # r293 default
-    "blend_new_off": dict(kind="blend", decorr=0.0),       # explicit opt-out
+    "blend_old": dict(kind="blend", decorr=0.0),
+    "blend_new_1e7": dict(kind="blend", decorr=1e-7),
+    "blend_new_1e6": dict(kind="blend", decorr=1e-6),
+    "blend_new_1e5": dict(kind="blend", decorr=1e-5),
+    "blend_new_off": dict(kind="blend", decorr=0.0),
 }
 _COMMON = dict(input_size=1, hidden_size=128, density=0.3,
                ste_temperature=1.0, entropy_lambda=0.1)
@@ -218,7 +220,7 @@ def main():
     base_hi = sum(mse_hi.get("blend_old", [])) / max(
         len(mse_hi.get("blend_old", [])), 1)
     print(f"  baseline blend_old: overall={base_all:.5f} hi_vol={base_hi:.5f}")
-    for m in ("blend_new_default", "blend_new_off"):
+    for m in ("blend_new_1e7", "blend_new_1e6", "blend_new_1e5", "blend_new_off"):
         v_all = sum(mse_all.get(m, [])) / max(len(mse_all.get(m, [])), 1)
         v_hi = sum(mse_hi.get(m, [])) / max(len(mse_hi.get(m, [])), 1)
         d_all = 100 * (v_all - base_all) / max(abs(base_all), 1e-12)
@@ -228,10 +230,10 @@ def main():
     print("\n[bench] H8 acceptance (r293 default matches r292 opt-in):")
     target_overall = -0.3
     target_hi = -1.0
-    new_all = sum(mse_all.get("blend_new_default", [])) / max(
-        len(mse_all.get("blend_new_default", [])), 1)
-    new_hi = sum(mse_hi.get("blend_new_default", [])) / max(
-        len(mse_hi.get("blend_new_default", [])), 1)
+    new_all = sum(mse_all.get("blend_new_1e5", [])) / max(
+        len(mse_all.get("blend_new_1e5", [])), 1)
+    new_hi = sum(mse_hi.get("blend_new_1e5", [])) / max(
+        len(mse_hi.get("blend_new_1e5", [])), 1)
     d_all = 100 * (new_all - base_all) / max(abs(base_all), 1e-12)
     d_hi = 100 * (new_hi - base_hi) / max(abs(base_hi), 1e-12)
     print(f"  Expected (r292 opt-in): overall Δ%≈{target_overall}%, "
