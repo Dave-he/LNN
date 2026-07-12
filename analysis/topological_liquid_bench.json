@@ -1,0 +1,136 @@
+{
+  "config": {
+    "epochs": 30,
+    "lr": 0.01,
+    "batch_size": 16,
+    "T": 64,
+    "seeds": [
+      0,
+      1
+    ],
+    "modes": [
+      "static_tau",
+      "blend_gated_default",
+      "topo_n4",
+      "topo_n8",
+      "topo_n16",
+      "topo_n32"
+    ],
+    "out": "analysis/topological_liquid_bench.json"
+  },
+  "data_summary": {
+    "n_train": 1786,
+    "n_test": 730,
+    "n_hi_vol": 331
+  },
+  "cells": [
+    {
+      "mode": "static_tau",
+      "seed": 0,
+      "n_params": 33537,
+      "test_mse": 3.3921008110046387,
+      "test_mse_hi_vol": 334.700439453125,
+      "train_loss_last": 0.2633809062785336,
+      "elapsed_sec": 82.79
+    },
+    {
+      "mode": "static_tau",
+      "seed": 1,
+      "n_params": 33537,
+      "test_mse": 2.8982670307159424,
+      "test_mse_hi_vol": 290.6647033691406,
+      "train_loss_last": 0.18160227247114694,
+      "elapsed_sec": 84.39
+    },
+    {
+      "mode": "blend_gated_default",
+      "seed": 0,
+      "n_params": 50049,
+      "test_mse": 2.7625303268432617,
+      "test_mse_hi_vol": 285.3560791015625,
+      "train_loss_last": 0.0755819661010589,
+      "elapsed_sec": 149.87
+    },
+    {
+      "mode": "blend_gated_default",
+      "seed": 1,
+      "n_params": 50049,
+      "test_mse": 2.617316961288452,
+      "test_mse_hi_vol": 257.51727294921875,
+      "train_loss_last": 0.0769917496945709,
+      "elapsed_sec": 153.13
+    },
+    {
+      "mode": "topo_n4",
+      "seed": 0,
+      "n_params": 1153,
+      "test_mse": 3.4222633838653564,
+      "test_mse_hi_vol": 348.01348876953125,
+      "train_loss_last": 0.22396135170544898,
+      "elapsed_sec": 119.46
+    },
+    {
+      "mode": "topo_n4",
+      "seed": 1,
+      "n_params": 1153,
+      "test_mse": 2.81969952583313,
+      "test_mse_hi_vol": 278.7604064941406,
+      "train_loss_last": 0.23325041681528091,
+      "elapsed_sec": 122.72
+    },
+    {
+      "mode": "topo_n8",
+      "seed": 0,
+      "n_params": 1665,
+      "test_mse": 3.792485237121582,
+      "test_mse_hi_vol": 389.1243896484375,
+      "train_loss_last": 0.1783717753631728,
+      "elapsed_sec": 143.25
+    },
+    {
+      "mode": "topo_n8",
+      "seed": 1,
+      "n_params": 1665,
+      "test_mse": 2.7279844284057617,
+      "test_mse_hi_vol": 272.301513671875,
+      "train_loss_last": 0.1788999643176794,
+      "elapsed_sec": 146.19
+    },
+    {
+      "mode": "topo_n16",
+      "seed": 0,
+      "n_params": 2689,
+      "test_mse": 2.9243128299713135,
+      "test_mse_hi_vol": 283.8533020019531,
+      "train_loss_last": 0.13091173541865178,
+      "elapsed_sec": 186.32
+    },
+    {
+      "mode": "topo_n16",
+      "seed": 1,
+      "n_params": 2689,
+      "test_mse": 2.825594663619995,
+      "test_mse_hi_vol": 276.1615295410156,
+      "train_loss_last": 0.11707733139129621,
+      "elapsed_sec": 202.21
+    },
+    {
+      "mode": "topo_n32",
+      "seed": 0,
+      "n_params": 4737,
+      "test_mse": 2.8793156147003174,
+      "test_mse_hi_vol": 280.84368896484375,
+      "train_loss_last": 0.09779710758344404,
+      "elapsed_sec": 235.03
+    },
+    {
+      "mode": "topo_n32",
+      "seed": 1,
+      "n_params": 4737,
+      "test_mse": 2.7855310440063477,
+      "test_mse_hi_vol": 271.66754150390625,
+      "train_loss_last": 0.08921684148455304,
+      "elapsed_sec": 236.02
+    }
+  ]
+}
