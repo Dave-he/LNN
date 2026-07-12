@@ -73,6 +73,31 @@ def make_structured(T=48, n_samples=192, seed=0):
     return y[:, :-1].unsqueeze(-1), y[:, 1:].unsqueeze(-1)
 
 
+def make_noisy_structured(T=48, n_samples=192, seed=0, snr=2.0,
+                           noise_std=0.1):
+    """Piecewise-constant signal + additive Gaussian noise at SNR=snr.
+
+    The signal has 4 piecewise-constant levels (same as structured)
+    but with substantial additive Gaussian noise. SNR=2 means the
+    signal amplitude (level differences ~1.5) is ~2× the noise std.
+    This is a "hard" dataset that has both structure AND noise.
+    """
+    g = torch.Generator().manual_seed(seed)
+    n_segments = 4
+    seg_len = (T + 1) // n_segments
+    levels = torch.tensor([0.0, 1.0, -0.5, 0.7])
+    y = torch.zeros(n_samples, T + 1)
+    for i in range(n_segments):
+        start = i * seg_len
+        end = (i + 1) * seg_len if i < n_segments - 1 else T + 1
+        y[:, start:end] = levels[i % len(levels)]
+    # Add noise calibrated so signal / noise = snr.
+    sig_std = y.std(dim=1, keepdim=True).clamp(min=1e-3)
+    target_noise_std = sig_std / snr
+    y = y + torch.randn(n_samples, T + 1, generator=g) * target_noise_std
+    return y[:, :-1].unsqueeze(-1), y[:, 1:].unsqueeze(-1)
+
+
 def make_random(T=48, n_samples=192, seed=0):
     g = torch.Generator().manual_seed(seed)
     y = torch.randn(n_samples, T + 1, generator=g)
@@ -82,6 +107,7 @@ def make_random(T=48, n_samples=192, seed=0):
 DATA_FACTORIES = {
     "toy_sin": make_toy_sin,
     "structured": make_structured,
+    "noisy_structured": make_noisy_structured,
     "random": make_random,
 }
 
@@ -116,10 +142,10 @@ class SeqModel(nn.Module):
 MODES = {
     "static_tau": dict(kind="static", decorr_lambda=0.0),
     "blend_gated": dict(kind="blend", decorr_lambda=0.0),
+    "decorr_a00001": dict(kind="blend", decorr_lambda=0.00001),
     "decorr_a0001": dict(kind="blend", decorr_lambda=0.0001),
     "decorr_a001": dict(kind="blend", decorr_lambda=0.001),
     "decorr_a01": dict(kind="blend", decorr_lambda=0.01),
-    "decorr_a1": dict(kind="blend", decorr_lambda=0.1),
 }
 _COMMON = dict(input_size=1, hidden_size=128, density=0.3,
                ste_temperature=1.0, entropy_lambda=0.1)
@@ -195,10 +221,11 @@ def main():
     ap.add_argument("--gap-p", type=float, default=0.3)
     ap.add_argument("--seeds", type=int, nargs="+", default=[0, 1])
     ap.add_argument("--datasets", nargs="+",
-                    default=["toy_sin", "structured", "random"])
+                    default=["toy_sin", "structured",
+                             "noisy_structured", "random"])
     ap.add_argument("--modes", nargs="+", default=list(MODES.keys()))
     ap.add_argument("--out", type=str,
-                    default="analysis/decorrelation_loss_bench.json")
+                    default="analysis/decorrelation_loss_bench_v2.json")
     args = ap.parse_args()
 
     device = torch.device("cpu")
@@ -270,7 +297,7 @@ def main():
             continue
         bm = sum(base) / len(base)
         line = f"  {d:11s}: blend={bm:.5f}"
-        for m in ("decorr_a0001", "decorr_a001", "decorr_a01", "decorr_a1"):
+        for m in ("decorr_a00001", "decorr_a0001", "decorr_a001", "decorr_a01"):
             v = mse.get((m, d), [])
             if v:
                 vm = sum(v) / len(v)
@@ -290,7 +317,7 @@ def main():
     print("  H1 task loss improves-or-maintains vs blend on ALL 3 datasets:")
     h1_ok = False
     h1_pass_modes = []
-    for m in ("decorr_a0001", "decorr_a001", "decorr_a01", "decorr_a1"):
+    for m in ("decorr_a00001", "decorr_a0001", "decorr_a001", "decorr_a01"):
         all_ok = True
         per_ds = []
         for ds in args.datasets:
@@ -308,7 +335,7 @@ def main():
 
     print("  H3 diag/off_ratio ≥ 5 (decorrelated axes):")
     h3_ok = False
-    for m in ("decorr_a0001", "decorr_a001", "decorr_a01", "decorr_a1"):
+    for m in ("decorr_a00001", "decorr_a0001", "decorr_a001", "decorr_a01"):
         ratios = []
         for ds in args.datasets:
             ratios.append(mean("ratio", m, ds))
