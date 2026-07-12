@@ -62,6 +62,7 @@ from __future__ import annotations
 import torch
 
 from lnn.core.liquid_tau_ste_cfc import LiquidTauSTECfCCell
+from lnn.core.decorrelation_loss import state_decorrelation_loss
 
 
 class PredictabilityGatedLiquidTauCfCCell(LiquidTauSTECfCCell):
@@ -106,6 +107,7 @@ class PredictabilityGatedLiquidTauCfCCell(LiquidTauSTECfCCell):
         init_rec_scale: float | None = None,
         input_strength_init: float = 0.1,
         seed: int = 42,
+        decorr_lambda: float = 1e-5,
     ):
         super().__init__(
             input_size=input_size,
@@ -126,8 +128,18 @@ class PredictabilityGatedLiquidTauCfCCell(LiquidTauSTECfCCell):
             raise ValueError("pred_gate_beta must be >= 0")
         if not (0.0 <= ema_gamma < 1.0):
             raise ValueError("ema_gamma must be in [0, 1)")
+        if decorr_lambda < 0:
+            raise ValueError("decorr_lambda must be ≥ 0")
         self.pred_gate_beta = float(pred_gate_beta)
         self.ema_gamma = float(ema_gamma)
+        # Decorrelation default (r295): in-cell state decorrelation at
+        # λ=1e-5. Found SP on r294 Henry Hub (-1.3%/-2.6%). Pass 0.0
+        # to opt out. Subclasses accel_gated and blend_gated inherit
+        # this and benefit from the same default.
+        self.decorr_lambda = float(decorr_lambda)
+        # Cache for extra_loss() to compute decorrelation without
+        # re-running forward. Subclasses set this in their forward.
+        self._last_outputs: torch.Tensor | None = None
 
     # ------------------------------------------------------------------
     # Predictability gate + gated liquid τ
@@ -223,6 +235,8 @@ class PredictabilityGatedLiquidTauCfCCell(LiquidTauSTECfCCell):
                 gate_steps.append(gate.detach())
 
         out = torch.stack(outputs, dim=1)
+        # Cache for extra_loss() — gradient flows back through cell params.
+        self._last_outputs = out
         if not return_aux:
             return out, h
 
@@ -243,8 +257,18 @@ class PredictabilityGatedLiquidTauCfCCell(LiquidTauSTECfCCell):
             "liquid_tau_strength": self.liquid_tau_strength,
             "alpha_mean": float(alpha.mean().item()),
             "alpha_std": float(alpha.std().item()),
+            "decorr_lambda": self.decorr_lambda,
         }
         return out, h, aux
+
+    # ------------------------------------------------------------------
+    def extra_loss(self) -> torch.Tensor:
+        """Entropy + decorrelation loss (r294 SP default)."""
+        ent = super().extra_loss()
+        if self.decorr_lambda == 0.0 or self._last_outputs is None:
+            return ent
+        return ent + state_decorrelation_loss(
+            self._last_outputs, lambda_coeff=self.decorr_lambda)
 
 
 __all__ = ["PredictabilityGatedLiquidTauCfCCell"]

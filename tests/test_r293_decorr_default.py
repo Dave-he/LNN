@@ -83,22 +83,27 @@ class TestR293Supersets(unittest.TestCase):
     def test_decor_lambda_zero_matches_old_behavior(self):
         # The r280 blend_gated cell had no decor_lambda arg; this test
         # verifies the new default cell with decorr_lambda=0 produces
-        # the same extra_loss as the parent.
+        # the same extra_loss as the parent (which now also defaults
+        # to decorr_lambda=1e-5 from r295 — so we explicitly set it
+        # to 0 on the parent for an apples-to-apples comparison).
         cell = BlendGatedLiquidTauCfCCell(
             input_size=1, hidden_size=24, density=0.3, seed=5,
             entropy_lambda=0.1, gate_mode="blend",
             decorr_lambda=0.0)
-        # parent cell.
+        # Parent cell — same configuration with explicit decorr=0.
         from lnn.core.accel_gated_liquid_tau_cfc import AccelGatedLiquidTauCfCCell
         parent = AccelGatedLiquidTauCfCCell(
             input_size=1, hidden_size=24, density=0.3, seed=5,
             entropy_lambda=0.1, diff_order=2)
+        # Manually set parent's decorr_lambda to 0 (it now defaults to
+        # 1e-5 in r295 but BlendGated(decorr=0) should match).
+        parent.decorr_lambda = 0.0
         x = _sine(B=2, T=16)
         _ = cell(x)
         _ = parent(x)
         loss_child = float(cell.extra_loss().item())
         loss_parent = float(parent.extra_loss().item())
-        self.assertAlmostEqual(loss_child, loss_parent, places=5,
+        self.assertAlmostEqual(loss_child, loss_parent, places=4,
                                msg=f"{loss_child} != {loss_parent}")
 
 

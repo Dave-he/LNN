@@ -132,15 +132,13 @@ class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
         if decorr_lambda < 0:
             raise ValueError("decorr_lambda must be ≥ 0")
         self.gate_mode = gate_mode
-        # Default 1e-5 (r294): the in-cell decorrelation at λ=1e-5
-        # gives overall -1.3%, hi_vol -2.6% on Henry Hub (BETTER than
-        # r292's opt-in path -0.3%/-1.0%). r293 found λ=1e-4 was too
-        # large for Henry Hub baseline MSE ~2.6; λ=1e-5 matches the
-        # toy_sin relative scale (~1e-5 / 1 ≈ 1e-5). Pass
-        # decorr_lambda=0.0 to opt out (≡ r280).
+        # r295: blend_gated keeps the SP default from r294. Pass 0.0
+        # to opt out (≡ r280).
         self.decorr_lambda = float(decorr_lambda)
         # Tracks the per-step hidden states from the most recent forward
         # so extra_loss() can compute decorrelation without re-running.
+        # (Pred_gated also sets this attribute; we re-init here to
+        # make blend_gated's lifecycle explicit.)
         self._last_outputs: torch.Tensor | None = None
 
     # ------------------------------------------------------------------

@@ -97,6 +97,7 @@ class AccelGatedLiquidTauCfCCell(PredictabilityGatedLiquidTauCfCCell):
         init_rec_scale: float | None = None,
         input_strength_init: float = 0.1,
         seed: int = 42,
+        decorr_lambda: float = 1e-5,
     ):
         super().__init__(
             input_size=input_size,
@@ -117,7 +118,11 @@ class AccelGatedLiquidTauCfCCell(PredictabilityGatedLiquidTauCfCCell):
         )
         if diff_order not in (1, 2):
             raise ValueError("diff_order must be 1 (r278) or 2 (accel)")
+        if decorr_lambda < 0:
+            raise ValueError("decorr_lambda must be ≥ 0")
         self.diff_order = int(diff_order)
+        # r295: pass decorr_lambda through to parent.
+        self.decorr_lambda = float(decorr_lambda)
 
     # ------------------------------------------------------------------
     # Forward (τ = acceleration-gated liquid τ, per-timestep)
@@ -187,6 +192,8 @@ class AccelGatedLiquidTauCfCCell(PredictabilityGatedLiquidTauCfCCell):
                 gate_steps.append(gate.detach())
 
         out = torch.stack(outputs, dim=1)
+        # r295: cache for extra_loss() decorrelation.
+        self._last_outputs = out
         if not return_aux:
             return out, h
 
