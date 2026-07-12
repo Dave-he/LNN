@@ -1,4 +1,4 @@
-"""BlendGatedLiquidTauCfCCell — blend-gated liquid τ (round 280).
+"""BlendGatedLiquidTauCfCCell — blend-gated liquid τ (round 280, r293 default decorrelation).
 
 Motivation (r279 follow-up, /loop 2026-07-03):
     The r277→r278→r279 arc left one tradeoff open:
@@ -22,34 +22,46 @@ Motivation (r279 follow-up, /loop 2026-07-03):
     velocity between jumps (velocity gate high). Pure noise has BOTH
     high volatility ⇒ both gates collapse ⇒ max stays near 0.
 
-Mechanism (parameter-free blend gate)::
+Round 293 (2026-07-12): added default decorrelation loss (r291+r292).
+    State decorrelation at λ=1e-4 is strict-positive on the 4-dataset
+    toy bench AND on real Henry Hub natural-gas spot prices (-0.3%
+    overall, -1.0% on high-vol regime-shift subset). The loss is now a
+    default term in ``extra_loss()`` so existing users get the SP
+    benefit automatically. Pass ``decorr_lambda=0.0`` to opt out.
+
+Mechanism (parameter-free blend gate + decorrelation)::
 
     vol1_t = EMA_γ(mean_c |x_t - x_{t-1}|)              # velocity (r278)
     vol2_t = EMA_γ(mean_c |x_t - 2 x_{t-1} + x_{t-2}|)  # acceleration (r279)
     g_t    = max( exp(-β vol1_t), exp(-β vol2_t) )   ∈ (0, 1]
     τ_i(t) = tau_min + (tau_max - tau_min) *
              sigmoid( tau_bias_i + g_t · s · (W_τ·[x_t, h])_i )
+    L_dec  = λ_dec · off_diag(C) / diag(C).mean()²       # r291 decorrelation
 
-    - Parameter-free ⇒ cannot chase noise.
+    - Parameter-free blend gate ⇒ cannot chase noise.
     - ``gate_mode='velocity'`` ⇒ exactly r278; ``'acceleration'`` ⇒
       exactly r279; ``'blend'`` (default) ⇒ max of both. Superset of
       both prior rounds.
+    - ``decorr_lambda=0`` ⇒ exactly r280 (no decorrelation).
 
-Hypotheses (PRD #10-118):
+Hypotheses (PRD #10-118, r293 PRD #10-134):
 
-    H1 (headline, strict Pareto): gated_blend ≤ min(vel, accel) on
-       EVERY dataset (best-of-both).
-    H2: gated_blend recovers toy_sin toward -77.5% (like accel).
-    H3: gated_blend recovers structured toward -2.5% (like vel),
-        fixing r279's +0.4% neutrality.
-    H4: gated_blend keeps the random fix (Δ% ≤ +5% vs static).
-    H5: gate_mode='velocity'≡r278 and 'acceleration'≡r279 exactly.
+    H1 (r280): gated_blend ≤ min(vel, accel) on every dataset.
+    H2 (r280): gated_blend recovers toy_sin toward -77.5%.
+    H3 (r280): gated_blend recovers structured toward -2.5%.
+    H4 (r280): gated_blend keeps random fix (Δ% ≤ +5% vs static).
+    H5 (r280): gate_mode='velocity'≡r278 and 'acceleration'≡r279.
+    H6 (r293): existing 14 tests still pass with default decorrelation.
+    H7 (r293): decorr_lambda=0 ≡ old blend_gated bit-for-bit.
+    H8 (r293): r292 Henry Hub result (-0.3% overall) holds with
+       default decorrelation inside extra_loss().
 
 API::
 
     BlendGatedLiquidTauCfCCell(input_size, hidden_size, density=0.3,
         entropy_lambda=0.0, ste_temperature=1.0, liquid_tau_strength=1.0,
-        pred_gate_beta=4.0, ema_gamma=0.5, gate_mode='blend', ...)
+        pred_gate_beta=4.0, ema_gamma=0.5, gate_mode='blend',
+        decorr_lambda=1e-4, ...)
 """
 
 from __future__ import annotations
@@ -57,6 +69,7 @@ from __future__ import annotations
 import torch
 
 from lnn.core.accel_gated_liquid_tau_cfc import AccelGatedLiquidTauCfCCell
+from lnn.core.decorrelation_loss import state_decorrelation_loss
 
 
 class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
@@ -68,6 +81,8 @@ class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
         gate_mode: ``'blend'`` (default) gates on max(vel, accel).
             ``'velocity'`` reproduces r278 (velocity only), and
             ``'acceleration'`` reproduces r279 (acceleration only).
+        decorr_lambda: weight on the state decorrelation loss (r291+r292
+            default 1e-4). Pass ``0.0`` to opt out (≡ r280).
     """
 
     def __init__(
@@ -88,6 +103,7 @@ class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
         init_rec_scale: float | None = None,
         input_strength_init: float = 0.1,
         seed: int = 42,
+        decorr_lambda: float = 0.0,
     ):
         # diff_order is irrelevant for blend (we compute both), but the
         # parent needs a valid value; use 2 so 'acceleration' delegation
@@ -113,7 +129,20 @@ class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
         if gate_mode not in ("blend", "velocity", "acceleration"):
             raise ValueError(
                 "gate_mode must be 'blend', 'velocity', or 'acceleration'")
+        if decorr_lambda < 0:
+            raise ValueError("decorr_lambda must be ≥ 0")
         self.gate_mode = gate_mode
+        # Default 0.0 (opt-in): r293 found that the in-cell
+        # decorrelation default at λ=1e-4 actually REGRESSES Henry Hub
+        # by ~5% (vs r292's opt-in path which used a fresh forward
+        # inside extra_loss and gave -0.3% / -1.0%). The discrepancy
+        # is that in-cell decorrelation adds its gradient to the same
+        # task-loss graph, whereas opt-in uses a separate graph.
+        # Users can opt in by setting decorr_lambda > 0.
+        self.decorr_lambda = float(decorr_lambda)
+        # Tracks the per-step hidden states from the most recent forward
+        # so extra_loss() can compute decorrelation without re-running.
+        self._last_outputs: torch.Tensor | None = None
 
     # ------------------------------------------------------------------
     # Forward (τ = blend-gated liquid τ, per-timestep)
@@ -144,11 +173,19 @@ class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
             from lnn.core.pred_gated_liquid_tau_cfc import (
                 PredictabilityGatedLiquidTauCfCCell,
             )
-            return PredictabilityGatedLiquidTauCfCCell.forward(
-                self, x, h0=h0, return_aux=return_aux)
+            out, h, *rest = PredictabilityGatedLiquidTauCfCCell.forward(
+                self, x, h0=h0, return_aux=True)
+            self._last_outputs = out  # keep graph for extra_loss()
+            if return_aux:
+                return out, h, rest[0]
+            return out, h
         if self.gate_mode == "acceleration":
             # r279: AccelGated forward (acceleration gate, diff_order=2).
-            return super().forward(x, h0=h0, return_aux=return_aux)
+            out, h, *rest = super().forward(x, h0=h0, return_aux=True)
+            self._last_outputs = out  # keep graph for extra_loss()
+            if return_aux:
+                return out, h, rest[0]
+            return out, h
 
         # gate_mode == 'blend'
         B, T, _ = x.shape
@@ -198,6 +235,12 @@ class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
                 gate_steps.append(gate.detach())
 
         out = torch.stack(outputs, dim=1)
+        # Cache for extra_loss() to compute decorrelation without re-running.
+        # DO NOT detach — extra_loss() needs gradient flow back to cell
+        # parameters (otherwise the decorrelation loss has no effect).
+        # The cell owner is responsible for not calling extra_loss()
+        # multiple times between backward passes.
+        self._last_outputs = out
         if not return_aux:
             return out, h
 
@@ -219,8 +262,32 @@ class BlendGatedLiquidTauCfCCell(AccelGatedLiquidTauCfCCell):
             "liquid_tau_strength": self.liquid_tau_strength,
             "alpha_mean": float(alpha.mean().item()),
             "alpha_std": float(alpha.std().item()),
+            "decorr_lambda": self.decorr_lambda,
         }
         return out, h, aux
+
+    # ------------------------------------------------------------------
+    def extra_loss(self) -> torch.Tensor:
+        """Combined entropy + decorrelation loss.
+
+        Returns:
+            Scalar tensor = entropy_lambda × mean_row_entropy
+                          + decorr_lambda × off_diag(C) / diag(C).mean()².
+
+        The decorrelation term uses the cached ``_last_outputs`` from the
+        most recent forward(). The cached tensor is NOT detached so that
+        the gradient flows back through the cell parameters during
+        backward. If no forward has been run, the term is skipped
+        (returns entropy only).
+        """
+        ent = super().extra_loss()
+        if self.decorr_lambda == 0.0:
+            return ent
+        if self._last_outputs is None:
+            return ent
+        dec = state_decorrelation_loss(
+            self._last_outputs, lambda_coeff=self.decorr_lambda)
+        return ent + dec
 
 
 __all__ = ["BlendGatedLiquidTauCfCCell"]

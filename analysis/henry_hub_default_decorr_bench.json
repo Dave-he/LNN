@@ -1,0 +1,90 @@
+{
+  "config": {
+    "epochs": 30,
+    "lr": 0.01,
+    "batch_size": 16,
+    "T": 64,
+    "seeds": [
+      0,
+      1
+    ],
+    "modes": [
+      "static_tau",
+      "blend_old",
+      "blend_new_default",
+      "blend_new_off"
+    ],
+    "out": "analysis/henry_hub_default_decorr_bench.json"
+  },
+  "data_summary": {
+    "n_train": 1786,
+    "n_test": 730,
+    "n_hi_vol": 331
+  },
+  "cells": [
+    {
+      "mode": "static_tau",
+      "seed": 0,
+      "test_mse": 3.3921008110046387,
+      "test_mse_hi_vol": 334.700439453125,
+      "train_loss_last": 0.2633809062785336,
+      "elapsed_sec": 86.99
+    },
+    {
+      "mode": "static_tau",
+      "seed": 1,
+      "test_mse": 2.8982670307159424,
+      "test_mse_hi_vol": 290.6647033691406,
+      "train_loss_last": 0.18160227247114694,
+      "elapsed_sec": 84.14
+    },
+    {
+      "mode": "blend_old",
+      "seed": 0,
+      "test_mse": 2.6671364307403564,
+      "test_mse_hi_vol": 273.1541748046875,
+      "train_loss_last": 0.07334375514515809,
+      "elapsed_sec": 156.43
+    },
+    {
+      "mode": "blend_old",
+      "seed": 1,
+      "test_mse": 2.5966556072235107,
+      "test_mse_hi_vol": 260.4186096191406,
+      "train_loss_last": 0.07560282509907015,
+      "elapsed_sec": 155.84
+    },
+    {
+      "mode": "blend_new_default",
+      "seed": 0,
+      "test_mse": 2.745964765548706,
+      "test_mse_hi_vol": 282.9848327636719,
+      "train_loss_last": 0.07250701812362033,
+      "elapsed_sec": 159.54
+    },
+    {
+      "mode": "blend_new_default",
+      "seed": 1,
+      "test_mse": 2.7761120796203613,
+      "test_mse_hi_vol": 278.4493408203125,
+      "train_loss_last": 0.07465063444604832,
+      "elapsed_sec": 159.77
+    },
+    {
+      "mode": "blend_new_off",
+      "seed": 0,
+      "test_mse": 2.6671364307403564,
+      "test_mse_hi_vol": 273.1541748046875,
+      "train_loss_last": 0.07334375514515809,
+      "elapsed_sec": 153.28
+    },
+    {
+      "mode": "blend_new_off",
+      "seed": 1,
+      "test_mse": 2.5966556072235107,
+      "test_mse_hi_vol": 260.4186096191406,
+      "train_loss_last": 0.07560282509907015,
+      "elapsed_sec": 154.12
+    }
+  ]
+}
