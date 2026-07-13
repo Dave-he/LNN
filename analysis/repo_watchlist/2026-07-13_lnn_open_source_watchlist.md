@@ -7,19 +7,33 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-07-13
 
 ## GitHub 仓库
+### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
+- 更新：2026-07-13
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
+
+### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
+- 更新：2026-07-13
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
+
+### [ys260106/lnn-benchmark](https://github.com/ys260106/lnn-benchmark)
+- 更新：2026-07-13
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：LNN (CFC) vs LSTM — UAV-SEAD Benchmark: Closed-Form Continuous-Time neural network outperforms LSTM 3/3 tests with 66 params vs 105
+
 ### [rudramadhabofficial/LLS-4-Liquid-Latent-Synthesis](https://github.com/rudramadhabofficial/LLS-4-Liquid-Latent-Synthesis)
 - 更新：2026-07-12
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：A quad-partite architecture proposing latent-space concept interpolation for continual reinforcement learning, built on a Closed-form Continuous-time (CfC) liquid network.
-
-### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
-- 更新：2026-07-11
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
 
 ### [liuyhoo/F-CfC](https://github.com/liuyhoo/F-CfC)
 - 更新：2026-07-11
@@ -41,13 +55,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：C
 - Topics：未标注
 - 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
-
-### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
-- 更新：2026-07-10
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
 
 ### [kakopappa/proxy-kd-lfm2](https://github.com/kakopappa/proxy-kd-lfm2)
 - 更新：2026-07-09
@@ -139,13 +146,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：anesthesia-validation, brain-inspired, deep-learning, liquid-neural-network, llm, long-context, microtubule, mt-lnn
 - 说明：MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).
-
-### [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection)
-- 更新：2026-06-25
-- Star / Fork：2 / 0
-- 语言：Swift
-- Topics：未标注
-- 说明：On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm
 
 ## Hugging Face 模型
 ### [lazos/lfm2.5-230m-frontend-agent](https://huggingface.co/lazos/lfm2.5-230m-frontend-agent)
