@@ -49,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-07-13 | [RockMan256/LFM2.5-1.2B-Instruct-fullrc-GGUF](https://huggingface.co/RockMan256/LFM2.5-1.2B-Instruct-fullrc-GGUF) | 81 | 0 |  |
-| 2026-07-13 | [P0u4a/SAE-Res-LFM2.5-230M-W16K-L0_64](https://huggingface.co/P0u4a/SAE-Res-LFM2.5-230M-W16K-L0_64) | 0 | 0 |  |
-| 2026-07-13 | [PinoCookie/LFM2.5-1.2B-Instruct-Abliterated-Paired-Alpha2](https://huggingface.co/PinoCookie/LFM2.5-1.2B-Instruct-Abliterated-Paired-Alpha2) | 0 | 0 | text-generation |
-| 2026-07-13 | [tugot17/LFM2.5-8B-A1B-DSpark-2L](https://huggingface.co/tugot17/LFM2.5-8B-A1B-DSpark-2L) | 0 | 0 |  |
-| 2026-07-13 | [tugot17/LFM2.5-8B-A1B-DSpark-5L](https://huggingface.co/tugot17/LFM2.5-8B-A1B-DSpark-5L) | 0 | 0 |  |
-| 2026-07-13 | [tugot17/LFM2.5-1.2B-Instruct-DSpark-3L-Nemotron](https://huggingface.co/tugot17/LFM2.5-1.2B-Instruct-DSpark-3L-Nemotron) | 0 | 0 |  |
-| 2026-07-13 | [tugot17/LFM2.5-1.2B-Instruct-DSpark-2L](https://huggingface.co/tugot17/LFM2.5-1.2B-Instruct-DSpark-2L) | 0 | 0 |  |
-| 2026-07-13 | [tugot17/LFM2.5-1.2B-Instruct-DSpark-3L](https://huggingface.co/tugot17/LFM2.5-1.2B-Instruct-DSpark-3L) | 0 | 0 |  |
-| 2026-07-10 | [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | 7700 | 56 | image-text-to-text |
-| 2026-07-10 | [LiquidAI/LFM2-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF) | 4082 | 40 | image-text-to-text |
-| 2026-07-10 | [Synaptics/liquidAI-LFM2p5-230M-LLM](https://huggingface.co/Synaptics/liquidAI-LFM2p5-230M-LLM) | 1090 | 0 | text-generation |
-| 2026-07-09 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 88951 | 370 | text-generation |
+| 2026-07-14 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 2127 | 5 | text-generation |
+| 2026-07-14 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 2102 | 0 | text-generation |
+| 2026-07-14 | [lazos/lfm2.5-230m-frontend-agent](https://huggingface.co/lazos/lfm2.5-230m-frontend-agent) | 892 | 0 | text-generation |
+| 2026-07-14 | [mlboydaisuke/LFM2.5-1.2B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-1.2B-CoreAI) | 486 | 0 | text-generation |
+| 2026-07-14 | [stressthismess/LFM2.5-1.2B-Thinking-Q4_K_M](https://huggingface.co/stressthismess/LFM2.5-1.2B-Thinking-Q4_K_M) | 58 | 0 |  |
+| 2026-07-14 | [AbdallaHolmes/LFM2.5-8B-A1B-CoreAI-NorthStar](https://huggingface.co/AbdallaHolmes/LFM2.5-8B-A1B-CoreAI-NorthStar) | 0 | 0 |  |
+| 2026-07-14 | [lazos/lfm2.5-350m-frontend-agent](https://huggingface.co/lazos/lfm2.5-350m-frontend-agent) | 0 | 0 | text-generation |
+| 2026-07-14 | [kroffske/shellcue-lfm2.5-230m-alpha](https://huggingface.co/kroffske/shellcue-lfm2.5-230m-alpha) | 0 | 0 | text-generation |
+| 2026-07-10 | [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | 7874 | 56 | image-text-to-text |
+| 2026-07-10 | [LiquidAI/LFM2-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF) | 4148 | 41 | image-text-to-text |
+| 2026-07-10 | [Synaptics/liquidAI-LFM2p5-230M-LLM](https://huggingface.co/Synaptics/liquidAI-LFM2p5-230M-LLM) | 1092 | 0 | text-generation |
+| 2026-07-09 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 90579 | 374 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

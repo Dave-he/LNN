@@ -148,75 +148,75 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).
 
 ## Hugging Face 模型
-### [RockMan256/LFM2.5-1.2B-Instruct-fullrc-GGUF](https://huggingface.co/RockMan256/LFM2.5-1.2B-Instruct-fullrc-GGUF)
-- 更新：2026-07-13
-- 下载 / Likes：81 / 0
-- 任务：unknown
-- Tags：llama.cpp, gguf, home-assistant, rc-parsing, document-parsing, lfm, ru, en
+### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
+- 更新：2026-07-14
+- 下载 / Likes：2127 / 5
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
 
-### [P0u4a/SAE-Res-LFM2.5-230M-W16K-L0_64](https://huggingface.co/P0u4a/SAE-Res-LFM2.5-230M-W16K-L0_64)
-- 更新：2026-07-13
+### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
+- 更新：2026-07-14
+- 下载 / Likes：2102 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
+
+### [lazos/lfm2.5-230m-frontend-agent](https://huggingface.co/lazos/lfm2.5-230m-frontend-agent)
+- 更新：2026-07-14
+- 下载 / Likes：892 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, gguf, lfm2, text-generation, edge, on-device, tool-calling
+
+### [mlboydaisuke/LFM2.5-1.2B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-1.2B-CoreAI)
+- 更新：2026-07-14
+- 下载 / Likes：486 / 0
+- 任务：text-generation
+- Tags：coreai-aimodel, coreai, aimodel, apple-silicon, on-device, lfm2, hybrid, text-generation
+
+### [stressthismess/LFM2.5-1.2B-Thinking-Q4_K_M](https://huggingface.co/stressthismess/LFM2.5-1.2B-Thinking-Q4_K_M)
+- 更新：2026-07-14
+- 下载 / Likes：58 / 0
+- 任务：unknown
+- Tags：gguf, license:apache-2.0, endpoints_compatible, region:us, conversational
+
+### [AbdallaHolmes/LFM2.5-8B-A1B-CoreAI-NorthStar](https://huggingface.co/AbdallaHolmes/LFM2.5-8B-A1B-CoreAI-NorthStar)
+- 更新：2026-07-14
 - 下载 / Likes：0 / 0
 - 任务：unknown
-- Tags：dataset:HuggingFaceFW/fineweb-edu, base_model:LiquidAI/LFM2.5-230M, base_model:finetune:LiquidAI/LFM2.5-230M, region:us
+- Tags：region:us
 
-### [PinoCookie/LFM2.5-1.2B-Instruct-Abliterated-Paired-Alpha2](https://huggingface.co/PinoCookie/LFM2.5-1.2B-Instruct-Abliterated-Paired-Alpha2)
-- 更新：2026-07-13
+### [lazos/lfm2.5-350m-frontend-agent](https://huggingface.co/lazos/lfm2.5-350m-frontend-agent)
+- 更新：2026-07-14
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, lfm2.5, abliterated, refusal-direction, red-teaming
+- Tags：transformers, safetensors, gguf, lfm2, text-generation, edge, on-device, tool-calling
 
-### [tugot17/LFM2.5-8B-A1B-DSpark-2L](https://huggingface.co/tugot17/LFM2.5-8B-A1B-DSpark-2L)
-- 更新：2026-07-13
+### [kroffske/shellcue-lfm2.5-230m-alpha](https://huggingface.co/kroffske/shellcue-lfm2.5-230m-alpha)
+- 更新：2026-07-14
 - 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, draft-model, lfm2, moe
-
-### [tugot17/LFM2.5-8B-A1B-DSpark-5L](https://huggingface.co/tugot17/LFM2.5-8B-A1B-DSpark-5L)
-- 更新：2026-07-13
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, draft-model, lfm2, moe
-
-### [tugot17/LFM2.5-1.2B-Instruct-DSpark-3L-Nemotron](https://huggingface.co/tugot17/LFM2.5-1.2B-Instruct-DSpark-3L-Nemotron)
-- 更新：2026-07-13
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, draft-model, lfm2, base_model:LiquidAI/LFM2.5-1.2B-Instruct
-
-### [tugot17/LFM2.5-1.2B-Instruct-DSpark-2L](https://huggingface.co/tugot17/LFM2.5-1.2B-Instruct-DSpark-2L)
-- 更新：2026-07-13
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, draft-model, lfm2, base_model:LiquidAI/LFM2.5-1.2B-Instruct
-
-### [tugot17/LFM2.5-1.2B-Instruct-DSpark-3L](https://huggingface.co/tugot17/LFM2.5-1.2B-Instruct-DSpark-3L)
-- 更新：2026-07-13
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, draft-model, lfm2, base_model:LiquidAI/LFM2.5-1.2B-Instruct
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, shellcue, shell, autocomplete, causal-lm
 
 ### [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF)
 - 更新：2026-07-10
-- 下载 / Likes：7700 / 56
+- 下载 / Likes：7874 / 56
 - 任务：image-text-to-text
 - Tags：gguf, vision, vlm, liquid, lfm2, lfm2-vl, edge, llama.cpp
 
 ### [LiquidAI/LFM2-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF)
 - 更新：2026-07-10
-- 下载 / Likes：4082 / 40
+- 下载 / Likes：4148 / 41
 - 任务：image-text-to-text
 - Tags：gguf, vision, vlm, liquid, lfm2, lfm2-vl, edge, llama.cpp
 
 ### [Synaptics/liquidAI-LFM2p5-230M-LLM](https://huggingface.co/Synaptics/liquidAI-LFM2p5-230M-LLM)
 - 更新：2026-07-10
-- 下载 / Likes：1090 / 0
+- 下载 / Likes：1092 / 0
 - 任务：text-generation
 - Tags：onnx, lfm2, torq, synaptics, sl2619, npu, edge, text-generation
 
 ### [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M)
 - 更新：2026-07-09
-- 下载 / Likes：88951 / 370
+- 下载 / Likes：90579 / 374
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
@@ -228,19 +228,19 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
 - 更新：2026-07-02
-- 下载 / Likes：86446 / 667
+- 下载 / Likes：88250 / 668
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2-Audio-1.5B-GGUF](https://huggingface.co/LiquidAI/LFM2-Audio-1.5B-GGUF)
 - 更新：2026-06-29
-- 下载 / Likes：1566 / 35
+- 下载 / Likes：1577 / 35
 - 任务：unknown
 - Tags：gguf, audio, liquid, lfm2, edge, llama.cpp, base_model:LiquidAI/LFM2-Audio-1.5B, base_model:quantized:LiquidAI/LFM2-Audio-1.5B
 
 ### [LiquidAI/LFM2-8B-A1B-ONNX](https://huggingface.co/LiquidAI/LFM2-8B-A1B-ONNX)
 - 更新：2026-06-29
-- 下载 / Likes：173 / 5
+- 下载 / Likes：169 / 5
 - 任务：text-generation
 - Tags：onnx, lfm2_moe, liquid, edge, lfm2, moe, mixture-of-experts, onnxruntime
 
