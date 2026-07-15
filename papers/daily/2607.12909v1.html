@@ -1,0 +1,1128 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Real-time fall detection based on vision for low-power edge platforms</title>
+<!--Generated on Tue Jul 14 15:39:21 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+    // Pre-apply spinout-banner dismissal here, before the banner paints, so it
+    // never flashes in only to be hidden later by the deferred arxiv-header.js.
+    // Key matches arxiv-header.js: "arxiv-banner-dismissed:" + data-banner-name.
+    if (localStorage.getItem('arxiv-banner-dismissed:spinout-nonprofit')) {
+      document.documentElement.setAttribute("data-banner-dismissed", "");
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css"><link rel="stylesheet" type="text/css" media="screen"
+  href="/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626"><style>
+  /* Banner pre-dismissal (set above before paint -> no flash-then-hide) and
+     reading-mode chrome hiding. */
+  html[data-banner-dismissed] .ds-announcement { display: none; }
+  html[data-reading-mode="enabled"] .ds-announcement,
+  html[data-reading-mode="enabled"] .ds-site-footer { display: none; }
+  /* Keep the announcement text dark on the Open-Blue band in both colour themes
+     (otherwise it inherits the paper's warm-wash text in dark mode and washes out). */
+  .ds-announcement-text { color: var(--arxiv-ink, #1c1a17); }
+</style>
+<script defer src="/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog><div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement"
+    data-banner-name="spinout-nonprofit">
+    <img class="ds-announcement-glyph" src="/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+    <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+    <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+    <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+  </div>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/"><img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/base/1.0.1/images/arxiv-logo-primary-light.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2607.12909v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2607.12909v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I </span><span class="ltx_text ltx_font_smallcaps">Introduction</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S2" title="In Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">II </span><span class="ltx_text ltx_font_smallcaps">Methodology</span></span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS1" title="In II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-A</span> </span><span class="ltx_text ltx_font_italic">Overall Framework</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS2" title="In II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-B</span> </span><span class="ltx_text ltx_font_italic">Perception Layer</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="#S2.SS3" title="In II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-C</span> </span><span class="ltx_text ltx_font_italic">Dynamics Decoupling Layer</span></span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S2.SS3.SSS1" title="In II-C Dynamics Decoupling Layer ‣ II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-C</span>1 </span>CoM Dynamics Subsystem (LTC-CoM)</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="#S2.SS3.SSS2" title="In II-C Dynamics Decoupling Layer ‣ II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-C</span>2 </span>BoS Dynamics Subsystem (LTC-BoS)</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS4" title="In II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-D</span> </span><span class="ltx_text ltx_font_italic">Coupling Interaction Module</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS5" title="In II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-E</span> </span><span class="ltx_text ltx_font_italic">Stability Manifold Determination</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS6" title="In II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-F</span> </span><span class="ltx_text ltx_font_italic">Counterfactual Inference</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS7" title="In II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-G</span> </span><span class="ltx_text ltx_font_italic">Time-to-Collision (TTC) Estimation</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS8" title="In II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">II-H</span> </span><span class="ltx_text ltx_font_italic">Complexity and Parameter Analysis</span></span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S3" title="In Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">III </span><span class="ltx_text ltx_font_smallcaps">Experiments and result</span></span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS1" title="In III Experiments and result ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">III-A</span> </span><span class="ltx_text ltx_font_italic">Dataset and Experimental Setup</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS2" title="In III Experiments and result ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">III-B</span> </span><span class="ltx_text ltx_font_italic">Evaluation Strategy: Precision at Fixed Recall</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS3" title="In III Experiments and result ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">III-C</span> </span><span class="ltx_text ltx_font_italic">Ultra-Lightweight Architecture and Micro-Neuron Scale</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S3.SS4" title="In III Experiments and result ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">III-D</span> </span><span class="ltx_text ltx_font_italic">Ablation Study and Performance Analysis</span></span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S4" title="In Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">IV </span><span class="ltx_text ltx_font_smallcaps">Conclusion</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S5" title="In Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">V </span><span class="ltx_text ltx_font_smallcaps">Discussion</span></span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS1" title="In V Discussion ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">V-A</span> </span><span class="ltx_text ltx_font_italic">System Advantages in Edge Deployment</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS2" title="In V Discussion ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">V-B</span> </span><span class="ltx_text ltx_font_italic">Superiority Over Conventional Black-Box Models</span></span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S5.SS3" title="In V Discussion ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref"><span class="ltx_text">V-C</span> </span><span class="ltx_text ltx_font_italic">Limitations and Future Directions</span></span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY-NC-SA 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2607.12909v1 [q-bio.NC] 14 Jul 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<h1 class="ltx_title ltx_title_document">Real-time fall detection based on vision for low-power edge platforms</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Wenjun Xia, Zhicheng Peng, Haopeng Li, and Zhengdi Zhang
+</span><span class="ltx_author_notes">Wenjun Xia and Zhengdi Zhang are the first and corresponding authors, respectively. All authors are with Jiangsu University, Zhenjiang, China.
+E-mail: vvjqnwork@outlook.com (first author); dyzhang@ujs.edu.cn (corresponding author).</span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">Falling detection is vital for elderly care and intelligent surveillance; however, prevailing vision-based approaches predominantly frame it as static pose classification or discrete temporal pattern matching, fundamentally overlooking the instability dynamics of the human support system. This paper proposes a physics-informed falling detection framework that recasts falling as a stability-loss event in a coupled dynamical system. We introduce a novel dual-LTC architecture comprising a Center-of-Mass (CoM) subsystem and a Base-of-Support (BoS) subsystem, both instantiated as Liquid Time-Constant (LTC) neural networks to continuously model inertial trajectory evolution and ground-contact adjustment through adaptive time constants, Physical interpretability of falling motion. A learnable coupling module emulates physical interaction between the two subsystems, while a Stability Manifold classifier operates in the joint latent space to detect boundary crossing via Lyapunov-inspired stability metrics. Complementary counterfactual trajectory projection and Time-to-Collision (TTC) estimation further enable irreversibility assessment and early warning. The architecture is designed to support a three-state prediction paradigm (Normal, Falling, Fallen); in this preliminary study, we validate the core stability discrimination capability on a two-class dataset (Normal vs. Falling), leaving the full three-state temporal transition to future work. Unlike conventional CNN–RNN pipelines, the proposed formulation encodes continuous-time mechanical inertia, yielding a sub-50K-parameter network capable of real-time inference on resource-constrained edge devices. Extensive experiments demonstrate competitive accuracy with superior physical interpretability, validating its efficacy for low-compute visual fall detection.</p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">I </span><span id="S1.1.1" class="ltx_text ltx_font_smallcaps">Introduction</span>
+</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p id="S1.p1.1" class="ltx_p">With the global acceleration of population aging, vision-based real-time fall detection on edge devices has become a crucial component of intelligent elderly care systems. Early approaches to this task predominantly relied on handcrafted feature extraction combined with classic machine learning classifiers, such as Support Vector Machines (SVMs) and Hidden Markov Models (HMMs) <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="" class="ltx_ref">1</a>, <a href="#bib.bib2" title="" class="ltx_ref">2</a>]</cite>. In recent years, deep learning has revolutionized the field. Mainstream frameworks have rapidly evolved from standard 2D Convolutional Neural Networks (CNNs) processing static frames <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib3" title="" class="ltx_ref">3</a>]</cite> to complex 3D-CNNs and skeleton-based Recurrent Neural Networks (RNNs) or Graph Convolutional Networks (GCNs) designed to capture spatio-temporal kinematic dependencies <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib4" title="" class="ltx_ref">4</a>, <a href="#bib.bib5" title="" class="ltx_ref">5</a>]</cite>.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p id="S1.p2.1" class="ltx_p">Despite their high accuracy on controlled benchmark datasets, existing deep learning methods often fall into the static cognitive trap of “posture classification” during practical deployment. These frameworks heavily rely on keypoint extraction to perform spatial feature pattern matching on discrete time slices, essentially attempting to identify typical postural templates such as “falling to the ground” <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib6" title="" class="ltx_ref">6</a>]</cite>. This paradigm reduces the complex physical event of a fall to a purely superficial classification problem, completely stripping away the continuous biomechanical mechanisms of human motion. Consequently, when faced with daily activities that highly overlap with falls in visual appearance—such as rapid squatting or controlled sitting—the system struggles to distinguish between “active height reduction” and “passive instability.” This fundamental flaw leads to frequent false alarms that severely undermine the practical viability of continuous monitoring systems <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib7" title="" class="ltx_ref">7</a>]</cite>.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p id="S1.p3.1" class="ltx_p">To overcome these bottlenecks, the theoretical paradigm of visual anomaly detection urgently needs to transition from superficial “posture classification” to rigorous “stability determination” that explores the physical essence of human balance <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib8" title="" class="ltx_ref">8</a>]</cite>. To accurately model this continuous physical process, we turn to Liquid Time-Constant (LTC) networks. Originating from the biological neural circuits of <span id="S1.p3.1.1" class="ltx_text ltx_font_italic">C. elegans</span>, LTCs are continuous-time recurrent neural networks governed by ordinary differential equations (ODEs) with input-dependent, dynamically varying time constants <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib9" title="" class="ltx_ref">9</a>]</cite>. Unlike discrete RNNs, LTCs excel at modeling continuous physical dynamics and handling irregular temporal sampling with extreme parameter efficiency <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib10" title="" class="ltx_ref">10</a>]</cite>. Furthermore, recent advancements in multi-LTC collaborative architectures have demonstrated superior capabilities in modeling highly coupled dynamical systems, such as multi-agent robotics and complex continuous control tasks <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib11" title="" class="ltx_ref">11</a>, <a href="#bib.bib12" title="" class="ltx_ref">12</a>]</cite>. However, their potential for biomechanical stability analysis in computer vision remains largely unexplored.</p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p id="S1.p4.1" class="ltx_p">In this paper, we propose a physics-informed, lightweight dynamic fall detection framework by introducing LTC networks into this domain for the first time. By abandoning traditional visual black-box fitting, we explicitly decouple human motion into two orthogonal dynamic subsystems: the Center of Mass (CoM) and the Base of Support (BoS). Leveraging the unique learnable time constants of LTCs, our system continuously models inertial trajectory evolution and ground-contact adjustment. A learnable coupling module emulates the physical interaction between these two subsystems, constructing a mathematically rigorous stability manifold boundary within the latent state phase space <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib13" title="" class="ltx_ref">13</a>]</cite>. Combined with a physical counterfactual inference mechanism, the proposed framework can rigorously confirm instability based on the irreversibility of human dynamics on extremely low-computing edge devices, thoroughly eliminating false alarm interferences caused by controlled movements.</p>
+</div>
+<div id="S1.p5" class="ltx_para">
+<p id="S1.p5.1" class="ltx_p"><span id="S1.p5.1.1" class="ltx_text ltx_font_bold">Contributions.</span> Our contributions are threefold:
+(1) We propose the first fall detection framework that explicitly decouples human motion into CoM and BoS subsystems modeled by continuous-time LTC networks, bridging neural dynamical systems and biomechanical stability theory.
+(2) We introduce a Stability Manifold classifier with a learnable equilibrium center and a directional velocity check, providing mathematically rigorous stability metrics rather than black-box confidence scores.
+(3) We design an ultra-lightweight architecture (16.1K parameters) that achieves real-time inference on edge devices, with extensive ablation studies validating the necessity of each proposed module.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">II </span><span id="S2.1.1" class="ltx_text ltx_font_smallcaps">Methodology</span>
+</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S2.SS1.5.1.1" class="ltx_text">II-A</span> </span><span id="S2.SS1.6.2" class="ltx_text ltx_font_italic">Overall Framework</span>
+</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p id="S2.SS1.p1.1" class="ltx_p">To achieve robust and highly interpretable fall detection on resource-constrained edge devices, the proposed framework structurally transforms the conventional image-based pattern recognition task into a continuous-time physical stability evaluation <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib15" title="" class="ltx_ref">15</a>]</cite>, <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib17" title="" class="ltx_ref">17</a>]</cite>. As illustrated in the architecture overview, the system is designed as a three-tier pipeline: Perception Layer, Dynamics Decoupling Layer, and Stability Manifold Determination Layer.</p>
+</div>
+<div id="S2.SS1.p2" class="ltx_para">
+<p id="S2.SS1.p2.1" class="ltx_p">The Perception Layer extracts normalized kinematic and geometric features from raw RGB frames. Subsequently, the Dynamics Decoupling Layer processes these low-dimensional signals by explicitly separating the human body’s inertial motion from its support surface adjustments using parallel continuous-time neural ODEs. Finally, the Stability Manifold Determination Layer maps the integrated hidden states into a phase space to continuously evaluate the boundary conditions of the system, outputting highly reliable three-state predictions (Normal, Pre-warning, Fall) alongside quantitative stability metrics.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S2.SS2.5.1.1" class="ltx_text">II-B</span> </span><span id="S2.SS2.6.2" class="ltx_text ltx_font_italic">Perception Layer</span>
+</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p id="S2.SS2.p1.1" class="ltx_p">The objective of the Perception layer is to acquire low-dimensional, scale-invariant physical features while discarding redundant background noise. We utilize the lightweight YOLOv11n-pose <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib14" title="" class="ltx_ref">14</a>]</cite>, <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib16" title="" class="ltx_ref">16</a>]</cite> to extract 17 COCO-format skeletal keypoints (including nose, shoulders, hips, knees, and ankles) from each frame.</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p id="S2.SS2.p2.1" class="ltx_p">To eliminate discrepancies caused by absolute spatial positioning and individual body dimensions, temporal normalization is strictly applied: the spatial origin is anchored at the center of the hips in the initial frame, and the coordinate scale is normalized utilizing the initial shoulder width. Furthermore, to quantify the human body’s dynamic contact with the ground, a Support Polygon is constructed. A convex hull is generated using 6 critical lower-body keypoints (left/right ankles, knees, and hips). From this convex hull, a 6D geometric feature vector is extracted, encompassing the normalized support area, centroid coordinates, bounding dimensions, and the margin (shortest distance) from the Center of Mass (CoM) projection to the support boundary.</p>
+</div>
+</section>
+<section id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S2.SS3.5.1.1" class="ltx_text">II-C</span> </span><span id="S2.SS3.6.2" class="ltx_text ltx_font_italic">Dynamics Decoupling Layer</span>
+</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p id="S2.SS3.p1.1" class="ltx_p">The Dynamics Decoupling layer constitutes the core mathematical innovation of this framework, explicitly modeling the non-linear biomechanical behavior of the human body. The fundamental motivation for decoupling lies in the biomechanical consensus that human balance during locomotion or a fall acts as a complex inverted pendulum <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib19" title="" class="ltx_ref">19</a>]</cite>. The stability of this pendulum is governed by the continuous interplay between the large-inertia Center of Mass (CoM) and the highly agile Base of Support (BoS). By physically decoupling these two orthogonal processes, the network is constrained to learn the underlying causal mechanics of balance loss, effectively preventing the model from overfitting to superficial visual patterns that plague conventional deep learning approaches <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib14" title="" class="ltx_ref">14</a>]</cite>.</p>
+</div>
+<div id="S2.SS3.p2" class="ltx_para">
+<p id="S2.SS3.p2.1" class="ltx_p">To achieve this, the system implements two independent continuous-time subsystems based on Liquid Time-Constant (LTC) networks <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib9" title="" class="ltx_ref">9</a>]</cite>. The dynamic evolution of both the CoM and BoS subsystems is governed by a continuous-time Ordinary Differential Equation (ODE) derived from the biological Leaky Integrate-and-Fire (LIF) neuron model. Rather than acting as a standard black-box recurrent layer, this specific continuous-time equation maps perfectly to the physical mechanics of a damped driven oscillator in a gravitational field. The generalized governing equation for both subsystems is formulated as:</p>
+</div>
+<div id="S2.SS3.p3" class="ltx_para">
+<table id="S2.E1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E1.m1" class="ltx_Math" alttext="\tau\frac{dh(t)}{dt}=-h(t)+\tanh(W^{(i)}x(t)+W^{(h)}h(t))" display="block" intent=":literal"><semantics><mrow><mrow><mi>τ</mi><mo lspace="0em" rspace="0em">​</mo><mfrac><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>h</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></mfrac></mrow><mo>=</mo><mrow><mrow><mo>−</mo><mrow><mi>h</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow></mrow><mo>+</mo><mrow><mi>tanh</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><mrow><msup><mi>W</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></msup><mo lspace="0em" rspace="0em">​</mo><mi>x</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>+</mo><mrow><msup><mi>W</mi><mrow><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo></mrow></msup><mo lspace="0em" rspace="0em">​</mo><mi>h</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">\tau\frac{dh(t)}{dt}=-h(t)+\tanh(W^{(i)}x(t)+W^{(h)}h(t))</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS3.p4" class="ltx_para">
+<p id="S2.SS3.p4.6" class="ltx_p">Where <math id="S2.SS3.p4.1.m1" class="ltx_Math" alttext="\tau\in\mathbb{R}^{d_{h}}" display="inline" intent=":literal"><semantics><mrow><mi>τ</mi><mo>∈</mo><msup><mi>ℝ</mi><msub><mi>d</mi><mi>h</mi></msub></msup></mrow><annotation encoding="application/x-tex">\tau\in\mathbb{R}^{d_{h}}</annotation></semantics></math> is a learnable time-constant vector initialized uniformly in <math id="S2.SS3.p4.2.m2" class="ltx_Math" alttext="[0.1,2.0]" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">[</mo><mn>0.1</mn><mo>,</mo><mn>2.0</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[0.1,2.0]</annotation></semantics></math>, <math id="S2.SS3.p4.3.m3" class="ltx_Math" alttext="W_{\text{in}}\in\mathbb{R}^{d_{h}\times d_{x}}" display="inline" intent=":literal"><semantics><mrow><msub><mi>W</mi><mtext>in</mtext></msub><mo>∈</mo><msup><mi>ℝ</mi><mrow><msub><mi>d</mi><mi>h</mi></msub><mo lspace="0.222em" rspace="0.222em">×</mo><msub><mi>d</mi><mi>x</mi></msub></mrow></msup></mrow><annotation encoding="application/x-tex">W_{\text{in}}\in\mathbb{R}^{d_{h}\times d_{x}}</annotation></semantics></math> and <math id="S2.SS3.p4.4.m4" class="ltx_Math" alttext="W_{h}\in\mathbb{R}^{d_{h}\times d_{h}}" display="inline" intent=":literal"><semantics><mrow><msub><mi>W</mi><mi>h</mi></msub><mo>∈</mo><msup><mi>ℝ</mi><mrow><msub><mi>d</mi><mi>h</mi></msub><mo lspace="0.222em" rspace="0.222em">×</mo><msub><mi>d</mi><mi>h</mi></msub></mrow></msup></mrow><annotation encoding="application/x-tex">W_{h}\in\mathbb{R}^{d_{h}\times d_{h}}</annotation></semantics></math> are input and recurrent weight matrices, and <math id="S2.SS3.p4.5.m5" class="ltx_Math" alttext="d_{h}=16" display="inline" intent=":literal"><semantics><mrow><msub><mi>d</mi><mi>h</mi></msub><mo>=</mo><mn>16</mn></mrow><annotation encoding="application/x-tex">d_{h}=16</annotation></semantics></math> for both subsystems. During the forward pass, the ODE is solved numerically via the Euler method with a fixed time step <math id="S2.SS3.p4.6.m6" class="ltx_Math" alttext="\Delta t=1/30" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow><mo>=</mo><mrow><mn>1</mn><mo>/</mo><mn>30</mn></mrow></mrow><annotation encoding="application/x-tex">\Delta t=1/30</annotation></semantics></math> s, matching the video frame rate.</p>
+</div>
+<div id="S2.SS3.p5" class="ltx_para">
+<p id="S2.SS3.p5.3" class="ltx_p"><span id="S2.SS3.p5.3.1" class="ltx_text ltx_font_bold">CoM Dynamics Subsystem (LTC-CoM)</span>: The input <math id="S2.SS3.p5.1.m1" class="ltx_Math" alttext="x_{\text{com}}\in\mathbb{R}^{6}" display="inline" intent=":literal"><semantics><mrow><msub><mi>x</mi><mtext>com</mtext></msub><mo>∈</mo><msup><mi>ℝ</mi><mn>6</mn></msup></mrow><annotation encoding="application/x-tex">x_{\text{com}}\in\mathbb{R}^{6}</annotation></semantics></math> concatenates the normalized hip-center coordinates <math id="S2.SS3.p5.2.m2" class="ltx_Math" alttext="(x,y)" display="inline" intent=":literal"><semantics><mrow><mo stretchy="false">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(x,y)</annotation></semantics></math>, their first-order temporal differences (velocity), and second-order differences (acceleration). The time constant <math id="S2.SS3.p5.3.m3" class="ltx_Math" alttext="\tau_{A}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>A</mi></msub><annotation encoding="application/x-tex">\tau_{A}</annotation></semantics></math> is initialized toward larger values to simulate the large mechanical inertia of the human mass center.</p>
+</div>
+<div id="S2.SS3.p6" class="ltx_para">
+<p id="S2.SS3.p6.2" class="ltx_p"><span id="S2.SS3.p6.2.1" class="ltx_text ltx_font_bold">BoS Dynamics Subsystem (LTC-BoS)</span>: The input <math id="S2.SS3.p6.1.m1" class="ltx_Math" alttext="x_{\text{bos}}\in\mathbb{R}^{6}" display="inline" intent=":literal"><semantics><mrow><msub><mi>x</mi><mtext>bos</mtext></msub><mo>∈</mo><msup><mi>ℝ</mi><mn>6</mn></msup></mrow><annotation encoding="application/x-tex">x_{\text{bos}}\in\mathbb{R}^{6}</annotation></semantics></math> comprises the 6D geometric features extracted from the support polygon (area, centroid, width, height, and margin). The time constant <math id="S2.SS3.p6.2.m2" class="ltx_Math" alttext="\tau_{B}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>B</mi></msub><annotation encoding="application/x-tex">\tau_{B}</annotation></semantics></math> is constrained to smaller values to reflect the high-frequency agility of corrective foot placement.</p>
+</div>
+<div id="S2.SS3.p7" class="ltx_para">
+<p id="S2.SS3.p7.1" class="ltx_p">This formulation models the system state <math id="S2.SS3.p7.1.m1" class="ltx_Math" alttext="h(t)" display="inline" intent=":literal"><semantics><mrow><mi>h</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">h(t)</annotation></semantics></math> as a continuous competition between two fundamental physical forces:</p>
+</div>
+<div id="S2.SS3.p8" class="ltx_para">
+<p id="S2.SS3.p8.2" class="ltx_p"><span id="S2.SS3.p8.1.1" class="ltx_text ltx_font_bold">The Restoring/Damping Term (<math id="S2.SS3.p8.1.1.m1" class="ltx_Math" alttext="-h" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mi>h</mi></mrow><annotation encoding="application/x-tex">-h</annotation></semantics></math>):</span> In biomechanics, when an inverted pendulum deviates from its center, inherent physical damping (e.g., muscle stiffness and joint friction) attempts to pull the state back to a zero-energy equilibrium. The linear negative term <math id="S2.SS3.p8.2.m1" class="ltx_Math" alttext="-h" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mi>h</mi></mrow><annotation encoding="application/x-tex">-h</annotation></semantics></math> guarantees that, in the absence of external stimuli, the momentum will exponentially decay rather than diverge infinitely.</p>
+</div>
+<div id="S2.SS3.p9" class="ltx_para">
+<p id="S2.SS3.p9.5" class="ltx_p"><span id="S2.SS3.p9.1.1" class="ltx_text ltx_font_bold">The Saturated Driving Force (<math id="S2.SS3.p9.1.1.m1" class="ltx_Math" alttext="\tanh(\dots)" display="inline" intent=":literal"><semantics><mrow><mi>tanh</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mi mathvariant="normal">…</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">\tanh(\dots)</annotation></semantics></math>):</span> The physical inputs (kinematic features <math id="S2.SS3.p9.2.m1" class="ltx_Math" alttext="x" display="inline" intent=":literal"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>) and the current momentum state (<math id="S2.SS3.p9.3.m2" class="ltx_Math" alttext="h" display="inline" intent=":literal"><semantics><mi>h</mi><annotation encoding="application/x-tex">h</annotation></semantics></math>) generate a driving force. The choice of the hyperbolic tangent (<math id="S2.SS3.p9.4.m3" class="ltx_Math" alttext="\tanh" display="inline" intent=":literal"><semantics><mi>tanh</mi><annotation encoding="application/x-tex">\tanh</annotation></semantics></math>) as the non-linear activation function is fundamentally driven by biomechanical constraints rather than mere deep learning conventions. Unlike unbounded functions (e.g., ReLU) or non-zero-centered functions (e.g., Sigmoid), the zero-centered, bounded nature of <math id="S2.SS3.p9.5.m4" class="ltx_Math" alttext="\tanh\in[-1,1]" display="inline" intent=":literal"><semantics><mrow><mi>tanh</mi><mo>∈</mo><mrow><mo stretchy="false">[</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo>,</mo><mn>1</mn><mo stretchy="false">]</mo></mrow></mrow><annotation encoding="application/x-tex">\tanh\in[-1,1]</annotation></semantics></math> effectively models the physiological saturation effect of biological recovery forces. It ensures that regardless of the magnitude of the visual displacement input, the resulting dynamic driving force simulates a physically plausible maximum muscle torque, thereby guaranteeing the global stability of the numerical ODE integration.</p>
+</div>
+<section id="S2.SS3.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection"><span id="S2.SS3.SSS1.5.1.1" class="ltx_text">II-C</span>1 </span>CoM Dynamics Subsystem (LTC-CoM)</h4>
+
+<div id="S2.SS3.SSS1.p1" class="ltx_para">
+<p id="S2.SS3.SSS1.p1.1" class="ltx_p">This branch models the inertial motion of the human body’s mass center in the gravitational field. The inputs <math id="S2.SS3.SSS1.p1.1.m1" class="ltx_Math" alttext="x_{\text{com}}" display="inline" intent=":literal"><semantics><msub><mi>x</mi><mtext>com</mtext></msub><annotation encoding="application/x-tex">x_{\text{com}}</annotation></semantics></math> consist of the normalized CoM coordinate sequence and its first-order difference (approximating velocity). The continuous-time dynamics are governed by the following Ordinary Differential Equation (ODE):</p>
+</div>
+<div id="S2.SS3.SSS1.p2" class="ltx_para">
+<table id="S2.E2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E2.m1" class="ltx_Math" alttext="\tau_{A}\frac{dh_{A}}{dt}=-h_{A}+\tanh(W_{A}^{(i)}x_{\text{com}}+W_{A}^{(h)}h_{A})" display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>τ</mi><mi>A</mi></msub><mo lspace="0em" rspace="0em">​</mo><mfrac><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>h</mi><mi>A</mi></msub></mrow><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></mfrac></mrow><mo>=</mo><mrow><mrow><mo>−</mo><msub><mi>h</mi><mi>A</mi></msub></mrow><mo>+</mo><mrow><mi>tanh</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><mrow><msubsup><mi>W</mi><mi>A</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></msubsup><mo lspace="0em" rspace="0em">​</mo><msub><mi>x</mi><mtext>com</mtext></msub></mrow><mo>+</mo><mrow><msubsup><mi>W</mi><mi>A</mi><mrow><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo></mrow></msubsup><mo lspace="0em" rspace="0em">​</mo><msub><mi>h</mi><mi>A</mi></msub></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">\tau_{A}\frac{dh_{A}}{dt}=-h_{A}+\tanh(W_{A}^{(i)}x_{\text{com}}+W_{A}^{(h)}h_{A})</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(2)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS3.SSS1.p3" class="ltx_para">
+<p id="S2.SS3.SSS1.p3.7" class="ltx_p">where <math id="S2.SS3.SSS1.p3.1.m1" class="ltx_Math" alttext="h_{A}" display="inline" intent=":literal"><semantics><msub><mi>h</mi><mi>A</mi></msub><annotation encoding="application/x-tex">h_{A}</annotation></semantics></math> is the hidden state vector encoding the accumulated momentum. The non-linear state transition is driven by the hyperbolic tangent function (<math id="S2.SS3.SSS1.p3.2.m2" class="ltx_Math" alttext="\tanh" display="inline" intent=":literal"><semantics><mi>tanh</mi><annotation encoding="application/x-tex">\tanh</annotation></semantics></math>), which is parameterized by the input weight matrix <math id="S2.SS3.SSS1.p3.3.m3" class="ltx_Math" alttext="W_{A}^{(i)}" display="inline" intent=":literal"><semantics><msubsup><mi>W</mi><mi>A</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></msubsup><annotation encoding="application/x-tex">W_{A}^{(i)}</annotation></semantics></math> (mapping the physical input features) and the recurrent hidden weight matrix <math id="S2.SS3.SSS1.p3.4.m4" class="ltx_Math" alttext="W_{A}^{(h)}" display="inline" intent=":literal"><semantics><msubsup><mi>W</mi><mi>A</mi><mrow><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo></mrow></msubsup><annotation encoding="application/x-tex">W_{A}^{(h)}</annotation></semantics></math> (representing the internal state feedback). Crucially, the time constant <math id="S2.SS3.SSS1.p3.5.m5" class="ltx_Math" alttext="\tau_{A}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>A</mi></msub><annotation encoding="application/x-tex">\tau_{A}</annotation></semantics></math> is initialized to a relatively large value. In a physical context, <math id="S2.SS3.SSS1.p3.6.m6" class="ltx_Math" alttext="\tau_{A}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>A</mi></msub><annotation encoding="application/x-tex">\tau_{A}</annotation></semantics></math> dictates the decay rate of the hidden state; a larger <math id="S2.SS3.SSS1.p3.7.m7" class="ltx_Math" alttext="\tau_{A}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>A</mi></msub><annotation encoding="application/x-tex">\tau_{A}</annotation></semantics></math> mathematically simulates the large mechanical inertia of the CoM, ensuring that the mass center’s trajectory remains smooth and cannot instantaneously change its momentum state, precisely mirroring real-world gravitational constraints.</p>
+</div>
+</section>
+<section id="S2.SS3.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection"><span id="S2.SS3.SSS2.5.1.1" class="ltx_text">II-C</span>2 </span>BoS Dynamics Subsystem (LTC-BoS)</h4>
+
+<div id="S2.SS3.SSS2.p1" class="ltx_para">
+<p id="S2.SS3.SSS2.p1.1" class="ltx_p">Concurrently, the second branch models the agile adjustment capability and stability reserve of the support surface. The inputs <math id="S2.SS3.SSS2.p1.1.m1" class="ltx_Math" alttext="x_{\text{bos}}" display="inline" intent=":literal"><semantics><msub><mi>x</mi><mtext>bos</mtext></msub><annotation encoding="application/x-tex">x_{\text{bos}}</annotation></semantics></math> consist of the 6D geometric features extracted from the support polygon. Its governing ODE is formulated as:</p>
+</div>
+<div id="S2.SS3.SSS2.p2" class="ltx_para">
+<table id="S2.E3" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E3.m1" class="ltx_Math" alttext="\tau_{B}\frac{dh_{B}}{dt}=-h_{B}+\tanh(W_{B}^{(i)}x_{\text{bos}}+W_{B}^{(h)}h_{B})" display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>τ</mi><mi>B</mi></msub><mo lspace="0em" rspace="0em">​</mo><mfrac><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><msub><mi>h</mi><mi>B</mi></msub></mrow><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></mfrac></mrow><mo>=</mo><mrow><mrow><mo>−</mo><msub><mi>h</mi><mi>B</mi></msub></mrow><mo>+</mo><mrow><mi>tanh</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mrow><mrow><msubsup><mi>W</mi><mi>B</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></msubsup><mo lspace="0em" rspace="0em">​</mo><msub><mi>x</mi><mtext>bos</mtext></msub></mrow><mo>+</mo><mrow><msubsup><mi>W</mi><mi>B</mi><mrow><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo></mrow></msubsup><mo lspace="0em" rspace="0em">​</mo><msub><mi>h</mi><mi>B</mi></msub></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">\tau_{B}\frac{dh_{B}}{dt}=-h_{B}+\tanh(W_{B}^{(i)}x_{\text{bos}}+W_{B}^{(h)}h_{B})</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(3)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS3.SSS2.p3" class="ltx_para">
+<p id="S2.SS3.SSS2.p3.5" class="ltx_p">where <math id="S2.SS3.SSS2.p3.1.m1" class="ltx_Math" alttext="h_{B}" display="inline" intent=":literal"><semantics><msub><mi>h</mi><mi>B</mi></msub><annotation encoding="application/x-tex">h_{B}</annotation></semantics></math> is the hidden state vector that encodes the recovery response of the support system. The non-linear state transition is driven by the hyperbolic tangent function (<math id="S2.SS3.SSS2.p3.2.m2" class="ltx_Math" alttext="\tanh" display="inline" intent=":literal"><semantics><mi>tanh</mi><annotation encoding="application/x-tex">\tanh</annotation></semantics></math>), parameterized by the input weight matrix <math id="S2.SS3.SSS2.p3.3.m3" class="ltx_Math" alttext="W_{B}^{(i)}" display="inline" intent=":literal"><semantics><msubsup><mi>W</mi><mi>B</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow></msubsup><annotation encoding="application/x-tex">W_{B}^{(i)}</annotation></semantics></math> (mapping the geometric support features) and the recurrent hidden weight matrix <math id="S2.SS3.SSS2.p3.4.m4" class="ltx_Math" alttext="W_{B}^{(h)}" display="inline" intent=":literal"><semantics><msubsup><mi>W</mi><mi>B</mi><mrow><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo></mrow></msubsup><annotation encoding="application/x-tex">W_{B}^{(h)}</annotation></semantics></math> (representing the internal state feedback). Unlike the CoM branch, the time constant parameter <math id="S2.SS3.SSS2.p3.5.m5" class="ltx_Math" alttext="\tau_{B}" display="inline" intent=":literal"><semantics><msub><mi>τ</mi><mi>B</mi></msub><annotation encoding="application/x-tex">\tau_{B}</annotation></semantics></math> is constrained to a significantly smaller value. This mathematically reflects the high-frequency agility of rapid corrective movements, such as a sudden compensatory step or placing a hand on the ground to arrest a fall.</p>
+</div>
+<div id="S2.SS3.SSS2.p4" class="ltx_para">
+<p id="S2.SS3.SSS2.p4.1" class="ltx_p"><span id="S2.SS3.SSS2.p4.1.1" class="ltx_text ltx_font_bold">The Necessity of LTCs:</span> The absolute necessity of utilizing LTC networks over traditional Recurrent Neural Networks (RNNs) or LSTMs stems from their continuous-time properties <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib10" title="" class="ltx_ref">10</a>]</cite>, <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib9" title="" class="ltx_ref">9</a>]</cite>. The adjustment of the human support system is a continuous mechanical process exhibiting variable temporal delays due to muscle contractions and weight shifts. Traditional discrete gating mechanisms in LSTMs force a rigid, frame-by-frame hidden state update, which inherently loses the high-resolution transient characteristics of this “delayed response” and struggles with irregular sampling rates. The continuous-time formulation acts as a true differential equation simulator <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib18" title="" class="ltx_ref">18</a>]</cite>. By solving the ODE using numerical integration (e.g., the Euler method) during the forward pass, the model naturally matches the continuous inertial dynamics of mechanical systems without suffering from temporal resolution bottlenecks.</p>
+</div>
+</section>
+</section>
+<section id="S2.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S2.SS4.5.1.1" class="ltx_text">II-D</span> </span><span id="S2.SS4.6.2" class="ltx_text ltx_font_italic">Coupling Interaction Module</span>
+</h3>
+
+<div id="S2.SS4.p1" class="ltx_para">
+<p id="S2.SS4.p1.1" class="ltx_p">In biomechanical reality, while the CoM and BoS possess distinct dynamic properties, they are highly coupled: a severe shift in the CoM forces an immediate BoS adjustment (e.g., stepping), and a collapse of the BoS (e.g., slipping) accelerates the CoM’s fall. To simulate this physical interaction, a Coupling Interaction Module integrates the independent ODE states. The joint hidden state <math id="S2.SS4.p1.1.m1" class="ltx_Math" alttext="h_{\text{joint}}(t)" display="inline" intent=":literal"><semantics><mrow><msub><mi>h</mi><mtext>joint</mtext></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">h_{\text{joint}}(t)</annotation></semantics></math> is updated using the following physical coupling mechanism:</p>
+</div>
+<div id="S2.SS4.p2" class="ltx_para">
+<table id="S2.E4" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center">
+<div id="S2.E4.m1.1.1.1" class="ltx_inline-block ltx_markedasmath ltx_transformed_outer" style="width:433.6pt;height:19.5pt;vertical-align:-4.9pt;"><span class="ltx_transformed_inner" style="transform:translate(82.7pt,-3.7pt) scale(1.61705167002716,1.61705167002716) ;">
+<p id="S2.E4.m1.1.1.1.1" class="ltx_p"><math id="S2.E4.m1.1.1.1.1.m1" class="ltx_Math" alttext="h_{\text{joint}}=\text{Concat}\bigl(P_{A}h_{A}+M\odot\sigma(\beta)\odot(P_{A}h_{A}\otimes P_{B}h_{B}),P_{B}h_{B}\bigr)" display="inline" intent=":literal"><semantics><mrow><msub><mi>h</mi><mtext>joint</mtext></msub><mo>=</mo><mrow><mtext>Concat</mtext><mo lspace="0em" rspace="0em">​</mo><mrow><mo maxsize="1.200em" minsize="1.200em">(</mo><mrow><mrow><msub><mi>P</mi><mi>A</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>h</mi><mi>A</mi></msub></mrow><mo>+</mo><mrow><mrow><mrow><mi>M</mi><mo lspace="0.222em" rspace="0.222em">⊙</mo><mi>σ</mi></mrow><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>β</mi><mo rspace="0.055em" stretchy="false">)</mo></mrow></mrow><mo rspace="0.222em">⊙</mo><mrow><mo stretchy="false">(</mo><mrow><mrow><mrow><msub><mi>P</mi><mi>A</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>h</mi><mi>A</mi></msub></mrow><mo lspace="0.222em" rspace="0.222em">⊗</mo><msub><mi>P</mi><mi>B</mi></msub></mrow><mo lspace="0em" rspace="0em">​</mo><msub><mi>h</mi><mi>B</mi></msub></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><mo>,</mo><mrow><msub><mi>P</mi><mi>B</mi></msub><mo lspace="0em" rspace="0em">​</mo><msub><mi>h</mi><mi>B</mi></msub></mrow><mo maxsize="1.200em" minsize="1.200em">)</mo></mrow></mrow></mrow><annotation encoding="application/x-tex">h_{\text{joint}}=\text{Concat}\bigl(P_{A}h_{A}+M\odot\sigma(\beta)\odot(P_{A}h_{A}\otimes P_{B}h_{B}),P_{B}h_{B}\bigr)</annotation></semantics></math></p>
+</span></div>
+</td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="0" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(4)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS4.p3" class="ltx_para">
+<p id="S2.SS4.p3.7" class="ltx_p">Where <math id="S2.SS4.p3.1.m1" class="ltx_Math" alttext="P_{A}:\mathbb{R}^{d_{A}}\to\mathbb{R}^{d_{j}}" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mi>A</mi></msub><mo lspace="0.278em" rspace="0.278em">:</mo><mrow><msup><mi>ℝ</mi><msub><mi>d</mi><mi>A</mi></msub></msup><mo stretchy="false">→</mo><msup><mi>ℝ</mi><msub><mi>d</mi><mi>j</mi></msub></msup></mrow></mrow><annotation encoding="application/x-tex">P_{A}:\mathbb{R}^{d_{A}}\to\mathbb{R}^{d_{j}}</annotation></semantics></math> and <math id="S2.SS4.p3.2.m2" class="ltx_Math" alttext="P_{B}:\mathbb{R}^{d_{B}}\to\mathbb{R}^{d_{j}}" display="inline" intent=":literal"><semantics><mrow><msub><mi>P</mi><mi>B</mi></msub><mo lspace="0.278em" rspace="0.278em">:</mo><mrow><msup><mi>ℝ</mi><msub><mi>d</mi><mi>B</mi></msub></msup><mo stretchy="false">→</mo><msup><mi>ℝ</mi><msub><mi>d</mi><mi>j</mi></msub></msup></mrow></mrow><annotation encoding="application/x-tex">P_{B}:\mathbb{R}^{d_{B}}\to\mathbb{R}^{d_{j}}</annotation></semantics></math> are linear projection layers, <math id="S2.SS4.p3.3.m3" class="ltx_Math" alttext="d_{j}=32" display="inline" intent=":literal"><semantics><mrow><msub><mi>d</mi><mi>j</mi></msub><mo>=</mo><mn>32</mn></mrow><annotation encoding="application/x-tex">d_{j}=32</annotation></semantics></math>, <math id="S2.SS4.p3.4.m4" class="ltx_Math" alttext="M\in\mathbb{R}^{d_{j}}" display="inline" intent=":literal"><semantics><mrow><mi>M</mi><mo>∈</mo><msup><mi>ℝ</mi><msub><mi>d</mi><mi>j</mi></msub></msup></mrow><annotation encoding="application/x-tex">M\in\mathbb{R}^{d_{j}}</annotation></semantics></math> is a learnable interaction mask, <math id="S2.SS4.p3.5.m5" class="ltx_Math" alttext="\beta" display="inline" intent=":literal"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math> is a learnable gating scalar modulated by <math id="S2.SS4.p3.6.m6" class="ltx_Math" alttext="\sigma(\cdot)" display="inline" intent=":literal"><semantics><mrow><mi>σ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mo lspace="0em" rspace="0em">⋅</mo><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">\sigma(\cdot)</annotation></semantics></math>, and <math id="S2.SS4.p3.7.m7" class="ltx_Math" alttext="\odot" display="inline" intent=":literal"><semantics><mo>⊙</mo><annotation encoding="application/x-tex">\odot</annotation></semantics></math> denotes the Hadamard product. This design ensures that cross-interaction remains minimal during normal standing but amplifies when support failure signals must propagate into the CoM trajectory. The interaction term remains minimal during normal standing (maintaining weak coupling), but spikes drastically during an anomalous event like a slip, injecting the “support failure” signal directly into the CoM subsystem and thereby accelerating the joint state toward the unstable region.</p>
+</div>
+</section>
+<section id="S2.SS5" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S2.SS5.5.1.1" class="ltx_text">II-E</span> </span><span id="S2.SS5.6.2" class="ltx_text ltx_font_italic">Stability Manifold Determination</span>
+</h3>
+
+<div id="S2.SS5.p1" class="ltx_para">
+<p id="S2.SS5.p1.1" class="ltx_p">The Stability Manifold Determination layer translates the high-dimensional hidden representations into a highly interpretable, mathematically rigorous metric of physical stability, effectively replacing the arbitrary thresholding found in traditional classifiers <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib14" title="" class="ltx_ref">14</a>]</cite>.</p>
+</div>
+<div id="S2.SS5.p2" class="ltx_para">
+<p id="S2.SS5.p2.2" class="ltx_p">To achieve this, the joint hidden state <math id="S2.SS5.p2.1.m1" class="ltx_Math" alttext="H(t)=h_{\text{joint}}(t)\in\mathbb{R}^{d_{A}+d_{B}}" display="inline" intent=":literal"><semantics><mrow><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><msub><mi>h</mi><mtext>joint</mtext></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>∈</mo><msup><mi>ℝ</mi><mrow><msub><mi>d</mi><mi>A</mi></msub><mo>+</mo><msub><mi>d</mi><mi>B</mi></msub></mrow></msup></mrow><annotation encoding="application/x-tex">H(t)=h_{\text{joint}}(t)\in\mathbb{R}^{d_{A}+d_{B}}</annotation></semantics></math> is continuously mapped into a phase space. Drawing inspiration from Dynamical Systems Theory and human locomotion stability analysis <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib8" title="" class="ltx_ref">8</a>]</cite>, a stable region, denoted as the Stability Manifold <math id="S2.SS5.p2.2.m2" class="ltx_Math" alttext="\Omega_{\text{stable}}" display="inline" intent=":literal"><semantics><msub><mi mathvariant="normal">Ω</mi><mtext>stable</mtext></msub><annotation encoding="application/x-tex">\Omega_{\text{stable}}</annotation></semantics></math>, is explicitly defined.</p>
+</div>
+<div id="S2.SS5.p3" class="ltx_para">
+<p id="S2.SS5.p3.2" class="ltx_p">The center of the stable region, <math id="S2.SS5.p3.1.m1" class="ltx_Math" alttext="H_{0}\in\mathbb{R}^{d_{\text{joint}}}" display="inline" intent=":literal"><semantics><mrow><msub><mi>H</mi><mn>0</mn></msub><mo>∈</mo><msup><mi>ℝ</mi><msub><mi>d</mi><mtext>joint</mtext></msub></msup></mrow><annotation encoding="application/x-tex">H_{0}\in\mathbb{R}^{d_{\text{joint}}}</annotation></semantics></math> is implemented as a learnable parameter initialized to zero and optimized during training to represent the empirical equilibrium of normal states. The covariance inverse <math id="S2.SS5.p3.2.m2" class="ltx_Math" alttext="\Sigma^{-1}" display="inline" intent=":literal"><semantics><msup><mi mathvariant="normal">Σ</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><annotation encoding="application/x-tex">\Sigma^{-1}</annotation></semantics></math> is initialized as an identity matrix and kept fixed during training, yielding a simplified Mahalanobis-like distance metric:</p>
+</div>
+<div id="S2.SS5.p4" class="ltx_para">
+<table id="S2.E5" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center">
+<div id="S2.E5.m1.1.1.1" class="ltx_inline-block ltx_markedasmath ltx_transformed_outer" style="width:433.6pt;height:20.4pt;vertical-align:-4.7pt;"><span class="ltx_transformed_inner" style="transform:translate(100.8pt,-4.7pt) scale(1.86849180756436,1.86849180756436) ;">
+<p id="S2.E5.m1.1.1.1.1" class="ltx_p"><math id="S2.E5.m1.1.1.1.1.m1" class="ltx_Math" alttext="D_{M}(H(t))=\sqrt{(H(t)-H_{0})^{T}\cdot\text{diag}(\Sigma^{-1})\cdot(H(t)-H_{0})+\epsilon}" display="inline" intent=":literal"><semantics><mrow><mrow><msub><mi>D</mi><mi>M</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><msqrt><mrow><mrow><mrow><mrow><msup><mrow><mo stretchy="false">(</mo><mrow><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>−</mo><msub><mi>H</mi><mn>0</mn></msub></mrow><mo stretchy="false">)</mo></mrow><mi>T</mi></msup><mo lspace="0.222em" rspace="0.222em">⋅</mo><mtext>diag</mtext></mrow><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><msup><mi mathvariant="normal">Σ</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo rspace="0.055em" stretchy="false">)</mo></mrow></mrow><mo rspace="0.222em">⋅</mo><mrow><mo stretchy="false">(</mo><mrow><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>−</mo><msub><mi>H</mi><mn>0</mn></msub></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>+</mo><mi>ϵ</mi></mrow></msqrt></mrow><annotation encoding="application/x-tex">D_{M}(H(t))=\sqrt{(H(t)-H_{0})^{T}\cdot\text{diag}(\Sigma^{-1})\cdot(H(t)-H_{0})+\epsilon}</annotation></semantics></math></p>
+</span></div>
+</td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="0" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(5)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS5.p5" class="ltx_para">
+<p id="S2.SS5.p5.6" class="ltx_p">where <math id="S2.SS5.p5.1.m1" class="ltx_Math" alttext="\epsilon=10^{-8}" display="inline" intent=":literal"><semantics><mrow><mi>ϵ</mi><mo>=</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>8</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\epsilon=10^{-8}</annotation></semantics></math> ensures numerical stability. In this preliminary formulation, we adopt a diagonal approximation of <math id="S2.SS5.p5.2.m2" class="ltx_Math" alttext="\Sigma^{-1}" display="inline" intent=":literal"><semantics><msup><mi mathvariant="normal">Σ</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><annotation encoding="application/x-tex">\Sigma^{-1}</annotation></semantics></math> for computational efficiency on edge devices; a full covariance estimation is reserved for future refinement. The stability score and boundary crossing conditions remain as described, with the threshold <math id="S2.SS5.p5.3.m3" class="ltx_Math" alttext="\lambda_{\text{margin}}" display="inline" intent=":literal"><semantics><msub><mi>λ</mi><mtext>margin</mtext></msub><annotation encoding="application/x-tex">\lambda_{\text{margin}}</annotation></semantics></math> implemented as a learnable parameter. This distance formulation is deeply connected to Lyapunov stability theory <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib13" title="" class="ltx_ref">13</a>]</cite>. In our framework, <math id="S2.SS5.p5.4.m4" class="ltx_Math" alttext="D_{M}(H(t))" display="inline" intent=":literal"><semantics><mrow><msub><mi>D</mi><mi>M</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">D_{M}(H(t))</annotation></semantics></math> acts as an estimated Lyapunov function candidate <math id="S2.SS5.p5.5.m5" class="ltx_Math" alttext="V(x)" display="inline" intent=":literal"><semantics><mrow><mi>V</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">V(x)</annotation></semantics></math>. According to Lyapunov’s direct method, the biomechanical system is deemed locally stable as long as the state remains bounded within the domain of attraction <math id="S2.SS5.p5.6.m6" class="ltx_Math" alttext="\Omega_{\text{stable}}" display="inline" intent=":literal"><semantics><msub><mi mathvariant="normal">Ω</mi><mtext>stable</mtext></msub><annotation encoding="application/x-tex">\Omega_{\text{stable}}</annotation></semantics></math>.</p>
+</div>
+<div id="S2.SS5.p6" class="ltx_para">
+<p id="S2.SS5.p6.1" class="ltx_p">A continuous stability score <math id="S2.SS5.p6.1.m1" class="ltx_Math" alttext="S(t)\in[0,1]" display="inline" intent=":literal"><semantics><mrow><mrow><mi>S</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>∈</mo><mrow><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false">]</mo></mrow></mrow><annotation encoding="application/x-tex">S(t)\in[0,1]</annotation></semantics></math> is derived to provide a quantifiable metric:</p>
+</div>
+<div id="S2.SS5.p7" class="ltx_para">
+<table id="S2.E6" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E6.m1" class="ltx_Math" alttext="S(t)=\sigma(-D_{M}(H(t))+\lambda_{\text{margin}})" display="block" intent=":literal"><semantics><mrow><mrow><mi>S</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><mi>σ</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mrow><mo>−</mo><mrow><msub><mi>D</mi><mi>M</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><mo>+</mo><msub><mi>λ</mi><mtext>margin</mtext></msub></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><annotation encoding="application/x-tex">S(t)=\sigma(-D_{M}(H(t))+\lambda_{\text{margin}})</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(6)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS5.p8" class="ltx_para">
+<p id="S2.SS5.p8.1" class="ltx_p">where <math id="S2.SS5.p8.1.m1" class="ltx_Math" alttext="\lambda_{\text{margin}}" display="inline" intent=":literal"><semantics><msub><mi>λ</mi><mtext>margin</mtext></msub><annotation encoding="application/x-tex">\lambda_{\text{margin}}</annotation></semantics></math> defines the physical tolerance threshold of the manifold boundary.</p>
+</div>
+<div id="S2.SS5.p9" class="ltx_para">
+<p id="S2.SS5.p9.1" class="ltx_p">Crucially, Boundary Crossing Detection does not merely rely on spatial distance. To prevent false alarms triggered by drastic but controlled movements (e.g., rapidly squatting to tie a shoe), an outward directional velocity check is enforced in the phase space. The system triggers a boundary crossing event (transitioning from ’Normal’ to ’Pre-warning’ or ’Fall’) if and only if two conditions are simultaneously met:</p>
+</div>
+<div id="S2.SS5.p10" class="ltx_para">
+<ul id="S2.I1" class="ltx_itemize">
+<li id="S2.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S2.I1.i1.p1" class="ltx_para">
+<p id="S2.I1.i1.p1.1" class="ltx_p"><span id="S2.I1.i1.p1.1.1" class="ltx_text ltx_font_bold">Spatial condition:</span> <math id="S2.I1.i1.p1.1.m1" class="ltx_Math" alttext="D_{M}(H(t))&gt;\lambda_{\text{margin}}" display="inline" intent=":literal"><semantics><mrow><mrow><msub><mi>D</mi><mi>M</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>&gt;</mo><msub><mi>λ</mi><mtext>margin</mtext></msub></mrow><annotation encoding="application/x-tex">D_{M}(H(t))&gt;\lambda_{\text{margin}}</annotation></semantics></math></p>
+</div>
+</li>
+<li id="S2.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S2.I1.i2.p1" class="ltx_para">
+<p id="S2.I1.i2.p1.1" class="ltx_p"><span id="S2.I1.i2.p1.1.1" class="ltx_text ltx_font_bold">Velocity condition:</span> <math id="S2.I1.i2.p1.1.m1" class="ltx_Math" alttext="\cos\langle\frac{dH(t)}{dt},H(t)-H_{0}\rangle&gt;0" display="inline" intent=":literal"><semantics><mrow><mrow><mi>cos</mi><mo>⁡</mo><mrow><mo stretchy="false">⟨</mo><mfrac><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mrow><mi>d</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></mfrac><mo>,</mo><mrow><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>−</mo><msub><mi>H</mi><mn>0</mn></msub></mrow><mo stretchy="false">⟩</mo></mrow></mrow><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\cos\langle\frac{dH(t)}{dt},H(t)-H_{0}\rangle&gt;0</annotation></semantics></math></p>
+</div>
+</li>
+</ul>
+</div>
+<div id="S2.SS5.p11" class="ltx_para">
+<p id="S2.SS5.p11.1" class="ltx_p">The second condition ensures that the normal velocity vector of the hidden state is pointing away from the stable center. If a user is actively squatting, the state may briefly exceed the margin, but the internal recovery dynamics will orient the velocity vector back toward <math id="S2.SS5.p11.1.m1" class="ltx_Math" alttext="H_{0}" display="inline" intent=":literal"><semantics><msub><mi>H</mi><mn>0</mn></msub><annotation encoding="application/x-tex">H_{0}</annotation></semantics></math>, thus successfully filtering out the false positive.</p>
+</div>
+</section>
+<section id="S2.SS6" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S2.SS6.5.1.1" class="ltx_text">II-F</span> </span><span id="S2.SS6.6.2" class="ltx_text ltx_font_italic">Counterfactual Inference</span>
+</h3>
+
+<div id="S2.SS6.p1" class="ltx_para">
+<p id="S2.SS6.p1.1" class="ltx_p">To rigorously distinguish between recoverable instability and irreversible falls, a Counterfactual Inference head is integrated. The motivation stems from causal reasoning: traditional models fail because they observe the current posture rather than predicting the inevitable consequence of the current dynamics.</p>
+</div>
+<div id="S2.SS6.p2" class="ltx_para">
+<p id="S2.SS6.p2.1" class="ltx_p">The counterfactual inference head and TTC estimation module are designed as auxiliary analysis branches that operate during inference to enhance interpretability. Specifically, the counterfactual head <math id="S2.SS6.p2.1.m1" class="ltx_Math" alttext="f_{cf}:\mathbb{R}^{d_{\text{joint}}}\to\mathbb{R}^{d_{\text{joint}}}" display="inline" intent=":literal"><semantics><mrow><msub><mi>f</mi><mrow><mi>c</mi><mo lspace="0em" rspace="0em">​</mo><mi>f</mi></mrow></msub><mo lspace="0.278em" rspace="0.278em">:</mo><mrow><msup><mi>ℝ</mi><msub><mi>d</mi><mtext>joint</mtext></msub></msup><mo stretchy="false">→</mo><msup><mi>ℝ</mi><msub><mi>d</mi><mtext>joint</mtext></msub></msup></mrow></mrow><annotation encoding="application/x-tex">f_{cf}:\mathbb{R}^{d_{\text{joint}}}\to\mathbb{R}^{d_{\text{joint}}}</annotation></semantics></math> projects a virtual recovery trajectory by injecting an estimated optimal recovery force into the latent dynamics. The TTC head estimates the remaining time before impact based on the current phase-space distance and latent velocity.</p>
+</div>
+<div id="S2.SS6.p3" class="ltx_para">
+<p id="S2.SS6.p3.3" class="ltx_p">When the system state <math id="S2.SS6.p3.1.m1" class="ltx_Math" alttext="H(t)" display="inline" intent=":literal"><semantics><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><annotation encoding="application/x-tex">H(t)</annotation></semantics></math> approaches the manifold boundary <math id="S2.SS6.p3.2.m2" class="ltx_Math" alttext="\partial\Omega" display="inline" intent=":literal"><semantics><mrow><mo rspace="0em">∂</mo><mi mathvariant="normal">Ω</mi></mrow><annotation encoding="application/x-tex">\partial\Omega</annotation></semantics></math>, the counterfactual module injects a virtual “optimal recovery” input <math id="S2.SS6.p3.3.m3" class="ltx_Math" alttext="I_{\text{recovery}}" display="inline" intent=":literal"><semantics><msub><mi>I</mi><mtext>recovery</mtext></msub><annotation encoding="application/x-tex">I_{\text{recovery}}</annotation></semantics></math> (simulating the human body’s maximum effort to regain balance). The ODE solver performs a forward integration to project a virtual future trajectory:</p>
+</div>
+<div id="S2.SS6.p4" class="ltx_para">
+<table id="S2.E7" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E7.m1" class="ltx_Math" alttext="H_{cf}(t+\Delta t)=H(t)+\int_{t}^{t+\Delta t}f_{\text{joint}}(H(\tau),I_{\text{recovery}},\theta)d\tau" display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>H</mi><mrow><mi>c</mi><mo lspace="0em" rspace="0em">​</mo><mi>f</mi></mrow></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>t</mi><mo>+</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo rspace="0.055em">+</mo><mrow><msubsup><mo>∫</mo><mi>t</mi><mrow><mi>t</mi><mo>+</mo><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi></mrow></mrow></msubsup><mrow><msub><mi>f</mi><mtext>joint</mtext></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>τ</mi><mo stretchy="false">)</mo></mrow></mrow><mo>,</mo><msub><mi>I</mi><mtext>recovery</mtext></msub><mo>,</mo><mi>θ</mi><mo stretchy="false">)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><mrow><mo rspace="0em">𝑑</mo><mi>τ</mi></mrow></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">H_{cf}(t+\Delta t)=H(t)+\int_{t}^{t+\Delta t}f_{\text{joint}}(H(\tau),I_{\text{recovery}},\theta)d\tau</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(7)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS6.p5" class="ltx_para">
+<p id="S2.SS6.p5.3" class="ltx_p">The physical interpretation acts as a dynamic “stress test.” By calculating the divergence between the counterfactual trajectory <math id="S2.SS6.p5.1.m1" class="ltx_Math" alttext="H_{cf}" display="inline" intent=":literal"><semantics><msub><mi>H</mi><mrow><mi>c</mi><mo lspace="0em" rspace="0em">​</mo><mi>f</mi></mrow></msub><annotation encoding="application/x-tex">H_{cf}</annotation></semantics></math> and the stable manifold, the system determines irreversibility. If the simulated trajectory curves back into <math id="S2.SS6.p5.2.m2" class="ltx_Math" alttext="\Omega_{\text{stable}}" display="inline" intent=":literal"><semantics><msub><mi mathvariant="normal">Ω</mi><mtext>stable</mtext></msub><annotation encoding="application/x-tex">\Omega_{\text{stable}}</annotation></semantics></math>, the action is confirmed as a controlled movement. Conversely, if <math id="S2.SS6.p5.3.m3" class="ltx_Math" alttext="H_{cf}" display="inline" intent=":literal"><semantics><msub><mi>H</mi><mrow><mi>c</mi><mo lspace="0em" rspace="0em">​</mo><mi>f</mi></mrow></msub><annotation encoding="application/x-tex">H_{cf}</annotation></semantics></math> diverges despite the injected recovery condition, the system confirms an irreversible fall, providing an irrefutable physical basis for the final alarm.</p>
+</div>
+<div id="S2.SS6.p6" class="ltx_para">
+<p id="S2.SS6.p6.1" class="ltx_p"><span id="S2.SS6.p6.1.1" class="ltx_text ltx_font_bold">Training Strategy:</span> During end-to-end training, only the classification loss (cross-entropy) is applied to the main classifier output. The counterfactual and TTC heads are trained implicitly through shared gradient backpropagation from the classification objective, without dedicated auxiliary losses. This design prioritizes the primary discrimination task while preserving the modules’ capacity for post-hoc stability analysis.</p>
+</div>
+</section>
+<section id="S2.SS7" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S2.SS7.5.1.1" class="ltx_text">II-G</span> </span><span id="S2.SS7.6.2" class="ltx_text ltx_font_italic">Time-to-Collision (TTC) Estimation</span>
+</h3>
+
+<div id="S2.SS7.p1" class="ltx_para">
+<p id="S2.SS7.p1.1" class="ltx_p">To facilitate proactive injury prevention, a Time-to-Collision (TTC) estimation module is incorporated. Upon detecting an outward boundary crossing, the remaining time before the physical impact is approximated based on the phase space distance and the latent velocity:</p>
+</div>
+<div id="S2.SS7.p2" class="ltx_para">
+<table id="S2.E8" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.E8.m1" class="ltx_Math" alttext="TTC=0.5\cdot\frac{D_{M}(H(t))}{\|v(t)\|}+0.5\cdot\text{MLP}_{ttc}(H(t),D_{M}(H(t)))" display="block" intent=":literal"><semantics><mrow><mrow><mi>T</mi><mo lspace="0em" rspace="0em">​</mo><mi>T</mi><mo lspace="0em" rspace="0em">​</mo><mi>C</mi></mrow><mo>=</mo><mrow><mrow><mn>0.5</mn><mo lspace="0.222em" rspace="0.222em">⋅</mo><mfrac><mrow><msub><mi>D</mi><mi>M</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow><mrow><mo stretchy="false">‖</mo><mrow><mi>v</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">‖</mo></mrow></mfrac></mrow><mo>+</mo><mrow><mrow><mn>0.5</mn><mo lspace="0.222em" rspace="0.222em">⋅</mo><msub><mtext>MLP</mtext><mrow><mi>t</mi><mo lspace="0em" rspace="0em">​</mo><mi>t</mi><mo lspace="0em" rspace="0em">​</mo><mi>c</mi></mrow></msub></mrow><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo>,</mo><mrow><msub><mi>D</mi><mi>M</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>H</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">TTC=0.5\cdot\frac{D_{M}(H(t))}{\|v(t)\|}+0.5\cdot\text{MLP}_{ttc}(H(t),D_{M}(H(t)))</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(8)</span></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S2.SS7.p3" class="ltx_para">
+<p id="S2.SS7.p3.1" class="ltx_p">combining a physics-based geometric projection with a learned refinement term for improved robustness against low-velocity boundary approaches.</p>
+</div>
+</section>
+<section id="S2.SS8" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S2.SS8.5.1.1" class="ltx_text">II-H</span> </span><span id="S2.SS8.6.2" class="ltx_text ltx_font_italic">Complexity and Parameter Analysis</span>
+</h3>
+
+<div id="S2.SS8.p1" class="ltx_para">
+<p id="S2.SS8.p1.1" class="ltx_p">A primary objective of this architecture is to maintain extreme computational efficiency for practical deployment on low-power edge platforms <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib15" title="" class="ltx_ref">15</a>]</cite>. Table <a href="#S2.T1" title="TABLE I ‣ II-H Complexity and Parameter Analysis ‣ II Methodology ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_tag">I</span></a> presents a complexity comparison between the proposed Dynamics Decoupling LTC model, the perception backbone, and a standard LSTM-based temporal baseline <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib14" title="" class="ltx_ref">14</a>]</cite>.</p>
+</div>
+<figure id="S2.T1" class="ltx_table">
+<figcaption class="ltx_caption"><span class="ltx_tag ltx_tag_table">TABLE I: </span>Complexity and Parameter Comparison</figcaption>
+<div id="S2.T1.3" class="ltx_inline-block ltx_align_center ltx_transformed_outer" style="width:433.6pt;height:47pt;vertical-align:-21.1pt;"><span class="ltx_transformed_inner" style="transform:translate(-9.8pt,1.1pt) scale(0.956864121531628,0.956864121531628) ;">
+<table id="S2.T1.3.3" class="ltx_tabular ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S2.T1.3.3.4.1" class="ltx_tr">
+<th id="S2.T1.3.3.4.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt"><span id="S2.T1.3.3.4.1.1.1" class="ltx_text ltx_font_bold">Model Component</span></th>
+<th id="S2.T1.3.3.4.1.2" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt"><span id="S2.T1.3.3.4.1.2.1" class="ltx_text ltx_font_bold">Architecture Type</span></th>
+<th id="S2.T1.3.3.4.1.3" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span id="S2.T1.3.3.4.1.3.1" class="ltx_text ltx_font_bold">Parameters</span></th>
+<th id="S2.T1.3.3.4.1.4" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt"><span id="S2.T1.3.3.4.1.4.1" class="ltx_text ltx_font_bold">Time Characteristics</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S2.T1.1.1.1" class="ltx_tr">
+<td id="S2.T1.1.1.1.2" class="ltx_td ltx_align_left ltx_border_t">YOLOv11n-pose <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib16" title="" class="ltx_ref">16</a>]</cite>
+</td>
+<td id="S2.T1.1.1.1.3" class="ltx_td ltx_align_left ltx_border_t">CNN (Perception)</td>
+<td id="S2.T1.1.1.1.1" class="ltx_td ltx_align_right ltx_border_t">
+<math id="S2.T1.1.1.1.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>2.6M</td>
+<td id="S2.T1.1.1.1.4" class="ltx_td ltx_align_left ltx_border_t">Single-frame spatial mapping</td>
+</tr>
+<tr id="S2.T1.2.2.2" class="ltx_tr">
+<td id="S2.T1.2.2.2.2" class="ltx_td ltx_align_left">LSTM Baseline <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib14" title="" class="ltx_ref">14</a>]</cite>
+</td>
+<td id="S2.T1.2.2.2.3" class="ltx_td ltx_align_left">Discrete RNN</td>
+<td id="S2.T1.2.2.2.1" class="ltx_td ltx_align_right">
+<math id="S2.T1.2.2.2.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>120K</td>
+<td id="S2.T1.2.2.2.4" class="ltx_td ltx_align_left">Frame-level discrete update</td>
+</tr>
+<tr id="S2.T1.3.3.3" class="ltx_tr">
+<td id="S2.T1.3.3.3.2" class="ltx_td ltx_align_left ltx_border_bb">Proposed LTC-CoM &amp; BoS</td>
+<td id="S2.T1.3.3.3.3" class="ltx_td ltx_align_left ltx_border_bb">Continuous ODE</td>
+<td id="S2.T1.3.3.3.1" class="ltx_td ltx_align_right ltx_border_bb">
+<math id="S2.T1.3.3.3.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>17K</td>
+<td id="S2.T1.3.3.3.4" class="ltx_td ltx_align_left ltx_border_bb">Continuous-time integration</td>
+</tr>
+</tbody>
+</table>
+</span></div>
+</figure>
+<div id="S2.SS8.p2" class="ltx_para">
+<p id="S2.SS8.p2.1" class="ltx_p">By extracting low-dimensional keypoints through the perception backbone, the temporal modeling burden is drastically reduced. The proposed LTC dynamic decoupling layers, comprising only 16 hidden units per subsystem, require heavily truncated weight matrices. The total parameters for the temporal ODE and stability determination modules amount to only <math id="S2.SS8.p2.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>17K. This ultra-lightweight profile ensures that the forward pass—primarily numerical ODE integration—achieves highly efficient real-time execution on standard edge microcontrollers without requiring high-end GPU acceleration.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">III </span><span id="S3.1.1" class="ltx_text ltx_font_smallcaps">Experiments and result</span>
+</h2>
+
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S3.SS1.5.1.1" class="ltx_text">III-A</span> </span><span id="S3.SS1.6.2" class="ltx_text ltx_font_italic">Dataset and Experimental Setup</span>
+</h3>
+
+<div id="S3.SS1.p1" class="ltx_para">
+<p id="S3.SS1.p1.1" class="ltx_p"><span id="S3.SS1.p1.1.1" class="ltx_text ltx_font_bold">Dataset.</span> We evaluate the proposed framework on the fall_detection dataset consisting of video sequences captured at 29 FPS with a resolution of <math id="S3.SS1.p1.1.m1" class="ltx_Math" alttext="1280\times 720" display="inline" intent=":literal"><semantics><mrow><mn>1280</mn><mo lspace="0.222em" rspace="0.222em">×</mo><mn>720</mn></mrow><annotation encoding="application/x-tex">1280\times 720</annotation></semantics></math>. Each video is annotated at the clip level with binary labels: Normal (0) and Falling (1). Following standard practice, we partition the dataset into training and validation sets with a ratio of 8:2, ensuring no subject overlap between splits to prevent information leakage.</p>
+</div>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S3.SS2.5.1.1" class="ltx_text">III-B</span> </span><span id="S3.SS2.6.2" class="ltx_text ltx_font_italic">Evaluation Strategy: Precision at Fixed Recall</span>
+</h3>
+
+<div id="S3.SS2.p1" class="ltx_para">
+<p id="S3.SS2.p1.1" class="ltx_p">In the comparative performance evaluation of the models, we deliberately abandoned the conventional “overall accuracy” (Accuracy) metric in favor of a much stricter “Precision at Fixed Recall” evaluation strategy.</p>
+</div>
+<div id="S3.SS2.p2" class="ltx_para">
+<p id="S3.SS2.p2.1" class="ltx_p">The rationale for this rigorous protocol is deeply rooted in the cost-sensitive nature of intelligent elderly care and healthcare monitoring <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib22" title="" class="ltx_ref">22</a>]</cite>:</p>
+</div>
+<div id="S3.SS2.p3" class="ltx_para">
+<ol id="S3.I1" class="ltx_enumerate">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p id="S3.I1.i1.p1.1" class="ltx_p"><span id="S3.I1.i1.p1.1.1" class="ltx_text ltx_font_bold">The Zero-Tolerance Bottom Line for Missed Detections:</span> In a fall detection system, a False Negative (missed fall) is a fatal flaw. Failing to detect a real fall directly delays the golden window for medical rescue, potentially leading to severe consequences. Conversely, a False Positive (false alarm) merely triggers a secondary verification by a caregiver, which is a highly acceptable and controllable cost. Therefore, ensuring life safety dictates that the cost of a missed detection is infinitely higher than that of a false alarm.</p>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p id="S3.I1.i2.p1.1" class="ltx_p"><span id="S3.I1.i2.p1.1.1" class="ltx_text ltx_font_bold">Establishing a Fair Life-Safety Baseline:</span> To conduct a meaningful comparison, we mandate that all evaluated models first meet a stringent safety baseline—fixing the Recall threshold at an extremely high level (e.g., <math id="S3.I1.i2.p1.1.m1" class="ltx_Math" alttext="&gt;98\%" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>98</mn><mo>%</mo></mrow></mrow><annotation encoding="application/x-tex">&gt;98\%</annotation></semantics></math>). This ensures that the vast majority of true falls are captured. Only when all models are forced to satisfy this “life-safety red line” do we compare their Precision (the proportion of true falls among all triggered alarms).</p>
+</div>
+</li>
+<li id="S3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S3.I1.i3.p1" class="ltx_para">
+<p id="S3.I1.i3.p1.1" class="ltx_p"><span id="S3.I1.i3.p1.1.1" class="ltx_text ltx_font_bold">Highlighting the Superiority of Physics-Informed Counterfactuals:</span> Under the extreme pressure of maintaining a near-perfect Recall, traditional black-box classification models (such as LSTM or Transformers) typically degenerate into a “better safe than sorry” mode. They end up triggering a flood of false alarms whenever a user performs a rapid but controlled movement (like squatting or sitting), causing their Precision to plummet to unacceptable levels.</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="S3.SS2.p4" class="ltx_para">
+<p id="S3.SS2.p4.1" class="ltx_p">Our LTC-Fall model, however, evaluates physical instability through the Stability Manifold and Counterfactual Inference rather than relying on visual posture matching. By simulating virtual recovery forces, the model accurately distinguishes between “active height reduction” (crouching) and “passive instability” (falling). Consequently, LTC-Fall successfully maintains remarkably high Precision even when the Recall is rigidly fixed, proving that our dynamic decoupling architecture fundamentally solves the false-alarm dilemma that plagues the industry.</p>
+</div>
+</section>
+<section id="S3.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S3.SS3.5.1.1" class="ltx_text">III-C</span> </span><span id="S3.SS3.6.2" class="ltx_text ltx_font_italic">Ultra-Lightweight Architecture and Micro-Neuron Scale</span>
+</h3>
+
+<div id="S3.SS3.p1" class="ltx_para">
+<p id="S3.SS3.p1.1" class="ltx_p">A fundamental objective of this study is to enable robust fall detection on highly resource-constrained edge devices. Traditional deep learning approaches rely on massive parameter spaces to blindly fit visual patterns. In contrast, our proposed LTC-Fall framework leverages physical dynamics to achieve an extreme level of architectural minimalism.</p>
+</div>
+<div id="S3.SS3.p2" class="ltx_para">
+<p id="S3.SS3.p2.1" class="ltx_p">As detailed in the overall model summary (Fig. <a href="#S3.F1" title="Figure 1 ‣ III-C Ultra-Lightweight Architecture and Micro-Neuron Scale ‣ III Experiments and result ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>), the total parameter count of the proposed model is precisely 16,088 (16.1K), occupying an exceptionally small memory footprint of merely 0.06 MB in float32 format. This extreme compression is achieved by strictly limiting the number of hidden neurons.</p>
+</div>
+<figure id="S3.F1" class="ltx_figure"><img src="2607.12909v1/AI_fig1.png" id="S3.F1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="214" height="104" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Overall parameter summary of the proposed LTC-Fall framework, demonstrating an extremely low memory footprint (0.06 MB).</figcaption>
+</figure>
+<div id="S3.SS3.p3" class="ltx_para">
+<p id="S3.SS3.p3.1" class="ltx_p">The continuous-time dynamic decoupling is handled by a micro-cluster of neurons:</p>
+<ul id="S3.I2" class="ltx_itemize">
+<li id="S3.I2.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I2.i1.p1" class="ltx_para">
+<p id="S3.I2.i1.p1.3" class="ltx_p"><span id="S3.I2.i1.p1.3.1" class="ltx_text ltx_font_bold">LTC-CoM Subsystem (Center of Mass):</span> Configured with only 16 hidden neurons, this module requires exactly 400 parameters (16 for the time constant <math id="S3.I2.i1.p1.1.m1" class="ltx_Math" alttext="\tau" display="inline" intent=":literal"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>, 112 for the input transformation <math id="S3.I2.i1.p1.2.m2" class="ltx_Math" alttext="W_{in}" display="inline" intent=":literal"><semantics><msub><mi>W</mi><mrow><mi>i</mi><mo lspace="0em" rspace="0em">​</mo><mi>n</mi></mrow></msub><annotation encoding="application/x-tex">W_{in}</annotation></semantics></math>, and 272 for hidden state feedback <math id="S3.I2.i1.p1.3.m3" class="ltx_Math" alttext="W_{h}" display="inline" intent=":literal"><semantics><msub><mi>W</mi><mi>h</mi></msub><annotation encoding="application/x-tex">W_{h}</annotation></semantics></math>). It accounts for just 2.49% of the total model.</p>
+</div>
+</li>
+<li id="S3.I2.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I2.i2.p1" class="ltx_para">
+<p id="S3.I2.i2.p1.1" class="ltx_p"><span id="S3.I2.i2.p1.1.1" class="ltx_text ltx_font_bold">LTC-BoS Subsystem (Base of Support):</span> Similarly, the support surface dynamics are modeled using only 16 hidden neurons (400 parameters, 2.49%).</p>
+</div>
+</li>
+<li id="S3.I2.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I2.i3.p1" class="ltx_para">
+<p id="S3.I2.i3.p1.1" class="ltx_p"><span id="S3.I2.i3.p1.1.1" class="ltx_text ltx_font_bold">Coupling Interaction Module:</span> This module integrates the two physical subsystems by projecting them into a joint hidden dimension of strictly 32 neurons (1,121 parameters, 6.97%).</p>
+</div>
+</li>
+<li id="S3.I2.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I2.i4.p1" class="ltx_para">
+<p id="S3.I2.i4.p1.1" class="ltx_p"><span id="S3.I2.i4.p1.1.1" class="ltx_text ltx_font_bold">Stability Manifold Determination:</span> The remaining 14,167 parameters (88.06%) are allocated to the phase-space mapping, velocity estimation, and the crucial counterfactual inference head (Fig. <a href="#S3.F2" title="Figure 2 ‣ III-C Ultra-Lightweight Architecture and Micro-Neuron Scale ‣ III Experiments and result ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>).</p>
+</div>
+</li>
+</ul>
+</div>
+<figure id="S3.F2" class="ltx_figure"><img src="2607.12909v1/AI_fig2.png" id="S3.F2.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="214" height="75" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>Here are the details of a few modules.</figcaption>
+</figure>
+<div id="S3.SS3.p4" class="ltx_para">
+<p id="S3.SS3.p4.1" class="ltx_p">By relying on the mathematical efficiency of Ordinary Differential Equations (ODEs) rather than brute-force matrix multiplications, the model extracts deep physical meaning using a total of only 64 core neurons, establishing a new baseline for lightweight architectural design <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib20" title="" class="ltx_ref">20</a>]</cite>.</p>
+</div>
+<div id="S3.SS3.p5" class="ltx_para">
+<p id="S3.SS3.p5.1" class="ltx_p">To demonstrate the structural superiority of LTC-Fall, we compared its parameter scale against mainstream neural network architectures commonly used in video analysis and sequence modeling.</p>
+</div>
+<div id="S3.SS3.p6" class="ltx_para">
+<p id="S3.SS3.p6.3" class="ltx_p">As shown in the comparative analysis, the parameter scale of LTC-Fall (16.1K) exhibits a crushing advantage. While a standard LSTM baseline (with a hidden size of 128) requires approximately 200,000 (200K) parameters, our physics-informed ODE model is over an order of magnitude smaller. Furthermore, compared to lightweight vision backbones like MobileNetV3-Small (<math id="S3.SS3.p6.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>2.5M), standard convolutional networks like ResNet-18 (<math id="S3.SS3.p6.2.m2" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>11M), and attention-based models like Transformer-Base (<math id="S3.SS3.p6.3.m3" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>86M), our proposed LTC-Fall model consumes only 0.6% of the parameters of MobileNetV3, as illustrated in Fig. <a href="#S3.F3" title="Figure 3 ‣ III-C Ultra-Lightweight Architecture and Micro-Neuron Scale ‣ III Experiments and result ‣ Real-time fall detection based on vision for low-power edge platforms" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>.</p>
+</div>
+<figure id="S3.F3" class="ltx_figure"><img src="2607.12909v1/AI_fig3.png" id="S3.F3.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="214" height="101" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>Complexity comparison between the proposed LTC-Fall model and mainstream baseline architectures, highlighting the crushing advantage of the continuous-time ODE approach.</figcaption>
+</figure>
+<div id="S3.SS3.p7" class="ltx_para">
+<p id="S3.SS3.p7.1" class="ltx_p">This minimal memory footprint translates directly into supreme computational efficiency. During edge deployment evaluations, the end-to-end inference time of the LTC-Fall temporal module is stably constrained between 20 ms to 46 ms per frame. This metric is highly significant for practical engineering. Standard surveillance video streams operate at 30 FPS, providing a theoretical time budget of approximately 33.3 ms per frame <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib21" title="" class="ltx_ref">21</a>]</cite>. The 20–46 ms latency ensures that the dynamic stability evaluation can be executed seamlessly in real-time. More importantly, this ultra-low computational burden leaves ample CPU and memory headroom for the frontend YOLOv11n-Pose perception tasks and the underlying hardware scheduling of the microcontroller, guaranteeing a stable, non-blocking closed-loop execution on edge nodes.</p>
+</div>
+</section>
+<section id="S3.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection"><span id="S3.SS4.5.1.1" class="ltx_text">III-D</span> </span><span id="S3.SS4.6.2" class="ltx_text ltx_font_italic">Ablation Study and Performance Analysis</span>
+</h3>
+
+<div id="S3.SS4.p1" class="ltx_para">
+<p id="S3.SS4.p1.1" class="ltx_p">To validate the contribution of each architectural component, we conduct systematic ablation experiments on the validation set. All results are averaged over 3 independent random seeds to eliminate statistical variance caused by the limited dataset size.</p>
+</div>
+<figure id="S3.T2" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">TABLE II: </span>Ablation Study</figcaption>
+<table id="S3.T2.1" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S3.T2.1.1.1" class="ltx_tr">
+<th id="S3.T2.1.1.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_tt" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.1.1.1.1" class="ltx_text ltx_font_bold" style="font-size:90%;">Configuration</span></th>
+<th id="S3.T2.1.1.1.2" class="ltx_td ltx_align_justify ltx_th ltx_th_column ltx_th_row ltx_border_tt" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S3.T2.1.1.1.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S3.T2.1.1.1.2.1.1" class="ltx_p"><span id="S3.T2.1.1.1.2.1.1.1" class="ltx_text ltx_font_bold" style="font-size:90%;">Params</span></span>
+</span>
+</th>
+<th id="S3.T2.1.1.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.1.1.3.1" class="ltx_text ltx_font_bold" style="font-size:90%;">Acc (%)</span></th>
+<th id="S3.T2.1.1.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.1.1.4.1" class="ltx_text ltx_font_bold" style="font-size:90%;">F1 (%)</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S3.T2.1.2.1" class="ltx_tr">
+<th id="S3.T2.1.2.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.2.1.1.1" class="ltx_text" style="font-size:90%;">(a) LTC-Fall (Full)</span></th>
+<th id="S3.T2.1.2.1.2" class="ltx_td ltx_align_justify ltx_th ltx_th_row ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S3.T2.1.2.1.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S3.T2.1.2.1.2.1.1" class="ltx_p"><span id="S3.T2.1.2.1.2.1.1.1" class="ltx_text" style="font-size:90%;">16.0K</span></span>
+</span>
+</th>
+<td id="S3.T2.1.2.1.3" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.2.1.3.1" class="ltx_text" style="font-size:90%;">96.63 ± 1.26</span></td>
+<td id="S3.T2.1.2.1.4" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.2.1.4.1" class="ltx_text" style="font-size:90%;">91.02 ± 4.02</span></td>
+</tr>
+<tr id="S3.T2.1.3.2" class="ltx_tr">
+<th id="S3.T2.1.3.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.3.2.1.1" class="ltx_text" style="font-size:90%;">(b) w/o Decoupling</span></th>
+<th id="S3.T2.1.3.2.2" class="ltx_td ltx_align_justify ltx_th ltx_th_row" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S3.T2.1.3.2.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S3.T2.1.3.2.2.1.1" class="ltx_p"><span id="S3.T2.1.3.2.2.1.1.1" class="ltx_text" style="font-size:90%;">3.7K</span></span>
+</span>
+</th>
+<td id="S3.T2.1.3.2.3" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.3.2.3.1" class="ltx_text" style="font-size:90%;">91.92 ± 0.00</span></td>
+<td id="S3.T2.1.3.2.4" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.3.2.4.1" class="ltx_text" style="font-size:90%;">78.47 ± 1.48</span></td>
+</tr>
+<tr id="S3.T2.1.4.3" class="ltx_tr">
+<th id="S3.T2.1.4.3.1" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.4.3.1.1" class="ltx_text" style="font-size:90%;">(c) w/o Coupling</span></th>
+<th id="S3.T2.1.4.3.2" class="ltx_td ltx_align_justify ltx_th ltx_th_row" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S3.T2.1.4.3.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S3.T2.1.4.3.2.1.1" class="ltx_p"><span id="S3.T2.1.4.3.2.1.1.1" class="ltx_text" style="font-size:90%;">3.0K</span></span>
+</span>
+</th>
+<td id="S3.T2.1.4.3.3" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.4.3.3.1" class="ltx_text" style="font-size:90%;">95.29 ± 2.08</span></td>
+<td id="S3.T2.1.4.3.4" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.4.3.4.1" class="ltx_text" style="font-size:90%;">87.75 ± 6.31</span></td>
+</tr>
+<tr id="S3.T2.1.5.4" class="ltx_tr">
+<th id="S3.T2.1.5.4.1" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.5.4.1.1" class="ltx_text" style="font-size:90%;">(d) w/o Stability Manifold</span></th>
+<th id="S3.T2.1.5.4.2" class="ltx_td ltx_align_justify ltx_th ltx_th_row" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S3.T2.1.5.4.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S3.T2.1.5.4.2.1.1" class="ltx_p"><span id="S3.T2.1.5.4.2.1.1.1" class="ltx_text" style="font-size:90%;">18.6K</span></span>
+</span>
+</th>
+<td id="S3.T2.1.5.4.3" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.5.4.3.1" class="ltx_text" style="font-size:90%;">95.29 ± 1.72</span></td>
+<td id="S3.T2.1.5.4.4" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.5.4.4.1" class="ltx_text" style="font-size:90%;">87.41 ± 5.54</span></td>
+</tr>
+<tr id="S3.T2.1.6.5" class="ltx_tr">
+<th id="S3.T2.1.6.5.1" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.6.5.1.1" class="ltx_text" style="font-size:90%;">(e) w/o Counterfactual</span></th>
+<th id="S3.T2.1.6.5.2" class="ltx_td ltx_align_justify ltx_th ltx_th_row" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S3.T2.1.6.5.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S3.T2.1.6.5.2.1.1" class="ltx_p"><span id="S3.T2.1.6.5.2.1.1.1" class="ltx_text" style="font-size:90%;">10.8K</span></span>
+</span>
+</th>
+<td id="S3.T2.1.6.5.3" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.6.5.3.1" class="ltx_text" style="font-size:90%;">95.28 ± 1.76</span></td>
+<td id="S3.T2.1.6.5.4" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.6.5.4.1" class="ltx_text" style="font-size:90%;">87.41 ± 5.54</span></td>
+</tr>
+<tr id="S3.T2.1.7.6" class="ltx_tr">
+<th id="S3.T2.1.7.6.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.7.6.1.1" class="ltx_text" style="font-size:90%;">(f) LSTM Baseline</span></th>
+<th id="S3.T2.1.7.6.2" class="ltx_td ltx_align_justify ltx_th ltx_th_row ltx_border_bb" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S3.T2.1.7.6.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S3.T2.1.7.6.2.1.1" class="ltx_p"><span id="S3.T2.1.7.6.2.1.1.1" class="ltx_text" style="font-size:90%;">8.1K</span></span>
+</span>
+</th>
+<td id="S3.T2.1.7.6.3" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.7.6.3.1" class="ltx_text" style="font-size:90%;">93.60 ± 0.48</span></td>
+<td id="S3.T2.1.7.6.4" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S3.T2.1.7.6.4.1" class="ltx_text" style="font-size:90%;">82.81 ± 1.63</span></td>
+</tr>
+</tbody>
+</table>
+</figure>
+<div id="S3.SS4.p2" class="ltx_para">
+<p id="S3.SS4.p2.1" class="ltx_p"><span id="S3.SS4.p2.1.1" class="ltx_text" style="font-size:90%;">All results are reported as Mean <math id="S3.SS4.p2.1.1.m1" class="ltx_Math" alttext="\pm" display="inline" intent=":literal"><semantics><mo>±</mo><annotation encoding="application/x-tex">\pm</annotation></semantics></math> Std over 3 independent random seeds. The best results are highlighted in bold.</span></p>
+</div>
+<div id="S3.SS4.p3" class="ltx_para">
+<p id="S3.SS4.p3.1" class="ltx_p"><span id="S3.SS4.p3.1.1" class="ltx_text ltx_font_bold" style="font-size:90%;">E<span id="S3.SS4.p3.1.1.1" class="ltx_text ltx_font_medium">ffect of Dynamics Decoupling (a vs. b).Removing the explicit CoM/BoS decoupling and replacing it with a single LTC branch processing the concatenated 12-D input leads to a drastic performance drop (<math id="S3.SS4.p3.1.1.1.m1" class="ltx_Math" alttext="\Delta\text{F1}=-12.55\%" display="inline" intent=":literal"><semantics><mrow><mrow><mi mathvariant="normal">Δ</mi><mo lspace="0em" rspace="0em">​</mo><mtext>F1</mtext></mrow><mo>=</mo><mrow><mo>−</mo><mrow><mn>12.55</mn><mo>%</mo></mrow></mrow></mrow><annotation encoding="application/x-tex">\Delta\text{F1}=-12.55\%</annotation></semantics></math>). This confirms that the physical separation of inertial motion from support-surface adjustment is essential; without it, the network overfits to superficial correlations between the two kinematic channels, failing to learn the causal mechanics of balance loss.</span></span></p>
+</div>
+<div id="S3.SS4.p4" class="ltx_para">
+<p id="S3.SS4.p4.2" class="ltx_p"><span id="S3.SS4.p4.2.2" class="ltx_text ltx_font_bold" style="font-size:90%;">E<span id="S3.SS4.p4.2.2.2" class="ltx_text ltx_font_medium">ffect of Coupling Interaction (a vs. c). Directly concatenating the two subsystem outputs without the learnable cross-interaction term <math id="S3.SS4.p4.1.1.1.m1" class="ltx_Math" alttext="M" display="inline" intent=":literal"><semantics><mi>M</mi><annotation encoding="application/x-tex">M</annotation></semantics></math> degrades F1 by <math id="S3.SS4.p4.2.2.2.m2" class="ltx_Math" alttext="3.27\%" display="inline" intent=":literal"><semantics><mrow><mn>3.27</mn><mo>%</mo></mrow><annotation encoding="application/x-tex">3.27\%</annotation></semantics></math>. The result indicates that the physical feedback between mass-center shift and support adjustment—modeled by the Hadamard interaction—is non-trivial for discriminating controlled movements from genuine instability.</span></span></p>
+</div>
+<div id="S3.SS4.p5" class="ltx_para">
+<p id="S3.SS4.p5.2" class="ltx_p"><span id="S3.SS4.p5.2.2" class="ltx_text ltx_font_bold" style="font-size:90%;">E<span id="S3.SS4.p5.2.2.2" class="ltx_text ltx_font_medium">ffect of Stability Manifold (a vs. d). Replacing the Lyapunov-inspired Stability Manifold with a conventional 2-layer MLP classifier reduces F1 by <math id="S3.SS4.p5.1.1.1.m1" class="ltx_Math" alttext="3.61\%" display="inline" intent=":literal"><semantics><mrow><mn>3.61</mn><mo>%</mo></mrow><annotation encoding="application/x-tex">3.61\%</annotation></semantics></math>, despite increasing the parameter count by <math id="S3.SS4.p5.2.2.2.m2" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math>2.6K. The MLP, lacking the geometric distance constraint and directional velocity check, collapses the latent structure into an uninterpretable black-box boundary, which is more susceptible to false positives from rapid but controlled motions.</span></span></p>
+</div>
+<div id="S3.SS4.p6" class="ltx_para">
+<p id="S3.SS4.p6.1" class="ltx_p"><span id="S3.SS4.p6.1.1" class="ltx_text ltx_font_bold" style="font-size:90%;">E<span id="S3.SS4.p6.1.1.1" class="ltx_text ltx_font_medium">ffect of Auxiliary Heads (a vs. e). Removing the counterfactual and TTC estimation branches causes a moderate F1 drop (<math id="S3.SS4.p6.1.1.1.m1" class="ltx_Math" alttext="-3.61\%" display="inline" intent=":literal"><semantics><mrow><mo>−</mo><mrow><mn>3.61</mn><mo>%</mo></mrow></mrow><annotation encoding="application/x-tex">-3.61\%</annotation></semantics></math>). Although these heads are trained implicitly without dedicated losses, they contribute beneficial regularization through shared gradient backpropagation, refining the latent representation toward physically plausible stability trajectories.</span></span></p>
+</div>
+<div id="S3.SS4.p7" class="ltx_para">
+<p id="S3.SS4.p7.2" class="ltx_p"><span id="S3.SS4.p7.2.2" class="ltx_text ltx_font_bold" style="font-size:90%;">L<span id="S3.SS4.p7.2.2.2" class="ltx_text ltx_font_medium">TC vs. Discrete RNN (a vs. f). Under identical hidden dimensions, the proposed continuous-time LTC formulation outperforms the standard LSTM baseline by <math id="S3.SS4.p7.1.1.1.m1" class="ltx_Math" alttext="3.03\%" display="inline" intent=":literal"><semantics><mrow><mn>3.03</mn><mo>%</mo></mrow><annotation encoding="application/x-tex">3.03\%</annotation></semantics></math> in F1 and <math id="S3.SS4.p7.2.2.2.m2" class="ltx_Math" alttext="3.03\%" display="inline" intent=":literal"><semantics><mrow><mn>3.03</mn><mo>%</mo></mrow><annotation encoding="application/x-tex">3.03\%</annotation></semantics></math> in accuracy. The gain validates our claim that the ODE-based integration better captures the irregular, biomechanical transient dynamics of human balance recovery than discrete gating mechanisms.</span></span></p>
+</div>
+<div id="S3.SS4.p8" class="ltx_para">
+<p id="S3.SS4.p8.1" class="ltx_p"><span id="S3.SS4.p8.1.1" class="ltx_text" style="font-size:90%;">In summary, every proposed module contributes positively to the overall discrimination capability. The full LTC-Fall model achieves the highest mean accuracy (96.63%) and F1 (91.02%), with the smallest standard deviation across seeds, demonstrating both superior performance and robustness.</span></p>
+</div>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section" style="font-size:90%;">
+<span class="ltx_tag ltx_tag_section">IV </span><span id="S4.1.1" class="ltx_text ltx_font_smallcaps">Conclusion</span>
+</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p id="S4.p1.1" class="ltx_p"><span id="S4.p1.1.1" class="ltx_text" style="font-size:90%;">This study successfully proposes and implements a physics-informed, ultra-lightweight dynamic fall detection framework designed specifically for edge computing environments. By abandoning the traditional “posture classification” paradigm, we explicitly modeled the human body as an inverted pendulum, decoupling its motion into Center of Mass and Base of Support dynamics using parallel Liquid Time-Constant (LTC) neural networks. The introduction of the Stability Manifold and Counterfactual Inference mechanism enables the rigorous, causal evaluation of biomechanical instability.</span></p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<p id="S4.p2.1" class="ltx_p"><span id="S4.p2.1.1" class="ltx_text" style="font-size:90%;">Experimental validations demonstrate that the proposed LTC-Fall model requires only 16.1K parameters—a mere fraction of mainstream architectures—while achieving robust real-time inference (20–46 ms) on edge devices. The system effectively eradicates the chronic false-alarm issues triggered by controlled daily movements without compromising the vital recall rate. This research bridges the gap between neural dynamical systems and practical biomedical engineering, providing a highly interpretable, cost-effective, and privacy-preserving closed-loop solution for intelligent elderly care.</span></p>
+</div>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section" style="font-size:90%;">
+<span class="ltx_tag ltx_tag_section">V </span><span id="S5.1.1" class="ltx_text ltx_font_smallcaps">Discussion</span>
+</h2>
+
+<section id="S5.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection" style="font-size:90%;">
+<span class="ltx_tag ltx_tag_subsection"><span id="S5.SS1.5.1.1" class="ltx_text">V-A</span> </span><span id="S5.SS1.6.2" class="ltx_text ltx_font_italic">System Advantages in Edge Deployment</span>
+</h3>
+
+<div id="S5.SS1.p1" class="ltx_para">
+<p id="S5.SS1.p1.1" class="ltx_p"><span id="S5.SS1.p1.1.1" class="ltx_text" style="font-size:90%;">The transition of deep learning applications from cloud servers to edge devices is a critical bottleneck in the intelligent healthcare industry, primarily due to constraints in computational resources and privacy concerns </span><cite class="ltx_cite ltx_citemacro_cite"><span id="S5.SS1.p1.1.2.1" class="ltx_text" style="font-size:90%;">[</span><a href="#bib.bib23" title="" class="ltx_ref">23</a><span id="S5.SS1.p1.1.3.2" class="ltx_text" style="font-size:90%;">]</span></cite><span id="S5.SS1.p1.1.4" class="ltx_text" style="font-size:90%;">. The proposed LTC-Fall framework demonstrates overwhelming advantages post-deployment in real-world edge environments.</span></p>
+</div>
+<div id="S5.SS1.p2" class="ltx_para">
+<p id="S5.SS1.p2.1" class="ltx_p"><span id="S5.SS1.p2.1.1" class="ltx_text" style="font-size:90%;">Firstly, strict privacy preservation is achieved. By utilizing the YOLOv11n-pose backbone merely for skeletal extraction and immediately discarding the raw RGB frames, coupled with the ultra-lightweight LTC dynamic decoupled network (16.1K parameters), the entire inferential pipeline operates locally on edge nodes (e.g., Raspberry Pi or ESP32-S3). No visual data is transmitted to the cloud, fundamentally resolving the privacy infringement risks associated with monitoring elderly individuals in sensitive areas such as bedrooms and bathrooms.</span></p>
+</div>
+<div id="S5.SS1.p3" class="ltx_para">
+<p id="S5.SS1.p3.1" class="ltx_p"><span id="S5.SS1.p3.1.1" class="ltx_text" style="font-size:90%;">Secondly, ultra-low latency and network independence ensure life-critical reliability. Relying on cloud computing introduces unpredictable transmission delays and the risk of network outages. Post-deployment testing confirms that our ODE-based numerical integration achieves an end-to-end processing time of 20–46 ms per frame. This guarantees real-time, deterministic anomaly responses entirely independent of external network conditions, maximizing the golden window for medical intervention </span><cite class="ltx_cite ltx_citemacro_cite"><span id="S5.SS1.p3.1.2.1" class="ltx_text" style="font-size:90%;">[</span><a href="#bib.bib23" title="" class="ltx_ref">23</a><span id="S5.SS1.p3.1.3.2" class="ltx_text" style="font-size:90%;">]</span></cite><span id="S5.SS1.p3.1.4" class="ltx_text" style="font-size:90%;">.</span></p>
+</div>
+</section>
+<section id="S5.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection" style="font-size:90%;">
+<span class="ltx_tag ltx_tag_subsection"><span id="S5.SS2.5.1.1" class="ltx_text">V-B</span> </span><span id="S5.SS2.6.2" class="ltx_text ltx_font_italic">Superiority Over Conventional Black-Box Models</span>
+</h3>
+
+<div id="S5.SS2.p1" class="ltx_para">
+<p id="S5.SS2.p1.1" class="ltx_p"><span id="S5.SS2.p1.1.1" class="ltx_text" style="font-size:90%;">Compared to mainstream data-driven models (such as LSTMs, 3D-CNNs, and Vision Transformers), the proposed LTC-Fall architecture represents a paradigm shift from “black-box pattern recognition” to “physics-informed dynamical modeling” </span><cite class="ltx_cite ltx_citemacro_cite"><span id="S5.SS2.p1.1.2.1" class="ltx_text" style="font-size:90%;">[</span><a href="#bib.bib24" title="" class="ltx_ref">24</a><span id="S5.SS2.p1.1.3.2" class="ltx_text" style="font-size:90%;">]</span></cite><span id="S5.SS2.p1.1.4" class="ltx_text" style="font-size:90%;">.</span></p>
+</div>
+<div id="S5.SS2.p2" class="ltx_para">
+<p id="S5.SS2.p2.1" class="ltx_p"><span id="S5.SS2.p2.1.1" class="ltx_text" style="font-size:90%;">Conventional models attempt to map sequential pixel or keypoint variations directly to a binary “Fall/Normal” label. This mapping is highly susceptible to overfitting visual illusions, leading to severe false positive rates when users perform safe but rapid actions (e.g., crouching to pick up an object). In contrast, our model physically decouples the Center of Mass (CoM) and Base of Support (BoS). By anchoring the latent space in Lyapunov stability theory and employing Counterfactual Inference, the system evaluates the irreversibility of the mechanical state rather than the visual appearance of the posture. This unique mechanism allows the model to maintain exceptionally high Precision at a fixed, near-perfect Recall, effectively filtering out the false alarms that plague conventional architectures </span><cite class="ltx_cite ltx_citemacro_cite"><span id="S5.SS2.p2.1.2.1" class="ltx_text" style="font-size:90%;">[</span><a href="#bib.bib24" title="" class="ltx_ref">24</a><span id="S5.SS2.p2.1.3.2" class="ltx_text" style="font-size:90%;">]</span></cite><span id="S5.SS2.p2.1.4" class="ltx_text" style="font-size:90%;">. Furthermore, the continuous-time nature of Liquid Time-Constant (LTC) networks ensures robust performance even under irregular frame rates, a common issue in resource-constrained edge cameras.</span></p>
+</div>
+</section>
+<section id="S5.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection" style="font-size:90%;">
+<span class="ltx_tag ltx_tag_subsection"><span id="S5.SS3.5.1.1" class="ltx_text">V-C</span> </span><span id="S5.SS3.6.2" class="ltx_text ltx_font_italic">Limitations and Future Directions</span>
+</h3>
+
+<div id="S5.SS3.p1" class="ltx_para">
+<p id="S5.SS3.p1.1" class="ltx_p"><span id="S5.SS3.p1.1.1" class="ltx_text" style="font-size:90%;">Despite the significant breakthroughs in computational efficiency and physical interpretability, the current vision-based framework possesses inherent limitations. The perception layer relies on YOLOv11n-pose, which may suffer from keypoint degradation in environments with severe occlusions (e.g., falls behind furniture) or extremely low lighting conditions (e.g., nighttime monitoring without infrared sensors).</span></p>
+</div>
+<div id="S5.SS3.p2" class="ltx_para">
+<p id="S5.SS3.p2.1" class="ltx_p"><span id="S5.SS3.p2.1.1" class="ltx_text" style="font-size:90%;">Future research will focus on two primary directions. First, multi-modal dynamic fusion will be explored. We aim to integrate the current visual ODE framework with privacy-preserving, non-line-of-sight sensors, such as millimeter-wave (mmWave) radar or Channel State Information (CSI) from Wi-Fi signals </span><cite class="ltx_cite ltx_citemacro_cite"><span id="S5.SS3.p2.1.2.1" class="ltx_text" style="font-size:90%;">[</span><a href="#bib.bib25" title="" class="ltx_ref">25</a><span id="S5.SS3.p2.1.3.2" class="ltx_text" style="font-size:90%;">]</span></cite><span id="S5.SS3.p2.1.4" class="ltx_text" style="font-size:90%;">. The continuous-time property of the LTC network provides an ideal mathematical foundation for fusing multi-modal asynchronous time-series data. Second, federated learning can be introduced for model updating. By sharing only the ODE weight updates (which total less than 17K parameters) rather than user data, the system can dynamically adapt to the specific gait characteristics and physical decline trajectories of individual elderly users over time, further enhancing personalized stability determination.</span></p>
+</div>
+</section>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography" style="font-size:90%;">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[1]</span>
+<span class="ltx_bibblock"><span id="bib.bib1.1.1" class="ltx_text" style="font-size:90%;"> Aziz, Omar, et al., “Validation of accuracy of SVM-based fall detection system using real-world fall and non-fall datasets,” </span><span id="bib.bib1.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">PLOS One</span><span id="bib.bib1.3.3" class="ltx_text" style="font-size:90%;">, vol. 12, no. 7, p. e0180318, 2017.
+</span>
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[2]</span>
+<span class="ltx_bibblock"><span id="bib.bib2.1.1" class="ltx_text" style="font-size:90%;"> Y. Ding et al., “Vision-Based Fall Event Detection in Complex Background Using Attention Guided Bi-Directional LSTM,” </span><span id="bib.bib2.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">IEEE Access</span><span id="bib.bib2.3.3" class="ltx_text" style="font-size:90%;">, vol. 8, pp. 161337-161348, 2020.
+</span>
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[3]</span>
+<span class="ltx_bibblock"><span id="bib.bib3.1.1" class="ltx_text" style="font-size:90%;"> I. Núñez-Marcos et al., “Vision-Based Fall Detection with Convolutional Neural Networks,” </span><span id="bib.bib3.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">IEEE Access</span><span id="bib.bib3.3.3" class="ltx_text" style="font-size:90%;">, vol. 5, pp. 16548-16559, 2017.
+</span>
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[4]</span>
+<span class="ltx_bibblock"><span id="bib.bib4.1.1" class="ltx_text" style="font-size:90%;"> N. Noor and I. K. Park, “A Lightweight Skeleton-Based 3D-CNN for Real-Time Fall Detection and Action Recognition,” in </span><span id="bib.bib4.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV) Workshops</span><span id="bib.bib4.3.3" class="ltx_text" style="font-size:90%;">, 2023, pp. 2179-2188.
+</span>
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[5]</span>
+<span class="ltx_bibblock"><span id="bib.bib5.1.1" class="ltx_text" style="font-size:90%;"> J. Yan et al., “Skeleton-Based Fall Detection with Multiple Inertial Sensors Using Spatial-Temporal Graph Convolutional Networks,” </span><span id="bib.bib5.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Sensors</span><span id="bib.bib5.3.3" class="ltx_text" style="font-size:90%;">, vol. 23, no. 4, p. 2153, Feb. 2023.
+</span>
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[6]</span>
+<span class="ltx_bibblock"><span id="bib.bib6.1.1" class="ltx_text" style="font-size:90%;"> M. Živanović et al., “Temporal Pose Analysis for False Positive Reduction in Proactive Video Surveillance,” presented at the </span><span id="bib.bib6.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">16th Int. Conf. on Bus. Inf. Sec. (BISEC)</span><span id="bib.bib6.3.3" class="ltx_text" style="font-size:90%;">, 2025.
+</span>
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[7]</span>
+<span class="ltx_bibblock"><span id="bib.bib7.1.1" class="ltx_text" style="font-size:90%;"> D. Mukhtorov et al., “A Lightweight Fall Detection Framework for Smart-City CCTV Using Distilled Pose and Interpretable Features,” </span><span id="bib.bib7.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Appl. Sci.</span><span id="bib.bib7.3.3" class="ltx_text" style="font-size:90%;">, vol. 16, no. 10, p. 4632, 2026.
+</span>
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[8]</span>
+<span class="ltx_bibblock"><span id="bib.bib8.1.1" class="ltx_text" style="font-size:90%;"> S. M. Bruijn, O. G. Meijer, P. J. Beek, and J. H. van Dieën, “Assessing the stability of human locomotion: a review of current measures,” </span><span id="bib.bib8.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">J R Soc Interface</span><span id="bib.bib8.3.3" class="ltx_text" style="font-size:90%;">, vol. 10, no. 83, p. 20120999, 2013.
+</span>
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[9]</span>
+<span class="ltx_bibblock"><span id="bib.bib9.1.1" class="ltx_text" style="font-size:90%;"> R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu, “Liquid Time-constant Networks,” in </span><span id="bib.bib9.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Proc. AAAI Conf. Artif. Intell.</span><span id="bib.bib9.3.3" class="ltx_text" style="font-size:90%;">, vol. 35, no. 9, pp. 7657-7666, May 2021.
+</span>
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[10]</span>
+<span class="ltx_bibblock"><span id="bib.bib10.1.1" class="ltx_text" style="font-size:90%;"> R. Hasani, M. Lechner, A. Amini, L. Liebenwein, A. Ray, M. Tsutsui, J. Cyr, D. Rus, and R. Grosu, “Closed-form continuous-time neural networks,” </span><span id="bib.bib10.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Nat. Mach. Intell.</span><span id="bib.bib10.3.3" class="ltx_text" style="font-size:90%;">, vol. 4, no. 11, pp. 992-1003, Nov. 2022.
+</span>
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[11]</span>
+<span class="ltx_bibblock"><span id="bib.bib11.1.1" class="ltx_text" style="font-size:90%;"> C. V. S. de Oliveira et al., “Liquid-Graph Time-Constant Network for Multi-Agent Systems Control,” </span><span id="bib.bib11.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">arXiv preprint arXiv:2404.13982</span><span id="bib.bib11.3.3" class="ltx_text" style="font-size:90%;">, 2024.
+</span>
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[12]</span>
+<span class="ltx_bibblock"><span id="bib.bib12.1.1" class="ltx_text" style="font-size:90%;"> R. Hasani et al., “Causal Navigation by Continuous-time Neural Networks,” in </span><span id="bib.bib12.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Adv. Neural Inf. Process. Syst.</span><span id="bib.bib12.3.3" class="ltx_text" style="font-size:90%;">, vol. 34, pp. 11572-11585, 2021.
+</span>
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[13]</span>
+<span class="ltx_bibblock"><span id="bib.bib13.1.1" class="ltx_text" style="font-size:90%;"> G. Manek and J. Z. Kolter, “Learning stable deep dynamics models,” in </span><span id="bib.bib13.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Adv. Neural Inf. Process. Syst.</span><span id="bib.bib13.3.3" class="ltx_text" style="font-size:90%;">, vol. 32, 2019.
+</span>
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[14]</span>
+<span class="ltx_bibblock"><span id="bib.bib14.1.1" class="ltx_text" style="font-size:90%;"> M. Salimi, J. J. M. Machado, and J. M. R. S. Tavares, “Using deep neural networks for human fall detection based on pose estimation,” </span><span id="bib.bib14.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Sensors</span><span id="bib.bib14.3.3" class="ltx_text" style="font-size:90%;">, vol. 22, no. 12, p. 4544, 2022.
+</span>
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[15]</span>
+<span class="ltx_bibblock"><span id="bib.bib15.1.1" class="ltx_text" style="font-size:90%;"> H. Pan, Y. Zhang, C. Ke, et al., “Towards real-time fall detection with lightweight vision-based networks,” </span><span id="bib.bib15.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">SIViP</span><span id="bib.bib15.3.3" class="ltx_text" style="font-size:90%;">, vol. 20, p. 424, 2026.
+</span>
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[16]</span>
+<span class="ltx_bibblock"><span id="bib.bib16.1.1" class="ltx_text" style="font-size:90%;"> B. Yang, L. T. Nguyen, and W. Chansanam, “Lightweight attention-augmented YOLOv5s for accurate and real-time fall detection in elderly care environments,” </span><span id="bib.bib16.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Sensors</span><span id="bib.bib16.3.3" class="ltx_text" style="font-size:90%;">, vol. 25, no. 23, p. 7365, 2025.
+</span>
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[17]</span>
+<span class="ltx_bibblock"><span id="bib.bib17.1.1" class="ltx_text" style="font-size:90%;"> Y. Wang and T. Deng, “Enhancing elderly care: Efficient and reliable real-time fall detection algorithm,” </span><span id="bib.bib17.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Digit. Health</span><span id="bib.bib17.3.3" class="ltx_text" style="font-size:90%;">, vol. 10, pp. 29–34, 2024.
+</span>
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[18]</span>
+<span class="ltx_bibblock"><span id="bib.bib18.1.1" class="ltx_text" style="font-size:90%;"> M. Lechner, R. Hasani, A. Amini, et al., “Neural circuit policies enabling auditable autonomy,” </span><span id="bib.bib18.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Nat. Mach. Intell.</span><span id="bib.bib18.3.3" class="ltx_text" style="font-size:90%;">, vol. 2, pp. 642–652, 2020.
+</span>
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[19]</span>
+<span class="ltx_bibblock"><span id="bib.bib19.1.1" class="ltx_text" style="font-size:90%;"> D. A. Winter, “Human balance and posture control during standing and walking,” </span><span id="bib.bib19.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Gait Posture</span><span id="bib.bib19.3.3" class="ltx_text" style="font-size:90%;">, vol. 3, no. 4, pp. 193–214, 1995.
+</span>
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[20]</span>
+<span class="ltx_bibblock"><span id="bib.bib20.1.1" class="ltx_text" style="font-size:90%;"> X. Wang, Y. Han, V. C. M. Leung, D. Niyato, X. Yan, and X. Chen, “Convergence of edge computing and deep learning: A comprehensive survey,” </span><span id="bib.bib20.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">IEEE Commun. Surveys Tuts.</span><span id="bib.bib20.3.3" class="ltx_text" style="font-size:90%;">, vol. 22, no. 2, pp. 869–904, 2020.
+</span>
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[21]</span>
+<span class="ltx_bibblock"><span id="bib.bib21.1.1" class="ltx_text" style="font-size:90%;"> J. Chen et al., “Distributed deep learning model for intelligent video surveillance systems with edge computing,” </span><span id="bib.bib21.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">IEEE Trans. Ind. Informat.</span><span id="bib.bib21.3.3" class="ltx_text" style="font-size:90%;">, pp. 1–1, 2019.
+</span>
+</span>
+</li>
+<li id="bib.bib22" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[22]</span>
+<span class="ltx_bibblock"><span id="bib.bib22.1.1" class="ltx_text" style="font-size:90%;"> M. Mubashir, L. Shao, and L. Seed, “A survey on fall detection: Principles and approaches,” </span><span id="bib.bib22.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Neurocomputing</span><span id="bib.bib22.3.3" class="ltx_text" style="font-size:90%;">, vol. 100, pp. 144–152, Jan. 2013.
+</span>
+</span>
+</li>
+<li id="bib.bib23" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[23]</span>
+<span class="ltx_bibblock"><span id="bib.bib23.1.1" class="ltx_text" style="font-size:90%;"> Q. Xia et al., “BBDS: Blockchain-based data sharing for electronic medical records in cloud environments,” </span><span id="bib.bib23.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Information</span><span id="bib.bib23.3.3" class="ltx_text" style="font-size:90%;">, vol. 8, no. 2, p. 44, 2017.
+</span>
+</span>
+</li>
+<li id="bib.bib24" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[24]</span>
+<span class="ltx_bibblock"><span id="bib.bib24.1.1" class="ltx_text" style="font-size:90%;"> G. E. Karniadakis et al., “Physics-informed machine learning,” </span><span id="bib.bib24.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">Nat. Rev. Phys.</span><span id="bib.bib24.3.3" class="ltx_text" style="font-size:90%;">, vol. 3, no. 6, pp. 422–440, 2021.
+</span>
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem">
+<span class="ltx_tag ltx_tag_bibitem">[25]</span>
+<span class="ltx_bibblock"><span id="bib.bib25.1.1" class="ltx_text" style="font-size:90%;"> V.-R. Xefteris et al., “Performance, challenges, and limitations in multimodal fall detection systems: A review,” </span><span id="bib.bib25.2.2" class="ltx_text ltx_font_italic" style="font-size:90%;">IEEE Sensors J.</span><span id="bib.bib25.3.3" class="ltx_text" style="font-size:90%;">, vol. 21, no. 17, pp. 18398–18409, 2021.
+</span>
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2607.12909v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer><footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation">
+        </a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International">
+        </a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences">
+        </a>
+      </div>
+    </div>
+  </div>
+</footer><div id="fixed-buttons-container">
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>
