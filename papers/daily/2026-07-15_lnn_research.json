@@ -1,8 +1,29 @@
 {
   "date": "2026-07-15",
-  "generated_at": "2026-07-14T22:31:50.989573+00:00",
+  "generated_at": "2026-07-15T23:31:28.922706+00:00",
   "errors": [],
   "papers": [
+    {
+      "id": "2607.12909v1",
+      "title": "Real-time fall detection based on vision for low-power edge platforms",
+      "authors": [
+        "Wenjun Xia",
+        "Zhicheng Peng",
+        "Haopeng Li",
+        "Zhengdi Zhang"
+      ],
+      "published": "2026-07-14",
+      "updated": "2026-07-14",
+      "summary": "Falling detection is vital for elderly care and intelligent surveillance; however, prevailing vision-based approaches predominantly frame it as static pose classification or discrete temporal pattern matching, fundamentally overlooking the instability dynamics of the human support system. This paper proposes a physics-informed falling detection framework that recasts falling as a stability-loss event in a coupled dynamical system. We introduce a novel dual-LTC architecture comprising a Center-of-Mass (CoM) subsystem and a Base-of-Support (BoS) subsystem, both instantiated as Liquid Time-Constant (LTC) neural networks to continuously model inertial trajectory evolution and ground-contact adjustment through adaptive time constants, Physical interpretability of falling motion. A learnable coupling module emulates physical interaction between the two subsystems, while a Stability Manifold classifier operates in the joint latent space to detect boundary crossing via Lyapunov-inspired stability metrics. Complementary counterfactual trajectory projection and Time-to-Collision (TTC) estimation further enable irreversibility assessment and early warning. The architecture is designed to support a three-state prediction paradigm (Normal, Falling, Fallen); in this preliminary study, we validate the core stability discrimination capability on a two-class dataset (Normal vs. Falling), leaving the full three-state temporal transition to future work. Unlike conventional CNN--RNN pipelines, the proposed formulation encodes continuous-time mechanical inertia, yielding a sub-50K-parameter network capable of real-time inference on resource-constrained edge devices. Extensive experiments demonstrate competitive accuracy with superior physical interpretability, validating its efficacy for low-compute visual fall detection.",
+      "categories": [
+        "q-bio.NC",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "abs_url": "https://arxiv.org/abs/2607.12909v1",
+      "pdf_url": "https://arxiv.org/pdf/2607.12909v1",
+      "keyword_score": 4
+    },
     {
       "id": "2607.08283v1",
       "title": "TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning",
@@ -467,31 +488,33 @@
       "abs_url": "https://arxiv.org/abs/2601.14115v1",
       "pdf_url": "https://arxiv.org/pdf/2601.14115v1",
       "keyword_score": 2
-    },
-    {
-      "id": "2601.06227v3",
-      "title": "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics",
-      "authors": [
-        "Dhivya Dharshini Kannan",
-        "Wei Li",
-        "Wei Zhang",
-        "Jianbiao Wang",
-        "Zhi Wei Seh",
-        "Man-Fai Ng"
-      ],
-      "published": "2026-01-09",
-      "updated": "2026-06-11",
-      "summary": "Battery management systems increasingly require accurate battery health prognostics under strict on-device constraints. This paper presents DLNet, a practical framework with dual-stage distillation of liquid neural networks that turns a high-capacity model into compact and edge-deployable models for battery health prediction. DLNet first applies Euler discretization to reformulate liquid dynamics for embedded compatibility. It then performs dual-stage knowledge distillation to transfer the teacher model's temporal behavior and recover it after further compression. Pareto-guided selection under joint error-cost objectives retains student models that balance accuracy and efficiency. We evaluate DLNet on a widely used dataset and validate real-device feasibility on an Arduino Nano 33 BLE Sense using int8 deployment. The final deployed student achieves a low error of 0.0066 when predicting battery health over the next 100 cycles, which is 15.4% lower than the teacher model. It reduces the model size from 616 kB to 94 kB with 84.7% reduction and takes 21 ms per inference on the device. These results support a practical smaller wins observation that a small model can match or exceed a large teacher for edge-based prognostics with proper supervision and selection. Beyond batteries, the DLNet framework can extend to other industrial analytics tasks with strict hardware constraints.",
-      "categories": [
-        "cs.LG",
-        "cs.AI"
-      ],
-      "abs_url": "https://arxiv.org/abs/2601.06227v3",
-      "pdf_url": "https://arxiv.org/pdf/2601.06227v3",
-      "keyword_score": 2
     }
   ],
   "github_repos": [
+    {
+      "full_name": "everest-an/O1",
+      "description": "MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).",
+      "html_url": "https://github.com/everest-an/O1",
+      "stars": 2,
+      "forks": 0,
+      "language": "Python",
+      "updated_at": "2026-07-15",
+      "pushed_at": "2026-07-15",
+      "topics": [
+        "anesthesia-validation",
+        "brain-inspired",
+        "deep-learning",
+        "liquid-neural-network",
+        "llm",
+        "long-context",
+        "microtubule",
+        "mt-lnn",
+        "organic-ai",
+        "prototype",
+        "transformer-replacement"
+      ],
+      "query": "\"liquid neural network\""
+    },
     {
       "full_name": "AlexanderRumyantcev/LNN-LowLight",
       "description": "Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.",
@@ -732,30 +755,6 @@
       "pushed_at": "2026-06-28",
       "topics": [],
       "query": "\"liquid time constant\""
-    },
-    {
-      "full_name": "everest-an/O1",
-      "description": "MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development continues at github.com/everest-an/M1 (AwareLiquid).",
-      "html_url": "https://github.com/everest-an/O1",
-      "stars": 2,
-      "forks": 0,
-      "language": "Python",
-      "updated_at": "2026-06-27",
-      "pushed_at": "2026-06-27",
-      "topics": [
-        "anesthesia-validation",
-        "brain-inspired",
-        "deep-learning",
-        "liquid-neural-network",
-        "llm",
-        "long-context",
-        "microtubule",
-        "mt-lnn",
-        "organic-ai",
-        "prototype",
-        "transformer-replacement"
-      ],
-      "query": "\"liquid neural network\""
     },
     {
       "full_name": "PicoMLX/SmartToolSelection",
@@ -1028,65 +1027,9 @@
   ],
   "huggingface_models": [
     {
-      "model_id": "reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil",
-      "author": null,
-      "last_modified": "2026-07-14",
-      "downloads": 2127,
-      "likes": 5,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2_moe",
-        "text-generation",
-        "causal-lm",
-        "lfm",
-        "liquid-ai",
-        "reasoning",
-        "instruction-tuning",
-        "cixopt",
-        "sparse-finetuning",
-        "conversational",
-        "en",
-        "dataset:angrygiraffe/claude-opus-4.6-4.7-reasoning-8.7k",
-        "base_model:LiquidAI/LFM2.5-8B-A1B",
-        "base_model:finetune:LiquidAI/LFM2.5-8B-A1B"
-      ],
-      "url": "https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT",
-      "author": null,
-      "last_modified": "2026-07-14",
-      "downloads": 2102,
-      "likes": 0,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2",
-        "text-generation",
-        "causal-lm",
-        "distillation",
-        "knowledge-distillation",
-        "sft",
-        "reasoning",
-        "chain-of-thought",
-        "mathematics",
-        "physics",
-        "stem",
-        "logic",
-        "logical-inference",
-        "hybrid"
-      ],
-      "url": "https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT",
-      "query": "LFM2"
-    },
-    {
       "model_id": "lazos/lfm2.5-230m-frontend-agent",
       "author": null,
-      "last_modified": "2026-07-14",
+      "last_modified": "2026-07-15",
       "downloads": 892,
       "likes": 0,
       "pipeline_tag": "text-generation",
@@ -1112,39 +1055,136 @@
       "query": "LFM2"
     },
     {
-      "model_id": "stressthismess/LFM2.5-1.2B-Thinking-Q4_K_M",
+      "model_id": "EZCon/LFM2.5-VL-1.6B-4bit-g32-mxfp4-mlx",
       "author": null,
-      "last_modified": "2026-07-14",
-      "downloads": 58,
+      "last_modified": "2026-07-15",
+      "downloads": 65,
       "likes": 0,
-      "pipeline_tag": null,
+      "pipeline_tag": "image-text-to-text",
       "tags": [
-        "gguf",
-        "license:apache-2.0",
-        "endpoints_compatible",
-        "region:us",
-        "conversational"
+        "mlx",
+        "safetensors",
+        "lfm2_vl",
+        "liquid",
+        "lfm2",
+        "lfm2-vl",
+        "edge",
+        "lfm2.5-vl",
+        "lfm2.5",
+        "image-text-to-text",
+        "conversational",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "es"
       ],
-      "url": "https://huggingface.co/stressthismess/LFM2.5-1.2B-Thinking-Q4_K_M",
+      "url": "https://huggingface.co/EZCon/LFM2.5-VL-1.6B-4bit-g32-mxfp4-mlx",
       "query": "LFM2"
     },
     {
-      "model_id": "AbdallaHolmes/LFM2.5-8B-A1B-CoreAI-NorthStar",
+      "model_id": "EZCon/LFM2.5-VL-1.6B-8bit-mlx",
       "author": null,
-      "last_modified": "2026-07-14",
+      "last_modified": "2026-07-15",
+      "downloads": 64,
+      "likes": 0,
+      "pipeline_tag": "image-text-to-text",
+      "tags": [
+        "mlx",
+        "safetensors",
+        "lfm2_vl",
+        "liquid",
+        "lfm2",
+        "lfm2-vl",
+        "edge",
+        "lfm2.5-vl",
+        "lfm2.5",
+        "image-text-to-text",
+        "conversational",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "es"
+      ],
+      "url": "https://huggingface.co/EZCon/LFM2.5-VL-1.6B-8bit-mlx",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "EZCon/LFM2.5-VL-1.6B-4bit-mlx",
+      "author": null,
+      "last_modified": "2026-07-15",
+      "downloads": 38,
+      "likes": 0,
+      "pipeline_tag": "image-text-to-text",
+      "tags": [
+        "mlx",
+        "safetensors",
+        "lfm2_vl",
+        "liquid",
+        "lfm2",
+        "lfm2-vl",
+        "edge",
+        "lfm2.5-vl",
+        "lfm2.5",
+        "image-text-to-text",
+        "conversational",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "es"
+      ],
+      "url": "https://huggingface.co/EZCon/LFM2.5-VL-1.6B-4bit-mlx",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "EZCon/LFM2.5-VL-1.6B-mlx",
+      "author": null,
+      "last_modified": "2026-07-15",
+      "downloads": 35,
+      "likes": 0,
+      "pipeline_tag": "image-text-to-text",
+      "tags": [
+        "mlx",
+        "safetensors",
+        "lfm2_vl",
+        "liquid",
+        "lfm2",
+        "lfm2-vl",
+        "edge",
+        "lfm2.5-vl",
+        "lfm2.5",
+        "image-text-to-text",
+        "conversational",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "es"
+      ],
+      "url": "https://huggingface.co/EZCon/LFM2.5-VL-1.6B-mlx",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "payam1394/LFM2.5-VL-450M-ONNX",
+      "author": null,
+      "last_modified": "2026-07-15",
       "downloads": 0,
       "likes": 0,
       "pipeline_tag": null,
       "tags": [
+        "onnx",
+        "lfm2_vl",
         "region:us"
       ],
-      "url": "https://huggingface.co/AbdallaHolmes/LFM2.5-8B-A1B-CoreAI-NorthStar",
+      "url": "https://huggingface.co/payam1394/LFM2.5-VL-450M-ONNX",
       "query": "LFM2"
     },
     {
       "model_id": "lazos/lfm2.5-350m-frontend-agent",
       "author": null,
-      "last_modified": "2026-07-14",
+      "last_modified": "2026-07-15",
       "downloads": 0,
       "likes": 0,
       "pipeline_tag": "text-generation",
@@ -1170,54 +1210,18 @@
       "query": "LFM2"
     },
     {
-      "model_id": "kroffske/shellcue-lfm2.5-230m-alpha",
+      "model_id": "DarkKnighToS223/lfm2.5-350m-hssa",
       "author": null,
-      "last_modified": "2026-07-14",
+      "last_modified": "2026-07-15",
       "downloads": 0,
       "likes": 0,
-      "pipeline_tag": "text-generation",
+      "pipeline_tag": null,
       "tags": [
-        "transformers",
         "safetensors",
         "lfm2",
-        "text-generation",
-        "shellcue",
-        "shell",
-        "autocomplete",
-        "causal-lm",
-        "base_model:LiquidAI/LFM2.5-230M-Base",
-        "base_model:finetune:LiquidAI/LFM2.5-230M-Base",
-        "license:other",
-        "endpoints_compatible",
         "region:us"
       ],
-      "url": "https://huggingface.co/kroffske/shellcue-lfm2.5-230m-alpha",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "jajmangold/LFM2.5-350M-fni8",
-      "author": null,
-      "last_modified": "2026-07-14",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "fni8",
-        "int8",
-        "w8a8",
-        "dp4a",
-        "volta",
-        "sm_70",
-        "quantized",
-        "4-bit",
-        "8-bit",
-        "text-generation",
-        "base_model:LiquidAI/LFM2.5-350M",
-        "base_model:quantized:LiquidAI/LFM2.5-350M",
-        "license:other",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/jajmangold/LFM2.5-350M-fni8",
+      "url": "https://huggingface.co/DarkKnighToS223/lfm2.5-350m-hssa",
       "query": "LFM2"
     },
     {
@@ -1253,7 +1257,7 @@
       "author": null,
       "last_modified": "2026-07-10",
       "downloads": 4148,
-      "likes": 41,
+      "likes": 42,
       "pipeline_tag": "image-text-to-text",
       "tags": [
         "gguf",
@@ -1357,7 +1361,7 @@
       "author": null,
       "last_modified": "2026-07-02",
       "downloads": 88250,
-      "likes": 668,
+      "likes": 669,
       "pipeline_tag": "text-generation",
       "tags": [
         "transformers",

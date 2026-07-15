@@ -17,6 +17,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
+| 2026-07-14 | [Real-time fall detection based on vision for low-power edge platforms](https://arxiv.org/abs/2607.12909v1) | Wenjun Xia, Zhicheng Peng, Haopeng Li 等 | Falling detection is vital for elderly care and intelligent surveillance; however, prevailing vision-based approaches predominantly frame it as static pose classification or discrete temporal pattern matching, fundamentally overlooking the instability dynamics of the human suppo… |
 | 2026-07-09 | [TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning](https://arxiv.org/abs/2607.08283v1) | Yushen Liang, Yue Peng, Baosheng Jin 等 | Vision--Language--Action (VLA) policies such as $π_{0.5}$ and OpenVLA perform well on many manipulation tasks, but they are often reactive: the next action is predicted from the current observation, instruction, and proprioceptive state. This assumption breaks down in stage-depe… |
 | 2026-07-02 | [Liquid Latent State Dynamics for Interpretable Turbofan Degradation Modeling](https://arxiv.org/abs/2607.01986v1) | Weizhi Nie, Weijie Wang, Yuting Su | Multivariate time-series models for prognostics are often evaluated by point prediction accuracy, yet their internal states rarely expose a coherent degradation process. We study liquid neural networks as latent dynamics models for aircraft engine health monitoring on the C-MAPS… |
 | 2026-06-25 | [Liquid Fusion of Heterogeneous Representations Towards General Salient Object Detection](https://arxiv.org/abs/2606.26849v1) | Ke Chen, Ling Zhou, Guangqi Jiang 等 | General Salient Object Detection (SOD) aims to identify and segment visually interesting objects from uni-modality or multi-modality scenes, recently advanced by cutting-edge State Space Models (SSMs). However, a critical limitation of current approaches is their neglect of the… |
@@ -28,11 +29,11 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-06-10 | [Multi-Rate Mixture of Experts for Accelerating Liquid Neural Network Training](https://arxiv.org/abs/2606.12240v1) | Shilong Zong, Almuatazbellah Boker, Hoda Eldardiry | Multivariate time-series data often exhibit complex temporal dependencies, irregular sampling, and heterogeneous dynamics across multiple time scales, making accurate sequence modeling particularly challenging. Traditional recurrent neural networks (RNNs), such as Long Short-Ter… |
 | 2026-06-04 | [Liquid Neural Networks as a Drop-in Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting](https://arxiv.org/abs/2606.07670v1) | Mingzhao Li, Arghya Pal, Guan Yuan Tan | Deformable 3D Gaussian Splatting (D-3DGS) re-constructs dynamic scenes from monocular video by deforming a canonical set of 3D Gaussians through a positional-encoded MLP of frame time t. Although fitted to a continuous variable, the MLP couples no two values of t in its architec… |
 | 2026-05-26 | [Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition: Robustness, Efficiency, and Clinical Utility](https://arxiv.org/abs/2605.27467v1) | Ye Kyaw Thu, Thazin Myint Oo, Thepchai Supnithi | Traditional Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) units operate on discrete time steps, often failing to capture the fluid temporal dynamics of real-world physical processes. Liquid Neural Networks (LNNs), specifically Closed-form Continuous-time (Cf… |
-| 2026-05-21 | [EMMA: Extracting Multiple physical parameters from Multimodal Data](https://arxiv.org/abs/2605.24047v1) | Farhat Shaikh, Ayan Banerjee, Sandeep Gupta | We introduce EMMA, a physics-informed multimodal framework that recovers all identifiable dynamical parameters of a system directly from raw video, audio, and image-based time-series observations. Unlike prior video-only approaches that struggle with occluded states, hidden actu… |
 
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-07-15 | [everest-an/O1](https://github.com/everest-an/O1) | 2 | Python | MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development… |
 | 2026-07-13 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-07-13 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
 | 2026-07-13 | [ys260106/lnn-benchmark](https://github.com/ys260106/lnn-benchmark) | 0 |  | LNN (CFC) vs LSTM — UAV-SEAD Benchmark: Closed-Form Continuous-Time neural network outperforms LSTM 3/3 tests with 66 params vs 105 |
@@ -44,21 +45,20 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-07-08 | [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad) | 0 | Python | A liquid neural network framework built from first principles to model the human brain 🌊 |
 | 2026-07-08 | [bluevisor/liquid-nn-demo](https://github.com/bluevisor/liquid-nn-demo) | 0 | HTML | A Liquid Time-Constant neural network built from scratch — a browser digit recognizer that runs the ODE solver in JS, an illustrated explainer, and an interact… |
 | 2026-07-07 | [sufirumii/LiquiMedThink-1.2B](https://github.com/sufirumii/LiquiMedThink-1.2B) | 0 | Python | A Fine Tuned version of LiquidAI/LFM2.5-1.2B-Thinking on a medical reasoning thinking dataset |
-| 2026-07-06 | [raddy666/Liquid-Time-Constant-Networks](https://github.com/raddy666/Liquid-Time-Constant-Networks) | 0 | Python | Can Liquid Time-Constant Networks Learn to See? |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-07-14 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 2127 | 5 | text-generation |
-| 2026-07-14 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 2102 | 0 | text-generation |
-| 2026-07-14 | [lazos/lfm2.5-230m-frontend-agent](https://huggingface.co/lazos/lfm2.5-230m-frontend-agent) | 892 | 0 | text-generation |
-| 2026-07-14 | [stressthismess/LFM2.5-1.2B-Thinking-Q4_K_M](https://huggingface.co/stressthismess/LFM2.5-1.2B-Thinking-Q4_K_M) | 58 | 0 |  |
-| 2026-07-14 | [AbdallaHolmes/LFM2.5-8B-A1B-CoreAI-NorthStar](https://huggingface.co/AbdallaHolmes/LFM2.5-8B-A1B-CoreAI-NorthStar) | 0 | 0 |  |
-| 2026-07-14 | [lazos/lfm2.5-350m-frontend-agent](https://huggingface.co/lazos/lfm2.5-350m-frontend-agent) | 0 | 0 | text-generation |
-| 2026-07-14 | [kroffske/shellcue-lfm2.5-230m-alpha](https://huggingface.co/kroffske/shellcue-lfm2.5-230m-alpha) | 0 | 0 | text-generation |
-| 2026-07-14 | [jajmangold/LFM2.5-350M-fni8](https://huggingface.co/jajmangold/LFM2.5-350M-fni8) | 0 | 0 | text-generation |
+| 2026-07-15 | [lazos/lfm2.5-230m-frontend-agent](https://huggingface.co/lazos/lfm2.5-230m-frontend-agent) | 892 | 0 | text-generation |
+| 2026-07-15 | [EZCon/LFM2.5-VL-1.6B-4bit-g32-mxfp4-mlx](https://huggingface.co/EZCon/LFM2.5-VL-1.6B-4bit-g32-mxfp4-mlx) | 65 | 0 | image-text-to-text |
+| 2026-07-15 | [EZCon/LFM2.5-VL-1.6B-8bit-mlx](https://huggingface.co/EZCon/LFM2.5-VL-1.6B-8bit-mlx) | 64 | 0 | image-text-to-text |
+| 2026-07-15 | [EZCon/LFM2.5-VL-1.6B-4bit-mlx](https://huggingface.co/EZCon/LFM2.5-VL-1.6B-4bit-mlx) | 38 | 0 | image-text-to-text |
+| 2026-07-15 | [EZCon/LFM2.5-VL-1.6B-mlx](https://huggingface.co/EZCon/LFM2.5-VL-1.6B-mlx) | 35 | 0 | image-text-to-text |
+| 2026-07-15 | [payam1394/LFM2.5-VL-450M-ONNX](https://huggingface.co/payam1394/LFM2.5-VL-450M-ONNX) | 0 | 0 |  |
+| 2026-07-15 | [lazos/lfm2.5-350m-frontend-agent](https://huggingface.co/lazos/lfm2.5-350m-frontend-agent) | 0 | 0 | text-generation |
+| 2026-07-15 | [DarkKnighToS223/lfm2.5-350m-hssa](https://huggingface.co/DarkKnighToS223/lfm2.5-350m-hssa) | 0 | 0 |  |
 | 2026-07-10 | [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | 7874 | 56 | image-text-to-text |
-| 2026-07-10 | [LiquidAI/LFM2-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF) | 4148 | 41 | image-text-to-text |
+| 2026-07-10 | [LiquidAI/LFM2-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF) | 4148 | 42 | image-text-to-text |
 | 2026-07-10 | [Synaptics/liquidAI-LFM2p5-230M-LLM](https://huggingface.co/Synaptics/liquidAI-LFM2p5-230M-LLM) | 1092 | 0 | text-generation |
 | 2026-07-09 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 90579 | 374 | text-generation |
 
