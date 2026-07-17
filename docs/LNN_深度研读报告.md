@@ -147,6 +147,14 @@ tags: [LNN, reading-report, papers]
 - **局限**：拓扑选择影响性能（随机稀疏 + 无学习机制）；固定动力学函数（所有神经元共享同一 $F$）；case study 单一（Pong）；参数规模小（$n \le 800$）；稀疏因子 $p$ / 步长 $\tau$ 全靠搜索；缺少与"只解耦但保留闭式更新"的 controlled ablation；PCA 投影定性未给统计检验；信号传播延迟（Eq. 9 依赖 $v^{t-1}$）未与全连接对照。
 - **对本仓**：**与现有 CfC / LTC baseline 直接对比**（论文以 CfC 为最强 baseline 之一），17.47 vs 6.14 的 Mean 是显著优势，建议 `bench_pong_sequential` 类脚本加入 TND 实现作为新基线；神经元级解耦为 LNN 变体库新增维度（"神经元内 ODE + 神经元间图交互"），可在 `lnn/core/topological.py` 实现 `TopologicalNeuralDynamics`；轨迹诊断 (PCA trajectory) 可作 `analysis/lnn_diagnostics/trajectory_smoothness.py`。**Verdict**: TARGET-POSITIVE（序列建模 + 连续时间 + CfC 直接 baseline / 神经元级解耦新增维度），边缘部署 NEGATIVE-WITH-NUANCE（800 神经元对 MCU 偏大但 small-data regime 友好），长期 horizon / 大规模序列 DEPENDENT-WITH-NUANCE（作者未验证，但神经元级解耦可能反而带来并行化优势）。
 
+### [2026-07-14] LTC-Fall — 双 LTC 动力学解耦 + Lyapunov 稳定性流形的视觉跌倒检测（边缘实时 16.1K 参数）
+- **独立报告**：[[docs/reports/LTC_Fall_Physics_Informed_Dual_LTC_Edge_2607.12909_研读报告.md]]
+- **核心问题**：视觉跌倒检测主流方案 (2D/3D-CNN / skeleton-RNN / GCN) 普遍陷入"**姿态分类静态认知陷阱**"——把跌倒视为"摔倒到地面"等离散姿态模板匹配，剥离了人体运动的连续生物力学机制；日常动作中**主动高度下降 (rapid squatting, controlled sitting)** 与**被动失稳**视觉上高度重叠导致假阳频发；边缘 MCU 算力约束下传统 pipeline (LSTM ~200K / MobileNetV3 ~2.5M) 无法实时闭环 (30 FPS → 33.3 ms/帧)。**作者将问题从"姿态分类"重定义为"连续物理失稳过程"**，并要求在 16.1K 参数规模内完成实时推理。
+- **方法论**：**三层流水线：Perception (YOLOv11n-pose 17 关键点 + Support Polygon 6D 几何特征) → Dynamics Decoupling (双 LTC 子系统 + Hadamard 耦合) → Stability Manifold Determination (Lyapunov 距离 + 方向速度检查 + 反事实推理 + TTC)**。Eq. (1) 给出统一 LTC ODE $\tau \odot dh/dt = -h + \tanh(W^{(i)} x + W^{(h)} h)$；Eq. (2)–(3) 分别用 **$\tau_A$ 偏大** 模拟质心 (CoM) 大惯性，**$\tau_B$ 偏小** 模拟支撑面 (BoS) 高频敏捷，对应**倒立摆两大动力学子系统**；Eq. (4) 通过 $M \odot \sigma(\beta) \odot (P_A h_A \otimes P_B h_B)$ 的 Hadamard 乘性耦合让"支撑失效"信号在异常时注入 CoM；Eq. (5) Lyapunov 候选距离 $D_M(H) = \sqrt{(H-H_0)^T \text{diag}(\Sigma^{-1})(H-H_0)+\epsilon}$ + Eq. (6) 稳定性评分 $S(t) = \sigma(-D_M+\lambda_{margin})$ + **方向速度检查** $\cos\langle dH/dt, H-H_0\rangle > 0$ 过滤受控动作假阳；Eq. (7) 反事实恢复轨迹 $H_{cf}(t+\Delta t) = H(t) + \int_t^{t+\Delta t} f_{joint}(H, I_{recovery}, \theta)\, d\tau$ 判断不可逆性。
+- **关键成果**：单数据集 (29 FPS, 1280×720) 上 **完整模型 Acc 96.63 ± 1.26%, F1 91.02 ± 4.02%**（3 seed），消融证明**动力学解耦贡献最大 ΔF1 = -12.55%**，耦合交互 / 稳定性流形 / 反事实各贡献 ≈ -3.6% F1；**LTC vs LSTM (相同 hidden 16) F1 +3.03%**；**16,088 (16.1K) 参数，float32 仅 0.06 MB，64 核心神经元**，时序模块端到端推理 **20–46 ms/帧**（30 FPS 预算 33.3 ms/帧）实时通过。**采用 "Precision @ Fixed Recall > 98%" 协议**（生命安全红线）替代 overall accuracy，黑盒分类器在该协议下崩塌为假阳雪崩，LTC-Fall 维持高 Precision 根本性解决行业假阳困境。
+- **局限**：仅 Normal vs Falling 二分类验证，**三状态 (Normal → Falling → Fallen) 时间转移未完整闭环**；单数据集 + 3 seed，F1 标准差 ±4.02 偏大，统计证据偏弱；协方差逆 $\Sigma^{-1}$ 取对角近似为边缘妥协；未开源代码 / 数据集；未与 **CfC (closed-form)** 直接对照，无法判定 ODE 数值积分 vs LTC 本身的边际贡献；反事实 $I_{recovery}$ 的参数化形式未消融；固定 Euler 步长 $\Delta t = 1/30$ s 对不规则采样鲁棒性未验证；真实 MCU (Cortex-M7 / ESP32) 功耗 / 内存峰值未实测。
+- **对本仓**：**双 ODE 子系统 + Hadamard 耦合**是 ODE 模块化模板，可作 `lnn/core/variants.py::DualLTCSubsystem(coeff_init=(τ_A, τ_B))`；**Lyapunov 流形分类器** 可封装为 `StabilityManifoldClassifier(H0, Σ_inv, λ_margin)` 与 `bench_lyapunov_stable_cfc` 直接对照；**反事实推理 + TTC** 可作为 `lnn/core/diagnostics.py` 的新模块；**Precision @ Fixed Recall** 是面向安全关键 / 代价敏感任务的通用评测框架，建议纳入 `analysis/lnn_diagnostics/`。**Verdict**: TARGET-POSITIVE（首次把 LTC 引入视觉跌倒检测 biomechanics / 边缘实时 16.1K / Lyapunov + 反事实可解释范式），多数据集 / 三状态 / CfC 对照 DEPENDENT-WITH-NUANCE（留作未来工作），统计强度 / 开源 NEGATIVE-WITH-NUANCE（3 seed, F1 σ 偏大, 代码未公开）。
+
 ### [2026-07-11] 今日候选论文覆盖率复盘
 - **digest 入口**：[[docs/daily/2026-07-11_LNN_research_digest.md|每日追踪]]
 - **挑选结果**：`scripts/select_papers_for_report.py --date 2026-07-11 --top 3` 输出候选 **0 篇**（`n_total_arxiv=12, n_skipped_reported=10`）；剩余 2 篇 NEW（2607.08283 TFP, 2606.21295 TND）虽被 selector 打 0 分（digest 表格中摘要被截断，强关键词 "Liquid Time-Constant"/"CfC" 仅在完整摘要后半段出现），但人工核查 arXiv 全文后判定为高质量 LNN 候选：TFP 直接使用 **LTC 动力学**作为 chunked VLA 信念滤波器（Eq. 3 用 retention $=\exp(-\Delta t_t/\tau_t)$），TND 以 **CfC 为最强 baseline** 做对比（Mean 17.47 vs 6.14）—— 满足用户 SOP 中"候选必须出现 liquid / CfC / LTC / NCP / closed-form continuous-time 等强关键词"的本质要求。
@@ -400,6 +408,17 @@ tags: [LNN, reading-report, papers]
 - **`paper-analyzer` 技能状态**：本次 cron 该技能仍缺失（系统级 SKILL 未加载，开篇已警告）。由于本日 selector 返回 `candidates=[]`，未阻塞任何报告生成流程；后续如遇 selector 返回非空但 paper-analyzer 仍缺失，需在 cron prompt 走 "LLM 直读 digest 摘要 + arXiv 全文 + PDF" 兜底路径。
 - **`run_lnn_research_pipeline.sh` 行为**：本日脚本的 SSH key 探测路径（`id_github_dave-he` 优先）正常识别 `~/.ssh/id_github_dave-he`，`git fetch` 一次重连抖动后 (Connection closed by remote host) 自动 retry 成功；`git push` 同样一次重连抖动后 retry 成功（详见 `logs/pipeline/2026-07-10_pipeline.log`）。这是 07-07 修复后的稳定行为。
 - **结论**：今日 LNN 关键词面仍饱和（连续第 4 天 n_candidates=0）；2026 上半年 LNN / CfC / LTC / NCP / LFM2 主题覆盖已闭合。下一波新主题等待 arXiv 7 月中旬（07-13 之后）的 continuous-depth / 神经动力学新一批投稿。
+
+### [2026-07-18] 今日候选论文覆盖率复盘
+- **digest 入口**：[[docs/daily/2026-07-18_LNN_research_digest.md|每日追踪]]
+- **抓取**：`scripts/daily_lnn_research.py` 正常完成（25/41/16）。git push 阶段因 origin 落后本地 3 commits (7-15, 7-16, 7-17 digest 历史被 GitHub Actions 推送) + 本地有未提交 analysis 改动阻挡 rebase，手动 stash → rebase → 解决 docs/LNN_深度研读报告.md 与 docs/Liquid_Neural_Networks_Latest_Papers_Summary.md 的两处小型合并冲突 (合并 7-16/7-17 digest 行) → unstash 后再 push 成功。详见 `logs/pipeline/2026-07-18_pipeline.log`。
+- **挑选结果**：`python3 scripts/select_papers_for_report.py --date 2026-07-18 --top 3` 输出候选 **1 篇**（`n_total_arxiv=12, n_skipped_reported=10`）：
+  - `2607.12909v1` Real-time fall detection based on vision for low-power edge platforms — score=2 (digest 摘要截断后只剩 "fall detection" + "edge" 关键词得分)，完整 arXiv 摘要里强关键词 "Liquid Time-Constant (LTC)" / "ODE" 大量出现 → 实际是强 LNN 关联论文，人工核查后判定为高质量候选。
+- **`paper-analyzer` 技能状态**：本次 cron 该技能**仍缺失**（系统开头已警告），LLM 走"读 arXiv 摘要 + 下载 PDF + PyMuPDF 全文 + 按 AGENTS.md SOP 生成独立报告"的兜底路径，与历史 2026-06-24 / 2026-07-11 复盘的处理一致。
+- **生成 1 篇独立研读报告 + 索引追加**：
+  - [[docs/reports/LTC_Fall_Physics_Informed_Dual_LTC_Edge_2607.12909_研读报告.md|LTC-Fall 研读]]
+- **PDF 落盘**：`papers/daily/2026-07-18/2607.12909v1.pdf` (548KB, 8 页) — curl 从 arxiv.org/pdf/ 抓取，PyMuPDF 1.27.2.3 已可用 (`fitz` + `pymupdf` 双 import 路径)。
+- **结论**：今日 digest 12 篇 arXiv 候选中 10 篇已被历史覆盖（Liquid Latent Turbofan / Liquid Fusion SOD / TND / GazeLNN / FlowFake / MA-GLTC / Multi-Rate MoE / Liquid 3DGS / Liquid Random Features / Comparative LNN-LSTM），新增 1 篇 LTC-Fall 为强 LNN 关联（首次把 LTC 引入视觉跌倒检测 biomechanics + 边缘实时 16.1K + Lyapunov 稳定性流形 + 反事实推理 + TTC），已生成完整独立报告并纳入索引。
 
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
