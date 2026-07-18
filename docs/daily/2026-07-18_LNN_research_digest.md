@@ -10,8 +10,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：25 篇
-- GitHub 候选仓库：41 个
-- Hugging Face 候选模型：16 个
+- GitHub 候选仓库：42 个
+- Hugging Face 候选模型：17 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -33,34 +33,34 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-07-18 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 2 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
+| 2026-07-18 | [arete-ai/Liquid-Neural-Network-LunarLander](https://github.com/arete-ai/Liquid-Neural-Network-LunarLander) | 0 | Python |  |
+| 2026-07-18 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
+| 2026-07-18 | [axvyrath/Amaranth-Duclid-TTS](https://github.com/axvyrath/Amaranth-Duclid-TTS) | 0 |  | A repository for Amaranth Duclid TTS — a Liquid Neural Network Text-to-speech model designed to be compact, efficient, and expressive |
+| 2026-07-18 | [bestxrr/lfm-serving](https://github.com/bestxrr/lfm-serving) | 0 | Python | vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct (BTC competition) |
 | 2026-07-16 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
 | 2026-07-15 | [everest-an/O1](https://github.com/everest-an/O1) | 2 | Python | MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development… |
-| 2026-07-13 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-07-13 | [ys260106/lnn-benchmark](https://github.com/ys260106/lnn-benchmark) | 0 |  | LNN (CFC) vs LSTM — UAV-SEAD Benchmark: Closed-Form Continuous-Time neural network outperforms LSTM 3/3 tests with 66 params vs 105 |
 | 2026-07-12 | [rudramadhabofficial/LLS-4-Liquid-Latent-Synthesis](https://github.com/rudramadhabofficial/LLS-4-Liquid-Latent-Synthesis) | 0 | Python | A quad-partite architecture proposing latent-space concept interpolation for continual reinforcement learning, built on a Closed-form Continuous-time (CfC) liq… |
 | 2026-07-11 | [liuyhoo/F-CfC](https://github.com/liuyhoo/F-CfC) | 0 |  | Open source implementation of F-CfC: Fractional Closed-form Continuous-time Networks |
 | 2026-07-11 | [lajosbencz/lfm-train-image](https://github.com/lajosbencz/lfm-train-image) | 0 | Dockerfile | Optimized base image for training LiquidAI LFM2.5 models |
-| 2026-07-10 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 1 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
 | 2026-07-09 | [kakopappa/proxy-kd-lfm2](https://github.com/kakopappa/proxy-kd-lfm2) | 0 | Python | From-scratch Proxy-KD (arXiv:2401.07013): black-box distillation of Claude into LiquidAI LFM2.5-350M on the Sharp AC-manual Q&A task, with findings. |
-| 2026-07-08 | [Jdka1/liquidgrad](https://github.com/Jdka1/liquidgrad) | 0 | Python | A liquid neural network framework built from first principles to model the human brain 🌊 |
-| 2026-07-08 | [bluevisor/liquid-nn-demo](https://github.com/bluevisor/liquid-nn-demo) | 0 | HTML | A Liquid Time-Constant neural network built from scratch — a browser digit recognizer that runs the ODE solver in JS, an illustrated explainer, and an interact… |
-| 2026-07-07 | [sufirumii/LiquiMedThink-1.2B](https://github.com/sufirumii/LiquiMedThink-1.2B) | 0 | Python | A Fine Tuned version of LiquidAI/LFM2.5-1.2B-Thinking on a medical reasoning thinking dataset |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-07-17 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 2620 | 5 | text-generation |
-| 2026-07-17 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 2609 | 0 | text-generation |
-| 2026-07-17 | [Synaptics/LiquidAI-LFM2.5-230M](https://huggingface.co/Synaptics/LiquidAI-LFM2.5-230M) | 1260 | 0 | text-generation |
-| 2026-07-17 | [mlboydaisuke/LFM2.5-1.2B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-1.2B-CoreAI) | 614 | 0 | text-generation |
-| 2026-07-17 | [Synaptics/LiquidAI-LFM2-VL-450M](https://huggingface.co/Synaptics/LiquidAI-LFM2-VL-450M) | 54 | 0 | image-text-to-text |
-| 2026-07-17 | [PinoCookie/LFM2.5-1.2B-JP-Abliterated](https://huggingface.co/PinoCookie/LFM2.5-1.2B-JP-Abliterated) | 0 | 0 | text-generation |
-| 2026-07-17 | [PinoCookie/LFM2.5-1.2B-Thinking-Abliterated](https://huggingface.co/PinoCookie/LFM2.5-1.2B-Thinking-Abliterated) | 0 | 0 | text-generation |
-| 2026-07-17 | [PinoCookie/LFM2.5-8B-A1B-abliterated](https://huggingface.co/PinoCookie/LFM2.5-8B-A1B-abliterated) | 0 | 0 | text-generation |
-| 2026-07-17 | [sayantan47/LFM2.5-VL-450M-Captioner](https://huggingface.co/sayantan47/LFM2.5-VL-450M-Captioner) | 0 | 0 | image-text-to-text |
-| 2026-07-10 | [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | 8079 | 56 | image-text-to-text |
-| 2026-07-10 | [LiquidAI/LFM2-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF) | 4255 | 44 | image-text-to-text |
-| 2026-07-09 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 92379 | 375 | text-generation |
+| 2026-07-18 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 2764 | 5 | text-generation |
+| 2026-07-18 | [mlboydaisuke/LFM2.5-8B-A1B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-8B-A1B-CoreAI) | 652 | 1 | text-generation |
+| 2026-07-18 | [hipfire-models/hipfire-LFM2.5-1.2B-Thinking](https://huggingface.co/hipfire-models/hipfire-LFM2.5-1.2B-Thinking) | 0 | 0 | text-generation |
+| 2026-07-18 | [hipfire-models/hipfire-LFM2.5-1.2B](https://huggingface.co/hipfire-models/hipfire-LFM2.5-1.2B) | 0 | 0 | text-generation |
+| 2026-07-18 | [mradermacher/LFM2.5-1.2B-JP-Abliterated-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-JP-Abliterated-GGUF) | 0 | 0 | text-generation |
+| 2026-07-18 | [mradermacher/LFM2.5-1.2B-JP-Abliterated-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-JP-Abliterated-i1-GGUF) | 0 | 0 | text-generation |
+| 2026-07-18 | [mradermacher/LFM2.5-1.2B-Thinking-Abliterated-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Thinking-Abliterated-i1-GGUF) | 0 | 0 | text-generation |
+| 2026-07-18 | [mradermacher/LFM2.5-1.2B-Thinking-Abliterated-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Thinking-Abliterated-GGUF) | 0 | 0 | text-generation |
+| 2026-07-17 | [Synaptics/LiquidAI-LFM2.5-230M](https://huggingface.co/Synaptics/LiquidAI-LFM2.5-230M) | 1487 | 0 | text-generation |
+| 2026-07-17 | [Synaptics/LiquidAI-LFM2-VL-450M](https://huggingface.co/Synaptics/LiquidAI-LFM2-VL-450M) | 135 | 0 | image-text-to-text |
+| 2026-07-10 | [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF) | 8095 | 56 | image-text-to-text |
+| 2026-07-10 | [LiquidAI/LFM2-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF) | 4331 | 44 | image-text-to-text |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
