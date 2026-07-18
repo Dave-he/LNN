@@ -420,6 +420,18 @@ tags: [LNN, reading-report, papers]
 - **PDF 落盘**：`papers/daily/2026-07-18/2607.12909v1.pdf` (548KB, 8 页) — curl 从 arxiv.org/pdf/ 抓取，PyMuPDF 1.27.2.3 已可用 (`fitz` + `pymupdf` 双 import 路径)。
 - **结论**：今日 digest 12 篇 arXiv 候选中 10 篇已被历史覆盖（Liquid Latent Turbofan / Liquid Fusion SOD / TND / GazeLNN / FlowFake / MA-GLTC / Multi-Rate MoE / Liquid 3DGS / Liquid Random Features / Comparative LNN-LSTM），新增 1 篇 LTC-Fall 为强 LNN 关联（首次把 LTC 引入视觉跌倒检测 biomechanics + 边缘实时 16.1K + Lyapunov 稳定性流形 + 反事实推理 + TTC），已生成完整独立报告并纳入索引。
 
+### [2026-07-19] 今日候选论文覆盖率复盘
+- **digest 入口**：[[docs/daily/2026-07-19_LNN_research_digest.md|每日追踪]]
+- **抓取**：`scripts/daily_lnn_research.py` 正常完成（25/42/0）。Hugging Face 四个查询 `LiquidAI / LFM2 / LFM2.5 / liquid neural / closed-form continuous-time` 因 `urlopen timeout` 全部失败 (与昨日 7-18 不同: 7-18 是 0 个 LFM2 上游, 今天是网络层 HF API 全部超时), arXiv 25 篇 + GitHub 42 个仓库均正常抓取。
+- **挑选结果**：`python3 scripts/select_papers_for_report.py --date 2026-07-19 --top 3` 输出候选 **0 篇**（`n_total_arxiv=12, n_skipped_reported=11, n_candidates=0`）：
+  - 12 篇 arXiv 候选全部已在历史独立报告 + 索引中存在 (含昨日 7-18 刚生成的 LTC-Fall / 7-11 的 TFP / 7-09 的 Liquid Latent Turbofan / 6-25 的 LFNet / 6-19 的 TND / 6-18 的 GazeLNN / 6-17 的 FlowFake / 6-14 的 MA-GLTC / 6-14 的 Liquid Random Feature / 6-10 的 Multi-Rate MoE / 6-04 的 Liquid 3DGS / 5-26 的 Comparative LNN-LSTM), score 过滤后无新候选。
+- **`paper-analyzer` 技能状态**：本次 cron 该技能**仍缺失**（系统开头已警告），LLM 走"读 arXiv 摘要 + 下载 PDF + PyMuPDF 全文 + 按 AGENTS.md SOP 生成独立报告"的兜底路径；今日因候选清单为空, 无需触发该兜底路径。
+- **生成 0 篇独立研读报告**：今日 digest 中所有强 LNN / CfC / LTC / NCP / closed-form continuous-time 论文均已被前 5 天覆盖, 暂无可生成对象。
+- **同步阻塞点**：
+  - **SSH proxy 不可用**：cron 默认 `GIT_SSH_COMMAND` 走 `~/.ssh/config` 中配置的 proxy (默认 `ncat` proxy 端口), 当前环境该 proxy 拒绝连接, 导致 `git push` 直接 `Connection refused` → 本次显式覆盖为 `ssh -i ~/.ssh/id_github_dave-he -o IdentitiesOnly=yes -o ProxyCommand=none` 才能 push, 已记录到 logs/pipeline/2026-07-19_pipeline.log。
+  - **本地落后 origin**：`git pull --ff-only` 失败 (本地含新 commit `0c48097`, origin 含历史 GH Actions 推送 `35a9413`) → `git pull --rebase` 触发 docs/LNN_深度研读报告.md 与 docs/Liquid_Neural_Networks_Latest_Papers_Summary.md 两处小型合并冲突 (均为 `daily-lnn-index` 自动维护块), 合并 `2026-07-19` + `2026-07-17` 两行后 rebase continue → push 成功。
+- **结论**：连续第 5 天 LNN 候选论文零新增 (LNN 主题覆盖已饱和), 等待 arXiv 7 月下旬新一轮 continuous-depth / 神经动力学投稿; Hugging Face 连续两次抓取失败需在下个 cron 中重点观察, 若连续 3 天失败将触发告警。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
