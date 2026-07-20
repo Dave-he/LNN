@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：42 个
-- Hugging Face 候选模型：0 个
+- Hugging Face 候选模型：21 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -33,21 +33,34 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-07-20 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 2 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
+| 2026-07-20 | [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant) | 1 |  | Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free p… |
+| 2026-07-20 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-07-19 | [shriyatallapragada/indian-news-comparator](https://github.com/shriyatallapragada/indian-news-comparator) | 1 | Python | AI-powered Chrome extension that detects political bias using IndicBERT, Liquid Neural Networks, ChromaDB, and Groq. |
 | 2026-07-19 | [AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices](https://github.com/AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices) | 0 | C |  |
-| 2026-07-19 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-07-19 | [sufirumii/LiquiMedThink-1.2B](https://github.com/sufirumii/LiquiMedThink-1.2B) | 0 | Python | A Fine Tuned version of LiquidAI/LFM2.5-1.2B-Thinking on a medical reasoning thinking dataset |
-| 2026-07-18 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 2 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
 | 2026-07-18 | [arete-ai/Liquid-Neural-Network-LunarLander](https://github.com/arete-ai/Liquid-Neural-Network-LunarLander) | 0 | Python |  |
 | 2026-07-18 | [axvyrath/Amaranth-Duclid-TTS](https://github.com/axvyrath/Amaranth-Duclid-TTS) | 0 |  | A repository for Amaranth Duclid TTS — a Liquid Neural Network Text-to-speech model designed to be compact, efficient, and expressive |
 | 2026-07-18 | [bestxrr/lfm-serving](https://github.com/bestxrr/lfm-serving) | 0 | Python | vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct (BTC competition) |
 | 2026-07-16 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
 | 2026-07-15 | [everest-an/O1](https://github.com/everest-an/O1) | 2 | Python | MT-LNN — clean prototype of a brain-inspired liquid neural network (constant-memory recurrent state, O(1) generation cache). Early baseline; active development… |
 | 2026-07-13 | [ys260106/lnn-benchmark](https://github.com/ys260106/lnn-benchmark) | 0 |  | LNN (CFC) vs LSTM — UAV-SEAD Benchmark: Closed-Form Continuous-Time neural network outperforms LSTM 3/3 tests with 66 params vs 105 |
-| 2026-07-12 | [rudramadhabofficial/LLS-4-Liquid-Latent-Synthesis](https://github.com/rudramadhabofficial/LLS-4-Liquid-Latent-Synthesis) | 0 | Python | A quad-partite architecture proposing latent-space concept interpolation for continual reinforcement learning, built on a Closed-form Continuous-time (CfC) liq… |
 
 ## Hugging Face 候选模型
-- 本次未发现可记录的 Hugging Face 模型。
+| 更新 | 模型 | 下载 | Likes | 任务 |
+|---|---|---:|---:|---|
+| 2026-07-20 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 2765 | 5 | text-generation |
+| 2026-07-20 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 2751 | 0 | text-generation |
+| 2026-07-20 | [danelcsb/daniel-lfm2-350m](https://huggingface.co/danelcsb/daniel-lfm2-350m) | 841 | 0 | text-generation |
+| 2026-07-20 | [open-world-group/LFM2.5-350M-SFT-ONNX](https://huggingface.co/open-world-group/LFM2.5-350M-SFT-ONNX) | 0 | 0 |  |
+| 2026-07-20 | [latentdivergence/mole-lfm2-1.2b-q4f16](https://huggingface.co/latentdivergence/mole-lfm2-1.2b-q4f16) | 0 | 0 | text-generation |
+| 2026-07-20 | [SandLogicTechnologies/LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/SandLogicTechnologies/LFM2.5-1.2B-Instruct-GGUF) | 0 | 0 | text-generation |
+| 2026-07-20 | [danelcsb/daniel-lfm2-350m-ONNX](https://huggingface.co/danelcsb/daniel-lfm2-350m-ONNX) | 0 | 0 | text-generation |
+| 2026-07-20 | [konic-labs/LFM2.5-8B-A1B-REAP-50-AWQ-INT4](https://huggingface.co/konic-labs/LFM2.5-8B-A1B-REAP-50-AWQ-INT4) | 0 | 0 | text-generation |
+| 2026-07-20 | [konic-labs/LFM2.5-8B-A1B-REAP-50](https://huggingface.co/konic-labs/LFM2.5-8B-A1B-REAP-50) | 0 | 0 | text-generation |
+| 2026-07-20 | [TiGa-RCE/LFM2-1.2B-MLX-oQ-Sweep](https://huggingface.co/TiGa-RCE/LFM2-1.2B-MLX-oQ-Sweep) | 0 | 0 |  |
+| 2026-07-20 | [mradermacher/LFM2.5-1.2B-Thinking-Fable5-hermes-opus-Agent-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Thinking-Fable5-hermes-opus-Agent-i1-GGUF) | 0 | 0 |  |
+| 2026-07-20 | [mradermacher/LFM2.5-1.2B-Thinking-Fable5-hermes-opus-Agent-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Thinking-Fable5-hermes-opus-Agent-GGUF) | 0 | 1 |  |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

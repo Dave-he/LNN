@@ -7,6 +7,27 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-07-20
 
 ## GitHub 仓库
+### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
+- 更新：2026-07-20
+- Star / Fork：2 / 0
+- 语言：C
+- Topics：未标注
+- 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
+
+### [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant)
+- 更新：2026-07-20
+- Star / Fork：1 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free parallel timestep execution via double buffering. No PyTorch/TensorFlow — pure Mojo, built for real-time inference on constrained hardware.
+
+### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
+- 更新：2026-07-20
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
+
 ### [shriyatallapragada/indian-news-comparator](https://github.com/shriyatallapragada/indian-news-comparator)
 - 更新：2026-07-19
 - Star / Fork：1 / 0
@@ -21,26 +42,12 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：无
 
-### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
-- 更新：2026-07-19
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
-
 ### [sufirumii/LiquiMedThink-1.2B](https://github.com/sufirumii/LiquiMedThink-1.2B)
 - 更新：2026-07-19
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：A Fine Tuned version of LiquidAI/LFM2.5-1.2B-Thinking on a medical reasoning thinking dataset
-
-### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
-- 更新：2026-07-18
-- Star / Fork：2 / 0
-- 语言：C
-- Topics：未标注
-- 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
 
 ### [arete-ai/Liquid-Neural-Network-LunarLander](https://github.com/arete-ai/Liquid-Neural-Network-LunarLander)
 - 更新：2026-07-18
@@ -140,11 +147,123 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：i will try to optimize the kernel for a slm(here LiquidAI/LFM2.5-1.2B-Thinking) no ai will be used
 
-### [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab)
-- 更新：2026-07-02
-- Star / Fork：0 / 0
-- 语言：JavaScript
-- Topics：未标注
-- 说明：Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab.
-
 ## Hugging Face 模型
+### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
+- 更新：2026-07-20
+- 下载 / Likes：2765 / 5
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
+
+### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
+- 更新：2026-07-20
+- 下载 / Likes：2751 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
+
+### [danelcsb/daniel-lfm2-350m](https://huggingface.co/danelcsb/daniel-lfm2-350m)
+- 更新：2026-07-20
+- 下载 / Likes：841 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, peft, portfolio-assistant, grounded-generation, conversational
+
+### [open-world-group/LFM2.5-350M-SFT-ONNX](https://huggingface.co/open-world-group/LFM2.5-350M-SFT-ONNX)
+- 更新：2026-07-20
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：onnx, lfm2, region:us
+
+### [latentdivergence/mole-lfm2-1.2b-q4f16](https://huggingface.co/latentdivergence/mole-lfm2-1.2b-q4f16)
+- 更新：2026-07-20
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers.js, onnx, lfm2, text-generation, webgpu, browser, conversational, base_model:onnx-community/LFM2-1.2B-ONNX
+
+### [SandLogicTechnologies/LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/SandLogicTechnologies/LFM2.5-1.2B-Instruct-GGUF)
+- 更新：2026-07-20
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：gguf, large-language-model, instruction-tuned, multilingual, reasoning, text-generation, efficient-model, base_model:LiquidAI/LFM2.5-1.2B-Instruct
+
+### [danelcsb/daniel-lfm2-350m-ONNX](https://huggingface.co/danelcsb/daniel-lfm2-350m-ONNX)
+- 更新：2026-07-20
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers.js, onnx, lfm2, text-generation, webgpu, portfolio-assistant, conversational, base_model:LiquidAI/LFM2-350M
+
+### [konic-labs/LFM2.5-8B-A1B-REAP-50-AWQ-INT4](https://huggingface.co/konic-labs/LFM2.5-8B-A1B-REAP-50-AWQ-INT4)
+- 更新：2026-07-20
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, reap, awq, int4, quantization
+
+### [konic-labs/LFM2.5-8B-A1B-REAP-50](https://huggingface.co/konic-labs/LFM2.5-8B-A1B-REAP-50)
+- 更新：2026-07-20
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, reap, pruning, moe, lfm2
+
+### [TiGa-RCE/LFM2-1.2B-MLX-oQ-Sweep](https://huggingface.co/TiGa-RCE/LFM2-1.2B-MLX-oQ-Sweep)
+- 更新：2026-07-20
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：mlx, safetensors, quantized, oq, lfm2, region:us
+
+### [mradermacher/LFM2.5-1.2B-Thinking-Fable5-hermes-opus-Agent-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Thinking-Fable5-hermes-opus-Agent-i1-GGUF)
+- 更新：2026-07-20
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, gguf, text-generation-inference, unsloth, lfm2, trl, agent, tool-calling
+
+### [mradermacher/LFM2.5-1.2B-Thinking-Fable5-hermes-opus-Agent-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Thinking-Fable5-hermes-opus-Agent-GGUF)
+- 更新：2026-07-20
+- 下载 / Likes：0 / 1
+- 任务：unknown
+- Tags：transformers, gguf, text-generation-inference, unsloth, lfm2, trl, agent, tool-calling
+
+### [Synaptics/LiquidAI-LFM2.5-230M](https://huggingface.co/Synaptics/LiquidAI-LFM2.5-230M)
+- 更新：2026-07-17
+- 下载 / Likes：1488 / 0
+- 任务：text-generation
+- Tags：onnx, lfm2, torq, synaptics, sl2619, npu, edge, text-generation
+
+### [Synaptics/LiquidAI-LFM2-VL-450M](https://huggingface.co/Synaptics/LiquidAI-LFM2-VL-450M)
+- 更新：2026-07-17
+- 下载 / Likes：136 / 0
+- 任务：image-text-to-text
+- Tags：onnx, lfm2, torq, synaptics, sl2619, npu, edge, lfm2-vl
+
+### [LiquidAI/LFM2.5-VL-450M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF)
+- 更新：2026-07-10
+- 下载 / Likes：7769 / 56
+- 任务：image-text-to-text
+- Tags：gguf, vision, vlm, liquid, lfm2, lfm2-vl, edge, llama.cpp
+
+### [LiquidAI/LFM2-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2-VL-3B-GGUF)
+- 更新：2026-07-10
+- 下载 / Likes：4243 / 44
+- 任务：image-text-to-text
+- Tags：gguf, vision, vlm, liquid, lfm2, lfm2-vl, edge, llama.cpp
+
+### [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M)
+- 更新：2026-07-09
+- 下载 / Likes：91127 / 377
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
+
+### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
+- 更新：2026-07-02
+- 下载 / Likes：75238 / 675
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
+
+### [LiquidAI/LFM2-Audio-1.5B-GGUF](https://huggingface.co/LiquidAI/LFM2-Audio-1.5B-GGUF)
+- 更新：2026-06-29
+- 下载 / Likes：1559 / 35
+- 任务：unknown
+- Tags：gguf, audio, liquid, lfm2, edge, llama.cpp, base_model:LiquidAI/LFM2-Audio-1.5B, base_model:quantized:LiquidAI/LFM2-Audio-1.5B
+
+### [LiquidAI/LFM2-8B-A1B-ONNX](https://huggingface.co/LiquidAI/LFM2-8B-A1B-ONNX)
+- 更新：2026-06-29
+- 下载 / Likes：156 / 5
+- 任务：text-generation
+- Tags：onnx, lfm2_moe, liquid, edge, lfm2, moe, mixture-of-experts, onnxruntime
