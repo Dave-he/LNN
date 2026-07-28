@@ -2,7 +2,16 @@
 title: TFP - Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning
 date: 2026-07-09
 tags: [LNN, LTC, Liquid-Time-Constant, VLA, Robotics, Memory, Imitation-Learning, AdaLN, Flow-Matching]
+updated: 2026-07-28
 ---
+
+## v2 delta (2026-07-28 巡检)
+
+- **arXiv 版本**: v2 发布于 2026-07-15 (arXiv:2607.08283v2),原文标题、作者、机构、核心方法、LTC 信念方程 (Eq.2–4) 与 v1 完全一致。
+- **关键数值**: 平均成功率 96.9% → 98.75% (3.3B 参数 + π0.5 骨干) 保持不变,无新增/重写。
+- **变更性质**: metadata / 引用 / 排版级 minor revision,无方法或实验新内容。
+- **v2 PDF 下载**: arXiv CDN 抖动 (IncompleteRead / curl 18) 暂未本地化,沿用 `papers/daily/2026-07-11/2607.08283v1.pdf`。
+- **本报告结论**: v2 不改变 round 104 之前的 Verdict (TARGET-POSITIVE / TARGET-DEPENDENT-WITH-NUANCE);如要重做实验,应继续用 v1 PDF。
 
 # 研读报告：TFP — 基于液态时间常数 (LTC) 动力学的视觉-运动策略记忆-动作融合框架
 
