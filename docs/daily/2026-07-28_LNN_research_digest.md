@@ -10,8 +10,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：25 篇
-- GitHub 候选仓库：18 个
-- Hugging Face 候选模型：10 个
+- GitHub 候选仓库：41 个
+- Hugging Face 候选模型：15 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -33,32 +33,34 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-07-28 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 2 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
+| 2026-07-28 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
+| 2026-07-28 | [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving) | 0 | Python | High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache… |
+| 2026-07-27 | [wangzifan396-wzf/liquid-neural-network-viz-lab](https://github.com/wangzifan396-wzf/liquid-neural-network-viz-lab) | 0 | HTML | Liquid Neural Network Visualization Lab |
+| 2026-07-27 | [Saad1926Q/slidevqa-smth](https://github.com/Saad1926Q/slidevqa-smth) | 0 | Python | Fine-tuning LiquidAI LFM2.5-VL on SlideVQA with Unsloth LoRA. |
 | 2026-07-25 | [Sriram-Sivakumar2211/Spandana-Team-Apex](https://github.com/Sriram-Sivakumar2211/Spandana-Team-Apex) | 3 | Python | AI-powered predictive maintenance platform using Liquid Time-Constant Networks and RAG. |
+| 2026-07-25 | [bestxrr/lfm-serving](https://github.com/bestxrr/lfm-serving) | 0 | Python | vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct (BTC competition) |
+| 2026-07-24 | [shriyatallapragada/indian-news-comparator](https://github.com/shriyatallapragada/indian-news-comparator) | 0 | Python | AI-powered Chrome extension that detects political bias using IndicBERT, Liquid Neural Networks, ChromaDB, and Groq. |
 | 2026-07-24 | [Moetasem/LTC-Model-with-Transfer-Learning](https://github.com/Moetasem/LTC-Model-with-Transfer-Learning) | 0 | Jupyter Notebook | Adaptive Liquid Time-Constant Equivalent Dynamic Model with Transfer Learning for Active Distribution Networks with Grid-Forming IBRs |
-| 2026-07-20 | [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant) | 1 |  | Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free p… |
-| 2026-07-08 | [bluevisor/liquid-nn-demo](https://github.com/bluevisor/liquid-nn-demo) | 0 | HTML | A Liquid Time-Constant neural network built from scratch — a browser digit recognizer that runs the ODE solver in JS, an illustrated explainer, and an interact… |
-| 2026-07-06 | [raddy666/Liquid-Time-Constant-Networks](https://github.com/raddy666/Liquid-Time-Constant-Networks) | 0 | Python | Can Liquid Time-Constant Networks Learn to See? |
-| 2026-06-28 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
-| 2026-06-16 | [KaiserDna23/RL_Trading](https://github.com/KaiserDna23/RL_Trading) | 1 | Python | Forex trading using Reinforcement Learning with Meta Trader 5 environment. This will use algorithms such as Actor Critic(A2C) Network with Proximal Policy Opti… |
-| 2026-06-10 | [ochigenuka/FYP](https://github.com/ochigenuka/FYP) | 1 | Jupyter Notebook | Solar Energy Forecasting using Liquid Time-Constant Network |
-| 2026-05-21 | [R-Liebert/LOKI-G](https://github.com/R-Liebert/LOKI-G) | 1 | Python | LOKI-G is a machine learning project designed for physical machines, enabling edge AI capabilities. It adapts the LOKI algorithm for training via imitation and… |
-| 2026-05-05 | [middesurya/daily-webapp-2026-05-04-liquidlab](https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab) | 1 | HTML | LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, a… |
-| 2026-03-19 | [Crispy26/Neural-Circuit-Policy-Based-Intrusion-Detection-System-for-Industrial-Control-Systems](https://github.com/Crispy26/Neural-Circuit-Policy-Based-Intrusion-Detection-System-for-Industrial-Control-Systems) | 0 | Python |  |
-| 2026-02-08 | [feracero/liquid-neural-nets-locomotion](https://github.com/feracero/liquid-neural-nets-locomotion) | 0 | Jupyter Notebook | Liquid Neural Networks and Neural Circuit Policies for Robot Locomotion |
+| 2026-07-23 | [smparc/murmur](https://github.com/smparc/murmur) | 1 | Python | An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages… |
+| 2026-07-23 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
+| 2026-07-23 | [WAPA0012/grepmem-lnn](https://github.com/WAPA0012/grepmem-lnn) | 0 | JavaScript | Liquid Neural Network time-decay for grepmem salience. CfC-inspired continuous-time decay replacing flat linear decay, with per-memory reinforcement-adaptive t… |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M) | 5327 | 2 | fill-mask |
-| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-230M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-230M) | 4115 | 2 | fill-mask |
-| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-Spellchecker](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Spellchecker) | 117 | 2 | token-classification |
-| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-PII-Detector) | 38 | 2 | token-classification |
-| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-Diffusion](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Diffusion) | 27 | 2 | text-generation |
-| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-Policy-Linter](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Policy-Linter) | 4 | 2 | token-classification |
-| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-Prompt-Router](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Prompt-Router) | 3 | 2 | text-classification |
-| 2026-07-28 | [PointGuardAI/LFM2.5-1.2B-Instruct-INT8](https://huggingface.co/PointGuardAI/LFM2.5-1.2B-Instruct-INT8) | 0 | 0 | text-generation |
-| 2026-07-22 | [LiquidAI/LFM2.5-VL-1.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF) | 71717 | 97 | image-text-to-text |
-| 2026-05-06 | [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE) | 0 | 0 |  |
+| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M) | 5327 | 53 | fill-mask |
+| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-230M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-230M) | 4115 | 42 | fill-mask |
+| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-Spellchecker](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Spellchecker) | 117 | 5 | token-classification |
+| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-PII-Detector) | 38 | 10 | token-classification |
+| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-Diffusion](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Diffusion) | 27 | 6 | text-generation |
+| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-Policy-Linter](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Policy-Linter) | 4 | 3 | token-classification |
+| 2026-07-28 | [LiquidAI/LFM2.5-Encoder-350M-Prompt-Router](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Prompt-Router) | 3 | 4 | text-classification |
+| 2026-07-28 | [Okoge-keys/lfm2.5-thinking_1.2b](https://huggingface.co/Okoge-keys/lfm2.5-thinking_1.2b) | 0 | 0 |  |
+| 2026-07-28 | [mradermacher/LFM2.5-1.2B-Instruct-Pashto-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Instruct-Pashto-GGUF) | 0 | 0 |  |
+| 2026-07-28 | [mradermacher/LFM2.5-1.2B-Base-Pashto-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Base-Pashto-GGUF) | 0 | 0 |  |
+| 2026-07-28 | [davanstrien/lfm25-encoder-goemotions-smoke](https://huggingface.co/davanstrien/lfm25-encoder-goemotions-smoke) | 0 | 0 | text-classification |
+| 2026-07-28 | [davanstrien/lfm25-encoder-agnews-smoke](https://huggingface.co/davanstrien/lfm25-encoder-agnews-smoke) | 0 | 0 | text-classification |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

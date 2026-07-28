@@ -7,12 +7,61 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-07-28
 
 ## GitHub 仓库
+### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
+- 更新：2026-07-28
+- Star / Fork：2 / 0
+- 语言：C
+- Topics：未标注
+- 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
+
+### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
+- 更新：2026-07-28
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
+
+### [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving)
+- 更新：2026-07-28
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache management, batching, quantization, and accuracy preservation for Viettel AI Race 2026.
+
+### [wangzifan396-wzf/liquid-neural-network-viz-lab](https://github.com/wangzifan396-wzf/liquid-neural-network-viz-lab)
+- 更新：2026-07-27
+- Star / Fork：0 / 0
+- 语言：HTML
+- Topics：未标注
+- 说明：Liquid Neural Network Visualization Lab
+
+### [Saad1926Q/slidevqa-smth](https://github.com/Saad1926Q/slidevqa-smth)
+- 更新：2026-07-27
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Fine-tuning LiquidAI LFM2.5-VL on SlideVQA with Unsloth LoRA.
+
 ### [Sriram-Sivakumar2211/Spandana-Team-Apex](https://github.com/Sriram-Sivakumar2211/Spandana-Team-Apex)
 - 更新：2026-07-25
 - Star / Fork：3 / 0
 - 语言：Python
 - Topics：anomaly-detection, condition-monitoring, deep-learning, edge-ai, explainable-ai, fastapi, fault-diagnosis, gemini
 - 说明：AI-powered predictive maintenance platform using Liquid Time-Constant Networks and RAG.
+
+### [bestxrr/lfm-serving](https://github.com/bestxrr/lfm-serving)
+- 更新：2026-07-25
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct (BTC competition)
+
+### [shriyatallapragada/indian-news-comparator](https://github.com/shriyatallapragada/indian-news-comparator)
+- 更新：2026-07-24
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：artificial-intelligence, chromadb, chrome-extension, fastapi, groq, indicbert, llm, machine-learning
+- 说明：AI-powered Chrome extension that detects political bias using IndicBERT, Liquid Neural Networks, ChromaDB, and Groq.
 
 ### [Moetasem/LTC-Model-with-Transfer-Learning](https://github.com/Moetasem/LTC-Model-with-Transfer-Learning)
 - 更新：2026-07-24
@@ -21,6 +70,34 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Adaptive Liquid Time-Constant Equivalent Dynamic Model with Transfer Learning for Active Distribution Networks with Grid-Forming IBRs
 
+### [smparc/murmur](https://github.com/smparc/murmur)
+- 更新：2026-07-23
+- Star / Fork：1 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages CUDA-accelerated Kafka streams, Spatio-Temporal GNNs, Liquid Neural Networks, and an Audio LLM to localize physical anomalies and forecast equipment failures in continuous time.
+
+### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
+- 更新：2026-07-23
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
+
+### [WAPA0012/grepmem-lnn](https://github.com/WAPA0012/grepmem-lnn)
+- 更新：2026-07-23
+- Star / Fork：0 / 0
+- 语言：JavaScript
+- Topics：未标注
+- 说明：Liquid Neural Network time-decay for grepmem salience. CfC-inspired continuous-time decay replacing flat linear decay, with per-memory reinforcement-adaptive tau.
+
+### [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab)
+- 更新：2026-07-22
+- Star / Fork：0 / 0
+- 语言：JavaScript
+- Topics：未标注
+- 说明：Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab.
+
 ### [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant)
 - 更新：2026-07-20
 - Star / Fork：1 / 0
@@ -28,153 +105,120 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free parallel timestep execution via double buffering. No PyTorch/TensorFlow — pure Mojo, built for real-time inference on constrained hardware.
 
-### [bluevisor/liquid-nn-demo](https://github.com/bluevisor/liquid-nn-demo)
-- 更新：2026-07-08
+### [AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices](https://github.com/AtzinCruz/Nested-Liquid-Neural-Networks-for-Continuous-Prognostics-on-Aerospace-Edge-Devices)
+- 更新：2026-07-19
 - Star / Fork：0 / 0
-- 语言：HTML
-- Topics：未标注
-- 说明：A Liquid Time-Constant neural network built from scratch — a browser digit recognizer that runs the ODE solver in JS, an illustrated explainer, and an interactive lab.
-
-### [raddy666/Liquid-Time-Constant-Networks](https://github.com/raddy666/Liquid-Time-Constant-Networks)
-- 更新：2026-07-06
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：attention-mechanism, cnn, computer-vision, deep-learning, image-classification, liquid-neural-networks, neural-ode, pytorch
-- 说明：Can Liquid Time-Constant Networks Learn to See?
-
-### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
-- 更新：2026-06-28
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
-
-### [KaiserDna23/RL_Trading](https://github.com/KaiserDna23/RL_Trading)
-- 更新：2026-06-16
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：metatrader5, python, reinforcement-learning-agent
-- 说明：Forex trading using Reinforcement Learning with Meta Trader 5 environment. This will use algorithms such as Actor Critic(A2C) Network with Proximal Policy Optimization (PPO). Subsequently the goal is to be able change the underlying network to Liquid Time Constant Network (Liquid nets), which are far greater at task dealing with timeseries
-
-### [ochigenuka/FYP](https://github.com/ochigenuka/FYP)
-- 更新：2026-06-10
-- Star / Fork：1 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：Solar Energy Forecasting using Liquid Time-Constant Network
-
-### [R-Liebert/LOKI-G](https://github.com/R-Liebert/LOKI-G)
-- 更新：2026-05-21
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：il, ncps, rl, robotics
-- 说明：LOKI-G is a machine learning project designed for physical machines, enabling edge AI capabilities. It adapts the LOKI algorithm for training via imitation and reinforcement learning using Closed-form Continuous-Time Neural Networks and Neural Circuit Policies.
-
-### [middesurya/daily-webapp-2026-05-04-liquidlab](https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab)
-- 更新：2026-05-05
-- Star / Fork：1 / 0
-- 语言：HTML
-- Topics：ai-built, claude-code, daily-webapp, liquid-neural-networks, mit-csail, neural-ode
-- 说明：LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, adaptive inference, efficiency arena. Zero dependencies.
-
-### [Crispy26/Neural-Circuit-Policy-Based-Intrusion-Detection-System-for-Industrial-Control-Systems](https://github.com/Crispy26/Neural-Circuit-Policy-Based-Intrusion-Detection-System-for-Industrial-Control-Systems)
-- 更新：2026-03-19
-- Star / Fork：0 / 0
-- 语言：Python
+- 语言：C
 - Topics：未标注
 - 说明：无
 
-### [feracero/liquid-neural-nets-locomotion](https://github.com/feracero/liquid-neural-nets-locomotion)
-- 更新：2026-02-08
-- Star / Fork：0 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：Liquid Neural Networks and Neural Circuit Policies for Robot Locomotion
-
-### [namitharayasam/liquid-time-constant-neural-circuit-policy](https://github.com/namitharayasam/liquid-time-constant-neural-circuit-policy)
-- 更新：2026-01-27
+### [sufirumii/LiquiMedThink-1.2B](https://github.com/sufirumii/LiquiMedThink-1.2B)
+- 更新：2026-07-19
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
-- 说明：无
+- 说明：A Fine Tuned version of LiquidAI/LFM2.5-1.2B-Thinking on a medical reasoning thinking dataset
 
-### [siddharthk27/Neural-Circuit-Policies](https://github.com/siddharthk27/Neural-Circuit-Policies)
-- 更新：2025-11-04
-- Star / Fork：4 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：This contains my experiments with Liquid Time Constant Networks (LTCs) and Closed Form Continuous Network (CFCs) architectures.
-
-### [dimarkov/ncpax](https://github.com/dimarkov/ncpax)
-- 更新：2025-04-04
+### [ys260106/lnn-benchmark](https://github.com/ys260106/lnn-benchmark)
+- 更新：2026-07-13
 - Star / Fork：0 / 0
-- 语言：Jupyter Notebook
+- 语言：unknown
 - Topics：未标注
-- 说明：Neural Circuit Policies for Equinox and Jax
+- 说明：LNN (CFC) vs LSTM — UAV-SEAD Benchmark: Closed-Form Continuous-Time neural network outperforms LSTM 3/3 tests with 66 params vs 105
 
-### [Alec-Norton/NCP_Testing](https://github.com/Alec-Norton/NCP_Testing)
-- 更新：2024-07-23
+### [rudramadhabofficial/LLS-4-Liquid-Latent-Synthesis](https://github.com/rudramadhabofficial/LLS-4-Liquid-Latent-Synthesis)
+- 更新：2026-07-12
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
-- 说明：STAR Program Result Testing, Comparing Neural Circuit Policy Algorithms with other Deep Learning
+- 说明：A quad-partite architecture proposing latent-space concept interpolation for continual reinforcement learning, built on a Closed-form Continuous-time (CfC) liquid network.
 
-### [logkn/FluxNCPs.jl](https://github.com/logkn/FluxNCPs.jl)
-- 更新：2023-06-07
+### [liuyhoo/F-CfC](https://github.com/liuyhoo/F-CfC)
+- 更新：2026-07-11
 - Star / Fork：0 / 0
-- 语言：Julia
+- 语言：unknown
 - Topics：未标注
-- 说明：FluxNCPs implements Neural Circuit Policies (NCPs), adapting the Python implementation of Python NCPs.
+- 说明：Open source implementation of F-CfC: Fractional Closed-form Continuous-time Networks
 
-### [alvinkimata/Keras-Neural-circuit-policy](https://github.com/alvinkimata/Keras-Neural-circuit-policy)
-- 更新：2022-07-03
+### [lajosbencz/lfm-train-image](https://github.com/lajosbencz/lfm-train-image)
+- 更新：2026-07-11
 - Star / Fork：0 / 0
-- 语言：Jupyter Notebook
+- 语言：Dockerfile
 - Topics：未标注
-- 说明：This repository contains notebook scripts demonstrating the use of neural circuit policies with the aid of `keras-ncp` library
+- 说明：Optimized base image for training LiquidAI LFM2.5 models
 
 ## Hugging Face 模型
 ### [LiquidAI/LFM2.5-Encoder-350M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M)
 - 更新：2026-07-28
-- 下载 / Likes：5327 / 2
+- 下载 / Likes：5327 / 53
 - 任务：fill-mask
 - Tags：transformers, safetensors, lfm2, fill-mask, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-Encoder-230M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-230M)
 - 更新：2026-07-28
-- 下载 / Likes：4115 / 2
+- 下载 / Likes：4115 / 42
 - 任务：fill-mask
 - Tags：transformers, safetensors, lfm2, fill-mask, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-Encoder-350M-Spellchecker](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Spellchecker)
 - 更新：2026-07-28
-- 下载 / Likes：117 / 2
+- 下载 / Likes：117 / 5
 - 任务：token-classification
 - Tags：transformers, safetensors, gec_tagger, feature-extraction, liquid, lfm2, lfm2.5, bidirectional
 
 ### [LiquidAI/LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-PII-Detector)
 - 更新：2026-07-28
-- 下载 / Likes：38 / 2
+- 下载 / Likes：38 / 10
 - 任务：token-classification
 - Tags：transformers, safetensors, lfm2, token-classification, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-Encoder-350M-Diffusion](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Diffusion)
 - 更新：2026-07-28
-- 下载 / Likes：27 / 2
+- 下载 / Likes：27 / 6
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, fill-mask, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-Encoder-350M-Policy-Linter](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Policy-Linter)
 - 更新：2026-07-28
-- 下载 / Likes：4 / 2
+- 下载 / Likes：4 / 3
 - 任务：token-classification
 - Tags：transformers, safetensors, lfm2, feature-extraction, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-Encoder-350M-Prompt-Router](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Prompt-Router)
 - 更新：2026-07-28
-- 下载 / Likes：3 / 2
+- 下载 / Likes：3 / 4
 - 任务：text-classification
 - Tags：transformers, safetensors, lfm2, feature-extraction, liquid, lfm2.5, bidirectional, masked-lm
+
+### [Okoge-keys/lfm2.5-thinking_1.2b](https://huggingface.co/Okoge-keys/lfm2.5-thinking_1.2b)
+- 更新：2026-07-28
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
+### [mradermacher/LFM2.5-1.2B-Instruct-Pashto-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Instruct-Pashto-GGUF)
+- 更新：2026-07-28
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, gguf, liquid, lfm2.5, edge, pashto, en, ar
+
+### [mradermacher/LFM2.5-1.2B-Base-Pashto-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Base-Pashto-GGUF)
+- 更新：2026-07-28
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, gguf, liquid, lfm2.5, edge, pashto, en, ar
+
+### [davanstrien/lfm25-encoder-goemotions-smoke](https://huggingface.co/davanstrien/lfm25-encoder-goemotions-smoke)
+- 更新：2026-07-28
+- 下载 / Likes：0 / 0
+- 任务：text-classification
+- Tags：transformers, safetensors, lfm2, text-classification, uv-script, hf-jobs, custom_code, dataset:google-research-datasets/go_emotions
+
+### [davanstrien/lfm25-encoder-agnews-smoke](https://huggingface.co/davanstrien/lfm25-encoder-agnews-smoke)
+- 更新：2026-07-28
+- 下载 / Likes：0 / 0
+- 任务：text-classification
+- Tags：transformers, safetensors, lfm2, text-classification, uv-script, hf-jobs, custom_code, dataset:fancyzhx/ag_news
 
 ### [PointGuardAI/LFM2.5-1.2B-Instruct-INT8](https://huggingface.co/PointGuardAI/LFM2.5-1.2B-Instruct-INT8)
 - 更新：2026-07-28
