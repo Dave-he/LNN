@@ -7,6 +7,13 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-07-29
 
 ## GitHub 仓库
+### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
+- 更新：2026-07-29
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
+
 ### [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving)
 - 更新：2026-07-29
 - Star / Fork：0 / 0
@@ -27,13 +34,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：computer-vision, diffusion-models, liquid-neural-networks, pytorch, research
 - 说明：Experimental image diffusion models built with liquid neural-network blocks
-
-### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
-- 更新：2026-07-28
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
 
 ### [wangzifan396-wzf/liquid-neural-network-viz-lab](https://github.com/wangzifan396-wzf/liquid-neural-network-viz-lab)
 - 更新：2026-07-27
@@ -58,7 +58,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [bestxrr/lfm-serving](https://github.com/bestxrr/lfm-serving)
 - 更新：2026-07-25
-- Star / Fork：0 / 0
+- Star / Fork：0 / 1
 - 语言：Python
 - Topics：未标注
 - 说明：vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct (BTC competition)
@@ -148,21 +148,75 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Optimized base image for training LiquidAI LFM2.5 models
 
 ## Hugging Face 模型
-### [zk0hf/lfm2-vl-450m-receipt-ocr-mlx-4bit](https://huggingface.co/zk0hf/lfm2-vl-450m-receipt-ocr-mlx-4bit)
+### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
+- 更新：2026-07-29
+- 下载 / Likes：2894 / 8
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
+
+### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
+- 更新：2026-07-29
+- 下载 / Likes：2866 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
+
+### [HattoriHanzo1/Liquid-LFM2-8B-Polish-Warrior](https://huggingface.co/HattoriHanzo1/Liquid-LFM2-8B-Polish-Warrior)
+- 更新：2026-07-29
+- 下载 / Likes：237 / 1
+- 任务：text-generation
+- Tags：transformers, safetensors, gguf, lfm2_moe, text-generation, liquid, lfm, polish
+
+### [kucukkanat/LFM2.5-Encoder-350M-Diffusion-ONNX](https://huggingface.co/kucukkanat/LFM2.5-Encoder-350M-Diffusion-ONNX)
 - 更新：2026-07-29
 - 下载 / Likes：0 / 0
-- 任务：image-text-to-text
-- Tags：mlx, safetensors, lfm2_vl, vision-language, ocr, receipts, image-text-to-text, conversational
+- 任务：text-generation
+- Tags：transformers.js, onnx, lfm2-bidirectional, lfm2, quantized, text-generation, en, de
+
+### [allura-forge/LFM2.5-Encoder-350M-SeqCls-initialized](https://huggingface.co/allura-forge/LFM2.5-Encoder-350M-SeqCls-initialized)
+- 更新：2026-07-29
+- 下载 / Likes：0 / 0
+- 任务：text-classification
+- Tags：transformers, safetensors, lfm2, text-classification, liquid, lfm2.5, bidirectional, sequence-classification
+
+### [microperceptron/LFM2.5-8B-A1B](https://huggingface.co/microperceptron/LFM2.5-8B-A1B)
+- 更新：2026-07-29
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
+
+### [TheStageAI/LFM2.5-350M](https://huggingface.co/TheStageAI/LFM2.5-350M)
+- 更新：2026-07-29
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：coreml, text-generation, apple-silicon, on-device, ios, macos, thestage-apple-sdk, base_model:LiquidAI/LFM2.5-350M
+
+### [TheStageAI/LFM2.5-230M](https://huggingface.co/TheStageAI/LFM2.5-230M)
+- 更新：2026-07-29
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：coreml, text-generation, apple-silicon, on-device, ios, macos, thestage-apple-sdk, base_model:LiquidAI/LFM2.5-230M
+
+### [on-device-ml/LFM2.5-Audio-1.5B-OHF-Voice-GGUF](https://huggingface.co/on-device-ml/LFM2.5-Audio-1.5B-OHF-Voice-GGUF)
+- 更新：2026-07-29
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, liquid, lfm2.5, edge, llama.cpp, audio, speech, home-assistant
+
+### [helenai/tiny-random-lfm2](https://huggingface.co/helenai/tiny-random-lfm2)
+- 更新：2026-07-29
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, lfm2, region:us
 
 ### [LiquidAI/LFM2.5-Encoder-350M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M)
 - 更新：2026-07-28
-- 下载 / Likes：5327 / 59
+- 下载 / Likes：5327 / 66
 - 任务：fill-mask
 - Tags：transformers, safetensors, lfm2, fill-mask, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-Encoder-230M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-230M)
 - 更新：2026-07-28
-- 下载 / Likes：4115 / 50
+- 下载 / Likes：4115 / 66
 - 任务：fill-mask
 - Tags：transformers, safetensors, lfm2, fill-mask, liquid, lfm2.5, bidirectional, masked-lm
 
@@ -174,13 +228,13 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-PII-Detector)
 - 更新：2026-07-28
-- 下载 / Likes：38 / 10
+- 下载 / Likes：38 / 16
 - 任务：token-classification
 - Tags：transformers, safetensors, lfm2, token-classification, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-Encoder-350M-Diffusion](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Diffusion)
 - 更新：2026-07-28
-- 下载 / Likes：27 / 6
+- 下载 / Likes：27 / 7
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, fill-mask, liquid, lfm2.5, bidirectional, masked-lm
 
@@ -192,45 +246,9 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-Encoder-350M-Prompt-Router](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Prompt-Router)
 - 更新：2026-07-28
-- 下载 / Likes：3 / 5
+- 下载 / Likes：3 / 11
 - 任务：text-classification
 - Tags：transformers, safetensors, lfm2, feature-extraction, liquid, lfm2.5, bidirectional, masked-lm
-
-### [Okoge-keys/lfm2.5-thinking_1.2b](https://huggingface.co/Okoge-keys/lfm2.5-thinking_1.2b)
-- 更新：2026-07-28
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
-
-### [mradermacher/LFM2.5-1.2B-Instruct-Pashto-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Instruct-Pashto-GGUF)
-- 更新：2026-07-28
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, liquid, lfm2.5, edge, pashto, en, ar
-
-### [mradermacher/LFM2.5-1.2B-Base-Pashto-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Base-Pashto-GGUF)
-- 更新：2026-07-28
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, liquid, lfm2.5, edge, pashto, en, ar
-
-### [davanstrien/lfm25-encoder-goemotions-smoke](https://huggingface.co/davanstrien/lfm25-encoder-goemotions-smoke)
-- 更新：2026-07-28
-- 下载 / Likes：0 / 0
-- 任务：text-classification
-- Tags：transformers, safetensors, lfm2, text-classification, uv-script, hf-jobs, custom_code, dataset:google-research-datasets/go_emotions
-
-### [davanstrien/lfm25-encoder-agnews-smoke](https://huggingface.co/davanstrien/lfm25-encoder-agnews-smoke)
-- 更新：2026-07-28
-- 下载 / Likes：0 / 0
-- 任务：text-classification
-- Tags：transformers, safetensors, lfm2, text-classification, uv-script, hf-jobs, custom_code, dataset:fancyzhx/ag_news
-
-### [PointGuardAI/LFM2.5-1.2B-Instruct-INT8](https://huggingface.co/PointGuardAI/LFM2.5-1.2B-Instruct-INT8)
-- 更新：2026-07-28
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, lfm2.5, liquid, int8, w8a8
 
 ### [LiquidAI/LFM2.5-VL-1.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF)
 - 更新：2026-07-22
