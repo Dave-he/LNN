@@ -7,19 +7,40 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-07-30
 
 ## GitHub 仓库
+### [Sriram-Sivakumar2211/Spandana-Team-Apex](https://github.com/Sriram-Sivakumar2211/Spandana-Team-Apex)
+- 更新：2026-07-30
+- Star / Fork：2 / 0
+- 语言：Python
+- Topics：anomaly-detection, condition-monitoring, deep-learning, edge-ai, explainable-ai, fastapi, fault-diagnosis, gemini
+- 说明：AI-powered predictive maintenance platform using Liquid Time-Constant Networks and RAG.
+
+### [smparc/murmur](https://github.com/smparc/murmur)
+- 更新：2026-07-30
+- Star / Fork：1 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages CUDA-accelerated Kafka streams, Spatio-Temporal GNNs, Liquid Neural Networks, and an Audio LLM to localize physical anomalies and forecast equipment failures in continuous time.
+
+### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
+- 更新：2026-07-30
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
+
+### [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving)
+- 更新：2026-07-30
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache management, batching, quantization, and accuracy preservation for Viettel AI Race 2026.
+
 ### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
 - 更新：2026-07-29
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
-
-### [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving)
-- 更新：2026-07-29
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache management, batching, quantization, and accuracy preservation for Viettel AI Race 2026.
 
 ### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
 - 更新：2026-07-28
@@ -49,13 +70,6 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Fine-tuning LiquidAI LFM2.5-VL on SlideVQA with Unsloth LoRA.
 
-### [Sriram-Sivakumar2211/Spandana-Team-Apex](https://github.com/Sriram-Sivakumar2211/Spandana-Team-Apex)
-- 更新：2026-07-25
-- Star / Fork：3 / 0
-- 语言：Python
-- Topics：anomaly-detection, condition-monitoring, deep-learning, edge-ai, explainable-ai, fastapi, fault-diagnosis, gemini
-- 说明：AI-powered predictive maintenance platform using Liquid Time-Constant Networks and RAG.
-
 ### [bestxrr/lfm-serving](https://github.com/bestxrr/lfm-serving)
 - 更新：2026-07-25
 - Star / Fork：0 / 1
@@ -69,20 +83,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Jupyter Notebook
 - Topics：未标注
 - 说明：Adaptive Liquid Time-Constant Equivalent Dynamic Model with Transfer Learning for Active Distribution Networks with Grid-Forming IBRs
-
-### [smparc/murmur](https://github.com/smparc/murmur)
-- 更新：2026-07-23
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages CUDA-accelerated Kafka streams, Spatio-Temporal GNNs, Liquid Neural Networks, and an Audio LLM to localize physical anomalies and forecast equipment failures in continuous time.
-
-### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
-- 更新：2026-07-23
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline.
 
 ### [WAPA0012/grepmem-lnn](https://github.com/WAPA0012/grepmem-lnn)
 - 更新：2026-07-23
