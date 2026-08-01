@@ -1,0 +1,392 @@
+Structure-Preserving Neural ODEs via Nonstandard Finite
+Diﬀerence Discretization
+Achraf Zinihi a,b, Matthias Ehrhardt a,∗, Moulay Rchid Sidi Ammi b
+aUniversity of Wuppertal, Applied and Computational Mathemat ics,
+Gaußstrasse 20, 42119 Wuppertal, Germany
+bMoulay Ismail University of Meknes, FST Errachidia,
+Department of Mathematics, AMNEA Group, Errachidia 52000, Mo rocco
+Abstract
+Although neural ordinary diﬀerential equations (NODEs) ar e a powerful framework for learn-
+ing continuous-time dynamics, they generally do not preser ve essential qualitative properties,
+such as positivity. We propose a structure-preserving Neur al ODE framework based on non-
+standard ﬁnite diﬀerence (NSFD) discretization. The learn ed dynamics are parameterized
+by nonnegative production and destruction rates, yielding an explicit, diﬀerentiable update
+that integrates seamlessly into standard automatic diﬀere ntiation pipelines. We prove that
+the resulting scheme unconditionally preserves positivit y for arbitrary time-step sizes while
+retaining ﬁrst-order consistency. We outline an extension based on Patankar-type discretiza-
+tions that preserves conservation laws exactly. Numerical experiments on an SIR epidemic
+model show that our approach generates physically meaningf ul trajectories, remains robust
+under coarse discretizations, and outperforms convention al NODEs in preserving the quali-
+tative structure of the learned dynamics.
+Keywords: Neural ODEs, NSFD schemes, Positivity preservation, Struc ture-preserving
+discretization, Scientiﬁc machine learning
+2020 Mathematics Subject Classiﬁcation: 65L05, 65L20, 68T07, 92D30
+1. Introduction
+Neural ODEs [ 1] parameterize the right-hand side of an initial value probl em ˙x = fθ(x, t )
+by a neural network fθ and treat the network as an implicit, continuous-depth mode l that is
+ﬁt to data by diﬀerentiating through a numerical ODE solver. This formulation is advanta-
+geous for learning the latent dynamics of physical and biolo gical systems, including epidemic
+models, because it preserves the continuous-time structur e of the underlying phenomenon
+rather than treating time as a discrete, recurrent index. Ho wever, in these applications, the
+∗ Corresponding author
+Email addresses: a.zinihi@edu.umi.ac.ma (Achraf Zinihi), ehrhardt@uni-wuppertal.de (Matthias
+Ehrhardt), rachidsidiammi@yahoo.fr (Moulay Rchid Sidi Ammi)
+arXiv:2607.10858v1  [math.NA]  12 Jul 2026
+state variables usually have a physical meaning, such as com partment sizes, concentrations,
+or population counts, and they must remain nonnegative. Oft en, they also satisfy additional
+invariants, such as a constant total population. A generic fθ provides no such guarantee:
+nothing in the training objective prevents the learned ﬂow f rom producing negative states,
+particularly under extrapolation or coarse time stepping, and the standard remedies (clip-
+ping, penalty terms for constraint violations, or projecti on back onto the feasible region after
+each solver step) are post-hoc corrections rather than stru ctural guarantees. Furthermore,
+these remedies can also introduce non-smoothness or bias in to the learned dynamics.
+A separate line of work in numerical analysis, dating back to [2] and rigorously developed
+by [3] and many others (see [4] and the references therein for recent high-order construc tions),
+shows that nonstandard ﬁnite diﬀerence (NSFD) schemes can be designed so that the discrete
+scheme preserves the positivity, boundedness, and other qu alitative features of a continuous
+dynamical system for every step size, not just for a step size below some stability thres hold.
+The central device is a nonlocal treatment of the right-hand side, along with a generalized,
+model-dependent denominator function that replaces ∆ t. This approach has been applied
+extensively to compartmental epidemic models with prescri bed (not learned) right-hand
+sides [ 5]. In the NODE literature, "structure" usually refers to a so ft, statistical constraint,
+such as an information bottleneck for dimensionality reduc tion or a linear-in-features form
+motivated by Koopman operator theory, rather than a hard, pr ovable guarantee on the state
+itself. By contrast, this work provides a structural constr aint of the latter, provable kind.
+This work contributes by combining two approaches: we const rain a NODE’s vector
+ﬁeld to a gain/loss (production/destruction) form and pair it with an NSFD time-stepping
+rule. This guarantees the positivity of the learned dynamic s unconditionally, rather than
+approximately through penalization. Speciﬁcally, we: (i) parameterize the network so that it
+outputs nonnegative gain and loss rates rather than an uncon strained vector ﬁeld (Section 2);
+(ii) construct an NSFD update for this class of networks and p rove unconditional positivity
+for any step size (Section 3); (iii) show that the update is a closed-form, diﬀerentiabl e
+function of the network output; therefore, it requires no ad ditional computation beyond
+that used in a standard NODE training loop (Proposition 3); (iv) outline how a total-
+population invariant can be preserved exactly by transitioning from an independent gain/loss
+parameterization to a ﬂux-based, Patankar-type scheme [ 6] (Section 4); and (v) Demonstrate
+the method on a latent SIR learning problem by comparing it to an unconstrained NODE
+baseline (Section 5).
+2. Gain-Loss Neural ODEs
+Let x(t) ∈ Rd
++ denote the latent state, and suppose the true generative dyn amics admit
+a decomposition into nonnegative gain and loss terms,
+˙xi(t) = Gi(x(t), t ) − Li(x(t), t ) xi(t), i = 1, . . . , d, (1)
+with Gi ≥ 0 and Li ≥ 0 are suﬃciently smooth functions on Rd
++. This is not a restriction
+on the class of dynamics: any locally Lipschitz vector ﬁeld f satisfying the subtangential
+condition fi(x) ≥ 0 whenever xi = 0 (the standard necessary and suﬃcient condition for Rd
++
+2
+to be positively invariant) can be written in this form, e.g. by taking Li ≡ 0 and Gi = fi
+wherever fi ≥ 0, and folding negative contributions into Lixi elsewhere; the decomposition
+simply makes the sign structure explicit rather than leavin g it implicit in a single network.
+This decomposition is used to deﬁne the positive and negativ e parts of fθ. For further
+details, we refer the reader to [ 4]. Compartmental epidemic models are a natural ﬁt: in the
+SIR model of Section 5, new infections are a gain for I and a loss for S, and recovery is a
+gain for R and a loss for I.
+We parameterize Gi and Li by feed-forward networks with a ﬁnal softplus (or squared)
+output activation
+Gθ,i (x, t ) = softplus
+(
+gθ,i (x, t )
+)
+and Lθ,i (x, t ) = softplus
+(
+ℓθ,i (x, t )
+)
+,
+where gθ,i , ℓ θ,i : Rd × [0, T ] → R are unconstrained networks. This guarantees Gθ,i ≥ 0 and
+Lθ,i ≥ 0 for every θ, which is the only hypothesis that Theorem 2 below requires. No
+constraint is imposed on θ during training.
+3. An NSFD Update for Gain-Loss Neural ODEs
+Given a time grid tn = n∆ t and state xn ≈ x(tn), we propose the following update
+xn+1
+i − xn
+i
+φ(∆ t) = Gθ,i (xn, t n) − Lθ,i (xn, t n) xn+1
+i , i = 1, . . . , d, (2)
+where the gain term is evaluated explicitly at xn, and the loss term is evaluated semi-
+implicitly, by multiplying the new state xn+1
+i . The denominator function φ replaces ∆ t and
+must satisfy the standard NSFD consistency conditions: φ(∆ t) > 0, φ(∆ t) = ∆ t+O(∆ t2) as
+∆ t → 0+, so that ( 2) reduces to the semi-implicit Euler discretization of ( 1) in the small-step
+limit, and it is a ﬁrst-order consistent scheme. The simples t admissible choice is φ(∆ t) = ∆ t
+itself; more elaborate choices, e.g. φ(∆ t) = (1 − e− λ ∆ t)/λ , can be used to match a known
+local rate λ exactly, as discussed in [ 2, 4, 5].
+Since the loss term is linear in xn+1
+i , ( 2) can be solved for xn+1
+i in closed form:
+xn+1
+i = xn
+i + φ(∆ t) Gθ,i (xn, t n)
+1 + φ(∆ t) Lθ,i (xn, t n) , i = 1, . . . , d. (3)
+Unlike a generic implicit scheme, ( 3) requires no nonlinear solving at each step: it is an
+explicit, elementwise rational function of the network out puts at xn. Consequently, ( 3) de-
+ﬁnes a diﬀerentiable computational layer that can directly replace a conventional numerical
+integration layer in NODE training. Since the update consis ts only of diﬀerentiable oper-
+ations with a strictly positive denominator, it is fully com patible with standard automatic
+diﬀerentiation frameworks.
+Proposition 1 (Consistency). Assume that the exact solution x(t) of (
+1) is suﬃciently
+smooth on [0, T ], and that Gi and Li are continuously diﬀerentiable. Then the NSFD scheme
+(3) is ﬁrst-order consistent in time.
+3
+Proof. Let x(t) be the exact solution of ( 1). By Taylor expansion, we have that
+xi(tn+1) = xi(tn) + ∆ t ˙xi(tn) + O(∆ t2).
+Using ( 1), this becomes
+xi(tn+1) = xi(tn) + ∆ t
+(
+Gi(x(tn), t n) − Li(x(tn), t n)xi(tn)
+)
++ O(∆ t2).
+Now evaluate the NSFD update (2) along the exact solution. Since xi(tn+1) = xi(tn)+O(∆ t),
+and Gi, Li are smooth, we have
+Li
+(
+x(tn), t n
+)
+xi(tn+1) = Li
+(
+x(tn), t n
+)
+xi(tn) + O(∆ t).
+Using φ(∆ t) = ∆ t+O(∆ t2), the discrete update produces the same expansion up to O(∆ t2).
+Therefore, the local truncation error satisﬁes τn
+i = O(∆ t2), which proves ﬁrst-order consis-
+tency in time.
+Thus, the NSFD update ( 2) has the same formal temporal accuracy as the semi-implicit
+Euler method and additionally preserves positivity uncond itionally.
+Theorem 2 (Unconditional Positivity and Boundedness) . Let x0 ∈ Rd
++. Then, the sequence
+generated by (
+3) satisﬁes xn ∈ Rd
++ for all n ≥ 0. Furthermore, if the scheme preserves the
+invariant set Ω ⊂ Rd
++, then xn ∈ Ω for all n ≥ 0, and thus the numerical solution is bounded.
+Proof. By induction on n. The base case x0 ∈ Rd
++ holds by assumption. Suppose xn ∈ Rd
++.
+Then for each i, the numerator of (
+3) is a sum of two nonnegative terms, xn
+i ≥ 0 and
+φ(∆ t) Gθ,i (xn, t n) ≥ 0, and the denominator is 1 + φ(∆ t) Lθ,i (xn, t n) ≥ 1 > 0. Hence
+xn+1
+i ≥ 0 for every i, so xn+1 ∈ Rd
++. If the scheme also preserves a bounded invariant region
+Ω , then xn ∈ Ω for all n ≥ 0. Since Ω is bounded, the numerical solution is bounded.
+Note that no bound on the step size ∆ t is required. The result holds for arbitrarily large
+step sizes, which is the deﬁning feature of an NSFD scheme as o pposed to a standard scheme
+whose positivity is only conditional on a step-size restric tion.
+Proposition 3 (Diﬀerentiability) . If gθ,i , ℓ θ,i are diﬀerentiable with respect to θ for every
+x, t , then xn+1
+i is also diﬀerentiable with respect to θ for every n.
+Proof. Immediate: ( 3) composes the diﬀerentiable softplus map, elementary arit hmetic op-
+erations with a strictly positive denominator, and gθ,i , ℓ θ,i , all of these are diﬀerentiable, and
+the composition is applied recursively in n.
+Remark 1. Proposition 3 allows ( 3) to be used as a drop-in replacement for a standard
+NODE solver step in existing training pipelines. Training p roceeds exactly as it would for a
+discretized NODE, with no need for an adjoint sensitivity eq uation or an implicit-function-
+theorem solve, since ( 3) is already explicit in xn+1.
+4
+4. Towards Exact Conservation
+Many epidemic models additionally conserve a total quantit y, e.g. a closed population
+N = S + I + R. However, the gain/loss parameterization of Section 2 does not enforce this
+by itself, because Gθ,i and Lθ,i are independent across i. Exact conservation requires that
+each unit of loss from one compartment appear as a matching un it of gain in another. This
+structure is studied under the name of production-destruction systems, for which positivity
+and conservation-preserving schemes are known [ 6]. We outline the corresponding extension
+here as a natural next step rather than a result we prove in ful l. We replace the independent
+networks Gθ,i , Lθ,i by a single set of pairwise, nonnegative ﬂux networks Φ θ,ij (x, t ) ≥ 0
+(i ̸= j) representing the learned rate of transfer from compartmen t i to compartment j:
+Gθ,i =
+∑
+j̸=i
+Φ θ,ji and Lθ,i xi =
+∑
+j̸=i
+Φ θ,ij .
+At the continuous level this decomposition telescopes to ex actly
+∑
+i
+˙xi =
+∑
+i
+∑
+j̸=i
+Φ θ,ji −
+∑
+i
+∑
+j̸=i
+Φ θ,ij = 0,
+so the total population is conserved. Simultaneously achie ving the discrete analogue with
+unconditional positivity is precisely the problem modiﬁed Patankar Runge-Kutta (MPRK)
+schemes solve for prescribed production-destruction syst ems, by treating the full oﬀ-diagonal
+ﬂux structure implicitly and solving the resulting (sparse , nonnegative) linear system at each
+step rather than the diagonal closed form ( 3). A full positivity-and-conservation proof for
+the learned ﬂux network Φ θ, together with the resulting linear-solve training step, i s left
+for future work. We mention this here because it directly tar gets the stronger " N exactly
+constant" property that motivated this project, beyond the positivity guarantee already
+established in Theorem 2.
+5. Example and Numerical Results
+We illustrate the proposed method on the classical SIR model
+˙S = − βSI, ˙I = βSI − γI, ˙R = γI,
+which is already in gain/loss form ( 1) with
+GS = 0, L S = βI, G I = βSI, L I = γ, G R = γI, L R = 0.
+We treat the parameters β , γ as unknown and replace them with the gain/loss networks of
+Section 2. The resulting NSFD update, from ( 3), is
+Sn+1 = Sn
+1 + φ(∆ t) Lθ,S (xn, t n) , I n+1 = I n + φ(∆ t) Gθ,I (xn, t n)
+1 + φ(∆ t) Lθ,I (xn, t n) ,
+and
+Rn+1 = Rn + φ(∆ t) Gθ,R (xn, t n).
+5
+Remark 2 (A free conservation law for the closed SIR model) . Because ˙S + ˙I + ˙R ≡ 0,
+the total population N = S + I + R is conserved by the true dynamics for any β , γ,
+and R(t) = N0 − S(t) − I(t). This allows us to avoid the general ﬂux construction of
+Section 4 here. We only model the (S, I ) system with the gain/loss networks Lθ,S , Gθ,I ,
+Lθ,I , as well as the update equation ( 3), and we recover Rn := N0 − Sn − I n algebraically.
+Section 4’s construction remains necessary when no such algebraic re duction exists (e.g. open
+populations, or conservation laws not equal to a simple stat e sum). One caveat: nothing
+here guarantees S + I ≤ N0, so the recovered Rn is not itself covered by Theorem 2, which
+applies modeled states (S, I ); we report this quantity honestly in this section rather tha n
+assume it away.
+Setup. We generated a reference trajectory from the SIR model above with β = 0 . 4,
+γ = 0 . 1, S(0) = 0 . 99, I(0) = 0 . 01, R(0) = 0 (so N0 = 1 ), integrated it over t ∈ [0, 100].
+We then train two models on the same noisy, subsampled observ ations of (S, I ) at ∆ t = 1
+(holding out the tail of the trajectory for extrapolation te sting):
+• Baseline (B-NODE) : an unconstrained NODE on the full 3D state (S, I, R ), ˙x =
+fθ(x, t ) with fθ a small Multilayer Perceptron (MLP), integrated with expli cit Euler
+and trained by backpropagation through the unrolled steps.
+• NSFD-NODE : the reduced (S, I ) gain/loss network of Remark 2 with the update ( 3),
+trained in the same manner (Proposition 3).
+Both models use MLPs of the same size (two hidden layers, 32 un its, tanh activations,
+gradient norm clipped to 5), so any diﬀerence in behavior is d ue to the discretization and
+output parameterization rather than model capacity. We use the same architecture-matched
+comparison logic to isolate the eﬀect of structuring a NODE’ s vector ﬁeld in [ 7]. Both models
+converge to a comparably low training loss ( ∼ 10− 4), indicating that the diﬀerences in the
+predictions stem from the discretization strategy rather t han diﬀerences in ﬁtting accuracy.
+Metrics. We evaluated the two models, which were trained for 3000 epoc hs, without
+retraining, at three step sizes: a ﬁner-than-training step size ( ∆ t = 0 . 5), the training step
+size ( ∆ t = 1 ), and a coarse-step stress test (∆ t = 5 , ﬁve times coarser than the training
+step). This directly targets Theorem 2, whose guarantee holds for every ∆ t, not only the one
+used in training. We report: (i) the minimum state value and the number of negative entries,
+over the full (S, I, R ) trajectory; (ii) the root-mean-square error (RMSE) on (S, I ) over the
+held-out extrapolation window; and (iii) the drift maxn |N n − N0| in total population.
+Results. Tables 1 and 2 report the outcome, and Figure 1 shows the trajectories at
+∆ t = 1 . Two things stand out. First, N-conservation is exact for NSFD-NODE at every
+step size by construction (drift ≈ 0 to ﬂoating-point precision) by construction, while the
+unconstrained baseline drifts substantially ( 2. 9 at ∆ t ≤ 1, and 18. 35 under the coarse-step
+test) despite matching training loss. Second, positivity: NSFD-NODE’s modeled states
+(S, I ) never go negative, as guaranteed. The baseline substantial ly violates positivity at
+every step size, and catastrophically so under the coarse-s tep test (minimum − 3. 19 e− 00,
+RMSE 3. 32), despite comparably low training loss. Evidently, low tra ining error does not
+guarantee of physically consistent unrolled dynamics.
+6
+Table 1: Numerical comparison of the unconstrained B-NODE a nd NSFD-NODE, at a ﬁner-than-training
+step ∆ t = 0.5, the training step size ∆ t = 1 and under a coarse-step stress test ∆ t = 5.
+Step Size Model Min. State Value Negative Entries RMSE Max. |N n − N 0|
+∆ t = 0. 5 B-NODE − 2. 4504 e− 02 72 0 . 0171 2 . 9403
+NSFD-NODE 0. 0000 0 0 . 0146 0 . 0000
+∆ t = 1 B-NODE − 2. 4712 e− 02 37 0 . 0174 2 . 9409
+NSFD-NODE 0. 0000 0 0 . 0145 0 . 0000
+∆ t = 5 B-NODE − 3. 1906 e− 00 19 3 . 3236 18 . 3525
+NSFD-NODE 0. 0000 0 0 . 0249 0 . 0000
+Table 2: Minimum and maximum values of the state variables ob tained by the B-NODE and the proposed
+NSFD-NODE for diﬀerent time step sizes.
+Step Size S B-NODE S NSFD-NODE I B-NODE I NSFD-NODE R B-NODE R NSFD-NODE
+Min. Max. Min. Max. Min. Max. Min. Max. Min. Max. Min. Max.
+∆ t = 0. 5 0.0043 1.0198 0.0003 0.9900 -0.0245 0.4048 0.0100 0.3913 0. 0000 3.9605 0.0010 0.9868
+∆ t = 1 0.0043 1.0442 0.0004 0.9900 -0.0247 0.4080 0.0100 0.3993 0. 0000 3.9613 0.0007 0.9867
+∆ t = 5 -3.1906 6.6857 0.0011 0.9900 -1.3762 5.8326 0.0100 0.4443 - 0.7115 11.6093 0.0000 0.9852
+0 20 40 60 80 100
+t
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+State V alue
+Extra olation →
+S ( t )
+Reference
+Baseline NODE
+NSFD-NODE
+0 20 40 60 80 100
+t
+0.0
+0.1
+0.2
+0.3
+0.4
+State V alue
+Extra olation →
+I ( t )
+Reference
+Baseline NODE
+NSFD-NODE
+Baseline negative states
+0 20 40 60 80 100
+t
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0
+3.5
+4.0
+State V alue
+Extra olation →
+R ( t )
+Reference
+Baseline NODE
+NSFD-NODE
+Figure 1: Reference, B-NODE (negative excursions marked), and NSFD-NODE trajectories for S(t), I(t),
+and R(t) at ∆ t = 1. R is recovered algebraically for NSFD-NODE (Remark 2). Dotted line: end of training
+window.
+The main advantage of the scheme is that positivity is a struc tural consequence of equa-
+tion ( 3) rather than a property encouraged by a penalty term. Theore ms 2 holds for every
+θ and every ∆ t, with no tuning of a penalty weight and no risk of violating th e constraint
+on out-of-distribution inputs. This is precisely where pen alty-based approaches tend to fail.
+However, the cost is architectural; the network must be writ ten in gain/loss form, which is
+natural for compartmental and production-destruction sys tems, but restrictive compared to
+an arbitrary fθ.
+7
+6. Conclusion
+We introduced an NSFD discretization for neural ODEs based o n a gain/loss parame-
+terization. This update preserves positivity uncondition ally, remains bounded, and is diﬀer-
+entiable in closed form. These properties make it directly c ompatible with standard Neural
+ODE training pipelines. This method addresses a critical li mitation of scientiﬁc neural ODEs
+by enforcing physically meaningful nonnegative states via structural discretization instead
+of a penalty or projection step.
+Our work establishes a rigorous connection between structu re-preserving numerical anal-
+ysis and neural ODEs. It demonstrates that qualitative prop erties can be enforced by design
+rather than through penalties or projections.
+Declarations
+Conﬂict of Interest
+The authors declared that they have no conﬂict of interest.
+Data Availability
+No data was used for the research described in the article.
+References
+[1] R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and D. K. Duven aud. Neural ordinary
+diﬀerential equations. Adv. Neural. Inf. Process. Syst. , 31, 2018.
+[2] R. E. Mickens. Nonstandard ﬁnite diﬀerence models of diﬀerential equatio ns. World
+Scientiﬁc, 1994.
+[3] R. Anguelov and J. M. S. Lubuma. Contributions to the math ematics of the nonstandard
+ﬁnite diﬀerence method and applications. Numer. Meth. Part. Diﬀ. Eqs. , 17(5):518–543,
+2001.
+[4] A. Zinihi, M. Ehrhardt, and M. R. Sidi Ammi. A nonstandard ﬁnite diﬀerence scheme
+for a nonlinear parabolic equation with p-Laplacian-type d iﬀusion. arXiv preprint
+arXiv:2607.00489, 2026.
+[5] A. Zinihi, M. Ehrhardt, and M. R. Sidi Ammi. A nonstandard ﬁnite diﬀerence scheme
+for an SEIQR epidemiological PDE model. Appl. Math. Comput. , 520:129953, 2026.
+[6] H. Burchard, E. Deleersnijder, and A. Meister. A high-or der conservative patankar-type
+discretisation for stiﬀ systems of production-destructio n equations. Appl. Numer. Math. ,
+47(1):1–30, 2003.
+[7] Jake Buzhardt, C. Ricardo Constante-Amores, and Michae l D. Graham. On the re-
+lationship between Koopman operator approximations and ne ural ordinary diﬀerential
+equations for data-driven time-evolution predictions. Chaos Interdiscip. J. Nonli. Sci. ,
+35(4), 2025.
+8

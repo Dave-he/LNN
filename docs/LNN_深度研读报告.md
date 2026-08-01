@@ -87,6 +87,14 @@ tags: [LNN, reading-report, papers]
 - **方法论**：模拟 BF 段用 48 单元液晶 (GT3-23001 LC) 阵列做 holographic 模式选择 (5° 波束 / 6.87 dB 增益 / 19 模式码本)，无需半导体移相器；数字 BF 段用 ODE 闭式 LNN (sigmoid-gated 闭式更新) 配合流形优化把 M×K 搜索空间压到 N×K，用 log-sum SE loss 训；用 NYURay 108 GHz 城市射线追踪信道做端到端评估。
 - **关键成果**：在 P=30 dBm / CEE=-10 dB 下 LNN+LC 相对 LAGD+LC 取得 +88.6% SE；CEE 从 -20 dB → 0 dB 时 LNN 仅 -31.7% SE (LAGD -55.4%)，验证 ODE 闭式 LNN 对信道不完美估计的鲁棒性；LC 天线相对 3GPP TR 38.901 标准阵列取得 1.9× SE。
 
+### [2026-07] Structure-Preserving Neural ODEs via Nonstandard Finite Difference Discretization
+- **独立报告**：[[docs/reports/Structure_Preserving_Neural_ODEs_NSFD_2607.10858_研读报告.md]]
+- **核心问题**：Neural ODE 在物理/生物系统（流行病仓室、化学反应、生态学）中需要状态变量始终 $\ge 0$ 且可能守恒，但标准 NODE + penalty/project 是 soft 约束，无法保证正定性，且大 $\Delta t$ 下守恒律崩塌。
+- **方法论**：把向量场改写为 gain/loss 形式 $\dot{x}_i = G_{\theta,i} - L_{\theta,i}\, x_i$（$G_{\theta,i}, L_{\theta,i} \ge 0$ 由 softplus 保证），用 Nonstandard Finite Difference (NSFD) 半隐式离散化得到**闭式可微更新** $x_i^{n+1} = (x_i^n + \varphi(\Delta t) G_{\theta,i}^n) / (1 + \varphi(\Delta t) L_{\theta,i}^n)$，分母恒正 → 无条件正定 + 一致性 + 可与 auto-diff 直接兼容。
+- **关键成果**：SIR 流行病实验（$\beta=0.4, \gamma=0.1$）中，NSFD-NODE 在 $\Delta t \in \{0.5, 1, 5\}$ 全部 $\min(\text{State}) = 0.0000$、无负样本；B-NODE 同样训练 loss 下在 $\Delta t=5$ 时 $\min = -3.19$, RMSE 3.32；守恒律漂移 NSFD-NODE 严格 0（利用 $R=N-S-I$ 代数还原），B-NODE 漂移 2.94~18.35。
+- **与 LNN 关联**：论文方法论可视为 CfC/LTC "闭式 forward 层"哲学在 scientific ML 的对偶——CfC 把 ODE 求解闭式化以便推理；本文把 gain/loss ODE 用 NSFD 闭式离散化以保结构（正定 / 守恒）。LTC 自身就是 gain/loss 形式 $\dot{x} = -x/\tau + A$ 的特例。
+- **复现成本**：低（单 SIR + 小 MLP，~50 行 PyTorch，无需 GPU；论文未附官方代码）。
+
 ### [2026] Liquid Networks with Mixture Density Heads for Efficient Imitation Learning
 - **独立报告**：[[docs/reports/Liquid_Networks_MDH_Imitation_Learning_研读报告.md]]
 - **核心问题**：Diffusion Policy 当前是模仿学习主流范式，但 50 步 DDPM 推理耗时 380–448 ms、参数量 8.6M；M 维多模态动作分布上 MSE 会坍缩到均值。需要一个更紧凑、能显式建模多模态的 policy head 替代方案。
@@ -431,6 +439,23 @@ tags: [LNN, reading-report, papers]
   - **SSH proxy 不可用**：cron 默认 `GIT_SSH_COMMAND` 走 `~/.ssh/config` 中配置的 proxy (默认 `ncat` proxy 端口), 当前环境该 proxy 拒绝连接, 导致 `git push` 直接 `Connection refused` → 本次显式覆盖为 `ssh -i ~/.ssh/id_github_dave-he -o IdentitiesOnly=yes -o ProxyCommand=none` 才能 push, 已记录到 logs/pipeline/2026-07-19_pipeline.log。
   - **本地落后 origin**：`git pull --ff-only` 失败 (本地含新 commit `0c48097`, origin 含历史 GH Actions 推送 `35a9413`) → `git pull --rebase` 触发 docs/LNN_深度研读报告.md 与 docs/Liquid_Neural_Networks_Latest_Papers_Summary.md 两处小型合并冲突 (均为 `daily-lnn-index` 自动维护块), 合并 `2026-07-19` + `2026-07-17` 两行后 rebase continue → push 成功。
 - **结论**：连续第 5 天 LNN 候选论文零新增 (LNN 主题覆盖已饱和), 等待 arXiv 7 月下旬新一轮 continuous-depth / 神经动力学投稿; Hugging Face 连续两次抓取失败需在下个 cron 中重点观察, 若连续 3 天失败将触发告警。
+
+### [2026-08-02] arXiv 抓取失败的兜底复盘（生成 1 篇 NSFD 研读）
+- **digest 入口**：[[docs/daily/2026-08-02_LNN_research_digest.md|每日追踪]]
+- **抓取异常**：`scripts/daily_lnn_research.py` 跑完后 arXiv 报 `Remote end closed connection without response`（transient，与 2026-07-25 同类错误，参见 [[docs/daily/2026-07-25_LNN_research_digest.md]]），GitHub 41 个仓库 + HuggingFace 18 个模型均正常抓取。**arXiv 当日 0 篇候选**，与 2026-07-25 / 2026-06-24 / 2026-06-22 三次抓取失败模式一致。
+- **挑选结果**：`python3 scripts/select_papers_for_report.py --date 2026-08-02 --top 3` 输出 0 篇（`n_total_arxiv=0`）。按 SOP "若 digest 失败但有历史 digest, 直接用历史"，从 7-25 ~ 7-31 历次 digest 中人工二次筛选（绕过 select_papers 的强关键词限制，因 digest 摘要被截断），并对 arXiv 2026-07-01 ~ 2026-08-02 窗口做手动 7-query 复检：
+  - 唯一**强 LNN 关联且未研读**命中：**arXiv:2607.10858 "Structure-Preserving Neural ODEs via Nonstandard Finite Difference Discretization"**（Zinihi, Ehrhardt, Sidi Ammi 2026-07-12，命中 `Neural ODE` 关键词 2 次，score=6）。
+  - 其他三个候选（2607.15232 tokenizer 扩展、2607.00926 GMHF 人类反馈）均为关键词 false positive（substring 命中），与 LNN 无关，已排除。
+  - 6-19 / 6-25 / 7-09 / 7-14 / 7-16 等历次 digest 12 篇候选全部已被独立研读报告覆盖（TFP / TND / LFNet / GazeLNN / LTC-Fall 等）。
+- **`paper-analyzer` 技能状态**：本次 cron 该技能**仍缺失**（系统开头已警告），LLM 直接走"读 arXiv 摘要 + 下载 PDF + pypdf 全文 + 按 AGENTS.md SOP 生成独立报告"的兜底路径。
+- **生成 1 篇独立研读报告 + 索引追加**：
+  - [[docs/reports/Structure_Preserving_Neural_ODEs_NSFD_2607.10858_研读报告.md|NSFD-NODE 研读]]
+- **PDF 落盘**：`/tmp/pdf_2607.10858.pdf` (193KB, 8 页, Zinihi 等, University of Wuppertal / Moulay Ismail University of Meknes, math.NA)，本地抽取全文至 `/tmp/paper_2607.10858.txt` (21.3KB)。
+- **同步阻塞点**：
+  - **本地落后 origin 6 commits**：`git pull --ff-only` 失败 → `git pull --no-rebase` 触发 `docs/Liquid_Neural_Networks_Latest_Papers_Summary.md` 与 `docs/LNN_深度研读报告.md` 各 2 处 `daily-lnn-index` 自动维护块合并冲突（GH Actions 在本地断网期间补推了 7-29 / 7-30 / 7-31 三日 digest）。合并策略：保留所有 5 行 (8-02 / 7-31 / 7-30 / 7-29 / 7-28)，冲突解决后 commit 即可。`analysis/repo_watchlist/2026-07-29_lnn_open_source_watchlist.md` 因 auto-generated 字段冲突较多，**`git checkout --ours` 保留本地较新版本**。
+  - **SSH 推送**：cron 默认 `GIT_SSH_COMMAND` 走 `~/.ssh/config` 中 `ncat --proxy 192.168.6.25:7890` 代理，代理拒连 → 显式覆盖为 `ssh -i ~/.ssh/id_github_dave-he -o IdentitiesOnly=yes` 后 push 成功。
+  - **arXiv 抓取重试**：直接手跑 `urllib` 验证 arXiv 偶发可用（首次 200 OK，2 分钟后多次 `RemoteDisconnected`），与 2026-07-19 / 2026-07-25 现象一致；推测与 arXiv 端 TLS / rate limit 抖动有关，非网络层故障。
+- **结论**：今日 1 篇新研读（NSFD-NODE，结构保留 Neural ODE，与 CfC/LTC 闭式 forward 层哲学同源），标记 LNN 主题覆盖仍未饱和。NSFD → gain/loss → 闭式更新这一链条，对 LFM2 / LNN 在边缘部署的"长时间运行累积误差"鲁棒性研究有直接借鉴价值，建议下个 cron 优先尝试用现有 `bench_cfc_*` 工具栈做 NSFD-NODE 复现（~50 行 PyTorch，无需 GPU）。
 
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
