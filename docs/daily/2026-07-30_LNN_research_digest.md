@@ -1,10 +1,10 @@
 ---
-title: LNN 每日研究追踪 - 2026-07-29
-date: 2026-07-29
+title: LNN 每日研究追踪 - 2026-07-30
+date: 2026-07-30
 tags: [LNN, daily, automation, arxiv, github, huggingface]
 ---
 
-# LNN 每日研究追踪 - 2026-07-29
+# LNN 每日研究追踪 - 2026-07-30
 
 > 自动生成：聚合 arXiv、GitHub 与 Hugging Face 的 LNN / LTC / CfC / NCP / LFM 相关更新，供人工筛选后进入深度研读。
 
@@ -33,17 +33,17 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-07-30 | [Sriram-Sivakumar2211/Spandana-Team-Apex](https://github.com/Sriram-Sivakumar2211/Spandana-Team-Apex) | 2 | Python | AI-powered predictive maintenance platform using Liquid Time-Constant Networks and RAG. |
+| 2026-07-30 | [smparc/murmur](https://github.com/smparc/murmur) | 1 | Python | An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages… |
+| 2026-07-30 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
+| 2026-07-30 | [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving) | 0 | Python | High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache… |
 | 2026-07-29 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
-| 2026-07-29 | [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving) | 0 | Python | High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache… |
 | 2026-07-28 | [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN) | 2 | C | Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language vers… |
 | 2026-07-28 | [unixsysdev/liquid-diffusion-](https://github.com/unixsysdev/liquid-diffusion-) | 0 | Python | Experimental image diffusion models built with liquid neural-network blocks |
 | 2026-07-27 | [wangzifan396-wzf/liquid-neural-network-viz-lab](https://github.com/wangzifan396-wzf/liquid-neural-network-viz-lab) | 0 | HTML | Liquid Neural Network Visualization Lab |
 | 2026-07-27 | [Saad1926Q/slidevqa-smth](https://github.com/Saad1926Q/slidevqa-smth) | 0 | Python | Fine-tuning LiquidAI LFM2.5-VL on SlideVQA with Unsloth LoRA. |
-| 2026-07-25 | [Sriram-Sivakumar2211/Spandana-Team-Apex](https://github.com/Sriram-Sivakumar2211/Spandana-Team-Apex) | 3 | Python | AI-powered predictive maintenance platform using Liquid Time-Constant Networks and RAG. |
 | 2026-07-25 | [bestxrr/lfm-serving](https://github.com/bestxrr/lfm-serving) | 0 | Python | vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct (BTC competition) |
 | 2026-07-24 | [Moetasem/LTC-Model-with-Transfer-Learning](https://github.com/Moetasem/LTC-Model-with-Transfer-Learning) | 0 | Jupyter Notebook | Adaptive Liquid Time-Constant Equivalent Dynamic Model with Transfer Learning for Active Distribution Networks with Grid-Forming IBRs |
-| 2026-07-23 | [smparc/murmur](https://github.com/smparc/murmur) | 1 | Python | An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages… |
-| 2026-07-23 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-07-23 | [WAPA0012/grepmem-lnn](https://github.com/WAPA0012/grepmem-lnn) | 0 | JavaScript | Liquid Neural Network time-decay for grepmem salience. CfC-inspired continuous-time decay replacing flat linear decay, with per-memory reinforcement-adaptive t… |
 
 ## Hugging Face 候选模型
