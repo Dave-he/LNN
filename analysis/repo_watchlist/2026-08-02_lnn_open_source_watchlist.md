@@ -8,28 +8,28 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer)
-- 更新：2026-08-01
-- Star / Fork：4 / 1
+- 更新：2026-08-02
+- Star / Fork：5 / 1
 - 语言：Python
 - Topics：contrastive-learning, dense-retrieval, embedding-models, lfm2, optuna, pytorch, wandb
 - 说明：Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data
 
-### [smparc/murmur](https://github.com/smparc/murmur)
-- 更新：2026-08-01
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages CUDA-accelerated Kafka streams, Spatio-Temporal GNNs, Liquid Neural Networks, and an Audio LLM to localize physical anomalies and forecast equipment failures in continuous time.
-
 ### [qorm/LNN](https://github.com/qorm/LNN)
-- 更新：2026-08-01
+- 更新：2026-08-02
 - Star / Fork：1 / 0
 - 语言：Go
 - Topics：未标注
 - 说明：Liquid Neural Networks Golang Library
 
+### [smparc/murmur](https://github.com/smparc/murmur)
+- 更新：2026-08-02
+- Star / Fork：1 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages CUDA-accelerated Kafka streams, Spatio-Temporal GNNs, Liquid Neural Networks, and an Audio LLM to localize physical anomalies and forecast equipment failures in continuous time.
+
 ### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
-- 更新：2026-08-01
+- 更新：2026-08-02
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
@@ -84,13 +84,6 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：computer-vision, diffusion-models, liquid-neural-networks, pytorch, research
 - 说明：Experimental image diffusion models built with liquid neural-network blocks
 
-### [wangzifan396-wzf/liquid-neural-network-viz-lab](https://github.com/wangzifan396-wzf/liquid-neural-network-viz-lab)
-- 更新：2026-07-27
-- Star / Fork：0 / 0
-- 语言：HTML
-- Topics：未标注
-- 说明：Liquid Neural Network Visualization Lab
-
 ### [Saad1926Q/slidevqa-smth](https://github.com/Saad1926Q/slidevqa-smth)
 - 更新：2026-07-27
 - Star / Fork：0 / 0
@@ -111,6 +104,13 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Jupyter Notebook
 - Topics：未标注
 - 说明：Adaptive Liquid Time-Constant Equivalent Dynamic Model with Transfer Learning for Active Distribution Networks with Grid-Forming IBRs
+
+### [WAPA0012/grepmem-lnn](https://github.com/WAPA0012/grepmem-lnn)
+- 更新：2026-07-23
+- Star / Fork：0 / 0
+- 语言：JavaScript
+- Topics：未标注
+- 说明：Liquid Neural Network time-decay for grepmem salience. CfC-inspired continuous-time decay replacing flat linear decay, with per-memory reinforcement-adaptive tau.
 
 ### [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab)
 - 更新：2026-07-22
@@ -149,109 +149,121 @@ tags: [LNN, repo-watchlist, automation]
 
 ## Hugging Face 模型
 ### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
-- 更新：2026-08-01
-- 下载 / Likes：2566 / 8
+- 更新：2026-08-02
+- 下载 / Likes：2410 / 8
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
 
 ### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
-- 更新：2026-08-01
-- 下载 / Likes：2525 / 0
+- 更新：2026-08-02
+- 下载 / Likes：2357 / 0
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
 
-### [Brunobkr/OFFELLIA_Q4_2_H_LFM2-700M-Heretic.gguf](https://huggingface.co/Brunobkr/OFFELLIA_Q4_2_H_LFM2-700M-Heretic.gguf)
-- 更新：2026-08-01
+### [cstr/lfm2-colbert-GGUF](https://huggingface.co/cstr/lfm2-colbert-GGUF)
+- 更新：2026-08-02
+- 下载 / Likes：582 / 0
+- 任务：unknown
+- Tags：gguf, colbert, retrieval, multi-vector, late-interaction, crispembed, ggml, en
+
+### [cstr/lfm2-embed-GGUF](https://huggingface.co/cstr/lfm2-embed-GGUF)
+- 更新：2026-08-02
+- 下载 / Likes：543 / 0
+- 任务：unknown
+- Tags：gguf, embedding, retrieval, text-embeddings-inference, crispembed, en, de, fr
+
+### [cstr/lfm2-audio-1.5b-GGUF](https://huggingface.co/cstr/lfm2-audio-1.5b-GGUF)
+- 更新：2026-08-02
+- 下载 / Likes：395 / 0
+- 任务：unknown
+- Tags：gguf, crispasr, asr, tts, speech-to-speech, audio, liquid-ai, lfm2
+
+### [cstr/lfm2-audio-1.5b-jp-GGUF](https://huggingface.co/cstr/lfm2-audio-1.5b-jp-GGUF)
+- 更新：2026-08-02
+- 下载 / Likes：258 / 0
+- 任务：unknown
+- Tags：gguf, crispasr, asr, tts, speech-to-speech, audio, liquid-ai, lfm2
+
+### [Codingstark/LFM2.5-350M-PR-Origin](https://huggingface.co/Codingstark/LFM2.5-350M-PR-Origin)
+- 更新：2026-08-02
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：gguf, model, brasil, brazil, multilingual, portuguese, português, llama.cpp
+- Tags：peft, safetensors, lora, unsloth, lfm2, code, pull-request, model-inversion
 
-### [RESMP-DEV/LFM2.5-Encoder-350M-Code-MXFP8-GPTQ](https://huggingface.co/RESMP-DEV/LFM2.5-Encoder-350M-Code-MXFP8-GPTQ)
-- 更新：2026-08-01
+### [Vocabook/LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/Vocabook/LFM2.5-1.2B-Instruct-GGUF)
+- 更新：2026-08-02
 - 下载 / Likes：0 / 0
-- 任务：feature-extraction
-- Tags：mlx, safetensors, lfm2, code, embeddings, feature-extraction, mxfp8, gptq
+- 任务：text-generation
+- Tags：gguf, liquid, lfm2.5, edge, llama.cpp, text-generation, en, ar
+
+### [cyqwill/sger-lfm2.5-name-matching](https://huggingface.co/cyqwill/sger-lfm2.5-name-matching)
+- 更新：2026-08-02
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, lfm2, lfm2.5, entity-resolution, kyc, name-matching, hi, en
+
+### [TheWirelessPhoenix/LFM2.5-8B-A1B-Base-mlx-4bit](https://huggingface.co/TheWirelessPhoenix/LFM2.5-8B-A1B-Base-mlx-4bit)
+- 更新：2026-08-02
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, text-generation, conversational
 
 ### [RESMP-DEV/LFM2.5-Encoder-350M-Code-MXFP4-GPTQ](https://huggingface.co/RESMP-DEV/LFM2.5-Encoder-350M-Code-MXFP4-GPTQ)
 - 更新：2026-08-01
-- 下载 / Likes：0 / 1
+- 下载 / Likes：42 / 1
 - 任务：feature-extraction
 - Tags：mlx, safetensors, lfm2, code, embeddings, feature-extraction, mxfp4, gptq
 
-### [RESMP-DEV/LFM2.5-Encoder-350M-Code-BF16](https://huggingface.co/RESMP-DEV/LFM2.5-Encoder-350M-Code-BF16)
+### [RESMP-DEV/LFM2.5-Encoder-350M-Code-MXFP8-GPTQ](https://huggingface.co/RESMP-DEV/LFM2.5-Encoder-350M-Code-MXFP8-GPTQ)
 - 更新：2026-08-01
-- 下载 / Likes：0 / 0
-- 任务：feature-extraction
-- Tags：transformers, safetensors, lfm2, feature-extraction, code, embeddings, pytorch, bf16
-
-### [RESMP-DEV/LFM2.5-Encoder-230M-Code-MXFP8-GPTQ](https://huggingface.co/RESMP-DEV/LFM2.5-Encoder-230M-Code-MXFP8-GPTQ)
-- 更新：2026-08-01
-- 下载 / Likes：0 / 0
+- 下载 / Likes：37 / 0
 - 任务：feature-extraction
 - Tags：mlx, safetensors, lfm2, code, embeddings, feature-extraction, mxfp8, gptq
 
-### [RESMP-DEV/LFM2.5-Encoder-230M-Code-MXFP4-GPTQ](https://huggingface.co/RESMP-DEV/LFM2.5-Encoder-230M-Code-MXFP4-GPTQ)
-- 更新：2026-08-01
-- 下载 / Likes：0 / 0
-- 任务：feature-extraction
-- Tags：mlx, safetensors, lfm2, code, embeddings, feature-extraction, mxfp4, gptq
-
-### [RESMP-DEV/LFM2.5-Encoder-230M-Code-BF16](https://huggingface.co/RESMP-DEV/LFM2.5-Encoder-230M-Code-BF16)
-- 更新：2026-08-01
-- 下载 / Likes：0 / 0
-- 任务：feature-extraction
-- Tags：transformers, safetensors, lfm2, feature-extraction, code, embeddings, pytorch, bf16
-
 ### [LiquidAI/LFM2.5-Encoder-230M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-230M)
 - 更新：2026-07-28
-- 下载 / Likes：13054 / 77
+- 下载 / Likes：15930 / 79
 - 任务：fill-mask
 - Tags：transformers, safetensors, lfm2, fill-mask, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-Encoder-350M](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M)
 - 更新：2026-07-28
-- 下载 / Likes：6190 / 85
+- 下载 / Likes：6957 / 89
 - 任务：fill-mask
 - Tags：transformers, safetensors, lfm2, fill-mask, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-Encoder-350M-Prompt-Router](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Prompt-Router)
 - 更新：2026-07-28
-- 下载 / Likes：617 / 19
+- 下载 / Likes：792 / 19
 - 任务：text-classification
 - Tags：transformers, safetensors, lfm2, feature-extraction, liquid, lfm2.5, bidirectional, masked-lm
 
-### [LiquidAI/LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-PII-Detector)
-- 更新：2026-07-28
-- 下载 / Likes：447 / 19
-- 任务：token-classification
-- Tags：transformers, safetensors, lfm2, token-classification, liquid, lfm2.5, bidirectional, masked-lm
-
 ### [LiquidAI/LFM2.5-Encoder-350M-Diffusion](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Diffusion)
 - 更新：2026-07-28
-- 下载 / Likes：270 / 12
+- 下载 / Likes：549 / 12
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, fill-mask, liquid, lfm2.5, bidirectional, masked-lm
 
+### [LiquidAI/LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-PII-Detector)
+- 更新：2026-07-28
+- 下载 / Likes：534 / 19
+- 任务：token-classification
+- Tags：transformers, safetensors, lfm2, token-classification, liquid, lfm2.5, bidirectional, masked-lm
+
 ### [LiquidAI/LFM2.5-Encoder-350M-Spellchecker](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Spellchecker)
 - 更新：2026-07-28
-- 下载 / Likes：260 / 8
+- 下载 / Likes：283 / 8
 - 任务：token-classification
 - Tags：transformers, safetensors, gec_tagger, feature-extraction, liquid, lfm2, lfm2.5, bidirectional
 
 ### [LiquidAI/LFM2.5-Encoder-350M-Policy-Linter](https://huggingface.co/LiquidAI/LFM2.5-Encoder-350M-Policy-Linter)
 - 更新：2026-07-28
-- 下载 / Likes：104 / 4
+- 下载 / Likes：125 / 4
 - 任务：token-classification
 - Tags：transformers, safetensors, lfm2, feature-extraction, liquid, lfm2.5, bidirectional, masked-lm
 
 ### [LiquidAI/LFM2.5-VL-1.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF)
 - 更新：2026-07-22
-- 下载 / Likes：70826 / 98
+- 下载 / Likes：71697 / 98
 - 任务：image-text-to-text
 - Tags：gguf, liquid, edge, lfm2.5-vl, lfm2.5, llama.cpp, image-text-to-text, en
-
-### [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE)
-- 更新：2026-05-06
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
