@@ -1,0 +1,1200 @@
+{
+  "status": "ok",
+  "experiment": "jetson_lnn_pareto_sweep",
+  "generated_at": "2026-08-03T07:08:59.378079+00:00",
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.10.19",
+    "device_tree_model": null,
+    "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "tegrastats_available": false,
+    "jetson_clocks_available": false,
+    "torch_version": "2.10.0",
+    "cuda_available": true,
+    "cuda_version": "12.6",
+    "cudnn_version": 90300,
+    "cuda_device": {
+      "name": "Orin",
+      "total_memory_mb": 7619.79,
+      "multi_processor_count": 8
+    }
+  },
+  "device": "cuda",
+  "config": {
+    "samples": 192,
+    "epochs": 3,
+    "batch_size": 16,
+    "lr": 0.003,
+    "hidden_sizes": [
+      8,
+      16,
+      24
+    ],
+    "seq_lens": [
+      16,
+      32
+    ],
+    "seeds": [
+      42,
+      43
+    ],
+    "inference_repeats": 2
+  },
+  "results": [
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.5071277022361755,
+      "train_seconds": 2.3642596919089556,
+      "inference_steps_per_sec": 28895.52557672623,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 185,
+      "test_mse": 0.6119887828826904,
+      "train_seconds": 6.483433540910482,
+      "inference_steps_per_sec": 6977.228396763121,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 418,
+      "test_mse": 0.509493350982666,
+      "train_seconds": 1.9467473602853715,
+      "inference_steps_per_sec": 28483.108831421952,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.5767360329627991,
+      "train_seconds": 0.2707660999149084,
+      "inference_steps_per_sec": 780926.8091760357,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.5434249639511108,
+      "train_seconds": 2.09904676489532,
+      "inference_steps_per_sec": 33634.12608089269,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 185,
+      "test_mse": 0.5904156565666199,
+      "train_seconds": 6.5327605828642845,
+      "inference_steps_per_sec": 6809.437110763571,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 418,
+      "test_mse": 0.44072988629341125,
+      "train_seconds": 1.8085081009194255,
+      "inference_steps_per_sec": 29612.512456911438,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.5449355840682983,
+      "train_seconds": 0.1823202441446483,
+      "inference_steps_per_sec": 537194.1754822013,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.3877201974391937,
+      "train_seconds": 3.431748210452497,
+      "inference_steps_per_sec": 35166.43958514103,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "LTC",
+      "parameters": 185,
+      "test_mse": 0.5626100301742554,
+      "train_seconds": 12.510839675087482,
+      "inference_steps_per_sec": 7041.6224270477205,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 418,
+      "test_mse": 0.3635719120502472,
+      "train_seconds": 3.0977717437781394,
+      "inference_steps_per_sec": 37654.29248200857,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.48609381914138794,
+      "train_seconds": 0.1470496952533722,
+      "inference_steps_per_sec": 1399055.9676261472,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.42677757143974304,
+      "train_seconds": 3.4284408278763294,
+      "inference_steps_per_sec": 35021.39214182909,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "LTC",
+      "parameters": 185,
+      "test_mse": 0.4377323091030121,
+      "train_seconds": 12.452830872032791,
+      "inference_steps_per_sec": 7089.9963200536295,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 418,
+      "test_mse": 0.3074338138103485,
+      "train_seconds": 3.0114576658234,
+      "inference_steps_per_sec": 38814.508072771096,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.4310424029827118,
+      "train_seconds": 0.18507937621325254,
+      "inference_steps_per_sec": 1138831.085022261,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.47327855229377747,
+      "train_seconds": 1.9949407931417227,
+      "inference_steps_per_sec": 29527.04631849934,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 625,
+      "test_mse": 0.5818930268287659,
+      "train_seconds": 6.405443673022091,
+      "inference_steps_per_sec": 6954.754439501217,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 1474,
+      "test_mse": 0.42262130975723267,
+      "train_seconds": 1.7860288470983505,
+      "inference_steps_per_sec": 31977.81314951177,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.5199099779129028,
+      "train_seconds": 0.1776352240704,
+      "inference_steps_per_sec": 648756.44692322,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.4399549961090088,
+      "train_seconds": 1.9226662912406027,
+      "inference_steps_per_sec": 29608.892818898363,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 625,
+      "test_mse": 0.603967010974884,
+      "train_seconds": 6.405082086101174,
+      "inference_steps_per_sec": 6805.837685914274,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 1474,
+      "test_mse": 0.4193437099456787,
+      "train_seconds": 1.746833364944905,
+      "inference_steps_per_sec": 33469.420041847334,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.5718934535980225,
+      "train_seconds": 0.18213492585346103,
+      "inference_steps_per_sec": 641004.1711471783,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.3544124662876129,
+      "train_seconds": 3.4457779680378735,
+      "inference_steps_per_sec": 35304.205294078514,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 625,
+      "test_mse": 0.467261403799057,
+      "train_seconds": 12.400779716670513,
+      "inference_steps_per_sec": 7086.97049240571,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 1474,
+      "test_mse": 0.3179520070552826,
+      "train_seconds": 3.009501268155873,
+      "inference_steps_per_sec": 38848.32036975589,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.3881951868534088,
+      "train_seconds": 0.17855403805151582,
+      "inference_steps_per_sec": 1098075.9076047032,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.2885306179523468,
+      "train_seconds": 3.527849717065692,
+      "inference_steps_per_sec": 35780.77625487752,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "LTC",
+      "parameters": 625,
+      "test_mse": 0.4430714249610901,
+      "train_seconds": 12.849700680933893,
+      "inference_steps_per_sec": 6765.974624518911,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 1474,
+      "test_mse": 0.26748546957969666,
+      "train_seconds": 3.0230126888491213,
+      "inference_steps_per_sec": 37396.34351573125,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.47085699439048767,
+      "train_seconds": 0.13617931492626667,
+      "inference_steps_per_sec": 1512779.7939470399,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 2521,
+      "test_mse": 0.44771695137023926,
+      "train_seconds": 1.9967228900641203,
+      "inference_steps_per_sec": 29682.653337000316,
+      "hidden_size": 24,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 1321,
+      "test_mse": 0.5127387642860413,
+      "train_seconds": 6.603590391110629,
+      "inference_steps_per_sec": 6821.3799445168415,
+      "hidden_size": 24,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 3170,
+      "test_mse": 0.4036003351211548,
+      "train_seconds": 1.6953443801030517,
+      "inference_steps_per_sec": 29731.351734404736,
+      "hidden_size": 24,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 1969,
+      "test_mse": 0.4751528203487396,
+      "train_seconds": 0.19668446481227875,
+      "inference_steps_per_sec": 660077.5950026341,
+      "hidden_size": 24,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 2521,
+      "test_mse": 0.38545796275138855,
+      "train_seconds": 2.0927520361728966,
+      "inference_steps_per_sec": 28383.252320761152,
+      "hidden_size": 24,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 1321,
+      "test_mse": 0.5336486101150513,
+      "train_seconds": 6.678559536114335,
+      "inference_steps_per_sec": 6455.9798999366085,
+      "hidden_size": 24,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 3170,
+      "test_mse": 0.4043324887752533,
+      "train_seconds": 1.7351429830305278,
+      "inference_steps_per_sec": 30360.927468824637,
+      "hidden_size": 24,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 1969,
+      "test_mse": 0.48830345273017883,
+      "train_seconds": 0.176104836165905,
+      "inference_steps_per_sec": 476308.29341004806,
+      "hidden_size": 24,
+      "seq_len": 16,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 2521,
+      "test_mse": 0.3330514430999756,
+      "train_seconds": 3.4207564131356776,
+      "inference_steps_per_sec": 35845.35076883759,
+      "hidden_size": 24,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 1321,
+      "test_mse": 0.31713590025901794,
+      "train_seconds": 12.935038323979825,
+      "inference_steps_per_sec": 6795.6374653718785,
+      "hidden_size": 24,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 3170,
+      "test_mse": 0.31648701429367065,
+      "train_seconds": 3.099692029878497,
+      "inference_steps_per_sec": 41134.98623238788,
+      "hidden_size": 24,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "parameters": 1969,
+      "test_mse": 0.352016419172287,
+      "train_seconds": 0.13388490304350853,
+      "inference_steps_per_sec": 1598667.8815699762,
+      "hidden_size": 24,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 2521,
+      "test_mse": 0.24891074001789093,
+      "train_seconds": 3.4013682422228158,
+      "inference_steps_per_sec": 35425.00974006169,
+      "hidden_size": 24,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "LTC",
+      "parameters": 1321,
+      "test_mse": 0.385423868894577,
+      "train_seconds": 12.723202520050108,
+      "inference_steps_per_sec": 6864.011635347435,
+      "hidden_size": 24,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 3170,
+      "test_mse": 0.27873504161834717,
+      "train_seconds": 3.0527168619446456,
+      "inference_steps_per_sec": 38340.85022899065,
+      "hidden_size": 24,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "parameters": 1969,
+      "test_mse": 0.3588308095932007,
+      "train_seconds": 0.16279988083988428,
+      "inference_steps_per_sec": 1181599.2028368332,
+      "hidden_size": 24,
+      "seq_len": 32,
+      "seed": 43,
+      "pareto_front": false
+    }
+  ],
+  "aggregated_results": [
+    {
+      "name": "CfCStyle",
+      "hidden_size": 8,
+      "seq_len": 16,
+      "parameters": 329,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.5252763330936432,
+        "std": 0.025666039897133605,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 31264.82582880946,
+        "std": 3350.696549830095,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 2.2316532284021378,
+        "std": 0.18753385914967466,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "hidden_size": 8,
+      "seq_len": 16,
+      "parameters": 185,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.6012022197246552,
+        "std": 0.015254503909487453,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 6893.332753763346,
+        "std": 118.64635615429349,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 6.5080970618873835,
+        "std": 0.034879485861406795,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "PDNAPulse",
+      "hidden_size": 8,
+      "seq_len": 16,
+      "parameters": 418,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.47511161863803864,
+        "std": 0.04862311217965375,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 29047.810644166697,
+        "std": 798.608962280287,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 1.8776277306023985,
+        "std": 0.09774991772386642,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "hidden_size": 8,
+      "seq_len": 16,
+      "parameters": 273,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.5608358085155487,
+        "std": 0.022486313058077717,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 659060.4923291185,
+        "std": 172344.9980813671,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 0.22654317202977836,
+        "std": 0.06254066438299824,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "CfCStyle",
+      "hidden_size": 8,
+      "seq_len": 32,
+      "parameters": 329,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.4072488844394684,
+        "std": 0.027617734011127576,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 35093.91586348506,
+        "std": 102.56403075964268,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 3.430094519164413,
+        "std": 0.0023386726475863313,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "LTC",
+      "hidden_size": 8,
+      "seq_len": 32,
+      "parameters": 185,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.5001711696386337,
+        "std": 0.08830188338859835,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 7065.809373550675,
+        "std": 34.20550777687072,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 12.481835273560137,
+        "std": 0.04101841800848647,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "PDNAPulse",
+      "hidden_size": 8,
+      "seq_len": 32,
+      "parameters": 418,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.33550286293029785,
+        "std": 0.039695629948348944,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 38234.40027738983,
+        "std": 820.3963118665395,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 3.0546147048007697,
+        "std": 0.06103326983366047,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "hidden_size": 8,
+      "seq_len": 32,
+      "parameters": 273,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.45856811106204987,
+        "std": 0.038927229679722584,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 1268943.5263242042,
+        "std": 184006.77912268124,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 0.16606453573331237,
+        "std": 0.026891045293092327,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "hidden_size": 16,
+      "seq_len": 16,
+      "parameters": 1169,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.4566167742013931,
+        "std": 0.023563312551500848,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 29567.96956869885,
+        "std": 57.87421544853739,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 1.9588035421911627,
+        "std": 0.051105790401161935,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "hidden_size": 16,
+      "seq_len": 16,
+      "parameters": 625,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.592930018901825,
+        "std": 0.015608663877524496,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 6880.2960627077455,
+        "std": 105.30004629361405,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 6.405262879561633,
+        "std": 0.0002556805637687987,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "hidden_size": 16,
+      "seq_len": 16,
+      "parameters": 1474,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.4209825098514557,
+        "std": 0.002317613052765552,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 32723.616595679552,
+        "std": 1054.7253484350692,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 1.7664311060216278,
+        "std": 0.027715391222577605,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "hidden_size": 16,
+      "seq_len": 16,
+      "parameters": 929,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.5459017157554626,
+        "std": 0.0367578681665941,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 644880.3090351991,
+        "std": 5481.686770867272,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 0.1798850749619305,
+        "std": 0.003181769644119652,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "CfCStyle",
+      "hidden_size": 16,
+      "seq_len": 32,
+      "parameters": 1169,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.32147154211997986,
+        "std": 0.04658550171497033,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 35542.49077447802,
+        "std": 336.9865580975659,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 3.4868138425517827,
+        "std": 0.05803349028141086,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "LTC",
+      "hidden_size": 16,
+      "seq_len": 32,
+      "parameters": 625,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.45516641438007355,
+        "std": 0.01710489807308549,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 6926.47255846231,
+        "std": 226.97835491561656,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 12.625240198802203,
+        "std": 0.31743505804743943,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "hidden_size": 16,
+      "seq_len": 32,
+      "parameters": 1474,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.2927187383174896,
+        "std": 0.035685230871991845,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 38122.33194274357,
+        "std": 1026.7026796067357,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 3.016256978502497,
+        "std": 0.009554017195660265,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "hidden_size": 16,
+      "seq_len": 32,
+      "parameters": 929,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.42952609062194824,
+        "std": 0.058450724654605726,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 1305427.8507758714,
+        "std": 293239.9302170815,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 0.15736667648889124,
+        "std": 0.029963454072766085,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "hidden_size": 24,
+      "seq_len": 16,
+      "parameters": 2521,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.4165874570608139,
+        "std": 0.04402375304220542,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 29032.952828880734,
+        "std": 918.8152700634041,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 2.0447374631185085,
+        "std": 0.0679028604050695,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "hidden_size": 24,
+      "seq_len": 16,
+      "parameters": 1321,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.5231936872005463,
+        "std": 0.014785493779258224,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 6638.6799222267255,
+        "std": 258.37684936854953,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 6.641074963612482,
+        "std": 0.053011190811878245,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "hidden_size": 24,
+      "seq_len": 16,
+      "parameters": 3170,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.40396641194820404,
+        "std": 0.0005177108136835668,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 30046.139601614686,
+        "std": 445.17727107881285,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 1.7152436815667897,
+        "std": 0.02814186201176918,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "hidden_size": 24,
+      "seq_len": 16,
+      "parameters": 1969,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.48172813653945923,
+        "std": 0.009298901333807062,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 568192.944206341,
+        "std": 129944.51933003339,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 0.18639465048909187,
+        "std": 0.014551994970151808,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "CfCStyle",
+      "hidden_size": 24,
+      "seq_len": 32,
+      "parameters": 2521,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.29098109155893326,
+        "std": 0.0594964617231459,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 35635.18025444964,
+        "std": 297.225991858371,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 3.4110623276792467,
+        "std": 0.013709507127288372,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "LTC",
+      "hidden_size": 24,
+      "seq_len": 32,
+      "parameters": 1321,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.3512798845767975,
+        "std": 0.048286885695658095,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 6829.824550359657,
+        "std": 48.347839247717616,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 12.829120422014967,
+        "std": 0.14979053345680632,
+        "n_seeds": 2
+      },
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "hidden_size": 24,
+      "seq_len": 32,
+      "parameters": 3170,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.2976110279560089,
+        "std": 0.026694675881890485,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 39737.91823068926,
+        "std": 1975.75251555966,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 3.0762044459115714,
+        "std": 0.03321645979340324,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "hidden_size": 24,
+      "seq_len": 32,
+      "parameters": 1969,
+      "seeds": [
+        42,
+        43
+      ],
+      "test_mse": {
+        "mean": 0.35542361438274384,
+        "std": 0.004818501676280727,
+        "n_seeds": 2
+      },
+      "inference_steps_per_sec": {
+        "mean": 1390133.5422034047,
+        "std": 294912.09095271904,
+        "n_seeds": 2
+      },
+      "train_seconds": {
+        "mean": 0.1483423919416964,
+        "std": 0.02044597687767575,
+        "n_seeds": 2
+      },
+      "pareto_front": true
+    }
+  ]
+}

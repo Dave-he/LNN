@@ -1,0 +1,17 @@
+# Side-car Dockerfile for the LNN Jetson Orin benchmark.
+#
+# This image extends the NVIDIA Jetson Orin vLLM image (which already has
+# torch 2.10.0 + CUDA 12.6 + dev tools) by adding the small Python-only
+# deps our benchmark code needs (torchdiffeq, matplotlib).
+#
+# Usage:
+#   docker build -f projects/lfm25_orin_nano_smoke/Dockerfile.lnn -t lnn-jetson-orin .
+#   docker run --rm --runtime nvidia --network host \
+#     -v "$PWD":/workspace/LNN -w /workspace/LNN \
+#     lnn-jetson-orin \
+#     python3 scripts/jetson_lnn_benchmark.py --quick --no-cpu-fallback
+FROM ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin
+
+USER root
+RUN pip install --quiet --no-cache-dir torchdiffeq matplotlib scipy
+WORKDIR /workspace/LNN
