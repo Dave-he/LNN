@@ -17,6 +17,7 @@ Documentation=https://github.com/Dave-he/LNN
 [Service]
 Type=oneshot
 WorkingDirectory=$ROOT_DIR
+Environment=PYTHON_BIN=/usr/bin/python3.10
 Environment=RUN_BENCHMARK=auto
 Environment=DOWNLOAD_PDFS=0
 Environment=COMMIT_AND_PUSH=1

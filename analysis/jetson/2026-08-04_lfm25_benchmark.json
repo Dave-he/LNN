@@ -1,0 +1,85 @@
+{
+  "status": "ok",
+  "generated_at": "2026-08-04T05:23:54.049726+00:00",
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.10.12",
+    "torch_version": "2.10.0",
+    "cuda_available": true,
+    "cuda_version": "12.6",
+    "cuda_device": {
+      "name": "Orin",
+      "total_memory_mb": 7619.79
+    },
+    "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia"
+  },
+  "benchmark": {
+    "model_name": "LFM2.5-350M",
+    "model_path": "LiquidAI/LFM2.5-350M",
+    "total_params": 354483968,
+    "model_size_mb": 676.12451171875,
+    "model_size_gb": 0.6602778434753418,
+    "device": "cpu",
+    "dtype": "float16",
+    "load_time_s": 13.204211535863578,
+    "repeats": 3,
+    "num_prompts": 1,
+    "max_new_tokens": 64,
+    "use_cache": true,
+    "prefill_time_s": {
+      "mean": 1.0118966509277623,
+      "min": 0.6806430192664266,
+      "max": 1.4971604119054973
+    },
+    "tokens_per_second": {
+      "mean": 9.005698159980664,
+      "min": 8.00472156263682,
+      "max": 9.525293878555377
+    },
+    "all_results": [
+      {
+        "repeat": 0,
+        "prompt_index": 0,
+        "prompt_length": 9,
+        "tokens_generated": 32,
+        "max_new_tokens": 32,
+        "load_time_s": 13.204211535863578,
+        "prefill_time_s": 0.6806430192664266,
+        "prefill_tokens_per_second": 13.222790427939579,
+        "generate_time_s": 3.394278780091554,
+        "decode_time_s": 3.373008685739478,
+        "tokens_per_second": 9.487079038749796,
+        "generated_text": "Write a short poem about artificial intelligence:\n\nThe code whispers secrets in the dark,\nGuiding the way, yet leaving no trace.\nIt learns from experience, it adapts,\nA"
+      },
+      {
+        "repeat": 1,
+        "prompt_index": 0,
+        "prompt_length": 9,
+        "tokens_generated": 32,
+        "max_new_tokens": 32,
+        "load_time_s": 13.204211535863578,
+        "prefill_time_s": 0.8578865216113627,
+        "prefill_tokens_per_second": 10.490898007227527,
+        "generate_time_s": 4.024449564982206,
+        "decode_time_s": 3.9976406111818505,
+        "tokens_per_second": 8.00472156263682,
+        "generated_text": "Write a short poem about artificial intelligence:\n\nThe code whispers secrets in the dark,\nGuiding the way, yet leaving no trace.\nIt learns from experience, it adapts,\nA"
+      },
+      {
+        "repeat": 2,
+        "prompt_index": 0,
+        "prompt_length": 9,
+        "tokens_generated": 32,
+        "max_new_tokens": 32,
+        "load_time_s": 13.204211535863578,
+        "prefill_time_s": 1.4971604119054973,
+        "prefill_tokens_per_second": 6.011379895187939,
+        "generate_time_s": 3.4062626641243696,
+        "decode_time_s": 3.359476401252323,
+        "tokens_per_second": 9.525293878555377,
+        "generated_text": "Write a short poem about artificial intelligence:\n\nThe code whispers secrets in the dark,\nGuiding the way, yet leaving no trace.\nIt learns from experience, it adapts,\nA"
+      }
+    ]
+  }
+}

@@ -1,15 +1,14 @@
 {
-  "status": "ok_cpu_fallback",
-  "experiment": "jetson_lnn_pareto_sweep",
-  "generated_at": "2026-08-04T03:58:52.685692+00:00",
+  "status": "ok",
+  "generated_at": "2026-08-04T05:20:44.850402+00:00",
   "environment": {
     "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
     "machine": "aarch64",
-    "python": "3.10.19",
-    "device_tree_model": null,
+    "python": "3.10.12",
+    "device_tree_model": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
     "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
-    "tegrastats_available": false,
-    "jetson_clocks_available": false,
+    "tegrastats_available": true,
+    "jetson_clocks_available": true,
     "torch_version": "2.10.0",
     "cuda_available": true,
     "cuda_version": "12.6",
@@ -20,291 +19,303 @@
       "multi_processor_count": 8
     }
   },
-  "device": "cpu",
+  "device": "cuda",
   "config": {
-    "samples": 384,
-    "epochs": 3,
-    "batch_size": 64,
+    "samples": 256,
+    "seq_len": 32,
+    "hidden_size": 16,
+    "epochs": 5,
+    "batch_size": 32,
     "lr": 0.003,
-    "hidden_sizes": [
-      8,
-      16
-    ],
-    "seq_lens": [
-      16,
-      32
-    ],
-    "seeds": [
-      42
-    ],
-    "inference_repeats": 4
+    "seed": 42
   },
   "results": [
     {
       "name": "CfCStyle",
-      "parameters": 329,
-      "test_mse": 0.5909627676010132,
-      "train_seconds": 0.6976494551636279,
-      "inference_steps_per_sec": 147066.0601126231,
-      "hidden_size": 8,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "LTC",
-      "parameters": 185,
-      "test_mse": 0.6542832851409912,
-      "train_seconds": 1.6691709300503135,
-      "inference_steps_per_sec": 29655.133009334426,
-      "hidden_size": 8,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "PDNAPulse",
-      "parameters": 418,
-      "test_mse": 0.7214109301567078,
-      "train_seconds": 0.469205376226455,
-      "inference_steps_per_sec": 127784.4592043491,
-      "hidden_size": 8,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "GRU",
-      "parameters": 273,
-      "test_mse": 0.601099967956543,
-      "train_seconds": 0.2208459572866559,
-      "inference_steps_per_sec": 660580.700162898,
-      "hidden_size": 8,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "NCPS-LTC",
-      "parameters": 339,
-      "test_mse": 0.572989821434021,
-      "train_seconds": 2.282818207051605,
-      "inference_steps_per_sec": 35436.77541661402,
-      "hidden_size": 8,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "NCPS-CfC",
-      "parameters": 5417,
-      "test_mse": 0.3710241913795471,
-      "train_seconds": 1.2250712723471224,
-      "inference_steps_per_sec": 25519.743966221686,
-      "hidden_size": 8,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "CfCStyle",
-      "parameters": 329,
-      "test_mse": 0.5622734427452087,
-      "train_seconds": 1.1298910100013018,
-      "inference_steps_per_sec": 154659.94914676304,
-      "hidden_size": 8,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "LTC",
-      "parameters": 185,
-      "test_mse": 0.6077473759651184,
-      "train_seconds": 3.222100191283971,
-      "inference_steps_per_sec": 32407.792409661466,
-      "hidden_size": 8,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "PDNAPulse",
-      "parameters": 418,
-      "test_mse": 0.40109890699386597,
-      "train_seconds": 0.8693387052044272,
-      "inference_steps_per_sec": 134253.21703970624,
-      "hidden_size": 8,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "GRU",
-      "parameters": 273,
-      "test_mse": 0.483984112739563,
-      "train_seconds": 0.41123449662700295,
-      "inference_steps_per_sec": 568409.523290126,
-      "hidden_size": 8,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "NCPS-LTC",
-      "parameters": 339,
-      "test_mse": 0.6780199408531189,
-      "train_seconds": 4.105554955080152,
-      "inference_steps_per_sec": 45067.14326692454,
-      "hidden_size": 8,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "NCPS-CfC",
-      "parameters": 5417,
-      "test_mse": 0.22761592268943787,
-      "train_seconds": 2.5814926330931485,
-      "inference_steps_per_sec": 24440.07141551474,
-      "hidden_size": 8,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "CfCStyle",
       "parameters": 1169,
-      "test_mse": 0.621814489364624,
-      "train_seconds": 0.44174165884032845,
-      "inference_steps_per_sec": 144267.6785491067,
-      "hidden_size": 16,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": false
+      "test_mse": 0.31373330950737,
+      "train_seconds": 4.9914462747983634,
+      "inference_steps_per_sec": 49042.197538668006,
+      "energy_mj_per_step": 0.17261117788461539
     },
     {
       "name": "LTC",
       "parameters": 625,
-      "test_mse": 0.5720508098602295,
-      "train_seconds": 1.4611581936478615,
-      "inference_steps_per_sec": 33821.15243772502,
-      "hidden_size": 16,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": false
+      "test_mse": 0.4001772403717041,
+      "train_seconds": 14.813024695031345,
+      "inference_steps_per_sec": 9410.659989186392,
+      "energy_mj_per_step": 0.8602764423076923
     },
     {
       "name": "PDNAPulse",
       "parameters": 1474,
-      "test_mse": 0.5250871181488037,
-      "train_seconds": 0.5034008561633527,
-      "inference_steps_per_sec": 123323.64175037123,
-      "hidden_size": 16,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": false
+      "test_mse": 0.29190200567245483,
+      "train_seconds": 3.7992392051965,
+      "inference_steps_per_sec": 52169.218157074145,
+      "energy_mj_per_step": 0.16286057692307693
     },
     {
       "name": "GRU",
       "parameters": 929,
-      "test_mse": 0.5754633545875549,
-      "train_seconds": 0.2991148619912565,
-      "inference_steps_per_sec": 275887.1019629806,
-      "hidden_size": 16,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "NCPS-LTC",
-      "parameters": 1187,
-      "test_mse": 0.5681934356689453,
-      "train_seconds": 2.5858669099397957,
-      "inference_steps_per_sec": 30432.904604606156,
-      "hidden_size": 16,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "NCPS-CfC",
-      "parameters": 10577,
-      "test_mse": 0.36384886503219604,
-      "train_seconds": 1.198534815106541,
-      "inference_steps_per_sec": 22609.86993590631,
-      "hidden_size": 16,
-      "seq_len": 16,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "CfCStyle",
-      "parameters": 1169,
-      "test_mse": 0.4703677296638489,
-      "train_seconds": 0.9213412101380527,
-      "inference_steps_per_sec": 136784.3877721022,
-      "hidden_size": 16,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": true
-    },
-    {
-      "name": "LTC",
-      "parameters": 625,
-      "test_mse": 0.5081126093864441,
-      "train_seconds": 3.4392651431262493,
-      "inference_steps_per_sec": 30444.26033387046,
-      "hidden_size": 16,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "PDNAPulse",
-      "parameters": 1474,
-      "test_mse": 0.4490618109703064,
-      "train_seconds": 1.989592478144914,
-      "inference_steps_per_sec": 32429.16236787572,
-      "hidden_size": 16,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "GRU",
-      "parameters": 929,
-      "test_mse": 0.5672656297683716,
-      "train_seconds": 0.45768859796226025,
-      "inference_steps_per_sec": 351706.8764016863,
-      "hidden_size": 16,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "NCPS-LTC",
-      "parameters": 1187,
-      "test_mse": 0.5397074222564697,
-      "train_seconds": 6.014152076095343,
-      "inference_steps_per_sec": 27971.666042769688,
-      "hidden_size": 16,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": false
-    },
-    {
-      "name": "NCPS-CfC",
-      "parameters": 10577,
-      "test_mse": 0.21715594828128815,
-      "train_seconds": 2.2505559870041907,
-      "inference_steps_per_sec": 18891.89451207027,
-      "hidden_size": 16,
-      "seq_len": 32,
-      "seed": 42,
-      "pareto_front": true
+      "test_mse": 0.35361409187316895,
+      "train_seconds": 0.4315601601265371,
+      "inference_steps_per_sec": 1931749.1217906051
     }
   ],
-  "aggregated_results": [],
-  "cuda_fallback_reason": "RuntimeError: CUDA error: CUBLAS_STATUS_ALLOC_FAILED when calling `cublasCreate(handle)`"
+  "cuda_peak_memory_mb": 27.13,
+  "tegrastats_summary": {
+    "available": true,
+    "n_samples": 253,
+    "duration_s": 26.9276,
+    "interval_ms": 100,
+    "power_mw": {
+      "VDD_IN": {
+        "mean": 6479.0,
+        "peak": 7468,
+        "min": 6000
+      },
+      "VDD_CPU_GPU_CV": {
+        "mean": 1696.3,
+        "peak": 2507,
+        "min": 1118
+      },
+      "VDD_SOC": {
+        "mean": 1498.1,
+        "peak": 1594,
+        "min": 1477
+      }
+    },
+    "energy_mj": {
+      "VDD_IN": 174462.9,
+      "VDD_CPU_GPU_CV": 45676.6,
+      "VDD_SOC": 40341.1
+    },
+    "temp_c": {
+      "cpu": {
+        "mean": 51.12,
+        "peak": 52.218
+      },
+      "soc2": {
+        "mean": 50.17,
+        "peak": 50.406
+      },
+      "soc0": {
+        "mean": 50.94,
+        "peak": 51.156
+      },
+      "gpu": {
+        "mean": 51.74,
+        "peak": 52.156
+      },
+      "tj": {
+        "mean": 51.74,
+        "peak": 52.218
+      },
+      "soc1": {
+        "mean": 51.22,
+        "peak": 51.468
+      }
+    },
+    "gpu_util_pct": {
+      "mean": 21.4,
+      "peak": 32
+    },
+    "ram_used_mb": {
+      "mean": 4935.4,
+      "peak": 5107
+    }
+  },
+  "model_tegrastats": {
+    "CfCStyle": {
+      "available": true,
+      "n_samples": 1,
+      "duration_s": 0.1818,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 6320.0,
+          "peak": 6320,
+          "min": 6320
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 1557.0,
+          "peak": 1557,
+          "min": 1557
+        },
+        "VDD_SOC": {
+          "mean": 1477.0,
+          "peak": 1477,
+          "min": 1477
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 1148.9,
+        "VDD_CPU_GPU_CV": 283.0,
+        "VDD_SOC": 268.5
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 50.75,
+          "peak": 50.75
+        },
+        "soc2": {
+          "mean": 50.16,
+          "peak": 50.156
+        },
+        "soc0": {
+          "mean": 50.97,
+          "peak": 50.968
+        },
+        "gpu": {
+          "mean": 51.62,
+          "peak": 51.625
+        },
+        "tj": {
+          "mean": 51.62,
+          "peak": 51.625
+        },
+        "soc1": {
+          "mean": 51.22,
+          "peak": 51.218
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 25.0,
+        "peak": 25
+      },
+      "ram_used_mb": {
+        "mean": 4928.0,
+        "peak": 4928
+      }
+    },
+    "LTC": {
+      "available": true,
+      "n_samples": 8,
+      "duration_s": 0.8968,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 6385.0,
+          "peak": 6440,
+          "min": 6360
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 1637.0,
+          "peak": 1677,
+          "min": 1597
+        },
+        "VDD_SOC": {
+          "mean": 1477.0,
+          "peak": 1477,
+          "min": 1477
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 5726.0,
+        "VDD_CPU_GPU_CV": 1468.0,
+        "VDD_SOC": 1324.6
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 50.9,
+          "peak": 51.187
+        },
+        "soc2": {
+          "mean": 50.12,
+          "peak": 50.218
+        },
+        "soc0": {
+          "mean": 50.91,
+          "peak": 51.0
+        },
+        "gpu": {
+          "mean": 51.77,
+          "peak": 52.031
+        },
+        "tj": {
+          "mean": 51.77,
+          "peak": 52.031
+        },
+        "soc1": {
+          "mean": 51.24,
+          "peak": 51.406
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 19.9,
+        "peak": 20
+      },
+      "ram_used_mb": {
+        "mean": 4944.0,
+        "peak": 4944
+      }
+    },
+    "PDNAPulse": {
+      "available": true,
+      "n_samples": 1,
+      "duration_s": 0.1737,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 6240.0,
+          "peak": 6240,
+          "min": 6240
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 1517.0,
+          "peak": 1517,
+          "min": 1517
+        },
+        "VDD_SOC": {
+          "mean": 1477.0,
+          "peak": 1477,
+          "min": 1477
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 1084.0,
+        "VDD_CPU_GPU_CV": 263.5,
+        "VDD_SOC": 256.6
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 51.09,
+          "peak": 51.093
+        },
+        "soc2": {
+          "mean": 50.12,
+          "peak": 50.125
+        },
+        "soc0": {
+          "mean": 51.06,
+          "peak": 51.062
+        },
+        "gpu": {
+          "mean": 51.69,
+          "peak": 51.687
+        },
+        "tj": {
+          "mean": 51.69,
+          "peak": 51.687
+        },
+        "soc1": {
+          "mean": 51.28,
+          "peak": 51.281
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 25.0,
+        "peak": 25
+      },
+      "ram_used_mb": {
+        "mean": 4937.0,
+        "peak": 4937
+      }
+    },
+    "GRU": {
+      "available": false,
+      "reason": "tegrastats produced no parseable samples (window too short? try a longer run or smaller --interval)",
+      "n_samples": 0
+    }
+  }
 }
