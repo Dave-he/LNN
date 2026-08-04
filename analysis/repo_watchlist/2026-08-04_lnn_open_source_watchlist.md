@@ -7,6 +7,27 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-08-04
 
 ## GitHub 仓库
+### [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet)
+- 更新：2026-08-04
+- Star / Fork：1 / 0
+- 语言：Jupyter Notebook
+- Topics：未标注
+- 说明：This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics", International Conference on Pattern Recognition, ICPR 2026.
+
+### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
+- 更新：2026-08-04
+- Star / Fork：1 / 0
+- 语言：unknown
+- Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
+- 说明：Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B / 8B-A1B / 24B-A2B) and LFM2.5 (350M / 1.2B variants) with text, vision, audio, and thinking modes. The LEAP platform enables LFM customization and on-device deployment.
+
+### [smparc/murmur](https://github.com/smparc/murmur)
+- 更新：2026-08-04
+- Star / Fork：1 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages CUDA-accelerated Kafka streams, Spatio-Temporal GNNs, Liquid Neural Networks, and an Audio LLM to localize physical anomalies and forecast equipment failures in continuous time.
+
 ### [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer)
 - 更新：2026-08-03
 - Star / Fork：6 / 1
@@ -14,26 +35,12 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：contrastive-learning, dense-retrieval, embedding-models, lfm2, optuna, pytorch, wandb
 - 说明：Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data
 
-### [smparc/murmur](https://github.com/smparc/murmur)
-- 更新：2026-08-03
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages CUDA-accelerated Kafka streams, Spatio-Temporal GNNs, Liquid Neural Networks, and an Audio LLM to localize physical anomalies and forecast equipment failures in continuous time.
-
 ### [qorm/LNN](https://github.com/qorm/LNN)
 - 更新：2026-08-03
 - Star / Fork：1 / 0
 - 语言：Go
 - Topics：未标注
 - 说明：Liquid Neural Networks Golang Library
-
-### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
-- 更新：2026-08-03
-- Star / Fork：1 / 0
-- 语言：unknown
-- Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
-- 说明：Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B / 8B-A1B / 24B-A2B) and LFM2.5 (350M / 1.2B variants) with text, vision, audio, and thinking modes. The LEAP platform enables LFM customization and on-device deployment.
 
 ### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
 - 更新：2026-08-02
@@ -76,13 +83,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：未标注
 - 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
-
-### [Sum-Outman/Self-LNN](https://github.com/Sum-Outman/Self-LNN)
-- 更新：2026-07-28
-- Star / Fork：2 / 0
-- 语言：C
-- Topics：未标注
-- 说明：Self AGI System（Self AGI robot System）.自主通用人工智能系统（自主通用人工智能机器人系统）。 AI capable of perceiving the real world。能够感知真实世界的人工智能。 Liquid Neural Network, C language version, compatible with multiple GPUs and CPUs.液态神经网络，C语言版本，兼容多种GPU,兼容CPU。 Supports embedded standalone operation.支持嵌入式单机运行。
 
 ### [unixsysdev/liquid-diffusion-](https://github.com/unixsysdev/liquid-diffusion-)
 - 更新：2026-07-28
@@ -148,6 +148,48 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：A quad-partite architecture proposing latent-space concept interpolation for continual reinforcement learning, built on a Closed-form Continuous-time (CfC) liquid network.
 
 ## Hugging Face 模型
+### [litert-community/LFM2.5-1.2B-Instruct](https://huggingface.co/litert-community/LFM2.5-1.2B-Instruct)
+- 更新：2026-08-04
+- 下载 / Likes：224 / 0
+- 任务：text-generation
+- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, text-generation
+
+### [litert-community/LFM2.5-1.2B-Thinking](https://huggingface.co/litert-community/LFM2.5-1.2B-Thinking)
+- 更新：2026-08-04
+- 下载 / Likes：186 / 0
+- 任务：text-generation
+- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, reasoning
+
+### [litert-community/LFM2.5-1.2B-JP](https://huggingface.co/litert-community/LFM2.5-1.2B-JP)
+- 更新：2026-08-04
+- 下载 / Likes：86 / 1
+- 任务：text-generation
+- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, japanese
+
+### [litert-community/LFM2.5-Encoder-350M-Spellchecker](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-Spellchecker)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：token-classification
+- Tags：litert, tflite, on-device, edge, encoder, spellcheck, grammar, gec
+
+### [litert-community/LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-PII-Detector)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：token-classification
+- Tags：litert, tflite, on-device, edge, encoder, pii, ner, privacy
+
+### [litert-community/LFM2.5-Encoder-350M-Policy-Linter](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-Policy-Linter)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：token-classification
+- Tags：litert, tflite, on-device, edge, encoder, zero-shot, policy, compliance
+
+### [litert-community/LFM2.5-Encoder-350M-Prompt-Router](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-Prompt-Router)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：text-classification
+- Tags：litert, tflite, on-device, edge, encoder, zero-shot, routing, liquid
+
 ### [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct)
 - 更新：2026-08-03
 - 下载 / Likes：601456 / 644
@@ -162,7 +204,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M)
 - 更新：2026-08-03
-- 下载 / Likes：93808 / 386
+- 下载 / Likes：93808 / 387
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
@@ -190,12 +232,6 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, edge, conversational, en
 
-### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
-- 更新：2026-08-03
-- 下载 / Likes：2234 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
-
 ### [LiquidAI/LFM2-1.2B-RAG](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG)
 - 更新：2026-08-03
 - 下载 / Likes：663 / 132
@@ -207,42 +243,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 0
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
-
-### [Q1ngMang/LFM2.5-350M-PT-zh_CN](https://huggingface.co/Q1ngMang/LFM2.5-350M-PT-zh_CN)
-- 更新：2026-08-03
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
-
-### [xocialize/LFM2.5-8B-A1B-MLX-8bit](https://huggingface.co/xocialize/LFM2.5-8B-A1B-MLX-8bit)
-- 更新：2026-08-03
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：mlx, safetensors, lfm2_moe, apple-silicon, text-generation, moe, conversational, base_model:LiquidAI/LFM2.5-8B-A1B
-
-### [xocialize/LFM2.5-8B-A1B-MLX-4bit](https://huggingface.co/xocialize/LFM2.5-8B-A1B-MLX-4bit)
-- 更新：2026-08-03
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：mlx, safetensors, lfm2_moe, apple-silicon, text-generation, moe, conversational, base_model:LiquidAI/LFM2.5-8B-A1B
-
-### [xocialize/LFM2.5-8B-A1B-MLX-bf16](https://huggingface.co/xocialize/LFM2.5-8B-A1B-MLX-bf16)
-- 更新：2026-08-03
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：mlx, safetensors, lfm2_moe, apple-silicon, text-generation, moe, conversational, base_model:LiquidAI/LFM2.5-8B-A1B
-
-### [xocialize/LFM2.5-8B-A1B-MLX-6bit](https://huggingface.co/xocialize/LFM2.5-8B-A1B-MLX-6bit)
-- 更新：2026-08-03
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：mlx, safetensors, lfm2_moe, apple-silicon, text-generation, moe, conversational, base_model:LiquidAI/LFM2.5-8B-A1B
-
-### [xocialize/LFM2.5-8B-A1B-MLX-5bit](https://huggingface.co/xocialize/LFM2.5-8B-A1B-MLX-5bit)
-- 更新：2026-08-03
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：mlx, safetensors, lfm2_moe, apple-silicon, text-generation, moe, conversational, base_model:LiquidAI/LFM2.5-8B-A1B
 
 ### [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE)
 - 更新：2026-05-06

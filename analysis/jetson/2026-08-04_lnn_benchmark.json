@@ -1,0 +1,310 @@
+{
+  "status": "ok_cpu_fallback",
+  "experiment": "jetson_lnn_pareto_sweep",
+  "generated_at": "2026-08-04T03:58:52.685692+00:00",
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.10.19",
+    "device_tree_model": null,
+    "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "tegrastats_available": false,
+    "jetson_clocks_available": false,
+    "torch_version": "2.10.0",
+    "cuda_available": true,
+    "cuda_version": "12.6",
+    "cudnn_version": 90300,
+    "cuda_device": {
+      "name": "Orin",
+      "total_memory_mb": 7619.79,
+      "multi_processor_count": 8
+    }
+  },
+  "device": "cpu",
+  "config": {
+    "samples": 384,
+    "epochs": 3,
+    "batch_size": 64,
+    "lr": 0.003,
+    "hidden_sizes": [
+      8,
+      16
+    ],
+    "seq_lens": [
+      16,
+      32
+    ],
+    "seeds": [
+      42
+    ],
+    "inference_repeats": 4
+  },
+  "results": [
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.5909627676010132,
+      "train_seconds": 0.6976494551636279,
+      "inference_steps_per_sec": 147066.0601126231,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 185,
+      "test_mse": 0.6542832851409912,
+      "train_seconds": 1.6691709300503135,
+      "inference_steps_per_sec": 29655.133009334426,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 418,
+      "test_mse": 0.7214109301567078,
+      "train_seconds": 0.469205376226455,
+      "inference_steps_per_sec": 127784.4592043491,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.601099967956543,
+      "train_seconds": 0.2208459572866559,
+      "inference_steps_per_sec": 660580.700162898,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "NCPS-LTC",
+      "parameters": 339,
+      "test_mse": 0.572989821434021,
+      "train_seconds": 2.282818207051605,
+      "inference_steps_per_sec": 35436.77541661402,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "NCPS-CfC",
+      "parameters": 5417,
+      "test_mse": 0.3710241913795471,
+      "train_seconds": 1.2250712723471224,
+      "inference_steps_per_sec": 25519.743966221686,
+      "hidden_size": 8,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 329,
+      "test_mse": 0.5622734427452087,
+      "train_seconds": 1.1298910100013018,
+      "inference_steps_per_sec": 154659.94914676304,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 185,
+      "test_mse": 0.6077473759651184,
+      "train_seconds": 3.222100191283971,
+      "inference_steps_per_sec": 32407.792409661466,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 418,
+      "test_mse": 0.40109890699386597,
+      "train_seconds": 0.8693387052044272,
+      "inference_steps_per_sec": 134253.21703970624,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "GRU",
+      "parameters": 273,
+      "test_mse": 0.483984112739563,
+      "train_seconds": 0.41123449662700295,
+      "inference_steps_per_sec": 568409.523290126,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "NCPS-LTC",
+      "parameters": 339,
+      "test_mse": 0.6780199408531189,
+      "train_seconds": 4.105554955080152,
+      "inference_steps_per_sec": 45067.14326692454,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "NCPS-CfC",
+      "parameters": 5417,
+      "test_mse": 0.22761592268943787,
+      "train_seconds": 2.5814926330931485,
+      "inference_steps_per_sec": 24440.07141551474,
+      "hidden_size": 8,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.621814489364624,
+      "train_seconds": 0.44174165884032845,
+      "inference_steps_per_sec": 144267.6785491067,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "LTC",
+      "parameters": 625,
+      "test_mse": 0.5720508098602295,
+      "train_seconds": 1.4611581936478615,
+      "inference_steps_per_sec": 33821.15243772502,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 1474,
+      "test_mse": 0.5250871181488037,
+      "train_seconds": 0.5034008561633527,
+      "inference_steps_per_sec": 123323.64175037123,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.5754633545875549,
+      "train_seconds": 0.2991148619912565,
+      "inference_steps_per_sec": 275887.1019629806,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "NCPS-LTC",
+      "parameters": 1187,
+      "test_mse": 0.5681934356689453,
+      "train_seconds": 2.5858669099397957,
+      "inference_steps_per_sec": 30432.904604606156,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "NCPS-CfC",
+      "parameters": 10577,
+      "test_mse": 0.36384886503219604,
+      "train_seconds": 1.198534815106541,
+      "inference_steps_per_sec": 22609.86993590631,
+      "hidden_size": 16,
+      "seq_len": 16,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "CfCStyle",
+      "parameters": 1169,
+      "test_mse": 0.4703677296638489,
+      "train_seconds": 0.9213412101380527,
+      "inference_steps_per_sec": 136784.3877721022,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    },
+    {
+      "name": "LTC",
+      "parameters": 625,
+      "test_mse": 0.5081126093864441,
+      "train_seconds": 3.4392651431262493,
+      "inference_steps_per_sec": 30444.26033387046,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 1474,
+      "test_mse": 0.4490618109703064,
+      "train_seconds": 1.989592478144914,
+      "inference_steps_per_sec": 32429.16236787572,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "GRU",
+      "parameters": 929,
+      "test_mse": 0.5672656297683716,
+      "train_seconds": 0.45768859796226025,
+      "inference_steps_per_sec": 351706.8764016863,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "NCPS-LTC",
+      "parameters": 1187,
+      "test_mse": 0.5397074222564697,
+      "train_seconds": 6.014152076095343,
+      "inference_steps_per_sec": 27971.666042769688,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": false
+    },
+    {
+      "name": "NCPS-CfC",
+      "parameters": 10577,
+      "test_mse": 0.21715594828128815,
+      "train_seconds": 2.2505559870041907,
+      "inference_steps_per_sec": 18891.89451207027,
+      "hidden_size": 16,
+      "seq_len": 32,
+      "seed": 42,
+      "pareto_front": true
+    }
+  ],
+  "aggregated_results": [],
+  "cuda_fallback_reason": "RuntimeError: CUDA error: CUBLAS_STATUS_ALLOC_FAILED when calling `cublasCreate(handle)`"
+}

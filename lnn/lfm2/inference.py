@@ -1,16 +1,16 @@
 """
-LFM2 (Liquid Foundation Model 2) inference and deployment module.
+LFM2 / LFM2.5 (Liquid Foundation Model) inference and deployment module.
 
 Provides utilities for loading, running inference, and deploying
-Liquid AI's LFM2 models from HuggingFace.
+Liquid AI's LFM2/LFM2.5 models from HuggingFace.
 
-Note: LFM2 models require the `transformers` library and may need
+Note: LFM2/LFM2.5 models require the `transformers` library and may need
 specific model configurations from Liquid AI's HuggingFace repository.
 
 Usage:
     from lnn.lfm2.inference import LFM2Inference
 
-    runner = LFM2Inference(model_name="LiquidAI/LFM2-350M")
+    runner = LFM2Inference(model_name="LiquidAI/LFM2.5-350M")
     output = runner.generate("The future of AI is")
 """
 
@@ -32,11 +32,18 @@ def _check_transformers():
 
 
 AVAILABLE_MODELS = {
+    # LFM2 series
     "LFM2-350M": "LiquidAI/LFM2-350M",
     "LFM2-700M": "LiquidAI/LFM2-700M",
     "LFM2-1.2B": "LiquidAI/LFM2-1.2B",
     "LFM2-2.6B-Exp": "LiquidAI/LFM2-2.6B-Exp",
     "LFM2-24B-A2B": "LiquidAI/LFM2-24B-A2B",
+    # LFM2.5 series (newer)
+    "LFM2.5-350M": "LiquidAI/LFM2.5-350M",
+    "LFM2.5-450M": "LiquidAI/LFM2.5-450M",
+    "LFM2.5-1.2B-Instruct": "LiquidAI/LFM2.5-1.2B-Instruct",
+    "LFM2.5-1.2B-Thinking": "LiquidAI/LFM2.5-1.2B-Thinking",
+    "LFM2.5-8B-A1B": "LiquidAI/LFM2.5-8B-A1B",
 }
 
 

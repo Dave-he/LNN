@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Run a small LNN/CfC-style benchmark suitable for Jetson edge devices."""
+"""Run a small LNN/CfC-style benchmark suitable for Jetson edge devices.
+
+Extensions since iter#35:
+- tegrastats power/thermal sampling (via lnn.edge.tegrastats)
+- NCPS official LTC/CfC implementations as comparison baselines
+- optional ONNX/TensorRT export and benchmark (--export-trt)
+"""
 
 from __future__ import annotations
 
@@ -20,6 +26,7 @@ from typing import Any
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 
 def read_text(path: str) -> str | None:
@@ -169,6 +176,42 @@ def detect_environment(torch_module: Any | None = None) -> dict[str, Any]:
     return env
 
 
+def _format_power_summary(power_summary: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+    if not power_summary or not power_summary.get("available"):
+        lines.extend(["- 功耗采样：不可用"])
+        reason = power_summary.get("reason", "tegrastats not available") if power_summary else "tegrastats not available"
+        lines.append(f"  - {reason}")
+        return lines
+
+    lines.append(f"- 功耗采样：可用 ({power_summary['n_samples']} samples @ {power_summary['interval_ms']}ms)")
+    lines.append(f"- 采样窗口时长：{power_summary['duration_s']:.2f}s")
+
+    power = power_summary.get("power_mw", {})
+    if power:
+        lines.append("- 功率轨道 (mean/peak)：")
+        for rail, stats in sorted(power.items()):
+            lines.append(f"  - {rail}: {stats['mean']:.0f}/{stats['peak']} mW")
+
+    energy = power_summary.get("energy_mj", {})
+    if energy:
+        lines.append("- 总能耗：")
+        for rail, value in sorted(energy.items()):
+            lines.append(f"  - {rail}: {value:.0f} mJ ({value/1000:.3f} J)")
+
+    temps = power_summary.get("temp_c", {})
+    if temps:
+        lines.append("- 温度：")
+        for zone, stats in sorted(temps.items()):
+            lines.append(f"  - {zone}: {stats['mean']:.1f}°C (peak {stats['peak']:.1f}°C)")
+
+    gpu = power_summary.get("gpu_util_pct", {})
+    if gpu:
+        lines.append(f"- GPU 利用率：mean {gpu['mean']:.0f}%, peak {gpu['peak']}%")
+
+    return lines
+
+
 def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, pathlib.Path]:
     output_dir = ROOT / "analysis" / "jetson"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -201,6 +244,21 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
         device = env["cuda_device"]
         lines.append(f"- CUDA 设备：{device.get('name')}，显存 {device.get('total_memory_mb')} MB")
 
+    # Power summary (if present)
+    power_summary = payload.get("tegrastats_summary")
+    if power_summary:
+        lines.extend(["", "## 功耗与温度"])
+        lines.extend(_format_power_summary(power_summary))
+
+    # Per-model power (if present)
+    per_model_power = payload.get("model_tegrastats", {})
+    if per_model_power:
+        lines.extend(["", "## 各模型独立功耗"])
+        for model_name in sorted(per_model_power.keys()):
+            summary = per_model_power[model_name]
+            lines.extend(["", f"### {model_name}"])
+            lines.extend(_format_power_summary(summary))
+
     if payload.get("status") not in {"ok", "ok_cpu_fallback"}:
         lines.extend(["", "## 状态", f"- {payload.get('status')}: {payload.get('reason')}"])
     elif payload.get("experiment") == "jetson_lnn_pareto_sweep":
@@ -215,23 +273,54 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
                 f"- SeqLen sweep：{config.get('seq_lens')}",
                 f"- Seeds：{config.get('seeds')}",
                 f"- 设备：{payload.get('device')}",
-                "",
-                "## Pareto 结果",
-                "| Front | 模型 | Hidden | SeqLen | Seed | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |",
-                "|---|---|---:|---:|---:|---:|---:|---:|---:|",
             ]
         )
-        sorted_results = sorted(
-            payload.get("results", []),
-            key=lambda result: (not result.get("pareto_front"), result["test_mse"]),
-        )
-        for result in sorted_results:
-            marker = "yes" if result.get("pareto_front") else ""
-            lines.append(
-                f"| {marker} | {result['name']} | {result['hidden_size']} | {result['seq_len']} | "
-                f"{result['seed']} | {result['parameters']} | {result['test_mse']:.6f} | "
-                f"{result['inference_steps_per_sec']:.1f} | {result['train_seconds']:.2f} |"
+
+        # Check if per-model energy is present (single-model mode) or not (pareto mode)
+        has_energy = any("energy_mj_per_step" in result for result in payload.get("results", []))
+        if has_energy:
+            lines.extend(
+                [
+                    "",
+                    "## Pareto 结果",
+                    "| Front | 模型 | Hidden | SeqLen | Seed | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 | VDD_IN mJ/步 |",
+                    "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+                ]
             )
+            sorted_results = sorted(
+                payload.get("results", []),
+                key=lambda result: (not result.get("pareto_front"), result["test_mse"]),
+            )
+            for result in sorted_results:
+                marker = "yes" if result.get("pareto_front") else ""
+                energy = result.get("energy_mj_per_step")
+                energy_str = f"{energy:.2f}" if energy is not None else "n/a"
+                lines.append(
+                    f"| {marker} | {result['name']} | {result['hidden_size']} | {result['seq_len']} | "
+                    f"{result['seed']} | {result['parameters']} | {result['test_mse']:.6f} | "
+                    f"{result['inference_steps_per_sec']:.1f} | {result['train_seconds']:.2f} | {energy_str} |"
+                )
+        else:
+            lines.extend(
+                [
+                    "",
+                    "## Pareto 结果",
+                    "| Front | 模型 | Hidden | SeqLen | Seed | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |",
+                    "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+                ]
+            )
+            sorted_results = sorted(
+                payload.get("results", []),
+                key=lambda result: (not result.get("pareto_front"), result["test_mse"]),
+            )
+            for result in sorted_results:
+                marker = "yes" if result.get("pareto_front") else ""
+                lines.append(
+                    f"| {marker} | {result['name']} | {result['hidden_size']} | {result['seq_len']} | "
+                    f"{result['seed']} | {result['parameters']} | {result['test_mse']:.6f} | "
+                    f"{result['inference_steps_per_sec']:.1f} | {result['train_seconds']:.2f} |"
+                )
+
         if plot_path is not None:
             lines.extend(["", "## Pareto 图", f"![Jetson LNN Pareto]({plot_path.name})"])
         lines.extend(
@@ -242,6 +331,7 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
                 "更短训练时间和更高吞吐。",
                 "- 该 sweep 是边缘筛选入口，正式实验应在真实 Jetson CUDA 路径上增加多 seed、"
                 "能耗和导出后延迟。",
+                "- `NCPS-LTC` / `NCPS-CfC` 是官方实现 (mlech26l/ncps)，与仓库内的近似实现做对比。",
             ]
         )
     else:
@@ -254,17 +344,41 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
                 f"- 样本 / 序列长度：{config.get('samples')} / {config.get('seq_len')}",
                 f"- 隐藏维度 / Epoch：{config.get('hidden_size')} / {config.get('epochs')}",
                 f"- 设备：{payload.get('device')}",
-                "",
-                "## 结果",
-                "| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |",
-                "|---|---:|---:|---:|---:|",
             ]
         )
-        for result in payload.get("results", []):
-            lines.append(
-                f"| {result['name']} | {result['parameters']} | {result['test_mse']:.6f} | "
-                f"{result['inference_steps_per_sec']:.1f} | {result['train_seconds']:.2f} |"
+
+        has_energy = any("energy_mj_per_step" in result for result in payload.get("results", []))
+        if has_energy:
+            lines.extend(
+                [
+                    "",
+                    "## 结果",
+                    "| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 | VDD_IN mJ/步 |",
+                    "|---|---:|---:|---:|---:|---:|",
+                ]
             )
+            for result in payload.get("results", []):
+                energy = result.get("energy_mj_per_step")
+                energy_str = f"{energy:.2f}" if energy is not None else "n/a"
+                lines.append(
+                    f"| {result['name']} | {result['parameters']} | {result['test_mse']:.6f} | "
+                    f"{result['inference_steps_per_sec']:.1f} | {result['train_seconds']:.2f} | {energy_str} |"
+                )
+        else:
+            lines.extend(
+                [
+                    "",
+                    "## 结果",
+                    "| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 |",
+                    "|---|---:|---:|---:|---:|",
+                ]
+            )
+            for result in payload.get("results", []):
+                lines.append(
+                    f"| {result['name']} | {result['parameters']} | {result['test_mse']:.6f} | "
+                    f"{result['inference_steps_per_sec']:.1f} | {result['train_seconds']:.2f} |"
+                )
+
         if plot_path is not None:
             lines.extend(["", "## Benchmark 图", f"![Jetson LNN Benchmark]({plot_path.name})"])
         if payload.get("status") == "ok_cpu_fallback":
@@ -287,7 +401,8 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
                 "## 解读",
                 "- `CfCStyle` 是闭式连续时间思想的轻量实现，"
                 "用于快速验证 LNN 类动态门控在边缘设备上的训练与推理成本。",
-                "- `GRU` 是同等隐藏维度的传统循环网络基线，便于比较参数量、误差和吞吐。",
+                "- `NCPS-LTC` / `NCPS-CfC` 是 mlech26l/ncps 官方实现，便于比较。",
+                "- `GRU` 是同等隐藏维度的传统循环网络基线。",
                 "- 该脚本是 smoke benchmark；正式论文复现应替换为论文数据集、"
                 "固定随机种子、多次重复和置信区间。",
             ]
@@ -422,6 +537,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
+    from lnn.edge.tegrastats import TegrastatsSampler, energy_per_step
 
     class CfCCell(nn.Module):
         def __init__(self, input_size: int, hidden_size: int) -> None:
@@ -512,6 +628,39 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             augmented = self.pulse(hidden_seq)  # [B, T, H]
             return self.readout(augmented)  # [B, T, 1]
 
+    # NCPS official implementations (if available)
+    try:
+        from ncps.torch import CfC as NCPS_CfC
+        from ncps.torch import LTC as NCPS_LTC
+
+        class NCPS_CfC_Model(nn.Module):
+            """Official NCPS CfC implementation from mlech26l/ncps."""
+            def __init__(self, hidden_size: int) -> None:
+                super().__init__()
+                self.cfc = NCPS_CfC(1, hidden_size, return_sequences=True)
+                self.readout = nn.Linear(hidden_size, 1)
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                out, _ = self.cfc(x)
+                return self.readout(out)
+
+        class NCPS_LTC_Model(nn.Module):
+            """Official NCPS LTC implementation from mlech26l/ncps."""
+            def __init__(self, hidden_size: int) -> None:
+                super().__init__()
+                self.ltc = NCPS_LTC(1, hidden_size, return_sequences=True)
+                self.readout = nn.Linear(hidden_size, 1)
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                out, _ = self.ltc(x)
+                return self.readout(out)
+
+        NCPS_AVAILABLE = True
+    except ImportError:
+        NCPS_AVAILABLE = False
+        NCPS_CfC_Model = None
+        NCPS_LTC_Model = None
+
     def make_dataset(samples: int, seq_len: int, device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
         steps = seq_len + 1
         t_axis = torch.linspace(0, 1, steps, device=device).unsqueeze(0).repeat(samples, 1)
@@ -554,8 +703,10 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             torch.cuda.synchronize()
         train_seconds = time.perf_counter() - start
 
+        # Measure inference with power sampling (if requested)
+        power_summary: dict[str, Any] | None = None
         model.eval()
-        with torch.no_grad():
+        with torch.no_grad(), TegrastatsSampler(interval_ms=100) as sampler:
             prediction = model(test_x)
             test_mse = criterion(prediction, test_y).item()
             if test_x.is_cuda:
@@ -567,14 +718,23 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             if test_x.is_cuda:
                 torch.cuda.synchronize()
             elapsed = max(time.perf_counter() - start, 1e-9)
+            power_summary = sampler.summary()
         steps_per_second = test_x.shape[0] * test_x.shape[1] * repeats / elapsed
-        return {
+        total_steps = test_x.shape[0] * test_x.shape[1] * repeats
+        energy_mj_per_step = energy_per_step(power_summary, total_steps) if power_summary else None
+
+        result: dict[str, Any] = {
             "name": name,
             "parameters": count_params(model),
             "test_mse": test_mse,
             "train_seconds": train_seconds,
             "inference_steps_per_sec": steps_per_second,
         }
+        if power_summary:
+            result["tegrastats_summary"] = power_summary
+        if energy_mj_per_step is not None:
+            result["energy_mj_per_step"] = energy_mj_per_step
+        return result
 
     torch.manual_seed(args.seed)
     use_cuda = torch.cuda.is_available() and not args.cpu
@@ -593,7 +753,19 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         ("PDNAPulse", PDNAPulseModel(args.hidden_size).to(device)),
         ("GRU", GRUModel(args.hidden_size).to(device)),
     ]
-    results = [train_and_eval(name, model, train_x, train_y, test_x, test_y) for name, model in models]
+    if NCPS_AVAILABLE:
+        models.append(("NCPS-LTC", NCPS_LTC_Model(args.hidden_size).to(device)))
+        models.append(("NCPS-CfC", NCPS_CfC_Model(args.hidden_size).to(device)))
+
+    # Global power sampling for total run
+    per_model_power: dict[str, dict[str, Any]] = {}
+    with TegrastatsSampler(interval_ms=100) as global_sampler:
+        results = []
+        for name, model in models:
+            result = train_and_eval(name, model, train_x, train_y, test_x, test_y)
+            results.append(result)
+            if "tegrastats_summary" in result:
+                per_model_power[name] = result.pop("tegrastats_summary")
 
     payload: dict[str, Any] = {
         "status": "ok",
@@ -613,6 +785,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     }
     if use_cuda:
         payload["cuda_peak_memory_mb"] = round(torch.cuda.max_memory_allocated() / 1024 / 1024, 2)
+    payload["tegrastats_summary"] = global_sampler.summary()
+    payload["model_tegrastats"] = per_model_power
     return payload
 
 
