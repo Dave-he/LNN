@@ -148,98 +148,110 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：A quad-partite architecture proposing latent-space concept interpolation for continual reinforcement learning, built on a Closed-form Continuous-time (CfC) liquid network.
 
 ## Hugging Face 模型
-### [litert-community/LFM2.5-1.2B-Instruct](https://huggingface.co/litert-community/LFM2.5-1.2B-Instruct)
-- 更新：2026-08-04
-- 下载 / Likes：224 / 0
-- 任务：text-generation
-- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, text-generation
-
-### [litert-community/LFM2.5-1.2B-Thinking](https://huggingface.co/litert-community/LFM2.5-1.2B-Thinking)
-- 更新：2026-08-04
-- 下载 / Likes：186 / 0
-- 任务：text-generation
-- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, reasoning
-
-### [litert-community/LFM2.5-1.2B-JP](https://huggingface.co/litert-community/LFM2.5-1.2B-JP)
-- 更新：2026-08-04
-- 下载 / Likes：86 / 1
-- 任务：text-generation
-- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, japanese
-
-### [litert-community/LFM2.5-Encoder-350M-Spellchecker](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-Spellchecker)
-- 更新：2026-08-04
-- 下载 / Likes：0 / 0
-- 任务：token-classification
-- Tags：litert, tflite, on-device, edge, encoder, spellcheck, grammar, gec
-
-### [litert-community/LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-PII-Detector)
-- 更新：2026-08-04
-- 下载 / Likes：0 / 0
-- 任务：token-classification
-- Tags：litert, tflite, on-device, edge, encoder, pii, ner, privacy
-
-### [litert-community/LFM2.5-Encoder-350M-Policy-Linter](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-Policy-Linter)
-- 更新：2026-08-04
-- 下载 / Likes：0 / 0
-- 任务：token-classification
-- Tags：litert, tflite, on-device, edge, encoder, zero-shot, policy, compliance
-
-### [litert-community/LFM2.5-Encoder-350M-Prompt-Router](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-Prompt-Router)
-- 更新：2026-08-04
-- 下载 / Likes：0 / 0
-- 任务：text-classification
-- Tags：litert, tflite, on-device, edge, encoder, zero-shot, routing, liquid
-
-### [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct)
-- 更新：2026-08-03
-- 下载 / Likes：601456 / 644
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
-
 ### [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B)
-- 更新：2026-08-03
-- 下载 / Likes：171302 / 691
+- 更新：2026-08-04
+- 下载 / Likes：171520 / 697
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
 
-### [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M)
-- 更新：2026-08-03
-- 下载 / Likes：93808 / 387
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
-
 ### [LiquidAI/LFM2.5-230M](https://huggingface.co/LiquidAI/LFM2.5-230M)
-- 更新：2026-08-03
-- 下载 / Likes：58833 / 249
+- 更新：2026-08-04
+- 下载 / Likes：58676 / 253
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
-### [LiquidAI/LFM2.5-1.2B-Thinking](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking)
-- 更新：2026-08-03
-- 下载 / Likes：38183 / 388
+### [LiquidAI/LFM2.5-2.6B](https://huggingface.co/LiquidAI/LFM2.5-2.6B)
+- 更新：2026-08-04
+- 下载 / Likes：47393 / 143
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
-### [LiquidAI/LFM2-350M](https://huggingface.co/LiquidAI/LFM2-350M)
-- 更新：2026-08-03
-- 下载 / Likes：24643 / 248
+### [LiquidAI/LFM2-2.6B](https://huggingface.co/LiquidAI/LFM2-2.6B)
+- 更新：2026-08-04
+- 下载 / Likes：7070 / 190
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, edge, conversational, en
 
-### [LiquidAI/LFM2-700M](https://huggingface.co/LiquidAI/LFM2-700M)
-- 更新：2026-08-03
-- 下载 / Likes：6292 / 115
+### [LiquidAI/LFM2.5-2.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF)
+- 更新：2026-08-04
+- 下载 / Likes：185 / 39
 - 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, edge, conversational, en
+- Tags：gguf, liquid, lfm2.5, llama.cpp, text-generation, ar, zh, en
 
-### [LiquidAI/LFM2-1.2B-RAG](https://huggingface.co/LiquidAI/LFM2-1.2B-RAG)
-- 更新：2026-08-03
-- 下载 / Likes：663 / 132
+### [FastFlowLM/LFM2-1.2B-NPU2](https://huggingface.co/FastFlowLM/LFM2-1.2B-NPU2)
+- 更新：2026-08-04
+- 下载 / Likes：94 / 0
 - 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, edge, conversational, en
+- Tags：transformers, lfm2, text-generation, liquid, edge, conversational, en, ar
 
-### [Q1ngMang/LFM2.5-230M-PT-zh_CN](https://huggingface.co/Q1ngMang/LFM2.5-230M-PT-zh_CN)
-- 更新：2026-08-03
+### [FastFlowLM/LFM2-2.6B-NPU2](https://huggingface.co/FastFlowLM/LFM2-2.6B-NPU2)
+- 更新：2026-08-04
+- 下载 / Likes：86 / 0
+- 任务：unknown
+- Tags：lfm2, region:us
+
+### [brainworkup/LFM2.5-8B-A1B-oQ8e](https://huggingface.co/brainworkup/LFM2.5-8B-A1B-oQ8e)
+- 更新：2026-08-04
+- 下载 / Likes：46 / 1
+- 任务：unknown
+- Tags：mlx, safetensors, lfm2_moe, oq, quantized, omlx, oQ8e, base_model:LiquidAI/LFM2.5-8B-A1B
+
+### [bartowski/LiquidAI_LFM2.5-2.6B-GGUF](https://huggingface.co/bartowski/LiquidAI_LFM2.5-2.6B-GGUF)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：gguf, liquid, lfm2.5, edge, text-generation, ar, zh, en
+
+### [LiquidAI/LFM2.5-2.6B-ONNX](https://huggingface.co/LiquidAI/LFM2.5-2.6B-ONNX)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 13
+- 任务：text-generation
+- Tags：onnx, lfm2, liquid, edge, lfm2.5, onnxruntime, webgpu, text-generation
+
+### [LiquidAI/LFM2.5-2.6B-MLX](https://huggingface.co/LiquidAI/LFM2.5-2.6B-MLX)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 14
+- 任务：text-generation
+- Tags：mlx, safetensors, liquid, lfm2.5, edge, text-generation, ar, zh
+
+### [runanywhere/LFM2.5-2.6B_ANE](https://huggingface.co/runanywhere/LFM2.5-2.6B_ANE)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：coreml, ane, apple, neural-engine, npu, llm, text-generation, base_model:LiquidAI/LFM2.5-2.6B
+
+### [noctrex/LFM2.5-2.6B-heretic-uncensored-GGUF](https://huggingface.co/noctrex/LFM2.5-2.6B-heretic-uncensored-GGUF)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：gguf, heretic, uncensored, abliterated, text-generation, base_model:LiquidAI/LFM2.5-2.6B, base_model:quantized:LiquidAI/LFM2.5-2.6B, endpoints_compatible
+
+### [insraq/LFM2.5-2.6B-heretic-GGUF](https://huggingface.co/insraq/LFM2.5-2.6B-heretic-GGUF)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, gguf, liquid, lfm2.5, edge, heretic, uncensored, decensored
+
+### [insraq/LFM2.5-2.6B-heretic](https://huggingface.co/insraq/LFM2.5-2.6B-heretic)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, heretic
+
+### [miifanboy/LFM2.5-2.6B-GGUF](https://huggingface.co/miifanboy/LFM2.5-2.6B-GGUF)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：gguf, text-generation-inference, text-generation, en, base_model:LiquidAI/LFM2.5-2.6B, base_model:quantized:LiquidAI/LFM2.5-2.6B, license:other, endpoints_compatible
+
+### [OsaurusAI/LFM2.5-2.6B-MXFP8](https://huggingface.co/OsaurusAI/LFM2.5-2.6B-MXFP8)
+- 更新：2026-08-04
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：mlx, safetensors, lfm2, mxfp8, jang, quantized, apple-silicon, lfm2.5
+
+### [jason-schulz/LFM2.5-2.6B-oQ4e](https://huggingface.co/jason-schulz/LFM2.5-2.6B-oQ4e)
+- 更新：2026-08-04
 - 下载 / Likes：0 / 0
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational

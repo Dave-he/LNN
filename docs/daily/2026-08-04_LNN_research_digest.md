@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：41 个
-- Hugging Face 候选模型：17 个
+- Hugging Face 候选模型：19 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -49,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-08-04 | [litert-community/LFM2.5-1.2B-Instruct](https://huggingface.co/litert-community/LFM2.5-1.2B-Instruct) | 224 | 0 | text-generation |
-| 2026-08-04 | [litert-community/LFM2.5-1.2B-Thinking](https://huggingface.co/litert-community/LFM2.5-1.2B-Thinking) | 186 | 0 | text-generation |
-| 2026-08-04 | [litert-community/LFM2.5-1.2B-JP](https://huggingface.co/litert-community/LFM2.5-1.2B-JP) | 86 | 1 | text-generation |
-| 2026-08-04 | [litert-community/LFM2.5-Encoder-350M-Spellchecker](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-Spellchecker) | 0 | 0 | token-classification |
-| 2026-08-04 | [litert-community/LFM2.5-Encoder-350M-PII-Detector](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-PII-Detector) | 0 | 0 | token-classification |
-| 2026-08-04 | [litert-community/LFM2.5-Encoder-350M-Policy-Linter](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-Policy-Linter) | 0 | 0 | token-classification |
-| 2026-08-04 | [litert-community/LFM2.5-Encoder-350M-Prompt-Router](https://huggingface.co/litert-community/LFM2.5-Encoder-350M-Prompt-Router) | 0 | 0 | text-classification |
-| 2026-08-03 | [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) | 601456 | 644 | text-generation |
-| 2026-08-03 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 171302 | 691 | text-generation |
-| 2026-08-03 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 93808 | 387 | text-generation |
-| 2026-08-03 | [LiquidAI/LFM2.5-230M](https://huggingface.co/LiquidAI/LFM2.5-230M) | 58833 | 249 | text-generation |
-| 2026-08-03 | [LiquidAI/LFM2.5-1.2B-Thinking](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking) | 38183 | 388 | text-generation |
+| 2026-08-04 | [LiquidAI/LFM2.5-8B-A1B](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B) | 171520 | 697 | text-generation |
+| 2026-08-04 | [LiquidAI/LFM2.5-230M](https://huggingface.co/LiquidAI/LFM2.5-230M) | 58676 | 253 | text-generation |
+| 2026-08-04 | [LiquidAI/LFM2.5-2.6B](https://huggingface.co/LiquidAI/LFM2.5-2.6B) | 47393 | 143 | text-generation |
+| 2026-08-04 | [LiquidAI/LFM2-2.6B](https://huggingface.co/LiquidAI/LFM2-2.6B) | 7070 | 190 | text-generation |
+| 2026-08-04 | [LiquidAI/LFM2.5-2.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF) | 185 | 39 | text-generation |
+| 2026-08-04 | [FastFlowLM/LFM2-1.2B-NPU2](https://huggingface.co/FastFlowLM/LFM2-1.2B-NPU2) | 94 | 0 | text-generation |
+| 2026-08-04 | [FastFlowLM/LFM2-2.6B-NPU2](https://huggingface.co/FastFlowLM/LFM2-2.6B-NPU2) | 86 | 0 |  |
+| 2026-08-04 | [brainworkup/LFM2.5-8B-A1B-oQ8e](https://huggingface.co/brainworkup/LFM2.5-8B-A1B-oQ8e) | 46 | 1 |  |
+| 2026-08-04 | [bartowski/LiquidAI_LFM2.5-2.6B-GGUF](https://huggingface.co/bartowski/LiquidAI_LFM2.5-2.6B-GGUF) | 0 | 0 | text-generation |
+| 2026-08-04 | [LiquidAI/LFM2.5-2.6B-ONNX](https://huggingface.co/LiquidAI/LFM2.5-2.6B-ONNX) | 0 | 13 | text-generation |
+| 2026-08-04 | [LiquidAI/LFM2.5-2.6B-MLX](https://huggingface.co/LiquidAI/LFM2.5-2.6B-MLX) | 0 | 14 | text-generation |
+| 2026-08-04 | [runanywhere/LFM2.5-2.6B_ANE](https://huggingface.co/runanywhere/LFM2.5-2.6B_ANE) | 0 | 0 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
