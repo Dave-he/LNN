@@ -607,6 +607,29 @@ tags: [LNN, reading-report, papers]
   - int8 量化（N20 4.0×）
   - **总：97.16× 压缩、零精度损失、可部署到 MCU**
 
+
+### [2026-08-05] MR-hybrid_gate-CfC at h≥64 (N14) — honest finding 加强
+- **独立报告**：[[docs/reports/MR_Hybrid_Gate_Scale_N14_Honest_Finding_2026-08-05.md]]
+- **核心验证**：N13 假设 MR-hybrid-gate-cfc 在 h=24 退化 11% 是因为 per-expert hidden (6) 太小。本轮 N14 验证 h=64 (per-expert=16, N3 Pareto threshold) 下 gap 是否消失。
+- **Benchmark（h ∈ {24, 32, 48, 64}）**：
+  | 模型 | h=24 | h=32 | h=48 | h=64 |
+  |---|---:|---:|---:|---:|
+  | cfc (single) | 0.0615 | 0.0626 | 0.0643 | 0.0618 |
+  | mfc-hybrid_gate (single) | 0.0625 | 0.0649 | 0.0634 | **0.0606** ⚡ |
+  | mr-hybrid-gate-cfc (n_tau=4) | 0.0640 | 0.0638 | 0.0644 | 0.0643 |
+  | single-MR delta | +2.4% | -1.7% | +1.6% | **+6.1%** ⚠ |
+- **关键发现（N13 honest finding 加强）**：
+  1. **即便 h=64 (per_expert=16)，MR routing 仍未帮助**——h=64 退化 6.1%
+  2. **single mfc-hybrid_gate 在 h=64 表现最佳**（0.0606）
+  3. **AR(2) simple task 任务本身不适合 MR routing**——3 个 AR coefficient sets 的 spectrum 太窄
+- **Why 3 hypothesis**：
+  - H1: 任务太简单，MR multi-scale 没发挥空间 ✓
+  - H2: 数据不够（128 samples），routing 没学到分工 ✓
+  - H3: top_k routing overhead——否（per-step 计算量在 h=24 vs h=64 差不多）
+- **N3 threshold 重新解读**："multi-rate 需要 h ≥ 64 per expert" 是 **MR > trivial baseline** 的 threshold，**不是 MR > sophisticated single expert** 的 threshold
+- **Gap 状态**：**N14 关闭（honest finding 加强）**；新增 N24（MR 在 long-sequence/multi-scale 任务上是否发挥）。
+- **Verdict**：N14 把 "small hidden 限制" 修正为 **"MR routing 不是 free lunch"**——只在有足够数据 + 真正多尺度任务时才有效。**single expert mfc-hybrid_gate 在 h=64 是当前 AR(2) 任务的最优配置**。要发挥 MR 的 multi-rate 优势，需要 long-sequence / multi-scale 任务（N24 待验证）。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
