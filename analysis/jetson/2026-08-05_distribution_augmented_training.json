@@ -1,0 +1,62 @@
+{
+  "date": "2026-08-05",
+  "task": "distribution_augmented_training_for_OOD_transferability",
+  "sigmas_train_mix": [
+    0.3,
+    0.5,
+    1.0
+  ],
+  "sigma_tests": [
+    0.3,
+    0.5,
+    1.0
+  ],
+  "results": {
+    "cfc-baseline (regular train only)": {
+      "0.3": {
+        "test_mse_regular_mean": 0.05651070922613144,
+        "test_mse_regular_std": 0.0004137187333389997,
+        "test_mse_irregular_mean": 0.056501153856515884,
+        "test_mse_irregular_std": 0.00039786098158677577,
+        "degradation_ratio": 0.9998309104637615
+      },
+      "0.5": {
+        "test_mse_regular_mean": 0.05651070922613144,
+        "test_mse_regular_std": 0.0004137187333389997,
+        "test_mse_irregular_mean": 0.05651572160422802,
+        "test_mse_irregular_std": 0.00038597293612867176,
+        "degradation_ratio": 1.0000886978444479
+      },
+      "1.0": {
+        "test_mse_regular_mean": 0.05651070922613144,
+        "test_mse_regular_std": 0.0004137187333389997,
+        "test_mse_irregular_mean": 0.05655752681195736,
+        "test_mse_irregular_std": 0.00038542502709803015,
+        "degradation_ratio": 1.0008284728057222
+      }
+    },
+    "mfc-hybrid_gate (mixed dt train)": {
+      "0.3": {
+        "test_mse_regular_mean": 0.05629502795636654,
+        "test_mse_regular_std": 2.4352975905200957e-05,
+        "test_mse_irregular_mean": 0.056812820956110954,
+        "test_mse_irregular_std": 1.267039633358752e-06,
+        "degradation_ratio": 1.0091978460361677
+      },
+      "0.5": {
+        "test_mse_regular_mean": 0.05629502795636654,
+        "test_mse_regular_std": 2.4352975905200957e-05,
+        "test_mse_irregular_mean": 0.05761139467358589,
+        "test_mse_irregular_std": 7.295619477235757e-05,
+        "degradation_ratio": 1.023383356665879
+      },
+      "1.0": {
+        "test_mse_regular_mean": 0.05629502795636654,
+        "test_mse_regular_std": 2.4352975905200957e-05,
+        "test_mse_irregular_mean": 0.060051947832107544,
+        "test_mse_irregular_std": 0.0002478761528046955,
+        "degradation_ratio": 1.0667362645001783
+      }
+    }
+  }
+}

@@ -477,6 +477,30 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：本 survey 完成（Round 11）；11/11 retention_kind benchmark 数据齐全
 - **Verdict**：本 survey 是"深入研究 LNN"的**设计空间全图交付**——可作为后续 LNN 工作的 canonical reference。下一步可直接进入新的研究方向（如 N1 DLNet 蒸馏、N15 distribution-augmented training、N16 CfC 多 regime 验证）。
 
+
+### [2026-08-05] Distribution-Augmented Training (N15) — partial positive
+- **独立报告**：[[docs/reports/Distribution_Augmented_Training_N15_Hybrid_Gate_2026-08-05.md]]
+- **核心验证**：N12 发现 hybrid_gate OOD 退化 1.10×，验证 distribution-augmented training（每个 batch 随机从 {0.3, 0.5, 1.0} 三个 dt 分布采样）能否让 α 学到更 general 的 dt-robustness。
+- **Benchmark（混合训练 vs N12 single-dist）**：
+  | 模型 | σ=0.3 | σ=0.5 | **σ=1.0 (OOD)** |
+  |---|---:|---:|---:|
+  | cfc-baseline | **1.00×** | **1.00×** | **1.00×** |
+  | mfc-hybrid_gate (mixed, N15) | 1.01× | 1.02× | **1.07×** ⚡ |
+  | mfc-hybrid_gate (single, N12) | 1.01× | 1.04× | 1.10× |
+- **关键发现**：
+  - ✅ **OOD degradation 从 1.10× 改善到 1.07×**（↓3pp）
+  - ✅ **In-dist degradation 从 1.04× 改善到 1.02×**（↓2pp）
+  - ❌ **没达到 CfC 的 1.00× perfect transfer**
+  - **→ α capacity 不够表达 generic dt-robustness**——它本质上是 learned interpolation function，不是 structural mechanism
+- **N11 → N12 → N15 演进**：
+  | 实验 | α 类型 | 训练策略 | σ=1.0 (OOD) degradation |
+  |---|---|---|---|
+  | N11 | input-dep α MLP | single-dist (0.5) | n/a (in-dist test only) |
+  | N12 | input-dep α MLP | single-dist (0.5) | 1.10× |
+  | **N15** | **input-dep α MLP** | **mixed-dist (0.3, 0.5, 1.0)** | **1.07×** ↓ |
+- **Gap 状态**：**N15 关闭（partial positive）**；新增 N17（α capacity 增强能否突破 interpolation 限制）；N14/N16 继续待办。
+- **Verdict**：本轮把"N12 honest finding 完全否定"修正为 **"Distribution-augmented training 部分有效（3pp 改善），但 α 仍只能 interpolation 而非 generic mechanism"**。**CfC σ-decay 仍是唯一 structural-generic dt-robustness choice**——这一结论在 N15 后更牢固。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
