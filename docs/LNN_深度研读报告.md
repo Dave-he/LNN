@@ -723,6 +723,34 @@ tags: [LNN, reading-report, papers]
   - **Student**: CfC（capacity-efficient，compression 友好）
   - **Final recommendation**: hybrid_gate teacher → CfC h=4 student → int8 = **97.16× 压缩**
 
+
+### [2026-08-05] Lorenz Attractor Retention Validation (N18) — MR routing 在混沌 ODE 上回归（partial transfer）
+- **独立报告**：[[docs/reports/Lorenz_Attractor_N18_MR_Routing_Regression_2026-08-05.md]]
+- **核心验证**：22 轮 retention design space findings 主要在 AR(2) 类任务上验证。本轮 N18 在 **Lorenz attractor**（chaotic nonlinear ODE）上验证 22 轮 findings 是否迁移。
+- **Benchmark（Lorenz attractor x(t+dt) prediction, sl=96, h=32）**：
+  | model | regular | in-dist irregular | OOD irregular |
+  |---|---:|---:|---:|
+  | **cfc-baseline** | **2.89** | 3.20 (1.11×) | 1.52 (0.53×) |
+  | mfc-hybrid_gate | 3.87 | 3.90 (1.01×) | 0.23 (0.06×) |
+  | **mr-hybrid-gate-cfc (n_tau=4)** | **19.96** ⚠ | 19.96 (1.00×) | 5.45 (0.27×) |
+- **关键发现**：
+  1. **MR routing 在混沌 ODE 上 6.9× 退化**（vs N24 multi-scale strong positive）——N24 finding **不迁移**到 chaotic ODE
+  2. **CfC 仍是 best retention** for default selection（regular 2.89 < hybrid_gate 3.87 < MR 19.96）
+  3. **OOD MSE < regular MSE 是 data artifact**——OOD dt=LogNormal(0, 1) 有极端 dt 值，"压扁"预测难度
+  4. **MR routing benefits are task-specific**：仅在 periodic / multi-scale 任务上 strong positive
+- **22 轮 findings partial transfer status**：
+  | Finding | N18 status |
+  |---|---|
+  | N1: CfC structural-generic | ✅ **CONFIRMED** on chaotic ODE |
+  | N24: MR routing multi-scale | ❌ **NOT TRANSFERRED**（混沌 ODE 上退化）|
+  | N12: OOD dt transferability | ⚠ Partial (data artifact caveat) |
+- **Gap 状态**：**N18 关闭（partial transfer, honest finding）**；N2 / L4 foundational gaps 收尾。
+- **Verdict**：N18 给出 retention design space 的 **task-specific boundary**：
+  - **Default（unknown task）**：CfC σ-decay（N1, N12, N18 三轮 confirmation）
+  - **Periodic / multi-scale time series**：MR-hybrid-gate-cfc（N24 强 positive）
+  - **Chaotic nonlinear ODE**：**CfC σ-decay**（MR routing 6.9× 退化，**不要用 MR**）
+  - **Edge deployment**：hybrid_gate teacher → CfC h=4 → int8（N19+N20+N23）
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
