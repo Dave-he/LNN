@@ -77,6 +77,49 @@ class ActivationAlignedCfCNetwork(nn.Module):
         return y_seq, h_seq
 
 
+class ActivationAlignedHybridGateCfCNetwork(nn.Module):
+    """hybrid_gate teacher variant: input-dep alpha + per-step hidden return.
+
+    Mirrors :class:`ActivationAlignedCfCNetwork` but uses a hybrid_gate
+    cell (CfC + TFP paths blended by an input-dependent alpha MLP).
+    Used in N19 to test whether hybrid_gate teacher compresses as well
+    as pure CfC teacher (N1 finding).
+    """
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        output_size: int,
+        return_sequences: bool = True,
+    ):
+        super().__init__()
+        from lnn.core.memory_fusion_cfc import MemoryFusionCfCCell
+        self.cell = MemoryFusionCfCCell(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            retention_kind="hybrid_gate",
+            n_tau=1,
+        )
+        self.readout = nn.Linear(hidden_size, output_size)
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.return_sequences = return_sequences
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        batch, seq_len, _ = x.shape
+        h = x.new_zeros(batch, self.hidden_size)
+        h_list = []
+        for t in range(seq_len):
+            h = self.cell(x[:, t, :], h, dt=1.0)
+            h_list.append(h)
+        h_seq = torch.stack(h_list, dim=1)
+        y_seq = self.readout(h_seq)
+        if not self.return_sequences:
+            return y_seq[:, -1, :], h_seq[:, -1, :]
+        return y_seq, h_seq
+
+
 # ---------------------------------------------------------------------------
 # Stage 1 + Stage 2 Distiller
 # ---------------------------------------------------------------------------
@@ -94,6 +137,7 @@ class DistillConfig:
     epochs: int = 4
     batch: int = 8
     lr: float = 1e-2
+    teacher_retention_kind: str = "cfc"  # 'cfc' | 'hybrid_gate' for teacher
 
 
 @dataclass
@@ -122,12 +166,22 @@ class DualStageDistiller:
 
     def __init__(self, cfg: DistillConfig):
         self.cfg = cfg
-        # Build teacher
-        self.teacher = ActivationAlignedCfCNetwork(
-            input_size=cfg.input_size,
-            hidden_size=cfg.teacher_hidden,
-            output_size=cfg.output_size,
-        )
+        # Build teacher (CfC or hybrid_gate based on config)
+        self.teacher_retention_kind = cfg.teacher_retention_kind
+        if cfg.teacher_retention_kind == "cfc":
+            self.teacher = ActivationAlignedCfCNetwork(
+                input_size=cfg.input_size,
+                hidden_size=cfg.teacher_hidden,
+                output_size=cfg.output_size,
+            )
+        elif cfg.teacher_retention_kind == "hybrid_gate":
+            self.teacher = ActivationAlignedHybridGateCfCNetwork(
+                input_size=cfg.input_size,
+                hidden_size=cfg.teacher_hidden,
+                output_size=cfg.output_size,
+            )
+        else:
+            raise ValueError(f"Unknown teacher_retention_kind: {cfg.teacher_retention_kind!r}")
         # Students will be created on demand in stage-2 sweep.
         self.students: dict[int, tuple[nn.Module, nn.Linear]] = {}
 
@@ -249,4 +303,5 @@ __all__ = [
     "ParetoPoint",
     "DualStageDistiller",
     "ActivationAlignedCfCNetwork",
+    "ActivationAlignedHybridGateCfCNetwork",
 ]

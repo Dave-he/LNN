@@ -17,21 +17,21 @@ arxiv_refs: [2601.06227, 2106.13898]
 
 | student hidden | params | test MSE | train seconds |
 |---:|---:|---:|---:|
-| 4 | 249 | 0.0632 ± 0.0059 | 6.48 |
-| 8 | 593 | 0.0570 ± 0.0004 | 6.27 |
-| 12 | 1033 | 0.0570 ± 0.0002 | 6.91 |
-| 16 | 1569 | 0.0563 ± 0.0005 | 6.26 |
-| 32 | 3617 | 0.0571 ± 0.0006 | 4.46 |
+| 4 | 249 | 0.0571 ± 0.0003 | 9.03 |
+| 8 | 593 | 0.0569 ± 0.0009 | 9.63 |
+| 12 | 1033 | 0.0571 ± 0.0006 | 9.21 |
+| 16 | 1569 | 0.0563 ± 0.0002 | 9.03 |
+| 32 | 6049 | 0.0572 ± 0.0008 | 8.59 |
 
 ## Pareto frontier
 
-- hidden=4: 249 params, MSE=0.0632
-- hidden=8: 593 params, MSE=0.0570
+- hidden=4: 249 params, MSE=0.0571
+- hidden=8: 593 params, MSE=0.0569
 - hidden=16: 1569 params, MSE=0.0563
 
 ## Compression ratio vs teacher
 
-- h=4: 14.53× smaller, MSE delta=+0.0061
-- h=8: 6.10× smaller, MSE delta=-0.0001
-- h=12: 3.50× smaller, MSE delta=-0.0001
-- h=16: 2.31× smaller, MSE delta=-0.0008
+- h=4: 24.29× smaller, MSE delta=-0.0001
+- h=8: 10.20× smaller, MSE delta=-0.0003
+- h=12: 5.86× smaller, MSE delta=-0.0002
+- h=16: 3.86× smaller, MSE delta=-0.0010

@@ -51,6 +51,7 @@ def main():
     parser.add_argument("--n-samples", type=int, default=192)
     parser.add_argument("--teacher-hidden", type=int, default=32)
     parser.add_argument("--student-hiddens", type=int, nargs="+", default=[4, 8, 12, 16])
+    parser.add_argument("--teacher-retention", choices=["cfc", "hybrid_gate"], default="cfc")
     parser.add_argument("--date", default="2026-08-05")
     args = parser.parse_args()
 
@@ -65,6 +66,7 @@ def main():
         teacher_hidden=args.teacher_hidden,
         student_hiddens=tuple(args.student_hiddens),
         epochs=args.epochs, batch=8, lr=1e-2,
+        teacher_retention_kind=args.teacher_retention,
     )
 
     # Run repeats and aggregate

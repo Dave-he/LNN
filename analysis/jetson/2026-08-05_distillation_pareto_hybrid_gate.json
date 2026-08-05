@@ -1,0 +1,78 @@
+{
+  "date": "2026-08-05",
+  "task": "ar2_regime_distillation",
+  "config": {
+    "repeats": 2,
+    "epochs": 4,
+    "n_samples": 192,
+    "teacher_hidden": 32,
+    "student_hiddens": [
+      4,
+      8,
+      12,
+      16
+    ],
+    "teacher_retention": "hybrid_gate",
+    "date": "2026-08-05"
+  },
+  "rows": [
+    {
+      "hidden": 4,
+      "params_mean": 249,
+      "test_mse_mean": 0.05709262937307358,
+      "test_mse_std": 0.00031493178878552795,
+      "train_seconds_mean": 9.031993399374187
+    },
+    {
+      "hidden": 8,
+      "params_mean": 593,
+      "test_mse_mean": 0.05688376724720001,
+      "test_mse_std": 0.0008794572144525703,
+      "train_seconds_mean": 9.631895441794768
+    },
+    {
+      "hidden": 12,
+      "params_mean": 1033,
+      "test_mse_mean": 0.05705077387392521,
+      "test_mse_std": 0.0005666670124070022,
+      "train_seconds_mean": 9.206016595941037
+    },
+    {
+      "hidden": 16,
+      "params_mean": 1569,
+      "test_mse_mean": 0.056253233924508095,
+      "test_mse_std": 0.00017198284952673503,
+      "train_seconds_mean": 9.029107099864632
+    },
+    {
+      "hidden": 32,
+      "params_mean": 6049,
+      "test_mse_mean": 0.05722055025398731,
+      "test_mse_std": 0.0007518549964078067,
+      "train_seconds_mean": 8.59273613942787
+    }
+  ],
+  "pareto_frontier": [
+    {
+      "hidden": 4,
+      "params_mean": 249,
+      "test_mse_mean": 0.05709262937307358,
+      "test_mse_std": 0.00031493178878552795,
+      "train_seconds_mean": 9.031993399374187
+    },
+    {
+      "hidden": 8,
+      "params_mean": 593,
+      "test_mse_mean": 0.05688376724720001,
+      "test_mse_std": 0.0008794572144525703,
+      "train_seconds_mean": 9.631895441794768
+    },
+    {
+      "hidden": 16,
+      "params_mean": 1569,
+      "test_mse_mean": 0.056253233924508095,
+      "test_mse_std": 0.00017198284952673503,
+      "train_seconds_mean": 9.029107099864632
+    }
+  ]
+}

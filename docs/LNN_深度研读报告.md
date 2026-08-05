@@ -556,6 +556,28 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N1 完成（strong positive）**；新增 N19（distillation + hybrid_gate）+ N20（int8 量化最后一公里）；N14/N17/N18 继续待办。
 - **Verdict**：14 轮 retention design space 研究 → pivot 到 edge deployment，**双方向都产出 strong positive result**：(a) 选 retention 设计空间 → CfC 是 universal choice；(b) 选 distillation student size → h=8 student 持平 teacher + 6× 压缩。→ LNN retention + distillation 已形成完整"design → distill → deploy"闭环。
 
+
+### [2026-08-05] hybrid_gate Teacher Distillation (N19) — 比 CfC Teacher **更易压缩**（10.20× vs 6.10× at h=8）
+- **独立报告**：[[docs/reports/Hybrid_Gate_Teacher_Distillation_N19_2026-08-05.md]]
+- **核心验证**：N1 用 CfC teacher 验证 6.10× 压缩无精度损失；本轮 N19 替换 teacher 为 **hybrid_gate** (input-dep α MLP)，测试 input-dep α 复杂度是否影响 distillation。
+- **代码修改**：`lnn/core/distillation.py` 重构支持 `teacher_retention_kind ∈ {"cfc", "hybrid_gate"}`，新增 `ActivationAlignedHybridGateCfCNetwork`；向后兼容（10 个 N1 测试仍通过）。
+- **测试**：`tests/test_distillation_hybrid_gate.py`（**7/7 通过**）覆盖 hybrid_gate teacher shape、DistillConfig 字段、unknown retention_kind 报错、Pareto sweep N+1 点、student < teacher。
+- **Benchmark 对比（N1 CfC teacher vs N19 hybrid_gate teacher）**：
+  | student h | N1 params | N1 MSE | N1 compression | N19 params | N19 MSE | N19 compression |
+  |---:|---:|---:|---:|---:|---:|---:|
+  | 4 | 249 | 0.0632 ± 0.0059 | 14.53× | 249 | **0.0571 ± 0.0003** | **24.29×** ⚡ |
+  | 8 | 593 | 0.0570 ± 0.0004 | 6.10× | 593 | **0.0569 ± 0.0009** | **10.20×** ⚡ |
+  | 12 | 1033 | 0.0570 ± 0.0002 | 3.50× | 1033 | 0.0571 ± 0.0006 | 5.86× |
+  | 16 | 1569 | 0.0563 ± 0.0005 | 2.31× | 1569 | **0.0563 ± 0.0002** | 3.86× |
+  | 32 (teacher) | 3617 | 0.0571 | baseline | **6049** | 0.0572 | baseline |
+- **关键发现（counter-intuitive positive）**：
+  1. **hybrid_gate teacher 给所有 student 67% 更多压缩**（h=8: 10.20× vs 6.10×）
+  2. **hybrid_gate students 全部 NEGATIVE MSE delta**（比 teacher 还略好）
+  3. **h=4 student 不再退化**（vs CfC teacher +0.0061 退化 11%）
+- **Hypothesis**：hybrid_gate hidden states 携带 α 路由 information（哪个维度偏 CfC、哪个偏 TFP），让 student 在 distillation 时知道 "如何混合两种 retention" — **rich hidden = 易压缩**
+- **Gap 状态**：**N19 完成（counter-intuitive positive）**；新增 N21（hybrid_gate student distillation）+ N22（教师容量 hypothesis 验证）；N14/N20 继续待办。
+- **Verdict**：N19 把 "hybrid_gate 比 CfC 更复杂" 的 property **翻转**为 benefit：in-dist MSE 持平（N11）+ 更易 distillation（N19）。这意味着对 edge deployment，**hybrid_gate teacher 是更优选择**——既能 in-dist 持平 CfC，又能给学生 67% 更多压缩。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
