@@ -1,0 +1,64 @@
+{
+  "date": "2026-08-05",
+  "task": "non_stationary_ar2_regime_change",
+  "config": {
+    "n_samples": 384,
+    "seq_len": 48,
+    "n_feat": 4,
+    "hidden": 24,
+    "epochs": 3,
+    "batch": 8,
+    "lr": 0.01,
+    "repeats": 3
+  },
+  "rows": [
+    {
+      "model": "CfC",
+      "params": 2137,
+      "test_mse_mean": 0.058940367152293525,
+      "test_mse_std": 2.3664870286787218e-05,
+      "inference_steps_per_sec_mean": 4698.3139163772885,
+      "train_seconds_mean": 15.508907813889286
+    },
+    {
+      "model": "MFC-CFC",
+      "params": 2137,
+      "test_mse_mean": 0.059035900980234146,
+      "test_mse_std": 5.797915380918213e-05,
+      "inference_steps_per_sec_mean": 4737.910169744077,
+      "train_seconds_mean": 16.15768225568657
+    },
+    {
+      "model": "MFC-TFP",
+      "params": 2113,
+      "test_mse_mean": 0.058130599558353424,
+      "test_mse_std": 0.000614778824878648,
+      "inference_steps_per_sec_mean": 4470.923435975301,
+      "train_seconds_mean": 15.711207315015296
+    },
+    {
+      "model": "MFC-NSFD",
+      "params": 2809,
+      "test_mse_mean": 0.07067369918028514,
+      "test_mse_std": 0.009252709211102461,
+      "inference_steps_per_sec_mean": 2945.8479396240705,
+      "train_seconds_mean": 18.89747378602624
+    },
+    {
+      "model": "LTC",
+      "params": 1465,
+      "test_mse_mean": 0.061667351673046746,
+      "test_mse_std": 0.00931061034009699,
+      "inference_steps_per_sec_mean": 1283.5490548682278,
+      "train_seconds_mean": 53.717617949005216
+    },
+    {
+      "model": "GRU",
+      "params": 2185,
+      "test_mse_mean": 0.05753174672524134,
+      "test_mse_std": 0.0022730443397716415,
+      "inference_steps_per_sec_mean": 12516.074902238737,
+      "train_seconds_mean": 7.944773021774988
+    }
+  ]
+}

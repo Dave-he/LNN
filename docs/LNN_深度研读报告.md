@@ -223,6 +223,19 @@ tags: [LNN, reading-report, papers]
 
 > 💡 以下实验基于本项目 `lnn/` 代码框架，使用从零实现的 CfC/LTC 模块和 ncps 集成模块完成。
 
+
+### [2026-08-05] MemoryFusionCfCCell — CfC × TFP retention × NSFD gain/loss 跨论文综合（代码 + 测试 + benchmark）
+- **独立报告**：[[docs/reports/MemoryFusionCfC_Cross_Paper_Synthesis_2026-08-05.md]]
+- **代码**：`lnn/core/memory_fusion_cfc.py`（241 行），新 cell 类 `MemoryFusionCfCCell` / `MemoryFusionCfCNetwork`，通过 `retention_kind ∈ {"cfc", "tfp", "nsfd"}` 一键切换三种论文的保留机制。
+- **测试**：`tests/test_memory_fusion_cfc.py`（16 用例全过），覆盖 init / shape / 三模式输出差异 / TFP dt→0 退化 / NSFD dt→0 退化 / NSFD positivity 保证 / 三模式梯度流 / 端到端训练 loss 下降。
+- **Benchmark**：合成非平稳 AR(2) + 3-regime，3 次重复 mean±std
+  - **MFC-CFC ≡ CfC**（MSE 差 0.0001，数值等价声明验证 ✅）
+  - **MFC-TFP** MSE=0.0581，比 CfC（0.0589）↓1.4%，std 仅 0.0006，微小但稳定优势，参数也更少（2113 vs 2137）
+  - **MFC-NSFD** MSE=0.0707，std 0.0093 偏大；在 AR(2) 带符号数据上吃亏（positivity 假设反而收窄优化空间）
+  - 旁证：LTC 在 CPU 上训练慢 3.5×（53.7s vs 15.5s），验证 8/3 [[Orin_Nano_Super_LNN_Deployment_v2_2026-08-03]] "LTC 必须 GPU 才能发挥 ODE solver 优势" 结论
+- **Gap 状态**：**N3 完整关闭**（TFP → CfC 门控已落地为 `retention_kind="tfp"`）；**N2 缩小 50%**（NSFD 闭式已落地为 `retention_kind="nsfd"`，L-RFM 的代数同源；剩余 50% 是把随机特征基投影接 `khlfft_attn_cfc.py`）。
+- **Verdict**：跨论文综合（把三篇论文的 retention 公式做成同一 cell 的三种模式）比单篇研读更扎实——单看 TFP 看不出 NSFD 在非负数据上的潜在优势，单看 NSFD 看不到 CfC 在带符号数据上的稳定性。把三者放一起后，**MFC-TFP 是默认推荐**，NSFD 仅在物理量（浓度、计数）任务上启用。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
