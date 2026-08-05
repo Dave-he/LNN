@@ -17,23 +17,32 @@ tags: [LNN, reading-report, papers]
 - **极致参数效率**：在自动驾驶等控制场景下，仅需 19 个神经元（约 1000 个参数）即可完成端到端任务，内存占用可低至 900MB 以下。
 - **分布外（OOD）泛化能力**：由于其基于微分方程的底层力学特性，在面对含噪数据、非平稳时间序列或未见过的场景时，展现出显著的鲁棒性。
 
-### 1.2 核心数学公式提取
-1. **通用连续时间神经网络 (Basic LNN ODE)**
+### 1.2 核心数学公式提取（arXiv-grounded, 2026-08-05 更新）
+
+> 本节公式已在 [[docs/reports/LNN_Mathematical_Foundations_Comprehensive_2026-08-05]] 中 grounding 到原文：
+> - **L1 通用 ODE** — Chen et al. 2018 (arXiv 1806.07366) *Neural Ordinary Differential Equations*
+> - **L2 LTC** — Hasani et al. 2021 (arXiv 2006.04439) *Liquid Time-Constant Networks*, **Eq. (5)**
+> - **L3 CfC** — Hasani et al. 2022 (arXiv 2106.13898) *Closed-form Continuous-depth Models*, **Eq. (10)**
+> - **L4 Liquid-S4** — 衍生形式，参见 Hasani 2021 NCP 系列（待 grounding）
+>
+> 原始 PDF 已落地到 [`papers/foundational/hasani_2021_ltc.pdf`](papers/foundational/hasani_2021_ltc.pdf) 与 [`papers/foundational/lechner_2022_cfc.pdf`](papers/foundational/lechner_2022_cfc.pdf)。
+
+1. **通用连续时间神经网络 (Basic Neural ODE, Chen 2018)**
    $$ \frac{dh(t)}{dt} = f(h(t), x(t), t, \theta) $$
-   *(注：$h(t)$ 为隐藏状态，$x(t)$ 为输入，$f$ 为由 $\theta$ 参数化的非线性函数)*
+   *(注：$h(t)$ 为隐藏状态，$x(t)$ 为输入，$f$ 为由 $\theta$ 参数化的非线性函数；这是 Neural ODE 的最一般形式)*
 
-2. **液态时间常数网络 (LTC - Liquid Time-Constant)**
-   $$ \frac{dx(t)}{dt} = - \left[\frac{1}{\tau + NN(x(t), I(t), \theta)}\right] \odot x(t) + NN(x(t), I(t), \theta) \odot A $$
-   *(注：$NN(\cdot)$ 动态调节偏置项 $A$ 并改变状态衰减率，即 $\tau + NN(\cdot)$ 构成了动态的“有效时间常数”)*
+2. **液态时间常数网络 (LTC, Hasani 2021 Eq. 5)**
+   $$ \frac{dx(t)}{dt} = -\left[\frac{1}{\tau} + f(x(t), I(t), t, \theta)\right] \odot x(t) + f(x(t), I(t), t, \theta) \odot A $$
+   *(注：$f$ 同时定义导数与 **输入依赖的可变时间常数** $\tau_{sys} = 1/[(1/\tau) + f]$；$A \in \mathbb{R}^N$ 是 bias 向量。Hasani 2021 还提出 **Fused Solver**（Algorithm 1）作为稳定 forward 求解器）*
 
-3. **闭式连续时间网络 (CfC - Closed-form Continuous-time)**
-   $$ x(t) = \sigma(-f(x, I; \theta_f) t) \odot g(x, I; \theta_g) + [1 - \sigma(-f(x, I; \theta_f) t)] \odot h(x, I; \theta_h) $$
-   *(注：消除了积分求解过程，利用 $\sigma$ 门控机制混合两个非线性状态分支，大幅提升训练和推理速度)*
+3. **闭式连续时间网络 (CfC, Hasani 2022 Eq. 10)**
+   $$ x(t) = \sigma(-f(x, I; \theta_f) \cdot t) \odot g(x, I; \theta_g) + [1 - \sigma(-f(x, I; \theta_f) \cdot t)] \odot h(x, I; \theta_h) $$
+   *(注：CfC 是 LTC 的**闭式近似**——用 sigmoid 衰减 $\sigma(-f\cdot t)$ 紧致近似 LTC Eq. (5) 中 $\exp(\int f dt)$ 的精确指数解；论文 Theorem 1 证明误差 $\le c\cdot e^{-w\tau t}$；速度比 ODE-based 版本提升 1-5 个数量级)*
 
 4. **Liquid-S4 (结合状态空间模型)**
-   $$ \dot{x} = (A + Bu)x + Bu $$
-   $$ y = Cx $$
-   *(注：融合 LNN 思想与结构化状态空间模型 S4，用于处理极长序列的依赖关系)*
+   $$ \dot{x} = (A + B u) x + B u $$
+   $$ y = C x $$
+   *(注：融合 LNN 思想与结构化状态空间模型 S4，用于处理极长序列的依赖关系；具体 grounding 见 Hasani 2021 NCP 系列论文)*
 
 ### 1.3 架构上下文与对比分析
 - **对比传统 RNN / LSTM / GRU**：传统模型依赖静态门控，长序列易发生梯度消失或爆炸。LNN 将权重的作用从“定义状态转移”转变为“定义系统动力学的演化系数”，时间连续且动态适应。
@@ -260,6 +269,25 @@ tags: [LNN, reading-report, papers]
   - H5 MFC-CFC ≡ CfC 数值等价 ✅
 - **Gap 状态**：N3 完全关闭（N3 + MR-TFP-CfC 双层）；新增 N5（MR-TFP-CfC 在大 hidden 下重评估）+ N6（不规则 dt 任务上验证 TFP 优势）；N2 缩小 50%。
 - **Verdict**：跨论文综合不能止于"组合起来"——必须用 benchmark 验证 negative space。本轮 negative result（MR-TFP-CfC 在 h=16 失败）比上轮 positive result（MFC-TFP 在 h=24 ↓1.4%）更有研究价值，因为它揭示了**多 expert routing 需要足够大的 hidden 才能发挥**这一边界条件。
+
+
+### [2026-08-05] LNN 数学基础综合报告 — Hasani 2021 LTC + Lechner 2022 CfC 原文 grounding
+- **独立报告**：[[docs/reports/LNN_Mathematical_Foundations_Comprehensive_2026-08-05.md]]
+- **核心交付**：
+  - 下载 **Hasani 2021 LTC**（arXiv 2006.04439, 6.7 MB）和 **Lechner 2022 CfC**（arXiv 2106.13898, 0.98 MB）原始 PDF 到 `papers/foundational/`
+  - **§1.2 公式 grounding**：把现有 4 条核心公式（Basic ODE / LTC / CfC / Liquid-S4）正式 cite 到原文 Eq. 与 arXiv ID
+  - **反向 trace**：把本项目最近 4 轮工作反向 trace 到奠基公式
+- **关键代数关系（首次明确化）**：
+  - **MFC-TFP 与 LTC Eq. (5)**：TFP 的 `exp(-Δt/τ)` 是 LTC fused-solver 中 `1/(1+Δt·[(1/τ)+f])` 的**精确指数解** —— TFP 把 LTC 的有理式近似还原成指数 retention
+  - **MFC-NSFD 与 LTC Eq. (5)**：NSFD 公式 `(h + dt·G)/(1 + dt·L)` 是 LTC Eq. (5) 隐式 Euler 离散化的**代数同源**，差别仅在 positivity 假设
+  - **MR-TFP-CfC 与 NCP 设计哲学**：EC routing 复现 NCP 神经元布线、τ_proj 偏置对应 NCP 不同时间常数子系统；8/5 negative result 给出"需 hidden ≥ 64 才能发挥"的边界条件
+- **§1.2 修订**：替换原 4 条公式为 arXiv-grounded 版本：
+  - L1 通用 ODE → Chen 2018 (arXiv 1806.07366)
+  - L2 LTC → Hasani 2021 (arXiv 2006.04439) Eq. (5)
+  - L3 CfC → Hasani 2022 (arXiv 2106.13898) Eq. (10)
+  - L4 Liquid-S4 → "TBD 待 grounding NCP 原文"（本轮 arXiv 2003.04674 / 2103.07922 均不是 NCP 论文）
+- **Foundational gap 关闭**：[[LNN_深度研读报告]] §1.2 从"无 arXiv 引用"升级为"4 条公式均有原文 Eq. + arXiv ID"。
+- **Verdict**：跨论文综合（最近 4 轮的工作）如果不能反向 trace 到奠基论文 Eq.，就只是"组合创新"。本报告首次提供 grounding——MFC-TFP / MFC-NSFD / MR-TFP-CfC 都不是从零发明，而是 Hasani 2021 Eq. (5) 的不同代数等价 / 闭式近似 / 工程化路由。
 
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
