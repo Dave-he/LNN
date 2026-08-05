@@ -1,0 +1,65 @@
+{
+  "date": "2026-08-05",
+  "task": "ar2_regime_irregular_dt_train",
+  "config": {
+    "n_samples": 384,
+    "seq_len": 48,
+    "hidden": 24,
+    "epochs": 4,
+    "batch": 8,
+    "lr": 0.01,
+    "repeats": 3,
+    "dt_sigma": 0.5
+  },
+  "rows": [
+    {
+      "model": "cfc-baseline",
+      "test_mse_regular_mean": 0.057334198306004204,
+      "test_mse_regular_std": 4.03879229132743e-05,
+      "test_mse_irregular_mean": 0.05741590509812037,
+      "test_mse_irregular_std": 1.8696967893250897e-05,
+      "train_seconds_mean": 15.977805658398816,
+      "degradation_ratio": 1.0014250969670855
+    },
+    {
+      "model": "mfc-cfc",
+      "test_mse_regular_mean": 0.05723605304956436,
+      "test_mse_regular_std": 0.00014401513972748807,
+      "test_mse_irregular_mean": 0.05728701005379359,
+      "test_mse_irregular_std": 0.00015358889097576362,
+      "train_seconds_mean": 16.9398304480128,
+      "degradation_ratio": 1.000890295565718
+    },
+    {
+      "model": "mfc-tfp",
+      "test_mse_regular_mean": 0.05746819575627645,
+      "test_mse_regular_std": 0.0001266881004472782,
+      "test_mse_irregular_mean": 0.06046677132447561,
+      "test_mse_irregular_std": 0.00018837078916499544,
+      "train_seconds_mean": 16.048312962520868,
+      "degradation_ratio": 1.0521780008705366
+    },
+    {
+      "model": "mfc-hybrid (static \u03b1)",
+      "test_mse_regular_mean": 0.05764732137322426,
+      "test_mse_regular_std": 0.00012249322413668355,
+      "test_mse_irregular_mean": 0.05816331133246422,
+      "test_mse_irregular_std": 0.00020650306830018023,
+      "train_seconds_mean": 23.415264242173482,
+      "degradation_ratio": 1.0089508054658656
+    },
+    {
+      "model": "mfc-hybrid_gate (input-dep \u03b1)",
+      "test_mse_regular_mean": 0.05759725968043009,
+      "test_mse_regular_std": 0.0002437879561269371,
+      "test_mse_irregular_mean": 0.05777899300058683,
+      "test_mse_irregular_std": 6.85577411664507e-05,
+      "train_seconds_mean": 29.96556862335031,
+      "degradation_ratio": 1.0031552424744694
+    }
+  ],
+  "alpha_diversity": {
+    "std_over_x": 0.011781173632757016,
+    "std_over_dt": 0.00445420328925067
+  }
+}

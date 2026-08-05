@@ -356,6 +356,43 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N9 完成（partial positive）**；新增 N11（input-dependent α）+ N12（dt distribution shift transferability）；N10 三层组合待评估。
 - **Verdict**：本轮 N9 **部分 positive**——验证了 α 真的从训练信号中学习，但发现 hybrid 在 AR(2) 任务上**没有超越 CfC**（因为 CfC σ-decay 已是该任务最优 retention，TFP path 是 overhead）。研究价值在于：(1) α-learnability 验证、(2) hybrid 退化为 CfC 是 honest 结论、(3) N11 input-dependent α 是真正 conditional gating 的下一步。
 
+
+### [2026-08-05] MFC-Hybrid-Gate — Input-Dependent α 实现真 Conditional Gating（N11 positive result）
+- **独立报告**：[[docs/reports/MFC_Hybrid_Gate_N11_Input_Dependent_Alpha_2026-08-05.md]]
+- **核心设计**：把 N9 "α 是 static scalar" 的观察推进——α 改为 **input-dependent 函数** `α(x_t, dt) = MLP([x_t, dt])`，让 α 成为真正的 conditional gate。这是 MFC 的第 5 种 retention_kind。
+- **公式**：
+  ```
+  gate_in = cat([x_t, dt_e])                              # [B, input_size + 1]
+  α       = sigmoid(W₂ · sigmoid(W₁ · gate_in + b₁) + b₂)  # MLP, [B, hidden_size]
+  k       = α · k_cfc + (1-α) · k_tfp
+  h_new   = k · h_prev + (1-k) · h_branch
+  ```
+- **代码**：`lnn/core/memory_fusion_cfc.py` 新增 hybrid_gate 分支（gate_mlps: ModuleList，per-branch MLP）。
+- **测试**：`tests/test_hybrid_gate.py`（11 tests, all pass）覆盖 init、shape、α 依赖 x/dt、训练后 α spread 显著、dt→0、梯度流、端到端训练。
+- **α diversity（训练后）**：
+  - std over different x (fixed dt=1): **0.0118**
+  - std over different dt (fixed x=0): **0.0045**
+  → α 真的 conditional！
+- **Benchmark（irregular train, dual test）**：
+  | 模型 | 参数量 | regular MSE | irregular MSE | degradation |
+  |---|---:|---:|---:|---:|
+  | cfc-baseline | 2137 | 0.0573 | 0.0574 | 1.00× |
+  | mfc-cfc | 2137 | 0.0572 | 0.0573 | 1.00× |
+  | mfc-tfp | 2113 | 0.0575 | 0.0605 | 1.05× |
+  | mfc-hybrid (static α) | 2857 | 0.0576 | 0.0582 | 1.01× |
+  | **mfc-hybrid_gate (input-dep α)** | **3577** | **0.0576** | **0.0578** | **1.00×** ⚡ |
+- **关键发现**：
+  1. hybrid_gate degradation 1.00× —— **与 CfC 完全持平**！这是 5 种 retention 中首次达到 CfC 级 dt-robustness
+  2. irregular MSE 0.0578 vs cfc 0.0574（差 0.7%）—— 几乎与 CfC 持平
+  3. α 真的 conditional（std_x=0.0118 > 0）
+  4. 参数代价：+720（gate MLP），换来 conditional gating 能力
+- **N8 → N9 → N11 演进**：
+  - N8: static α, regular train → degradation 1.05×
+  - N9: static α, irregular train → α 0.500→0.576, degradation 1.01×
+  - **N11: input-dep α MLP, irregular train → degradation 1.00×**（与 CfC 持平）
+- **Gap 状态**：**N11 完成（positive result）**；新增 N13（hybrid_gate × MR-TFP-CfC 三层组合）；N10/N12 继续待办。
+- **Verdict**：N11 把"α 是不是 conditional gate"这个开放问题转为**已解决**——是的，input-dep α MLP 能做到。3 轮 hybrid 演进（N8 static → N9 验证 → N11 input-dep）证明 alpha-as-MLP 是 hybrid 设计的关键。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |

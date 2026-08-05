@@ -43,6 +43,20 @@ Motivation (loop 2026-08-05, follow-up to LNN_Training_Paradigm_2026_Summer_Cros
       dt semantics** (TFP paper arXiv 2607.08283). ``α`` is per-branch
       learnable (init 0.5), so the cell can interpolate between the
       two regimes during training.
+    - ``'hybrid_gate'`` (NEW round 284: N9 finding was that ``hybrid``'s
+      static ``α`` does not provide true *conditional* gating — it's a
+      learned scalar that does not depend on the input or dt. This
+      variant makes ``α`` an *input-dependent* function ``α(x_t, dt)``
+      via a per-branch 2-layer MLP, so different inputs / dt regimes
+      can route to different retention paths::
+
+          ``α(x_t, dt) = σ(W_2 · σ(W_1 · [x_t, dt_e] + b_1) + b_2)``
+          ``k = α · k_cfc + (1 - α) · k_tfp``
+
+      ``dt_e`` is the per-sample elapsed time broadcast to ``input_size + 1``.
+      This is the first retention mode that enables true *conditional*
+      gating, as opposed to the static mix in ``'hybrid'``. The cost is
+      an extra MLP per branch with ``hidden_dim → hidden_dim`` shape.
 
     All three share the same input projection head (``g_branch``, ``h_branch``), so
     apples-to-apples comparison reduces to *how the previous hidden state is fused
@@ -70,7 +84,7 @@ import torch.nn as nn
 from torch.nn import ParameterList
 
 
-_VALID_RETENTION = ("cfc", "tfp", "nsfd", "hybrid")
+_VALID_RETENTION = ("cfc", "tfp", "nsfd", "hybrid", "hybrid_gate")
 
 
 class MemoryFusionCfCCell(nn.Module):
@@ -154,7 +168,7 @@ class MemoryFusionCfCCell(nn.Module):
                 [nn.Sequential(nn.Linear(in_dim, d), nn.Softplus()) for d in self._branch_dims]
             )
             self.f_gate = self.tau_proj = self.time_scale = self.alpha = None
-        else:  # "hybrid": CfC path + TFP path + learned mix alpha per branch
+        elif retention_kind == "hybrid":  # CfC path + TFP path + learned mix alpha per branch
             # CfC components
             self.f_gate = nn.ModuleList(
                 [nn.Sequential(nn.Linear(in_dim, d), nn.Sigmoid()) for d in self._branch_dims]
@@ -174,6 +188,35 @@ class MemoryFusionCfCCell(nn.Module):
             self.alpha = ParameterList(  # type: ignore[name-defined]
                 [nn.Parameter(torch.zeros(d)) for d in self._branch_dims]
             )
+            self.g_net = self.l_net = None
+        elif retention_kind == "hybrid_gate":  # input-dependent alpha
+            # Same CfC + TFP components as 'hybrid'
+            self.f_gate = nn.ModuleList(
+                [nn.Sequential(nn.Linear(in_dim, d), nn.Sigmoid()) for d in self._branch_dims]
+            )
+            self.time_scale = nn.ParameterList(
+                [nn.Parameter(torch.full((d,), 1.0)) for d in self._branch_dims]
+            )
+            self.tau_proj = nn.ModuleList(
+                [
+                    nn.Sequential(nn.Linear(in_dim, d), nn.Softplus())
+                    for d in self._branch_dims
+                ]
+            )
+            # Input-dependent α: per-branch MLP taking [x_t, dt_e] → α
+            # dt_e broadcast to match input dimension
+            gate_in_dim = self.input_size + 1  # x_t + dt
+            self.gate_mlps = nn.ModuleList()
+            for d in self._branch_dims:
+                self.gate_mlps.append(
+                    nn.Sequential(
+                        nn.Linear(gate_in_dim, d),
+                        nn.Sigmoid(),       # first non-linearity
+                        nn.Linear(d, d),
+                        nn.Sigmoid(),       # final squeeze to [0, 1]
+                    )
+                )
+            self.alpha = None  # distinguish from static hybrid's alpha
             self.g_net = self.l_net = None
 
         self._init_parameters()
@@ -212,6 +255,18 @@ class MemoryFusionCfCCell(nn.Module):
                 lin = mlp[0]
                 nn.init.xavier_uniform_(lin.weight, gain=0.5)
                 nn.init.zeros_(lin.bias)
+        if self.retention_kind == "hybrid_gate":
+            for mlp in self.tau_proj:  # type: ignore[union-attr]
+                lin = mlp[0]
+                nn.init.xavier_uniform_(lin.weight, gain=0.5)
+                nn.init.zeros_(lin.bias)
+            # Init gate MLPs to output ~0.5 (sigmoid saturation ensures
+            # the second Linear starts at sigmoid(<small>) ≈ 0.5).
+            for mlp in self.gate_mlps:  # type: ignore[union-attr]
+                for lin in mlp:
+                    if hasattr(lin, 'weight'):
+                        nn.init.xavier_uniform_(lin.weight, gain=0.1)
+                        nn.init.zeros_(lin.bias)
 
     def _branch_slice(self, h: torch.Tensor, i: int) -> torch.Tensor:
         """Slice ``h`` into branch ``i``'s hidden slice."""
@@ -253,7 +308,42 @@ class MemoryFusionCfCCell(nn.Module):
                 a = torch.sigmoid(self.alpha[i])  # type: ignore[index]
                 k = a * k_cfc + (1.0 - a) * k_tfp
                 branch_outs.append(k * h_i + (1.0 - k) * cand)
-            else:  # "nsfd"
+            elif self.retention_kind == "nsfd":
+                G = self.g_net[i](combined)  # type: ignore[index]
+                L = self.l_net[i](combined)  # type: ignore[index]
+                branch_outs.append((h_i + dt * G) / (1.0 + dt * L))
+            elif self.retention_kind == "hybrid":
+                # CfC path: sigmoid saturation (dt-robustness from prior benchmark)
+                f = self.f_gate[i](combined)  # type: ignore[index]
+                k_cfc = torch.sigmoid(-f * self.time_scale[i] * dt)  # type: ignore[index]
+                # TFP path: explicit-dt exponential retention
+                tau = self.tau_proj[i](combined) + 1e-3  # type: ignore[index]
+                k_tfp = torch.exp(-dt / tau)
+                # Learned per-element mix in [0, 1]
+                a = torch.sigmoid(self.alpha[i])  # type: ignore[index]
+                k = a * k_cfc + (1.0 - a) * k_tfp
+                branch_outs.append(k * h_i + (1.0 - k) * cand)
+            elif self.retention_kind == "hybrid_gate":
+                # CfC + TFP paths (same as hybrid)
+                f = self.f_gate[i](combined)  # type: ignore[index]
+                k_cfc = torch.sigmoid(-f * self.time_scale[i] * dt)  # type: ignore[index]
+                tau = self.tau_proj[i](combined) + 1e-3  # type: ignore[index]
+                k_tfp = torch.exp(-dt / tau)
+                # Input-dependent α via gate MLP: input = [x_t, dt_e]
+                # Normalise dt to a [B, 1] tensor (handle float, 1D, 2D inputs).
+                if isinstance(dt, (int, float)):
+                    dt_e = torch.full((x_t.shape[0], 1), float(dt), device=x_t.device, dtype=x_t.dtype)
+                elif dt.dim() == 1:
+                    dt_e = dt.unsqueeze(-1)  # [B, 1]
+                elif dt.dim() == 2:
+                    dt_e = dt if dt.shape[-1] == 1 else dt[..., -1:]
+                else:
+                    dt_e = dt.view(dt.shape[0], -1)[:, -1:]
+                gate_in = torch.cat([x_t, dt_e], dim=-1)  # [B, input_size + 1]
+                a = self.gate_mlps[i](gate_in)  # [B, branch_dim]
+                k = a * k_cfc + (1.0 - a) * k_tfp
+                branch_outs.append(k * h_i + (1.0 - k) * cand)
+            elif self.retention_kind == "nsfd":
                 G = self.g_net[i](combined)  # type: ignore[index]
                 L = self.l_net[i](combined)  # type: ignore[index]
                 branch_outs.append((h_i + dt * G) / (1.0 + dt * L))
