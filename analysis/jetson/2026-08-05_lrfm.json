@@ -1,0 +1,55 @@
+{
+  "date": "2026-08-05",
+  "task": "lrfm_frozen_ltc_features_vs_trained_cfc",
+  "config": {
+    "repeats": 2,
+    "epochs": 4,
+    "n_samples": 192,
+    "seq_len": 24,
+    "date": "2026-08-05"
+  },
+  "rows": [
+    {
+      "model": "L-RFM n_features=32",
+      "params": 417,
+      "test_mse_mean": 1568.1573181152344,
+      "test_mse_std": 775.5958820614536,
+      "train_s_mean": 0.3086811020039022
+    },
+    {
+      "model": "L-RFM n_features=64",
+      "params": 833,
+      "test_mse_mean": 0.2855074889957905,
+      "test_mse_std": 0.2372690290981785,
+      "train_s_mean": 0.3241375719662756
+    },
+    {
+      "model": "L-RFM n_features=128",
+      "params": 1665,
+      "test_mse_mean": 169626.6171875,
+      "test_mse_std": 108713.25923859273,
+      "train_s_mean": 0.3727493181359023
+    },
+    {
+      "model": "CfC h=8",
+      "params": 329,
+      "test_mse_mean": 0.05232355184853077,
+      "test_mse_std": 0.0007086228665477572,
+      "train_s_mean": 4.298311856808141
+    },
+    {
+      "model": "CfC h=16",
+      "params": 1041,
+      "test_mse_mean": 0.0515893530100584,
+      "test_mse_std": 0.00037117939230134795,
+      "train_s_mean": 4.298762480262667
+    },
+    {
+      "model": "CfC h=24",
+      "params": 2137,
+      "test_mse_mean": 0.05195852182805538,
+      "test_mse_std": 8.094829092123585e-06,
+      "train_s_mean": 3.9633912430144846
+    }
+  ]
+}
