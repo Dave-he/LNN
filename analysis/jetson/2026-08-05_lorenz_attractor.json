@@ -1,0 +1,29 @@
+{
+  "date": "2026-08-05",
+  "task": "lorenz_attractor_retention_validation",
+  "config": {
+    "repeats": 2,
+    "epochs": 3,
+    "n_samples": 192,
+    "seq_len": 96,
+    "hidden": 32,
+    "date": "2026-08-05"
+  },
+  "results": {
+    "cfc-baseline": {
+      "regular_mse": 2.8870911598205566,
+      "in_dist_irreg_mse": 3.1993247270584106,
+      "ood_irreg_mse": 1.5202200412750244
+    },
+    "mfc-hybrid_gate": {
+      "regular_mse": 3.867855668067932,
+      "in_dist_irreg_mse": 3.896217703819275,
+      "ood_irreg_mse": 0.23362943530082703
+    },
+    "mr-hybrid-gate-cfc (n_tau=4)": {
+      "regular_mse": 19.959104537963867,
+      "in_dist_irreg_mse": 19.9605131149292,
+      "ood_irreg_mse": 5.447515487670898
+    }
+  }
+}
