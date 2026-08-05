@@ -1,19 +1,18 @@
-"""MultiRateTfpCfC — Second-layer synthesis: MR-MoE × TFP retention.
+"""MultiRateTfpCfC — Multi-rate EC router × multiple retention kinds.
 
-Motivation (loop 2026-08-05, round 282, follow-up to MemoryFusionCfC):
-    The cross-paper synthesis ``MemoryFusionCfCCell`` (round 281) closed
-    the **N3** gap by exposing TFP-style retention (``exp(-dt/τ)·h_prev + (1-exp)·ĥ``)
-    on top of the CfC architecture. The next layer of synthesis combines that
-    with the **N2-adjacent** multi-rate MoE structure (arXiv:2606.12240) that
-    already lives in :class:`MultiRateMoECfC`.
+Round 282 (original): MR-MoE × TFP retention.
+Round 286 (N13 extension): MR-MoE × TFP × hybrid_gate retention
+(third-layer synthesis combining all three).
 
-    Rather than retrofitting the existing ``MultiRateMoECfC`` (which would
-    risk ABI breakage for the dozens of existing Pareto / smoke tests), we
-    introduce a *standalone* second-layer synthesis:
+The class now accepts an ``expert_retention_kind`` parameter that selects
+which retention mechanism each expert uses. Default ``"tfp"`` preserves
+the original behaviour. New ``"hybrid_gate"`` value combines:
+- MR-MoE multi-rate structure (arXiv 2606.12240)
+- TFP retention (arXiv 2607.08283)
+- CfC sigmoid path (Lechner 2022, arXiv 2106.13898)
+- Input-dependent α via per-expert MLP (N11 design)
 
-        MR-TFP-CfC = EC-Router(MultiRateMoECfC routing)
-                   × MemoryFusionCfCCell(retention_kind='tfp') experts
-                   × per-expert τ bias  →  multi-scale temporal specialisation
+Each expert is a :class:`MemoryFusionCfCCell` with the chosen retention_kind.
 
     Each of the ``n_tau`` experts is a *TFP-retention* liquid cell (one
     branch of the hidden state, with its own ``τ_proj`` initial bias), and the
@@ -91,6 +90,7 @@ class MultiRateTfpCfC(nn.Module):
         n_tau: int = 4,
         top_k_active: int | None = None,
         tau_scales: tuple = (0.1, 0.5, 2.0, 10.0),
+        expert_retention_kind: str = "tfp",
         aux_load_balance_weight: float = 0.01,
     ):
         super().__init__()
@@ -99,9 +99,15 @@ class MultiRateTfpCfC(nn.Module):
                 f"MultiRateTfpCfC requires n_tau >= 2 (got {n_tau}); "
                 "for single-expert use MemoryFusionCfCCell directly."
             )
+        if expert_retention_kind not in ("tfp", "cfc", "nsfd", "hybrid", "hybrid_gate"):
+            raise ValueError(
+                f"expert_retention_kind must be one of ('tfp', 'cfc', 'nsfd', "
+                f"'hybrid', 'hybrid_gate'); got {expert_retention_kind!r}"
+            )
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.n_tau = int(n_tau)
+        self.expert_retention_kind = expert_retention_kind
         self.aux_load_balance_weight = float(aux_load_balance_weight)
 
         k = top_k_active if top_k_active is not None else max(1, math.ceil(self.n_tau / 2))
@@ -120,24 +126,26 @@ class MultiRateTfpCfC(nn.Module):
             base + (rem if i == self.n_tau - 1 else 0) for i in range(self.n_tau)
         ]
 
-        # Build one TFP-retention expert per τ group.
+        # Build one expert per τ group, using the chosen retention_kind.
         self.experts = nn.ModuleList()
         for i, out_dim in enumerate(self._branch_dims):
             expert = MemoryFusionCfCCell(
                 input_size=input_size,
                 hidden_size=out_dim,
-                retention_kind="tfp",
+                retention_kind=expert_retention_kind,
                 n_tau=1,
             )
             # Set τ_proj bias so that exp(-1/softplus(bias)) gives the target
             # initial τ scale. softplus(bias) ≈ τ  ⇒  bias ≈ log(exp(τ) - 1).
-            target_tau = float(scales[i])
-            bias_init = math.log(min(math.expm1(target_tau), 1e6) + 1e-3) if target_tau < 20 else float(target_tau)
-            # tau_proj is an nn.Sequential: first layer is nn.Linear, second is Softplus.
-            tau_lin_seq = expert.tau_proj[0]  # type: ignore[index]
-            tau_lin = tau_lin_seq[0]
-            with torch.no_grad():
-                tau_lin.bias.fill_(bias_init)
+            # Only relevant for retention_kinds that use tau_proj (tfp, hybrid, hybrid_gate).
+            if expert_retention_kind in ("tfp", "hybrid", "hybrid_gate"):
+                target_tau = float(scales[i])
+                bias_init = math.log(min(math.expm1(target_tau), 1e6) + 1e-3) if target_tau < 20 else float(target_tau)
+                # tau_proj is an nn.Sequential: first layer is nn.Linear, second is Softplus.
+                tau_lin_seq = expert.tau_proj[0]  # type: ignore[index]
+                tau_lin = tau_lin_seq[0]
+                with torch.no_grad():
+                    tau_lin.bias.fill_(bias_init)
             self.experts.append(expert)
 
         self.router = _LinearRouter(input_size=input_size, n_experts=self.n_tau)
@@ -208,11 +216,20 @@ class MultiRateTfpCfC(nn.Module):
                 mask = branch_idx_per_row == e
                 if not mask.any():
                     continue
-                # Sub-batch those rows.
+                # Sub-batch those rows (and slice dt accordingly).
                 idx = torch.nonzero(mask, as_tuple=False).reshape(-1)
                 x_e = x_t.index_select(0, idx)
                 h_e = self._slice_h(h, e, idx)
-                h_e_next = self.experts[e](x_e, h_e, dt=dt)
+                # Slice dt to the sub-batch if it's a Tensor.
+                if isinstance(dt, torch.Tensor):
+                    # dt shape is [B, 1] (set by wrapper) or scalar
+                    if dt.dim() >= 1 and dt.shape[0] >= idx.shape[0]:
+                        dt_e = dt.index_select(0, idx)
+                    else:
+                        dt_e = dt  # scalar fallback
+                else:
+                    dt_e = dt  # float scalar
+                h_e_next = self.experts[e](x_e, h_e, dt=dt_e)
 
                 # Weighted write-back into the active rows.
                 gate_e = gate_per_row.index_select(0, idx).unsqueeze(-1)
@@ -235,6 +252,7 @@ class MultiRateTfpCfCNetwork(nn.Module):
         n_tau: int = 4,
         top_k_active: int | None = None,
         tau_scales: tuple = (0.1, 0.5, 2.0, 10.0),
+        expert_retention_kind: str = "tfp",
         return_sequences: bool = True,
         aux_load_balance_weight: float = 0.01,
     ):
@@ -245,18 +263,34 @@ class MultiRateTfpCfCNetwork(nn.Module):
             n_tau=n_tau,
             top_k_active=top_k_active,
             tau_scales=tau_scales,
+            expert_retention_kind=expert_retention_kind,
             aux_load_balance_weight=aux_load_balance_weight,
         )
         self.readout = nn.Linear(hidden_size, output_size)
         self.return_sequences = return_sequences
         self.output_size = output_size
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, dt: torch.Tensor | float = 1.0) -> torch.Tensor:
+        """Sequence forward.
+
+        Args:
+            x: ``[batch, seq_len, input_size]``
+            dt: Either a scalar (uniform) or a ``[batch, seq_len]`` tensor of
+                per-step elapsed times. Per-step dt is sliced to per-step
+                before calling the underlying cell.
+        """
         batch, seq_len, _ = x.shape
         h = x.new_zeros(batch, self.cell.hidden_size)
         outs = []
         for t in range(seq_len):
-            h = self.cell(x[:, t, :], h, dt=1.0 / max(seq_len, 1))
+            if isinstance(dt, torch.Tensor):
+                # Per-step slicing. dt shape from wrapper is [B, T] or [B, T, 1].
+                dt_t = dt[:, t]
+                if dt_t.dim() == 1:
+                    dt_t = dt_t.unsqueeze(-1)
+            else:
+                dt_t = dt  # scalar
+            h = self.cell(x[:, t, :], h, dt=dt_t)
             outs.append(h)
         h_seq = torch.stack(outs, dim=1)
         y = self.readout(h_seq)

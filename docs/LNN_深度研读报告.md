@@ -393,6 +393,30 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N11 完成（positive result）**；新增 N13（hybrid_gate × MR-TFP-CfC 三层组合）；N10/N12 继续待办。
 - **Verdict**：N11 把"α 是不是 conditional gate"这个开放问题转为**已解决**——是的，input-dep α MLP 能做到。3 轮 hybrid 演进（N8 static → N9 验证 → N11 input-dep）证明 alpha-as-MLP 是 hybrid 设计的关键。
 
+
+### [2026-08-05] MR-hybrid_gate-CfC — N13 三层综合（含 honest finding）
+- **独立报告**：[[docs/reports/MR_Hybrid_Gate_N13_Three_Layer_Synthesis_2026-08-05.md]]
+- **核心设计**：把 N11 "input-dep α conditional gating" 与 round 282 "MR-TFP-CfC multi-rate EC routing" 组合——三层综合：MR-MoE (2606.12240) × TFP (2607.08283) × CfC (2106.13898) × input-dep α (N11)。
+- **实现**：`MultiRateTfpCfCNetwork(expert_retention_kind="hybrid_gate")` —— 每个 expert 是 `MemoryFusionCfCCell(retention_kind="hybrid_gate")`，独立 α MLP。代码改动：`lnn/core/multirate_tfp_cfc.py` 重构 `expert_retention_kind` 参数支持 `"tfp" | "cfc" | "nsfd" | "hybrid" | "hybrid_gate"`，向后兼容（13 个原有测试仍通过）。
+- **测试**：`tests/test_mr_hybrid_gate.py`（14 tests, all pass）覆盖 init、shape、α 依赖 x/dt、auxiliary_loss、端到端训练 loss 下降、梯度流。
+- **Benchmark（irregular dt 训练, h=24 split as 6 per expert）**：
+  | 模型 | 参数量 | regular MSE | irregular MSE | degradation |
+  |---|---:|---:|---:|---:|
+  | cfc-baseline | 2137 | 0.0564 | 0.0565 | 1.00× |
+  | mfc-cfc | 2137 | 0.0560 | 0.0560 | 1.00× |
+  | mfc-tfp | 2113 | 0.0586 | 0.0618 | 1.05× |
+  | mfc-hybrid | 2857 | 0.0556 | 0.0574 | 1.03× |
+  | mfc-hybrid_gate | 3577 | **0.0558** | **0.0579** | 1.04× |
+  | MR-TFP-CfC | 833 | 0.0650 | 0.0649 | 1.00× |
+  | **MR-hybrid_gate-CfC** | **1433** | 0.0643 | 0.0643 | **1.00×** |
+- **Honest finding**：N13 是 **架构正确但规模受限**：
+  - ✅ degradation 1.00× 与 CfC 持平（设计目标达到）
+  - ✅ 比 MR-TFP-CfC 略优（0.0643 vs 0.0649，↓1.0%）—— input-dep α 在 multi-rate 内仍贡献
+  - ❌ 比 single-expert mfc-hybrid_gate **差 11%**（0.0643 vs 0.0579）—— small hidden (6 per expert) 是限制因素
+- **N14 候选**：跑 MR-hybrid_gate-CfC 在 h=64/128 上重评估，验证"small hidden 限制"是否被消除。
+- **Gap 状态**：**N13 关闭（架构 OK，规模受限）**；新增 N14（h=64/128 重评估）；N12 仍待办（dt distribution shift）。
+- **Verdict**：N13 把"input-dep α + multi-rate + EC routing"三个 architectural innovations **正确组合**并验证 degradation 持平 CfC，但**小 hidden 配置下参数利用效率不如 single-expert**——这是 honest 的边界条件发现，与 round 282 (b8d8879) 的 small-hidden finding **完全一致**。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
