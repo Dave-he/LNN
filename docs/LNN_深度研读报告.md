@@ -335,6 +335,27 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N8 完成**；新增 N9（hybrid 在 irregular dt 训练下的 α 学习曲线）+ N10（hybrid × MR-TFP-CfC 三层组合）。
 - **Verdict**：本轮把上一轮的 negative result 转成 constructive synthesis。Hybrid **不是 0 vs 14% 的极端解**，而是 **"用 1.05× 轻微退化换 regular dt 的 TFP-level 性能"** 的实用 interpolation。研究价值在于：(1) α 真的可学、(2) α 在 regular 训练下保持中性、(3) 为 N9 提供了 baseline，待 irregular 训练验证 conditional gating hypothesis。
 
+
+### [2026-08-05] MFC-Hybrid 在 irregular Δt 训练下学到 conditional gating — N9（partial positive）
+- **独立报告**：[[docs/reports/MFC_Hybrid_Irregular_Dt_Train_N9_2026-08-05.md]]
+- **核心验证**：把 N8 "α 不变" 的观察推进——改为 irregular dt 训练，看 α 是否学到 conditional gating。
+- **α trajectory（关键证据）**：`[0.501, 0.525, 0.557, 0.576]` over 4 epochs —— α 真的在向 CfC 方向移动，4 epoch 后 mean > 0.5。
+- **Benchmark（irregular train, dual test）**：
+  | 模型 | regular MSE | irregular MSE | degradation |
+  |---|---:|---:|---:|
+  | cfc-baseline | 0.0573 | 0.0574 | 1.00× |
+  | mfc-cfc | 0.0572 | 0.0573 | 1.00× |
+  | mfc-tfp | 0.0575 | 0.0605 | 1.05× |
+  | **mfc-hybrid** | 0.0576 | **0.0582** | **1.01×** ⚡ |
+- **关键观察**：Hybrid 1.01× degradation **几乎与 CfC 1.00× 持平**，但 irregular MSE 0.0582 仍略高于 CfC 0.0574（差 1.4%）—— **hybrid 退化为 CfC 而不是"两边优势兼得"**。
+- **N8 → N9 演进**：
+  - N8 (regular train): α 0.462（不变）, hybrid degradation 1.05× vs cfc 1.00×
+  - **N9 (irregular train): α 0.576（向 CfC）, hybrid degradation 1.01× vs cfc 1.00×**
+  - **结论**：α 学到了，hybrid 接近 CfC，但没有超越 CfC。
+- **α 不是 conditional gate**：当前 `α = sigmoid(self.alpha[i])` 是 static per-branch parameter，不依赖输入。要做真正的 conditional gating 需要 `α = sigmoid(MLP([x_t, dt]))` —— 这是 **N11 候选**。
+- **Gap 状态**：**N9 完成（partial positive）**；新增 N11（input-dependent α）+ N12（dt distribution shift transferability）；N10 三层组合待评估。
+- **Verdict**：本轮 N9 **部分 positive**——验证了 α 真的从训练信号中学习，但发现 hybrid 在 AR(2) 任务上**没有超越 CfC**（因为 CfC σ-decay 已是该任务最优 retention，TFP path 是 overhead）。研究价值在于：(1) α-learnability 验证、(2) hybrid 退化为 CfC 是 honest 结论、(3) N11 input-dependent α 是真正 conditional gating 的下一步。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
