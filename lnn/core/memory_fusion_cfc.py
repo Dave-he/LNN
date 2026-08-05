@@ -111,6 +111,8 @@ class MemoryFusionCfCCell(nn.Module):
         n_tau: int = 1,
         tau_min: float = 0.1,
         tau_max: float = 5.0,
+        alpha_mlp_depth: int = 1,    # hybrid_gate only: extra hidden layers in alpha MLP (1 = single Linear+Sigmoid)
+        alpha_mlp_width: int = 0,    # hybrid_gate only: extra width multiplier (0 = same as branch_dim)
     ):
         super().__init__()
         if retention_kind not in _VALID_RETENTION:
@@ -126,6 +128,8 @@ class MemoryFusionCfCCell(nn.Module):
         self.n_tau = int(n_tau)
         self.tau_min = float(tau_min)
         self.tau_max = float(tau_max)
+        self.alpha_mlp_depth = int(alpha_mlp_depth)
+        self.alpha_mlp_width = int(alpha_mlp_width)
 
         # Branch dims (CfCCell convention: last branch absorbs remainder).
         base = self.hidden_size // self.n_tau
@@ -204,18 +208,29 @@ class MemoryFusionCfCCell(nn.Module):
                 ]
             )
             # Input-dependent α: per-branch MLP taking [x_t, dt_e] → α
-            # dt_e broadcast to match input dimension
+            # depth=1: Linear(gate_in_dim, d) -> Sigmoid (single linear projection, original N11)
+            # depth=2: Linear -> Sigmoid -> Linear -> Sigmoid (round 284 default)
+            # depth=N: N Linear+Sigmoid layers
+            # width=k*d: hidden layers have k*d units (0=branch_dim, default)
             gate_in_dim = self.input_size + 1  # x_t + dt
             self.gate_mlps = nn.ModuleList()
             for d in self._branch_dims:
-                self.gate_mlps.append(
-                    nn.Sequential(
-                        nn.Linear(gate_in_dim, d),
-                        nn.Sigmoid(),       # first non-linearity
-                        nn.Linear(d, d),
-                        nn.Sigmoid(),       # final squeeze to [0, 1]
-                    )
-                )
+                width = self.alpha_mlp_width if self.alpha_mlp_width > 0 else d
+                layers = []
+                if self.alpha_mlp_depth == 1:
+                    # Single-layer: direct projection
+                    layers += [nn.Linear(gate_in_dim, d), nn.Sigmoid()]
+                elif self.alpha_mlp_depth == 2:
+                    # Two-layer: gate_in -> width -> d
+                    layers += [nn.Linear(gate_in_dim, width), nn.Sigmoid(),
+                               nn.Linear(width, d), nn.Sigmoid()]
+                else:
+                    # depth >= 3: gate_in -> width -> width -> ... -> d
+                    layers += [nn.Linear(gate_in_dim, width), nn.Sigmoid()]
+                    for _ in range(self.alpha_mlp_depth - 2):
+                        layers += [nn.Linear(width, width), nn.Sigmoid()]
+                    layers += [nn.Linear(width, d), nn.Sigmoid()]
+                self.gate_mlps.append(nn.Sequential(*layers))
             self.alpha = None  # distinguish from static hybrid's alpha
             self.g_net = self.l_net = None
 

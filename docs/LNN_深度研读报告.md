@@ -655,6 +655,27 @@ tags: [LNN, reading-report, papers]
   - Simple AR(2) → single mfc-hybrid_gate (N14)
   - **Long-sequence multi-scale → MR-hybrid-gate-cfc** (N24)
 
+
+### [2026-08-05] α MLP Capacity Hypothesis (N22) — NEGATIVE
+- **独立报告**：[[docs/reports/Alpha_Capacity_N22_Negative_Result_2026-08-05.md]]
+- **核心验证**：N15 假设 α capacity 不足导致 hybrid_gate 只能 interpolation（OOD 1.07×）。本轮 N22 测试 **deeper/wider α MLP** 能否突破 ceiling。
+- **代码**：`lnn/core/memory_fusion_cfc.py` 新增 `alpha_mlp_depth` (1/2/3) 和 `alpha_mlp_width` (0=branch_dim, or N×branch_dim) 参数。Init 改进：gain=3.0 + 非零 bias 让 deeper Sigmoid 链有合理 init spread。
+- **测试**：`tests/test_alpha_mlp_capacity.py`（**8/8 通过**）覆盖 depth=1/2/3、width=0/2×/4×、forward shape、α varies、gradient flow、params scaling。
+- **Benchmark（mixed-dt training, 3 σ_test）**：
+  | 模型 | depth | width | params | σ=0.3 | σ=0.5 | **σ=1.0 (OOD)** |
+  |---|---:|---:|---:|---:|---:|---:|
+  | cfc-baseline | — | — | 2137 | 1.00× | 1.00× | **1.00×** |
+  | mfc-hybrid_gate (N15 baseline) | 1 | branch_dim | 2977 | 1.01× | 1.03× | 1.07× |
+  | mfc-hybrid_gate (deeper) | 2 | 2× branch_dim | 3577 | 1.01× | 1.02× | 1.07× |
+  | mfc-hybrid_gate (deeper + wider) | 3 | 2× branch_dim | 4177 | 1.01× | 1.03× | **1.08×** ⚠ |
+  | mfc-hybrid_gate (deeper + much wider) | 3 | 4× branch_dim | 4177 | 1.01× | 1.03× | **1.08×** ⚠ |
+- **关键发现（Honest Negative）**：
+  1. **α capacity 增大不能突破 interpolation ceiling**——depth=3 + width=4× 仍 1.08× OOD（**略变差** ⚠）
+  2. **N15 假设（capacity 不足）被 N22 反驳**：更大 α 不改善 OOD
+  3. **α 本身的 per-input 结构是限制**——Sigmoid 链在 OOD dt 上必须外推
+- **Gap 状态**：**N22 关闭（negative result）**；N17（α capacity 增强）的方向**被 N22 反驳**。
+- **Verdict**：N22 修正 N15 的诊断——α 不能 generic transfer **不是 capacity 不足**，而是 **per-input function 本身的固有限制**。**唯一真正的 OOD dt-robust solution 是 CfC σ-decay**（N12/N16 finding）。**N17 (α capacity enhancement) 方向被关闭**——应该尝试其他路径解决 OOD（如 distillation N19/int8 N20 路径，而不是 α capacity）。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
