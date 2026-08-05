@@ -28,6 +28,21 @@ Motivation (loop 2026-08-05, follow-up to LNN_Training_Paradigm_2026_Summer_Cros
         ``G     = softplus(G_net([x_t, h_prev]))``
         ``L     = softplus(L_net([x_t, h_prev]))``
         ``h_new = (h_prev + dt · G) / (1 + dt · L)``
+    - ``'hybrid'`` (NEW round 283: constructive response to TFP-vs-CfC
+      irregular-dt negative result). Convex combination of CfC and TFP
+      retentions via a learned per-branch mix weight ``α ∈ [0, 1]``::
+
+          ``k_cfc = σ(-f · τ_cfc · dt)                       ``  (sigmoid path)
+          ``k_tfp = exp(-dt / softplus(τ_tfp))              ``  (TFP exponential path)
+          ``k     = α · k_cfc + (1 - α) · k_tfp             ``  (learned mix)
+          ``h_new = k · h_prev + (1 - k) · h_branch         ``
+
+      The sigmoid path provides **dt-robustness via saturation** (cf.
+      benchmark analysis 2026-08-05 — CfC is fully insensitive to
+      dt ∈ [0.12, 4.74]); the exponential path provides **explicit
+      dt semantics** (TFP paper arXiv 2607.08283). ``α`` is per-branch
+      learnable (init 0.5), so the cell can interpolate between the
+      two regimes during training.
 
     All three share the same input projection head (``g_branch``, ``h_branch``), so
     apples-to-apples comparison reduces to *how the previous hidden state is fused
@@ -52,9 +67,10 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
+from torch.nn import ParameterList
 
 
-_VALID_RETENTION = ("cfc", "tfp", "nsfd")
+_VALID_RETENTION = ("cfc", "tfp", "nsfd", "hybrid")
 
 
 class MemoryFusionCfCCell(nn.Module):
@@ -63,7 +79,7 @@ class MemoryFusionCfCCell(nn.Module):
     Args:
         input_size: Input feature dimension.
         hidden_size: Hidden state dimension.
-        retention_kind: One of ``"cfc"``, ``"tfp"``, ``"nsfd"`` (see module docstring).
+        retention_kind: One of ``"cfc"``, ``"tfp"``, ``"nsfd"``, ``"hybrid"`` (see module docstring).
         n_tau: Number of independent time-scale branches (≥ 1). ``n_tau == 1``
             recovers the single-τ path. Each branch gets ``hidden_size // n_tau``
             hidden dims (last branch absorbs remainder).
@@ -121,7 +137,7 @@ class MemoryFusionCfCCell(nn.Module):
             self.time_scale = nn.ParameterList(
                 [nn.Parameter(torch.full((d,), 1.0)) for d in self._branch_dims]
             )
-            self.tau_proj = self.g_net = self.l_net = None
+            self.tau_proj = self.g_net = self.l_net = self.alpha = None
         elif retention_kind == "tfp":
             self.tau_proj = nn.ModuleList(
                 [
@@ -129,15 +145,36 @@ class MemoryFusionCfCCell(nn.Module):
                     for d in self._branch_dims
                 ]
             )
-            self.f_gate = self.time_scale = self.g_net = self.l_net = None
-        else:  # "nsfd"
+            self.f_gate = self.time_scale = self.g_net = self.l_net = self.alpha = None
+        elif retention_kind == "nsfd":
             self.g_net = nn.ModuleList(
                 [nn.Sequential(nn.Linear(in_dim, d), nn.Softplus()) for d in self._branch_dims]
             )
             self.l_net = nn.ModuleList(
                 [nn.Sequential(nn.Linear(in_dim, d), nn.Softplus()) for d in self._branch_dims]
             )
-            self.f_gate = self.tau_proj = self.time_scale = None
+            self.f_gate = self.tau_proj = self.time_scale = self.alpha = None
+        else:  # "hybrid": CfC path + TFP path + learned mix alpha per branch
+            # CfC components
+            self.f_gate = nn.ModuleList(
+                [nn.Sequential(nn.Linear(in_dim, d), nn.Sigmoid()) for d in self._branch_dims]
+            )
+            self.time_scale = nn.ParameterList(
+                [nn.Parameter(torch.full((d,), 1.0)) for d in self._branch_dims]
+            )
+            # TFP components
+            self.tau_proj = nn.ModuleList(
+                [
+                    nn.Sequential(nn.Linear(in_dim, d), nn.Softplus())
+                    for d in self._branch_dims
+                ]
+            )
+            # Learned per-branch mix weight alpha in [0, 1] via sigmoid parameter
+            # 0.5 at init ⇒ equal contribution of both paths.
+            self.alpha = ParameterList(  # type: ignore[name-defined]
+                [nn.Parameter(torch.zeros(d)) for d in self._branch_dims]
+            )
+            self.g_net = self.l_net = None
 
         self._init_parameters()
 
@@ -161,6 +198,15 @@ class MemoryFusionCfCCell(nn.Module):
                 lin = mlp[0]
                 nn.init.xavier_uniform_(lin.weight, gain=0.5)
                 nn.init.constant_(lin.bias, 1.0)  # softplus(1) ≈ 1.31 ≈ "default τ"
+        if self.retention_kind == "hybrid":
+            # bias=0 ⇒ softplus(0)=ln(2) ≈ 0.69 — well-defined default τ
+            for mlp in self.tau_proj:  # type: ignore[union-attr]
+                lin = mlp[0]
+                nn.init.xavier_uniform_(lin.weight, gain=0.5)
+                nn.init.zeros_(lin.bias)
+            # alpha=0 ⇒ sigmoid(0)=0.5 — equal mix at init
+            for p in self.alpha:  # type: ignore[union-attr]
+                nn.init.zeros_(p)
         if self.retention_kind == "nsfd":
             for mlp in (*self.g_net, *self.l_net):
                 lin = mlp[0]
@@ -195,6 +241,17 @@ class MemoryFusionCfCCell(nn.Module):
             elif self.retention_kind == "tfp":
                 tau = self.tau_proj[i](combined) + 1e-3  # type: ignore[index]
                 k = torch.exp(-dt / tau)
+                branch_outs.append(k * h_i + (1.0 - k) * cand)
+            elif self.retention_kind == "hybrid":
+                # CfC path: sigmoid saturation (dt-robustness from prior benchmark)
+                f = self.f_gate[i](combined)  # type: ignore[index]
+                k_cfc = torch.sigmoid(-f * self.time_scale[i] * dt)  # type: ignore[index]
+                # TFP path: explicit-dt exponential retention
+                tau = self.tau_proj[i](combined) + 1e-3  # type: ignore[index]
+                k_tfp = torch.exp(-dt / tau)
+                # Learned per-element mix in [0, 1]
+                a = torch.sigmoid(self.alpha[i])  # type: ignore[index]
+                k = a * k_cfc + (1.0 - a) * k_tfp
                 branch_outs.append(k * h_i + (1.0 - k) * cand)
             else:  # "nsfd"
                 G = self.g_net[i](combined)  # type: ignore[index]

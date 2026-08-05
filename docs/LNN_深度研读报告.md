@@ -310,6 +310,31 @@ tags: [LNN, reading-report, papers]
   - **irregular dt (h=24, sl=48)**：**MFC-TFP ↑14% MSE（劣于 CfC）** ← 完全反转
 - **Verdict**：上一轮 "MFC-TFP 在 h ≥ 24 稳定优于 CfC" 的结论现在需要补一个限定条件："**仅在 regular dt 下成立**"。这是关于 retention 机制选择的**实质性边界条件**，对 VLA / 时间序列应用有直接指导意义。
 
+
+### [2026-08-05] MFC-Hybrid Retention — CfC × TFP Learned Mix（关 N8）
+- **独立报告**：[[docs/reports/MFC_Hybrid_Retention_2026-08-05.md]]
+- **核心设计**：把上一轮 TFP-vs-CfC 的 **counter-intuitive negative result** 转化为 **constructive synthesis**。新增 `MemoryFusionCfCCell(retention_kind="hybrid")`，公式：
+  ```
+  k_cfc = σ(-f_cfc · τ_cfc · dt)            ← sigmoid saturation, dt-robust
+  k_tfp = exp(-dt / softplus(τ_tfp_proj))   ← exponential, explicit dt
+  α     = sigmoid(self.alpha)                ← learned per-element mix ∈ [0, 1]
+  k     = α · k_cfc + (1 - α) · k_tfp        ← convex combination
+  h_new = k · h_prev + (1 - k) · h_branch
+  ```
+- **代码**：`lnn/core/memory_fusion_cfc.py` 新增 hybrid 分支（同时存在 CfC f_gate 与 TFP tau_proj + per-branch alpha）。
+- **测试**：`tests/test_hybrid_retention.py`（10 tests, all pass）覆盖 init、shape、α=0 退化为 TFP、α=0+dt→0 退化为 h_prev、梯度流、端到端训练。
+- **意外发现**：CfC σ-decay 在 dt→0 时 **不会**退化为 h_prev（k_cfc → σ(0) = 0.5 而非 1，因为 f 是网络输出）—— 只有 TFP 的 exp(-dt/τ) 才有真正的 dt→0 identity 退化。
+- **Benchmark（regular train + regular/irregular test）**：
+  | 模型 | regular MSE | irregular MSE | degradation |
+  |---|---:|---:|---:|
+  | cfc-baseline | 0.0589 | 0.0589 | 1.00× |
+  | mfc-cfc | 0.0590 | 0.0590 | 1.00× |
+  | mfc-tfp | 0.0586 | 0.0671 | **1.14×** |
+  | **mfc-hybrid** | 0.0590 | **0.0618** | **1.05×** ⚡ |
+- **α 学习观察**：在 regular dt 上训练 20 步后 α mean 从 0.500 → 0.462（几乎没变）— **模型从未见过 dt 抖动，没有切换动机**。这是 hybrid 在当前训练条件下没学到 conditional gating 的根本原因。
+- **Gap 状态**：**N8 完成**；新增 N9（hybrid 在 irregular dt 训练下的 α 学习曲线）+ N10（hybrid × MR-TFP-CfC 三层组合）。
+- **Verdict**：本轮把上一轮的 negative result 转成 constructive synthesis。Hybrid **不是 0 vs 14% 的极端解**，而是 **"用 1.05× 轻微退化换 regular dt 的 TFP-level 性能"** 的实用 interpolation。研究价值在于：(1) α 真的可学、(2) α 在 regular 训练下保持中性、(3) 为 N9 提供了 baseline，待 irregular 训练验证 conditional gating hypothesis。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
