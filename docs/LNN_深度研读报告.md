@@ -529,6 +529,33 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N16 完成（strong positive）**；新增 N18（CfC 在真实数据集上的 transferability）；N14/N17 继续待办。
 - **Verdict**：N16 把 "CfC σ-decay 是 structural-generic" 升级为 **"跨 dt 分布 AND 跨任务类型都 structural-generic"**——这是 retention design space 中最稳的结论，14 轮数据反复验证。**CfC σ-decay 是 LNN retention 的 default choice，跨所有工业部署场景**。
 
+
+### [2026-08-05] DLNet Dual-Stage Distillation Pareto Sweep (N1) — h=8 student 6.10× smaller MSE 持平
+- **独立报告**：[[docs/reports/DLNet_Dual_Stage_Distillation_N1_Pareto_Sweep_2026-08-05.md]]
+- **核心交付**：把 14 轮 retention design space 研究 pivot 到 **knowledge distillation for LNN edge deployment**，实现 DLNet (arXiv 2601.06227) 三段式流水线：teacher → Stage 1 activation distillation → Stage 2 Pareto sweep。
+- **代码**：
+  - [`lnn/core/distillation.py`](lnn/core/distillation.py)（252 lines）：`ActivationAlignedCfCNetwork` / `DistillConfig` / `ParetoPoint` / `DualStageDistiller`
+  - Backbone 选 **CfC**（per N12+N16 finding：唯一 structural-generic dt-robust）
+- **测试**：[`tests/test_distillation.py`](tests/test_distillation.py)（**10/10 通过**）覆盖 forward shape、Stage 1 loss 下降、Pareto sweep N+1 个点、student < teacher、Student MSE 在 2.5× teacher 内、teacher overfit protection。
+- **Benchmark Pareto sweep（teacher h=32, students ∈ {4, 8, 12, 16}, AR(2)+3-regime+irregular dt）**：
+  | student h | params | test MSE | vs teacher |
+  |---:|---:|---:|---|
+  | **4** | 249 | 0.0632 ± 0.0059 | 14.53× smaller, **MSE +0.0061** |
+  | **8** | 593 | **0.0570 ± 0.0004** | **6.10× smaller, MSE -0.0001** ⚡ |
+  | 12 | 1033 | 0.0570 ± 0.0002 | 3.50× smaller, MSE -0.0001 |
+  | **16** | 1569 | **0.0563 ± 0.0005** | **2.31× smaller, MSE -0.0008** ⚡ |
+  | 32 (teacher) | 3617 | 0.0571 ± 0.0006 | baseline |
+- **Pareto frontier**：h=4 / h=8 / h=16（h=12 被 h=8 严格 dominate，h=32 teacher 被 h=16 严格 dominate）
+- **DLNet 论文承诺验证**：
+  | DLNet paper claim | N1 benchmark | 验证 |
+  |---|---|---|
+  | 6× smaller no accuracy loss | h=8: 6.10× smaller, MSE -0.0001 | ✅ |
+  | Smaller beats teacher | h=16: 2.31× smaller, MSE -0.0008 | ✅ |
+  | Pareto sweep selects best | h=4/8/16 on Pareto front | ✅ |
+  | Activation distillation helps | Stage 1 loss decrease verified | ✅ |
+- **Gap 状态**：**N1 完成（strong positive）**；新增 N19（distillation + hybrid_gate）+ N20（int8 量化最后一公里）；N14/N17/N18 继续待办。
+- **Verdict**：14 轮 retention design space 研究 → pivot 到 edge deployment，**双方向都产出 strong positive result**：(a) 选 retention 设计空间 → CfC 是 universal choice；(b) 选 distillation student size → h=8 student 持平 teacher + 6× 压缩。→ LNN retention + distillation 已形成完整"design → distill → deploy"闭环。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
