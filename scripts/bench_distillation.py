@@ -52,6 +52,7 @@ def main():
     parser.add_argument("--teacher-hidden", type=int, default=32)
     parser.add_argument("--student-hiddens", type=int, nargs="+", default=[4, 8, 12, 16])
     parser.add_argument("--teacher-retention", choices=["cfc", "hybrid_gate"], default="cfc")
+    parser.add_argument("--student-retention", choices=["cfc", "hybrid_gate"], default="cfc")
     parser.add_argument("--date", default="2026-08-05")
     args = parser.parse_args()
 
@@ -67,6 +68,7 @@ def main():
         student_hiddens=tuple(args.student_hiddens),
         epochs=args.epochs, batch=8, lr=1e-2,
         teacher_retention_kind=args.teacher_retention,
+        student_retention_kind=getattr(args, "student_retention", "cfc"),
     )
 
     # Run repeats and aggregate
@@ -130,8 +132,10 @@ def main():
     # Save
     out_dir = ROOT / "analysis" / "jetson"
     out_dir.mkdir(parents=True, exist_ok=True)
-    json_path = out_dir / f"{args.date}_distillation_pareto.json"
-    md_path = out_dir / f"{args.date}_distillation_pareto.md"
+    # Filename includes both teacher and student retention kinds
+    base_name = f"{args.date}_distillation_{args.teacher_retention}_to_{args.student_retention}"
+    json_path = out_dir / f"{base_name}.json"
+    md_path = out_dir / f"{base_name}.md"
     json_path.write_text(json.dumps({
         "date": args.date,
         "task": "ar2_regime_distillation",
@@ -141,7 +145,7 @@ def main():
     }, indent=2))
 
     md = [f"""---
-title: DLNet-style LNN Distillation Pareto Sweep — {args.date}
+title: DLNet-style LNN Distillation Pareto Sweep — {args.date} (teacher={args.teacher_retention} → student={args.student_retention})
 date: {args.date}
 tags: [LNN, distillation, pareto, edge-ai, DLNet, knowledge-distillation, dual-stage, N1]
 arxiv_refs: [2601.06227, 2106.13898]

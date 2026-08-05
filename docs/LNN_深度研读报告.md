@@ -700,6 +700,29 @@ tags: [LNN, reading-report, papers]
   - delta 0 in-dist + delta 0 OOD
   - **Edge deployment ready under variable sensor sampling rates**
 
+
+### [2026-08-05] hybrid_gate Student Distillation (N21) — N19 仍最优：CfC student 胜
+- **独立报告**：[[docs/reports/Hybrid_Gate_Student_Distillation_N21_2026-08-05.md]]
+- **核心验证**：N19 发现 hybrid_gate teacher 比 CfC teacher 更易压缩。本轮 N21 验证 **hybrid_gate student** 是否进一步提升压缩比。**结论：NEGATIVE for round-trip**——N19 (hybrid_gate teacher → CfC student) 仍是最优。
+- **代码**：`lnn/core/distillation.py` 新增 `student_retention_kind` 参数（默认 'cfc'），`__init__` 验证。`scripts/bench_distillation.py` 新增 `--student-retention` 选项。
+- **测试**：`tests/test_distillation_round_trip.py`（**7/7 通过**）覆盖 DistillConfig、unknown rejection、student kind selection、end-to-end round-trip sweep、Stage 1 loss decrease。
+- **Benchmark（4 teacher-student 配置 × 4 student h）**：
+  | Teacher→Student | h=4 comp | h=4 MSE δ | h=8 comp | h=8 MSE δ |
+  |---|---:|---:|---:|---:|
+  | **CfC→CfC (N1)** | 14.53× | +0.0061 | 6.10× | -0.0001 |
+  | **hybrid_gate→CfC (N19)** | **24.29×** | **-0.0001** | **10.20×** | -0.0003 |
+  | **hybrid_gate→hybrid_gate (N21)** | 16.16× | +0.0129 | 6.70× | +0.0030 |
+  | **CfC→hybrid_gate (N21 cmp)** | 11.71× | +0.0114 | 4.86× | +0.0053 |
+- **关键发现**：
+  1. **N19 (hybrid_gate teacher → CfC student) 仍是 BEST**——24.29× at h=4，N21 round-trip 只 16.16× (-33%)
+  2. **hybrid_gate student 在小 hidden 下退化**——h=4 delta +0.0129 vs CfC -0.0001（α MLP + τ_proj 需要 capacity）
+  3. **Teacher dimension (N19): hybrid_gate > CfC** + **Student dimension (N21): CfC > hybrid_gate** = **N19 组合最优**
+- **Gap 状态**：**N21 关闭（N19 仍 best）**；N18 继续待办；N2/L4 foundational gaps 收尾。
+- **Verdict**：N21 给出 distillation design 的**完整 picture**：
+  - **Teacher**: hybrid_gate（rich hidden 让 student 容易学）
+  - **Student**: CfC（capacity-efficient，compression 友好）
+  - **Final recommendation**: hybrid_gate teacher → CfC h=4 student → int8 = **97.16× 压缩**
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |

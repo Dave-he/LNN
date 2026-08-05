@@ -138,6 +138,7 @@ class DistillConfig:
     batch: int = 8
     lr: float = 1e-2
     teacher_retention_kind: str = "cfc"  # 'cfc' | 'hybrid_gate' for teacher
+    student_retention_kind: str = "cfc"  # 'cfc' | 'hybrid_gate' for student (N21: round-trip)
 
 
 @dataclass
@@ -166,8 +167,13 @@ class DualStageDistiller:
 
     def __init__(self, cfg: DistillConfig):
         self.cfg = cfg
+        if cfg.student_retention_kind not in ("cfc", "hybrid_gate"):
+            raise ValueError(
+                f"student_retention_kind must be 'cfc' or 'hybrid_gate'; got {cfg.student_retention_kind!r}"
+            )
         # Build teacher (CfC or hybrid_gate based on config)
         self.teacher_retention_kind = cfg.teacher_retention_kind
+        self.student_retention_kind = cfg.student_retention_kind
         if cfg.teacher_retention_kind == "cfc":
             self.teacher = ActivationAlignedCfCNetwork(
                 input_size=cfg.input_size,
@@ -189,15 +195,24 @@ class DualStageDistiller:
     # Stage 1 helpers
     # ------------------------------------------------------------------
 
-    def _make_student(self, hidden: int) -> tuple[ActivationAlignedCfCNetwork, nn.Linear]:
+    def _make_student(self, hidden: int) -> tuple[nn.Module, nn.Linear]:
         """Build a student with hidden-dim ``hidden`` plus a linear projection
         from teacher-hidden (cfg.teacher_hidden) to student-hidden so the
         activation-MSE loss can be computed across dimensions."""
-        student = ActivationAlignedCfCNetwork(
-            input_size=self.cfg.input_size,
-            hidden_size=hidden,
-            output_size=self.cfg.output_size,
-        )
+        if self.cfg.student_retention_kind == "cfc":
+            student = ActivationAlignedCfCNetwork(
+                input_size=self.cfg.input_size,
+                hidden_size=hidden,
+                output_size=self.cfg.output_size,
+            )
+        elif self.cfg.student_retention_kind == "hybrid_gate":
+            student = ActivationAlignedHybridGateCfCNetwork(
+                input_size=self.cfg.input_size,
+                hidden_size=hidden,
+                output_size=self.cfg.output_size,
+            )
+        else:
+            raise ValueError(f"Unknown student_retention_kind: {self.cfg.student_retention_kind!r}")
         # Linear projection from teacher hidden -> student hidden (broadcast over time)
         proj = nn.Linear(self.cfg.teacher_hidden, hidden)
         return student, proj

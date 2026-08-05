@@ -1,0 +1,93 @@
+{
+  "date": "2026-08-05",
+  "task": "ar2_regime_distillation",
+  "config": {
+    "repeats": 2,
+    "epochs": 4,
+    "n_samples": 192,
+    "teacher_hidden": 32,
+    "student_hiddens": [
+      4,
+      8,
+      12,
+      16
+    ],
+    "teacher_retention": "cfc",
+    "student_retention": "hybrid_gate",
+    "date": "2026-08-05"
+  },
+  "rows": [
+    {
+      "hidden": 4,
+      "params_mean": 309,
+      "test_mse_mean": 0.06850533932447433,
+      "test_mse_std": 0.00029364763028752645,
+      "train_seconds_mean": 10.043911962769926
+    },
+    {
+      "hidden": 8,
+      "params_mean": 745,
+      "test_mse_mean": 0.06240804120898247,
+      "test_mse_std": 0.007537547656044353,
+      "train_seconds_mean": 12.956078097224236
+    },
+    {
+      "hidden": 12,
+      "params_mean": 1309,
+      "test_mse_mean": 0.059346290305256844,
+      "test_mse_std": 0.0034394594271823058,
+      "train_seconds_mean": 10.780855272896588
+    },
+    {
+      "hidden": 16,
+      "params_mean": 2001,
+      "test_mse_mean": 0.05719425156712532,
+      "test_mse_std": 0.00037623964830068717,
+      "train_seconds_mean": 10.21557057206519
+    },
+    {
+      "hidden": 32,
+      "params_mean": 3617,
+      "test_mse_mean": 0.05709310434758663,
+      "test_mse_std": 0.0006370680544883869,
+      "train_seconds_mean": 6.022996944608167
+    }
+  ],
+  "pareto_frontier": [
+    {
+      "hidden": 4,
+      "params_mean": 309,
+      "test_mse_mean": 0.06850533932447433,
+      "test_mse_std": 0.00029364763028752645,
+      "train_seconds_mean": 10.043911962769926
+    },
+    {
+      "hidden": 8,
+      "params_mean": 745,
+      "test_mse_mean": 0.06240804120898247,
+      "test_mse_std": 0.007537547656044353,
+      "train_seconds_mean": 12.956078097224236
+    },
+    {
+      "hidden": 12,
+      "params_mean": 1309,
+      "test_mse_mean": 0.059346290305256844,
+      "test_mse_std": 0.0034394594271823058,
+      "train_seconds_mean": 10.780855272896588
+    },
+    {
+      "hidden": 16,
+      "params_mean": 2001,
+      "test_mse_mean": 0.05719425156712532,
+      "test_mse_std": 0.00037623964830068717,
+      "train_seconds_mean": 10.21557057206519
+    },
+    {
+      "hidden": 32,
+      "params_mean": 3617,
+      "test_mse_mean": 0.05709310434758663,
+      "test_mse_std": 0.0006370680544883869,
+      "train_seconds_mean": 6.022996944608167
+    }
+  ]
+}
