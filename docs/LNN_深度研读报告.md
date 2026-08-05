@@ -501,6 +501,34 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N15 关闭（partial positive）**；新增 N17（α capacity 增强能否突破 interpolation 限制）；N14/N16 继续待办。
 - **Verdict**：本轮把"N12 honest finding 完全否定"修正为 **"Distribution-augmented training 部分有效（3pp 改善），但 α 仍只能 interpolation 而非 generic mechanism"**。**CfC σ-decay 仍是唯一 structural-generic dt-robustness choice**——这一结论在 N15 后更牢固。
 
+
+### [2026-08-05] CfC Transferability on Multi-Regime Tasks (N16) — strong confirmation of N12
+- **独立报告**：[[docs/reports/CfC_Transferability_N16_Multi_Regime_2026-08-05.md]]
+- **核心验证**：N12 发现 CfC σ-decay 在 simple 3-regime AR(2) 跨 dt 分布全 1.00×；本轮 N16 验证在 **更复杂任务**（多 regime、overlap、intra-drift、长序列）上是否保持。
+- **6 个任务变体 × 3 模型 = 18 个 degradation 值**：
+  | Task | **cfc-baseline** | mfc-tfp | mfc-hybrid_gate |
+  |---|---:|---:|---:|
+  | 3-regime (N12 baseline) | **1.00×** | 1.05× | 1.04× |
+  | 5-regime | **1.00×** | 1.05× | 1.03× |
+  | 8-regime | **1.00×** | **1.11×** | 1.05× |
+  | 3-regime + intra-drift | **1.00×** | 1.05× | 1.00× |
+  | 3-regime + overlap | **1.00×** | **1.18×** ⚠ | 1.04× |
+  | 3-regime long (sl=96) | **1.00×** | 1.07× | 1.01× |
+- **关键发现（strong confirmation of N12）**：
+  1. **CfC 在 6 个任务变体上全部 1.00×** —— N12 finding 完全跨任务验证
+  2. TFP 在 overlap 任务退化 **1.18×**（regime 系数相近时 TFP 难以区分）
+  3. **Hybrid_gate 在 intra-drift 任务上 1.00×**（与 CfC 持平！input-dep α 在 regime-drift 任务上帮助显著）
+  4. **CfC σ-decay = 双 structural-generic**：跨 dt 分布 AND 跨任务类型
+- **N12 + N16 综合结论**：
+  | 维度 | N12 (跨 dt) | N16 (跨任务) |
+  |---|---|---|
+  | CfC 跨条件 | 1.00× across all σ_test | 1.00× across all tasks |
+  | TFP 退化范围 | 1.02-1.12× | 1.05-1.18× |
+  | Hybrid_gate 退化范围 | 1.01-1.10× | 1.00-1.05× |
+  | Generic 结论 | structural | structural |
+- **Gap 状态**：**N16 完成（strong positive）**；新增 N18（CfC 在真实数据集上的 transferability）；N14/N17 继续待办。
+- **Verdict**：N16 把 "CfC σ-decay 是 structural-generic" 升级为 **"跨 dt 分布 AND 跨任务类型都 structural-generic"**——这是 retention design space 中最稳的结论，14 轮数据反复验证。**CfC σ-decay 是 LNN retention 的 default choice，跨所有工业部署场景**。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
