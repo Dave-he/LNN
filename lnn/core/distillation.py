@@ -254,10 +254,13 @@ class DualStageDistiller:
         """Train teacher, then sweep student hidden sizes for Stage 2.
 
         Returns a list of :class:`ParetoPoint` sorted by student_hidden.
+        Stores trained students in ``self.students`` keyed by hidden
+        size so callers (e.g. int8 quantization) can re-use them.
         """
         cfg = self.cfg
+        self.students = {}  # reset
 
-        # --- Train teacher (skip if already trained; simple smoke assumes not) ---
+        # --- Train teacher ---
         teacher_opt = torch.optim.Adam(self.teacher.parameters(), lr=cfg.lr)
         n = x_tr.shape[0]
         t0 = time.perf_counter()
@@ -277,7 +280,6 @@ class DualStageDistiller:
 
         # --- Stage 2: Pareto sweep ---
         results: list[ParetoPoint] = []
-        # Add teacher as the largest point for reference
         results.append(ParetoPoint(
             student_hidden=cfg.teacher_hidden,
             params=teacher_params,
@@ -289,6 +291,8 @@ class DualStageDistiller:
             train_s = self.train_stage1(student, proj, x_tr, y_tr)
             test_mse = self.evaluate(student, x_te, y_te)
             n_params = sum(p.numel() for p in student.parameters()) + sum(p.numel() for p in proj.parameters())
+            # Save trained student state for downstream use (e.g. int8 quantization)
+            self.students[h] = (student, proj)
             results.append(ParetoPoint(
                 student_hidden=h,
                 params=n_params,

@@ -1,0 +1,60 @@
+{
+  "date": "2026-08-05",
+  "task": "int8_quantization_post_distillation",
+  "config": {
+    "repeats": 2,
+    "epochs": 4,
+    "n_samples": 192,
+    "teacher_hidden": 32,
+    "student_hiddens": [
+      4,
+      8,
+      12,
+      16
+    ],
+    "teacher_retention": "hybrid_gate",
+    "date": "2026-08-05"
+  },
+  "rows": [
+    {
+      "hidden": 4,
+      "params": 249,
+      "fp32_mse_mean": 0.05709262937307358,
+      "fp32_mse_std": 0.00031493178878552795,
+      "int8_mse_mean": 0.05707583762705326,
+      "int8_mse_std": 0.00033675068542401136,
+      "int8_bytes": 113,
+      "fp32_bytes": 452
+    },
+    {
+      "hidden": 8,
+      "params": 593,
+      "fp32_mse_mean": 0.05688376724720001,
+      "fp32_mse_std": 0.0008794572144525703,
+      "int8_mse_mean": 0.056865762919187546,
+      "int8_mse_std": 0.0008660755900503614,
+      "int8_bytes": 321,
+      "fp32_bytes": 1284
+    },
+    {
+      "hidden": 12,
+      "params": 1033,
+      "fp32_mse_mean": 0.05705077387392521,
+      "fp32_mse_std": 0.0005666670124070022,
+      "int8_mse_mean": 0.05705306679010391,
+      "int8_mse_std": 0.0005416554919938186,
+      "int8_bytes": 625,
+      "fp32_bytes": 2500
+    },
+    {
+      "hidden": 16,
+      "params": 1569,
+      "fp32_mse_mean": 0.056253233924508095,
+      "fp32_mse_std": 0.00017198284952673503,
+      "int8_mse_mean": 0.0562533438205719,
+      "int8_mse_std": 0.00017322354737977447,
+      "int8_bytes": 1025,
+      "fp32_bytes": 4100
+    }
+  ]
+}

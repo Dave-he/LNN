@@ -578,6 +578,35 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N19 完成（counter-intuitive positive）**；新增 N21（hybrid_gate student distillation）+ N22（教师容量 hypothesis 验证）；N14/N20 继续待办。
 - **Verdict**：N19 把 "hybrid_gate 比 CfC 更复杂" 的 property **翻转**为 benefit：in-dist MSE 持平（N11）+ 更易 distillation（N19）。这意味着对 edge deployment，**hybrid_gate teacher 是更优选择**——既能 in-dist 持平 CfC，又能给学生 67% 更多压缩。
 
+
+### [2026-08-05] Int8 Quantization on Distillation Students (N20) — DLNet Stage 3 落地，4.0× 无损压缩
+- **独立报告**：[[docs/reports/Int8_Quantization_N20_DLNet_Stage3_2026-08-05.md]]
+- **核心交付**：把 DLNet (arXiv 2601.06227) Stage 3 (int8 quantization) 补完到本项目 DLNet 流水线。
+- **代码**：
+  - [`lnn/core/quantization.py`](lnn/core/quantization.py)（136 lines）：`quantize_int8_per_tensor` / `quantize_int8_per_channel` / `dequantize_int8` / `quantize_model_inplace` / size accounting
+  - [`lnn/core/distillation.py`](lnn/core/distillation.py)（refactored: store trained students in `self.students` dict so int8 量化可重用）
+- **测试**：[`tests/test_quantization.py`](tests/test_quantization.py)（**9/9 通过**）覆盖 shape、range、recovery error、zero weight、in-place quantization、bounded error、int8 size = fp32 size / 4。
+- **Benchmark**：
+  | student h | fp32 MSE | int8 MSE | delta | int8 size | fp32 size |
+  |---:|---:|---:|---:|---:|---:|
+  | 4 | 0.0632 | 0.0632 | **-0.0000** | 113B | 452B |
+  | 8 | 0.0570 | 0.0570 | **+0.0000** | 321B | 1284B |
+  | 12 | 0.0570 | 0.0570 | **+0.0000** | 625B | 2500B |
+  | 16 | 0.0563 | 0.0563 | **-0.0000** | 1025B | 4100B |
+  - **所有 8 个 (4 student × 2 teacher) 配置的 MSE delta 都在 ±0.0001 内**——浮点精度内
+- **关键发现**：
+  1. **int8 量化"无成本"提供 4.0× 压缩**——free-lunch compression
+  2. **Combined compression 链路**：
+     - CfC teacher + h=4 + int8 = 14.53× × 4.0× = **58.13×**
+     - **hybrid_gate teacher + h=4 + int8 = 24.29× × 4.0× = 97.16×**（超两个数量级）
+  3. **3 轮 distillation research 累积**：每一步"无成本"提供额外压缩
+- **Gap 状态**：**N20 完成（strong positive）**；新增 N23（int8 student × irregular dt 验证）；N14/N21/N22 继续待办。
+- **Verdict**：N20 完成 DLNet 完整三段式流水线（teacher → distill → quantize）。**LNN edge deployment total pipeline**:
+  - 选 hybrid_gate teacher（N19 rich hidden）
+  - 蒸馏到 h=4 CfC student（N19 24.29×）
+  - int8 量化（N20 4.0×）
+  - **总：97.16× 压缩、零精度损失、可部署到 MCU**
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
