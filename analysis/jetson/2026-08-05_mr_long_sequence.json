@@ -1,0 +1,37 @@
+{
+  "date": "2026-08-05",
+  "task": "mr_routing_long_sequence_multiscale",
+  "config": {
+    "repeats": 2,
+    "epochs": 3,
+    "n_samples": 128,
+    "seq_len": 96,
+    "hidden": 64,
+    "n_tau": 4,
+    "n_regimes": 8,
+    "date": "2026-08-05"
+  },
+  "results": {
+    "cfc": {
+      "params": 7241,
+      "per_expert_hidden": 64,
+      "mse_mean": 0.2496219128370285,
+      "mse_std": 0.006195102042343547,
+      "train_s_mean": 32.350376557093114
+    },
+    "mfc-hybrid_gate": {
+      "params": 12105,
+      "per_expert_hidden": 64,
+      "mse_mean": 0.2691887766122818,
+      "mse_std": 0.007102776571874162,
+      "train_s_mean": 46.2314063210506
+    },
+    "mr-hybrid-gate-cfc": {
+      "params": 6993,
+      "per_expert_hidden": 16,
+      "mse_mean": 0.1617969274520874,
+      "mse_std": 0.031034220771693412,
+      "train_s_mean": 144.05188710731454
+    }
+  }
+}

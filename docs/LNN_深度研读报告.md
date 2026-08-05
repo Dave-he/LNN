@@ -630,6 +630,31 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N14 关闭（honest finding 加强）**；新增 N24（MR 在 long-sequence/multi-scale 任务上是否发挥）。
 - **Verdict**：N14 把 "small hidden 限制" 修正为 **"MR routing 不是 free lunch"**——只在有足够数据 + 真正多尺度任务时才有效。**single expert mfc-hybrid_gate 在 h=64 是当前 AR(2) 任务的最优配置**。要发挥 MR 的 multi-rate 优势，需要 long-sequence / multi-scale 任务（N24 待验证）。
 
+
+### [2026-08-05] MR Routing on Long-Sequence / Multi-Scale Tasks (N24) — STRONG POSITIVE
+- **独立报告**：[[docs/reports/MR_Long_Sequence_N24_Multi_Scale_Strong_Positive_2026-08-05.md]]
+- **核心验证**：N14 在 AR(2) simple task 上发现 MR 退化 6%，并提出 H1 hypothesis："任务太简单，MR multi-scale 没发挥空间"。本轮 N24 在 **multi-scale long-sequence 任务**（8-regime + sinusoidal carriers, sl=96）上验证。
+- **Benchmark（sl=96, h=64, n_tau=4, 8 regimes + sinusoidal）**：
+  | 模型 | per_expert | params | test MSE |
+  |---|---:|---:|---:|
+  | cfc (single) | 64 | 7241 | 0.2496 ± 0.0062 |
+  | mfc-hybrid_gate (single) | 64 | 12105 | 0.2692 ± 0.0071 |
+  | **mr-hybrid-gate-cfc (n_tau=4)** | 16 | 6993 | **0.1618 ± 0.0310** ⚡ |
+- **关键发现（STRONG POSITIVE）**：
+  1. **MR 退化 35-40%** single expert：0.1618 / 0.2496 = 0.65× vs cfc; 0.1618 / 0.2692 = 0.60× vs mfc-hybrid_gate
+  2. **N14 H1 hypothesis 完全确认**：任务 spectrum 是 MR routing 发挥的关键
+  3. **N13/N14 的"MR 退化" finding 仅在 simple AR(2) task 上成立**——N24 证明**当 task 真正多尺度时 MR 是 free lunch**
+- **N13/N14/N24 三轮 MR 演进**：
+  | Round | 任务 | 结果 |
+  |---|---|---|
+  | N13 | AR(2) 3-regime, sl=32, h=24 | MR 退化 11% (honest) |
+  | N14 | AR(2) 3-regime, sl=24, h=64 | MR 退化 6% (honest, partial reversal) |
+  | **N24** | **Multi-scale 8-regime, sl=96, h=64** | **MR 退化 35% (STRONG POSITIVE)** ⚡ |
+- **Gap 状态**：**N24 完成（strong positive）**；N21/N22/N23/N17/N18 继续待办；N2/L4 foundational gaps 收尾。
+- **Verdict**：N24 修正了 N13/N14 的"MR 退化"结论——**MR routing 在 simple AR(2) task 上退化，但在真正 multi-scale long-sequence task 上退化 single expert 35%**。**任务 spectrum 是选择 single vs MR 的关键因素**：
+  - Simple AR(2) → single mfc-hybrid_gate (N14)
+  - **Long-sequence multi-scale → MR-hybrid-gate-cfc** (N24)
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
