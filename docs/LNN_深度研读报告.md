@@ -236,6 +236,31 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N3 完整关闭**（TFP → CfC 门控已落地为 `retention_kind="tfp"`）；**N2 缩小 50%**（NSFD 闭式已落地为 `retention_kind="nsfd"`，L-RFM 的代数同源；剩余 50% 是把随机特征基投影接 `khlfft_attn_cfc.py`）。
 - **Verdict**：跨论文综合（把三篇论文的 retention 公式做成同一 cell 的三种模式）比单篇研读更扎实——单看 TFP 看不出 NSFD 在非负数据上的潜在优势，单看 NSFD 看不到 CfC 在带符号数据上的稳定性。把三者放一起后，**MFC-TFP 是默认推荐**，NSFD 仅在物理量（浓度、计数）任务上启用。
 
+
+### [2026-08-05] MR-TFP-CfC 第二层综合 + Pareto 验证 — multi-rate MoE × TFP retention（含 negative result）
+- **独立报告**：[[docs/reports/MR_TFP_CfC_Second_Layer_Synthesis_2026-08-05.md]]
+- **代码**：`lnn/core/multirate_tfp_cfc.py`（262 lines），新模块 `MultiRateTfpCfC` / `MultiRateTfpCfCNetwork`，每个 expert 是 `MemoryFusionCfCCell(retention_kind="tfp")`，EC-routed top-K 激活。
+- **测试**：`tests/test_multirate_tfp_cfc.py`（13 tests, all pass），覆盖 init/形状/τ bias 对齐/top-K 路由/aux loss/端到端训练/梯度流。
+- **Pareto sweep 验证**：`scripts/bench_mfc_cfc_pareto.py` 跑 `hidden ∈ {16, 32} × seq_len ∈ {32, 64}`：
+  - **h=16, sl=32**：胜者 MFC-CFC（0.0561）
+  - **h=16, sl=64**：胜者 **CfC**（0.0566）
+  - **h=32, sl=32**：并列 CfC / MFC-TFP（0.0566）
+  - **h=32, sl=64**：胜者 **MFC-TFP**（0.0564）
+  - **MFC-NSFD 在 h=16/sl=64 爆炸**：MSE 160.96 ± 227（最严重 negative result，**必须显式禁用除非数据非负**）
+- **MR-TFP-CfC benchmark**（h=16，2 repeats）：**negative result** —
+  - MR-TFP-CfC (n_tau=4) MSE 0.0709 > CfC 0.0550（差距 ~29%）
+  - 训练时间膨胀 23×（108s vs 4.7s）
+  - top-K=1 与默认 top-K=2 几乎相同（0.0714 vs 0.0709）
+  - 原因：参数预算不足（465 vs 1041），4 个 expert 各 ~116 参数，TFP retention 在 4-dim hidden 下没空间建模
+- **5 项假设的验证状态**：
+  - H1 MFC-TFP 在 h=24 时 ↓1.4% ✅
+  - H2 MFC-TFP 优势跨配置 ⚠ 部分成立（h ≥ 24 时稳定，h=16 时反超）
+  - H3 MFC-NSFD 在带符号数据吃亏 ✅（爆炸）
+  - H4 MR-TFP-CfC Pareto-improving ❌（至少 h=16 下不成立）
+  - H5 MFC-CFC ≡ CfC 数值等价 ✅
+- **Gap 状态**：N3 完全关闭（N3 + MR-TFP-CfC 双层）；新增 N5（MR-TFP-CfC 在大 hidden 下重评估）+ N6（不规则 dt 任务上验证 TFP 优势）；N2 缩小 50%。
+- **Verdict**：跨论文综合不能止于"组合起来"——必须用 benchmark 验证 negative space。本轮 negative result（MR-TFP-CfC 在 h=16 失败）比上轮 positive result（MFC-TFP 在 h=24 ↓1.4%）更有研究价值，因为它揭示了**多 expert routing 需要足够大的 hidden 才能发挥**这一边界条件。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |

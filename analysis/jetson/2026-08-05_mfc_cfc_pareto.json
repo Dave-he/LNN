@@ -1,0 +1,222 @@
+{
+  "date": "2026-08-05",
+  "task": "non_stationary_ar2_regime_change",
+  "config": {
+    "repeats": 2,
+    "epochs": 2,
+    "batch": 8,
+    "lr": 0.01,
+    "n_samples": 384,
+    "hidden_sizes": [
+      16,
+      32
+    ],
+    "seq_lens": [
+      32,
+      64
+    ],
+    "date": "2026-08-05"
+  },
+  "rows": [
+    {
+      "model": "cfc",
+      "hidden": 16,
+      "seq_len": 32,
+      "params": 1041,
+      "test_mse_mean": 0.056246889755129814,
+      "test_mse_std": 6.135264054170205e-05,
+      "inference_steps_per_sec_mean": 4316.613918931029,
+      "train_seconds_mean": 6.7974239201284945
+    },
+    {
+      "model": "mfc-cfc",
+      "hidden": 16,
+      "seq_len": 32,
+      "params": 1041,
+      "test_mse_mean": 0.056126851588487625,
+      "test_mse_std": 0.00014999009713814415,
+      "inference_steps_per_sec_mean": 3427.5619593337287,
+      "train_seconds_mean": 7.0129819109570235
+    },
+    {
+      "model": "mfc-tfp",
+      "hidden": 16,
+      "seq_len": 32,
+      "params": 1025,
+      "test_mse_mean": 0.057462967932224274,
+      "test_mse_std": 0.0020882182930328833,
+      "inference_steps_per_sec_mean": 4022.968742572094,
+      "train_seconds_mean": 6.816497709369287
+    },
+    {
+      "model": "mfc-nsfd",
+      "hidden": 16,
+      "seq_len": 32,
+      "params": 1361,
+      "test_mse_mean": 0.07925408333539963,
+      "test_mse_std": 0.018102124118989624,
+      "inference_steps_per_sec_mean": 4101.601299624275,
+      "train_seconds_mean": 7.769185490673408
+    },
+    {
+      "model": "gru",
+      "hidden": 16,
+      "seq_len": 32,
+      "params": 1073,
+      "test_mse_mean": 0.05982692912220955,
+      "test_mse_std": 0.005048186195596907,
+      "inference_steps_per_sec_mean": 17160.46718084676,
+      "train_seconds_mean": 3.0135823474265635
+    },
+    {
+      "model": "cfc",
+      "hidden": 16,
+      "seq_len": 64,
+      "params": 1041,
+      "test_mse_mean": 0.056606050580739975,
+      "test_mse_std": 0.00012724133565438907,
+      "inference_steps_per_sec_mean": 4699.783279966785,
+      "train_seconds_mean": 13.073424375848845
+    },
+    {
+      "model": "mfc-cfc",
+      "hidden": 16,
+      "seq_len": 64,
+      "params": 1041,
+      "test_mse_mean": 0.0567118301987648,
+      "test_mse_std": 9.8739529348897e-05,
+      "inference_steps_per_sec_mean": 4455.452138667711,
+      "train_seconds_mean": 13.7115330605302
+    },
+    {
+      "model": "mfc-tfp",
+      "hidden": 16,
+      "seq_len": 64,
+      "params": 1025,
+      "test_mse_mean": 0.057283878326416016,
+      "test_mse_std": 0.0015974287788356502,
+      "inference_steps_per_sec_mean": 4693.375173946839,
+      "train_seconds_mean": 13.174151140730828
+    },
+    {
+      "model": "mfc-nsfd",
+      "hidden": 16,
+      "seq_len": 64,
+      "params": 1361,
+      "test_mse_mean": 160.96070220693946,
+      "test_mse_std": 227.51625543869653,
+      "inference_steps_per_sec_mean": 3907.862102268028,
+      "train_seconds_mean": 14.96031143469736
+    },
+    {
+      "model": "gru",
+      "hidden": 16,
+      "seq_len": 64,
+      "params": 1073,
+      "test_mse_mean": 0.0612430851906538,
+      "test_mse_std": 0.0059901656256373574,
+      "inference_steps_per_sec_mean": 18482.506729475695,
+      "train_seconds_mean": 4.746012241346762
+    },
+    {
+      "model": "cfc",
+      "hidden": 32,
+      "seq_len": 32,
+      "params": 3617,
+      "test_mse_mean": 0.056581202894449234,
+      "test_mse_std": 8.850838187287746e-05,
+      "inference_steps_per_sec_mean": 3660.6714849064133,
+      "train_seconds_mean": 9.249483227031305
+    },
+    {
+      "model": "mfc-cfc",
+      "hidden": 32,
+      "seq_len": 32,
+      "params": 3617,
+      "test_mse_mean": 0.05700342729687691,
+      "test_mse_std": 0.00017878693138321248,
+      "inference_steps_per_sec_mean": 3389.146903198809,
+      "train_seconds_mean": 9.75586553500034
+    },
+    {
+      "model": "mfc-tfp",
+      "hidden": 32,
+      "seq_len": 32,
+      "params": 3585,
+      "test_mse_mean": 0.05662243254482746,
+      "test_mse_std": 3.829304605017916e-05,
+      "inference_steps_per_sec_mean": 3980.1845178722724,
+      "train_seconds_mean": 9.375680504599586
+    },
+    {
+      "model": "mfc-nsfd",
+      "hidden": 32,
+      "seq_len": 32,
+      "params": 4769,
+      "test_mse_mean": 0.06795884296298027,
+      "test_mse_std": 0.002205908099143491,
+      "inference_steps_per_sec_mean": 2364.974377001749,
+      "train_seconds_mean": 12.458392722997814
+    },
+    {
+      "model": "gru",
+      "hidden": 32,
+      "seq_len": 32,
+      "params": 3681,
+      "test_mse_mean": 0.0592403169721365,
+      "test_mse_std": 0.0036908811836179802,
+      "inference_steps_per_sec_mean": 4557.786979212668,
+      "train_seconds_mean": 8.917397866491228
+    },
+    {
+      "model": "cfc",
+      "hidden": 32,
+      "seq_len": 64,
+      "params": 3617,
+      "test_mse_mean": 0.05715594068169594,
+      "test_mse_std": 1.2275269628797886e-05,
+      "inference_steps_per_sec_mean": 1933.9488481551057,
+      "train_seconds_mean": 31.498978592688218
+    },
+    {
+      "model": "mfc-cfc",
+      "hidden": 32,
+      "seq_len": 64,
+      "params": 3617,
+      "test_mse_mean": 0.05665566027164459,
+      "test_mse_std": 0.00017883434658778723,
+      "inference_steps_per_sec_mean": 2202.089899416434,
+      "train_seconds_mean": 28.134186252951622
+    },
+    {
+      "model": "mfc-tfp",
+      "hidden": 32,
+      "seq_len": 64,
+      "params": 3585,
+      "test_mse_mean": 0.056388428434729576,
+      "test_mse_std": 0.0005637114646551757,
+      "inference_steps_per_sec_mean": 1992.1792335010773,
+      "train_seconds_mean": 25.516119881765917
+    },
+    {
+      "model": "mfc-nsfd",
+      "hidden": 32,
+      "seq_len": 64,
+      "params": 4769,
+      "test_mse_mean": 0.07444890588521957,
+      "test_mse_std": 0.0019612087650453043,
+      "inference_steps_per_sec_mean": 1915.0247463771025,
+      "train_seconds_mean": 35.652954060351476
+    },
+    {
+      "model": "gru",
+      "hidden": 32,
+      "seq_len": 64,
+      "params": 3681,
+      "test_mse_mean": 0.057265060022473335,
+      "test_mse_std": 0.0015972891673999578,
+      "inference_steps_per_sec_mean": 10160.153400180006,
+      "train_seconds_mean": 11.934921077918261
+    }
+  ]
+}
