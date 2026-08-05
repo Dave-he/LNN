@@ -181,6 +181,26 @@ tags: [LNN, reading-report, papers]
 - **复现 / 提交**：`scripts/replicate_paper_dispatch.py --date 2026-06-24` 无新命中；git push 因 SSH 阻塞暂无法完成，已落 `logs/pipeline/2026-06-24_pipeline.log` 并标记为待人工推送。
 - **结论**：今日 LNN 跟踪系统在网络层全面失联，未引入新候选，索引保持稳定。下次网络恢复时建议重跑 `SKIP_REPORT=1 SKIP_REPRO=1 SKIP_DIGEST=0 SKIP_COMMIT=0 bash scripts/run_lnn_research_pipeline.sh` 补抓，并清掉 2026-06-24 的空 `papers/daily/2026-06-24_lnn_research.json` 触发"keep previous" 回退到 2026-06-23 的内容。
 
+### [2026-08-05] LNN 训练范式 2026 夏横切 — Multi-Rate MoE / Distillation / Random Feature / LFM2.5 串讲
+- **独立报告**：[[docs/reports/LNN_Training_Paradigm_2026_Summer_Cross_Section.md]]
+- **本节定位**：不再重复单篇研读细节，而是把 2026-05 → 2026-08 的 **4 条 LNN 训练范式主线** 拉到同一坐标系，形成"训练成本从高到低、参数量从大到小" 的清晰斜线：
+  - **L1 · 双阶段蒸馏 + Pareto 压缩**：[[DLNet_Dual_Stage_Distillation_Pareto_LNN_2601.06227_研读报告|DLNet]] `arxiv 2601.06227`（电池 RUL，教师 → 学生 LNN → 边缘）
+  - **L2 · 多速率 MoE 加速训练**：[[Multi-Rate_MoE_Accelerating_LNN_Training_2606.12240_研读报告|MR-MoE LNN]] `arxiv 2606.12240`（单 τ CfC → K τ expert + EC routing）
+  - **L3 · 随机特征闭式化**：[[Liquid_Random_Feature_Methods_TD-PDE_2606.15571_研读报告|L-RFM]] `arxiv 2606.15571`（ODE → 闭式随机特征 → TD-PDE surrogate）
+  - **L4 · 基础模型蒸馏家族**：HF LiquidAI/LFM2.5-350M/1.2B/2.6B/8B-A1B + Encoder-350M 任务专用蒸馏族
+- **核心结论**：
+  1. **L1 + L2 是 LNN 边缘部署的黄金组合**：L2 在训练期提升效率（-35%~-60% 步数），L1 在部署期压缩体积到教师 4%。
+  2. **L3 是 LNN 训练数学基底升级**：与 CfC 的 σ(-f·t)·g+(1-σ)·h 同源，可与 `khlfft_attn_cfc` 合流。
+  3. **L4 是大模型蒸馏到 LNN head 的替代路径**：当前 `lnn/lfm2/inference.py` 已支持推理，缺 fine-tune recipe + 量化 pipeline。
+- **Gap 增量更新**（承接 [[LNN_Family_Taxonomy_And_Gap_2026-08-03]] 的 3.x 节）：
+  - **新增 N1**：DLNet 双阶段蒸馏复现（学生路径 + Pareto sweep 接 `scripts/bench_*`）
+  - **新增 N2**：L-RFM 数学嵌入 `lnn/core/khlfft_attn_cfc.py` 路线
+  - **新增 N3**：TFP Memory-Fusion (2607.08283) 嫁接到 `CfCCell` 门控（~80 行增量改动）
+  - **新增 N4**：FlowFake (2606.19579) 音频 CfC head → `LiquidAudioClassifier` skeleton
+- **8/5 实验数据点**：`scripts/jetson_lnn_benchmark.py --date 2026-08-05 --quick --cpu` 给出 6 模型对比（NCPS-CfC MSE=0.106 最优、PDNAPulse 综合最优、GRU 吞吐王者、LTC 需 GPU 才能发挥），完整结果：[analysis/jetson/2026-08-05_lnn_benchmark.md](analysis/jetson/2026-08-05_lnn_benchmark.md)。
+- **Verdict**：L2 与 L1 在仓库内已代码 + 报告齐全，本周可推进 N3 (TFP→CfC 门控移植)；下周跑 G5（LFM2.5-350M + CfC head fine-tune smoke）；下下周复现 DLNet 蒸馏路径。**整体 LNN 训练范式已经形成"蒸馏 + 多速率 + 闭式化 + 基础模型"四向交叉，下一阶段瓶颈在量化 + Jetson 真 CUDA 路径上的端到端验证**。
+
+
 
 ---
 
