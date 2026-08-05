@@ -676,6 +676,30 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N22 关闭（negative result）**；N17（α capacity 增强）的方向**被 N22 反驳**。
 - **Verdict**：N22 修正 N15 的诊断——α 不能 generic transfer **不是 capacity 不足**，而是 **per-input function 本身的固有限制**。**唯一真正的 OOD dt-robust solution 是 CfC σ-decay**（N12/N16 finding）。**N17 (α capacity enhancement) 方向被关闭**——应该尝试其他路径解决 OOD（如 distillation N19/int8 N20 路径，而不是 α capacity）。
 
+
+### [2026-08-05] Int8 Quantization on OOD dt (N23) — STRONG POSITIVE
+- **独立报告**：[[docs/reports/Int8_OOD_Dt_N23_Free_Lunch_Generalizes_2026-08-05.md]]
+- **核心验证**：N20 发现 int8 是 "free-lunch 4.0× compression, 零精度损失"（in-dist）。本轮 N23 验证 int8 在 **OOD dt** 下是否仍保持——担心 quantization error 与 retention's OOD sensitivity 复合。
+- **Benchmark（train dt=0, test dt ∈ {0, 0.5, 1.0}）**：
+  | teacher | σ=0 | σ=0.5 | σ=1.0 (OOD) |
+  |---|---:|---:|---:|
+  | **CfC** fp32 MSE | 0.0519 | 0.0527 | 0.0537 |
+  | **CfC** int8 MSE | 0.0519 | 0.0527 | 0.0537 |
+  | **CfC** delta | -0.0000 | +0.0000 | **+0.0000** |
+  | **hybrid_gate** fp32 MSE | 0.0520 | 0.0526 | 0.0535 |
+  | **hybrid_gate** int8 MSE | 0.0520 | 0.0526 | 0.0535 |
+  | **hybrid_gate** delta | +0.0000 | +0.0000 | **+0.0000** |
+- **关键发现**：
+  1. **int8 free-lunch 跨 OOD dt 仍成立**——所有 6 个配置 delta ±0.0000
+  2. **quantization error 与 retention OOD sensitivity 不交互**——int8 是 local weight precision，retention OOD 是 global dt-distribution shift
+  3. **For edge deployment under variable sensor sampling rates: 58.13× compression, 零精度损失**
+- **Gap 状态**：**N23 完成（strong positive）**；N21/N18 继续待办；N2/L4 foundational gaps 收尾。
+- **Verdict**：N23 把 N20 的"int8 free-lunch 4.0×" 推广到 **OOD dt 场景**——这是边缘部署的关键发现。**完整 LNN edge deployment pipeline**（N1 + N19 + N20 + N23）在所有 dt 分布下都保持 **≥58× compression + 零精度损失**：
+  - Teacher (h=32) → Student (h=8) → int8
+  - 58.13× compression vs CfC teacher
+  - delta 0 in-dist + delta 0 OOD
+  - **Edge deployment ready under variable sensor sampling rates**
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
