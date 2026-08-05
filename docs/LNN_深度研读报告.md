@@ -449,6 +449,34 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N12 完成（honest finding）**；新增 N15（distribution-augmented training 看 hybrid_gate 能否 transfer）+ N16（CfC 在多 regime 任务上的 transfer 验证）；N14 仍待办。
 - **Verdict**：N12 把"N11 hybrid_gate = best" 修正为 **"N11 hybrid_gate 仅 in-dist 时 = best，OOD 时退化为 static hybrid 一样差"**。**唯一在所有 σ_test 下都 1.00× 的是 CfC σ-decay**——它的 saturation 是结构性的 generic 机制，不依赖 dt 分布假设。这一发现对工业部署有直接指导：**传感器采样率会变化时优先选 CfC**。
 
+
+### [2026-08-05] LNN Retention Mechanism Design Space Survey — 11 轮研究综合
+- **独立报告**：[[docs/reports/LNN_Retention_Mechanism_Design_Space_Survey_2026-08-05.md]]
+- **核心交付**：把 11 轮（commits `64266ce` → `68c7465`）的所有 retention 机制研究 consolidated 到一份 comprehensive survey
+- **6 种 retention 的 design space 全景**：
+  | retention | in-dist degradation | OOD degradation | 推荐场景 |
+  |---|---:|---:|---|
+  | **CfC σ-decay** | **1.00×** | **1.00×** | **默认，传感器采样率变化** |
+  | TFP exp-decay | 1.05× | 1.12× | 不推荐 |
+  | NSFD gain/loss | 跑飞 | 跑飞 | 仅物理量非负任务 |
+  | Hybrid (static α) | 1.01× | 1.09× | 不推荐 |
+  | **Hybrid-Gate (input-dep α)** | 1.00× | 1.10× | in-dist irregular dt |
+  | MR-hybrid_gate-CfC | 1.00× (h=24) | n/a | h ≥ 64（待 N14 验证）|
+- **决策树**（基于 11 轮数据）：
+  - 物理量非负 → NSFD
+  - dt 已知固定 + 训练 ≈ 部署 + in-dist → MFC-Hybrid-Gate
+  - **dt 分布不确定/会变化 → CfC σ-decay**（N12 finding：唯一 structural generic）
+  - 长序列 multi-scale + h ≥ 64 → MR-hybrid_gate-CfC
+- **关键 insight 综合**：
+  - **CfC σ-decay 是唯一 structural generic mechanism**（N12）
+  - **Hybrid-Gate in-dist 持平 CfC**（N11）但 OOD 退化（α 没救）
+  - **Multi-rate 受 small hidden 限制**（N3/N13）→ 需 h ≥ 64
+  - **Input-dep α 学到 training-distribution-specific 模式**（N12）
+  - **每个 retention 都有明确边界条件**（NSFD 仅物理量、TFP 仅 regular dt、CfC universal）
+- **11 轮 negative results 的研究价值**：每个 negative 都给出明确的边界条件
+- **Gap 状态**：本 survey 完成（Round 11）；11/11 retention_kind benchmark 数据齐全
+- **Verdict**：本 survey 是"深入研究 LNN"的**设计空间全图交付**——可作为后续 LNN 工作的 canonical reference。下一步可直接进入新的研究方向（如 N1 DLNet 蒸馏、N15 distribution-augmented training、N16 CfC 多 regime 验证）。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
