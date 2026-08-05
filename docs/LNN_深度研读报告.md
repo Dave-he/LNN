@@ -289,6 +289,27 @@ tags: [LNN, reading-report, papers]
 - **Foundational gap 关闭**：[[LNN_深度研读报告]] §1.2 从"无 arXiv 引用"升级为"4 条公式均有原文 Eq. + arXiv ID"。
 - **Verdict**：跨论文综合（最近 4 轮的工作）如果不能反向 trace 到奠基论文 Eq.，就只是"组合创新"。本报告首次提供 grounding——MFC-TFP / MFC-NSFD / MR-TFP-CfC 都不是从零发明，而是 Hasani 2021 Eq. (5) 的不同代数等价 / 闭式近似 / 工程化路由。
 
+
+### [2026-08-05] TFP vs CfC 在不规则 Δt 下的鲁棒性 — 反直觉的 negative result
+- **独立报告**：[[docs/reports/TFP_vs_CfC_on_Irregular_Dt_2026-08-05.md]]
+- **核心验证**：测试 TFP 论文 (arXiv 2607.08283) 的核心 claim "retention 显式依赖 dt → 对 dt 分布变化更鲁棒"。训练 dt=1.0 恒定，测试 dt~LogNormal(0, 0.5)（范围 [0.12, 4.74]）。
+- **结果（与论文预期相反）**：
+  - **CfC**：regular=0.0589, irregular=0.0589, **ratio=1.00×**（完全不变）
+  - **MFC-CFC**：regular=0.0590, irregular=0.0590, **ratio=1.00×**
+  - **MFC-TFP**：regular=0.0586, irregular=0.0671, **ratio=1.14× ⚠**（退化 14%）
+- **原因**：
+  - **CfC σ-decay** `σ(-f·τ·dt)` 把 dt 揉进 sigmoid 内部，sigmoid 的 saturation 特性天然 clamp 输出到 (0, 1)
+  - **TFP exp-decay** `exp(-dt/τ)` 直接把 dt 当指数输入，dt 翻 40 倍把 retention 从 0.886 砸到 0.008，hidden update 剧烈波动
+- **关键 take-away**：
+  1. **TFP 论文的 claim 有边界条件** — VLA short-horizon 任务成立，长序列 + 大 dt 分布反转
+  2. **Sigmoid saturation 是天然的 dt-robustness 机制** — 比指数 retention 更适合 irregular sampling
+  3. **"显式依赖 dt" ≠ "对 dt 分布鲁棒"** — TFP 论文混用了两个不同 property
+- **Gap 状态**：N6 完成（验证 → 与预期相反）；新增 N7（CfC 大 dt 范围验证）+ N8（TFP × CfC hybrid）。
+- **与上一轮 Pareto sweep 的对比**：
+  - regular dt (h=32, sl=64)：MFC-TFP ↓1.4% MSE（优于 CfC）
+  - **irregular dt (h=24, sl=48)**：**MFC-TFP ↑14% MSE（劣于 CfC）** ← 完全反转
+- **Verdict**：上一轮 "MFC-TFP 在 h ≥ 24 稳定优于 CfC" 的结论现在需要补一个限定条件："**仅在 regular dt 下成立**"。这是关于 retention 机制选择的**实质性边界条件**，对 VLA / 时间序列应用有直接指导意义。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
