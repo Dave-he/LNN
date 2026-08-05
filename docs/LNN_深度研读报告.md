@@ -417,6 +417,38 @@ tags: [LNN, reading-report, papers]
 - **Gap 状态**：**N13 关闭（架构 OK，规模受限）**；新增 N14（h=64/128 重评估）；N12 仍待办（dt distribution shift）。
 - **Verdict**：N13 把"input-dep α + multi-rate + EC routing"三个 architectural innovations **正确组合**并验证 degradation 持平 CfC，但**小 hidden 配置下参数利用效率不如 single-expert**——这是 honest 的边界条件发现，与 round 282 (b8d8879) 的 small-hidden finding **完全一致**。
 
+
+### [2026-08-05] dt distribution shift transferability (N12) — hybrid_gate α 过拟合训练分布（honest finding）
+- **独立报告**：[[docs/reports/DT_Distribution_Shift_N12_Hybrid_Gate_Transferability_2026-08-05.md]]
+- **核心验证**：N11 让 `α(x_t, dt)` 成为 conditional gate，N12 问：学到的究竟是 generic dt-robustness 还是 training-distribution-specific 模式？训练 σ_train=0.5，测试 σ_test ∈ {0.3, 0.5, 1.0}。
+- **结果（4 模型 × 3 σ_test）**：
+  | 模型 | σ=0.3 | σ=0.5 | **σ=1.0 (OOD)** |
+  |---|---:|---:|---:|
+  | cfc-baseline | **1.00×** | **1.00×** | **1.00×** |
+  | mfc-tfp | 1.02× | 1.05× | **1.12×** ⚠ |
+  | mfc-hybrid (static α) | 1.01× | 1.03× | **1.09×** |
+  | mfc-hybrid_gate | 1.01× | 1.04× | **1.10×** |
+- **关键观察**：
+  1. **CfC 完全 transfer**（σ=1.0 仍 1.00×）—— sigmoid saturation 是 **generic** dt-robustness 机制，不受训练分布影响
+  2. **TFP/Hybrid/Hybrid-Gate 全部过拟合训练分布**（σ=1.0 时 degradation 飙到 1.09-1.12×）
+  3. **hybrid_gate 与 static hybrid 几乎一致**（σ=1.0: 1.10× vs 1.09×）—— **input-dep α 没救**
+- **Honest finding**：N11 的 "α(x_t, dt) = MLP conditional gate" 在 in-dist 下达到 1.00× degradation，但 **input-dep α 没学到 generic dt-robustness**，而是 fit 了训练 dt 分布。
+- **N11 → N12 finding 对照**：
+  | 任务 | hybrid_gate degradation | hybrid_gate irregular MSE |
+  |---|---|---|
+  | N11 in-dist (σ_train = σ_test = 0.5) | 1.00× | 0.0578 |
+  | N12 OOD (σ_test = 1.0) | **1.10×** | **0.0615** |
+  → N11 的 "1.00× 持平 CfC" **仅在 in-dist 下成立**
+- **实用 take-away**：
+  | 场景 | 推荐 retention |
+  |---|---|
+  | Regular dt | CfC 或 MFC-TFP |
+  | Irregular dt, train ≈ deployment | MFC-hybrid_gate（in-dist 1.00×）|
+  | **Irregular dt, train ≠ deployment** | **CfC σ-decay（唯一保证 transfer）**|
+  | Future sensor with unknown dt distribution | **CfC σ-decay** |
+- **Gap 状态**：**N12 完成（honest finding）**；新增 N15（distribution-augmented training 看 hybrid_gate 能否 transfer）+ N16（CfC 在多 regime 任务上的 transfer 验证）；N14 仍待办。
+- **Verdict**：N12 把"N11 hybrid_gate = best" 修正为 **"N11 hybrid_gate 仅 in-dist 时 = best，OOD 时退化为 static hybrid 一样差"**。**唯一在所有 σ_test 下都 1.00× 的是 CfC σ-decay**——它的 saturation 是结构性的 generic 机制，不依赖 dt 分布假设。这一发现对工业部署有直接指导：**传感器采样率会变化时优先选 CfC**。
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |

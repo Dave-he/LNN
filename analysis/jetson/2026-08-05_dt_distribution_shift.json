@@ -1,0 +1,104 @@
+{
+  "date": "2026-08-05",
+  "task": "dt_distribution_shift_transferability",
+  "sigma_train": 0.5,
+  "sigma_tests": [
+    0.3,
+    0.5,
+    1.0
+  ],
+  "results": {
+    "cfc-baseline": {
+      "0.3": {
+        "test_mse_regular_mean": 0.05644623748958111,
+        "test_mse_regular_std": 0.0004366387163948302,
+        "test_mse_irregular_mean": 0.05643875151872635,
+        "test_mse_irregular_std": 0.0004614869177700342,
+        "degradation_ratio": 0.9998673787450202
+      },
+      "0.5": {
+        "test_mse_regular_mean": 0.05644623748958111,
+        "test_mse_regular_std": 0.0004366387163948302,
+        "test_mse_irregular_mean": 0.05645767226815224,
+        "test_mse_irregular_std": 0.00047612767927150603,
+        "degradation_ratio": 1.0002025782245139
+      },
+      "1.0": {
+        "test_mse_regular_mean": 0.05644623748958111,
+        "test_mse_regular_std": 0.0004366387163948302,
+        "test_mse_irregular_mean": 0.056543173268437386,
+        "test_mse_irregular_std": 0.0005036258637468325,
+        "degradation_ratio": 1.0017173116077784
+      }
+    },
+    "mfc-tfp": {
+      "0.3": {
+        "test_mse_regular_mean": 0.05859815515577793,
+        "test_mse_regular_std": 0.00393221403819136,
+        "test_mse_irregular_mean": 0.05991394445300102,
+        "test_mse_irregular_std": 0.002678184610132314,
+        "degradation_ratio": 1.0224544491840262
+      },
+      "0.5": {
+        "test_mse_regular_mean": 0.05859815515577793,
+        "test_mse_regular_std": 0.00393221403819136,
+        "test_mse_irregular_mean": 0.06178033538162708,
+        "test_mse_irregular_std": 0.0009725253584987201,
+        "degradation_ratio": 1.0543051264564491
+      },
+      "1.0": {
+        "test_mse_regular_mean": 0.05859815515577793,
+        "test_mse_regular_std": 0.00393221403819136,
+        "test_mse_irregular_mean": 0.06536980345845222,
+        "test_mse_irregular_std": 0.0017682130773578567,
+        "degradation_ratio": 1.115560776353325
+      }
+    },
+    "mfc-hybrid": {
+      "0.3": {
+        "test_mse_regular_mean": 0.055598484352231026,
+        "test_mse_regular_std": 0.0001709133732457711,
+        "test_mse_irregular_mean": 0.056288180872797966,
+        "test_mse_irregular_std": 6.850706807642632e-05,
+        "degradation_ratio": 1.0124049518364122
+      },
+      "0.5": {
+        "test_mse_regular_mean": 0.055598484352231026,
+        "test_mse_regular_std": 0.0001709133732457711,
+        "test_mse_irregular_mean": 0.057356804609298706,
+        "test_mse_irregular_std": 6.026999337057847e-06,
+        "degradation_ratio": 1.0316253271569107
+      },
+      "1.0": {
+        "test_mse_regular_mean": 0.055598484352231026,
+        "test_mse_regular_std": 0.0001709133732457711,
+        "test_mse_irregular_mean": 0.06044450402259827,
+        "test_mse_irregular_std": 0.00011196310306919,
+        "degradation_ratio": 1.0871610031609213
+      }
+    },
+    "mfc-hybrid_gate": {
+      "0.3": {
+        "test_mse_regular_mean": 0.055783262476325035,
+        "test_mse_regular_std": 0.0003130430831366335,
+        "test_mse_irregular_mean": 0.05657404661178589,
+        "test_mse_irregular_std": 0.0002701244204623837,
+        "degradation_ratio": 1.0141760108741662
+      },
+      "0.5": {
+        "test_mse_regular_mean": 0.055783262476325035,
+        "test_mse_regular_std": 0.0003130430831366335,
+        "test_mse_irregular_mean": 0.0578850582242012,
+        "test_mse_irregular_std": 0.00018202697036248747,
+        "degradation_ratio": 1.0376778921592869
+      },
+      "1.0": {
+        "test_mse_regular_mean": 0.055783262476325035,
+        "test_mse_regular_std": 0.0003130430831366335,
+        "test_mse_irregular_mean": 0.06151628866791725,
+        "test_mse_irregular_std": 8.220742802049881e-05,
+        "degradation_ratio": 1.1027732322759962
+      }
+    }
+  }
+}
