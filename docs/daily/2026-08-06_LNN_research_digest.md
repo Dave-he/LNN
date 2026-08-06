@@ -71,3 +71,67 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - arXiv API: https://export.arxiv.org/api/query
 - GitHub Search API: https://docs.github.com/rest/search/search
 - Hugging Face Models API: https://huggingface.co/docs/hub/api
+
+---
+
+## 已消化 / 已研读 (cron 09:00 LLM 深度研读补刀)
+
+> 由本 cron 06:30 systemd timer 之后,LNN 仓库 LLM 深度研读 cron 手动触发补刀。task 4 增量验证已完成。
+
+### 今日深度研读 (新增 2 份,本 cron)
+
+| 类别 | 标题 | arXiv / Model | 报告 |
+|---|---|---|---|
+| 论文 (paper-analyzer) | PLAN: Parallel Liquid-Inspired Approximation Network for FJSP | arxiv 2608.03041v1 | `docs/reports/PLAN_Parallel_Liquid_Approximation_FJSP_2608.03041_研读报告.md` |
+| 模型 (paper-analyzer 模式) | LFM2.5-1.2B-Instruct-GGUF | LiquidAI/LFM2.5-1.2B-Instruct-GGUF | `docs/reports/LFM2.5-1.2B-Instruct-GGUF_Jetson_Orin_Nano_研读报告.md` |
+
+**PLAN 关键**: 1.2-2.3% makespan 改善 (单点 10.2%),13.2-31.7% 延迟降低 (单点 69.2%),仅 22-47% baseline 参数。第一作者 Dhivya Dharshini Kannan 同时是 DLNet (2601.06227, ICPR 2026) 作者 → 同作者 LNN 边缘压缩线连续工作。
+
+**LFM2.5-1.2B 关键**: 1.17B 参数 / 16 层 (10×double-gated conv + 6×GQA) / 32K context / lfm1.0 license;**252,368 下载,LFM2.5 系列最高人气**;Q4_K_M 731MB,验证目标 Jetson Orin Nano ≥30 tok/s。
+
+### 排除 (已存在深度报告,本日跳过)
+
+| arXiv | 标题 | 现有报告 |
+|---|---|---|
+| 2607.12909 | Real-time fall detection (Dual-LTC edge) | `LTC_Fall_Physics_Informed_Dual_LTC_Edge_2607.12909_研读报告.md` |
+| 2606.20491 | GazeLNN | `GazeLNN_2606.20491_研读报告.md` |
+| 2605.27467 | LNN vs LSTM clinical | `Comparative_Analysis_of_LNN_and_LSTM_研读报告.md` |
+| 2601.06227 | DLNet (When Smaller Wins) | `DLNet_Dual_Stage_Distillation_Pareto_LNN_2601.06227_研读报告.md` (+ 内部 N20/N21 工作) |
+| 2606.15807 | Cross-Domain Traffic (MA-GLTC) | `MA-GLTC_Graph_Liquid_Time_Constant_Cross_Domain_Traffic_2606.15807_研读报告.md` |
+| 2607.01986 | Liquid Latent State Turbofan | `Liquid_Latent_State_Dynamics_Turbofan_2607.01986_研读报告.md` |
+| 2606.26849 | Liquid Fusion (LFNet) SOD | `LFNet_Liquid_Fusion_Heterogeneous_Representations_SOD_2606.26849_研读报告.md` |
+
+### Jetson 增量验证 (task 4)
+
+跑了 `scripts/jetson_lnn_benchmark.py --quick --cpu` (Jetson Orin Nano Engineering Reference,CUDA 软件驱动不匹配走 CPU):
+
+| 模型 | 参数量 | 测试 MSE | 推理步/秒 | 训练秒 | VDD_IN mJ/步 |
+|---|---:|---:|---:|---:|---:|
+| CfCStyle | 2521 | 0.312 | 45,527 | 3.77 | 0.20 |
+| LTC | 1321 | 0.465 | 17,094 | 7.73 | 0.56 |
+| PDNAPulse | 3170 | **0.286** | 39,638 | 3.10 | 0.23 |
+| GRU | 1969 | 0.393 | **172,448** | 1.02 | n/a |
+| NCPS-LTC | 2547 | 0.621 | 8,688 | 16.20 | 1.10 |
+| NCPS-CfC | 15,737 | **0.106** | 30,517 | 3.42 | 0.31 |
+
+**关键发现**:
+- **PDNAPulse** MSE 0.286 是 in-house 实现最优 (vs CfCStyle 0.312) — 内部 N21 工作在 CPU 路径上验证有效
+- **NCPS-CfC** 0.106 MSE 绝对最优,但 15,737 参数(~5x PDNAPulse) + 3.42s 训练成本
+- **GRU** 推理速度碾压 172K steps/s,但 MSE 0.393 弱于 PDNAPulse/NCPS-CfC
+- **功耗**: VDD_IN 均值 7.26W (15W MAXN 内),运行 44.12s 总能耗 320J
+
+**LFM2.5-1.2B-Instruct benchmark** 未跑(本 cron 时间预算,避免触发 HF 大模型下载),详细 Jetson 验证计划已写入 `LFM2.5-1.2B-Instruct-GGUF_Jetson_Orin_Nano_研读报告.md` 的"🧪 Jetson Orin Nano 验证计划"章节,留待下次 cron。
+
+### 7 天连续性 (task 8)
+
+| 日期 | digest 文件 | 状态 |
+|---|---|---|
+| 2026-07-31 | docs/daily/2026-07-31_LNN_research_digest.md | ✓ |
+| 2026-08-01 | docs/daily/2026-08-01_LNN_research_digest.md | ✓ |
+| 2026-08-02 | docs/daily/2026-08-02_LNN_research_digest.md | ✓ |
+| 2026-08-03 | docs/daily/2026-08-03_LNN_research_digest.md | ✓ |
+| 2026-08-04 | docs/daily/2026-08-04_LNN_research_digest.md (+ _llm 变体) | ✓ |
+| 2026-08-05 | docs/daily/2026-08-05_LNN_research_digest.md | ✓ |
+| 2026-08-06 | docs/daily/2026-08-06_LNN_research_digest.md | ✓ (本日) |
+
+**7/7 连续,无 gap**。本 cron 07:00-09:00 期间 systemd timer 已 06:30 跑过 08-06 digest 更新(0cba603),09:00 LLM 深度研读 cron 接管研读 + benchmark。
