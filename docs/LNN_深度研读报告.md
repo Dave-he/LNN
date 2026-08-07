@@ -844,6 +844,41 @@ tags: [LNN, reading-report, papers]
   - r306 候选：N-MNIST 验证 sharp-transition 退化是否被 routing 选择性补偿
   - r307 候选：learned per-neuron density (取代全局 ρ)
 
+### [2026-08-07] r305 — MidpointCfC: predictor-corrector non-anchor parallel scan (honest negative on latency)
+- **独立报告**：[[docs/reports/Midpoint_Parallel_CfC_r305_2026-08-07.md]]
+- **核心 idea**：r301 ParallelCfC 是 order-dt accurate + order-dt² bias。r305 用 predictor-corrector (Heun / 显式 midpoint) 把 anchor bias 升到 order-dt²：(1) predictor 在 h_0 算 h_pred,(2) midpoint h_mid=0.5(h_0+h_pred),(3) corrector 在 h_mid 重算 h_corr。代价:2x parallel eval per chunk。
+- **实现**：`lnn/core/midpoint_cfc.py` (172 行, `MidpointCfCCell` + `MidpointCfCNetwork`)+ `tests/test_midpoint_cfc.py` (20/20 pass) + `scripts/bench_midpoint_cfc.py`
+- **toy_sin 5-seed (h=64, T=64, 100 epochs)**:
+  | 模型 | MSE | 推理延迟 (10 pass) | MSE Std |
+  |---|---:|---:|---:|
+  | vanilla_cfc | 0.11414 ± 0.00486 | 47.88 ms | 0.0049 |
+  | parallel_cfc_w4 (r301) | 0.10733 ± 0.00107 | 16.27 ms | 0.0011 |
+  | parallel_cfc_w8 (r301) | **0.10564 ± 0.00225** | **13.37 ms** | 0.0023 |
+  | midpoint_cfc_w4 (r305) | 0.10966 ± 0.00106 | 26.47 ms | 0.0011 |
+  | midpoint_cfc_w8 (r305) | 0.10603 ± 0.00057 | 16.60 ms | **0.0006** |
+- **关键发现 (含 honest negative)**:
+  1. **NEGATIVE on latency, MARGINAL POSITIVE on stability**: midpoint_w8 vs parallel_w8 → MSE 0.10603 vs 0.10564 (+0.4% 退化),但 **std 0.00057 vs 0.00225 (3.9× 改善)** — midpoint 唯一的 clear win 是稳定性
+  2. **延迟 +24%**: 16.60 ms vs 13.37 ms (2x parallel eval 预期代价)
+  3. **Pareto 结论**: pure anchor (r301 parallel_w8) 仍是 sweet spot;midpoint 是 "stability at cost of latency" 的 trade-off,不是新 SOTA
+  4. **WHY 不是 order-dt² 优势**: toy_sin 是 smooth periodic,τ≈1.0 / f-gate≈0.5,线性度好,anchor 的 order-dt² bias 本身很小。r302 sharp-transition 数据集上表现可能不同
+  5. **隐性观察**: midpoint_w8 std 0.00057 < parallel_w4 std 0.00107,corrector 有 *implicit regularization* 作用,不仅是误差修正
+- **适用场景**:
+  - **不要**默认用 midpoint: 24% 延迟代价在边缘部署是真实成本
+  - **可考虑** midpoint_w8: (a) 任务有 sharp transitions, anchor bias 主导误差; (b) 多 seed 一致性比延迟重要
+- **HONEST VERDICT**:
+  - **toy_sin 上的诚实 negative-on-latency / marginal-positive-on-stability**
+  - **不是新 SOTA** — 不进 production default
+  - **生产** 仍用 r301 parallel_w4 (sweet spot) 或 r303 ste_parallel (SOTA -36% MSE)
+- **与既有研究的相关性**:
+  - r301 anchor: r305 试图消除其 order-dt² bias 但未成功 → 验证 anchor 假设在 toy_sin 上已经够好
+  - r302 sharp-transition: 留作未来工作,在 r302 数据集上重测 (anchor bias 可能主导误差)
+  - r303 STE: routing 才是 r301 anchor 误差的 *有效* 补偿器 (-13-36% MSE),不是 midpoint corrector (+0.4% 退化)
+  - r244-r256 Basin-Lyapunov: predictor = anchor basin trajectory start,corrector = mid-trajectory basin correction — 与多盆地轨迹理论契合但未在 toy_sin 上显出优势
+- **后续 rounds**:
+  - **r306**: 在 r302 sharp-transition 数据集上重测 midpoint
+  - **r307**: midpoint 作为 STE 蒸馏目标 (训练用 midpoint 提供 soft target, 推理用 anchor) — 折衷 latency
+  - **r308**: midpoint + STE joint cell, 看是否比 r303 单独 STE 更优
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |
