@@ -84,3 +84,17 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
   - Bench：`scripts/bench_parallel_cfc.py` + `bench_parallel_cfc_results.json`
   - toy_sin 5-seed 关键结果：parallel_w8 **MSE -7.1%, 推理延迟 -60%** (Pareto win)
   - 后续 rounds：r302 N-MNIST 验证 / r303 STE+PLAN 联合 / r304 LFM2.5 接入 / r305 non-anchor parallel scan
+
+## 2026-08-07 r304 增量更新（PLAN-CfC × LFM2.5 部署桥接）
+
+### 今日完成 r304
+- **PLAN-CfC 部署集成**: 把 r301 的 ParallelCfCNetwork 作为 LFM2.5 推理路径的 `nn.LSTM` / `nn.GRU` drop-in 替换
+- **集成模块**: `lnn/lfm2/parallel_integration.py` (152 行, `replace_lstm_with_parallel_cfc()` walker, 支持嵌套容器)
+- **基准**: `scripts/bench_lfm2_parallel_cfc.py` + `bench_lfm2_parallel_cfc_results.json`
+- **测试**: `tests/test_lfm2_parallel_cfc.py` 18/18 通过 (replace / 多种 W / 嵌套 / GRU / 梯度 / inplace/copy)
+- **CPU 5-trial 关键结果 (W=4, mock LFM2.5 backbone)**:
+  - 参数: 66048 → 61760 (**-6.5%**)
+  - 延迟 (T=8/16/32/64/128): avg **-57.2%** vs nn.LSTM baseline
+  - 形状契约: **(B, T, vocab) 全部严格保持** (all_shape_match=True)
+- **生产建议**: 集成机制 READY; 真实 LFM2.5 perplexity/MMLU 评估 BLOCKED (无权重, SSL_SYS); W=4 是 Pareto sweet spot (W=8 在 LLM 自回归 sharp step 上风险大)
+- **独立报告**: `docs/reports/LFM2_5_Parallel_CfC_Integration_r304_2026-08-07.md`

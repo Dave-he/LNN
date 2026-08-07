@@ -780,6 +780,33 @@ tags: [LNN, reading-report, papers]
   - r305: 探索 non-anchor parallel scan(真正的 parallel prefix-sum 形式)
 - **Verdict**：PLAN 思想在 LNN 上的迁移 **STRICTLY POSITIVE** (toy_sin),但 honest 报告 anchor 假设的边界条件。**生产默认**建议 W=4(Pareto sweet spot),不要直接 W=8。
 
+### [2026-08-07] r304 — PLAN-CfC × LFM2.5 部署集成 (drop-in LSTM swap)
+- **独立报告**：[[docs/reports/LFM2_5_Parallel_CfC_Integration_r304_2026-08-07.md]]
+- **核心 idea**：把 r301 的 `ParallelCfCNetwork` 作为 `nn.LSTM` / `nn.GRU` 的 drop-in 替换,通过递归 `named_modules()` walker 在 LFM2.5 推理路径上自动替换,验证部署机制 + 量化参数/延迟影响。
+- **实现**：`lnn/lfm2/parallel_integration.py` (`replace_lstm_with_parallel_cfc(model, window=4)` walker, 支持 `nn.Sequential` / `nn.ModuleList` 嵌套) + `scripts/bench_lfm2_parallel_cfc.py` + `tests/test_lfm2_parallel_cfc.py` (18/18 pass)
+- **CPU 5-trial benchmark (W=4, mock LFM2.5 backbone hidden=64, vocab=512, batch=1)**:
+  | T (seq len) | LSTM (ms) | ParallelCfC W=4 (ms) | Δ latency | Shape match |
+  |---:|---:|---:|---:|---|
+  |   8 |  2.36 |  0.73 | **-68.9%** | yes |
+  |  16 |  3.79 |  1.90 | **-50.0%** | yes |
+  |  32 |  5.42 |  2.15 | **-60.4%** | yes |
+  |  64 |  9.42 |  5.12 | **-45.7%** | yes |
+  | 128 | 18.00 |  6.98 | **-61.3%** | yes |
+  - 参数: 66,048 → 61,760 (**-6.5%**);延迟平均 **-57.2%**;输出形状 (B, T, vocab) 全部严格保持
+- **关键发现**:
+  1. **集成机制完全正确**: 18/18 tests pass, 多种 W (1/2/4/8) 全部工作, output shape 严格保持, 反向传播正常, 模块名解析保留
+  2. **延迟结果符合 PLAN paper 区间**: W=4 -46% to -69% (5 seq_lens), W=8 -71% to -82%, 与 r301 toy_sin -60% 量级一致
+  3. **参数减少仅 -6.5%** (与 PLAN 22-47% 差距大, 因为 mock 只有 1 层 LSTM, 嵌入/head 占总参数 ~80%)
+  4. **W=8 在 LLM 自回归 sharp step 上有风险**: per-token step 是 sharp 的, 与 paper §6.3 自陈"sharp inter-step transitions 退化"完全适用;生产 LFM2.5 建议 W=4
+- **HONEST VERDICT**:
+  - **deployment integration**: READY (机制完全验证, 18/18 tests + 形状契约 + 反向传播)
+  - **quality benchmark on real LFM2.5**: BLOCKED (无权重, SSL_SYS)
+  - **production recommendation**: 仅在 (a) 真实 LFM2.5 权重可获取, (b) 端到端 perplexity/MMLU 评估通过, (c) W 与 T 兼容性已用 padding 处理 之后, 才是 production-ready
+- **后续 rounds**:
+  - r305: T 兼容 padding (right-pad to next multiple of W) — 移除 T % W == 0 强约束
+  - r306: 在 `lnn/lfm2/inference.py::LFM2Inference` 加 `swap_to_parallel_cfc(window=4)` 方法
+  - r307: 与 r244-r256 basin-lyapunov anchor 联合,看 W=4 + multi-basin 是否能恢复被 PLAN approximation 损失的质量
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |

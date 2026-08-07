@@ -1,0 +1,391 @@
+{
+  "device": "cpu",
+  "config": {
+    "vocab": 512,
+    "hidden": 64,
+    "num_layers": 1,
+    "batch": 1,
+    "trials": 5
+  },
+  "baseline": {
+    "n_lstm": 1,
+    "params": 66048
+  },
+  "per_seq_len": [
+    {
+      "T": 8,
+      "baseline": {
+        "latency_ms": 2.3582467996675405,
+        "latency_std_ms": 0.7046638170045791,
+        "out_shape": [
+          1,
+          8,
+          512
+        ]
+      },
+      "swaps": [
+        {
+          "window": 1,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 1.725128599719028,
+          "latency_std_ms": 0.2306402013197974,
+          "latency_delta_pct_vs_lstm": -26.846986500215667,
+          "out_shape": [
+            1,
+            8,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 2,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 1.1500965998493484,
+          "latency_std_ms": 0.10447924954425919,
+          "latency_delta_pct_vs_lstm": -51.23086353762948,
+          "out_shape": [
+            1,
+            8,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 4,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 0.7336037999266409,
+          "latency_std_ms": 0.0794546638990818,
+          "latency_delta_pct_vs_lstm": -68.89198365370144,
+          "out_shape": [
+            1,
+            8,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 8,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 0.6272011998589733,
+          "latency_std_ms": 0.13209885010512915,
+          "latency_delta_pct_vs_lstm": -73.40392023653358,
+          "out_shape": [
+            1,
+            8,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        }
+      ]
+    },
+    {
+      "T": 16,
+      "baseline": {
+        "latency_ms": 3.7925208003798616,
+        "latency_std_ms": 0.5901590397590456,
+        "out_shape": [
+          1,
+          16,
+          512
+        ]
+      },
+      "swaps": [
+        {
+          "window": 1,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 2.536450600018725,
+          "latency_std_ms": 0.1757296800727825,
+          "latency_delta_pct_vs_lstm": -33.11966542768408,
+          "out_shape": [
+            1,
+            16,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 2,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 1.9288680001409375,
+          "latency_std_ms": 0.22258152947987278,
+          "latency_delta_pct_vs_lstm": -49.14021302275414,
+          "out_shape": [
+            1,
+            16,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 4,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 1.895636200060835,
+          "latency_std_ms": 1.1733822574708481,
+          "latency_delta_pct_vs_lstm": -50.016458713398045,
+          "out_shape": [
+            1,
+            16,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 8,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 0.6879450000269571,
+          "latency_std_ms": 0.1511249323265972,
+          "latency_delta_pct_vs_lstm": -81.86048182100802,
+          "out_shape": [
+            1,
+            16,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        }
+      ]
+    },
+    {
+      "T": 32,
+      "baseline": {
+        "latency_ms": 5.424057599884691,
+        "latency_std_ms": 2.2658456877715047,
+        "out_shape": [
+          1,
+          32,
+          512
+        ]
+      },
+      "swaps": [
+        {
+          "window": 1,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 5.3852181998081505,
+          "latency_std_ms": 0.7054165952820167,
+          "latency_delta_pct_vs_lstm": -0.7160580314885643,
+          "out_shape": [
+            1,
+            32,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 2,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 3.5803946000669384,
+          "latency_std_ms": 0.41373024003051717,
+          "latency_delta_pct_vs_lstm": -33.990476057203864,
+          "out_shape": [
+            1,
+            32,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 4,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 2.1497359997738386,
+          "latency_std_ms": 0.47230615116857194,
+          "latency_delta_pct_vs_lstm": -60.36664507730265,
+          "out_shape": [
+            1,
+            32,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 8,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 1.2638734000574914,
+          "latency_std_ms": 0.297002381623387,
+          "latency_delta_pct_vs_lstm": -76.69874670791917,
+          "out_shape": [
+            1,
+            32,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        }
+      ]
+    },
+    {
+      "T": 64,
+      "baseline": {
+        "latency_ms": 9.420387799764285,
+        "latency_std_ms": 3.1559705308572,
+        "out_shape": [
+          1,
+          64,
+          512
+        ]
+      },
+      "swaps": [
+        {
+          "window": 1,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 8.916545400097675,
+          "latency_std_ms": 0.48824620045234435,
+          "latency_delta_pct_vs_lstm": -5.348425249321655,
+          "out_shape": [
+            1,
+            64,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 2,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 6.610426800034475,
+          "latency_std_ms": 0.41217257138954905,
+          "latency_delta_pct_vs_lstm": -29.828506633242004,
+          "out_shape": [
+            1,
+            64,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 4,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 5.1184508000005735,
+          "latency_std_ms": 1.2717949641767867,
+          "latency_delta_pct_vs_lstm": -45.66624104234173,
+          "out_shape": [
+            1,
+            64,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 8,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 2.6982732000760734,
+          "latency_std_ms": 0.48845199518691895,
+          "latency_delta_pct_vs_lstm": -71.35708999003641,
+          "out_shape": [
+            1,
+            64,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        }
+      ]
+    },
+    {
+      "T": 128,
+      "baseline": {
+        "latency_ms": 18.00433360021998,
+        "latency_std_ms": 5.018428359700556,
+        "out_shape": [
+          1,
+          128,
+          512
+        ]
+      },
+      "swaps": [
+        {
+          "window": 1,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 17.950943999858282,
+          "latency_std_ms": 0.7071959591166964,
+          "latency_delta_pct_vs_lstm": -0.29653749784464656,
+          "out_shape": [
+            1,
+            128,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 2,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 12.98679040010029,
+          "latency_std_ms": 0.701355291842515,
+          "latency_delta_pct_vs_lstm": -27.86853049678209,
+          "out_shape": [
+            1,
+            128,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 4,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 6.975566599794547,
+          "latency_std_ms": 0.1266371788777143,
+          "latency_delta_pct_vs_lstm": -61.25618001374226,
+          "out_shape": [
+            1,
+            128,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        },
+        {
+          "window": 8,
+          "params": 61760,
+          "params_delta_pct": -6.492248062015504,
+          "latency_ms": 4.100825599925884,
+          "latency_std_ms": 0.2802278094739991,
+          "latency_delta_pct_vs_lstm": -77.22311921683244,
+          "out_shape": [
+            1,
+            128,
+            512
+          ],
+          "shape_match": true,
+          "stability_std": 0.0
+        }
+      ]
+    }
+  ],
+  "summary_w4": {
+    "avg_param_delta_pct": 6.492248062015504,
+    "avg_latency_delta_pct": -57.23950170009723,
+    "all_shape_match": true
+  }
+}
