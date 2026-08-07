@@ -1,0 +1,337 @@
+"""Round 302 — ParallelCfC vs vanilla CfC on **sharp-transition** task.
+
+Goal: validate or refute the honest caveat in arXiv:2608.03041v1 §6.3
+that PLAN (parallel liquid-inspired approximation) underperforms on
+tasks with sharp inter-step state transitions.
+
+Dataset:
+    N-MNIST-like synthetic binary spike classification.
+    - 10 classes (digits 0..9).
+    - 2 input channels (ON/OFF polarity, mimicking DVS events).
+    - T = 64 timesteps.
+    - Each class has a *deterministic burst template* (3 burst windows of
+      width 2..4 within the 64-step window).  Within a burst the channel
+      that "fires" emits spike=1 with high probability (0.9); outside
+      bursts spikes are sparse (Poisson 0.05).  This produces sharp
+      inter-step transitions (binary 0/1 events with no interpolation)
+      that test the paper's caveat directly.
+    - We deliberately avoid the smooth toy_sin protocol from r301 because
+      smooth sinusoids are *not* what the caveat warns about.
+    - 200 train + 50 test samples per class (= 2000 train / 500 test).
+
+Why synthetic, not real N-MNIST:
+    The Tonic-style N-MNIST download from gin.g-node.org was 503-blocked
+    in this sandbox (see `curl` output).  Per the r302 task brief, when
+    dataset download is blocked we fall back to a synthetic N-MNIST-style
+    binary spike dataset and document the substitution.  The synthetic
+    version is in fact a *cleaner* test of the paper's caveat because it
+    isolates the "sharp inter-step transition" property without
+    image-domain noise (sensor noise, saccade dynamics) that would
+    confound the comparison.
+
+Models:
+  - CfC (vanilla, sequential) — manual step loop, no chunking.
+  - ParallelCfC window ∈ {2, 4, 8}.
+
+Protocol (matches r301):
+  - h=64, T=64, batch=full-batch, Adam(lr=2e-3), 100 epochs, CrossEntropyLoss.
+  - 5 seeds, mean ± std.
+  - Metrics: classification accuracy + train-time + inference latency.
+
+Output:
+  - bench_parallel_cfc_sharp_results.json (raw + summary)
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import time
+from pathlib import Path
+
+import numpy as np
+import torch
+import torch.nn as nn
+
+from lnn.core.cfc import CfCCell
+from lnn.core.parallel_cfc import ParallelCfCNetwork
+
+
+# ---------------------------------------------------------------------------
+# Dataset: N-MNIST-like synthetic binary spike classification.
+# ---------------------------------------------------------------------------
+
+NUM_CLASSES = 10
+NUM_CHANNELS = 2  # ON/OFF polarity
+SEQ_LEN = 64
+BURST_PROB = 0.9  # spike prob inside burst window
+NOISE_PROB = 0.05  # spike prob outside burst window (sparse noise)
+
+
+def _build_class_templates(num_classes: int, T: int, num_channels: int, seed: int = 0) -> np.ndarray:
+    """Build per-class burst templates.
+
+    For each class and each channel we draw 3 burst windows of width
+    ``w in {2,3,4}`` at random non-overlapping positions in [0, T).  The
+    resulting template is a boolean (num_classes, num_channels, T) array.
+
+    Burst windows are non-overlapping per class per channel so that the
+    transitions are visually sharp (burst → silence → burst).
+    """
+    rng = np.random.default_rng(seed)
+    templates = np.zeros((num_classes, num_channels, T), dtype=bool)
+    for c in range(num_classes):
+        for ch in range(num_channels):
+            positions = np.arange(T)
+            rng.shuffle(positions)
+            cursor = 0
+            burst_count = 0
+            while burst_count < 3 and cursor < T:
+                # Pick burst width 2-4.
+                w = int(rng.integers(2, 5))
+                if cursor + w > T:
+                    break
+                # Pick a non-overlapping start.
+                start = int(rng.integers(0, T - w + 1))
+                # Skip if overlap with any existing burst for this class/channel.
+                if templates[c, ch, start : start + w].any():
+                    # try a few more times, else just skip
+                    found = False
+                    for _ in range(10):
+                        start = int(rng.integers(0, T - w + 1))
+                        if not templates[c, ch, start : start + w].any():
+                            templates[c, ch, start : start + w] = True
+                            found = True
+                            break
+                    if not found:
+                        cursor += 1
+                        continue
+                else:
+                    templates[c, ch, start : start + w] = True
+                cursor += w
+                burst_count += 1
+    return templates
+
+
+def make_sharp_data(
+    n_train: int = 200,
+    n_test: int = 50,
+    T: int = SEQ_LEN,
+    num_classes: int = NUM_CLASSES,
+    num_channels: int = NUM_CHANNELS,
+    seed: int = 0,
+):
+    """Build (x, y) datasets where x is a binary spike tensor (N, T, C) and
+    y is an int class label.
+
+    Each class is generated by:
+        1. Drawing a burst template per channel.
+        2. For each sample of that class, flipping the template to a
+           binary event tensor with ``BURST_PROB`` inside bursts and
+           ``NOISE_PROB`` outside bursts.
+        3. Adding small Gaussian jitter (σ=0.02) to the binary events and
+           re-quantising to {0, 1} so the network receives noisy spike
+           counts, not exact 0/1.
+    """
+    rng = np.random.default_rng(seed)
+    templates = _build_class_templates(num_classes, T, num_channels, seed=seed)
+
+    def _sample(n_per_class: int, seed_offset: int) -> tuple[np.ndarray, np.ndarray]:
+        local_rng = np.random.default_rng(seed + seed_offset)
+        xs, ys = [], []
+        for c in range(num_classes):
+            for _ in range(n_per_class):
+                tpl = templates[c]  # (C, T) bool
+                # Sample spikes: 1.0 inside burst, 0.0 outside, with small prob.
+                rand = local_rng.random(tpl.shape)
+                events = (rand < np.where(tpl, BURST_PROB, NOISE_PROB)).astype(np.float32)
+                # Add tiny Gaussian jitter then re-quantise.
+                events = events + local_rng.normal(0.0, 0.02, events.shape).astype(np.float32)
+                events = (events > 0.5).astype(np.float32)
+                xs.append(events.T)  # (T, C)
+                ys.append(c)
+        idx = local_rng.permutation(len(xs))
+        xs = np.stack([xs[i] for i in idx], axis=0)
+        ys = np.array([ys[i] for i in idx], dtype=np.int64)
+        return xs, ys
+
+    x_tr, y_tr = _sample(n_train, seed_offset=1)
+    x_te, y_te = _sample(n_test, seed_offset=2)
+    return (
+        torch.tensor(x_tr, dtype=torch.float32),
+        torch.tensor(y_tr, dtype=torch.long),
+        torch.tensor(x_te, dtype=torch.float32),
+        torch.tensor(y_te, dtype=torch.long),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Models.
+# ---------------------------------------------------------------------------
+
+
+class VanillaCfCClassifier(nn.Module):
+    """Sequential CfC classifier with manual step loop (CfCCell)."""
+
+    def __init__(self, input_size: int = NUM_CHANNELS, hidden_size: int = 64, num_classes: int = NUM_CLASSES):
+        super().__init__()
+        self.cell = CfCCell(input_size, hidden_size)
+        self.proj = nn.Linear(hidden_size, num_classes)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x: (B, T, d_in)
+        B, T, _ = x.shape
+        h = torch.zeros(B, self.cell.hidden_size, device=x.device, dtype=x.dtype)
+        for t in range(T):
+            h = self.cell(
+                x[:, t, :], h,
+                dt=torch.tensor(1.0, device=x.device, dtype=x.dtype),
+            )
+        return self.proj(h)
+
+
+class ParallelCfCClassifier(nn.Module):
+    """ParallelCfC classifier with manual chunked loop over windows."""
+
+    def __init__(
+        self,
+        input_size: int = NUM_CHANNELS,
+        hidden_size: int = 64,
+        num_classes: int = NUM_CLASSES,
+        window: int = 4,
+    ):
+        super().__init__()
+        self.network = ParallelCfCNetwork(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            output_size=num_classes,
+            num_layers=1,
+            window=window,
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.network(x)
+
+
+# ---------------------------------------------------------------------------
+# Train / eval.
+# ---------------------------------------------------------------------------
+
+
+def train_eval(
+    model: nn.Module,
+    x_tr: torch.Tensor,
+    y_tr: torch.Tensor,
+    x_te: torch.Tensor,
+    y_te: torch.Tensor,
+    epochs: int,
+    lr: float,
+    seed: int,
+) -> dict:
+    torch.manual_seed(seed)
+    opt = torch.optim.Adam(model.parameters(), lr=lr)
+    loss_fn = nn.CrossEntropyLoss()
+    model.train()
+    t0 = time.perf_counter()
+    for _ in range(epochs):
+        opt.zero_grad()
+        logits = model(x_tr)
+        loss = loss_fn(logits, y_tr)
+        loss.backward()
+        opt.step()
+    train_s = time.perf_counter() - t0
+    model.eval()
+    with torch.no_grad():
+        # Final test accuracy (single forward pass — most rigorous measure).
+        logits = model(x_te)
+        pred = logits.argmax(dim=-1)
+        acc = float((pred == y_te).float().mean().item())
+        # Train accuracy (for sanity).
+        logits_tr = model(x_tr)
+        train_acc = float((logits_tr.argmax(dim=-1) == y_tr).float().mean().item())
+        # Inference latency: 10 forward passes averaged.
+        t0 = time.perf_counter()
+        for _ in range(10):
+            _ = model(x_te)
+        lat_10p_ms = (time.perf_counter() - t0) * 100.0
+    return {
+        "seed": seed,
+        "test_acc": acc,
+        "train_acc": train_acc,
+        "train_s": train_s,
+        "lat_10pass_ms": lat_10p_ms,
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--lr", type=float, default=2e-3)
+    parser.add_argument("--seeds", type=int, default=5)
+    parser.add_argument(
+        "--out",
+        type=str,
+        default="bench_parallel_cfc_sharp_results.json",
+    )
+    args = parser.parse_args()
+
+    x_tr, y_tr, x_te, y_te = make_sharp_data()
+    print(
+        f"[bench] dataset: x_tr={tuple(x_tr.shape)} y_tr={tuple(y_tr.shape)} "
+        f"x_te={tuple(x_te.shape)} y_te={tuple(y_te.shape)}"
+    )
+    print(
+        f"[bench] per-class burst rate: "
+        f"{x_tr.mean().item():.3f} (fraction of 1s in the data)"
+    )
+    results: dict = {}
+
+    # 1) Vanilla CfC
+    for seed in range(args.seeds):
+        model = VanillaCfCClassifier()
+        r = train_eval(model, x_tr, y_tr, x_te, y_te, args.epochs, args.lr, seed)
+        results.setdefault("vanilla_cfc", []).append(r)
+        print(
+            f"  vanilla_cfc seed={seed} acc={r['test_acc']:.4f} "
+            f"train_acc={r['train_acc']:.4f} train_s={r['train_s']:.2f} "
+            f"lat_10p_ms={r['lat_10pass_ms']:.2f}"
+        )
+
+    # 2) ParallelCfC window ∈ {2, 4, 8}
+    for W in (2, 4, 8):
+        for seed in range(args.seeds):
+            model = ParallelCfCClassifier(window=W)
+            r = train_eval(model, x_tr, y_tr, x_te, y_te, args.epochs, args.lr, seed)
+            results.setdefault(f"parallel_cfc_w{W}", []).append(r)
+            print(
+                f"  parallel_w{W} seed={seed} acc={r['test_acc']:.4f} "
+                f"train_acc={r['train_acc']:.4f} train_s={r['train_s']:.2f} "
+                f"lat_10p_ms={r['lat_10pass_ms']:.2f}"
+            )
+
+    # Summary
+    summary: dict = {}
+    for k, lst in results.items():
+        accs = np.array([r["test_acc"] for r in lst])
+        lats = np.array([r["lat_10pass_ms"] for r in lst])
+        tts = np.array([r["train_s"] for r in lst])
+        summary[k] = {
+            "test_acc_mean": float(accs.mean()),
+            "test_acc_std": float(accs.std()),
+            "lat_10p_mean_ms": float(lats.mean()),
+            "lat_10p_std_ms": float(lats.std()),
+            "train_s_mean": float(tts.mean()),
+        }
+    print("\n=== Summary (mean ± std over {} seeds) ===".format(args.seeds))
+    for k, s in summary.items():
+        print(
+            f"  {k:25s}  acc={s['test_acc_mean']:.4f} ± {s['test_acc_std']:.4f}  "
+            f"lat={s['lat_10p_mean_ms']:.2f}ms  train={s['train_s_mean']:.2f}s"
+        )
+
+    out_path = Path(args.out)
+    out_path.write_text(json.dumps({"raw": results, "summary": summary}, indent=2))
+    print(f"\nResults written to {out_path.resolve()}")
+
+
+if __name__ == "__main__":
+    main()

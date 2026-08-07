@@ -119,3 +119,44 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 - **r304 LFM2.5 + PLAN-CfC 部署集成** (subagent) — `lnn/lfm2/parallel_integration.py` (LSTM/GRU → ParallelCfCNetwork walker), 18/18 tests, mock LFM2.5 CPU 5-trial **W=4 -57.2% latency / -6.5% params** / shape strictly preserved, push 923eefc. 真实 LFM2.5 perplexity BLOCKED (无权重).
 - **r305 MidpointCfC — non-anchor parallel scan** (本地) — predictor-corrector 给出 order-dt² accuracy, 但 2x parallel eval 致延迟 +24%, toy_sin 5-seed: MSE 0.10603 (vs parallel_w8 0.10564, +0.4%) 但 **std 0.00057 (3.9× 更稳)**. **Honest verdict**: NEGATIVE on latency, MARGINAL POSITIVE on stability. r301 pure anchor 仍是 Pareto sweet spot.
+
+## 2026-08-07 r302 增量更新（PLAN-CfC sharp-transition 验证）
+
+### 今日完成 r302
+- **目标**: 验证或证伪 arXiv:2608.03041v1 §6.3 自陈"PLAN 在 sharp inter-step transitions 任务上退化"的边界条件
+- **数据 (synthetic fallback)**: 10 类 N-MNIST-like 二元脉冲分类,T=64,C=2 (ON/OFF 极性),{0,1} 输入,burst/silence 模式 + 高斯噪声 σ=0.02。200 train/50 test per class = 2000/500 total
+- **真实 N-MNIST 下载失败 (按 brief fallback)**:
+  - `gin.g-node.org/tonic-proxy/.../nmnist_train.zip` → 503 Service Unavailable
+  - `prod-dcd-datasets-public-files-eu-west-1.s3.../9e4e3a40-...` → 403 Forbidden
+  - `tonic` Python 包 → 未安装
+  - `huggingface.co/datasets/eminorhan/nmnist` → 401 Unauthorized
+  - synthetic 反而是 *更纯净* 的 §6.3 检验 — 隔离 sharp-transition 性质,去除 image-domain 噪声混淆
+- **代码**:
+  - `scripts/bench_parallel_cfc_sharp.py` (315 行,5-seed × 4 模型 × 100 epoch)
+  - `tests/test_bench_parallel_cfc_sharp.py` (8/8 pass,新)
+  - 复用 r301 的 `ParallelCfCCell` / `ParallelCfCNetwork` (无新模型代码)
+- **5-seed 关键结果 (T=64, h=64, 100 epochs, Adam(2e-3) CE-Loss)**:
+  | 模型 | Test Acc | Δ vs vanilla | 推理延迟 (10 pass) | Δ latency |
+  |---|---:|---:|---:|---:|
+  | vanilla_cfc | 0.7796 ± 0.0731 | — | 89.00 ms | — |
+  | parallel_cfc_w2 | 0.8792 ± 0.0402 | **+12.8%** | 52.40 ms | -41% |
+  | parallel_cfc_w4 | **0.9164 ± 0.0079** | **+17.6%** | 43.25 ms | -51% |
+  | parallel_cfc_w8 | 0.7420 ± 0.0084 | **-4.8%** | 42.01 ms | -53% |
+- **MIXED honest result**:
+  1. **W=8 论文 §6.3 caveat 经验性 VALID** — `parallel_cfc_w8` 在 sharp 任务上 *退化* 至 0.742 (低于 vanilla 0.780)。anchor h_0 假设在 8-step 窗口 + 二元事件上太激进
+  2. **W=2, W=4 论文 §6.3 caveat REFUTED** — 短窗口 anchor 近似误差小,f-gate 仍可自由更新;W=4 strict Pareto win (+17.6% acc, -51% latency)
+  3. **方差塌缩 9× (与 r301 7.8× 一致)** — W=4 std 0.008 vs vanilla 0.073,anchor 作为 implicit regularizer 持续成立
+  4. **W=8 train_acc 饱和 ≈0.78 (W=2/4 均 >0.93)** — anchor *过强*,梯度信号无法传播 per-step 更新,*欠拟合* 而非 *过拟合* 失败
+- **r301 vs r302 ranking (sign flip at W=8)**:
+  - r301 smooth (MSE): W=8 best (0.106)
+  - r302 sharp (Acc): W=8 worst (0.742)
+  - W=4 在两任务都是 strict Pareto winner
+- **生产 default 收窄** `{2,4,8}` → **`{2,4}` 用于 sharp-transition 任务**;W=4 strict sweet spot
+- **独立报告**: `docs/reports/PLAN_Parallel_Liquid_CfC_Sharp_Validation_r302_2026-08-07.md`
+- **后续**: r303 STE-ParallelCfC (已完,NEW SOTA) / r304 LFM2.5 集成 / r305 MidpointCfC (已完,非 anchor 负 on latency) / **r306 真实 N-MNIST (待 tonic 装好)**
+
+### r301 → r302 闭环
+- r301 toy_sin STRICTLY POSITIVE (Pareto win all W)
+- r302 sharp VALIDATES §6.3 at W=8, REFUTES at W=2/W=4
+- anchor assumption 是 *短窗口* 的 implicit regularizer,不是无条件成立
+- W=4 在 r301 + r302 双向 strict Pareto winner — **生产 default 锁定 W=4**

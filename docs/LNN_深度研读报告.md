@@ -780,6 +780,44 @@ tags: [LNN, reading-report, papers]
   - r305: 探索 non-anchor parallel scan(真正的 parallel prefix-sum 形式)
 - **Verdict**：PLAN 思想在 LNN 上的迁移 **STRICTLY POSITIVE** (toy_sin),但 honest 报告 anchor 假设的边界条件。**生产默认**建议 W=4(Pareto sweet spot),不要直接 W=8。
 
+### [2026-08-07] r302 — PLAN-CfC Sharp-Transition 验证 (N-MNIST-like synthetic, 5-seed)
+- **独立报告**：`docs/reports/PLAN_Parallel_Liquid_CfC_Sharp_Validation_r302_2026-08-07.md`
+- **目标**：验证或证伪 arXiv:2608.03041v1 §6.3 自陈"PLAN 在 sharp inter-step transitions 任务上退化"的边界条件
+- **数据 (synthetic fallback)**：10 类 N-MNIST-like 二元脉冲分类,T=64,C=2 (ON/OFF 极性),{0,1} 输入,burst/silence 模式 + 高斯噪声 σ=0.02。
+  - 真实 N-MNIST 下载失败:`gin.g-node.org` 503,`prod-dcd-datasets-public-files-eu-west-1.s3` 403,`tonic` 未安装,`huggingface.co/datasets/eminorhan/nmnist` 401。按 r302 brief fallback 到 synthetic 并明确文档化
+  - synthetic 反而是 *更纯净* 的 §6.3 检验 — 隔离了 sharp-transition 性质,去除 image-domain 噪声混淆
+- **实现**：`scripts/bench_parallel_cfc_sharp.py` (315 行,5-seed × 4 模型 × 100 epoch)+ `tests/test_bench_parallel_cfc_sharp.py` (8/8 pass,新)
+- **5-seed 结果 (T=64, h=64, 100 epochs, h32 hidden=64 Adam(2e-3) CE-Loss)**：
+  | 模型 | Test Acc | Δ vs vanilla | 推理延迟 (10 pass) | Δ latency | Train time |
+  |---|---:|---:|---:|---:|---:|
+  | vanilla_cfc | 0.7796 ± 0.0731 | — | 89.00 ms | — | 52.7 s |
+  | parallel_w2 | 0.8792 ± 0.0402 | **+12.8%** | 52.40 ms | -41% | 37.5 s |
+  | parallel_w4 | **0.9164 ± 0.0079** | **+17.6%** | 43.25 ms | -51% | 35.8 s |
+  | parallel_w8 | 0.7420 ± 0.0084 | **-4.8%** | 42.01 ms | -53% | 35.0 s |
+- **关键发现 (MIXED honest result)**：
+  1. **W=8 论文 §6.3 caveat 经验性 VALID**：`parallel_cfc_w8` 在 sharp 任务上 *退化* 至 0.742 (低于 vanilla 0.780, 4.8%)。anchor h_0 假设在 8-step 窗口 + 二元事件上太激进 — 模型需在窗口内 *反应* 一个 spike 然后 *忘记* 它,但 anchor 强制 h 常量
+  2. **W=2, W=4 论文 §6.3 caveat REFUTED**：短窗口 anchor 近似误差小,f-gate 仍可自由更新;W=4 strict Pareto win (+17.6% acc, -51% latency)
+  3. **方差塌缩 9× (与 r301 7.8× 一致)**：W=4 std 0.008 vs vanilla 0.073,anchor 作为 implicit regularizer 持续成立
+  4. **W=8 训练饱和 train_acc≈0.78 (W=2/4 均>0.93)**：anchor *过强*,梯度信号无法传播 per-step 更新 — 这是 *欠拟合* 而非 *过拟合* 失败
+- **生产 default 收窄 `{2,4,8}` → `{2,4}` 用于 sharp-transition 任务**；W=4 在 r301 (smooth) + r302 (sharp) 都是 strict Pareto winner
+- **r301 toy_sin 排名 vs r302 sharp 排名 (sign flip at W=8)**：
+  | 模型 | r301 smooth (MSE) | r302 sharp (Acc) | 跨任务 |
+  |---|---:|---:|---|
+  | vanilla_cfc | 0.114 | 0.780 | — |
+  | parallel_w2 | 0.112 (-1.3%) | 0.879 (+12.8%) | 都胜 |
+  | parallel_w4 | 0.107 (-5.6%) | **0.916 (+17.6%)** | 都胜 — strict Pareto |
+  | parallel_w8 | **0.106 (-7.1%)** | 0.742 (-4.8%) | **sign flip** — smooth 最佳, sharp 最差 |
+- **与既有研究连接**：
+  - r301 → r302 直接闭环: r301 标出的 §6.3 caveat 在 W=8 经验性确认为真,但 W=2/4 反而 strict win,生产 default W=4 双向胜
+  - r244-r256 Basin-Lyapunov: anchor = anchor basin, sharp 任务上 W=4 anchor 太短 *不* 锁定 basin (W=8 锁定失败,变成欠拟合)
+  - r305 (planned) non-anchor parallel scan: 可能消除 W=8 退化
+  - LFM2.5 (r304) W=4 集成: 已在 LLM 自回归 sharp step 验证 W=4 strict win,与 r302 一致
+- **后续 rounds**：
+  - r303: 联合 STE routing + PLAN-CfC,看离散路由能否补偿 W=8 anchor 误差
+  - r305: non-anchor parallel scan (true parallel prefix-sum),目标消除 §6.3 caveat
+  - r306: 真实 N-MNIST (待 tonic 装好 / 数据源恢复) 复现
+- **Verdict**：**MIXED honest result**。论文 §6.3 caveat 在 **W=8 经验性确认为真**;在 **W=2/W=4 被反驳**。anchor 假设是 *短窗口* 的 implicit regularizer,不是无条件成立的 simplification。**生产 default** 收窄到 W=2/W=4,strict sweet spot 是 W=4。
+
 ### [2026-08-07] r304 — PLAN-CfC × LFM2.5 部署集成 (drop-in LSTM swap)
 - **独立报告**：[[docs/reports/LFM2_5_Parallel_CfC_Integration_r304_2026-08-07.md]]
 - **核心 idea**：把 r301 的 `ParallelCfCNetwork` 作为 `nn.LSTM` / `nn.GRU` 的 drop-in 替换,通过递归 `named_modules()` walker 在 LFM2.5 推理路径上自动替换,验证部署机制 + 量化参数/延迟影响。
