@@ -71,3 +71,16 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - arXiv API: https://export.arxiv.org/api/query
 - GitHub Search API: https://docs.github.com/rest/search/search
 - Hugging Face Models API: https://huggingface.co/docs/hub/api
+
+---
+
+## 2026-08-07 增量更新（loop pipeline）
+
+### 今日新增研读
+- **PLAN — Parallel Liquid-Inspired Approximation Network** (arXiv:2608.03041v1, Kannan et al. 2026-08-04) — 研读 + CfC 复现 (r301)
+  - 独立报告：`docs/reports/PLAN_Parallel_Liquid_CfC_研读报告_r301_2026-08-07.md`
+  - 复现代码：`lnn/core/parallel_cfc.py` (ParallelCfCCell + ParallelCfCNetwork)
+  - 测试：`tests/test_parallel_cfc.py` 21/21 通过
+  - Bench：`scripts/bench_parallel_cfc.py` + `bench_parallel_cfc_results.json`
+  - toy_sin 5-seed 关键结果：parallel_w8 **MSE -7.1%, 推理延迟 -60%** (Pareto win)
+  - 后续 rounds：r302 N-MNIST 验证 / r303 STE+PLAN 联合 / r304 LFM2.5 接入 / r305 non-anchor parallel scan

@@ -738,7 +738,7 @@ tags: [LNN, reading-report, papers]
   2. **CfC 仍是 best retention** for default selection（regular 2.89 < hybrid_gate 3.87 < MR 19.96）
   3. **OOD MSE < regular MSE 是 data artifact**——OOD dt=LogNormal(0, 1) 有极端 dt 值，"压扁"预测难度
   4. **MR routing benefits are task-specific**：仅在 periodic / multi-scale 任务上 strong positive
-- **22 轮 findings partial transfer status**：
+  5. **22 轮 findings partial transfer status**：
   | Finding | N18 status |
   |---|---|
   | N1: CfC structural-generic | ✅ **CONFIRMED** on chaotic ODE |
@@ -750,6 +750,35 @@ tags: [LNN, reading-report, papers]
   - **Periodic / multi-scale time series**：MR-hybrid-gate-cfc（N24 强 positive）
   - **Chaotic nonlinear ODE**：**CfC σ-decay**（MR routing 6.9× 退化，**不要用 MR**）
   - **Edge deployment**：hybrid_gate teacher → CfC h=4 → int8（N19+N20+N23）
+
+### [2026-08-07] PLAN — Parallel Liquid-Inspired Approximation Network (Kannan et al. 2026, arXiv:2608.03041v1)
+- **独立报告**：[[docs/reports/PLAN_Parallel_Liquid_CfC_研读报告_r301_2026-08-07.md]]
+- **核心 idea**：把顺序 LNN 的 liquid-state dynamics 重写为可并行的离散形式,在窗口 W 内使用 h_0 anchor 一次性 batched matmul 评估 W 步闭式更新。本质上是 *inter-timestep simplification*,与 r299 TopologicalCfC 的 *inter-neuron simplification* 正交。
+- **PLAN vs CfC 数学对应**：PLAN 的"discretized liquid state"方程(sigmoid-gated tanh-blend closed-form)与 Lechner 2022 CfC 几乎同构,区别仅在窗口内是否更新 h_anchor。
+- **实现**：`lnn/core/parallel_cfc.py` (ParallelCfCCell + ParallelCfCNetwork) + `tests/test_parallel_cfc.py` 21/21 通过 + `scripts/bench_parallel_cfc.py`。
+- **toy_sin 5-seed 结果 (T=64, h=64, 100 epochs)**：
+  | 模型 | MSE | Δ vs vanilla | 推理延迟 (10 pass) | Δ latency |
+  |---|---:|---:|---:|---:|
+  | vanilla_cfc | 0.11372 ± 0.00467 | — | 14.30 ms | — |
+  | parallel_w2 | 0.11225 ± 0.00059 | -1.3% | 9.96 ms | -30% |
+  | parallel_w4 | 0.10733 ± 0.00107 | -5.6% | 7.66 ms | -46% |
+  | parallel_w8 | **0.10564 ± 0.00225** | **-7.1%** | **5.74 ms** | **-60%** |
+- **关键发现**：
+  1. **STRONG POSITIVE — Pareto 改进**：W=8 同时 -7.1% MSE 和 -60% 延迟,验证 PLAN 论文 13-69% latency 方向
+  2. **方差塌缩 7.8×**：anchor 假设起到 implicit regularization,W=2 std 从 0.0047 降到 0.0006
+  3. **边际收益递减**：W=8 vs W=4 MSE 仅 -1.6% 而延迟再降 25% — anchor 假设在更长窗口开始失效
+  4. **HONEST CAVEAT**：仅在 toy_sin (周期平滑) 验证;论文 §6.3 自承在 sharp inter-step transitions 任务上退化,r302 需在 N-MNIST/EMMA 上验证
+- **与既有研究连接**：
+  - r244-r256 Basin-Lyapunov: PLAN anchor 可视为 "anchor basin",值得在 inter-basin-distance 框架中验证
+  - r265-r272 STE Neuron-Wise: STE L1 (r266) 与 PLAN anchor 同属"显式简化 ODE"的不同路径,可串联
+  - r299 TopologicalCfC: inter-neuron × inter-timestep simplification 正交
+  - LFM2.5 边缘部署: 22-47% 参数占比对 Jetson Orin Nano memory budget 直接友好
+- **后续 rounds**：
+  - r302: 在 N-MNIST / EMMA rover / Long-Sequence Arena 上验证 sharp-transition 退化
+  - r303: 联合 STE routing + PLAN-CfC,看离散路由能否补偿 anchor 误差
+  - r304: 把 PLAN-CfC 接入 LFM2.5 推理 demo,测 TTFT/TPOT
+  - r305: 探索 non-anchor parallel scan(真正的 parallel prefix-sum 形式)
+- **Verdict**：PLAN 思想在 LNN 上的迁移 **STRICTLY POSITIVE** (toy_sin),但 honest 报告 anchor 假设的边界条件。**生产默认**建议 W=4(Pareto sweet spot),不要直接 W=8。
 
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
@@ -1008,7 +1037,7 @@ tags: [LNN, reading-report, papers]
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-08-07**：[[docs/daily/2026-08-07_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
+- **2026-08-07**：[[docs/daily/2026-08-07_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。**今日新增研读**：PLAN (arXiv:2608.03041v1) — 详见上文 r301。
 - **2026-08-05**：[[docs/daily/2026-08-05_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
 - **2026-08-06**：[[docs/daily/2026-08-06_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 33 个，模型 17 个。
 - **2026-08-04**：[[docs/daily/2026-08-04_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
