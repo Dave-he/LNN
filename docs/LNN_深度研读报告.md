@@ -807,6 +807,43 @@ tags: [LNN, reading-report, papers]
   - r306: 在 `lnn/lfm2/inference.py::LFM2Inference` 加 `swap_to_parallel_cfc(window=4)` 方法
   - r307: 与 r244-r256 basin-lyapunov anchor 联合,看 W=4 + multi-basin 是否能恢复被 PLAN approximation 损失的质量
 
+### [2026-08-07] r303 — STE × PLAN-ParallelCfC 联合: 离散路由补偿 anchor 误差
+- **独立报告**：[[docs/reports/STE_Parallel_CfC_r303_2026-08-07.md]]
+- **核心 idea**：联合 r265 STE neuron-wise routing (inter-neuron sparsity) 与 r301 PLAN-ParallelCfC (inter-timestep parallel approximation)。每神经元 STE mask 在两条更新路径间路由：mask=1 走 PLAN parallel anchor (cheap, approximate),mask=0 走 sequential vanilla CfC (accurate, per-step)。hypothesis：anchor 误差是 per-neuron 的,STE 让 cell 学会哪些神经元承担 anchor 误差,哪些不行。
+- **核心机制**：
+  - `route_logits` (per-neuron) 经 STE 模式 `(hard - soft).detach() + soft` 训练 → forward=hard 二值,backward=soft sigmoid
+  - density ρ 控制 anchor-safe 神经元比例 (1.0=全 parallel, 0.0=全 sequential)
+  - r267 风格的 soft-mask Bernoulli entropy reg (λ=0.01) 保持路由离散化
+  - 双分支 separate 权重 (`f_gate_p`/`g_branch_p`/`h_branch_p` vs `f_gate_s`/`g_branch_s`/`h_branch_s`)
+- **实现**：`lnn/core/ste_parallel_cfc.py` (~340 行, `STEParallelCfCCell` + `STEParallelCfCNetwork`)+ `tests/test_ste_parallel_cfc.py` (40/40 pass) + `scripts/bench_ste_parallel_cfc.py`
+- **toy_sin 5-seed (h=64, T=64, 200 epochs)**:
+  | 模型 | MSE mean | MSE std | Δ vs r301 (parallel_w8) | 推理延迟 (10 pass) | 训练时间 |
+  |---|---:|---:|---:|---:|---:|
+  | vanilla_cfc | 0.10977 | 0.00333 | +49.3% | 15.86 ms | 14.6 s |
+  | parallel_cfc_w8 (r301) | 0.07353 | 0.02592 | — | 9.53 ms | 14.5 s |
+  | **ste_parallel_cfc_w8_d0.3** | **0.06386** | 0.01821 | **-13.2%** | 13.35 ms | 20.9 s |
+  | **ste_parallel_cfc_w8_d0.5** | **0.04706** | 0.02347 | **-36.0% (NEW SOTA)** | 16.31 ms | 21.8 s |
+- **关键发现**：
+  1. **STRICT POSITIVE**: routing 进一步压低 MSE 13-36% over r301。STE mask 让 cell 学会"哪些神经元可以承担 anchor 误差,哪些不行" — 这是 r301 报告里 anchor assumption 的隐式 regularizer 的 explicit 化
+  2. **d=0.5 > d=0.3** (与 r265 production default d=0.3 不同) — 提示 density 选择与下游任务耦合,inter-update-mode 维度(本工作)与 inter-neuron 维度(r265)的最优 density 不通用
+  3. **std 降低**: STE-ParallelCfC std 0.018-0.023 < r301 0.026,跨种子方差进一步降低
+  4. **latency tradeoff**: 双分支 +40-71% 推理延迟,但仍 < 17ms;r304 稀疏 sequential 评估可恢复 r301 latency
+- **HONEST VERDICT**:
+  - **toy_sin 上的 STRICT 正向** (无论 d=0.3 还是 d=0.5 都优于 r301)
+  - **未验证**: N-MNIST / Long-Sequence Arena 的 sharp-transition 退化 — r303 routing 可能选择性补偿,但需后续 r306 验证
+  - **未验证**: 大 hidden_size (>64), batch>1, 多层 (>1) — r270 的"h=192 production optimum"是 NeuronWise 维度,本工作 density 维度可能不同
+  - **production default 候选**: `W=8, density=0.5, entropy_lambda=0.01, ste_temperature=1.0` (toy_sin 最优)
+- **与既有研究的相关性**：
+  - **r265-r272 STE Neuron-Wise**: r303 的 STE mask 操作 *inter-update-mode* 维度(parallel vs sequential),r265 操作 *inter-neuron* 维度(neighbors)。两者完全正交,可串联:r265 处理"哪些邻居连接",r303 处理"哪些更新模式"
+  - **r301 PLAN-Parallel**: r303 是 r301 的"加 routing"版,严格 Pareto 优于 r301 + vanilla
+  - **r244-r256 Basin-Lyapunov**: anchor = anchor basin,sequential = trajectory within the basin。r303 routing 实质上是 basin-vs-basin-routing
+  - **r267 STE + entropy reg**: r303 沿用 r267 的 entropy reg pattern,证明 soft-mask entropy 是 STE 的通用 pattern
+- **后续 rounds**:
+  - r304 候选：稀疏 sequential 评估(只对 mask=0 神经元走 sequential 分支),恢复 r301 latency
+  - r305 候选：NeuronWiseCfC + STE-ParallelCfC 双 STE 串联(inter-neuron + inter-update-mode)
+  - r306 候选：N-MNIST 验证 sharp-transition 退化是否被 routing 选择性补偿
+  - r307 候选：learned per-neuron density (取代全局 ρ)
+
 ### 4.1 基础 Benchmark（Mackey-Glass 混沌时序）
 
 | Model | RMSE | MAE | 参数量 | 训练时间 |

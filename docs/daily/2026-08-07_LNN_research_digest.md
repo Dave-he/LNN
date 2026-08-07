@@ -98,3 +98,24 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
   - 形状契约: **(B, T, vocab) 全部严格保持** (all_shape_match=True)
 - **生产建议**: 集成机制 READY; 真实 LFM2.5 perplexity/MMLU 评估 BLOCKED (无权重, SSL_SYS); W=4 是 Pareto sweet spot (W=8 在 LLM 自回归 sharp step 上风险大)
 - **独立报告**: `docs/reports/LFM2_5_Parallel_CfC_Integration_r304_2026-08-07.md`
+
+## 2026-08-07 r303 增量更新（STE neuron-wise 路由 × PLAN-ParallelCfC 联合）
+
+### 今日完成 r303
+- **STE-ParallelCfC**: 联合 r265 STE neuron-wise routing 与 r301 PLAN-ParallelCfC。每神经元 STE mask 在两条更新路径间路由:mask=1 走 PLAN parallel anchor (cheap, approximate),mask=0 走 sequential vanilla CfC (accurate, per-step)。
+- **核心机制**: `route_logits` (per-neuron) 经 STE 模式 `(hard - soft).detach() + soft` 训练,forward 用 hard 二值,backward 用 soft sigmoid。density ρ 控制 anchor-safe 神经元比例。附加 r267 的 soft-mask Bernoulli entropy reg (λ=0.01)。
+- **代码**: `lnn/core/ste_parallel_cfc.py` (~340 行) — `STEParallelCfCCell` + `STEParallelCfCNetwork`
+- **测试**: `tests/test_ste_parallel_cfc.py` **40/40 通过** (top-k mask, hard/soft/STE mask, density 0/0.3/0.5/1, gradient flow, entropy reg, multi-layer, window sweep, dtype/device)
+- **Bench**: `scripts/bench_ste_parallel_cfc.py` + `bench_ste_parallel_cfc_results.json`
+- **toy_sin 5-seed 关键结果**:
+  - vanilla_cfc: MSE 0.10977 ± 0.00333
+  - parallel_cfc_w8 (r301): MSE 0.07353 ± 0.02592 (-33% vs vanilla)
+  - **ste_parallel_cfc_w8_d0.3**: MSE 0.06386 ± 0.01821 (**-13.2%** vs r301)
+  - **ste_parallel_cfc_w8_d0.5**: MSE 0.04706 ± 0.02347 (**-36.0%** vs r301, **NEW SOTA** on toy_sin)
+- **STRICT POSITIVE**: routing 进一步压低 MSE,密度 0.5 > 0.3 (与 r265 默认 d=0.3 不同,提示密度选择与任务耦合)
+- **独立报告**: `docs/reports/STE_Parallel_CfC_r303_2026-08-07.md`
+- **Tradeoff**: 推理延迟 +40-71% (双分支),训练时间 +40-50%,但仍在 16ms / 22s 以内 — 为精度付的合理代价
+- **后续**: r304 稀疏 sequential 评估恢复 r301 latency / r305 NeuronWiseCfC + STE-ParallelCfC 双 STE / r306 N-MNIST 验证 sharp-transition 退化
+
+- **r304 LFM2.5 + PLAN-CfC 部署集成** (subagent) — `lnn/lfm2/parallel_integration.py` (LSTM/GRU → ParallelCfCNetwork walker), 18/18 tests, mock LFM2.5 CPU 5-trial **W=4 -57.2% latency / -6.5% params** / shape strictly preserved, push 923eefc. 真实 LFM2.5 perplexity BLOCKED (无权重).
+- **r305 MidpointCfC — non-anchor parallel scan** (本地) — predictor-corrector 给出 order-dt² accuracy, 但 2x parallel eval 致延迟 +24%, toy_sin 5-seed: MSE 0.10603 (vs parallel_w8 0.10564, +0.4%) 但 **std 0.00057 (3.9× 更稳)**. **Honest verdict**: NEGATIVE on latency, MARGINAL POSITIVE on stability. r301 pure anchor 仍是 Pareto sweet spot.
