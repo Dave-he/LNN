@@ -59,6 +59,13 @@ line-length = 120
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 
+# Pyright resolves `from scripts.xxx import ...` and `from lnn.xxx import ...`
+# from the project root so test files don't need sys.path manipulation.
+[tool.pyright]
+pythonVersion = "3.10"
+include = ["lnn", "tests", "scripts"]
+extraPaths = ["."]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Markers added by round 28 (§32) for regime-stratified testing.
