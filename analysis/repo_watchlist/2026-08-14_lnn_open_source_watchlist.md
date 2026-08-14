@@ -7,6 +7,34 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-08-14
 
 ## GitHub 仓库
+### [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet)
+- 更新：2026-08-14
+- Star / Fork：1 / 0
+- 语言：Jupyter Notebook
+- Topics：未标注
+- 说明：This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics", International Conference on Pattern Recognition, ICPR 2026.
+
+### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
+- 更新：2026-08-14
+- Star / Fork：1 / 0
+- 语言：unknown
+- Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
+- 说明：Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B / 8B-A1B / 24B-A2B) and LFM2.5 (350M / 1.2B variants) with text, vision, audio, and thinking modes. The LEAP platform enables LFM customization and on-device deployment.
+
+### [XenoVoyage/xeno-rover](https://github.com/XenoVoyage/xeno-rover)
+- 更新：2026-08-14
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：computer-vision, embodied-ai, large-language-models, liquid-neural-networks, raspberry-pi, raspberry-pi-5, robotics, rover
+- 说明：Raspberry Pi 5 rover for mapping, computer vision, voice control, on-device language models, and liquid neural network experiments.
+
+### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
+- 更新：2026-08-14
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
+
 ### [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving)
 - 更新：2026-08-13
 - Star / Fork：0 / 0
@@ -20,13 +48,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Rust
 - Topics：未标注
 - 说明：LSTN is an experimental text generation engine that models language not as static probabilities, but as a dynamic and "liquid" neural network. Each trigram (3-character sequence) acts as an individual neuron within a continuous temporal dynamic system.
-
-### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
-- 更新：2026-08-12
-- Star / Fork：1 / 0
-- 语言：unknown
-- Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
-- 说明：Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B / 8B-A1B / 24B-A2B) and LFM2.5 (350M / 1.2B variants) with text, vision, audio, and thinking modes. The LEAP platform enables LFM customization and on-device deployment.
 
 ### [Tivaphe/Anywhere-lfm](https://github.com/Tivaphe/Anywhere-lfm)
 - 更新：2026-08-12
@@ -56,13 +77,6 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：dynamical-systems, education, liquid-neural-networks, machine-learning, neural-ode, pytorch, state-space-models
 - 说明：Liquid Neural Networks from first principles: curriculum, LaTeX textbook, pure PyTorch implementations, and reproducible experiments
 
-### [CHI9-SATR/github_release](https://github.com/CHI9-SATR/github_release)
-- 更新：2026-08-10
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Continuous-Time Sepsis Early Warning via Liquid Neural Networks, Kalman Filtering, and Bayesian Decision Heads
-
 ### [Ujjawal1612/Cholangiocarcinoma_detection-LiquidNeuralNetwork](https://github.com/Ujjawal1612/Cholangiocarcinoma_detection-LiquidNeuralNetwork)
 - 更新：2026-08-09
 - Star / Fork：3 / 0
@@ -90,20 +104,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：unknown
 - Topics：未标注
 - 说明：A Comparative Study of Liquid Time-Constant Networks and Closed-form Continuous-time Neural Networks
-
-### [2841649220/LSHN](https://github.com/2841649220/LSHN)
-- 更新：2026-08-06
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：About A bionic neural network that combines liquid neural networks, spiking neural networks, and hypergraph neural networks
-
-### [Fantou-Arthur/Ecoli_prediction_training_pipeline](https://github.com/Fantou-Arthur/Ecoli_prediction_training_pipeline)
-- 更新：2026-08-06
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Self-contained Python pipeline for processing ColiMinder water quality sensor data, running grid search experiments on CUDA-accelerated Liquid Neural Networks, and visualizing ablation metrics.
 
 ### [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer)
 - 更新：2026-08-03

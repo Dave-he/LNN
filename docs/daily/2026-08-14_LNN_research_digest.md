@@ -33,18 +33,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-08-14 | [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet) | 1 | Jupyter Notebook | This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for E… |
+| 2026-08-14 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B /… |
+| 2026-08-14 | [XenoVoyage/xeno-rover](https://github.com/XenoVoyage/xeno-rover) | 0 |  | Raspberry Pi 5 rover for mapping, computer vision, voice control, on-device language models, and liquid neural network experiments. |
+| 2026-08-14 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
 | 2026-08-13 | [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving) | 0 | Python | High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache… |
 | 2026-08-12 | [infinition/LSTN](https://github.com/infinition/LSTN) | 2 | Rust | LSTN is an experimental text generation engine that models language not as static probabilities, but as a dynamic and "liquid" neural network. Each trigram (3-… |
-| 2026-08-12 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B /… |
 | 2026-08-12 | [Tivaphe/Anywhere-lfm](https://github.com/Tivaphe/Anywhere-lfm) | 1 | Python | Anywhere-LFM est une application de bureau légère, pensée pour simplifier l'utilisation en local des modèles LiquidAI/LFM2 (350M à 1.2B). Elle permet à n'impor… |
 | 2026-08-12 | [dermatolecturio-ai/lfm25-c-bf16](https://github.com/dermatolecturio-ai/lfm25-c-bf16) | 0 | C | Out-of-core BF16 inference for LiquidAI LFM2.5-8B-A1B on 8 GB Apple Silicon (no quantization). |
 | 2026-08-11 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-08-11 | [VanGogh-7/liquid-neural-networks-from-scratch](https://github.com/VanGogh-7/liquid-neural-networks-from-scratch) | 0 | TeX | Liquid Neural Networks from first principles: curriculum, LaTeX textbook, pure PyTorch implementations, and reproducible experiments |
-| 2026-08-10 | [CHI9-SATR/github_release](https://github.com/CHI9-SATR/github_release) | 0 | Python | Continuous-Time Sepsis Early Warning via Liquid Neural Networks, Kalman Filtering, and Bayesian Decision Heads |
 | 2026-08-09 | [Ujjawal1612/Cholangiocarcinoma_detection-LiquidNeuralNetwork](https://github.com/Ujjawal1612/Cholangiocarcinoma_detection-LiquidNeuralNetwork) | 3 | Jupyter Notebook |  |
 | 2026-08-08 | [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab) | 0 | JavaScript | Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab. |
-| 2026-08-07 | [AadyaAnoop/UPI-Sheild](https://github.com/AadyaAnoop/UPI-Sheild) | 0 | Jupyter Notebook | This project uses a Liquid Neural Network (LNN) to detect fraud in digital payment transactions. It studies a customer’s recent transaction patterns, such as a… |
-| 2026-08-07 | [03-Richik/LTC-vs-CfC-Comparison-](https://github.com/03-Richik/LTC-vs-CfC-Comparison-) | 0 |  | A Comparative Study of Liquid Time-Constant Networks and Closed-form Continuous-time Neural Networks |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
