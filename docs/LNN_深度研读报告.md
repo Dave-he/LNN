@@ -1171,10 +1171,22 @@ tags: [LNN, reading-report, papers]
   - **arXiv 抓取重试**：直接手跑 `urllib` 验证 arXiv 偶发可用（首次 200 OK，2 分钟后多次 `RemoteDisconnected`），与 2026-07-19 / 2026-07-25 现象一致；推测与 arXiv 端 TLS / rate limit 抖动有关，非网络层故障。
 - **结论**：今日 1 篇新研读（NSFD-NODE，结构保留 Neural ODE，与 CfC/LTC 闭式 forward 层哲学同源），标记 LNN 主题覆盖仍未饱和。NSFD → gain/loss → 闭式更新这一链条，对 LFM2 / LNN 在边缘部署的"长时间运行累积误差"鲁棒性研究有直接借鉴价值，建议下个 cron 优先尝试用现有 `bench_cfc_*` 工具栈做 NSFD-NODE 复现（~50 行 PyTorch，无需 GPU）。
 
+### [2026-08-15] 今日候选论文覆盖率复盘（候选清空，无新增研读）
+- **digest 入口**：[[docs/daily/2026-08-15_LNN_research_digest.md|每日追踪]]
+- **抓取**：`scripts/run_lnn_research_pipeline.sh` 步骤 1 第一次执行时 `fetch_arxiv` 报 `Remote end closed connection without response`（transient，与 2026-07-19 / 2026-07-25 / 2026-08-02 同类），GitHub 41 仓库 + HuggingFace 17 模型正常。`git pull --ff-only` 第一次失败（GitHub SSH 端 Connection closed），脚本内置 retry 1 次即恢复，`Fast-forward` 拉取 8-13 历史 digest → digest 落盘 `papers/repos/models: 0/41/17` → commit + push 成功。
+- **arXiv 二次重抓**：手动跑 `python3 scripts/daily_lnn_research.py --date 2026-08-15 --max-results 25 --per-query 8` 后 arXiv 立刻恢复（`papers/repos/models: 25/41/17`），原因为 arXiv TLS / rate-limit 抖动而非网络层故障。digest markdown 与 JSON 重新生成覆盖第一版（包含 12 篇 arXiv 候选，与最近 7-25 ~ 8-14 一致）。
+- **挑选结果**：`python3 scripts/select_papers_for_report.py --date 2026-08-15 --top 3` 输出候选 **0 篇**（`n_total_arxiv=12, n_skipped_reported=12`）。人工二次核查 `papers/daily/2026-08-15_lnn_research.json` 中全部 25 篇：所有 `keyword_score > 0` 的论文（最早 2026-01-28 Adaptive Temporal Dynamics, 最近 2026-08-04 PLAN）均已在 `docs/reports/` 中找到对应独立研读报告（精确文件名匹配 `arxiv_id`，并经正则边界校验 `re.search(rf'{id}(?![\d])', content)` 排除 substring 误命中）。本日 12 篇 digest 候选与 25 篇 JSON 全集中"已研读覆盖"达到 100%。
+- **`paper-analyzer` 技能状态**：本次 cron 该技能**仍缺失**（系统开头已警告），与 2026-07-19 / 2026-08-02 处理一致；今日因候选清单为空，无需触发该兜底路径。
+- **生成 0 篇独立研读报告**：今日 digest 中所有强 LNN / CfC / LTC / NCP / closed-form continuous-time 论文均已被过去 5 周覆盖（Liquid Latent Turbofan / LFNet / TND / GazeLNN / FlowFake / MA-GLTC / Liquid Random Feature / Multi-Rate MoE / Liquid 3DGS / LTC-Fall / PLAN-CfC / TFP 等），暂无可生成对象。
+- **同步阻塞点**：
+  - **GitHub SSH 抖动**：`git fetch` / `git pull --ff-only` / `git push` 三次出现 `Connection closed by remote host`，均在脚本内置 `prun_retry` (5 attempts, 4s→13s 退避) 第 1 次或第 3 次恢复。`GIT_SSH_COMMAND` 显式注入 `id_github_dave-he -o IdentitiesOnly=yes -o ProxyCommand=none` 已生效，无需人工干预。
+  - **arXiv 抓取 transient 失败**：本次未走"历史 digest 兜底"路径（脚本最终成功重抓并落盘 25 篇），但若连续 3 天 arXiv 失败则按 cron 协议触发告警——目前是 8-02 → 8-15 间隔式触发，单点抖动模式，暂不上报警。
+- **结论**：连续 2 周 LNN 候选论文零新增（LNN 主题覆盖饱和），等待 arXiv 8 月下旬新一轮 LTC / NCP / CfC 投稿（重点关注 ICML / NeurIPS 投稿窗口与 Cornell 上 liquid neural 关联 query 的"持续投稿"流量）。Hugging Face 17 个 LFM2 / LFM2.5 / LiquidAI 模型与 GitHub 41 个仓库正常抓取，新模型 LFM2.5-VL-3B (LiquidAI, 2026-08-13) + LFM2.5-2.6B-Base (LiquidAI, 2026-08-14) 值得关注，建议下个 cron 优先做 LFM2.5-VL-3B 的 Jetson 量化/推理可行性评估。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-08-15**：[[docs/daily/2026-08-15_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 17 个。
+- **2026-08-15**：[[docs/daily/2026-08-15_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 17 个。
 - **2026-08-13**：[[docs/daily/2026-08-13_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 21 个。
 - **2026-08-14**：[[docs/daily/2026-08-14_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 22 个。
 - **2026-08-12**：[[docs/daily/2026-08-12_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 16 个。
