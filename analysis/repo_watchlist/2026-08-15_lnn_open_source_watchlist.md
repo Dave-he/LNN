@@ -148,99 +148,105 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Adaptive Liquid Time-Constant Equivalent Dynamic Model with Transfer Learning for Active Distribution Networks with Grid-Forming IBRs
 
 ## Hugging Face 模型
-### [LiquidAI/LFM2.5-2.6B-Base](https://huggingface.co/LiquidAI/LFM2.5-2.6B-Base)
-- 更新：2026-08-14
-- 下载 / Likes：8899 / 42
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
-
 ### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
-- 更新：2026-08-14
-- 下载 / Likes：2706 / 9
+- 更新：2026-08-15
+- 下载 / Likes：2867 / 9
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
 
 ### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
-- 更新：2026-08-14
-- 下载 / Likes：2012 / 0
+- 更新：2026-08-15
+- 下载 / Likes：2179 / 0
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
 
-### [Lufel6848/LFM2.5-2.6B-GGUF](https://huggingface.co/Lufel6848/LFM2.5-2.6B-GGUF)
-- 更新：2026-08-14
+### [AyoubChLin/lfm2.5-2.6b-fable5-coding-agent](https://huggingface.co/AyoubChLin/lfm2.5-2.6b-fable5-coding-agent)
+- 更新：2026-08-15
+- 下载 / Likes：430 / 4
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, full-parameter-fine-tuning, supervised-fine-tuning, assistant-only-loss, tool-use
+
+### [yuyijiong/LFM2.5-Encoder-350M-corpus-cleaner](https://huggingface.co/yuyijiong/LFM2.5-Encoder-350M-corpus-cleaner)
+- 更新：2026-08-15
+- 下载 / Likes：12 / 1
+- 任务：token-classification
+- Tags：transformers, safetensors, lfm2, token-classification, data-cleaning, custom_code, en, zh
+
+### [rafmacalaba/lfm2.5-350M-datause-provenance-onnx](https://huggingface.co/rafmacalaba/lfm2.5-350M-datause-provenance-onnx)
+- 更新：2026-08-15
 - 下载 / Likes：0 / 0
 - 任务：unknown
-- Tags：gguf, liquid-ai, lfm, lfm2.5, llama.cpp, quantization, local-ai, en
+- Tags：onnx, region:us
 
-### [Schnuckade/LFM-2.5-Coder-2.6B](https://huggingface.co/Schnuckade/LFM-2.5-Coder-2.6B)
-- 更新：2026-08-14
+### [rafmacalaba/lfm2.5-350M-datause-provenance](https://huggingface.co/rafmacalaba/lfm2.5-350M-datause-provenance)
+- 更新：2026-08-15
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：transformers, safetensors, gguf, lfm2, text-generation, text-generation-inference, unsloth, lfm2.5
+- Tags：safetensors, lfm2, data-use, provenance, sft, lora, text-generation, conversational
 
-### [brainworkup/LFM2.5-8B-A1B-abliterated-mlx-oQ8e](https://huggingface.co/brainworkup/LFM2.5-8B-A1B-abliterated-mlx-oQ8e)
-- 更新：2026-08-14
+### [rafmacalaba/lfm2-provenance-smoke](https://huggingface.co/rafmacalaba/lfm2-provenance-smoke)
+- 更新：2026-08-15
 - 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：mlx, safetensors, lfm2_moe, oq, quantized, 8-bit, region:us
+- 任务：text-generation
+- Tags：safetensors, lfm2, data-use, provenance, sft, lora, text-generation, conversational
 
-### [Arki05/LFM2.5-2.6B-GGUF-shards](https://huggingface.co/Arki05/LFM2.5-2.6B-GGUF-shards)
-- 更新：2026-08-14
+### [AbhishekG711/LFM2.5-2.6B-Insight-Extractor](https://huggingface.co/AbhishekG711/LFM2.5-2.6B-Insight-Extractor)
+- 更新：2026-08-15
 - 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, text-generation-inference, unsloth, conversational, en
 
-### [NANI-Nithin/LFM2.5-VL-3B-GGUF](https://huggingface.co/NANI-Nithin/LFM2.5-VL-3B-GGUF)
-- 更新：2026-08-14
+### [ai4data/lfm2.5-Encoder-350M-datause](https://huggingface.co/ai4data/lfm2.5-Encoder-350M-datause)
+- 更新：2026-08-15
 - 下载 / Likes：0 / 0
-- 任务：image-text-to-text
-- Tags：llama.cpp, gguf, quantized, vision, multimodal, lfm2, liquid, ocr
+- 任务：token-classification
+- Tags：safetensors, lfm2, ner, bio, data-use, token-classification, custom_code, license:apache-2.0
 
-### [shubhambaid/LFM2.5-VL-3B-MLX-mixed-v6p6b4e4](https://huggingface.co/shubhambaid/LFM2.5-VL-3B-MLX-mixed-v6p6b4e4)
+### [LiquidAI/LFM2.5-2.6B-Base](https://huggingface.co/LiquidAI/LFM2.5-2.6B-Base)
 - 更新：2026-08-14
-- 下载 / Likes：0 / 2
-- 任务：image-text-to-text
-- Tags：mlx-vlm, safetensors, lfm2_vl, mlx, vision-language, quantization, mixed-precision, apple-silicon
+- 下载 / Likes：11673 / 43
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2.5-VL-3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B)
 - 更新：2026-08-13
-- 下载 / Likes：1794 / 133
+- 下载 / Likes：4598 / 142
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2.5-VL-3B-ONNX](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-ONNX)
 - 更新：2026-08-13
-- 下载 / Likes：312 / 15
+- 下载 / Likes：561 / 16
 - 任务：image-text-to-text
 - Tags：transformers.js, onnx, lfm2_vl, image-text-to-text, liquid, lfm2, lfm2-vl, edge
 
 ### [LiquidAI/LFM2.5-1.2B-Instruct-MLX-4bit](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-MLX-4bit)
 - 更新：2026-08-12
-- 下载 / Likes：1850 / 16
+- 下载 / Likes：1981 / 16
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2, liquid, lfm2.5, edge, text-generation, conversational
 
 ### [LiquidAI/LFM2.5-1.2B-Instruct-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-MLX-8bit)
 - 更新：2026-08-12
-- 下载 / Likes：1026 / 25
+- 下载 / Likes：1162 / 25
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2, liquid, lfm2.5, edge, text-generation, conversational
 
 ### [LiquidAI/LFM2.5-1.2B-Instruct-MLX-bf16](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-MLX-bf16)
 - 更新：2026-08-12
-- 下载 / Likes：637 / 13
+- 下载 / Likes：660 / 13
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2, liquid, lfm2.5, edge, text-generation, conversational
 
 ### [LiquidAI/LFM2.5-1.2B-Instruct-MLX-5bit](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-MLX-5bit)
 - 更新：2026-08-12
-- 下载 / Likes：292 / 9
+- 下载 / Likes：317 / 9
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2, liquid, lfm2.5, edge, text-generation, conversational
 
 ### [LiquidAI/LFM2.5-1.2B-Instruct-MLX-6bit](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-MLX-6bit)
 - 更新：2026-08-12
-- 下载 / Likes：286 / 10
+- 下载 / Likes：310 / 10
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2, liquid, lfm2.5, edge, text-generation, conversational
 
