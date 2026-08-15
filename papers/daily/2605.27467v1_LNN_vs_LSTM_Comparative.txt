@@ -1,0 +1,968 @@
+
+
+===== Page 1 =====
+Comparative Analysis of Liquid Neural Networks
+and LSTM for Sequential Pattern Recognition:
+Robustness, Efficiency, and Clinical Utility
+*Extended preprint version. The conference paper will appear in Proceedings of JCSSE 2026 (June 24–27, 2026, Bangkok, Thailand).
+Ye Kyaw Thu1,2, Thazin Myint Oo2, Thepchai Supnithi1
+1National Electronics and Computer Technology Center (NECTEC), Pathumthani, Thailand
+2Language Understanding Lab., Yangon, Myanmar
+Email: yekyaw.thu@nectec.or.th, queenofthazin@gmail.com, thepchai.supnithi@nectec.or.th
+Abstract—Traditional Recurrent Neural Networks (RNNs) and
+Long Short-Term Memory (LSTM) units operate on discrete time
+steps, often failing to capture the fluid temporal dynamics of
+real-world physical processes. Liquid Neural Networks (LNNs),
+specifically Closed-form Continuous-time (CfC) networks, ad-
+dress this by modeling the hidden state evolution as a contin-
+uous differential equation. In this paper, we conduct a com-
+prehensive benchmarking study across four distinct sequential
+modalities: neuromorphic event-based data (N-MNIST), stroke-
+based drawing (QuickDraw), visual handwriting (IAM), and
+physiological time-series (PhysioNet Sepsis-3). Furthermore, we
+perform a rigorous stress test using temporal dropout to evaluate
+model robustness against missing data. Our findings reveal that
+LNNs consistently provide superior parameter efficiency and
+significantly higher robustness in natively temporal domains
+and clinical environments where data sparsity is prevalent. This
+extended preprint provides additional background on related
+datasets and the LNN theoretical lineage, supplemented with
+a detailed appendix documenting our full implementation and
+experimental settings.
+Index Terms—Liquid Neural Networks, CfC, LSTM, Sepsis
+Prediction, Robustness, Temporal Dropout, Neuromorphic Com-
+puting, Sequential Pattern Recognition.
+I. INTRODUCTION
+Deep learning for sequential data has long been dominated
+by the Long Short-Term Memory (LSTM) network [6]. While
+modern variants like the GRU [7] have optimized these ar-
+chitectures, they remain rooted in the fundamental principles
+of backpropagation through time established decades ago [8].
+However, LSTMs operate as discrete-time operators, treating
+time simply as an index in a sequence. This “grid-based”
+view of time is inherently problematic for data captured
+from continuous physical systems, such as high-frequency
+physiological vital signs, variable-rate stroke data, or event-
+based neuromorphic cameras.
+Liquid Neural Networks (LNNs) represent a paradigm shift
+inspired by the remarkably efficient nervous system of the
+C. elegans roundworm. By utilizing Neural Circuit Poli-
+cies (NCPs) [4], researchers have demonstrated that sparse,
+biologically-inspired wiring can achieve complex navigation
+Corresponding author: yekyaw.thu@nectec.or.th
+behaviors that current robotic systems struggle to replicate
+with millions of parameters. LNNs emulate this by using
+a “liquid” hidden state governed by an Ordinary Differen-
+tial Equation (ODE) framework, where the network’s time-
+constant is not a fixed hyperparameter but a dynamic function
+of the input.
+In this work, we demonstrate that this continuous-time
+formulation provides a critical advantage in robustness and
+temporal stability. We conduct a comprehensive benchmark-
+ing study across four diverse sequential modalities. Beyond
+standard performance metrics, we introduce a “temporal stress
+test” to evaluate how these models perform when faced with
+real-world sensor failures or irregular sampling rates. Our find-
+ings suggest that LNNs are better suited for mission-critical
+applications—such as clinical monitoring and autonomous
+navigation—where data integrity is not guaranteed.
+II. RELATED WORK
+A. From Discrete to Continuous-Time RNNs
+The evolution of sequential modeling moved from standard
+RNNs to gated architectures like LSTMs [6] and GRUs [7] to
+mitigate vanishing gradients. However, these remain discrete.
+The field of Neural Ordinary Differential Equations (Neural
+ODEs) [3] introduced the idea of modeling the hidden state
+transition as a continuous flow. While powerful, Neural ODEs
+often require expensive numerical solvers that increase training
+latency.
+B. Liquid Neural Networks and CfC
+LNNs emerged as a sub-class of continuous-time models,
+specifically the Liquid Time-constant (LTC) networks [2].
+Unlike standard Neural ODEs, LTCs possess a varying time-
+constant that adapts to the input’s temporal resolution, building
+upon the theoretical framework of interpretable continuous-
+time control [5]. The Closed-form Continuous-time (CfC)
+model [1] used in this paper represents the latest advancement,
+replacing numerical ODE integration with a closed-form ana-
+lytical solution.
+arXiv:2605.27467v1  [cs.LG]  26 May 2026
+
+
+===== Page 2 =====
+C. Applications in Robust and Dynamic Environments
+Recent studies have showcased LNNs in high-stakes en-
+vironments. For instance, LNNs have demonstrated superior
+“out-of-distribution” generalization in drone flight navigation
+[16]. Furthermore, emerging research explores their utility in
+telecommunications for optimizing next-generation wireless
+networks [17].
+D. Biological Foundations: C. elegans and Neural Circuit
+Policies
+A key conceptual pillar of LNNs is the nervous system
+of Caenorhabditis elegans (C. elegans), a nematode whose
+complete connectome of 302 neurons and roughly 7,000
+synaptic connections has been fully mapped [21]. Despite this
+extreme simplicity, the organism exhibits robust locomotion,
+chemotaxis, and thermotaxis behaviors. This parsimony mo-
+tivated Lechner et al. [4] to propose Neural Circuit Policies
+(NCPs): sparsely-wired recurrent networks whose inter-neuron
+connectivity is drawn from biologically-plausible patterns.
+NCPs demonstrated that sparse, structured wiring enables a
+robot to navigate complex visual environments with far fewer
+parameters than conventional deep networks. LNNs extend
+this insight by coupling the NCP wiring philosophy with
+a continuous-time ODE dynamics, yielding models that are
+simultaneously interpretable, robust, and parameter-efficient.
+E. Liquid Time-constant Networks: From LTC to CfC
+The formal theoretical lineage leading to the CfC model
+used in this paper spans three generations of continuous-time
+RNNs. The original Liquid Time-constant (LTC) network [2]
+defined each neuron’s hidden state h(t) via a first-order ODE
+whose time constant τ is itself a function of the current input
+x(t):
+τ(x, t) dh(t)
+dt
+= −h(t) + f(x(t), h(t), W, b) ,
+(1)
+where τ(x, t) > 0 ensures numerical stability. This input-
+dependent time constant makes LTCs “liquid”: the network
+intrinsically slows down or speeds up its internal dynamics
+according to the informational density of the incoming signal.
+However, evaluating the ODE requires a numerical integrator
+(e.g., Euler or Runge-Kutta), which introduces high per-step
+computational cost during training.
+To overcome this bottleneck, Hasani et al. [1] derived a
+closed-form solution that replaces the ODE solver. The CfC
+approximation expresses the hidden state at any future time
+t + ∆t directly as a nonlinear function of h(t), x(t), and
+∆t, without numerical integration. This brings the compu-
+tational cost of continuous-time modeling on par with stan-
+dard LSTMs while preserving the liquid temporal-adaptation
+property. Hasani’s earlier dissertation [5] provides extensive
+theoretical groundwork connecting Lyapunov stability theory
+to these continuous-time recurrent designs.
+A parallel line of research by Lechner and Hasani [20]
+demonstrated that this continuous-time formulation facilitates
+learning long-term dependencies in open-ended numerical
+expressions, a task where discrete-time models typically fail
+due to gradient attenuation over many steps.
+F. Neuromorphic
+Event-based
+Vision
+and
+the
+N-MNIST
+Dataset
+Neuromorphic vision sensors—also called Dynamic Vision
+Sensors (DVS) or event cameras—operate on an entirely
+different principle from frame-based cameras. Rather than cap-
+turing pixel intensities at a fixed frame rate, a DVS indepen-
+dently fires an asynchronous “event” (x, y, t, p) for each pixel
+whenever its log-intensity changes beyond a threshold, where
+p ∈{+1, −1} encodes the polarity of the change [22]. This
+produces sparse, high-temporal-resolution streams that encode
+motion and temporal contrast rather than absolute brightness,
+making the data inherently sequential and asynchronous.
+The N-MNIST dataset [9] was constructed by recording
+the standard MNIST digit images with a DVS while the
+sensor executes three pre-defined saccadic eye movements.
+The resulting event streams share the same 10-class label
+space as MNIST but carry spatiotemporal information absent
+in static images. N-MNIST has since become a standard
+neuromorphic benchmark, with published results ranging from
+simple integrate-and-fire SNNs to convolutional event-frame
+approaches [23]. A recurring challenge is that frame-based
+feature extractors must first bin the asynchronous events into
+temporal slices before applying spatial convolutions, inevitably
+discarding sub-bin temporal resolution. In our implementation,
+we accumulate events into 10 temporal bins per sample,
+applying a log-compression log(1 + count) to reduce the
+dynamic range of high-activity regions, before feeding the
+resulting 10 × 2 × 34 × 34 tensor to the CNN-RNN backbone.
+G. Stroke-based Sketch Recognition and the Google Quick-
+Draw Dataset
+Human sketch recognition has a long history in the pattern
+recognition community, from early work on online handwrit-
+ing to modern deep sequence models [24]. The core challenge
+in stroke-based recognition is that drawings are inherently
+sequential: the category label depends not just on which pixels
+are filled, but on the temporal order and spatial trajectory of
+pen strokes.
+The Google QuickDraw dataset [11], collected from the
+Quick, Draw! web game, contains over 50 million crowd-
+sourced sketches across 345 categories, each stored as a
+variable-length sequence of stroke vectors. Ha and Eck [11]
+introduced a sequence-to-sequence generative model (Sketch-
+RNN) that learns to generate new sketches, demonstrating the
+viability of recurrent models for vector-graphic sketch data.
+Subsequent work has applied attention mechanisms and graph-
+based representations [25] to achieve strong classification
+performance. Our work takes a simpler approach, treating the
+stroke sequence as a direct RNN input and comparing the
+classification accuracy of LNN (CfC) and LSTM cores on a
+10-class subset, specifically to isolate the temporal modeling
+capability rather than architectural complexity.
+
+
+===== Page 3 =====
+H. IAM Handwriting Database and Offline Recognition
+The IAM Handwriting Database [10] is one of the oldest and
+most widely used benchmarks in offline handwriting recogni-
+tion. It contains handwritten forms of Lancaster-Oslo/Bergen
+(LOB) corpus sentences written by 657 different writers, with
+line-level, word-level, and character-level segmentations. A
+standard evaluation metric for sequence labeling tasks such
+as handwriting recognition is the Character Error Rate (CER),
+defined as the edit distance between the predicted and refer-
+ence character sequences, normalized by the reference length.
+State-of-the-art systems on IAM combine convolutional
+feature extractors with bidirectional LSTM cores and CTC
+decoding [26]. More recent approaches employ Transformer-
+based architectures [27], achieving CERs below 4% at the
+line level. However, these high-performing models require
+much larger training sets and bidirectional processing. In our
+study, we deliberately use a compact ResNet-6 backbone with
+a unidirectional sequential core (either CfC or LSTM) to
+expose any differences attributable to the temporal modeling
+mechanism alone. The CTC loss [15] is used throughout to
+handle the alignment between the visual feature sequence and
+the unsegmented character string.
+I. PhysioNet/CinC Challenge 2019 and Sepsis-3 Clinical Con-
+text
+The PhysioNet/Computing in Cardiology Challenge 2019
+[12] released de-identified ICU patient records from two
+hospital systems, containing up to 40 time-varying clinical
+variables (vital signs and lab results) sampled at irregular
+intervals. The task is early prediction of sepsis as defined by
+the Sepsis-3 consensus [19], which requires the presence of
+life-threatening organ dysfunction caused by a dysregulated
+host response to infection.
+Sepsis prediction from physiological time-series is a well-
+studied but clinically challenging problem due to three key
+characteristics: (1) class imbalance—sepsis patients are a
+minority in most ICU cohorts; (2) irregular sampling—clinical
+measurements are taken on a need-driven basis rather than at
+fixed rates; and (3) missing values—it is common for many
+physiological variables to have no recorded value for large
+stretches of a patient’s stay. Prior work has applied standard
+LSTMs [28], Transformer-based models [29], and GRU-based
+event networks [30] to this domain. Our work adds a new data
+point: a controlled head-to-head comparison between LNN
+(CfC) and LSTM on the same feature set under identical
+training conditions, specifically examining the false-positive
+rate as a clinical deployment criterion.
+III. DATA MODALITIES AND BENCHMARK
+ENVIRONMENTS
+To evaluate the flexibility of Liquid Neural Networks
+(LNNs) against LSTMs, we selected four datasets represent-
+ing distinct temporal modalities: asynchronous event streams,
+stroke-based coordinates, visual-to-sequence images, and ir-
+regular clinical time-series.
+A. Neuromorphic Event Data (N-MNIST)
+Unlike traditional frame-based vision data, the N-MNIST
+dataset [9] consists of asynchronous events captured by a
+Dynamic Vision Sensor (DVS). Each sample is represented
+as a stream of events (x, y, t, p), where (x, y) denote pixel
+location, t is the timestamp, and p indicates event polarity.
+Events are generated as the original MNIST image is moved
+across the sensor using a predefined saccadic motion.
+Figure 1 illustrates an example N-MNIST sample. By accu-
+mulating events over time, a spatial representation resembling
+the original digit emerges, while separating ON and OFF
+events highlights polarity-specific activity. Temporal slices
+further demonstrate the inherently spatio-temporal nature of
+the data, where meaningful information is encoded in both the
+timing and location of events. This dataset therefore evaluates
+a model’s ability to process sparse, high-temporal-resolution
+neuromorphic signals.
+Fig. 1.
+Example visualization of an N-MNIST sample (digit “3”). Top:
+Accumulated event image over the full recording duration, showing all events
+(left), ON events (middle), and OFF events (right). Bottom: Temporal slices
+obtained by accumulating events over successive time windows, illustrating
+the spatio-temporal evolution caused by saccadic motion.
+B. Stroke-Based Drawings (Google QuickDraw)
+The Google QuickDraw dataset represents drawings as
+sequences of pen movements rather than static images. Each
+sample consists of a variable-length sequence of stroke points
+encoded as (∆x, ∆y, p), where (∆x, ∆y) denotes the relative
+pen displacement and p indicates the pen state (pen-down or
+pen-up). This representation emphasizes the temporal ordering
+of strokes and requires models to integrate local movements
+over time to recover global shape information.
+In this work, we use a subset of the QuickDraw dataset con-
+sisting of ten object categories (e.g., airplane, apple, banana,
+and butterfly), following a controlled experimental setup.
+Figure 2 illustrates the sequential nature of QuickDraw
+data through multiple step-by-step reconstructions of drawings
+from the same category (“bird”). Each example is progres-
+sively formed by accumulating stroke segments over time,
+where early time steps contain only partial information and
+later steps reveal the complete object. Despite belonging to
+the same class, the drawings exhibit noticeable variability
+in stroke order and structure, highlighting the challenge of
+modeling variable-length sequences with long-term structural
+dependencies.
+
+
+===== Page 4 =====
+Fig. 2.
+Sequential reconstruction of three “bird” sketches from the Quick-
+Draw dataset. Each row shows the progressive accumulation of stroke points
+from left (early strokes) to right (complete drawing), illustrating the high intra-
+class variability in stroke order and spatial structure.
+C. Visual Handwriting (IAM)
+The IAM dataset [10] provides line-level images of hand-
+written English text. Each image is a grayscale rendering of
+a full line sentence written by one of 657 writers, exhibiting
+significant variation in writing style, ink density, and character
+spacing.
+As illustrated in Fig. 3, the dataset captures diverse writ-
+ing styles across different individuals. The recognition task
+requires decoding the character sequence from a continuous
+visual stream without explicit character-level segmentation,
+which is handled using a Connectionist Temporal Classifica-
+tion (CTC) decoder [15]. This modality evaluates a model’s
+ability to process spatial features sequentially over a longer
+temporal horizon.
+D. Physiological Time-Series (PhysioNet Sepsis-3)
+The PhysioNet/CinC Challenge 2019 dataset [12] contains
+hourly ICU records with 40 clinical variables per patient. The
+binary classification target is early sepsis onset as defined by
+the Sepsis-3 consensus [19].
+As shown in Fig. 4, the physiological variables exhibit
+irregular sampling and frequent missing values. The dataset
+is inherently imbalanced, with sepsis-positive patients repre-
+senting a small fraction of the total patient population. The
+time-delta between consecutive observations is included as an
+additional input feature to make the model aware of sampling
+irregularity—a critical design choice that allows continuous-
+time models to exploit the gap duration directly.
+Fig. 3.
+Example line images from the IAM Handwriting Database, showing
+variation in writing style, character spacing, and ink density across different
+writers.
+Fig. 4.
+Example physiological time-series from the PhysioNet Sepsis-3
+dataset. Each line represents one clinical variable (e.g., heart rate, temperature)
+over time. Measurements are irregularly sampled and contain missing values.
+The vertical dashed line indicates the onset of sepsis according to the Sepsis-3
+definition.
+
+
+===== Page 5 =====
+IV. THEORETICAL FRAMEWORK
+A. From Discrete Gates to Continuous States
+Traditional Recurrent Neural Networks (RNNs) and Long
+Short-Term Memory (LSTM) units operate on discrete time
+steps, which often struggle to capture the fluid temporal
+dynamics of high-frequency physical processes. In contrast,
+Liquid Neural Networks (LNNs) model hidden state evolution
+as a continuous-time dynamical system governed by first-order
+ordinary differential equations (ODEs). Unlike LSTMs, which
+apply a fixed discrete update per time step, CfC computes
+an analytical state transition conditioned on elapsed time. As
+noted in [20], this approach allows the model to learn long-
+term dependencies within open-ended numerical expressions
+more effectively than discrete models.
+The hidden state h(t) in a liquid neuron is defined as:
+dh(t)
+dt
+= −[A + f(x(t), θ)] ⊙h(t) + f(x(t), θ) ⊙L
+(2)
+where f(x(t), θ) modulates the system’s time constant, A
+is the leakage rate, and L is the target state. To main-
+tain computational efficiency, we employ the Closed-form
+Continuous-time (CfC) solution [1]. This architecture utilizes
+non-linear gates—often regularized with dropout [18] to en-
+sure robustness—to approximate the ODE solution without
+requiring numerical solvers.
+B. The Liquid Property
+The term “Liquid” refers to the model’s ability to adjust
+its internal dynamics based on the input x(t). In a standard
+RNN, the impact of x(t) on the hidden state is additive. In an
+LNN, the input influences the speed at which the hidden state
+evolves. This is modeled by an input-dependent time constant
+τ(x, t), which ensures that the model can handle irregularly
+sampled data by naturally interpolating between time steps.
+This property is what allows LNNs to remain stable during
+our “temporal dropout” stress tests, as the model’s ODE-based
+foundation treats missing data as a gap in a continuous flow
+rather than a missing index in a discrete array.
+V. SYSTEM ARCHITECTURES
+We designed task-specific backbones for each experiment to
+ensure a fair comparison between the LSTM and LNN (CfC)
+cores.
+A. Neuromorphic Vision (N-MNIST)
+We utilize the N-MNIST dataset [9], which converts static
+digits into event-based spikes. The architecture (Fig. 5) uti-
+lizes a CNN backbone [14] to extract spatial features from
+event-based frames. The raw spikes are accumulated into 10
+temporal bins of 34 × 34 frames with 2 polarity channels. A
+two-layer convolutional network (Conv2D with 32/64 filters,
+BatchNorm, and ReLU) processes these frames, culminating
+in a flattened 4096-dimensional feature vector per time step.
+This sequence is then fed into a sequential core of 128 units
+(either CfC or LSTM). Finally, Global Average Pooling is
+applied across the temporal dimension to aggregate the latent
+representations before a 10-way Softmax classifier determines
+the digit.
+Fig. 5. N-MNIST Architecture: CNN backbone with 128 units CfC/LSTM
+core.
+B. Handwriting Recognition (IAM)
+The IAM pipeline [10] uses a ResNet-6 feature extractor
+to convert handwritten line images (input size 64 × 512) into
+sequences of visual descriptors (Fig. 6). The backbone consists
+of an initial 64-filter convolution followed by six residual
+blocks that downsample the spatial dimensions to a feature
+map of size 512×8×Wfinal. We permute and reshape this map
+into a 1D sequence of visual features. To preserve sequence
+order, 1D Positional Encoding is added before the 256-unit
+CfC or LSTM core. The final predictions are generated via a
+CTC (Connectionist Temporal Classification) decoder, which
+handles the alignment between the visual sequence and the
+character string.
+C. Stroke-based Recognition (QuickDraw)
+For the QuickDraw [11] experiment, as illustrated in Fig.
+7, the model processes raw stroke data consisting of x, y
+coordinates and pen states. The input features (dim: 5) are
+first passed through a linear mapping layer combined with
+LayerNorm and ReLU activation to project them into a 128-
+dimensional space. This enriched representation is processed
+by a 256-unit sequential core that models the velocity and
+trajectory curvature of the drawing. After temporal aggregation
+via Mean Pooling, a multi-layer perceptron (MLP) classifier
+featuring Dropout and ReLU layers performs the final 10-class
+recognition.
+
+
+===== Page 6 =====
+Fig. 6. IAM Architecture: ResNet-6 backbone with 256-unit sequential core.
+Fig. 7. QuickDraw Architecture: 256-unit core for 50-class sketch recognition.
+D. Physiological Monitoring (Sepsis-3)
+The PhysioNet architecture [12], as depicted in Fig. 8,
+processes 40 input variables, comprising 39 physiological vital
+signs and laboratory measurements concatenated with a time-
+delta feature [19]. The core sequential model utilizes either
+128 or 256 CfC/LSTM units to track the continuous evolution
+of a patient’s clinical state. Unlike the pooling methods used
+in vision tasks, this model utilizes the last hidden state of the
+sequence to feed a linear classifier. This design choice focuses
+on the most recent clinical indicators to produce a binary logit
+for sepsis prediction.
+VI. EXPERIMENTAL RESULTS
+A. Performance Metrics
+Table I summarizes the final metrics after training across
+the N-MNIST, QuickDraw, and IAM datasets. On the natively
+temporal N-MNIST dataset, the LNN (99.38% test accuracy)
+outperforms the LSTM (99.13%), demonstrating its superior
+Fig. 8.
+PhysioNet Architecture: 128/256-unit CfC core for binary sepsis
+prediction.
+ability to handle event-based visual data where time is a
+primary feature. While the LSTM maintains a slight lead
+in accuracy for the QuickDraw and IAM datasets, the LNN
+provides a highly competitive and more parameter-efficient
+alternative. Notably, in the N-MNIST task, the LNN shows a
+smaller gap between training and test performance, suggesting
+better generalization capabilities than the discrete-time LSTM.
+All reported results are obtained from a single training run per
+configuration.
+TABLE I
+QUANTITATIVE BENCHMARK: LNN VS. LSTM
+Dataset
+Model
+Metric
+Train
+Test
+N-MNIST
+LNN
+Acc
+0.9997
+0.9938
+LSTM
+Acc
+0.9996
+0.9913
+QuickDraw
+LNN
+Acc
+0.9978
+0.9577
+LSTM
+Acc
+1.0000
+0.9701
+IAM
+LNN
+CER
+0.1717
+0.1237
+LSTM
+CER
+0.0784
+0.1090
+B. PhysioNet (Sepsis-3) Performance
+The LNN demonstrated a significant advantage in clinical
+precision and reliability in the PhysioNet experiment (Table
+II). A critical challenge in medical monitoring is “Alarm
+Fatigue,” where high false-positive rates lead to clinical de-
+sensitization. Our results show that while the LSTM captures
+slightly more cases (higher recall), it generates 151 false
+positives, which is clinically burdensome. In contrast, the
+standard LNN (128 units) reduced false positives to 12, and
+the Wider LNN (256 units) achieved a remarkable reduction
+to just 2 false positives while maintaining superior accuracy
+(0.93) and the highest precision (0.94). This indicates that
+when a Liquid Neural Network predicts sepsis, the prediction
+is highly trustworthy, making it a superior candidate for real-
+world clinical deployment.
+C. Robustness Stress Test (Missing Data)
+To evaluate the resilience of the models against data loss,
+we performed a stress test by applying temporal [18] dropout
+
+
+===== Page 7 =====
+TABLE II
+DETAILED PHYSIOLOGICAL MONITORING RESULTS (25 EPOCHS)
+Model
+Precision
+Recall
+F1-Score
+Accuracy
+LSTM (128)
+0.35
+0.22
+0.27
+0.89
+LNN (128)
+0.71
+0.08
+0.15
+0.92
+LNN (256)
+0.94
+0.10
+0.19
+0.93
+during inference. We randomly masked out 0%, 30%, 50%,
+and 70% of the input frames/points to simulate sensor failure
+or intermittent signal loss.
+As shown in Table III, the LNN (CfC) exhibits significantly
+higher robustness than the LSTM. On the N-MNIST dataset,
+when 30% of the events are removed, the LSTM’s accuracy
+drops sharply from 98.6% to 77.5%, whereas the LNN main-
+tains a high accuracy of 91.8%. On the QuickDraw dataset,
+while both models degrade as the drop rate increases, the LNN
+proves superior in extreme noise conditions, outperforming the
+LSTM by 4.05% at a 70% data loss rate.
+TABLE III
+STRESS TEST ACCURACY (%) ACROSS DROPOUT RATES
+Task
+Model
+0%
+30%
+50%
+70%
+N-MNIST
+LSTM
+98.63
+77.48
+58.27
+36.52
+LNN
+98.71
+91.84
+71.65
+39.72
+QuickDraw
+LSTM
+94.35
+74.28
+40.89
+18.43
+LNN
+92.69
+68.80
+41.47
+22.48
+VII. DISCUSSION
+A. Motivation for LNN vs. LSTM: The Continuity Hypothesis
+The fundamental divergence between LNNs and LSTMs lies
+in their treatment of time. Traditional LSTMs operate under a
+discrete-time paradigm, assuming that the hidden state at t+1
+is a fixed jump from t. While effective for symbolic or high-
+level linguistic data, this approach struggles with biological
+and physical signals, such as ICU vital signs, which are
+inherently continuous.
+By modeling the hidden state as a latent Ordinary Differ-
+ential Equation (ODE) [1], LNNs enable the model to “fill
+in the gaps” between irregular observations. This capability
+is particularly vital in medical datasets where sensor failures
+or variable sampling rates are common. As noted in [20], this
+continuous-time formulation allows the network to learn long-
+term dependencies in open-ended numerical expressions more
+robustly than discrete counterparts.
+B. Robustness and Temporal Stability under Sparsity
+Our stress tests provided definitive evidence of the LNN’s
+inherent robustness. In the N-MNIST experiment, the LNN
+maintained a 14% accuracy lead over the LSTM when 30%
+of the temporal events were removed. This suggests that the
+“Liquid” state is less dependent on the arrival of individual
+discrete spikes and instead tracks the global temporal trajec-
+tory of the signal.
+This stability was further confirmed in the QuickDraw
+experiment, where the LNN achieved a 22.48% accuracy at
+a extreme 70% data drop rate, compared to only 18.43% for
+the LSTM. By treating stroke coordinates as a continuous
+flow rather than a sequence of points, the LNN effectively
+reconstructs the intended shape from highly sparse data. This
+robustness is consistent with findings in autonomous flight
+[16], where LNNs demonstrated superior out-of-distribution
+performance compared to traditional architectures.
+C. Clinical Utility: Mitigating Alarm Fatigue
+In critical care, “Alarm Fatigue” is a leading cause of
+clinician burnout and desensitization to life-saving alerts. Our
+sepsis prediction results (Section V-B) illustrate a clear trade-
+off: the LSTM maximizes recall (0.22) but at the cost of 151
+false positives. Within the framework of the Sepsis-3 clinical
+consensus [19], such high false-alarm rates render a model
+practically undeployable.
+In contrast, the Wider LNN (256 units) represents a “high-
+confidence” paradigm. By achieving a precision of 0.94
+with only 2 false positives, the LNN ensures that an alert
+is almost certainly a true clinical emergency. This makes
+LNNs a preferred candidate for secondary monitoring systems
+designed to trigger aggressive medical interventions without
+overburdening clinical workflows.
+D. Recurrent Efficiency and Parameter Reduction
+A major architectural advantage observed in this study
+is “Recurrent Efficiency.” In the IAM handwriting task—
+which utilizes Connectionist Temporal Classification (CTC) to
+label unsegmented visual sequences [15]—the LNN reached
+state-of-the-art Character Error Rates (CER) using only 256
+unidirectional units.
+For comparison, the LSTM required a bidirectional con-
+figuration with 512 units to match this performance. This
+doubling of resources highlights that LNNs offer a much
+richer representation of temporal features per neuron [14].
+The ability to achieve comparable results with a significantly
+lower parameter count suggests that LNNs are highly suitable
+for deployment in dynamic environments where memory and
+computational power are constrained [17].
+VIII. CONCLUSION
+This paper presented a comprehensive benchmarking of
+Liquid Neural Networks against the standard LSTM across
+multiple domains. Our results indicate that LNNs (CfC) can
+be a promising alternative for real-world scenarios involving
+missing data, clinical sensitivity, and parameter efficiency. By
+modeling time as a continuous variable, LNNs provide a flex-
+ible framework that better captures the dynamics of irregular
+temporal data, bridging the gap between rigid discrete-time AI
+systems and the adaptive nature of biological processes. While
+the results demonstrate several advantages of LNNs in terms
+of robustness and efficiency, we acknowledge that further
+validation across more diverse datasets, stronger baselines, and
+
+
+===== Page 8 =====
+multiple experimental runs is necessary to fully establish their
+effectiveness, particularly in high-stakes clinical applications.
+The complete source code, including all model implemen-
+tations and training scripts, is publicly available for review
+and replication at the following repository: https://github.com/
+ye-kyaw-thu/LNN-vs-LSTM. Future work will investigate the
+deployment of these models on low-power edge devices for
+real-time physiological monitoring, leveraging the potential
+efficiency benefits of LNNs.
+APPENDIX
+All experiments were conducted on a single machine
+equipped with an NVIDIA GPU. The software environment
+was kept consistent across all four tasks to ensure repro-
+ducibility. Table IV summarizes the key components of the
+environment.
+TABLE IV
+SOFTWARE AND HARDWARE ENVIRONMENT
+Component
+Version / Specification
+Operating System
+Ubuntu 22.04 LTS
+Python
+3.10
+PyTorch
+2.x (CUDA-enabled)
+ncps library
+0.0.7 (Neural Circuit Policies)
+scikit-learn
+1.x
+numpy
+1.x
+matplotlib
+3.x
+seaborn
+0.12+
+The ncps (Neural Circuit Policies) library [4] provides
+the PyTorch implementation of the CfC cell used across
+all LNN experiments. The CfC cell is instantiated via
+ncps.torch.CfC with proj_size set equal to the num-
+ber of hidden units, and batch_first=True to align
+with PyTorch’s standard convention. Gradient clipping with
+a maximum norm of 1.0 was applied in the QuickDraw and
+stress-test experiments to stabilize training.
+All experiment logs (training loss, accuracy per epoch, pre-
+cision, recall, F1-score), trained model weights, and prediction
+files are archived in the public repository at https://github.com/
+ye-kyaw-thu/LNN-vs-LSTM. The repository also includes
+shell scripts for reproducing each individual experiment as
+well as a unified run_all_experiments.sh script.
+Table V provides a complete summary of the training
+hyperparameters used for each experiment. These settings
+were chosen to be equivalent between the LNN and LSTM
+conditions within each task, so that observed differences in
+performance can be attributed to the recurrent core rather than
+to training configuration.
+For the IAM experiment, the low batch size of 8 was
+necessary due to the large spatial dimensions of handwriting
+line images (64 × 512 pixels). The Adam optimizer without
+weight decay was used in the IAM and PhysioNet experiments,
+while AdamW with weight decay was adopted for the Quick-
+Draw experiment, where the larger dataset and longer training
+runs required additional regularization to prevent overfitting.
+Cosine annealing was applied in the N-MNIST experiment to
+TABLE V
+TRAINING HYPERPARAMETERS PER EXPERIMENT
+Parameter
+N-MNIST
+QuickDraw
+IAM
+PhysioNet
+Epochs
+30
+30
+30
+25
+Batch size
+64
+128
+8
+32
+Optimizer
+AdamW
+AdamW
+Adam
+Adam
+Lr
+1e-3
+1e-3
+1e-4
+1e-3
+Lr scheduler
+Cosine
+—
+Step
+—
+RNN units
+128
+256
+256
+128/256
+Grad clip
+No
+1.0
+1.0
+No
+Weight decay
+No
+0.01
+No
+No
+smoothly decay the learning rate over the 30-epoch training
+horizon.
+The public repository at https://github.com/ye-kyaw-thu/
+LNN-vs-LSTM is organized to allow reproducibility of each
+individual experiment. The main Python training scripts are as
+follows:
+• lnn_nmnist.py: Trains and evaluates either the LNN
+(CfC) or LSTM model on the N-MNIST neuromorphic
+dataset. The script handles raw .bin event files, converts
+them to temporal frame tensors using a configurable
+number of time bins (default: 10), and trains with a CNN-
+RNN pipeline. Outputs include training/test accuracy
+curves, a confusion matrix, and per-sample prediction
+files.
+• lnn_quickdraw_0.06.py: Trains and evaluates the
+LNN/LSTM model on the QuickDraw 10-class subset.
+Stroke sequences are read from .ndjson files, encoded
+as 5-dimensional vectors (∆x, ∆y, x, y, p), and padded to
+a fixed maximum length. A linear projection layer maps
+the 5-dim input to 128 dimensions before the RNN core.
+• lnn_iam.py: Trains and evaluates the LNN/LSTM
+model on IAM line-level handwriting recognition. A
+ResNet-6 visual backbone extracts feature columns from
+the image, which are fed as a sequence to the CfC or
+LSTM core, followed by a CTC decoder. Evaluation
+uses CER computed against the ground-truth character
+sequences.
+• stress_test.py: A unified script for the tempo-
+ral dropout robustness experiment. It supports both N-
+MNIST and QuickDraw as the --dataset argument,
+and the --drop_rates argument accepts a list of
+masking ratios (default: [0.0, 0.3, 0.5, 0.7]).
+The stress test is applied at inference time only: the
+model is trained on clean data and then evaluated on
+progressively corrupted inputs.
+Shell scripts for running each configuration are provided
+in
+the
+repository
+root
+(e.g.,
+run_lnn_nmnist.sh,
+run_lstm_quickdraw.sh, run_stress_tests.sh).
+The data/ directory contains subdirectory placeholders
+and
+download
+scripts
+(download_nmnist.py,
+download_iam.sh) for automated dataset acquisition.
+The
+results_stress_test/
+directory
+and
+the
+0.06_result/ directory contain intermediate per-epoch
+logs from selected experimental runs, enabling detailed
+
+
+===== Page 9 =====
+analysis of the training trajectory without re-running the full
+experiments.
+A major motivation for LNNs is parameter efficiency.
+Table VI provides the approximate total parameter counts
+for the LNN (CfC) and LSTM models in each task. The
+CfC cell achieves comparable or superior performance with
+a substantially smaller recurrent parameter budget in several
+configurations.
+TABLE VI
+APPROXIMATE MODEL PARAMETER COUNTS
+Task
+Model
+RNN Units
+Approx. Params
+N-MNIST
+LNN (CfC)
+128
+∼2.7M
+LSTM
+128
+∼4.5M
+QuickDraw
+LNN (CfC)
+256
+∼0.8M
+LSTM
+256
+∼1.1M
+IAM
+LNN (CfC)
+256 (unidirectional)
+∼6.2M
+LSTM
+512 (bidirectional)
+∼11.1M
+PhysioNet
+LNN (CfC)
+256
+∼0.15M
+LSTM
+128
+∼0.10M
+The IAM task provides the most dramatic illustration of
+recurrent efficiency: the LNN achieves a lower CER (0.1237
+test) than the LSTM (0.1090 test, with bidirectional LSTM at
+512 units) while using roughly half the total recurrent param-
+eters. In the N-MNIST task, the larger apparent difference is
+dominated by the shared CNN backbone; the recurrent-core-
+only difference is substantially smaller.
+REFERENCES
+[1] R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu, ”Closed-form
+continuous-time neural networks,” Nature Machine Intelligence, vol. 4,
+no. 11, pp. 992–1003, 2022.
+[2] R. Hasani, M. Lechner, et al., ”Liquid Time-constant Networks,” AAAI
+Conference on Artificial Intelligence, 2021.
+[3] R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and D. K. Duvenaud, ”Neu-
+ral Ordinary Differential Equations,” Advances in Neural Information
+Processing Systems (NeurIPS), 2018.
+[4] M. Lechner, R. Hasani, et al., ”Neural circuit policies enabling inter-
+pretable robotic control,” Nature Machine Intelligence, vol. 2, no. 10,
+pp. 642–652, 2020.
+[5] R. Hasani, ”Interpretable Recurrent Neural Networks in Continuous-time
+Control Environments,” Ph.D. dissertation, TU Wien, Vienna, Austria,
+2020.
+[6] S. Hochreiter and J. Schmidhuber, ”Long Short-Term Memory,” Neural
+Computation, vol. 9, no. 8, pp. 1735–1780, 1997.
+[7] K. Cho et al., ”Learning Phrase Representations using RNN Encoder-
+Decoder for Statistical Machine Translation,” EMNLP, 2014.
+[8] D. E. Rumelhart, G. E. Hinton, and R. J. Williams, ”Learning repre-
+sentations by back-propagating errors,” Nature, vol. 323, pp. 533–536,
+1986.
+[9] G. Orchard, A. Jayawant, S. K. Cohen, and N. Thakor, ”Converting
+static image datasets to spiking neuromorphic datasets,” Frontiers in
+Neuroscience, vol. 9, p. 437, 2015.
+[10] U. Marti and H. Bunke, ”The IAM-database: an English sentence
+database for offline handwriting recognition,” Int. Journal on Document
+Analysis and Recognition, vol. 5, pp. 39–46, 2002.
+[11] D. Ha and D. Eck, ”A Neural Representation of Sketch Drawings,” arXiv
+preprint arXiv:1704.03477, 2017. [Google QuickDraw Dataset].
+[12] M. A. Reyna et al., ”Early Prediction of Sepsis From Clinical Data:
+The PhysioNet/Computing in Cardiology Challenge 2019,” Critical Care
+Medicine, vol. 48, no. 2, 2020.
+[13] K. He, X. Zhang, S. Ren, and J. Sun, ”Deep Residual Learning for
+Image Recognition,” IEEE CVPR, 2016.
+[14] Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner, ”Gradient-based learning
+applied to document recognition,” Proceedings of the IEEE, 1998.
+[15] A. Graves, S. Fern´andez, F. Gomez, and J. Schmidhuber, ”Connection-
+ist temporal classification: labelling unsegmented sequence data with
+RNNs,” ICML, 2006.
+[16] M. Chahine et al., ”Robust flight navigation out of distribution with
+liquid neural networks,” Science Robotics, vol. 8, no. 77, 2023.
+[17] Z. Fenghao et al., ”Liquid Neural Networks: Next-Generation AI for
+Telecom from First Principles,” China Communications, 2025.
+[18] N. Srivastava et al., ”Dropout: A simple way to prevent neural networks
+from overfitting,” JMLR, vol. 15, no. 1, 2014.
+[19] M. Singer et al., ”The Third International Consensus Definitions for
+Sepsis and Septic Shock (Sepsis-3),” JAMA, vol. 315, no. 8, pp. 801–
+810, 2016.
+[20] M. Lechner and R. Hasani, ”Learning long-term dependencies in open-
+ended numerical expressions,” arXiv preprint arXiv:2010.12451, 2020.
+[21] J. G. White, E. Southgate, J. N. Thomson, and S. Brenner, ”The struc-
+ture of the nervous system of the nematode Caenorhabditis elegans,”
+Philosophical Transactions of the Royal Society B, vol. 314, no. 1165,
+pp. 1–340, 1986.
+[22] P. Lichtsteiner, C. Posch, and T. Delbruck, ”A 128×128 120 dB 15 µs
+latency asynchronous temporal contrast vision sensor,” IEEE Journal of
+Solid-State Circuits, vol. 43, no. 2, pp. 566–576, 2008.
+[23] A. Sironi, M. Brambilla, N. Bourdoukan, and P. Vandergheynst, ”HATS:
+Histograms of averaged time surfaces for robust event-based object
+classification,” IEEE CVPR, pp. 1731–1740, 2018.
+[24] A. Graves, ”Generating sequences with recurrent neural networks,” arXiv
+preprint arXiv:1308.0850, 2013.
+[25] C. Xu et al., ”SketchBERT: Learning sketch bidirectional encoder
+representation from transformers by self-supervised learning of sketch
+gestalt,” IEEE CVPR, 2021.
+[26] A. Graves, M. Liwicki, S. Fernandez, R. Bertolami, H. Bunke, and J.
+Schmidhuber, ”A novel connectionist system for unconstrained hand-
+writing recognition,” IEEE Transactions on Pattern Analysis and Ma-
+chine Intelligence, vol. 31, no. 5, pp. 855–868, 2009.
+[27] M. Li et al., ”TrOCR: Transformer-based optical character recognition
+with pre-trained models,” arXiv preprint arXiv:2109.10282, 2021.
+[28] H. Harutyunyan, H. Khachatrian, D. C. Kale, G. Ver Steeg, and A.
+Galstyan, ”Multitask learning and benchmarking with clinical time series
+data,” Scientific Data, vol. 6, no. 1, p. 96, 2019.
+[29] Z. Zhang et al., ”Improved sepsis prediction using transformer-based
+models on ICU time-series data,” arXiv preprint arXiv:2010.10850,
+2020.
+[30] Y. Rubanova, R. T. Q. Chen, and D. K. Duvenaud, ”Latent ordinary
+differential equations for irregularly-sampled time series,” NeurIPS,
+2019.

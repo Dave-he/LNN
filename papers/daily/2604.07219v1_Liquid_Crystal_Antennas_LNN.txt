@@ -1,0 +1,861 @@
+
+
+===== Page 1 =====
+X. Wang, M. Ying, H. Chen, G. Qian, X. Liu, P. Ma, D. Shakya, C. Argyropoulos, and T. S. Rappaport, “Robust Hybrid
+Beamforming with Liquid Crystal Antennas and Liquid Neural Networks,” to appear in IEEE 103rd Vehicular Technology
+Conference (VTC2026-Spring), Nice, France, Jun. 2026, pp. 1–6.
+Robust Hybrid Beamforming with Liquid Crystal Antennas and
+Liquid Neural Networks
+Xinquan Wang1∗, Mingjun Ying1, Hongren Chen2, Guanyue Qian1, Xingchen Liu1, Peijie Ma1, Dipankar Shakya1,
+Christos Argyropoulos2, and Theodore S. Rappaport1†
+1NYU WIRELESS, New York University, Brooklyn, NY 11201, USA
+2Pennsylvania State University, University Park, PA 16802, USA
+{xinquanwang∗, tsr†}@nyu.edu
+Abstract—Sub-terahertz (sub-THz) multi-user multiple-input
+multiple-output (MU-MIMO) systems unlock immense bandwidth
+for 6G wireless communications. However, practical deployment
+of wireless systems in sub-THz bands faces critical challenges
+such as increased atmospheric absorption, reduced channel co-
+herence time due to increased Doppler spread at higher carrier
+frequencies, and hardware bottlenecks as low-loss sub-THz phase
+shifters are difficult to realize. To overcome the hardware and
+channel estimation challenges of sub-THz systems, this paper
+proposes a hybrid beamforming (BF) framework that integrates
+reconfigurable liquid crystal (LC) antennas with a liquid neural
+network (LNN) for transmitter. Specifically, we employ an LC
+antenna as the analog BF stage of a hybrid BF architecture,
+exploiting its voltage-driven permittivity tunability to achieve high-
+gain beam steering without the need for lossy phase shifters.
+For digital BF, we utilize an ordinary differential equations-
+defined LNN to learn temporal channel dynamics, and use a
+manifold optimization technique to compress the search space.
+We validated the proposed method on simulated site-specific 108
+GHz ray-tracing channels in an urban scenario using NYURay,
+a ray-tracing simulator validated against 142 GHz propagation
+measurements [1], [2]. The 108 GHz carrier frequency matches
+the operating band of the LC antenna hardware. The proposed
+method achieves an 88.6% spectral efficiency (SE) gain and
+higher robustness to imperfect channel estimation compared to the
+learning-aided gradient descent and gated recurrent unit machine
+learning baselines [3], and 1.9 times higher SE than the 3GPP
+TR 38.901 standard antenna model [4], highlighting the potential
+of LC-based hardware for sub-THz communications.
+Index Terms—Sub-THz communications, hybrid beamforming,
+liquid crystal antenna, liquid neural network, manifold optimiza-
+tion.
+I. INTRODUCTION
+Sixth-generation (6G) wireless systems are expected to de-
+liver substantially higher data rates, motivating the use of
+sub-terahertz (sub-THz) bands that offer vast bandwidth for
+high-throughput links and sensing [5]–[7]. However, wireless
+systems operating at sub-THz bands also encounter funda-
+mental challenges, including higher atmospheric and material
+absorption losses, highly directional propagation characteristics,
+and an extreme sensitivity of the channel to user location and
+blockage [1], [8]–[10]. At sub-THz carrier frequencies, the
+shorter wavelength increases the Doppler spread for a given
+This paper was supported by the NYU WIRELESS Industrial Affiliates
+Program, NYU Tandon ECE PhD Fellowship, and NSF Grant No. 2234123.
+The authors thank Prof. Sundeep Rangan for his valuable discussions and
+suggestions.
+user velocity, thereby reducing the channel coherence time and
+degrading channel estimation accuracy. Moreover, devices face
+a critical hardware bottleneck above 100 GHz where low-loss
+per-element tuning components for phase control are difficult
+to realize, creating a need for sub-THz capable antenna and
+beamforming (BF) algorithm designs that this paper aims to
+fulfill. The improvement of phase shifters is also an open
+problem that this paper aim to solve.
+The sub-THz hardware bottleneck of per-element phase
+control above 100 GHz is a major limitation in the development
+of scalable and potentially low-loss analog beam steering
+devices. Several sub-THz front-ends have been explored to
+form high-gain steerable beams with limited radiofrequency
+(RF) chains. Conventional phased arrays offer fine steering
+but suffer from wideband beam squint [11]–[13]. For further
+hardware reduction, lens antenna arrays exploit spatial focusing
+for beam selection [14], while dynamic metasurface antennas
+integrate reconfigurable combining to lower the RF-chain count
+[15]. Beam combining at the receiver can also reduce outage
+[16]. However, when frequent beam reconfiguration is required
+across different locations and link states, these solutions rely on
+lossy and costly control networks or offer only coarse beams;
+moreover, the associated calibration overhead can slow updates
+and cause alignment loss. LC-based antennas offer a promising
+alternative to conventional antennas by providing continuous,
+voltage-driven permittivity tuning without semiconductor phase
+shifters, thereby enabling potentially low-loss beam steering at
+sub-THz frequencies. However, LC antennas introduce addi-
+tional BF challenges: (i) the LC dielectric response time, on
+the order of milliseconds, limits the beam update rate relative
+to electronic phase shifters, (ii) the achievable phase tuning
+range per element constrains the effective steering aperture,
+and (iii) mutual coupling between adjacent LC unit cells
+complicates independent per-element control and necessitates
+carefully designed codebooks [17], [18].
+While scalable hardware enables efficient beam steering,
+practical sub-THz deployment also demands BF algorithms that
+can adapt to rapid channel variations and remain robust under
+degraded channel estimation [19], [20]. Several BF methods
+have therefore been proposed [21]–[24]. While iterative meth-
+ods employing angle-error statistics [21] or Bayesian inference
+arXiv:2604.07219v1  [cs.IT]  8 Apr 2026
+
+
+===== Page 2 =====
+[22] improve robustness of BF to rapid channel variations, they
+suffer from high computational overhead. Alternatively, neural
+network-based methods like [24] reduce latency by utilizing
+fusion-separation models to approximate optimal BF, but they
+remain limited in their ability to capture the continuous physical
+dynamics of changing channels. Designed to effectively learn
+real-world dynamic systems, a continuous-time architecture
+governed by ordinary differential equations (ODEs) named
+liquid neural network (LNN) was introduced [25]. By learning
+the ODE parameters to mimic the time-varying behavior of
+biological synapses, LNNs demonstrate exceptional robustness
+in processing noisy, continuous-time data.
+This paper proposes a hybrid BF method that is robust
+to imperfect channel estimation, using a reconfigurable LC
+antenna and an LNN. Specifically, we utilize an LC antenna
+array capable of continuous dielectric tuning, enabling elec-
+tronic beam steering at 108 GHz in the sub-THz band, a
+frequency within the 105–108 GHz operating range of the LC
+antenna hardware. The proposed hybrid architecture operates
+in two sequential stages: an analog BF first selects an LC
+antenna radiation pattern from a discrete codebook, and a
+digital BF then applies baseband precoding to manage multi-
+user interference. The framework formulates analog BF as a
+discrete LC antenna pattern selection problem from a pre-
+optimized codebook of 19 radiation patterns. For digital BF, we
+utilize an LNN to optimize the digital BF matrix via manifold
+optimization following [26]. Unlike prior work that relies on
+statistical channel models, we validate the proposed method
+in a realistic urban scenario using simulated site-specific 108
+GHz channels generated by NYURay [27]–[30], a ray-tracing
+simulator calibrated against 142 GHz measurements [1], [2],
+[13], [31], [32]; the 108 GHz carrier frequency was selected
+to match the operating band of the LC antenna hardware.
+Simulation results demonstrate that our approach outperforms
+the learning-aided gradient descent (LAGD) and gated recurrent
+unit (GRU) baselines [3] by 88.6% in SE and shows increased
+robustness to imperfect channel estimation against degraded
+channel estimation. Furthermore, the LC antenna yields 1.9
+times higher SE compared to the 3GPP TR 38.901 standard
+antenna model [4].
+The remainder of this paper is organized as follows: Section
+II introduces the downlink sub-THz MU-MIMO hybrid BF
+system model and defines the hybrid BF optimization problem,
+Section III describes the LC antenna design, analog BF design
+and the LNN-based digital BF workflow, Section IV reports
+numerical results, and Section V concludes the paper.
+Notation: We denote scalar, vector, matrix, transpose,
+Hermitian,
+inverse,
+Frobenius
+norm,
+Hadamard
+product,
+expectation,
+trace,
+complex
+Gaussian
+distribution
+and
+identity
+matrix
+as
+a, a, A, (·)T, (·)H, (·)−1, ∥
+·
+∥F , ⊙, E(·), det(·), Tr(·), CN(·, ·), I, respectively.
+II. SYSTEM MODEL AND PROBLEM FORMULATION
+A. System Model
+Consider a downlink sub-THz multi-user MIMO (MU-
+MIMO) hybrid BF communication system where a base station
+(BS) with M transmit antenna elements simultaneously serves
+K users, each of which are equipped with Nk receive antennas,
+where M ≫Nk. Let sk ∈C denote the data symbol intended
+for user k, where sk ∼CN(0, 1). The unit-variance Gaussian
+assumption models the transmitted data symbols for capacity
+analysis [33]; the actual multipath channel is captured by the
+site-specific ray-tracing channel matrix H(p)
+k
+in (2) without
+assuming Rayleigh fading.
+The proposed hybrid architecture uses the LC antenna array
+as the analog front-end at the BS, replacing conventional phase-
+shifter networks. Each of the M LC antenna elements connects
+to a dedicated RF chain feeding a digital baseband processor.
+The two BF stages operate sequentially: the LC pattern is
+first selected to maximize aggregate channel gain, and then
+the digital precoder W is computed to suppress inter-user
+interference. This paper focuses on the transmit-side hybrid
+BF design at the BS; receive-side processing at the UEs is
+beyond the scope of this work, as the BS-side BF dominates
+performance in massive MIMO systems where M ≫Nk.
+For the digital BF part, we denote wk ∈CM×1 as the
+BF vector for user k. Therefore, the BS transmits the signal
+u = PK
+k=1 wksk. For analog BF, we utilize LC antennas
+discussed in Section III-A. Every LC antenna here is embedded
+with np predefined antenna patterns that steering at np different
+directions. Let p ∈{1, 2, . . . , np} denote the index of the
+antenna pattern. When LC antenna pattern p is selected, the
+channel matrix between the base station and user k is denoted
+as H(p)
+k
+∈CNk×M. The superscript (p) indicates that the
+channel matrix depends on the selected antenna pattern, because
+different patterns produce different radiation gains in different
+directions. The additive Gaussian noise vector as nk ∈CNk×1
+with distribution CN(0, σ2I), where σ2 is the variance of the
+noise. Therefore, the received signal yk at user k is
+yk = H(p)
+k wksk +
+X
+j̸=k
+H(p)
+k wjsj + nk,
+(1)
+where the sk and nk are assumed to be independent for different
+k. For clarity, we define N ≜PK
+k=1 Nk as the total number of
+receive antennas, and denote y ≜[yT
+1 , yT
+2 , · · · , yT
+K]T ∈CN×1,
+W ≜[w1, w2, · · · , wK] ∈CM×K, s ≜[s1, s2, · · · , sK]T ∈
+CK×1, n ≜[nT
+1 , nT
+2 , · · · , nT
+K]T
+∈CN×1, and H(p)
+≜
+[(H(p)
+1 )T, (H(p)
+2 )T, · · · , (H(p)
+K )T]T ∈CN×M. Therefore, (1)
+can be rewritten as y = H(p)Ws + n.
+B. Channel Model
+The channel matrix H(p)
+k
+is generated using NYURay ray-
+tracing simulation at a carrier frequency of 108 GHz [27]–[29].
+The ray-tracing identifies L propagation paths between the base
+station and user k. Each path ℓhas a departure direction (θt
+ℓ, ϕt
+ℓ)
+from the transmitter and an arrival direction (θr
+ℓ, ϕr
+ℓ) at the
+receiver, where θ denotes the elevation angle and ϕ denotes the
+azimuth angle. The channel matrix is the sum of contributions
+from all L paths:
+H(p)
+k
+=
+L
+X
+ℓ=1
+αℓG(p)(θt
+ℓ, ϕt
+ℓ) ar(θr
+ℓ, ϕr
+ℓ) aH
+t (θt
+ℓ, ϕt
+ℓ).
+(2)
+
+
+===== Page 3 =====
+The terms in equation (2) are defined as follows. The com-
+plex path gain αℓ= |aℓ|e−j2πfcτℓincludes the amplitude
+|aℓ| and the phase shift due to propagation delay τℓ, where
+fc is the carrier frequency. The term G(p)(θt
+ℓ, ϕt
+ℓ) is the
+antenna gain of LC pattern p in the departure direction
+of path ℓ. The vector at(θ, ϕ) ∈CM×1 is the transmit
+array response vector, and ar(θ, ϕ)
+∈
+CNk×1 is the re-
+ceive array response vector. For a linear array with ele-
+ment spacing d, the array response vector is a(θ, ϕ)
+=
+
+1, ej(2πd/λ) sin θ cos ϕ, . . . , ej(2πd/λ)(W −1) sin θ cos ϕT , where
+λ is the wavelength. For the transmit array, d = dt and
+W = M. For the receive array, d = dr and W = Nk.
+C. Problem Formulation
+In practice, the BS does not have access to accurate H(p)
+(the stacked channel matrix of all K users, as defined above).
+Instead, all optimization is performed based on a noisy channel
+estimate. In order to evaluate the robustness of the proposed al-
+gorithms against imperfect channel estimation, we add estima-
+tion errors into the channel matrices generated from (2) for sim-
+ulation. We denote the estimated channel for user k as ˆH(p)
+k
+=
+H(p)
+k
++ E(p)
+k , and the stacked estimated channel as ˆH(p) =
+[( ˆH(p)
+1 )T, . . . , ( ˆH(p)
+K )T]T. We define the channel estimation
+error (CEE) as CEE ≜10 log10
+ E[∥E(p)∥2
+F ]/E[∥H(p)∥2
+F ]
+
+.
+Since the BS only observes ˆH(p), i.e., the noisy estimate of
+the stacked channel matrix, all digital BF computation should
+be carried out using ˆH(p) instead of the true channel H(p).
+Therefore, the optimization objective function for the digital
+BF is
+R =
+K
+X
+k=1
+log2 det(I + γk)
+(3)
+where γk denotes the signal-to-interference-plus-noise ratio
+matrix of the user k, given by
+γk = ˆH(p)
+k wk( ˆH(p)
+k wk)H
+
+
+K
+X
+j̸=k
+ˆH(p)
+k wj( ˆH(p)
+k wj)H + σ2I
+
+
+−1
+.
+(4)
+The basic problem is to maximize R by finding an optimal p
+and W with a sum power constraint, given as Tr(WWH) ≤P,
+where P is the sum power budget of the transmit antenna. The
+hybrid BF optimization problem can be formulated as
+max
+W,p
+R,
+s.t. Tr(WWH) ≤P, p ∈{1, 2, . . . , np}
+(5)
+III. ROBUST HYBRID BEAMFORMING WITH LNN AND LC
+ANTENNA
+The proposed framework decouples hybrid BF into two
+sequential stages. In the first stage, analog BF selects an
+LC antenna radiation pattern p from a discrete codebook to
+maximize the effective channel gain. In the second stage, digital
+BF computes the precoding matrix W in baseband using the
+effective channel corresponding to the selected pattern. Since
+the analog stage operates in the RF domain via LC voltage
+control and the digital stage operates in baseband, the two
+stages do not interfere with each other [34].
+5 mm
+0.486 mm
+(a) LC antenna
+(b) One LC antenna element
+(c) LC biasing
+Fused silica (top 400um, bottom 200um) 
+Top Al electrode (1um)
+Bottom Al electrode (1um)
+GT3-23001 LC mixture (12 um)
+𝑬
+𝑽𝒃
+Al microstrip patch (1um)
+Without external voltage
+With external voltage
+Fig. 1: Schematic of the LC antenna used. (a) Model of the LC-based
+antenna structure consisting of 48 unit cells. (b) Model of a single
+LC unit cell integrated into the ground plane (yellow) of a widened
+microstrip feed line (red). (c) Lateral cross-sectional schematic of
+a single unit cell showing the LC cavity, biasing electrodes, and
+the electric-field-induced reorientation of the LC molecules, which
+modifies the effective permittivity within the cavity [17].
+A. Liquid Crystal Antenna and Analog Beamforming
+To realize scalable analog beam steering at sub-THz frequen-
+cies, we utilize a LC-based reconfigurable antenna structure
+[17], [18], as illustrated in Fig. 1. Unlike conventional phased
+arrays dependent on phase shifters, the proposed architecture
+comprises a 48-element linear array , where each unit cell in-
+corporates GT3-23001 LC material. By dynamically controlling
+the bias voltage of individual elements, the antenna synthesizes
+directional beams via holographic BF in the sub-THz band. This
+mechanism enables agile steering across a 90◦field of view
+with a 5◦beamwidth in the 105–108 GHz band, achieving
+a 6.87 dB gain per element without requiring phase shifters,
+thereby reducing power waste in the RF chain [35].
+The discrete codebook consists of np = 19 pre-optimized
+radiation patterns covering steering angles from −45◦to +45◦
+in 5◦increments. Each pattern is obtained by applying the bias-
+voltage distribution generated by the holographic algorithm
+across the 48 LC-loaded elements in full-wave electromag-
+netic simulation, targeting maximum directional gain at the
+corresponding steering angle while suppressing sidelobes. The
+resulting set of np voltage configurations and the associated
+radiation patterns {G(p)(θ, ϕ)}np
+p=1 constitute the analog BF
+codebook.
+Selecting state p ∈{1, . . . , np} produces a radiation pattern
+with directional gain G(p)(θ, ϕ), which directly weights each
+path contribution in (2).
+B. Liquid Neural Network
+LNNs are ODE-based recurrent neural networks that model
+dynamical systems without separate numerical solvers [25]. We
+leverage LNNs to capture the temporal dynamics of the channel
+and BF process. Consider a basic first-order ODE dx(t)/dt =
+−x(t) + S(t), where S(t) = f(i(t))(a −x(t)) represents the
+synaptic current between neurons, and x(t), a represent the
+
+
+===== Page 4 =====
+current state and the bias. Substituting S(t) = f(i(t))(a−x(t))
+into dx(t)/dt = −x(t) + S(t) yields a linear ODE in x(t):
+dx(t)
+dt
+= −(1 + f(i(t))) x(t) + a f(i(t)).
+(6)
+Using the integrating-factor solution of linear ODEs, we obtain
+the integral closed-form that can be simplified and vectorized
+to
+x(t) = (x(0) −a) ⊙e−oτ t−
+R t
+0 f(i(s),θf )ds + a,
+(7)
+where x(t) ∈RD×1, i(t) ∈RC×1, oτ ∈RD×1, a ∈RD×1, f
+are the hidden state, external inputs with C features, time
+constant parameter, bias, and the function of the neural network
+with parameters θf, respectively. We follow the approximation
+in [25] and remove the integral term, resulting in
+x(t) ≈b ⊙e−[oτ +f(i(t),θf )]t ⊙f(−i(t), θf) + a,
+(8)
+which retains the ODE-driven temporal evolution while avoid-
+ing separate numerical solvers. Since the exponential decay
+in (8) drives x(t) rapidly towards a, the exponential term is
+replaced with sigmoid gates. Finally, to make model more
+adaptive to changing scenarios, we treat a and b as learnable
+by parameterizing them with NN heads g and h, respectively.
+To better capture temporal dependencies, the input to each
+liquid neuron consists of both the current input vector i and
+the previous hidden state x. Accordingly, the closed-form
+continuous-time model is written as
+x(t) = σ
+ −f(x, i; θf)t
+
+⊙g(x, i; θg)
++
+h
+1 −σ
+ −f(x, i; θf)t
+i
+⊙h(x, i; θh),
+(9)
+where θg and θh denote the parameters of NN heads g and h,
+respectively.
+The LNN architecture is well-suited for the BF optimization
+in (5) for two reasons. First, the sub-THz channel evolves
+continuously in time due to UE mobility and environmental
+dynamics, and the ODE-based state evolution in (9) provides
+a natural inductive bias for modeling such continuous-time
+dynamics, unlike discrete-time architectures (like GRUs) that
+process channel snapshots independently [36], [37]. Second,
+the sigmoid gating mechanism in (9) bounds the hidden state
+trajectory, acting as an implicit regularizer that improves ro-
+bustness when channel estimates are noisy [38], [39].
+C. Workflow of the Proposed Method
+1) Manifold Optimization: Leveraging the characteristic that
+M ≫N in massive MIMO systems, we adopt a manifold
+optimization approach [26] to reduce the search space of the
+optimization problem in (5). We model E Gaussian as [40],
+and the randomness from the Gaussian noise prevent rank
+deficiency, making ˆH(p) full row rank. Under the manifold
+optimization framework, the optimal W for the BS can be
+projected onto the row space of ˆH(p) as W = ˆHHX, allowing
+the proposed LNN to optimize a base matrix X ∈CN×K
+rather than optimize W directly. When M ≫N, manifold
+optimization compresses the search space from CM×K to
+CN×K, significantly reducing the number of parameters the
+LNN must optimize [41], [42].
+TABLE I: Simulation Parameters
+Parameter
+Value
+NYURay [27], [43] Ray-Tracing Configuration
+Carrier frequency
+108 GHz
+Number of rays
+106 (5 max reflections)
+Propagation modes
+Reflection, penetration, diffraction
+Antenna Configuration
+BS antenna (M)
+48 × 1 (LC antenna elements)
+UE antenna (Nk)
+4 × 1 ULA (Isotropic, 0 dBi)
+Polarization
+Vertical
+Deployment Scenario
+Location
+Brooklyn MetroTech Commons, NYC
+Geographic boundaries
+40.688°–40.699°N, 73.972°–73.992°W
+Coverage area
+1.8 km × 1.2 km
+(BS height, UE height)
+(20 m, 1.5 m)
+2) Forward Propagation: In the forward propagation, the
+LNN updates the digital BF matrix using the estimated channel
+ˆH as input. Since the elements in ˆH are extremely small, poten-
+tially leading to numerical underflow. Therefore, we normalize
+the channels by ˆHn = ˆH/σ, and feed ˆHn into three layers
+of liquid neurons that are fully connected. For the simulations
+with analog BF, we input all ˆHk,n into the neural network,
+and obtain X = LNN( ˆHn). Finally, considering the power
+constraints in (5), we can compute the W as
+W =
+q
+P/Tr( ˆHHX( ˆHHX)H) · ˆHHX,
+(10)
+3) Backward Propagation: To train the proposed LNN, we
+employ a logarithmic loss to encourage a fair SE distribution
+among users. This design prevents the network from collaps-
+ing to a single-user solution and improves training stability.
+Specifically, given the per-user SE R1, . . . , RK, the log loss is
+defined as L = −PK
+k=1 log (max(ϵ, Rk)) , where ϵ is a small
+positive constant to avoid numerical instability. For simulations
+with analog BF, we only select the loss from p with the best
+SE as calculated in (3). Then, we use an Adam optimizer to
+optimize the parameters, as θ∗= θ+α·Adam(∇θL, θ), where
+θ, θ∗are NN parameters before and after update, respectively,
+and α is the learning rate.
+IV. NUMERICAL RESULTS
+A. Scenario and Baselines
+We evaluated the proposed system using a site-specific sim-
+ulation of the Brooklyn MetroTech Commons, Brooklyn, NY, a
+typical urban scenario covering 1.8 km × 1.2 km at 108 GHz,
+as shown in Fig. 2 [44]. We place the BS at a typical urban
+environment [4], which is 20 m above the ground. UEs operate
+at street level (1.5 m height) positioned at realistic locations.
+NYURay [43], [45] generated channels using 106 rays with up
+to five reflections. Table I provides complete scene parameters.
+We use K = 4, P = 30 dBm, α = 0.01 and run simulations
+on an NVIDIA RTX 4090 GPU using PyTorch 2.5.1. For
+baselines, we consider LAGD [3] and a GRU-based model.
+
+
+===== Page 5 =====
+700
+600
+500
+400
+300
+200
+x (m)
+100
+50
+0
+50
+100
+150
+200
+250
+300
+350
+y (m)
+Scene Map with Buildings and TX/RX Locations
+TX
+RX
+TX1
+25
+50
+75
+100
+125
+150
+Building Height (m)
+Fig. 2: Site-specific simulation scenario in Brooklyn MetroTech
+Commons, Brooklyn, NY, generated using NYURay at 108 GHz. TX1
+marks the BS equipped with a 48×1 LC antenna array at 20 m height
+with 10◦downtilt. The blue traces represent UE routes along streets at
+1.5 m height, to emulate mobile users traversing the coverage area. For
+each UE position, ray-tracing channels were generated to evaluate the
+hybrid BF performance under realistic urban propagation conditions.
+0
+5
+10
+15
+20
+25
+30
+P (dBm)
+0
+2
+4
+6
+8
+SE (bps/Hz)
+LNN (LC)
+GRU (LC)
+LAGD (LC)
+LNN (3GPP)
+GRU (3GPP)
+LAGD (3GPP)
+Fig. 3: SE vs. BS total transmit power budget P at CEE = −10 dB.
+The LNN with LC antennas achieves 88.6% higher SE than LAGD at
+P = 30 dBm. All LC antenna configurations outperform their 3GPP
+counterparts by over 1.9 times in SE.
+To emphasize the effect of LC antennas, we compare all three
+methods using 3GPP TR 38.901 antennas [4].
+B. Evaluation on Beamforming Performance
+In Fig. 3, we present the spectral efficiency (SE) of the
+proposed method, under conditions of fixed CEE as -10 dB and
+varying P. The results show that the SE of all the algorithms
+increases with an increasing P, and the proposed method
+outperforms all the baselines, being 88.6% higher than the
+LAGD when P is 30 dBm. LNN outperforms baselines due to
+its ability to learn channel dynamics via its ODE architecture.
+Besides that, a significant SE gain (over 1.9 times) is observed
+comparing the LC antenna and 3GPP antennas, showcasing the
+benefit of using LC-based hardware and coherent analog BF
+algorithm in sub-THz frequencies.
+C. Evaluation on Robustness to Inaccurate Channel Estimation
+In Fig. 4, we fix P = 30 dBm and evaluate the performance
+of the algorithms as the CEE increases from -20 dB to 0 dB. As
+20
+15
+10
+5
+0
+CEE (dB)
+2
+4
+6
+8
+SE (bps/Hz)
+LNN (LC)
+GRU (LC)
+LAGD (LC)
+LNN (3GPP)
+GRU (3GPP)
+LAGD (3GPP)
+Fig. 4: Robustness evaluation SE vs. channel estimation error (CEE)
+at P = 30 dBm. The proposed LNN approach demonstrates higher
+robustness to imperfect CSI compared to the LAGD and GRU base-
+lines.
+shown in the figure, the LNN (LC) demonstrates significantly
+stronger robustness against high CEE compared to LAGD (LC).
+Specifically, the LNN (LC) experiences only a 31.7% reduction
+in SE (from 8.8 to 6.0 bps/Hz), whereas LAGD (LC) suffers a
+55.4% reduction (from 5.4 to 2.4 bps/Hz).
+The stronger robustness of the LNN stems from two archi-
+tectural properties. First, the sigmoid gating in (9) inherently
+bounds the hidden state updates, preventing large estimation
+errors from causing unbounded changes in the BF output.
+In contrast, LAGD uses gradient-based iterative updates that
+can amplify noise in the channel estimate across iterations.
+In addition to gating, the manifold projection W = ˆHHX
+constrains the precoder to lie in the row space of the es-
+timated channel, acting as implicit regularization that keeps
+the precoder structurally aligned with the dominant channel
+subspace. A full robustness characterization including per-user
+SE variance analysis and SE cumulative distribution under
+varying CEE levels is deferred to future work.
+V. CONCLUSION
+A hybrid BF framework was presented for sub-THz MU-
+MIMO systems, combining a reconfigurable LC antenna for
+analog BF with an ODE-inspired LNN for digital BF, validated
+on simulated ray-tracing channels at 108 GHz in an urban
+scenario. The 88.6% SE gain of the LNN over the LAGD
+and GRU baselines is attributed to two factors: (i) the sigmoid
+gating mechanism in the LNN bounds hidden-state updates,
+preventing noise amplification that affects the iterative gradient
+steps in LAGD, and (ii) the continuous-time ODE formulation
+provides an inductive bias better matched to the temporal
+evolution of sub-THz channels than the discrete-time GRU
+architecture. The LNN also demonstrated stronger robustness to
+imperfect channel estimation, with only a 31.7% SE reduction
+as CEE increased from −20 dB to 0 dB, compared to 55.4%
+for LAGD. Separately, the LC antenna achieved 1.9 times
+higher SE than the 3GPP TR 38.901 antenna array. This gain is
+attributed to the higher per-element directivity of the LC design,
+where each of the 48 elements achieves 6.87 dB gain through
+BF, and codebook-based pattern selection that concentrates
+
+
+===== Page 6 =====
+radiated energy toward users with a 5-degree beamwidth. A
+controlled comparison with matched array aperture and element
+count between the LC and 3GPP arrays is left to future work.
+Future work also includes varying the number of users and
+antennas, per-user SE distribution analysis, and experimental
+validation of the LC antenna with field measurements.
+REFERENCES
+[1] Y. Xing et al., “Millimeter wave and terahertz urban microcell propagation
+measurements and models,” IEEE Commun. Lett., vol. 25, no. 12, pp.
+3755–3759, 2021.
+[2] S. Ju et al., “142 GHz multipath propagation measurements and path loss
+channel modeling in factory buildings,” in ICC 2023-IEEE International
+Conference on Communications, 2023, pp. 5048–5053.
+[3] Z. Yang et al., “A learning-aided flexible gradient descent approach to
+MISO beamforming,” IEEE Wirel. Commun. Lett., vol. 11, no. 9, pp.
+1895–1899, 2022.
+[4] 3GPP, “Study on channel model for frequencies from 0.5 to 100 GHz,”
+3rd Generation Partnership Project, Technical Report TR 38.901, 2018.
+[5] T. S. Rappaport et al., “Wireless communications and applications above
+100 GHz: Opportunities and challenges for 6G and beyond,” IEEE Access,
+vol. 7, pp. 78 729–78 757, 2019.
+[6] A. Bazzi et al., “ISAC imaging by channel state information using ray
+tracing for next generation 6G,” IEEE J. Sel. Top. Electromagnetics Ant.
+Prop., vol. 1, no. 1, pp. 135–149, 2025.
+[7] A. Shahid et al., “Large-scale AI in telecom: Charting the roadmap
+for innovation, scalability, and enhanced digital experiences,” 2025.
+[Online]. Available: https://arxiv.org/abs/2503.04184
+[8] T. S. Rappaport et al., “Overview of millimeter wave communications
+for fifth-generation (5G) wireless networks—with a focus on propagation
+models,” IEEE Transactions on antennas and propagation, vol. 65, no. 12,
+pp. 6213–6230, 2017.
+[9] X. Wang et al., “Bridging physical and digital worlds: Embodied
+large AI for future wireless systems,” 2025. [Online]. Available:
+https://arxiv.org/abs/2506.24009
+[10] W. Jiang et al., “Terahertz communications and sensing for 6G and
+beyond: A comprehensive review,” IEEE Communications Surveys &
+Tutorials, vol. 26, no. 4, pp. 2326–2381, 2024.
+[11] B. Wang et al., “Spatial-wideband effect in massive MIMO with appli-
+cation in mmwave systems,” IEEE Communications Magazine, vol. 56,
+no. 12, pp. 134–141, 2018.
+[12] M.
+Cai
+et
+al.,
+“Beamforming
+codebook
+compensation
+for beam
+squint with channel capacity constraint,” 2017. [Online]. Available:
+https://arxiv.org/abs/1705.04441
+[13] Y. Xing et al., “Propagation measurement system and approach at
+140 GHz-moving to 6G and above 100 GHz,” in 2018 IEEE Global
+Communications Conference (GLOBECOM), 2018, pp. 1–6.
+[14] Y. Zeng et al., “Cost-effective millimeter-wave communications with lens
+antenna array,” IEEE Wireless Communications, vol. 24, no. 4, pp. 81–87,
+2017.
+[15] H. Wang et al., “Dynamic metasurface antennas for MIMO-OFDM
+receivers with bit-limited adcs,” IEEE Transactions on Communications,
+vol. 69, no. 4, pp. 2643–2659, 2021.
+[16] S. Sun et al., “Millimeter wave multi-beam antenna combining for 5G
+cellular link improvement in new york city,” in 2014 IEEE ICC.
+IEEE,
+2014, pp. 5468–5473.
+[17] P.-Y. Wang et al., “A liquid crystal tunable metamaterial unit cell for
+dynamic metasurface antennas,” IEEE Transactions on Antennas and
+Propagation, vol. 71, no. 1, pp. 1135–1140, 2023.
+[18] P.-Y. Wang et al., “A liquid-crystal-based dynamic metasurface antenna
+for electrical beam-steering at 105 GHz,” IEEE Transactions on Antennas
+and Propagation, vol. 72, no. 6, pp. 5313–5318, Jun. 2024.
+[19] F. Zhu et al., “Robust deep learning-based physical layer communications:
+Strategies and approaches,” IEEE Network, vol. 40, no. 2, pp. 278–286,
+2026.
+[20] X. Wang et al., “Telemom: Consensus-driven telecom intelligence via
+mixture of models,” in Proc. of 2025 IEEE 102nd Veh. Tech. Conf., 2025,
+pp. 1–6.
+[21] S. Jayaprakasam et al., “Robust beam-tracking for mmWave mobile
+communications,” IEEE Communications Letters, vol. 21, no. 12, pp.
+2654–2657, 2017.
+[22] Y. Yang et al., “Bayesian beamforming for mobile millimeter wave
+channel tracking in the presence of DOA uncertainty,” IEEE Transactions
+on Communications, vol. 68, no. 12, pp. 7547–7562, 2020.
+[23] F. Zhu et al., “Beamforming inferring by conditional WGAN-GP for
+holographic antenna arrays,” IEEE Wirel. Commun. Lett., vol. 13, no. 7,
+pp. 2023–2027, 2024.
+[24] R. U. Murshed et al., “A CNN-LSTM-based fusion separation deep neural
+network for 6G ultra-massive MIMO hybrid beamforming,” IEEE Access,
+vol. 11, pp. 38 614–38 630, 2023.
+[25] R. Hasani et al., “Closed-form continuous-time neural networks,” Nature
+Machine Intelligence, vol. 4, no. 11, pp. 992–1003, 2022.
+[26] X. Zhao et al., “Rethinking WMMSE: Can its complexity scale linearly
+with the number of BS antennas?” IEEE Trans. Signal Process., vol. 71,
+pp. 433–446, 2023.
+[27] M. Ying et al., “Site-specific location calibration and validation of ray-
+tracing simulator NYURay at upper mid-band frequencies,” npj Wireless
+Technology, pp. 1–18, Mar. 2026.
+[28] O. Kanhere et al., “Calibration of NYURay, a 3D mmWave and sub-THz
+Ray Tracer using Indoor, Outdoor, and Factory Channel Measurements,”
+in IEEE ICC, Jun 2023, pp. 1–6.
+[29] O. Kanhere et al., “Calibration of NYURay for ray tracing using 28, 73,
+and 142 GHz channel measurements conducted in indoor, outdoor, and
+factory scenarios,” IEEE Trans. Antennas Propag., 2024.
+[30] M. Ying et al., “Multi-stage location optimization through power delay
+profile alignment using site-specific wireless ray tracing,” in Proc. IEEE
+Global Commun. Conf., Taipei, Taiwan, Dec. 2025, pp. 1–6, accepted.
+[31] S. Nie et al., “72 GHz millimeter wave indoor measurements for wireless
+and backhaul communications,” in 2013 IEEE 24th PIMRC. IEEE, 2013,
+pp. 2429–2433.
+[32] S. Ju et al., “140 GHz urban microcell propagation measurements
+for spatial consistency modeling,” in ICC 2021 - IEEE International
+Conference on Communications, 2021, pp. 1–6.
+[33] D. Tse et al., Fundamentals of wireless communication.
+Cambridge
+university press, 2005.
+[34] S. Sun et al., “Analytical framework of hybrid beamforming in multi-cell
+millimeter-wave systems,” IEEE Transactions on Wireless Communica-
+tions, vol. 17, no. 11, pp. 7528–7543, 2018.
+[35] M. Ying et al., “Using waste factor to optimize energy efficiency in
+multiple-input single-output (MISO) and multiple-input multiple-output
+(MIMO) systems,” in Proc. of 2024 IEEE Global Commun. Conf., 2024,
+pp. 3170–3175.
+[36] F. Zhu et al., “Robust continuous-time beam tracking with liquid neural
+network,” in GLOBECOM 2024 - 2024 IEEE Global Communications
+Conference, 2024, pp. 4878–4883.
+[37] X. Wang et al., “Robust beamforming with gradient-based liquid neural
+network,” IEEE Wireless Communications Letters, 2024.
+[38] F.
+Zhu
+et
+al.,
+“Wireless
+large
+AI
+model:
+Shaping
+the
+AI-
+native
+future
+of
+6G
+and
+beyond,”
+2025.
+[Online].
+Available:
+https://arxiv.org/abs/2504.14653
+[39] F. Zhu et al., “Liquid neural networks: Next-generation AI for telecom
+from first principles,” ZTE Commun., vol. 23, no. 2, pp. 76–84, 2025.
+[40] J. Hoydis et al., “Massive MIMO in the UL/DL of cellular networks:
+How many antennas do we need?” IEEE J. Sel. Areas Commun., vol. 31,
+no. 2, pp. 160–171, 2013.
+[41] F. Zhu et al., “Robust Beamforming for RIS-aided Communications:
+Gradient-based Manifold Meta Learning,” IEEE Trans. Wirel. Commun.,
+2024.
+[42] X. Wang et al., “Energy-efficient beamforming for RISs-aided commu-
+nications: Gradient based meta learning,” in Proc. 2024 IEEE Int. Conf.
+Commun. (ICC), Jun. 2024.
+[43] M. Ying, “Site-specific propagation predictions of the radio channel
+in different environments using NYURay based on measurements and
+ray-tracing at upper mid-band frequencies,” Master’s thesis, New York
+University, 2025.
+[44] D. Shakya et al., “Urban outdoor propagation measurements and channel
+models at 6.75 GHz FR1(C) and 16.95 GHz FR3 upper mid-band
+spectrum for 5G and 6G,” in Proc. IEEE Int. Conf. Commun., Montreal,
+Canada, Jun. 2025, pp. 3291–3296.
+[45] M. Ying et al., “HoRAMA: Holistic reconstruction with automated
+material assignment for ray tracing using NYURay,” in Proc. IEEE Int.
+Conf. Commun., Glasgow, UK, Jun. 2026, pp. 1–6.

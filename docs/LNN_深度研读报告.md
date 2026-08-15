@@ -209,7 +209,29 @@ tags: [LNN, reading-report, papers]
 - **8/5 实验数据点**：`scripts/jetson_lnn_benchmark.py --date 2026-08-05 --quick --cpu` 给出 6 模型对比（NCPS-CfC MSE=0.106 最优、PDNAPulse 综合最优、GRU 吞吐王者、LTC 需 GPU 才能发挥），完整结果：[analysis/jetson/2026-08-05_lnn_benchmark.md](analysis/jetson/2026-08-05_lnn_benchmark.md)。
 - **Verdict**：L2 与 L1 在仓库内已代码 + 报告齐全，本周可推进 N3 (TFP→CfC 门控移植)；下周跑 G5（LFM2.5-350M + CfC head fine-tune smoke）；下下周复现 DLNet 蒸馏路径。**整体 LNN 训练范式已经形成"蒸馏 + 多速率 + 闭式化 + 基础模型"四向交叉，下一阶段瓶颈在量化 + Jetson 真 CUDA 路径上的端到端验证**。
 
+### [2026-05-26] LNN vs LSTM 四模态系统对标 + Temporal Dropout 鲁棒性 — N-MNIST/QuickDraw/IAM/Sepsis-3 (arXiv:2605.27467)
+- **独立报告**: [[docs/reports/Comparative_Analysis_LNN_vs_LSTM_2605.27467_研读报告.md]]
+- **核心问题**: LSTM 的离散时间假设在连续物理信号 + 不规则采样场景下是否被 LNN/CfC 系统性替代?
+- **方法论**: 4 模态同条件对标 + 推理时随机 mask 0/30/50/70% 时间步的 temporal dropout 协议 + Sepsis-3 临床假阳性分析
+- **关键成果**: N-MNIST 上 LNN 99.38% vs LSTM 99.13%; Sepsis-3 上 Wider LNN (256) 把 FP 从 151 降到 2 (Precision 0.94) — 直击 "Alarm Fatigue" 痛点; N-MNIST 30% drop 时 LNN 91.84% vs LSTM 77.48% (+14.4 pp); IAM 单向 256 单元 LNN 匹配 LSTM 双向 512 CER
+- **局限**: 单次训练无 seed 误差棒, 无 SSM/Transformer 对照, Wider LNN recall 仅 0.10 (高可信度辅助定位)
+- **复现成本**: 低 — 代码 + 训练日志 + 权重全公开 (`github.com/ye-kyaw-thu/LNN-vs-LSTM`), 依赖 `ncps==0.0.7` + PyTorch 2.x
 
+### [2026-01-28] LNN × EEG 多模态情感识别 + 自动编码器融合 — 7 类 PhyMER SOTA (arXiv:2602.06997)
+- **独立报告**: [[docs/reports/LNN_EEG_Emotion_Recognition_2602.06997_研读报告.md]]
+- **核心问题**: EEG + 外周生理 + personality 多模态融合下, 7 类离散情绪识别能否用 LNN 的可学习 $\tau$ 同时建模 ERP 毫秒级瞬态与 HRV 秒级慢动态?
+- **方法论**: 1D CNN 编码 raw EEG → 1 层 LNN (hidden=128, $\tau \in [0.1, 10]$ log-space) → self-attention 聚合; 10 模态 MLP → bottleneck autoencoder (312→128→312) + reconstruction loss 退火; 分类 MLP 128→256→128→7
+- **关键成果**: Subject-dependent 95.45% Acc / 0.9338 Cohen's κ / 0.99 macro AUC — 远超此前 SOTA (THHSCA 4-class 55.45%, Mifu-ER 7-class 70.24%); Raw EEG + DE + Personality 三模态达 96.76% (A11); 432.6K 参数 / 0.15 ms latency / 1.65 MB 适合边缘部署; Personality 边际效用 +9.35 pp (raw EEG 86.89% → +Personality 96.35%)
+- **局限**: Subject-independent 性能 -10 pp; 仅 30 受试者; 超参离散评估无 Bayesian search; cross-modal attention 反向有害
+- **复现成本**: 中 — 论文未给 repo URL, 但 PhyMER 数据公开; 架构在 `ncps` 库可直接调用
+
+### [2026-04-08] LC 天线 × LNN 数字波束赋形 — 108 GHz sub-THz 6G (arXiv:2604.07219)
+- **独立报告**: [[docs/reports/Liquid_Crystal_Antennas_Hybrid_BF_LNN_2604.07219_研读报告.md]]
+- **核心问题**: sub-THz (≥100 GHz) 6G 的硬件瓶颈 (无低损耗 phase shifter) + 信道估计瓶颈 (短相干时间) 能否用 LC 天线 + ODE-based LNN 同时解决?
+- **方法论**: LC 48 单元模拟 BF (19 pattern codebook) + LNN 3 层数字 BF 输出 base matrix $X$, manifold projection $W = \hat{H}^H X$ 压搜索空间 12×, log loss 保证多用户 SE 公平分配; 验证用 NYURay ray-tracing 在 108 GHz Brooklyn MetroTech 城市场景
+- **关键成果**: LNN+LC vs LAGD+LC SE +88.6% (P=30 dBm, CEE=-10 dB); LC vs 3GPP SE 1.9×; CEE 从 -20 dB 到 0 dB 时 LNN SE 仅 -31.7% vs LAGD -55.4% — sigmoid gating 的隐式 boundedness 是鲁棒性的关键
+- **局限**: 无 per-user SE 方差/CDF 公平性分析; LC vs 3GPP 对比未控制 aperture; 仅 1 个 urban 场景; 仅 simulation, 无 field measurement
+- **复现成本**: 高 — 需要 NYURay ray-tracing + LC 天线硬件模型 (NYU WIRELESS 组私有); LNN 代码可从 Hasani 2022 / Zhu 2024 复用
 
 ---
 
