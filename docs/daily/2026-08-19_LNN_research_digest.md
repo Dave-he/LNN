@@ -33,15 +33,15 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
-| 2026-08-18 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 0 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
+| 2026-08-19 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B /… |
+| 2026-08-19 | [HNUBIGroup/LNN-DACA](https://github.com/HNUBIGroup/LNN-DACA) | 1 | Python | Multi-view fusion via liquid neural networks and dynamic adaptive cross-attention for enhancing ncRNA-protein interactions prediction |
+| 2026-08-19 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 1 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
+| 2026-08-19 | [chlakhal/Liquid-neural-networks](https://github.com/chlakhal/Liquid-neural-networks) | 0 |  |  |
 | 2026-08-18 | [m-swetanjali/Edge-AI-in-LNN](https://github.com/m-swetanjali/Edge-AI-in-LNN) | 0 |  | Edge AI for Cardiovascular Disease using Liquid Neural Network |
 | 2026-08-18 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
 | 2026-08-17 | [WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF](https://github.com/WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF) | 0 |  | 本研究提出了一种运动学-动力学融合框架，将来自七个惯性测量单元（IMU：足部、胫骨、股骨和骨盆）的运动学变量与压力鞋垫采集的动态足底压力数据相结合，用于估算行走和跑步过程中的三维地面反作用力。 |
 | 2026-08-16 | [hanija0/Skin-Lesion-Classification-Using-Liquid-Neural-Networks](https://github.com/hanija0/Skin-Lesion-Classification-Using-Liquid-Neural-Networks) | 0 | Jupyter Notebook | Leveraged Liquid Neural Networks for skin lesion classification |
 | 2026-08-15 | [arfazkachhi/UPISHIELD](https://github.com/arfazkachhi/UPISHIELD) | 0 | Jupyter Notebook | Fraud detection using Liquid Neural Network (CfC) |
-| 2026-08-15 | [XenoVoyage/xeno-rover](https://github.com/XenoVoyage/xeno-rover) | 0 |  | Open-source Raspberry Pi 5 robotic rover for mapping, computer vision, and voice control, powered by on-device language models and liquid neural networks. |
-| 2026-08-14 | [Dhivya-DD17/DLNet](https://github.com/Dhivya-DD17/DLNet) | 1 | Jupyter Notebook | This repo is the official implementation of the paper "When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for E… |
-| 2026-08-14 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B /… |
 | 2026-08-13 | [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving) | 0 | Python | High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache… |
 | 2026-08-12 | [Tivaphe/Anywhere-lfm](https://github.com/Tivaphe/Anywhere-lfm) | 1 | Python | Anywhere-LFM est une application de bureau légère, pensée pour simplifier l'utilisation en local des modèles LiquidAI/LFM2 (350M à 1.2B). Elle permet à n'impor… |
 | 2026-08-12 | [dermatolecturio-ai/lfm25-c-bf16](https://github.com/dermatolecturio-ai/lfm25-c-bf16) | 0 | C | Out-of-core BF16 inference for LiquidAI LFM2.5-8B-A1B on 8 GB Apple Silicon (no quantization). |
