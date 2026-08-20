@@ -33,15 +33,15 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
-| 2026-08-19 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B /… |
+| 2026-08-20 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B /… |
+| 2026-08-20 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 1 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
+| 2026-08-20 | [chlakhal/Liquid-neural-networks](https://github.com/chlakhal/Liquid-neural-networks) | 0 | Python |  |
 | 2026-08-19 | [HNUBIGroup/LNN-DACA](https://github.com/HNUBIGroup/LNN-DACA) | 1 | Python | Multi-view fusion via liquid neural networks and dynamic adaptive cross-attention for enhancing ncRNA-protein interactions prediction |
-| 2026-08-19 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 1 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
 | 2026-08-18 | [m-swetanjali/Edge-AI-in-LNN](https://github.com/m-swetanjali/Edge-AI-in-LNN) | 0 |  | Edge AI for Cardiovascular Disease using Liquid Neural Network |
 | 2026-08-18 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
 | 2026-08-17 | [WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF](https://github.com/WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF) | 0 |  | 本研究提出了一种运动学-动力学融合框架，将来自七个惯性测量单元（IMU：足部、胫骨、股骨和骨盆）的运动学变量与压力鞋垫采集的动态足底压力数据相结合，用于估算行走和跑步过程中的三维地面反作用力。 |
 | 2026-08-16 | [hanija0/Skin-Lesion-Classification-Using-Liquid-Neural-Networks](https://github.com/hanija0/Skin-Lesion-Classification-Using-Liquid-Neural-Networks) | 0 | Jupyter Notebook | Leveraged Liquid Neural Networks for skin lesion classification |
 | 2026-08-15 | [arfazkachhi/UPISHIELD](https://github.com/arfazkachhi/UPISHIELD) | 0 | Jupyter Notebook | Fraud detection using Liquid Neural Network (CfC) |
-| 2026-08-15 | [XenoVoyage/xeno-rover](https://github.com/XenoVoyage/xeno-rover) | 0 |  | Open-source Raspberry Pi 5 robotic rover for mapping, computer vision, and voice control, powered by on-device language models and liquid neural networks. |
 | 2026-08-13 | [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving) | 0 | Python | High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache… |
 | 2026-08-12 | [Tivaphe/Anywhere-lfm](https://github.com/Tivaphe/Anywhere-lfm) | 1 | Python | Anywhere-LFM est une application de bureau légère, pensée pour simplifier l'utilisation en local des modèles LiquidAI/LFM2 (350M à 1.2B). Elle permet à n'impor… |
 | 2026-08-12 | [dermatolecturio-ai/lfm25-c-bf16](https://github.com/dermatolecturio-ai/lfm25-c-bf16) | 0 | C | Out-of-core BF16 inference for LiquidAI LFM2.5-8B-A1B on 8 GB Apple Silicon (no quantization). |
@@ -49,17 +49,17 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-08-19 | [LiquidAI/LFM2.5-2.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF) | 391869 | 251 | text-generation |
-| 2026-08-19 | [LiquidAI/LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF) | 238879 | 212 | text-generation |
-| 2026-08-19 | [LiquidAI/LFM2.5-230M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-230M-GGUF) | 79337 | 88 | text-generation |
-| 2026-08-19 | [LiquidAI/LFM2.5-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF) | 76139 | 94 | text-generation |
-| 2026-08-19 | [LiquidAI/LFM2.5-230M](https://huggingface.co/LiquidAI/LFM2.5-230M) | 55265 | 275 | text-generation |
-| 2026-08-19 | [saidutta69/lfm2.5-2.6b-fable5-coding-agent-heretic](https://huggingface.co/saidutta69/lfm2.5-2.6b-fable5-coding-agent-heretic) | 0 | 0 | text-generation |
-| 2026-08-19 | [rafmacalaba/lfm2.5-350M-datause](https://huggingface.co/rafmacalaba/lfm2.5-350M-datause) | 0 | 0 | text-generation |
-| 2026-08-19 | [abcsnoobai/LFM2.5-2.6B](https://huggingface.co/abcsnoobai/LFM2.5-2.6B) | 0 | 0 |  |
-| 2026-08-18 | [LiquidAI/LFM2-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2-ColBERT-350M) | 39767 | 149 | sentence-similarity |
-| 2026-08-17 | [LiquidAI/LFM2.5-ColBERT-350M](https://huggingface.co/LiquidAI/LFM2.5-ColBERT-350M) | 4370 | 113 | sentence-similarity |
-| 2026-08-14 | [LiquidAI/LFM2.5-2.6B-Base](https://huggingface.co/LiquidAI/LFM2.5-2.6B-Base) | 14753 | 43 | text-generation |
+| 2026-08-20 | [LiquidAI/LFM2.5-2.6B](https://huggingface.co/LiquidAI/LFM2.5-2.6B) | 163222 | 666 | text-generation |
+| 2026-08-20 | [mlboydaisuke/LFM2.5-1.2B-Instruct-ExecuTorch](https://huggingface.co/mlboydaisuke/LFM2.5-1.2B-Instruct-ExecuTorch) | 239 | 0 | text-generation |
+| 2026-08-20 | [LiquidAI/LFM2.5-1.2B-Instruct-DSpark](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark) | 219 | 20 | text-generation |
+| 2026-08-20 | [LiquidAI/LFM2.5-2.6B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark) | 189 | 21 | text-generation |
+| 2026-08-20 | [LiquidAI/LFM2.5-8B-A1B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark) | 125 | 20 | text-generation |
+| 2026-08-20 | [LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF) | 0 | 16 | text-generation |
+| 2026-08-20 | [LiquidAI/LFM2.5-2.6B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark-GGUF) | 0 | 13 | text-generation |
+| 2026-08-20 | [LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF) | 0 | 14 | text-generation |
+| 2026-08-20 | [rafmacalaba/lfm2.5-350M-datause-prwp](https://huggingface.co/rafmacalaba/lfm2.5-350M-datause-prwp) | 0 | 0 | text-generation |
+| 2026-08-20 | [jeanbaptdzd/lfm25-nli-350m-v1k-mps-recipe-l4](https://huggingface.co/jeanbaptdzd/lfm25-nli-350m-v1k-mps-recipe-l4) | 0 | 0 |  |
+| 2026-08-19 | [LiquidAI/LFM2.5-2.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF) | 421614 | 272 | text-generation |
 | 2026-05-06 | [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE) | 0 | 0 |  |
 
 ## 建议动作
