@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：40 个
-- Hugging Face 候选模型：13 个
+- Hugging Face 候选模型：18 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -33,9 +33,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-08-21 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B /… |
+| 2026-08-21 | [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab) | 0 | JavaScript | Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab. |
 | 2026-08-20 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 1 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
 | 2026-08-20 | [chlakhal/Liquid-neural-networks](https://github.com/chlakhal/Liquid-neural-networks) | 0 | Python |  |
-| 2026-08-19 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B /… |
 | 2026-08-19 | [HNUBIGroup/LNN-DACA](https://github.com/HNUBIGroup/LNN-DACA) | 1 | Python | Multi-view fusion via liquid neural networks and dynamic adaptive cross-attention for enhancing ncRNA-protein interactions prediction |
 | 2026-08-18 | [m-swetanjali/Edge-AI-in-LNN](https://github.com/m-swetanjali/Edge-AI-in-LNN) | 0 |  | Edge AI for Cardiovascular Disease using Liquid Neural Network |
 | 2026-08-18 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
@@ -44,23 +45,22 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-08-15 | [arfazkachhi/UPISHIELD](https://github.com/arfazkachhi/UPISHIELD) | 0 | Jupyter Notebook | Fraud detection using Liquid Neural Network (CfC) |
 | 2026-08-13 | [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving) | 0 | Python | High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache… |
 | 2026-08-12 | [Tivaphe/Anywhere-lfm](https://github.com/Tivaphe/Anywhere-lfm) | 1 | Python | Anywhere-LFM est une application de bureau légère, pensée pour simplifier l'utilisation en local des modèles LiquidAI/LFM2 (350M à 1.2B). Elle permet à n'impor… |
-| 2026-08-12 | [dermatolecturio-ai/lfm25-c-bf16](https://github.com/dermatolecturio-ai/lfm25-c-bf16) | 0 | C | Out-of-core BF16 inference for LiquidAI LFM2.5-8B-A1B on 8 GB Apple Silicon (no quantization). |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-08-20 | [LiquidAI/LFM2.5-2.6B](https://huggingface.co/LiquidAI/LFM2.5-2.6B) | 163222 | 666 | text-generation |
-| 2026-08-20 | [mlboydaisuke/LFM2.5-350M-ExecuTorch](https://huggingface.co/mlboydaisuke/LFM2.5-350M-ExecuTorch) | 241 | 0 | text-generation |
-| 2026-08-20 | [mlboydaisuke/LFM2.5-1.2B-Instruct-ExecuTorch](https://huggingface.co/mlboydaisuke/LFM2.5-1.2B-Instruct-ExecuTorch) | 239 | 0 | text-generation |
-| 2026-08-20 | [LiquidAI/LFM2.5-1.2B-Instruct-DSpark](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark) | 219 | 19 | text-generation |
-| 2026-08-20 | [LiquidAI/LFM2.5-2.6B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark) | 189 | 20 | text-generation |
-| 2026-08-20 | [LiquidAI/LFM2.5-8B-A1B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark) | 125 | 18 | text-generation |
-| 2026-08-20 | [LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF) | 0 | 14 | text-generation |
-| 2026-08-20 | [LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF) | 0 | 12 | text-generation |
-| 2026-08-20 | [LiquidAI/LFM2.5-2.6B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark-GGUF) | 0 | 13 | text-generation |
-| 2026-08-20 | [jeanbaptdzd/lfm25-nli-350m-v1k-mps-recipe-l4](https://huggingface.co/jeanbaptdzd/lfm25-nli-350m-v1k-mps-recipe-l4) | 0 | 0 |  |
-| 2026-08-20 | [jeanbaptdzd/lfm25-nli-350m-mps-domain-1k](https://huggingface.co/jeanbaptdzd/lfm25-nli-350m-mps-domain-1k) | 0 | 0 |  |
-| 2026-08-19 | [LiquidAI/LFM2.5-2.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF) | 421614 | 271 | text-generation |
+| 2026-08-21 | [software-mansion/react-native-executorch-lfm2.5-embedding-350m](https://huggingface.co/software-mansion/react-native-executorch-lfm2.5-embedding-350m) | 4549 | 0 |  |
+| 2026-08-21 | [LiquidAI/LFM2.5-2.6B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark-GGUF) | 940 | 27 | text-generation |
+| 2026-08-21 | [LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF) | 604 | 20 | text-generation |
+| 2026-08-21 | [LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF) | 369 | 20 | text-generation |
+| 2026-08-21 | [software-mansion/react-native-executorch-lfm2.5-colbert-350m](https://huggingface.co/software-mansion/react-native-executorch-lfm2.5-colbert-350m) | 30 | 0 |  |
+| 2026-08-21 | [dtaddis/LFM2.5-VL-450M-Unity-Sentis](https://huggingface.co/dtaddis/LFM2.5-VL-450M-Unity-Sentis) | 0 | 0 |  |
+| 2026-08-21 | [Panga-Azazia/LFM2.5-350M-LORA-TTS](https://huggingface.co/Panga-Azazia/LFM2.5-350M-LORA-TTS) | 0 | 0 |  |
+| 2026-08-21 | [rafmacalaba/lfm2.5-350M-multitask-datause](https://huggingface.co/rafmacalaba/lfm2.5-350M-multitask-datause) | 0 | 0 | text-generation |
+| 2026-08-21 | [infosave/LFM2.5-cmf](https://huggingface.co/infosave/LFM2.5-cmf) | 0 | 1 |  |
+| 2026-08-21 | [mlboydaisuke/LFM2-1.2B-ExecuTorch](https://huggingface.co/mlboydaisuke/LFM2-1.2B-ExecuTorch) | 0 | 0 | text-generation |
+| 2026-08-21 | [mlboydaisuke/LFM2-700M-ExecuTorch](https://huggingface.co/mlboydaisuke/LFM2-700M-ExecuTorch) | 0 | 0 | text-generation |
+| 2026-08-21 | [sahilchachra/LFM2.5-VL-3B-AWQ](https://huggingface.co/sahilchachra/LFM2.5-VL-3B-AWQ) | 0 | 0 | image-text-to-text |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
