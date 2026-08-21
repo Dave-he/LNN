@@ -8,7 +8,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
-- 更新：2026-08-20
+- 更新：2026-08-21
 - Star / Fork：1 / 0
 - 语言：unknown
 - Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
@@ -148,75 +148,105 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Adaptive Liquid Time-Constant Equivalent Dynamic Model with Transfer Learning for Active Distribution Networks with Grid-Forming IBRs
 
 ## Hugging Face 模型
-### [mlboydaisuke/LFM2.5-VL-450M-ExecuTorch](https://huggingface.co/mlboydaisuke/LFM2.5-VL-450M-ExecuTorch)
+### [software-mansion/react-native-executorch-lfm2.5-embedding-350m](https://huggingface.co/software-mansion/react-native-executorch-lfm2.5-embedding-350m)
+- 更新：2026-08-21
+- 下载 / Likes：4549 / 0
+- 任务：unknown
+- Tags：executorch, license:other, region:us
+
+### [LiquidAI/LFM2.5-2.6B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark-GGUF)
+- 更新：2026-08-21
+- 下载 / Likes：940 / 27
+- 任务：text-generation
+- Tags：llama.cpp, gguf, speculative-decoding, dspark, lfm2, draft-model, text-generation, base_model:LiquidAI/LFM2.5-2.6B-DSpark
+
+### [LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF)
+- 更新：2026-08-21
+- 下载 / Likes：604 / 20
+- 任务：text-generation
+- Tags：llama.cpp, gguf, speculative-decoding, dspark, lfm2, draft-model, text-generation, base_model:LiquidAI/LFM2.5-8B-A1B-DSpark
+
+### [LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF)
+- 更新：2026-08-21
+- 下载 / Likes：369 / 20
+- 任务：text-generation
+- Tags：llama.cpp, gguf, speculative-decoding, dspark, lfm2, draft-model, text-generation, base_model:LiquidAI/LFM2.5-1.2B-Instruct-DSpark
+
+### [software-mansion/react-native-executorch-lfm2.5-colbert-350m](https://huggingface.co/software-mansion/react-native-executorch-lfm2.5-colbert-350m)
+- 更新：2026-08-21
+- 下载 / Likes：30 / 0
+- 任务：unknown
+- Tags：executorch, license:other, region:us
+
+### [Panga-Azazia/LFM2.5-350M-LORA-TTS](https://huggingface.co/Panga-Azazia/LFM2.5-350M-LORA-TTS)
+- 更新：2026-08-21
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
+### [rafmacalaba/lfm2.5-350M-multitask-datause](https://huggingface.co/rafmacalaba/lfm2.5-350M-multitask-datause)
+- 更新：2026-08-21
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：safetensors, lfm2, data-use, provenance, usage, impact, sft, lora
+
+### [infosave/LFM2.5-cmf](https://huggingface.co/infosave/LFM2.5-cmf)
+- 更新：2026-08-21
+- 下载 / Likes：0 / 1
+- 任务：unknown
+- Tags：cmf, cortiq, quantized, lfm2, en, base_model:LiquidAI/LFM2.5-2.6B, base_model:finetune:LiquidAI/LFM2.5-2.6B, license:other
+
+### [dtaddis/LFM2.5-VL-450M-Unity-Sentis](https://huggingface.co/dtaddis/LFM2.5-VL-450M-Unity-Sentis)
+- 更新：2026-08-21
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：license:other, region:us
+
+### [mlboydaisuke/LFM2-1.2B-ExecuTorch](https://huggingface.co/mlboydaisuke/LFM2-1.2B-ExecuTorch)
+- 更新：2026-08-21
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：executorch, xnnpack, pte, on-device, text-generation, base_model:LiquidAI/LFM2-1.2B, base_model:quantized:LiquidAI/LFM2-1.2B, license:other
+
+### [mlboydaisuke/LFM2-700M-ExecuTorch](https://huggingface.co/mlboydaisuke/LFM2-700M-ExecuTorch)
+- 更新：2026-08-21
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：executorch, xnnpack, pte, on-device, text-generation, base_model:LiquidAI/LFM2-700M, base_model:quantized:LiquidAI/LFM2-700M, license:other
+
+### [sahilchachra/LFM2.5-VL-3B-AWQ](https://huggingface.co/sahilchachra/LFM2.5-VL-3B-AWQ)
 - 更新：2026-08-21
 - 下载 / Likes：0 / 0
 - 任务：image-text-to-text
-- Tags：executorch, xnnpack, pte, on-device, image-text-to-text, base_model:LiquidAI/LFM2.5-VL-450M, base_model:quantized:LiquidAI/LFM2.5-VL-450M, license:other
-
-### [rafmacalaba/lfm2.5-350M-datause](https://huggingface.co/rafmacalaba/lfm2.5-350M-datause)
-- 更新：2026-08-21
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：safetensors, lfm2, data-use, data-mentions, extraction, sft, lora, text-generation
-
-### [rafmacalaba/lfm2.5-350M-datause-prwp](https://huggingface.co/rafmacalaba/lfm2.5-350M-datause-prwp)
-- 更新：2026-08-21
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：safetensors, lfm2, data-use, data-mentions, extraction, sft, lora, text-generation
+- Tags：transformers, safetensors, lfm2_vl, image-text-to-text, awq, int4, w4a16, compressed-tensors
 
 ### [LiquidAI/LFM2.5-2.6B](https://huggingface.co/LiquidAI/LFM2.5-2.6B)
 - 更新：2026-08-20
-- 下载 / Likes：163222 / 667
+- 下载 / Likes：169335 / 672
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2.5-1.2B-Instruct-DSpark](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark)
 - 更新：2026-08-20
-- 下载 / Likes：219 / 23
-- 任务：text-generation
-- Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, lfm2, draft-model, text-generation
-
-### [LiquidAI/LFM2.5-2.6B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark)
-- 更新：2026-08-20
-- 下载 / Likes：189 / 23
+- 下载 / Likes：710 / 25
 - 任务：text-generation
 - Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, lfm2, draft-model, text-generation
 
 ### [LiquidAI/LFM2.5-8B-A1B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark)
 - 更新：2026-08-20
-- 下载 / Likes：125 / 22
+- 下载 / Likes：680 / 27
 - 任务：text-generation
 - Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, lfm2, lfm2_moe, draft-model
 
-### [LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-DSpark-GGUF)
+### [LiquidAI/LFM2.5-2.6B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark)
 - 更新：2026-08-20
-- 下载 / Likes：0 / 19
+- 下载 / Likes：401 / 27
 - 任务：text-generation
-- Tags：llama.cpp, gguf, speculative-decoding, dspark, lfm2, draft-model, text-generation, base_model:LiquidAI/LFM2.5-8B-A1B-DSpark
-
-### [LiquidAI/LFM2.5-2.6B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-DSpark-GGUF)
-- 更新：2026-08-20
-- 下载 / Likes：0 / 15
-- 任务：text-generation
-- Tags：llama.cpp, gguf, speculative-decoding, dspark, lfm2, draft-model, text-generation, base_model:LiquidAI/LFM2.5-2.6B-DSpark
-
-### [LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-DSpark-GGUF)
-- 更新：2026-08-20
-- 下载 / Likes：0 / 16
-- 任务：text-generation
-- Tags：llama.cpp, gguf, speculative-decoding, dspark, lfm2, draft-model, text-generation, base_model:LiquidAI/LFM2.5-1.2B-Instruct-DSpark
-
-### [osk-arr00/lfm2.5-2.6B-thinkingcap-distiller-v2](https://huggingface.co/osk-arr00/lfm2.5-2.6B-thinkingcap-distiller-v2)
-- 更新：2026-08-20
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, gguf, lfm2, text-generation, reasoning, distillation, thinking-cap
+- Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, lfm2, draft-model, text-generation
 
 ### [LiquidAI/LFM2.5-2.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF)
 - 更新：2026-08-19
-- 下载 / Likes：421614 / 275
+- 下载 / Likes：456769 / 279
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2.5, llama.cpp, text-generation, ar, zh, en
 
