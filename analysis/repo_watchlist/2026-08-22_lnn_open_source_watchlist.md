@@ -8,11 +8,25 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
-- 更新：2026-08-21
+- 更新：2026-08-22
 - Star / Fork：1 / 0
 - 语言：unknown
 - Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
 - 说明：Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B / 8B-A1B / 24B-A2B) and LFM2.5 (350M / 1.2B variants) with text, vision, audio, and thinking modes. The LEAP platform enables LFM customization and on-device deployment.
+
+### [smparc/murmur](https://github.com/smparc/murmur)
+- 更新：2026-08-22
+- Star / Fork：1 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages CUDA-accelerated Kafka streams, Spatio-Temporal GNNs, Liquid Neural Networks, and an Audio LLM to localize physical anomalies and forecast equipment failures in continuous time.
+
+### [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab)
+- 更新：2026-08-21
+- Star / Fork：0 / 0
+- 语言：JavaScript
+- Topics：未标注
+- 说明：Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab.
 
 ### [AwareLiquid/M1](https://github.com/AwareLiquid/M1)
 - 更新：2026-08-20
@@ -63,13 +77,6 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Leveraged Liquid Neural Networks for skin lesion classification
 
-### [arfazkachhi/UPISHIELD](https://github.com/arfazkachhi/UPISHIELD)
-- 更新：2026-08-15
-- Star / Fork：0 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：Fraud detection using Liquid Neural Network (CfC)
-
 ### [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving)
 - 更新：2026-08-13
 - Star / Fork：0 / 0
@@ -90,13 +97,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：C
 - Topics：未标注
 - 说明：Out-of-core BF16 inference for LiquidAI LFM2.5-8B-A1B on 8 GB Apple Silicon (no quantization).
-
-### [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab)
-- 更新：2026-08-08
-- Star / Fork：0 / 0
-- 语言：JavaScript
-- Topics：未标注
-- 说明：Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab.
 
 ### [03-Richik/LTC-vs-CfC-Comparison-](https://github.com/03-Richik/LTC-vs-CfC-Comparison-)
 - 更新：2026-08-07
