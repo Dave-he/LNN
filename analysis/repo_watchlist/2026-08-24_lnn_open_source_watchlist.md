@@ -7,6 +7,20 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-08-24
 
 ## GitHub 仓库
+### [prime-sandbox/LTC-World-Model](https://github.com/prime-sandbox/LTC-World-Model)
+- 更新：2026-08-24
+- Star / Fork：1 / 0
+- 语言：Python
+- Topics：liquid-time-constant, pytorch, world-models
+- 说明：A law-conditioned multi-step world model built around Liquid Time-Constant (LTC) dynamics.
+
+### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
+- 更新：2026-08-24
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
+
 ### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
 - 更新：2026-08-22
 - Star / Fork：1 / 0
@@ -55,13 +69,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：unknown
 - Topics：未标注
 - 说明：Edge AI for Cardiovascular Disease using Liquid Neural Network
-
-### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
-- 更新：2026-08-18
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
 
 ### [WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF](https://github.com/WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF)
 - 更新：2026-08-17
@@ -139,13 +146,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：未标注
 - 说明：vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct (BTC competition)
-
-### [Moetasem/LTC-Model-with-Transfer-Learning](https://github.com/Moetasem/LTC-Model-with-Transfer-Learning)
-- 更新：2026-07-24
-- Star / Fork：0 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：Adaptive Liquid Time-Constant Equivalent Dynamic Model with Transfer Learning for Active Distribution Networks with Grid-Forming IBRs
 
 ## Hugging Face 模型
 ### [immortaltatsu/ghostai-lfm2.5-1.2b-app-v2](https://huggingface.co/immortaltatsu/ghostai-lfm2.5-1.2b-app-v2)
