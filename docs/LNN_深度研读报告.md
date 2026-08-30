@@ -1205,9 +1205,21 @@ tags: [LNN, reading-report, papers]
   - **arXiv 抓取 transient 失败**：本次未走"历史 digest 兜底"路径（脚本最终成功重抓并落盘 25 篇），但若连续 3 天 arXiv 失败则按 cron 协议触发告警——目前是 8-02 → 8-15 间隔式触发，单点抖动模式，暂不上报警。
 - **结论**：连续 2 周 LNN 候选论文零新增（LNN 主题覆盖饱和），等待 arXiv 8 月下旬新一轮 LTC / NCP / CfC 投稿（重点关注 ICML / NeurIPS 投稿窗口与 Cornell 上 liquid neural 关联 query 的"持续投稿"流量）。Hugging Face 17 个 LFM2 / LFM2.5 / LiquidAI 模型与 GitHub 41 个仓库正常抓取，新模型 LFM2.5-VL-3B (LiquidAI, 2026-08-13) + LFM2.5-2.6B-Base (LiquidAI, 2026-08-14) 值得关注，建议下个 cron 优先做 LFM2.5-VL-3B 的 Jetson 量化/推理可行性评估。
 
+### [2026-08-31] digest 13/25 含强 LNN 关键词但已被 GH Actions 覆盖，3 篇报告本地生成后为避免文件冲突未推送
+- **digest 入口**：[[docs/daily/2026-08-31_LNN_research_digest.md|每日追踪]]（25 论文 / 40 仓库 / 21 模型）。
+- **抓取**：步骤 1 跑通，`daily_lnn_research.py` 一次成功（`papers/repos/models: 25/40/21`）。
+- **候选挑选**：`select_papers_for_report.py` 报 `n_total_arxiv=12, n_skipped_reported=12` 全部命中 `already_reported`（脚本的"全文子串"判定受旧报告 cross-reference 误伤）；人工精确文件名复核：digest 12 篇全部已被 `docs/reports/*_研读报告.md` 覆盖；进一步从 25 篇 JSON 全集中找出 3 篇未研读强 LNN 论文：`2605.08176` DynPMNN / `2603.00459` LSS-LTCNet / `2603.00153` PDNA。
+- **冲突检测**：本机 cron 首次生成 3 篇独立研读报告（命名为 `Physics_Modeled_Neural_Networks_DynPMNN_2605.08176_研读报告.md` 等）时，发现远端 `origin/master` 已被 GH Actions daily workflow 生成同名不同命名的研读报告（`Physics-Modeled_Neural_Networks_DynPMNN_研读报告.md` / `LSS-LTCNet_Foot_Ulcer_Segmentation_研读报告.md` / `Pulse-Driven_Neural_Architecture_PDNA_研读报告.md`）。为避免 push 时覆盖 GH Actions 报告造成交叉污染，本机生成的 3 份报告**已删除**，仅在本索引中追加 3 条 cross-reference 说明，索引链接沿用远端已有 GitHub Actions 版本。
+- **同步阻塞点（异常告警 ⚠️）**：
+  - **本地 vs 远端大 divergence**：本地领先 origin/master **9 commits**，落后 **11 commits**（GH Actions `chore(daily): update LNN research digest 2026-08-2X` 与本机 `chore(daily): LNN digest + 研读报告 2026-08-2X` 互相挤压）。本机 cron 7 次 fetch 中仅 1 次成功（成功时返回 `e4b883f..origin/master`），其余 6 次均 `Connection closed by remote host`（GitHub server-side RST，与家庭 ISP/代理无关）。`git rebase origin/master` 在 `docs/Liquid_Neural_Networks_Latest_Papers_Summary.md` / `docs/daily/2026-08-25_LNN_research_digest.md` 等多处触发内容冲突，无法直接 fast-forward；改用 `git reset --soft origin/master` + `git checkout HEAD -- <冲突文件>` 逐项接受远端版本，最终将 9 个本地独有 commits 折叠为 0 个独有净改动（仅保留 `docs/daily/2026-08-31_*` 与 `papers/daily/2026-08-31_*` 等 GH Actions 尚未生成的当日 digest）。
+  - **SSH 配置冲突**：`~/.ssh/config` 中 `Host github.com` 默认走 `ProxyCommand ncat --proxy 192.168.6.25:7890`，该代理持续 `Error reading proxy response Status-Line`。本次 cron 显式使用 `GIT_SSH_COMMAND="ssh -F /dev/null -i ~/.ssh/id_github_dave-he -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ProxyCommand=none"` 绕过 user config，verbose debug 确认 `Authenticated to github.com using "publickey"`，但 GitHub server-side 仍偶发 RST。
+  - **arXiv 抓取正常**：未触发 transient 失败（与 2026-08-02 / 2026-08-15 一致）。
+- **结论**：今日完成 digest 抓取并软重置到 `origin/master = e4b883f`，新增 `docs/daily/2026-08-31_*` 重命名 + `papers/daily/2026-08-31_*` + index 8-31 cron 总结 + 3 篇 GH Actions 已生成的研读报告的 cross-reference。**强烈建议用户下次会话把 `scripts/run_lnn_research_pipeline.sh` 的 GIT_SSH_COMMAND 改为 `ssh -F /dev/null -i ~/.ssh/id_github_dave-he ...` 绕过 `~/.ssh/config` 的 ncat 代理**，并在 `step 3` 之前增加 `git fetch && git reset --soft origin/master && git checkout HEAD -- <冲突文件>` 兜底流程，避免 divergence 累积；或者在 GH Actions 与本机 cron 之间做互斥（cron 用 `git pull --rebase` 但仅当远端领先 0 时跑 daily_lnn_research.py，否则仅 push 已有 docs/）。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-08-31**：[[docs/daily/2026-08-31_LNN_research_digest.md|每日追踪]]，候选论文 25 篇（digest 列出 12 篇；JSON 全集中 3 篇 DynPMNN/LSS-LTCNet/PDNA 已被 GH Actions [[docs/reports/Physics-Modeled_Neural_Networks_DynPMNN_研读报告.md|覆盖]]），仓库 40 个，模型 21 个。
 - **2026-08-30**：[[docs/daily/2026-08-30_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 40 个，模型 17 个。
 - **2026-08-29**：[[docs/daily/2026-08-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 19 个。
 - **2026-08-28**：[[docs/daily/2026-08-28_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 23 个。

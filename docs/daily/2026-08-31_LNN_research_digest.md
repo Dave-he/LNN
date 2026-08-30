@@ -1,17 +1,17 @@
 ---
-title: LNN 每日研究追踪 - 2026-08-28
-date: 2026-08-28
+title: LNN 每日研究追踪 - 2026-08-31
+date: 2026-08-31
 tags: [LNN, daily, automation, arxiv, github, huggingface]
 ---
 
-# LNN 每日研究追踪 - 2026-08-28
+# LNN 每日研究追踪 - 2026-08-31
 
 > 自动生成：聚合 arXiv、GitHub 与 Hugging Face 的 LNN / LTC / CfC / NCP / LFM 相关更新，供人工筛选后进入深度研读。
 
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：40 个
-- Hugging Face 候选模型：23 个
+- Hugging Face 候选模型：21 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -33,9 +33,11 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-08-30 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
+| 2026-08-30 | [Dmelon666/PhysLTCNet](https://github.com/Dmelon666/PhysLTCNet) | 0 | Python | PhysLTCNet: A Physics-Aware ODE-Guided Liquid Time-Constant Network for Multivariate Production Forecasting of a Single Well |
+| 2026-08-30 | [rahulrikisinghcode/liquid-time-constant-networks](https://github.com/rahulrikisinghcode/liquid-time-constant-networks) | 0 | Python |  |
 | 2026-08-28 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 1 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
-| 2026-08-28 | [rahulrikisinghcode/liquid-time-constant-networks](https://github.com/rahulrikisinghcode/liquid-time-constant-networks) | 0 | Python |  |
-| 2026-08-27 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B /… |
+| 2026-08-28 | [Think520change/gb-lnn](https://github.com/Think520change/gb-lnn) | 0 |  | To address these issues, a Multi-Scale Granular-Ball Liquid Neural Network (GB-LNN) is proposed as a common representation and temporal-modelling framework. |
 | 2026-08-27 | [ertakay10/DoctorLNN](https://github.com/ertakay10/DoctorLNN) | 0 |  | Patient-independent EEG seizure prediction with Liquid Neural Networks on CHB-MIT. LOSO evaluation with few-shot per-patient calibration: AUC 0.74 vs 0.63 (Log… |
 | 2026-08-27 | [shareef65/TLTO-Net](https://github.com/shareef65/TLTO-Net) | 0 | Python | TLTO-Net: A Trust and Energy-Efficient Routing Framework for Wireless Sensor Networks using Liquid Neural Networks and Termite Life Cycle Optimization |
 | 2026-08-27 | [shubhambaid/lfm2vl-lab](https://github.com/shubhambaid/lfm2vl-lab) | 0 | Python | Component-wise quantization and edge-inference study of LiquidAI/LFM2.5-VL-3B on Apple Silicon (MLX) |
@@ -43,24 +45,22 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-08-25 | [dddd888wedwde/liquid-time-constants-as-an-instrument-for-spatial-non-stationarity](https://github.com/dddd888wedwde/liquid-time-constants-as-an-instrument-for-spatial-non-stationarity) | 0 | Python |  |
 | 2026-08-24 | [prime-sandbox/LTC-World-Model](https://github.com/prime-sandbox/LTC-World-Model) | 1 | Python | A law-conditioned multi-step world model built around Liquid Time-Constant (LTC) dynamics. |
 | 2026-08-24 | [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction) | 0 | Python | Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines. |
-| 2026-08-22 | [smparc/murmur](https://github.com/smparc/murmur) | 1 | Python | An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages… |
-| 2026-08-21 | [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab) | 0 | JavaScript | Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab. |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-08-28 | [simaai/LFM2-VL-1.6B-Autoround-Safetensors](https://huggingface.co/simaai/LFM2-VL-1.6B-Autoround-Safetensors) | 11 | 0 | image-text-to-text |
-| 2026-08-28 | [simaai/LFM2-VL-450M-Autoround-Safetensors](https://huggingface.co/simaai/LFM2-VL-450M-Autoround-Safetensors) | 5 | 0 | image-text-to-text |
-| 2026-08-28 | [simaai/LFM2-VL-3B-Autoround-Safetensors](https://huggingface.co/simaai/LFM2-VL-3B-Autoround-Safetensors) | 4 | 0 | image-text-to-text |
-| 2026-08-28 | [simaai/LFM2-VL-450M-Autoround-a16w4](https://huggingface.co/simaai/LFM2-VL-450M-Autoround-a16w4) | 0 | 0 | image-text-to-text |
-| 2026-08-28 | [simaai/LFM2-VL-3B-Autoround-a16w4](https://huggingface.co/simaai/LFM2-VL-3B-Autoround-a16w4) | 0 | 0 | image-text-to-text |
-| 2026-08-28 | [simaai/LFM2-VL-1.6B-Autoround-a16w4](https://huggingface.co/simaai/LFM2-VL-1.6B-Autoround-a16w4) | 0 | 0 | image-text-to-text |
-| 2026-08-27 | [Oscilla/LFM2.5-1.2B-Thinking-mlx-8Bit](https://huggingface.co/Oscilla/LFM2.5-1.2B-Thinking-mlx-8Bit) | 0 | 0 | text-generation |
-| 2026-08-27 | [Oscilla/LFM2.5-1.2B-Instruct-mlx-8Bit](https://huggingface.co/Oscilla/LFM2.5-1.2B-Instruct-mlx-8Bit) | 0 | 0 | text-generation |
-| 2026-08-27 | [Oscilla/LFM2.5-350M-mlx-8Bit](https://huggingface.co/Oscilla/LFM2.5-350M-mlx-8Bit) | 0 | 0 | text-generation |
-| 2026-08-27 | [Oscilla/LFM2.5-1.2B-Thinking-mlx-4Bit](https://huggingface.co/Oscilla/LFM2.5-1.2B-Thinking-mlx-4Bit) | 0 | 0 | text-generation |
-| 2026-08-27 | [Oscilla/LFM2.5-1.2B-Instruct-mlx-4Bit](https://huggingface.co/Oscilla/LFM2.5-1.2B-Instruct-mlx-4Bit) | 0 | 0 | text-generation |
-| 2026-08-27 | [Oscilla/LFM2.5-350M-mlx-4Bit](https://huggingface.co/Oscilla/LFM2.5-350M-mlx-4Bit) | 0 | 0 | text-generation |
+| 2026-08-30 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 3525 | 9 | text-generation |
+| 2026-08-30 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 2807 | 0 | text-generation |
+| 2026-08-30 | [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec) | 986 | 0 | text-generation |
+| 2026-08-30 | [PraxySante/pt-luth-lfm2-1.2b](https://huggingface.co/PraxySante/pt-luth-lfm2-1.2b) | 7 | 0 |  |
+| 2026-08-30 | [ldalbe/calorie-lfm2.5-350m-onnx](https://huggingface.co/ldalbe/calorie-lfm2.5-350m-onnx) | 0 | 0 | text-generation |
+| 2026-08-30 | [adriandj3/LFM2.5-to-Llama8B-LLM2Vec-Kimodo](https://huggingface.co/adriandj3/LFM2.5-to-Llama8B-LLM2Vec-Kimodo) | 0 | 0 | feature-extraction |
+| 2026-08-30 | [ISB369/lfm25-230m-bash-sft100k](https://huggingface.co/ISB369/lfm25-230m-bash-sft100k) | 0 | 0 | text-generation |
+| 2026-08-30 | [vsuhas9/LFM2-VL-450M-8](https://huggingface.co/vsuhas9/LFM2-VL-450M-8) | 0 | 0 |  |
+| 2026-08-30 | [rafmacalaba/lfm2.5-350M-datause-multitask-tiered](https://huggingface.co/rafmacalaba/lfm2.5-350M-datause-multitask-tiered) | 0 | 0 | text-generation |
+| 2026-08-30 | [agney/lfm2-herdr-gguf](https://huggingface.co/agney/lfm2-herdr-gguf) | 0 | 0 | text-generation |
+| 2026-08-30 | [Soulfate24/LFM2.5-2.6B-DSpark-ASHQ1-Remix-GGUF](https://huggingface.co/Soulfate24/LFM2.5-2.6B-DSpark-ASHQ1-Remix-GGUF) | 0 | 0 | text-generation |
+| 2026-08-30 | [romainkh14/LFM2.5-230M_BRIK](https://huggingface.co/romainkh14/LFM2.5-230M_BRIK) | 0 | 0 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
