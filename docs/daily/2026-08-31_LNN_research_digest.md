@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：40 个
-- Hugging Face 候选模型：21 个
+- Hugging Face 候选模型：22 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -52,15 +52,15 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-08-30 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 3525 | 9 | text-generation |
 | 2026-08-30 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 2807 | 0 | text-generation |
 | 2026-08-30 | [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec) | 986 | 0 | text-generation |
+| 2026-08-30 | [mradermacher/LFM2-2.6B-Longevity-GGUF](https://huggingface.co/mradermacher/LFM2-2.6B-Longevity-GGUF) | 531 | 1 |  |
+| 2026-08-30 | [mradermacher/LFM2-1.2B-Longevity-GGUF](https://huggingface.co/mradermacher/LFM2-1.2B-Longevity-GGUF) | 337 | 0 |  |
 | 2026-08-30 | [PraxySante/pt-luth-lfm2-1.2b](https://huggingface.co/PraxySante/pt-luth-lfm2-1.2b) | 7 | 0 |  |
 | 2026-08-30 | [ldalbe/calorie-lfm2.5-350m-onnx](https://huggingface.co/ldalbe/calorie-lfm2.5-350m-onnx) | 0 | 0 | text-generation |
 | 2026-08-30 | [adriandj3/LFM2.5-to-Llama8B-LLM2Vec-Kimodo](https://huggingface.co/adriandj3/LFM2.5-to-Llama8B-LLM2Vec-Kimodo) | 0 | 0 | feature-extraction |
 | 2026-08-30 | [ISB369/lfm25-230m-bash-sft100k](https://huggingface.co/ISB369/lfm25-230m-bash-sft100k) | 0 | 0 | text-generation |
 | 2026-08-30 | [vsuhas9/LFM2-VL-450M-8](https://huggingface.co/vsuhas9/LFM2-VL-450M-8) | 0 | 0 |  |
 | 2026-08-30 | [rafmacalaba/lfm2.5-350M-datause-multitask-tiered](https://huggingface.co/rafmacalaba/lfm2.5-350M-datause-multitask-tiered) | 0 | 0 | text-generation |
-| 2026-08-30 | [agney/lfm2-herdr-gguf](https://huggingface.co/agney/lfm2-herdr-gguf) | 0 | 0 | text-generation |
 | 2026-08-30 | [Soulfate24/LFM2.5-2.6B-DSpark-ASHQ1-Remix-GGUF](https://huggingface.co/Soulfate24/LFM2.5-2.6B-DSpark-ASHQ1-Remix-GGUF) | 0 | 0 | text-generation |
-| 2026-08-30 | [romainkh14/LFM2.5-230M_BRIK](https://huggingface.co/romainkh14/LFM2.5-230M_BRIK) | 0 | 0 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

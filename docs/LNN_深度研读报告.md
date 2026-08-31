@@ -1219,7 +1219,7 @@ tags: [LNN, reading-report, papers]
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-08-31**：[[docs/daily/2026-08-31_LNN_research_digest.md|每日追踪]]，候选论文 25 篇（digest 列出 12 篇；JSON 全集中 3 篇 DynPMNN/LSS-LTCNet/PDNA 已被 GH Actions [[docs/reports/Physics-Modeled_Neural_Networks_DynPMNN_研读报告.md|覆盖]]），仓库 40 个，模型 21 个。
+- **2026-08-31**：[[docs/daily/2026-08-31_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 22 个。
 - **2026-08-30**：[[docs/daily/2026-08-30_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 40 个，模型 17 个。
 - **2026-08-29**：[[docs/daily/2026-08-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 19 个。
 - **2026-08-28**：[[docs/daily/2026-08-28_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 23 个。
@@ -1249,5 +1249,4 @@ tags: [LNN, reading-report, papers]
 - **2026-08-04**：[[docs/daily/2026-08-04_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
 - **2026-08-03**：[[docs/daily/2026-08-03_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 17 个。
 - **2026-08-02**：[[docs/daily/2026-08-02_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 21 个。
-- **2026-08-01**：[[docs/daily/2026-08-01_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 <!-- daily-lnn-index:end -->
