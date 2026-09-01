@@ -1,10 +1,10 @@
 ---
-title: LNN 每日研究追踪 - 2026-09-01
-date: 2026-09-01
+title: LNN 每日研究追踪 - 2026-09-02
+date: 2026-09-02
 tags: [LNN, daily, automation, arxiv, github, huggingface]
 ---
 
-# LNN 每日研究追踪 - 2026-09-01
+# LNN 每日研究追踪 - 2026-09-02
 
 > 自动生成：聚合 arXiv、GitHub 与 Hugging Face 的 LNN / LTC / CfC / NCP / LFM 相关更新，供人工筛选后进入深度研读。
 
@@ -33,10 +33,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-09-01 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
 | 2026-08-31 | [rahulrikisinghcode/liquid-time-constant-networks](https://github.com/rahulrikisinghcode/liquid-time-constant-networks) | 0 | Python |  |
 | 2026-08-31 | [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant) | 0 |  | Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free p… |
 | 2026-08-31 | [The-Silly-Glitch/cfc-async-fusion](https://github.com/The-Silly-Glitch/cfc-async-fusion) | 0 | TeX | Closed-Form Continuous-Time Networks for Native Asynchronous Sensor Fusion in Contact-Rich Manipulation — research dossier, experiments on Franka Panda (slip-r… |
-| 2026-08-30 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
 | 2026-08-30 | [Dmelon666/PhysLTCNet](https://github.com/Dmelon666/PhysLTCNet) | 0 | Python | PhysLTCNet: A Physics-Aware ODE-Guided Liquid Time-Constant Network for Multivariate Production Forecasting of a Single Well |
 | 2026-08-28 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 1 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
 | 2026-08-28 | [Think520change/gb-lnn](https://github.com/Think520change/gb-lnn) | 0 |  | To address these issues, a Multi-Scale Granular-Ball Liquid Neural Network (GB-LNN) is proposed as a common representation and temporal-modelling framework. |
@@ -49,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-09-01 | [simaai/LFM2.5-1.2B-Instruct-Autoround-Safetensors](https://huggingface.co/simaai/LFM2.5-1.2B-Instruct-Autoround-Safetensors) | 75 | 0 | text-generation |
-| 2026-09-01 | [simaai/LFM2.5-1.2B-Thinking-Autoround-Safetensors](https://huggingface.co/simaai/LFM2.5-1.2B-Thinking-Autoround-Safetensors) | 69 | 0 | text-generation |
-| 2026-09-01 | [simaai/LFM2-VL-1.6B-Autoround-Safetensors](https://huggingface.co/simaai/LFM2-VL-1.6B-Autoround-Safetensors) | 27 | 0 | image-text-to-text |
-| 2026-09-01 | [simaai/LFM2-VL-450M-Autoround-Safetensors](https://huggingface.co/simaai/LFM2-VL-450M-Autoround-Safetensors) | 20 | 0 | image-text-to-text |
-| 2026-09-01 | [simaai/LFM2-VL-3B-Autoround-Safetensors](https://huggingface.co/simaai/LFM2-VL-3B-Autoround-Safetensors) | 18 | 0 | image-text-to-text |
-| 2026-09-01 | [simaai/LFM2.5-VL-450M-Autoround-Safetensors](https://huggingface.co/simaai/LFM2.5-VL-450M-Autoround-Safetensors) | 17 | 0 | image-text-to-text |
-| 2026-09-01 | [simaai/LFM2.5-VL-1.6B-Autoround-Safetensors](https://huggingface.co/simaai/LFM2.5-VL-1.6B-Autoround-Safetensors) | 11 | 0 | image-text-to-text |
-| 2026-09-01 | [mradermacher/LFM-2.6B-Claude4.8-GPT-5.6-Sol-Grok-4.6_Fable5-Distilled-GGUF](https://huggingface.co/mradermacher/LFM-2.6B-Claude4.8-GPT-5.6-Sol-Grok-4.6_Fable5-Distilled-GGUF) | 0 | 0 |  |
-| 2026-09-01 | [SiddhJagani/Jwero-LFM2.5-1.2B-CRM-Insights-GGUF](https://huggingface.co/SiddhJagani/Jwero-LFM2.5-1.2B-CRM-Insights-GGUF) | 0 | 0 | text-generation |
-| 2026-09-01 | [jasonjimnz/LFM2.5-1.2B-Instruct_boe_legal_pre_alpha_3](https://huggingface.co/jasonjimnz/LFM2.5-1.2B-Instruct_boe_legal_pre_alpha_3) | 0 | 0 |  |
-| 2026-09-01 | [simaai/LFM2.5-VL-450M-Autoround-a16w4](https://huggingface.co/simaai/LFM2.5-VL-450M-Autoround-a16w4) | 0 | 0 | image-text-to-text |
-| 2026-09-01 | [simaai/LFM2.5-VL-1.6B-Autoround-a16w4](https://huggingface.co/simaai/LFM2.5-VL-1.6B-Autoround-a16w4) | 0 | 0 | image-text-to-text |
+| 2026-09-01 | [trymirai/LFM2.5-230M-L](https://huggingface.co/trymirai/LFM2.5-230M-L) | 414 | 0 | text-generation |
+| 2026-09-01 | [trymirai/LFM2.5-230M-M](https://huggingface.co/trymirai/LFM2.5-230M-M) | 395 | 0 | text-generation |
+| 2026-09-01 | [trymirai/LFM2.5-350M-L](https://huggingface.co/trymirai/LFM2.5-350M-L) | 389 | 0 | text-generation |
+| 2026-09-01 | [trymirai/LFM2.5-350M-M](https://huggingface.co/trymirai/LFM2.5-350M-M) | 386 | 0 | text-generation |
+| 2026-09-01 | [aweussom/LFM2.5-1.2B-Instruct-int4-cw-ov](https://huggingface.co/aweussom/LFM2.5-1.2B-Instruct-int4-cw-ov) | 56 | 1 |  |
+| 2026-09-01 | [aweussom/LFM2-1.2B-int4-cw-ov](https://huggingface.co/aweussom/LFM2-1.2B-int4-cw-ov) | 32 | 0 |  |
+| 2026-09-01 | [vsuhas9/LFM2-VL-450M-r32-a128](https://huggingface.co/vsuhas9/LFM2-VL-450M-r32-a128) | 0 | 0 | image-text-to-text |
+| 2026-09-01 | [udold/czech-legal-lfm2-5-8b-a1b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-8b-a1b-ckpt) | 0 | 0 |  |
+| 2026-09-01 | [udold/czech-legal-lfm2-5-2-6b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b-ckpt) | 0 | 0 |  |
+| 2026-09-01 | [litert-community/LFM2.5-230M](https://huggingface.co/litert-community/LFM2.5-230M) | 0 | 0 | text-generation |
+| 2026-09-01 | [ZTFlynn/LFM2.5-230M-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2.5-230M-Cascadia-ternary3) | 0 | 0 | text-generation |
+| 2026-09-01 | [jasonjimnz/LFM2.5-2.6B-boe_legal_pre_alpha](https://huggingface.co/jasonjimnz/LFM2.5-2.6B-boe_legal_pre_alpha) | 0 | 0 |  |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
