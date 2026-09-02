@@ -148,6 +148,24 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Out-of-core BF16 inference for LiquidAI LFM2.5-8B-A1B on 8 GB Apple Silicon (no quantization).
 
 ## Hugging Face 模型
+### [udold/czech-legal-lfm2-5-2-6b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b-ckpt)
+- 更新：2026-09-02
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, region:us
+
+### [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity)
+- 更新：2026-09-01
+- 下载 / Likes：1690 / 43
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, longevity, conversational
+
+### [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity)
+- 更新：2026-09-01
+- 下载 / Likes：662 / 43
+- 任务：unknown
+- Tags：safetensors, lfm2, liquid, lfm2.5, longevity, arxiv:2511.23404, base_model:LiquidAI/LFM2-1.2B, base_model:finetune:LiquidAI/LFM2-1.2B
+
 ### [trymirai/LFM2.5-230M-L](https://huggingface.co/trymirai/LFM2.5-230M-L)
 - 更新：2026-09-01
 - 下载 / Likes：414 / 0
@@ -184,6 +202,12 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：unknown
 - Tags：openvino, lfm2, npu, int4, intel, base_model:LiquidAI/LFM2-1.2B, base_model:quantized:LiquidAI/LFM2-1.2B, license:other
 
+### [ZTFlynn/LFM2-1.2B-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2-1.2B-Cascadia-ternary3)
+- 更新：2026-09-01
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：cascadia, lut, compression, spline, ternary, quantization, cpu, edge
+
 ### [vsuhas9/LFM2-VL-450M-r32-a128](https://huggingface.co/vsuhas9/LFM2-VL-450M-r32-a128)
 - 更新：2026-09-01
 - 下载 / Likes：0 / 0
@@ -191,12 +215,6 @@ tags: [LNN, repo-watchlist, automation]
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, trl, sft, conversational, arxiv:1910.09700
 
 ### [udold/czech-legal-lfm2-5-8b-a1b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-8b-a1b-ckpt)
-- 更新：2026-09-01
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
-
-### [udold/czech-legal-lfm2-5-2-6b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b-ckpt)
 - 更新：2026-09-01
 - 下载 / Likes：0 / 0
 - 任务：unknown
@@ -232,18 +250,6 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, edge, conversational
 
-### [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity)
-- 更新：2026-08-29
-- 下载 / Likes：1690 / 43
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, longevity, conversational
-
-### [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity)
-- 更新：2026-08-29
-- 下载 / Likes：662 / 42
-- 任务：unknown
-- Tags：safetensors, lfm2, liquid, lfm2.5, longevity, arxiv:2511.23404, base_model:LiquidAI/LFM2-1.2B, base_model:finetune:LiquidAI/LFM2-1.2B
-
 ### [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct)
 - 更新：2026-08-24
 - 下载 / Likes：375329 / 663
@@ -261,9 +267,3 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：99517 / 749
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, conversational
-
-### [LiquidAI/LFM2.5-VL-1.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF)
-- 更新：2026-08-24
-- 下载 / Likes：62813 / 107
-- 任务：image-text-to-text
-- Tags：gguf, liquid, edge, lfm2.5-vl, lfm2.5, llama.cpp, image-text-to-text, en
