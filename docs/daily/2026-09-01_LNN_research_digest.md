@@ -11,15 +11,16 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：40 个
-- Hugging Face 候选模型：16 个
+- Hugging Face 候选模型：21 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
+| 2026-08-27 | [Stochastic Liquid Deformation Fields: An SDE Generalisation of Closed-Form Continuous-Time Cells for Dynamic 3D Gaussian Splatting](https://arxiv.org/abs/2608.28702v1) | Mingzhao Li, Arghya Pal | Deformable 3D Gaussian Splatting (D-3DGS) reconstructs dynamic scenes by deforming a canonical set of 3D Gaussians through a deformation field of frame time. Replacing its MLP with a stack of Closed-form Continuous-time (CfC) cells-a Liquid Neural Network that solves the Liquid… |
 | 2026-08-04 | [PLAN: Parallel Liquid-Inspired Approximation Network for Efficient Representation Learning in Flexible Job Shop Scheduling](https://arxiv.org/abs/2608.03041v1) | Dhivya Dharshini Kannan, Wei Zhang, Jieyi Bi 等 | Deep reinforcement learning (DRL) approaches for flexible job shop scheduling (FJSP) heavily rely on attention-centric architectures to achieve state-of-the-art performance. However, these models suffer from excessive parameter counts and prohibitive inference latency as problem… |
 | 2026-07-14 | [Real-time fall detection based on vision for low-power edge platforms](https://arxiv.org/abs/2607.12909v1) | Wenjun Xia, Zhicheng Peng, Haopeng Li 等 | Falling detection is vital for elderly care and intelligent surveillance; however, prevailing vision-based approaches predominantly frame it as static pose classification or discrete temporal pattern matching, fundamentally overlooking the instability dynamics of the human suppo… |
-| 2026-07-09 | [TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning](https://arxiv.org/abs/2607.08283v2) | Yushen Liang, Yue Peng, Baosheng Jin 等 | Vision--Language--Action (VLA) policies such as $π_{0.5}$ and OpenVLA perform well on many manipulation tasks, but they are often reactive: the next action is predicted from the current observation, instruction, and proprioceptive state. This assumption breaks down in stage-depe… |
+| 2026-07-09 | [TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning](https://arxiv.org/abs/2607.08283v3) | Yushen Liang, Yue Peng, Baosheng Jin 等 | Vision--Language--Action (VLA) policies such as $π_{0.5}$ and OpenVLA perform well on many manipulation tasks, but they are often reactive: the next action is predicted from the current observation, instruction, and proprioceptive state. This assumption breaks down in stage-depe… |
 | 2026-07-02 | [Liquid Latent State Dynamics for Interpretable Turbofan Degradation Modeling](https://arxiv.org/abs/2607.01986v1) | Weizhi Nie, Weijie Wang, Yuting Su | Multivariate time-series models for prognostics are often evaluated by point prediction accuracy, yet their internal states rarely expose a coherent degradation process. We study liquid neural networks as latent dynamics models for aircraft engine health monitoring on the C-MAPS… |
 | 2026-06-25 | [Liquid Fusion of Heterogeneous Representations Towards General Salient Object Detection](https://arxiv.org/abs/2606.26849v1) | Ke Chen, Ling Zhou, Guangqi Jiang 等 | General Salient Object Detection (SOD) aims to identify and segment visually interesting objects from uni-modality or multi-modality scenes, recently advanced by cutting-edge State Space Models (SSMs). However, a critical limitation of current approaches is their neglect of the… |
 | 2026-06-19 | [Topological Neural Dynamics: A Neuron-wise Framework for Sequence Modeling](https://arxiv.org/abs/2606.21295v6) | Borui Cai, Yao Zhao | Existing sequence models, including RNNs, LSTMs, continuous-time networks, and Transformers, share a common structural principle: layer-wise dynamics, where all neurons in the same layer co-evolve through a shared parameterized operator, leaving individual neurons no freedom to… |
@@ -28,7 +29,6 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-06-14 | [Continuous Cross-Domain Traffic State Prediction via Memory-Augmented Graph Liquid Time-Constant Networks](https://arxiv.org/abs/2606.15807v1) | Jinrong Xiang, Ming Xu | Traffic state prediction is a fundamental task in intelligent transportation systems. In practical applications, some regions suffer from limited traffic observations due to insufficient sensing infrastructure, making cross-domain knowledge transfer an important solution for dat… |
 | 2026-06-14 | [Liquid Random Feature Methods for Time-Dependent Partial Differential Equations](https://arxiv.org/abs/2606.15571v1) | Jiale Linghu, Yangshuai Wang | A central challenge in mesh-free space--time approximation for time-dependent partial differential equations is to represent evolving temporal scales while keeping residual minimization computationally tractable. Random feature methods simplify this algebraic problem by freezing… |
 | 2026-06-10 | [Multi-Rate Mixture of Experts for Accelerating Liquid Neural Network Training](https://arxiv.org/abs/2606.12240v1) | Shilong Zong, Almuatazbellah Boker, Hoda Eldardiry | Multivariate time-series data often exhibit complex temporal dependencies, irregular sampling, and heterogeneous dynamics across multiple time scales, making accurate sequence modeling particularly challenging. Traditional recurrent neural networks (RNNs), such as Long Short-Ter… |
-| 2026-06-04 | [Liquid Neural Networks as a Drop-in Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting](https://arxiv.org/abs/2606.07670v1) | Mingzhao Li, Arghya Pal, Guan Yuan Tan | Deformable 3D Gaussian Splatting (D-3DGS) re-constructs dynamic scenes from monocular video by deforming a canonical set of 3D Gaussians through a positional-encoded MLP of frame time t. Although fitted to a continuous variable, the MLP couples no two values of t in its architec… |
 
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
@@ -49,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-08-31 | [LiquidAI/LFM2.5-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF) | 39861 | 55 | image-text-to-text |
-| 2026-08-31 | [LiquidAI/LFM2.5-VL-3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B) | 22816 | 196 | image-text-to-text |
-| 2026-08-31 | [ZTFlynn/LFM2.5-8B-A1B-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2.5-8B-A1B-Cascadia-ternary3) | 0 | 0 | text-generation |
-| 2026-08-31 | [ZTFlynn/LFM2.5-350M-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2.5-350M-Cascadia-ternary3) | 0 | 0 | text-generation |
-| 2026-08-31 | [ZTFlynn/LFM2.5-2.6B-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2.5-2.6B-Cascadia-ternary3) | 0 | 0 | text-generation |
-| 2026-08-31 | [ZTFlynn/LFM2.5-230M-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2.5-230M-Cascadia-ternary3) | 0 | 0 | text-generation |
-| 2026-08-31 | [ZTFlynn/LFM2.5-1.2B-Thinking-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2.5-1.2B-Thinking-Cascadia-ternary3) | 0 | 0 | text-generation |
-| 2026-08-31 | [ZTFlynn/LFM2-350M-Math-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2-350M-Math-Cascadia-ternary3) | 0 | 0 | text-generation |
-| 2026-08-31 | [ZTFlynn/LFM2.5-1.2B-Instruct-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2.5-1.2B-Instruct-Cascadia-ternary3) | 0 | 0 | text-generation |
-| 2026-08-29 | [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity) | 1540 | 43 | text-generation |
-| 2026-08-29 | [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity) | 645 | 42 |  |
-| 2026-08-24 | [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) | 391220 | 662 | text-generation |
+| 2026-09-01 | [simaai/LFM2.5-1.2B-Instruct-Autoround-Safetensors](https://huggingface.co/simaai/LFM2.5-1.2B-Instruct-Autoround-Safetensors) | 75 | 0 | text-generation |
+| 2026-09-01 | [simaai/LFM2.5-1.2B-Thinking-Autoround-Safetensors](https://huggingface.co/simaai/LFM2.5-1.2B-Thinking-Autoround-Safetensors) | 69 | 0 | text-generation |
+| 2026-09-01 | [simaai/LFM2-VL-1.6B-Autoround-Safetensors](https://huggingface.co/simaai/LFM2-VL-1.6B-Autoround-Safetensors) | 27 | 0 | image-text-to-text |
+| 2026-09-01 | [simaai/LFM2-VL-450M-Autoround-Safetensors](https://huggingface.co/simaai/LFM2-VL-450M-Autoround-Safetensors) | 20 | 0 | image-text-to-text |
+| 2026-09-01 | [simaai/LFM2-VL-3B-Autoround-Safetensors](https://huggingface.co/simaai/LFM2-VL-3B-Autoround-Safetensors) | 18 | 0 | image-text-to-text |
+| 2026-09-01 | [simaai/LFM2.5-VL-450M-Autoround-Safetensors](https://huggingface.co/simaai/LFM2.5-VL-450M-Autoround-Safetensors) | 17 | 0 | image-text-to-text |
+| 2026-09-01 | [simaai/LFM2.5-VL-1.6B-Autoround-Safetensors](https://huggingface.co/simaai/LFM2.5-VL-1.6B-Autoround-Safetensors) | 11 | 0 | image-text-to-text |
+| 2026-09-01 | [mradermacher/LFM-2.6B-Claude4.8-GPT-5.6-Sol-Grok-4.6_Fable5-Distilled-GGUF](https://huggingface.co/mradermacher/LFM-2.6B-Claude4.8-GPT-5.6-Sol-Grok-4.6_Fable5-Distilled-GGUF) | 0 | 0 |  |
+| 2026-09-01 | [SiddhJagani/Jwero-LFM2.5-1.2B-CRM-Insights-GGUF](https://huggingface.co/SiddhJagani/Jwero-LFM2.5-1.2B-CRM-Insights-GGUF) | 0 | 0 | text-generation |
+| 2026-09-01 | [jasonjimnz/LFM2.5-1.2B-Instruct_boe_legal_pre_alpha_3](https://huggingface.co/jasonjimnz/LFM2.5-1.2B-Instruct_boe_legal_pre_alpha_3) | 0 | 0 |  |
+| 2026-09-01 | [simaai/LFM2.5-VL-450M-Autoround-a16w4](https://huggingface.co/simaai/LFM2.5-VL-450M-Autoround-a16w4) | 0 | 0 | image-text-to-text |
+| 2026-09-01 | [simaai/LFM2.5-VL-1.6B-Autoround-a16w4](https://huggingface.co/simaai/LFM2.5-VL-1.6B-Autoround-a16w4) | 0 | 0 | image-text-to-text |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

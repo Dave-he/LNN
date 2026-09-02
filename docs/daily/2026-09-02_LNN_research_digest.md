@@ -49,6 +49,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
+| 2026-09-02 | [udold/czech-legal-lfm2-5-2-6b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b-ckpt) | 0 | 0 |  |
 | 2026-09-01 | [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity) | 1690 | 43 | text-generation |
 | 2026-09-01 | [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity) | 662 | 43 |  |
 | 2026-09-01 | [trymirai/LFM2.5-230M-L](https://huggingface.co/trymirai/LFM2.5-230M-L) | 414 | 0 | text-generation |
@@ -57,7 +58,6 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-01 | [trymirai/LFM2.5-350M-M](https://huggingface.co/trymirai/LFM2.5-350M-M) | 386 | 0 | text-generation |
 | 2026-09-01 | [aweussom/LFM2.5-1.2B-Instruct-int4-cw-ov](https://huggingface.co/aweussom/LFM2.5-1.2B-Instruct-int4-cw-ov) | 56 | 1 |  |
 | 2026-09-01 | [aweussom/LFM2-1.2B-int4-cw-ov](https://huggingface.co/aweussom/LFM2-1.2B-int4-cw-ov) | 32 | 0 |  |
-| 2026-09-01 | [udold/czech-legal-lfm2-5-2-6b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b-ckpt) | 0 | 0 |  |
 | 2026-09-01 | [ZTFlynn/LFM2-1.2B-Cascadia-ternary3](https://huggingface.co/ZTFlynn/LFM2-1.2B-Cascadia-ternary3) | 0 | 0 | text-generation |
 | 2026-09-01 | [vsuhas9/LFM2-VL-450M-r32-a128](https://huggingface.co/vsuhas9/LFM2-VL-450M-r32-a128) | 0 | 0 | image-text-to-text |
 | 2026-09-01 | [udold/czech-legal-lfm2-5-8b-a1b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-8b-a1b-ckpt) | 0 | 0 |  |
