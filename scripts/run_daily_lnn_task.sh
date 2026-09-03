@@ -37,9 +37,12 @@ if [[ -n "$SSH_KEY" ]]; then
 fi
 
 # -----------------------------------------------------------------------------
-# Git sync: 拉取 origin 并在分叉时重置到 origin/master,
-# 避免 systemd 04:30 推送与 GH Action 06:30 (前日 22:30 UTC) 补推产生 "Updates were rejected".
-# 根因: 历史上本地从未 pull, 累积落后后下一次 commit 即被 reject.
+# Git sync: 本地 systemd (04:30) 是 docs/ papers/ analysis/ 唯一的定时写入方。
+# .github/workflows/daily-lnn-research.yml 的 schedule 已移除, 只保留手动触发,
+# 因为两边提交相同路径 + 相同 message 会让本地与 origin 分叉, push 必然被拒
+# (2026-09-03 lnn-daily-research.service 就是这样 exit 1 的)。
+# 这里仍保留 sync/rebase, 是为了兼容手动 workflow_dispatch 或多机器写入。
+# 注意: 分叉时会 git reset --hard, 工作区未提交的改动会一起丢失。
 # -----------------------------------------------------------------------------
 git_retry() {
   local max_attempts=5
@@ -60,23 +63,53 @@ git_retry() {
 sync_with_origin() {
   echo "[$(date '+%F %T')] [sync] 拉取 origin/master" >> "$LOG_FILE"
   if ! git_retry git fetch --no-tags origin master; then
-    echo "[$(date '+%F %T')] [warn] git fetch 5 次重试均失败, 跳过 sync (push 可能被拒)" >> "$LOG_FILE"
+    echo "[$(date '+%F %T')] [error] git fetch 5 次重试均失败, 中止本次运行" >> "$LOG_FILE"
+    echo "[error] git fetch 失败, 中止: 在落后的 HEAD 上提交只会让 push 必然被拒" >&2
+    return 1
+  fi
+  # 判序必须先问"本地是否已包含 origin" —— 两边相同时两个 --is-ancestor 都成立,
+  # 先问这一侧才不会把"相同"误判成"落后"。
+  if git merge-base --is-ancestor origin/master HEAD 2>/dev/null; then
+    echo "[$(date '+%F %T')] [sync] 本地已包含 origin/master (相同或领先), 保留本地 commit" >> "$LOG_FILE"
     return 0
   fi
   if git merge-base --is-ancestor HEAD origin/master 2>/dev/null; then
-    echo "[$(date '+%F %T')] [sync] 本地已是 origin/master 后裔, 无需 reset" >> "$LOG_FILE"
-    return 0
-  fi
-  if git merge-base --is-ancestor origin/master HEAD 2>/dev/null; then
-    echo "[$(date '+%F %T')] [sync] 本地领先 origin (fast-forward), 保留本地 commit" >> "$LOG_FILE"
+    echo "[$(date '+%F %T')] [sync] 本地落后 origin/master, 快进" >> "$LOG_FILE"
+    git merge --ff-only origin/master
     return 0
   fi
   echo "[$(date '+%F %T')] [sync] 本地与 origin 分叉, 重置到 origin/master (丢弃本地落后 commit, 当日 digest 会重新生成)" >> "$LOG_FILE"
+  echo "[warn] 即将 git reset --hard: 本仓库工作区里未提交的改动会一并丢失" >&2
   git reset --hard origin/master
 }
 
+# push 被拒的唯一安全解法是先 rebase 到远端再推, 而不是盲目重试同一个 ref。
+push_with_rebase() {
+  local max_attempts=5
+  local attempt=1
+  while (( attempt <= max_attempts )); do
+    if git push origin HEAD; then
+      return 0
+    fi
+    echo "[$(date '+%F %T')] [warn] push 被拒 ($attempt/$max_attempts), 先 rebase 到 origin/master 再重试" >> "$LOG_FILE"
+    if ! git fetch --no-tags origin master; then
+      sleep 4
+      attempt=$((attempt+1))
+      continue
+    fi
+    if ! git pull --rebase --autostash origin master; then
+      echo "[$(date '+%F %T')] [error] rebase 冲突, 需要人工介入" >> "$LOG_FILE"
+      git rebase --abort 2>/dev/null || true
+      return 1
+    fi
+    attempt=$((attempt+1))
+    sleep 3
+  done
+  return 1
+}
+
 if [[ "$COMMIT_AND_PUSH" == "1" ]]; then
-  sync_with_origin
+  sync_with_origin || exit 1
 fi
 
 research_args=(--date "$RUN_DATE" --max-results "$MAX_RESULTS" --per-query "$PER_QUERY")
@@ -129,8 +162,8 @@ if [[ "$COMMIT_AND_PUSH" == "1" ]]; then
   git add docs papers analysis
   if ! git diff --cached --quiet; then
     git commit -m "chore(daily): update LNN research digest ${RUN_DATE}"
-    if ! git_retry git push origin HEAD; then
-      echo "[$(date '+%F %T')] [error] git push 5 次重试均失败, 留待下次 cron 修复" >> "$LOG_FILE"
+    if ! push_with_rebase; then
+      echo "[$(date '+%F %T')] [error] push 重试 + rebase 均失败, 留待下次 cron 修复" >> "$LOG_FILE"
       exit 1
     fi
   else
