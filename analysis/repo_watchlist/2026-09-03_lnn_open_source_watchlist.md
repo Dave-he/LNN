@@ -148,47 +148,23 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Anywhere-LFM est une application de bureau légère, pensée pour simplifier l'utilisation en local des modèles LiquidAI/LFM2 (350M à 1.2B). Elle permet à n'importe qui de discuter avec une IA générative performante, sans nécessiter de ligne de commande ou de configuration complexe.
 
 ## Hugging Face 模型
-### [litert-community/LFM2.5-1.2B-Instruct](https://huggingface.co/litert-community/LFM2.5-1.2B-Instruct)
+### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
 - 更新：2026-09-02
-- 下载 / Likes：1790 / 4
+- 下载 / Likes：3713 / 9
 - 任务：text-generation
-- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
 
-### [litert-community/LFM2.5-2.6B](https://huggingface.co/litert-community/LFM2.5-2.6B)
+### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
 - 更新：2026-09-02
-- 下载 / Likes：1091 / 1
+- 下载 / Likes：2976 / 0
 - 任务：text-generation
-- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, reasoning
+- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
 
-### [litert-community/LFM2.5-1.2B-Thinking](https://huggingface.co/litert-community/LFM2.5-1.2B-Thinking)
+### [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec)
 - 更新：2026-09-02
-- 下载 / Likes：1042 / 0
+- 下载 / Likes：1186 / 0
 - 任务：text-generation
-- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, reasoning
-
-### [litert-community/LFM2.5-1.2B-JP](https://huggingface.co/litert-community/LFM2.5-1.2B-JP)
-- 更新：2026-09-02
-- 下载 / Likes：767 / 1
-- 任务：text-generation
-- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, japanese
-
-### [andreagemelli/LFM2.5-350M-IT-Extract](https://huggingface.co/andreagemelli/LFM2.5-350M-IT-Extract)
-- 更新：2026-09-02
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, generated_from_trainer, sft, trl, conversational
-
-### [udold/czech-legal-lfm2-5-2-6b-GGUF](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b-GGUF)
-- 更新：2026-09-02
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：gguf, endpoints_compatible, region:us, conversational
-
-### [udold/czech-legal-lfm2-5-2-6b](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b)
-- 更新：2026-09-02
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, conversational, arxiv:1910.09700, endpoints_compatible, region:us
+- Tags：transformers, safetensors, gguf, lfm2, text-generation, cybersecurity, conversational, unsloth
 
 ### [udold/czech-legal-lfm2-5-2-6b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b-ckpt)
 - 更新：2026-09-02
@@ -213,6 +189,18 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 0
 - 任务：text-generation
 - Tags：gguf, lfm2, qad, german, speech-to-text, post-processing, text-generation, de
+
+### [jasonjimnz/LFM2.5-2.6B-boe_legal_pre_alpha](https://huggingface.co/jasonjimnz/LFM2.5-2.6B-boe_legal_pre_alpha)
+- 更新：2026-09-02
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, lfm2, llama.cpp, unsloth, endpoints_compatible, region:us, conversational
+
+### [hemanthdegapudi/LFM2.5-1.2B-Instruct](https://huggingface.co/hemanthdegapudi/LFM2.5-1.2B-Instruct)
+- 更新：2026-09-02
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 
 ### [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity)
 - 更新：2026-09-01

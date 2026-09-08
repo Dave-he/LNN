@@ -55,8 +55,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-06 | [mlboydaisuke/LFM2.5-VL-450M-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-VL-450M-CoreAI) | 61 | 0 | image-text-to-text |
 | 2026-09-06 | [mlboydaisuke/LFM2.5-VL-3B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-VL-3B-CoreAI) | 53 | 0 | image-text-to-text |
 | 2026-09-06 | [alpharomercoma/LFM2.5-2.6B-ExecuTorch-XNNPACK](https://huggingface.co/alpharomercoma/LFM2.5-2.6B-ExecuTorch-XNNPACK) | 0 | 0 |  |
+| 2026-09-06 | [opencal/lfm25vl-opencal-ONNX](https://huggingface.co/opencal/lfm25vl-opencal-ONNX) | 0 | 0 |  |
 | 2026-09-06 | [alpharomercoma/LFM2.5-1.2B-Instruct-ExecuTorch-XNNPACK](https://huggingface.co/alpharomercoma/LFM2.5-1.2B-Instruct-ExecuTorch-XNNPACK) | 0 | 0 |  |
-| 2026-09-06 | [OpenIntelligenceNet/LFM-2.6B-Zero-Refusal](https://huggingface.co/OpenIntelligenceNet/LFM-2.6B-Zero-Refusal) | 0 | 0 |  |
 | 2026-09-06 | [alpharomercoma/LFM2.5-2.6B-heretic](https://huggingface.co/alpharomercoma/LFM2.5-2.6B-heretic) | 0 | 0 | text-generation |
 | 2026-09-04 | [Synaptics/LiquidAI-LFM2-VL-450M](https://huggingface.co/Synaptics/LiquidAI-LFM2-VL-450M) | 60 | 0 | image-text-to-text |
 | 2026-09-03 | [Auguments/LiquidAI-LFM2.5-Audio-1.5B-GGUF-BF16](https://huggingface.co/Auguments/LiquidAI-LFM2.5-Audio-1.5B-GGUF-BF16) | 310 | 1 |  |

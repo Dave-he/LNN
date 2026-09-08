@@ -204,7 +204,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [Auguments/LiquidAI-LFM2.5-Audio-1.5B-GGUF-BF16](https://huggingface.co/Auguments/LiquidAI-LFM2.5-Audio-1.5B-GGUF-BF16)
 - 更新：2026-09-03
-- 下载 / Likes：301 / 0
+- 下载 / Likes：301 / 1
 - 任务：unknown
 - Tags：gguf, quantized, base_model:LiquidAI/LFM2.5-Audio-1.5B, base_model:quantized:LiquidAI/LFM2.5-Audio-1.5B, endpoints_compatible, region:us, conversational
 

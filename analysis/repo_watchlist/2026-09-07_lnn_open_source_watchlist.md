@@ -182,19 +182,19 @@ tags: [LNN, repo-watchlist, automation]
 - 更新：2026-09-06
 - 下载 / Likes：0 / 0
 - 任务：unknown
-- Tags：executorch, xnnpack, android, on-device, lfm2, openweights, base_model:LiquidAI/LFM2.5-2.6B, base_model:quantized:LiquidAI/LFM2.5-2.6B
+- Tags：executorch, xnnpack, android, on-device, openweights, base_model:LiquidAI/LFM2.5-2.6B, base_model:quantized:LiquidAI/LFM2.5-2.6B, license:other
+
+### [opencal/lfm25vl-opencal-ONNX](https://huggingface.co/opencal/lfm25vl-opencal-ONNX)
+- 更新：2026-09-06
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：onnx, lfm2_vl, region:us
 
 ### [alpharomercoma/LFM2.5-1.2B-Instruct-ExecuTorch-XNNPACK](https://huggingface.co/alpharomercoma/LFM2.5-1.2B-Instruct-ExecuTorch-XNNPACK)
 - 更新：2026-09-06
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：executorch, xnnpack, android, on-device, lfm2, openweights, base_model:LiquidAI/LFM2.5-1.2B-Instruct, base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct
-
-### [OpenIntelligenceNet/LFM-2.6B-Zero-Refusal](https://huggingface.co/OpenIntelligenceNet/LFM-2.6B-Zero-Refusal)
-- 更新：2026-09-06
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：gguf, endpoints_compatible, region:us, conversational
 
 ### [alpharomercoma/LFM2.5-2.6B-heretic](https://huggingface.co/alpharomercoma/LFM2.5-2.6B-heretic)
 - 更新：2026-09-06

@@ -7,12 +7,103 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-09-08
 
 ## GitHub 仓库
+### [solluna100X/Bi-LENS](https://github.com/solluna100X/Bi-LENS)
+- 更新：2026-09-07
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：Bi-LENS: A shape-scale decoupled deep learning framework for high-fidelity prediction of stress-strain curves of polyurethane elastomers, leveraging bidirectional liquid time-constant networks and physics-informed constraints.
+
+### [AwareLiquid/M1](https://github.com/AwareLiquid/M1)
+- 更新：2026-09-06
+- Star / Fork：1 / 0
+- 语言：Python
+- Topics：ai-research, attention-free, catastrophic-forgetting, continual-learning, edge-ai, edge-computing, liquid-neural-networks, llm
+- 说明：MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory
+
+### [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant)
+- 更新：2026-09-05
+- Star / Fork：2 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free parallel timestep execution via double buffering. No PyTorch/TensorFlow — pure Mojo, built for real-time inference on constrained hardware.
+
+### [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav)
+- 更新：2026-09-05
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
+
 ### [santos-sanz/spanish-wordle-slm](https://github.com/santos-sanz/spanish-wordle-slm)
 - 更新：2026-09-05
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：Fine-tunes a 2.6B LiquidAI LFM2.5 model with QLoRA on Apple Silicon to play Spanish Wordle, benchmarked head-to-head against DeepSeek Flash.
+
+### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
+- 更新：2026-09-04
+- Star / Fork：1 / 0
+- 语言：unknown
+- Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
+- 说明：Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B / 8B-A1B / 24B-A2B) and LFM2.5 (350M / 1.2B variants) with text, vision, audio, and thinking modes. The L
+
+### [404reese/XWormNet](https://github.com/404reese/XWormNet)
+- 更新：2026-09-04
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks
+
+### [asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL](https://github.com/asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL)
+- 更新：2026-09-03
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：MSc dissertation code: Closed-Form Continuous-Time Networks for Early Detection of Unsafe Trajectories in Multi-Turn LLM Conversations
+
+### [rahulrikisinghcode/liquid-time-constant-networks](https://github.com/rahulrikisinghcode/liquid-time-constant-networks)
+- 更新：2026-09-02
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：continuous-time-rnn, deep-learning, irregular-time-series, liquid-neural-networks, machine-learning, mfcc, neural-networks, python
+- 说明：Continuous-time RNNs that learn how fast to change, not just whether to. Liquid time-constant networks in PyTorch, with an MFCC speech front end.
+
+### [The-Silly-Glitch/cfc-async-fusion](https://github.com/The-Silly-Glitch/cfc-async-fusion)
+- 更新：2026-08-31
+- Star / Fork：0 / 0
+- 语言：TeX
+- Topics：未标注
+- 说明：Closed-Form Continuous-Time Networks for Native Asynchronous Sensor Fusion in Contact-Rich Manipulation — research dossier, experiments on Franka Panda (slip-reactive grasping, peg-in-hole) vs LSTM/TCN/Transformer. CfC/LTC with native async multimodal fusion.
+
+### [Dmelon666/PhysLTCNet](https://github.com/Dmelon666/PhysLTCNet)
+- 更新：2026-08-30
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：PhysLTCNet: A Physics-Aware ODE-Guided Liquid Time-Constant Network for Multivariate Production Forecasting of a Single Well
+
+### [Think520change/gb-lnn](https://github.com/Think520change/gb-lnn)
+- 更新：2026-08-28
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：To address these issues, a Multi-Scale Granular-Ball Liquid Neural Network (GB-LNN) is proposed as a common representation and temporal-modelling framework.
+
+### [ertakay10/DoctorLNN](https://github.com/ertakay10/DoctorLNN)
+- 更新：2026-08-27
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：Patient-independent EEG seizure prediction with Liquid Neural Networks on CHB-MIT. LOSO evaluation with few-shot per-patient calibration: AUC 0.74 vs 0.63 (LogReg baseline), calibration lifts mean AUC 0.63 to 0.76. Python.
+
+### [shareef65/TLTO-Net](https://github.com/shareef65/TLTO-Net)
+- 更新：2026-08-27
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：TLTO-Net: A Trust and Energy-Efficient Routing Framework for Wireless Sensor Networks using Liquid Neural Networks and Termite Life Cycle Optimization
 
 ### [shubhambaid/lfm2vl-lab](https://github.com/shubhambaid/lfm2vl-lab)
 - 更新：2026-08-27
@@ -21,68 +112,40 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Component-wise quantization and edge-inference study of LiquidAI/LFM2.5-VL-3B on Apple Silicon (MLX)
 
+### [infinition/LSTN](https://github.com/infinition/LSTN)
+- 更新：2026-08-26
+- Star / Fork：2 / 1
+- 语言：Rust
+- Topics：liquid-neural-network, natural-language-processing, neuromorphic, rust, spiking-neural-network, synaptic-plasticity, temporal-dynamics, text-generation
+- 说明：LSTN is an experimental text generation engine that models language not as static probabilities, but as a dynamic and "liquid" neural network. Each trigram (3-character sequence) acts as an individual neuron within a continuous temporal dynamic system.
+
+### [dddd888wedwde/liquid-time-constants-as-an-instrument-for-spatial-non-stationarity](https://github.com/dddd888wedwde/liquid-time-constants-as-an-instrument-for-spatial-non-stationarity)
+- 更新：2026-08-25
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：无
+
+### [prime-sandbox/LTC-World-Model](https://github.com/prime-sandbox/LTC-World-Model)
+- 更新：2026-08-24
+- Star / Fork：1 / 0
+- 语言：Python
+- Topics：liquid-time-constant, pytorch, world-models
+- 说明：A law-conditioned multi-step world model built around Liquid Time-Constant (LTC) dynamics.
+
+### [kydaong/lnn_prediction](https://github.com/kydaong/lnn_prediction)
+- 更新：2026-08-24
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Liquid Neural Network for detection of varying baseline operating points for Turbomachinery asset class like Pumps, Compressors and gas turbines.
+
 ### [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab)
 - 更新：2026-08-21
 - Star / Fork：0 / 0
 - 语言：JavaScript
 - Topics：未标注
 - 说明：Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab.
-
-### [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving)
-- 更新：2026-08-13
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache management, batching, quantization, and accuracy preservation for Viettel AI Race 2026.
-
-### [Tivaphe/Anywhere-lfm](https://github.com/Tivaphe/Anywhere-lfm)
-- 更新：2026-08-12
-- Star / Fork：1 / 1
-- 语言：Python
-- Topics：ai, desktop-app, lfm2, liquidai, llm, slm
-- 说明：Anywhere-LFM est une application de bureau légère, pensée pour simplifier l'utilisation en local des modèles LiquidAI/LFM2 (350M à 1.2B). Elle permet à n'importe qui de discuter avec une IA générative performante, sans nécessiter de ligne de commande ou de configuration complexe.
-
-### [dermatolecturio-ai/lfm25-c-bf16](https://github.com/dermatolecturio-ai/lfm25-c-bf16)
-- 更新：2026-08-12
-- Star / Fork：0 / 0
-- 语言：C
-- Topics：未标注
-- 说明：Out-of-core BF16 inference for LiquidAI LFM2.5-8B-A1B on 8 GB Apple Silicon (no quantization).
-
-### [03-Richik/LTC-vs-CfC-Comparison-](https://github.com/03-Richik/LTC-vs-CfC-Comparison-)
-- 更新：2026-08-07
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：A Comparative Study of Liquid Time-Constant Networks and Closed-form Continuous-time Neural Networks
-
-### [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer)
-- 更新：2026-08-03
-- Star / Fork：6 / 1
-- 语言：Python
-- Topics：contrastive-learning, dense-retrieval, embedding-models, lfm2, optuna, pytorch, wandb
-- 说明：Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data
-
-### [middesurya/daily-webapp-2026-05-04-liquidlab](https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab)
-- 更新：2026-07-31
-- Star / Fork：2 / 0
-- 语言：HTML
-- Topics：ai-built, claude-code, daily-webapp, liquid-neural-networks, mit-csail, neural-ode
-- 说明：LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, adaptive inference, efficiency arena. Zero dependencies.
-
-### [bestxrr/lfm-serving](https://github.com/bestxrr/lfm-serving)
-- 更新：2026-07-25
-- Star / Fork：0 / 1
-- 语言：Python
-- Topics：未标注
-- 说明：vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct (BTC competition)
-
-### [siddharthk27/Neural-Circuit-Policies](https://github.com/siddharthk27/Neural-Circuit-Policies)
-- 更新：2025-11-04
-- Star / Fork：4 / 0
-- 语言：Jupyter Notebook
-- Topics：未标注
-- 说明：This contains my experiments with Liquid Time Constant Networks (LTCs) and Closed Form Continuous Network (CFCs) architectures.
 
 ## Hugging Face 模型
 ### [HoangHa/lfm2.5-230m-title-v0](https://huggingface.co/HoangHa/lfm2.5-230m-title-v0)

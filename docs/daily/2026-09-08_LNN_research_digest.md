@@ -10,7 +10,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：25 篇
-- GitHub 候选仓库：11 个
+- GitHub 候选仓库：41 个
 - Hugging Face 候选模型：17 个
 - 已下载 PDF：0 个
 
@@ -33,17 +33,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-09-07 | [solluna100X/Bi-LENS](https://github.com/solluna100X/Bi-LENS) | 0 |  | Bi-LENS: A shape-scale decoupled deep learning framework for high-fidelity prediction of stress-strain curves of polyurethane elastomers, leveraging bidirectio… |
+| 2026-09-06 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 1 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
+| 2026-09-05 | [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant) | 2 |  | Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free p… |
+| 2026-09-05 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
 | 2026-09-05 | [santos-sanz/spanish-wordle-slm](https://github.com/santos-sanz/spanish-wordle-slm) | 0 | Python | Fine-tunes a 2.6B LiquidAI LFM2.5 model with QLoRA on Apple Silicon to play Spanish Wordle, benchmarked head-to-head against DeepSeek Flash. |
-| 2026-08-27 | [shubhambaid/lfm2vl-lab](https://github.com/shubhambaid/lfm2vl-lab) | 0 | Python | Component-wise quantization and edge-inference study of LiquidAI/LFM2.5-VL-3B on Apple Silicon (MLX) |
-| 2026-08-21 | [kortexa-ai/lfm-2.5-230m.lab](https://github.com/kortexa-ai/lfm-2.5-230m.lab) | 0 | JavaScript | Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab. |
-| 2026-08-13 | [Platypus27-coder/viettel-ai-race-llm-serving](https://github.com/Platypus27-coder/viettel-ai-race-llm-serving) | 0 | Python | High-performance vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct on an NVIDIA H200 MiG instance, focusing on low TTFT, low TPOT, efficient KV-cache… |
-| 2026-08-12 | [Tivaphe/Anywhere-lfm](https://github.com/Tivaphe/Anywhere-lfm) | 1 | Python | Anywhere-LFM est une application de bureau légère, pensée pour simplifier l'utilisation en local des modèles LiquidAI/LFM2 (350M à 1.2B). Elle permet à n'impor… |
-| 2026-08-12 | [dermatolecturio-ai/lfm25-c-bf16](https://github.com/dermatolecturio-ai/lfm25-c-bf16) | 0 | C | Out-of-core BF16 inference for LiquidAI LFM2.5-8B-A1B on 8 GB Apple Silicon (no quantization). |
-| 2026-08-07 | [03-Richik/LTC-vs-CfC-Comparison-](https://github.com/03-Richik/LTC-vs-CfC-Comparison-) | 0 |  | A Comparative Study of Liquid Time-Constant Networks and Closed-form Continuous-time Neural Networks |
-| 2026-08-03 | [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer) | 6 | Python | Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data |
-| 2026-07-31 | [middesurya/daily-webapp-2026-05-04-liquidlab](https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab) | 2 | HTML | LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, a… |
-| 2026-07-25 | [bestxrr/lfm-serving](https://github.com/bestxrr/lfm-serving) | 0 | Python | vLLM serving optimization for LiquidAI/LFM2.5-1.2B-Instruct (BTC competition) |
-| 2025-11-04 | [siddharthk27/Neural-Circuit-Policies](https://github.com/siddharthk27/Neural-Circuit-Policies) | 4 | Jupyter Notebook | This contains my experiments with Liquid Time Constant Networks (LTCs) and Closed Form Continuous Network (CFCs) architectures. |
+| 2026-09-04 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
+| 2026-09-04 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
+| 2026-09-03 | [asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL](https://github.com/asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL) | 0 | Python | MSc dissertation code: Closed-Form Continuous-Time Networks for Early Detection of Unsafe Trajectories in Multi-Turn LLM Conversations |
+| 2026-09-02 | [rahulrikisinghcode/liquid-time-constant-networks](https://github.com/rahulrikisinghcode/liquid-time-constant-networks) | 0 | Python | Continuous-time RNNs that learn how fast to change, not just whether to. Liquid time-constant networks in PyTorch, with an MFCC speech front end. |
+| 2026-08-31 | [The-Silly-Glitch/cfc-async-fusion](https://github.com/The-Silly-Glitch/cfc-async-fusion) | 0 | TeX | Closed-Form Continuous-Time Networks for Native Asynchronous Sensor Fusion in Contact-Rich Manipulation — research dossier, experiments on Franka Panda (slip-r… |
+| 2026-08-30 | [Dmelon666/PhysLTCNet](https://github.com/Dmelon666/PhysLTCNet) | 0 | Python | PhysLTCNet: A Physics-Aware ODE-Guided Liquid Time-Constant Network for Multivariate Production Forecasting of a Single Well |
+| 2026-08-28 | [Think520change/gb-lnn](https://github.com/Think520change/gb-lnn) | 0 |  | To address these issues, a Multi-Scale Granular-Ball Liquid Neural Network (GB-LNN) is proposed as a common representation and temporal-modelling framework. |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |

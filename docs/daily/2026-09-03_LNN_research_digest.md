@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：40 个
-- Hugging Face 候选模型：20 个
+- Hugging Face 候选模型：18 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -49,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-09-02 | [litert-community/LFM2.5-1.2B-Instruct](https://huggingface.co/litert-community/LFM2.5-1.2B-Instruct) | 1790 | 4 | text-generation |
-| 2026-09-02 | [litert-community/LFM2.5-2.6B](https://huggingface.co/litert-community/LFM2.5-2.6B) | 1091 | 1 | text-generation |
-| 2026-09-02 | [litert-community/LFM2.5-1.2B-Thinking](https://huggingface.co/litert-community/LFM2.5-1.2B-Thinking) | 1042 | 0 | text-generation |
-| 2026-09-02 | [litert-community/LFM2.5-1.2B-JP](https://huggingface.co/litert-community/LFM2.5-1.2B-JP) | 767 | 1 | text-generation |
-| 2026-09-02 | [andreagemelli/LFM2.5-350M-IT-Extract](https://huggingface.co/andreagemelli/LFM2.5-350M-IT-Extract) | 0 | 0 | text-generation |
-| 2026-09-02 | [udold/czech-legal-lfm2-5-2-6b-GGUF](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b-GGUF) | 0 | 0 |  |
-| 2026-09-02 | [udold/czech-legal-lfm2-5-2-6b](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b) | 0 | 0 | text-generation |
+| 2026-09-02 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 3713 | 9 | text-generation |
+| 2026-09-02 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 2976 | 0 | text-generation |
+| 2026-09-02 | [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec) | 1186 | 0 | text-generation |
 | 2026-09-02 | [udold/czech-legal-lfm2-5-2-6b-ckpt](https://huggingface.co/udold/czech-legal-lfm2-5-2-6b-ckpt) | 0 | 0 |  |
 | 2026-09-02 | [Jepoxy/LFM2.5-350M-Memory-Extractor](https://huggingface.co/Jepoxy/LFM2.5-350M-Memory-Extractor) | 0 | 1 | text-generation |
 | 2026-09-02 | [PinoCookie/LFM2.5-1.2B-Instruct-Abliterated](https://huggingface.co/PinoCookie/LFM2.5-1.2B-Instruct-Abliterated) | 0 | 0 | text-generation |
 | 2026-09-02 | [Buttermilk03/scriber-lfm2.5-350m-polishing-de-qad-v1](https://huggingface.co/Buttermilk03/scriber-lfm2.5-350m-polishing-de-qad-v1) | 0 | 0 | text-generation |
+| 2026-09-02 | [jasonjimnz/LFM2.5-2.6B-boe_legal_pre_alpha](https://huggingface.co/jasonjimnz/LFM2.5-2.6B-boe_legal_pre_alpha) | 0 | 0 |  |
+| 2026-09-02 | [hemanthdegapudi/LFM2.5-1.2B-Instruct](https://huggingface.co/hemanthdegapudi/LFM2.5-1.2B-Instruct) | 0 | 0 | text-generation |
 | 2026-09-01 | [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity) | 1690 | 43 | text-generation |
+| 2026-09-01 | [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity) | 662 | 43 |  |
+| 2026-08-31 | [LiquidAI/LFM2.5-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF) | 41180 | 57 | image-text-to-text |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

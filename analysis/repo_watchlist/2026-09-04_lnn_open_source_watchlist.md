@@ -234,7 +234,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct)
 - 更新：2026-08-24
-- 下载 / Likes：366847 / 665
+- 下载 / Likes：366847 / 666
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
 

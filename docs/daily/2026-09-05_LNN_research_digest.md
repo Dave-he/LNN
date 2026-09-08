@@ -58,7 +58,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-04 | [litert-community/LFM2.5-ColBERT-350M](https://huggingface.co/litert-community/LFM2.5-ColBERT-350M) | 99 | 0 | feature-extraction |
 | 2026-09-04 | [Synaptics/LiquidAI-LFM2-VL-450M](https://huggingface.co/Synaptics/LiquidAI-LFM2-VL-450M) | 44 | 0 | image-text-to-text |
 | 2026-09-04 | [PP12546/LFM2.5-Audio-1.5B](https://huggingface.co/PP12546/LFM2.5-Audio-1.5B) | 0 | 0 | audio-to-audio |
-| 2026-09-03 | [Auguments/LiquidAI-LFM2.5-Audio-1.5B-GGUF-BF16](https://huggingface.co/Auguments/LiquidAI-LFM2.5-Audio-1.5B-GGUF-BF16) | 301 | 0 |  |
+| 2026-09-03 | [Auguments/LiquidAI-LFM2.5-Audio-1.5B-GGUF-BF16](https://huggingface.co/Auguments/LiquidAI-LFM2.5-Audio-1.5B-GGUF-BF16) | 301 | 1 |  |
 | 2026-09-01 | [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity) | 3189 | 45 | text-generation |
 | 2026-09-01 | [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity) | 692 | 43 |  |
 
