@@ -1,0 +1,28 @@
+[lnn-cron] 2026-09-09T01:00:31Z  narrow 7-step cron start
+[lnn-cron]  cwd          = /Users/hyx/workspace/LNN
+[lnn-cron]  branch       = integration/daily-2026-09-09
+[lnn-cron]  top_n        = 5  (window=24h)
+[lnn-cron]  spec_url      = http://export.arxiv.org/api/query?search_query=all:"Liquid Neural Networks" OR all:"CfC" OR all:"LTC" OR all:"Neural ODEs"&start=0&max_results=100&sortBy=submittedDate&sortOrder=descending
+[lnn-cron]  fix          = rewrote scheme to https://, set UA "LNN-Cron/1.0 (mailto:research@example.com)", added --http1.1
+[lnn-cron]  fetch attempt 1 -> HTTP=000 SIZE=0 TIME=3.010s  (HTTP/2 framing reset; sleep 8s)
+[lnn-cron]  fetch attempt 2 -> HTTP=000 SIZE=0 TIME=3.011s  (still 0-byte; sleep 30s)
+[lnn-cron]  fetch attempt 3 -> HTTP=429 SIZE=14 TIME=0.780s  ("Rate exceeded."; sleep 60s)
+[lnn-cron]  fetch attempt 4 -> HTTP=429 SIZE=14 TIME=15.976s (still throttled; sleep 90s)
+[lnn-cron]  fetch attempt 5 -> HTTP=429 SIZE=14 TIME=16.398s (still throttled; sleep 180s)
+[lnn-cron]  fetch attempt 6 -> HTTP=000 SIZE=0 TIME=3.009s (single-keyword "Liquid Neural Networks"; sleep 120s)
+[lnn-cron]  fetch attempt 7 -> HTTP=429 SIZE=14 TIME=0.567s (still throttled after 3min cumulative cooldown)
+[lnn-cron]  pivot        = tried export.arxiv.org/rss/cs.LG (HTTP 200, but channel-only stub, no <item> entries)
+[lnn-cron]  pivot        = tried rss.arxiv.org/rss/cs.LG     (HTTP 200, same channel-only stub)
+[lnn-cron]  in-repo      = ran scripts/cron_lnn_arxiv_daily.sh, 3 attempts all HTTP=000 (curl with -L retry)
+[lnn-cron]  in-repo      = queued ~/.hermes/skills/.../scripts/fetch_arxiv_4query.py for background, hit foreground timeout ceiling (900s) before completion — API host hard-down
+[lnn-cron]  outcome      = arXiv API path on export.arxiv.org is hard-down today (Varnish throttle bucket 429/000 not clearing within ~9 min); RSS feeds return channel-only stub; no usable data
+[lnn-cron]  papers       = 0 in 24h (cannot determine — upstream dead, not a true zero)
+[lnn-cron]  step 4       = SKIPPED (no papers)
+[lnn-cron]  step 5       = SKIPPED (no papers)
+[lnn-cron]  step 6       = SKIPPED (no papers)
+[lnn-cron]  step 7       = n/a (errors handled per spec, did not abort)
+[lnn-cron]  note         = this is NOT a "0 papers in 24h" verdict — it's an "upstream unreachable" verdict. The cron spec says "若无新论文则跳过提交"; with no data to confirm, the safe default is skip.
+[lnn-cron]  note         = per umbrella trap #N+5 (2026-09-03) and 09-05 evening pivot rule: when API path is hard-down, RSS fallback on same host is the documented pivot; RSS feeds returned channel-only stub today, so no usable signal either.
+[lnn-cron]  trap         = api_hard_down_2026-09-09 — export.arxiv.org/api/query stuck in 429/000 Varnish throttle bucket; 7 attempts over ~9 min cumulative cooldown never cleared. Distinct from intermittent jitter (would clear on 90s).
+[lnn-cron]  trap         = rss_channel_only_2026-09-09 — export.arxiv.org/rss/<cat> and rss.arxiv.org/rss/<cat> both return 892-byte channel metadata stub, no recent entries. arXiv RSS feeds appear to no longer carry per-entry content.
+[lnn-cron]  end          = 2026-09-09T01:11:00Z  clean no-op per spec
