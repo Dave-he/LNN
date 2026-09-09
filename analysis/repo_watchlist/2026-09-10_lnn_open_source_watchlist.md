@@ -148,6 +148,12 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Chat with LiquidAI LFM2.5-230M entirely in-browser via ONNX + WebGPU. A kortexa.ai lab.
 
 ## Hugging Face 模型
+### [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity)
+- 更新：2026-09-09
+- 下载 / Likes：3934 / 46
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, longevity, conversational
+
 ### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
 - 更新：2026-09-09
 - 下载 / Likes：3576 / 9
@@ -165,6 +171,12 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：2076 / 0
 - 任务：text-generation
 - Tags：transformers, safetensors, gguf, lfm2, text-generation, cybersecurity, conversational, unsloth
+
+### [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity)
+- 更新：2026-09-09
+- 下载 / Likes：648 / 44
+- 任务：unknown
+- Tags：safetensors, lfm2, liquid, lfm2.5, longevity, arxiv:2511.23404, base_model:LiquidAI/LFM2-1.2B, base_model:finetune:LiquidAI/LFM2-1.2B
 
 ### [itsdevice/LFM2.5-350M-GRPO-Toolcall-2b](https://huggingface.co/itsdevice/LFM2.5-350M-GRPO-Toolcall-2b)
 - 更新：2026-09-09
@@ -207,18 +219,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：318 / 1
 - 任务：unknown
 - Tags：gguf, quantized, base_model:LiquidAI/LFM2.5-Audio-1.5B, base_model:quantized:LiquidAI/LFM2.5-Audio-1.5B, endpoints_compatible, region:us, conversational
-
-### [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity)
-- 更新：2026-09-01
-- 下载 / Likes：3934 / 46
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, longevity, conversational
-
-### [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity)
-- 更新：2026-09-01
-- 下载 / Likes：648 / 44
-- 任务：unknown
-- Tags：safetensors, lfm2, liquid, lfm2.5, longevity, arxiv:2511.23404, base_model:LiquidAI/LFM2-1.2B, base_model:finetune:LiquidAI/LFM2-1.2B
 
 ### [LiquidAI/LFM2.5-VL-3B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF)
 - 更新：2026-08-31
