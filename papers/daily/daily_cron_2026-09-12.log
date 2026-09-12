@@ -1,0 +1,22 @@
+[lnn-cron] 2026-09-12T01:55:00Z  arxiv-pdf-download spec start
+[lnn-cron]  cwd          = /Users/hyx/workspace/LNN
+[lnn-cron]  branch       = integration/daily-2026-09-09  (origin/master +4, not main)
+[lnn-cron]  top_n        = 5  (window=24h)
+[lnn-cron]  spec_url     = http://export.arxiv.org/api/query?search_query=all:"Liquid Neural Networks" OR all:"CfC" OR all:"LTC" OR all:"Neural ODEs"&start=0&max_results=100&sortBy=submittedDate&sortOrder=descending
+[lnn-cron]  attempt  1   -> HTTP=000 SIZE=0 TIME~3s (curl -v showed HTTP/2 framing reset; throttled)
+[lnn-cron]  attempt  2   -> HTTP=429 SIZE=14 "Rate exceeded." (after 60s cooldown)
+[lnn-cron]  attempt  3   -> HTTP=429 SIZE=14 "Rate exceeded." (after 240s cooldown)
+[lnn-cron]  attempt  4   -> HTTP=429 SIZE=14 "Rate exceeded." (after 360s cooldown)
+[lnn-cron]  attempt  5   -> HTTP=000 RemoteDisconnected (after additional ~14min cumulative cooldown across many probes)
+[lnn-cron]  probe all:Liquid+Neural+Networks alone (max_results=3) -> same 429/000 alternating
+[lnn-cron]  probe all:test (single keyword, 1 result)            -> same 429/000 alternating
+[lnn-cron]  control      = HEAD https://arxiv.org/  -> HTTP/2 200 (the website itself is reachable; only export.arxiv.org/api is rate-limited)
+[lnn-cron]  in-repo      = scripts/cron_lnn_arxiv_daily.sh exited 0 after 3 attempts (clean no-op per its hard-down branch)
+[lnn-cron]  outcome      = arXiv export.arxiv.org/api/query is HARD-DOWN again today (same Varnish throttle bucket as 2026-09-09 trap). Spec says "若无新论文则跳过提交"; with no data to confirm, the safe default is skip.
+[lnn-cron]  step 3 parse = SKIPPED (no XML)
+[lnn-cron]  step 4 PDFs  = SKIPPED (no entries to download)
+[lnn-cron]  step 5 git add/commit = SKIPPED (no new PDFs)
+[lnn-cron]  step 6 push origin    = SKIPPED (no commit)
+[lnn-cron]  errors handled per spec, did not abort
+[lnn-cron]  trap         = api_hard_down_2026-09-12 — same Varnish 429/000 throttle bucket as 2026-09-09; cumulative ~20min of waits between retries never cleared it.
+[lnn-cron]  end          = 2026-09-12T01:55:00Z  clean no-op per spec
