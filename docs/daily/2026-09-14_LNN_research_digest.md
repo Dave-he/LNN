@@ -15,7 +15,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - 已下载 PDF：0 个
 
 ## 数据源状态
-- `arXiv fetch failed: The read operation timed out`
+- `arXiv fetch failed: HTTP Error 429: Unknown Error`
 - 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
 
 ## arXiv 候选论文
@@ -40,11 +40,11 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
+| 2026-09-13 | [vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf](https://huggingface.co/vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf) | 0 | 0 |  |
 | 2026-09-13 | [mradermacher/LFM2.5-8B-A1B-UltraCoder-L3-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-UltraCoder-L3-i1-GGUF) | 0 | 0 |  |
 | 2026-09-13 | [mradermacher/LFM2.5-8B-A1B-UltraCoder-L3-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-UltraCoder-L3-GGUF) | 0 | 0 |  |
 | 2026-09-13 | [Susant-Achary/LFM2.5-8B-A1B-UltraCoder-L3-GGUF](https://huggingface.co/Susant-Achary/LFM2.5-8B-A1B-UltraCoder-L3-GGUF) | 0 | 1 | text-generation |
 | 2026-09-13 | [Susant-Achary/LFM2.5-8B-A1B-UltraCoder-L3](https://huggingface.co/Susant-Achary/LFM2.5-8B-A1B-UltraCoder-L3) | 0 | 1 | text-generation |
-| 2026-09-13 | [vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf](https://huggingface.co/vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf) | 0 | 0 |  |
 | 2026-09-13 | [fwizzer1/Fwizzer-LFM2.5-VL-3B-RU-GGUF](https://huggingface.co/fwizzer1/Fwizzer-LFM2.5-VL-3B-RU-GGUF) | 0 | 0 | image-text-to-text |
 | 2026-09-13 | [fwizzer1/Fwizzer-LFM2.5-VL-3B-ZH-GGUF](https://huggingface.co/fwizzer1/Fwizzer-LFM2.5-VL-3B-ZH-GGUF) | 0 | 0 | image-text-to-text |
 | 2026-09-13 | [fwizzer1/Fwizzer-LFM2.5-VL-3B-EN-GGUF](https://huggingface.co/fwizzer1/Fwizzer-LFM2.5-VL-3B-EN-GGUF) | 0 | 0 | image-text-to-text |
