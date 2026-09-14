@@ -9,3 +9,9 @@ cmd   : python3 scripts/experiment_imitation_lnn.py
        paper 2606.26849 (Liquid Fusion / SOD) was a false-positive match on "imitation" keyword.
        experiment_imitation_lnn.py ran successfully on default Imitation LNN setup.
        artifacts: analysis/control/2026-09-15_064019_imitation_lnn.{json,md}
+
+[2026-09-15 ~07:00] git push blocked: GitHub closes git-receive-pack connection
+       (plain `ssh -T` auth succeeds; receive-pack closes immediately after auth).
+       Both local commits (e76eda4 digest+report, 93908e3 reproduce) preserved
+       locally; not pushed. Issue persists for 30+ minutes across retries. Next
+       cron run should retry `git push origin HEAD`.
