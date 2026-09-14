@@ -15,6 +15,28 @@ Current package status: `0.1.0`. Core sequence models are covered by tests and
 are intended for reuse. Timestamped research reports and analysis outputs are
 evidence trails, not stable APIs.
 
+## 项目定位 (Project Positioning)
+
+> 截至 2026-09，本仓的 LNN 不是 dense LLM（GPT/Claude 级）的替代品，而是 **时间归纳偏置组件** — 详见 `docs/research/2026-09-08_technical_route_landscape.md` 与 `docs/reports/AwareLiquid_M1_MT-LNN_研读报告.md`。
+
+### LNN 在本仓的边界
+
+- **不在**: 通用智能密度、知识问答、数学/编程基准、可解释大模型 — 这些是 dense LLM 的领域
+- **在**: 三角区
+  - **端侧 + 小数据 + 时序**（Jetson Orin Nano / Snapdragon，目标 <1 GB 内存 / 80+ tok/s）
+  - **跨 session / 长生命 agent**（bit-exact 状态快照恢复、continual learning zero-param）
+  - **时间连续性关键的子任务**（注意力预测 / refinement / 模仿学习时序记忆）
+  - **物理建模 / 鲁棒 ODE**（PDE 解、振动动力学、irregular sampling）
+- **Liquid + X 混合** 是当前主流，纯 LNN 已难独立 SOTA — 本仓 `BlendGatedCfC` (r293) / `PLAN-CfC` (r302-r304) / 拟升级的 SNCP-PPO-Lite 13-protofilament actor 都遵循此模式
+- **LiquidAI 自己的演进证据**: LFM2 → LFM2.5 把"完整 ODE + RK4/Euler solver"换成"double-gated conv + GQA"，等于 Liquid AI 自己把"液态"从 backbone 降级到组件 — 本仓对齐此判断
+
+### 给后续 contributor 的明确边界
+
+1. **不要** 把 LNN 当作"小而美替代 GPT" — 9/14 deep-dive 的 MT-LNN 125M PPL 88.93 vs modern Transformer 78.86（同 20K 步 / fp32 / WikiText-103 严格控制变量），即便最优 LNN-O 系列仍输 ~10 PPL
+2. **要** 把 LNN 当作"时间归纳偏置模块嵌入更大模型" — 与 dense LLM 是"组件 vs 系统"关系，不是竞争
+3. **要** 引用任何 LNN 仓库的 claims 时，先查 README/论文里的 retraction / caveat 段（MT-LNN 自撤回 4 条主张：MT-adapter -28.5% PPL、原生 -31%、irregular-sampling、Orch-OR/consciousness）
+4. **要** 在新加 bench 前先对照 `docs/research/2026-09-08_technical_route_landscape.md` 的 9 路线 + 6 主题 + 自然下一步 backlog，避免重复造轮子
+
 ## Install
 
 ```bash

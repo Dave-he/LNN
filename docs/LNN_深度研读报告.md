@@ -2,11 +2,42 @@
 title: 液态神经网络 (LNN) 深度研读报告
 date: 2026-05-24
 tags: [LNN, reading-report, papers]
+positioning_updated: 2026-09-14
 ---
 
 # 液态神经网络 (LNN) 深度研读报告
 
 > 💡 **维护说明**：本文档用于系统性沉淀 LNN 的底层数学原理、核心演进路线及各篇论文的深度剖析。后续若有新论文发布，请统一按格式追加至 **“2. 论文深度研读 (持续更新区)”**。
+
+## 0. 项目定位 (2026-09-14 更新)
+
+> 本节为对所有读者的统一边界声明，与 `README.md` 的"项目定位"节、`docs/research/2026-09-08_technical_route_landscape.md` 的"主题 D / 主题 F"、以及 `docs/reports/AwareLiquid_M1_MT-LNN_研读报告.md` 的"§2.4 一句话定位" 保持一致。
+
+### LNN 在本仓 / 在学界 / 在产业 的真实位置
+
+**LNN 不是 dense LLM (GPT / Claude 级) 的替代品**，定位是 **时间归纳偏置组件**。三条直接证据：
+
+1. **MT-LNN 125M PPL 88.93 vs modern Transformer 78.86** — 同 20K 步 / fp32 / WikiText-103 严格控制变量，9/14 deep-dive 验证为 ✅ validated。即便最优 LNN-O 系列仍输 ~10 PPL，"LNN 替代 LLM" 在 PPL 维度不成立。
+2. **MT-LNN 的 O(1) 状态 crossover = 17–976 tokens** — 低于此区间 Transformer 仍占优；高于此区间 O-series 状态更小。这是**工程拐点**，不是"替代"信号。
+3. **Liquid AI 自己的演进证据**: LFM2 → LFM2.5 把"完整 ODE + RK4/Euler solver" 替换为 "double-gated conv + GQA"，**等于 Liquid AI 自己把"液态"从 backbone 降级到组件**。HF 下载量（LFM2.5-1.2B-Instruct 252K+ / LFM2.5-2.6B 120K+）说明 Liquid AI 的产品路径已是"Liquid + X 混合"，不是纯 LNN。
+
+### LNN 真价值所在 (三角区)
+
+| 三角区 | 代表证据 |
+|---|---|
+| 端侧 + 小数据 + 时序 | LFM2.5-1.2B 696MB Q4_0 / Snapdragon 80+ tok/s / Jetson Orin Nano 30-100 tok/s；MT-LNN O-series 0.381 MB state + 4.1 KB decode |
+| 跨 session / 长生命 agent | MT-LNN `(F, z)` bit-exact snapshot/restore；`test_long_context_memory.py` 钉住 20× RoPE window 状态平坦 |
+| 时间连续性关键子任务 | GazeLNN (2606.20491) / Fall Detection (2607.12909) / FlowFake (2606.19579) / Pulse-Driven (2603.00153) |
+| Continual learning 零参 | MT-LNN `replay.py` bounded reservoir-replay: forgetting≈0, acc≈1.0, 零新增参数 |
+| 物理建模 / 鲁棒 ODE | Liquid RFM (2606.15571) PDE 解 / PhysLTCNet / PDNA pulse |
+
+### 与本仓 `liquid_*` 路径的关系
+
+- 本仓 r287-r305 已在"路线 1 (CfC 闭式场) + 路线 2 (ODE 衍生)" 上积累（`Binary Gated Pulse` / `BlendGatedCfC` / `PLAN-CfC` / `MidpointCfC`）
+- 自然下一步：noise-injection bench / graph LTC cross-domain bench / SNCP-PPO-Lite 13-protofilament actor — 详见 `docs/research/2026-09-08_technical_route_landscape.md` §三"自然下一步"
+- **不要** 在引用任何 LNN 仓库的 claims 时直接采用 consciousness / AGI / new path to general intelligence 论调 — 必须先在 README/论文里查 retraction 段（MT-LNN 已自撤回 4 条主张）
+
+---
 
 ## 1. LNN 核心理论与技术脉络
 

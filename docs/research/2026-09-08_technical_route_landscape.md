@@ -192,6 +192,12 @@ LNN 没在 ImageNet / 检测 / 分割 backbone 上击败 CNN/Transformer, 它赢
 
 3. **Liquid + Symbolic 混合 (对应 2604.03955)**: 本仓 Liquid + X 已有 BlendGatedCfC, 但 Liquid + Symbolic attention 是新维度, 可探索。
 
+4. **SNCP-PPO-Lite actor 升级到 13-protofilament mixer (来自 9/14 MT-LNN deep-dive)**: `analysis/sncp_ppo_lite` 当前 actor 是单 LTC, 可借鉴 MT-LNN O-series 的 13 路并行 MultiScaleResonance 思路, 在不增参数预算的前提下把 5-scale τ ladder 扩成 13×5 网格。具体设计点: d_model 需 13 整除; frozen-τ ablation 0.285 vs 0.621 trained recall 表明 τ 初始化需谨慎; reference 实现见 `docs/reports/AwareLiquid_M1_MT-LNN_研读报告.md` §2.1。**先 micro-bench 再迁 SNCP**。
+
+5. **MT-LNN O-series 17-976 token crossover 作为设计指标 (来自 9/14)**: 把 MT-LNN 的 O(1) 状态 + Transformer 的 O(n) KV cache 拐点作为本仓 CfC 路径的"何时关 KV cache" 的工程指标 — 在 sequence length < crossover 时用 Tx-style KV cache + CfC backbone (质量优先), > crossover 时切 O-series 风格 state (记忆优先)。可加 `bench_cfc_state_vs_kv_crossover.py`。
+
+6. **跨 session bit-exact snapshot/restore 作为 agent baseline (来自 9/14)**: MT-LNN 的 `(F, z)` bit-exact round-trip 在长生命 agent / streaming continual learning 场景极有价值。本仓 `analysis/sncp_ppo_lite` / `analysis/emma_rover` 都可加 state snapshot API, 与现有 checkpoint 区分: snapshot = 模型内部 recurrent state (F, z) + τ ladder, checkpoint = 完整可恢复权重。
+
 ### 不属于本仓主线但值得跟踪
 
 - 路线 6 音频 (2604.10815 MeloTune, 2606.19579 FlowFake) — 离本仓 `liquid_*` 路径较远, 但与端侧部署主题相关
