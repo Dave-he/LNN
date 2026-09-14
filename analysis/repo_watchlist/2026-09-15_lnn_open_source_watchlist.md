@@ -148,12 +148,6 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：A law-conditioned multi-step world model built around Liquid Time-Constant (LTC) dynamics.
 
 ## Hugging Face 模型
-### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
-- 更新：2026-09-14
-- 下载 / Likes：3381 / 9
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
-
 ### [mlboydaisuke/LFM2.5-8B-A1B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-8B-A1B-CoreAI)
 - 更新：2026-09-14
 - 下载 / Likes：1075 / 2
@@ -190,17 +184,23 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：image-text-to-text
 - Tags：coreai, lfm2_vl, aimodel, apple-silicon, on-device, lfm2, vision-language, siglip2
 
+### [justinbalexander/LFM2-8B-A1B-STQ2.0-patchset](https://huggingface.co/justinbalexander/LFM2-8B-A1B-STQ2.0-patchset)
+- 更新：2026-09-14
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
+### [zetianli/LFM2.5-350M-Justinv1](https://huggingface.co/zetianli/LFM2.5-350M-Justinv1)
+- 更新：2026-09-14
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, lfm2, region:us
+
 ### [jc-builds/LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/jc-builds/LFM2.5-1.2B-Instruct-GGUF)
 - 更新：2026-09-14
 - 下载 / Likes：0 / 0
 - 任务：text-generation
 - Tags：gguf, llama.cpp, quantized, on-device, mobile, ios, apple-silicon, haplo
-
-### [ldenoue/employee-simulator-lfm25-350m-run04-onnx](https://huggingface.co/ldenoue/employee-simulator-lfm25-350m-run04-onnx)
-- 更新：2026-09-14
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：onnx, lfm2, region:us
 
 ### [LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF)
 - 更新：2026-09-11
