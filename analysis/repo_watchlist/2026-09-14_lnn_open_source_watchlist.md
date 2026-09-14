@@ -148,6 +148,12 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：A law-conditioned multi-step world model built around Liquid Time-Constant (LTC) dynamics.
 
 ## Hugging Face 模型
+### [vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf](https://huggingface.co/vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf)
+- 更新：2026-09-13
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, conversational, function-calling, lfm2, base_model:LiquidAI/LFM2.5-1.2B-Instruct, base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct, license:other, endpoints_compatible
+
 ### [mradermacher/LFM2.5-8B-A1B-UltraCoder-L3-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-UltraCoder-L3-i1-GGUF)
 - 更新：2026-09-13
 - 下载 / Likes：0 / 0
@@ -171,12 +177,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 1
 - 任务：text-generation
 - Tags：safetensors, gguf, lfm2_moe, text-generation, conversational, dataset:openbmb/UltraData-Code, base_model:LiquidAI/LFM2.5-8B-A1B, base_model:quantized:LiquidAI/LFM2.5-8B-A1B
-
-### [vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf](https://huggingface.co/vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf)
-- 更新：2026-09-13
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：gguf, endpoints_compatible, region:us, conversational
 
 ### [fwizzer1/Fwizzer-LFM2.5-VL-3B-RU-GGUF](https://huggingface.co/fwizzer1/Fwizzer-LFM2.5-VL-3B-RU-GGUF)
 - 更新：2026-09-13

@@ -7,6 +7,13 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-09-13
 
 ## GitHub 仓库
+### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
+- 更新：2026-09-12
+- Star / Fork：1 / 0
+- 语言：unknown
+- Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
+- 说明：Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B / 8B-A1B / 24B-A2B) and LFM2.5 (350M / 1.2B variants) with text, vision, audio, and thinking modes. The L
+
 ### [aygp-dr/liquid-neural-networks](https://github.com/aygp-dr/liquid-neural-networks)
 - 更新：2026-09-11
 - Star / Fork：22 / 3
@@ -62,13 +69,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：未标注
 - 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
-
-### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
-- 更新：2026-09-04
-- Star / Fork：1 / 0
-- 语言：unknown
-- Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
-- 说明：Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B / 8B-A1B / 24B-A2B) and LFM2.5 (350M / 1.2B variants) with text, vision, audio, and thinking modes. The L
 
 ### [asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL](https://github.com/asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL)
 - 更新：2026-09-03
@@ -178,35 +178,29 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：unknown
 - Tags：executorch, xnnpack, kleidiai, android, on-device, arm, openweights, base_model:LiquidAI/LFM2.5-1.2B-Instruct
 
-### [freelion/DAVID-lfm2-1.2b-8bit-mlx](https://huggingface.co/freelion/DAVID-lfm2-1.2b-8bit-mlx)
-- 更新：2026-09-12
-- 下载 / Likes：34 / 0
-- 任务：text-generation
-- Tags：mlx, safetensors, lfm2, dark-patterns, safety, classification, apple-silicon, text-generation
-
 ### [experimentalmachines/LFM2.5-2.6B-ExecuTorch-XNNPACK-32k](https://huggingface.co/experimentalmachines/LFM2.5-2.6B-ExecuTorch-XNNPACK-32k)
 - 更新：2026-09-12
 - 下载 / Likes：33 / 0
 - 任务：unknown
 - Tags：executorch, xnnpack, kleidiai, android, on-device, arm, openweights, base_model:LiquidAI/LFM2.5-2.6B
 
+### [lugman-madhiai/LFM2.5-230M-SearchAgent-SFT-02](https://huggingface.co/lugman-madhiai/LFM2.5-230M-SearchAgent-SFT-02)
+- 更新：2026-09-12
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, text-generation-inference, unsloth, conversational, en
+
+### [lugman-madhiai/LFM2.5-230M-SearchAgent-SFT-02-adapter](https://huggingface.co/lugman-madhiai/LFM2.5-230M-SearchAgent-SFT-02-adapter)
+- 更新：2026-09-12
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, safetensors, text-generation-inference, unsloth, lfm2, trl, en, base_model:LiquidAI/LFM2.5-230M
+
 ### [Neeze/LFM2.5-2.6B-TAGI-SVD-20](https://huggingface.co/Neeze/LFM2.5-2.6B-TAGI-SVD-20)
 - 更新：2026-09-12
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：safetensors, lfm2, region:us
-
-### [mradermacher/LFM2.5-230M-OpenCode-Title-Generator-GGUF](https://huggingface.co/mradermacher/LFM2.5-230M-OpenCode-Title-Generator-GGUF)
-- 更新：2026-09-12
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：transformers, gguf, sft, trl, unsloth, liquid, lfm2.5, en
-
-### [kth8/LFM2.5-230M-OpenCode-Title-Generator-GGUF](https://huggingface.co/kth8/LFM2.5-230M-OpenCode-Title-Generator-GGUF)
-- 更新：2026-09-12
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, gguf, sft, trl, unsloth, liquid, lfm2.5, text-generation
 
 ### [LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF)
 - 更新：2026-09-11
