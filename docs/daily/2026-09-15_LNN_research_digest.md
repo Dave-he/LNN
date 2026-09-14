@@ -49,15 +49,15 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-09-14 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 3381 | 9 | text-generation |
 | 2026-09-14 | [mlboydaisuke/LFM2.5-8B-A1B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-8B-A1B-CoreAI) | 1075 | 2 | text-generation |
 | 2026-09-14 | [mlboydaisuke/LFM2.5-2.6B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-2.6B-CoreAI) | 1003 | 0 | text-generation |
 | 2026-09-14 | [mlboydaisuke/LFM2.5-1.2B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-1.2B-CoreAI) | 563 | 0 | text-generation |
 | 2026-09-14 | [vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf](https://huggingface.co/vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf) | 121 | 0 |  |
 | 2026-09-14 | [mlboydaisuke/LFM2.5-VL-3B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-VL-3B-CoreAI) | 57 | 0 | image-text-to-text |
 | 2026-09-14 | [mlboydaisuke/LFM2.5-VL-450M-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-VL-450M-CoreAI) | 53 | 0 | image-text-to-text |
+| 2026-09-14 | [justinbalexander/LFM2-8B-A1B-STQ2.0-patchset](https://huggingface.co/justinbalexander/LFM2-8B-A1B-STQ2.0-patchset) | 0 | 0 |  |
+| 2026-09-14 | [zetianli/LFM2.5-350M-Justinv1](https://huggingface.co/zetianli/LFM2.5-350M-Justinv1) | 0 | 0 |  |
 | 2026-09-14 | [jc-builds/LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/jc-builds/LFM2.5-1.2B-Instruct-GGUF) | 0 | 0 | text-generation |
-| 2026-09-14 | [ldenoue/employee-simulator-lfm25-350m-run04-onnx](https://huggingface.co/ldenoue/employee-simulator-lfm25-350m-run04-onnx) | 0 | 0 |  |
 | 2026-09-11 | [LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF) | 2293 | 31 | audio-to-audio |
 | 2026-09-11 | [LiquidAI/LFM2.5-1.2B-JP-202606-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF) | 1962 | 27 | text-generation |
 | 2026-09-10 | [LiquidAI/LeapBundles](https://huggingface.co/LiquidAI/LeapBundles) | 0 | 20 |  |
