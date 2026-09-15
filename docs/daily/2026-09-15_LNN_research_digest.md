@@ -12,7 +12,11 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：41 个
 - Hugging Face 候选模型：18 个
-- 已下载 PDF：0 个
+- 已下载 PDF：4 个
+
+## 数据源状态
+- `arXiv fetch failed: Remote end closed connection without response`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
@@ -49,18 +53,24 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
+| 2026-09-15 | [justinbalexander/LFM2-8B-A1B-STQ2.0-patchset](https://huggingface.co/justinbalexander/LFM2-8B-A1B-STQ2.0-patchset) | 0 | 0 |  |
 | 2026-09-14 | [mlboydaisuke/LFM2.5-8B-A1B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-8B-A1B-CoreAI) | 1075 | 2 | text-generation |
 | 2026-09-14 | [mlboydaisuke/LFM2.5-2.6B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-2.6B-CoreAI) | 1003 | 0 | text-generation |
-| 2026-09-14 | [mlboydaisuke/LFM2.5-1.2B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-1.2B-CoreAI) | 563 | 0 | text-generation |
-| 2026-09-14 | [vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf](https://huggingface.co/vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf) | 121 | 0 |  |
 | 2026-09-14 | [mlboydaisuke/LFM2.5-VL-3B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-VL-3B-CoreAI) | 57 | 0 | image-text-to-text |
 | 2026-09-14 | [mlboydaisuke/LFM2.5-VL-450M-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-VL-450M-CoreAI) | 53 | 0 | image-text-to-text |
-| 2026-09-14 | [justinbalexander/LFM2-8B-A1B-STQ2.0-patchset](https://huggingface.co/justinbalexander/LFM2-8B-A1B-STQ2.0-patchset) | 0 | 0 |  |
+| 2026-09-14 | [gcoli/LFM2.5-2.6B-MLX-oQ4-fp16](https://huggingface.co/gcoli/LFM2.5-2.6B-MLX-oQ4-fp16) | 0 | 0 |  |
+| 2026-09-14 | [gcoli/LFM2.5-2.6B-MLX-oQ4e-fp16](https://huggingface.co/gcoli/LFM2.5-2.6B-MLX-oQ4e-fp16) | 0 | 0 |  |
 | 2026-09-14 | [zetianli/LFM2.5-350M-Justinv1](https://huggingface.co/zetianli/LFM2.5-350M-Justinv1) | 0 | 0 |  |
 | 2026-09-14 | [jc-builds/LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/jc-builds/LFM2.5-1.2B-Instruct-GGUF) | 0 | 0 | text-generation |
 | 2026-09-11 | [LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF) | 2293 | 31 | audio-to-audio |
 | 2026-09-11 | [LiquidAI/LFM2.5-1.2B-JP-202606-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF) | 1962 | 27 | text-generation |
 | 2026-09-10 | [LiquidAI/LeapBundles](https://huggingface.co/LiquidAI/LeapBundles) | 0 | 20 |  |
+
+## PDF 归档
+- `papers/daily/2026-09-15/2026-08-27_Stochastic_Liquid_Deformation_Fields_An_SDE_Generalisation_of_Closed-Form_Continuous-Time_Cells__2608.28702v1.pdf`
+- `papers/daily/2026-09-15/2026-08-04_PLAN_Parallel_Liquid-Inspired_Approximation_Network_for_Efficient_Representation_Learning_in_Fle_2608.03041v1.pdf`
+- `papers/daily/2026-09-15/2026-07-14_Real-time_fall_detection_based_on_vision_for_low-power_edge_platforms_2607.12909v1.pdf`
+- `papers/daily/2026-09-15/2026-07-09_TFP_Temporally_Conditioned_Memory-Fusion_Policies_for_Visuomotor_Learning_2607.08283v3.pdf`
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

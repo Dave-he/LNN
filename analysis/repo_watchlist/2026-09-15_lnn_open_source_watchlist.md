@@ -148,6 +148,12 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：A law-conditioned multi-step world model built around Liquid Time-Constant (LTC) dynamics.
 
 ## Hugging Face 模型
+### [justinbalexander/LFM2-8B-A1B-STQ2.0-patchset](https://huggingface.co/justinbalexander/LFM2-8B-A1B-STQ2.0-patchset)
+- 更新：2026-09-15
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, endpoints_compatible, region:us, conversational
+
 ### [mlboydaisuke/LFM2.5-8B-A1B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-8B-A1B-CoreAI)
 - 更新：2026-09-14
 - 下载 / Likes：1075 / 2
@@ -159,18 +165,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：1003 / 0
 - 任务：text-generation
 - Tags：coreai, lfm2, aimodel, apple-silicon, on-device, hybrid, text-generation, base_model:LiquidAI/LFM2.5-2.6B
-
-### [mlboydaisuke/LFM2.5-1.2B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-1.2B-CoreAI)
-- 更新：2026-09-14
-- 下载 / Likes：563 / 0
-- 任务：text-generation
-- Tags：coreai, coreai-aimodel, aimodel, apple-silicon, on-device, lfm2, hybrid, text-generation
-
-### [vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf](https://huggingface.co/vitorcalvi/ava-lab-dyagnosys-lfm2.5-gguf)
-- 更新：2026-09-14
-- 下载 / Likes：121 / 0
-- 任务：unknown
-- Tags：gguf, conversational, function-calling, lfm2, base_model:LiquidAI/LFM2.5-1.2B-Instruct, base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct, license:other, endpoints_compatible
 
 ### [mlboydaisuke/LFM2.5-VL-3B-CoreAI](https://huggingface.co/mlboydaisuke/LFM2.5-VL-3B-CoreAI)
 - 更新：2026-09-14
@@ -184,11 +178,17 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：image-text-to-text
 - Tags：coreai, lfm2_vl, aimodel, apple-silicon, on-device, lfm2, vision-language, siglip2
 
-### [justinbalexander/LFM2-8B-A1B-STQ2.0-patchset](https://huggingface.co/justinbalexander/LFM2-8B-A1B-STQ2.0-patchset)
+### [gcoli/LFM2.5-2.6B-MLX-oQ4-fp16](https://huggingface.co/gcoli/LFM2.5-2.6B-MLX-oQ4-fp16)
 - 更新：2026-09-14
 - 下载 / Likes：0 / 0
 - 任务：unknown
-- Tags：region:us
+- Tags：mlx, safetensors, lfm2, oq, quantized, 4-bit, region:us
+
+### [gcoli/LFM2.5-2.6B-MLX-oQ4e-fp16](https://huggingface.co/gcoli/LFM2.5-2.6B-MLX-oQ4e-fp16)
+- 更新：2026-09-14
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：mlx, safetensors, lfm2, oq, quantized, 4-bit, region:us
 
 ### [zetianli/LFM2.5-350M-Justinv1](https://huggingface.co/zetianli/LFM2.5-350M-Justinv1)
 - 更新：2026-09-14
