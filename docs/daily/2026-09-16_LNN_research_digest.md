@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：25 篇
 - GitHub 候选仓库：41 个
-- Hugging Face 候选模型：19 个
+- Hugging Face 候选模型：20 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -56,11 +56,11 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-15 | [litert-community/LFM2.5-VL-1.6B](https://huggingface.co/litert-community/LFM2.5-VL-1.6B) | 956 | 4 | image-text-to-text |
 | 2026-09-15 | [freelion/DAVID-lfm2-1.2b-full](https://huggingface.co/freelion/DAVID-lfm2-1.2b-full) | 573 | 0 |  |
 | 2026-09-15 | [freelion/DAVID-lfm2-1.2b-8bit-mlx](https://huggingface.co/freelion/DAVID-lfm2-1.2b-8bit-mlx) | 90 | 0 | text-generation |
+| 2026-09-15 | [justinbalexander/LFM2-8B-A1B-STQ2.0-patchset](https://huggingface.co/justinbalexander/LFM2-8B-A1B-STQ2.0-patchset) | 9 | 0 |  |
 | 2026-09-15 | [aoiandroid/LFM2.5-2.6B](https://huggingface.co/aoiandroid/LFM2.5-2.6B) | 0 | 0 | text-generation |
 | 2026-09-15 | [inductiveML/LFM2.5-230M-MONARCH](https://huggingface.co/inductiveML/LFM2.5-230M-MONARCH) | 0 | 0 | text-generation |
 | 2026-09-15 | [Omni-Post-Train/LFM2.5-Audio-1.5B-IFEval-SFT-GRPO](https://huggingface.co/Omni-Post-Train/LFM2.5-Audio-1.5B-IFEval-SFT-GRPO) | 0 | 0 |  |
 | 2026-09-11 | [LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF) | 2256 | 32 | audio-to-audio |
-| 2026-09-11 | [LiquidAI/LFM2.5-1.2B-JP-202606-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF) | 1813 | 27 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

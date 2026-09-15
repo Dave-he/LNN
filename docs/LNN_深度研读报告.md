@@ -1250,7 +1250,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-09-16**：[[docs/daily/2026-09-16_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
+- **2026-09-16**：[[docs/daily/2026-09-16_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个。
 - **2026-09-15**：[[docs/daily/2026-09-15_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 - **2026-09-14**：[[docs/daily/2026-09-14_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 17 个。
 - **2026-09-11**：[[docs/daily/2026-09-11_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。

@@ -190,6 +190,12 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2, text-generation, conversational, en, license:cc-by-nc-nd-4.0, 8-bit
 
+### [justinbalexander/LFM2-8B-A1B-STQ2.0-patchset](https://huggingface.co/justinbalexander/LFM2-8B-A1B-STQ2.0-patchset)
+- 更新：2026-09-15
+- 下载 / Likes：9 / 0
+- 任务：unknown
+- Tags：gguf, quantization, mixture-of-experts, simulated-quantization, base_model:LiquidAI/LFM2-8B-A1B, base_model:quantized:LiquidAI/LFM2-8B-A1B, endpoints_compatible, region:us
+
 ### [aoiandroid/LFM2.5-2.6B](https://huggingface.co/aoiandroid/LFM2.5-2.6B)
 - 更新：2026-09-15
 - 下载 / Likes：0 / 0
