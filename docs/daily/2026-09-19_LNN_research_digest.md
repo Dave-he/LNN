@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：0 篇
 - GitHub 候选仓库：41 个
-- Hugging Face 候选模型：17 个
+- Hugging Face 候选模型：19 个
 - 已下载 PDF：0 个
 
 ## 数据源状态
@@ -41,17 +41,17 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
 | 2026-09-18 | [experimentalmachines/LFM2.5-1.2B-Instruct-ExecuTorch](https://huggingface.co/experimentalmachines/LFM2.5-1.2B-Instruct-ExecuTorch) | 53 | 0 | text-generation |
+| 2026-09-18 | [amd/LFM2-1.2B_rai_1.8.0_medusa_npu_4K](https://huggingface.co/amd/LFM2-1.2B_rai_1.8.0_medusa_npu_4K) | 3 | 0 | text-generation |
+| 2026-09-18 | [amd/LFM2-2.6B_rai_1.8.0_medusa_npu_4K](https://huggingface.co/amd/LFM2-2.6B_rai_1.8.0_medusa_npu_4K) | 2 | 0 | text-generation |
+| 2026-09-18 | [DuoNeural/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v3-GGUF](https://huggingface.co/DuoNeural/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v3-GGUF) | 0 | 0 |  |
+| 2026-09-18 | [DuoNeural/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v3](https://huggingface.co/DuoNeural/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v3) | 0 | 0 |  |
+| 2026-09-18 | [DuoNeural/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v3-LoRA](https://huggingface.co/DuoNeural/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v3-LoRA) | 0 | 0 | text-generation |
+| 2026-09-18 | [experimentalmachines/LFM2.5-1.2B-Instruct-heretic-ExecuTorch](https://huggingface.co/experimentalmachines/LFM2.5-1.2B-Instruct-heretic-ExecuTorch) | 0 | 0 | text-generation |
 | 2026-09-18 | [kadirnar/LFM2.5-Audio-1.5B-hf](https://huggingface.co/kadirnar/LFM2.5-Audio-1.5B-hf) | 0 | 0 | audio-to-audio |
 | 2026-09-18 | [mradermacher/LFM2.5-1.2B-Wolof-Instruct-GGUF](https://huggingface.co/mradermacher/LFM2.5-1.2B-Wolof-Instruct-GGUF) | 0 | 0 |  |
 | 2026-09-18 | [mradermacher/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v2-GGUF](https://huggingface.co/mradermacher/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v2-GGUF) | 0 | 1 |  |
-| 2026-09-18 | [Solshine/lfm2.5-2.6b-nla-L21-av-priordev-relabel-v2](https://huggingface.co/Solshine/lfm2.5-2.6b-nla-L21-av-priordev-relabel-v2) | 0 | 0 | text-generation |
-| 2026-09-18 | [mamelles/LFM2.5-350M-Wolof-CPT](https://huggingface.co/mamelles/LFM2.5-350M-Wolof-CPT) | 0 | 0 | text-generation |
-| 2026-09-18 | [mamelles/LFM2.5-350M-Wolof-Instruct](https://huggingface.co/mamelles/LFM2.5-350M-Wolof-Instruct) | 0 | 0 | text-generation |
-| 2026-09-18 | [mamelles/LFM2.5-Wolof-Tokenizer-lfm25-wolof-ext-2000](https://huggingface.co/mamelles/LFM2.5-Wolof-Tokenizer-lfm25-wolof-ext-2000) | 0 | 0 |  |
 | 2026-09-17 | [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity) | 5753 | 49 | text-generation |
 | 2026-09-17 | [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity) | 722 | 46 |  |
-| 2026-09-11 | [LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF) | 2599 | 32 | audio-to-audio |
-| 2026-09-11 | [LiquidAI/LFM2.5-1.2B-JP-202606-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF) | 1782 | 27 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
