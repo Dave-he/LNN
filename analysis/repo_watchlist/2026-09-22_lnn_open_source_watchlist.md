@@ -56,27 +56,6 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：clojure, neural-networks, python, research
 - 说明：Liquid Neural Networks (LNN): continuous-time neural dynamics inspired by C. elegans, with 19-302 neurons. Hybrid Clojure/Python implementation
 
-### [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer)
-- 更新：2026-09-15
-- Star / Fork：7 / 1
-- 语言：Python
-- Topics：contrastive-learning, dense-retrieval, embedding-models, lfm2, optuna, pytorch, wandb
-- 说明：Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data
-
-### [santos-sanz/spanish-wordle-slm](https://github.com/santos-sanz/spanish-wordle-slm)
-- 更新：2026-09-10
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Fine-tunes a 2.6B LiquidAI LFM2.5 model with QLoRA on Apple Silicon to play Spanish Wordle, benchmarked head-to-head against DeepSeek Flash.
-
-### [muhammedelsami/OnDeviceRAG](https://github.com/muhammedelsami/OnDeviceRAG)
-- 更新：2026-09-10
-- Star / Fork：0 / 0
-- 语言：Swift
-- Topics：未标注
-- 说明：Fully offline RAG for iOS — chat with your PDFs using on-device embeddings, Accelerate-powered vector search, and LiquidAI's LFM2. No server, no API key.
-
 ### [404reese/XWormNet](https://github.com/404reese/XWormNet)
 - 更新：2026-09-09
 - Star / Fork：0 / 0
@@ -105,26 +84,12 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab notebook.
 
-### [asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL](https://github.com/asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL)
-- 更新：2026-09-03
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：MSc dissertation code: Closed-Form Continuous-Time Networks for Early Detection of Unsafe Trajectories in Multi-Turn LLM Conversations
-
 ### [rahulrikisinghcode/liquid-time-constant-networks](https://github.com/rahulrikisinghcode/liquid-time-constant-networks)
 - 更新：2026-09-02
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：continuous-time-rnn, deep-learning, irregular-time-series, liquid-neural-networks, machine-learning, mfcc, neural-networks, python
 - 说明：Continuous-time RNNs that learn how fast to change, not just whether to. Liquid time-constant networks in PyTorch, with an MFCC speech front end.
-
-### [The-Silly-Glitch/cfc-async-fusion](https://github.com/The-Silly-Glitch/cfc-async-fusion)
-- 更新：2026-08-31
-- Star / Fork：0 / 0
-- 语言：TeX
-- Topics：未标注
-- 说明：Closed-Form Continuous-Time Networks for Native Asynchronous Sensor Fusion in Contact-Rich Manipulation — research dossier, experiments on Franka Panda (slip-reactive grasping, peg-in-hole) vs LSTM/TCN/Transformer. CfC/LTC with native async multimodal fusion.
 
 ### [Dmelon666/PhysLTCNet](https://github.com/Dmelon666/PhysLTCNet)
 - 更新：2026-08-30
@@ -133,19 +98,26 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：PhysLTCNet: A Physics-Aware ODE-Guided Liquid Time-Constant Network for Multivariate Production Forecasting of a Single Well
 
-### [shubhambaid/lfm2vl-lab](https://github.com/shubhambaid/lfm2vl-lab)
-- 更新：2026-08-27
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Component-wise quantization and edge-inference study of LiquidAI/LFM2.5-VL-3B on Apple Silicon (MLX)
-
 ### [dddd888wedwde/liquid-time-constants-as-an-instrument-for-spatial-non-stationarity](https://github.com/dddd888wedwde/liquid-time-constants-as-an-instrument-for-spatial-non-stationarity)
 - 更新：2026-08-25
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：无
+
+### [prime-sandbox/LTC-World-Model](https://github.com/prime-sandbox/LTC-World-Model)
+- 更新：2026-08-24
+- Star / Fork：1 / 0
+- 语言：Python
+- Topics：liquid-time-constant, pytorch, world-models
+- 说明：A law-conditioned multi-step world model built around Liquid Time-Constant (LTC) dynamics.
+
+### [WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF](https://github.com/WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF)
+- 更新：2026-08-17
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：本研究提出了一种运动学-动力学融合框架，将来自七个惯性测量单元（IMU：足部、胫骨、股骨和骨盆）的运动学变量与压力鞋垫采集的动态足底压力数据相结合，用于估算行走和跑步过程中的三维地面反作用力。
 
 ## Hugging Face 模型
 ### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
@@ -159,12 +131,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：3628 / 0
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
-
-### [litert-community/LFM2.5-1.2B-Instruct](https://huggingface.co/litert-community/LFM2.5-1.2B-Instruct)
-- 更新：2026-09-21
-- 下载 / Likes：3047 / 4
-- 任务：text-generation
-- Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, text-generation
 
 ### [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec)
 - 更新：2026-09-21
@@ -190,6 +156,18 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：litert-lm, litert, litertlm, on-device, edge, hybrid, liquid, reasoning
 
+### [virtuanista/LFM2.5-8B-A1B-Uncensored-GGUF](https://huggingface.co/virtuanista/LFM2.5-8B-A1B-Uncensored-GGUF)
+- 更新：2026-09-21
+- 下载 / Likes：936 / 0
+- 任务：text-generation
+- Tags：gguf, uncensored, abliterated, moe, hybrid, llama.cpp, ollama, liquid-ai
+
+### [SadokBarbouche/LFM2.5-350M-LoRA-adapter-MedTech-Workshop](https://huggingface.co/SadokBarbouche/LFM2.5-350M-LoRA-adapter-MedTech-Workshop)
+- 更新：2026-09-21
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：transformers, safetensors, text-generation-inference, unsloth, lfm2, trl, en, base_model:LiquidAI/LFM2.5-350M
+
 ### [baptistefrancois1/lfm2a-fr-checkpoints](https://huggingface.co/baptistefrancois1/lfm2a-fr-checkpoints)
 - 更新：2026-09-21
 - 下载 / Likes：0 / 0
@@ -201,18 +179,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 0
 - 任务：text-generation
 - Tags：transformers, gguf, lfm2, linux, bash, shell, command-generation, text-generation
-
-### [vitorcalvi/ava-lfm25-toolcall](https://huggingface.co/vitorcalvi/ava-lfm25-toolcall)
-- 更新：2026-09-21
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：gguf, endpoints_compatible, region:us, conversational
-
-### [PerRing/InternVL-MoonViT-V2-LFM2.5-2.6B-HF](https://huggingface.co/PerRing/InternVL-MoonViT-V2-LFM2.5-2.6B-HF)
-- 更新：2026-09-21
-- 下载 / Likes：0 / 0
-- 任务：image-text-to-text
-- Tags：transformers, safetensors, internvl_moonvit, image-text-to-text, conversational, custom_code, base_model:LiquidAI/LFM2.5-2.6B, base_model:finetune:LiquidAI/LFM2.5-2.6B
 
 ### [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity)
 - 更新：2026-09-17
