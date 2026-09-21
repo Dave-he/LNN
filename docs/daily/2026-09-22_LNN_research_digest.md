@@ -14,6 +14,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - Hugging Face 候选模型：20 个
 - 已下载 PDF：0 个
 
+## 数据源状态
+- `arXiv fetch failed: HTTP Error 406: Not Acceptable`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
+
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
@@ -71,10 +75,3 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - arXiv API: https://export.arxiv.org/api/query
 - GitHub Search API: https://docs.github.com/rest/search/search
 - Hugging Face Models API: https://huggingface.co/docs/hub/api
-
-## r307 增量：MDN-CfC 落地 (2026-09-22 闭环)
-- 研读了 arXiv 2603.27058 (Liquid Networks with MDN Heads) 并把"Bishop mixture density head on CfC"建议落地到 toy benchmark：`lnn/core/mdn_cfc.py` (`MDNCfCNetwork` + `mdn_cfc_loss`) + `scripts/bench_mdn_cfc.py` + `results/bench_mdn_cfc_v2.json`。
-- 100-epoch × 3-seed × 3-dataset × 5-cond sweep 结果为 **诚实负向-with-nuance**：MDN k=1/3/5 在 toy_sin 上 -25% / -37% / -56% (单模 target 上 K↑ 反退化)，structured_irr (双模但 mode 互为相反数，混合均值 ≈ 0) 仅 -0.4% ~ -0.7% 微优，random_irr 完全中性。
-- 失败原因分析：paper Push-T/RoboMimic/PointMaze 是真正的多模动作分布（左转/右转等），本 toy_sin / structured_irr / random_irr 全是 unimodal 或 mode 互为相反数，MDN 多 mode 表示力无发力点。
-- MDNHead + MDNCfCNetwork 实现本身进 repo 备用，未来若引入真正的多模 target (e.g. pointmaze 左/右) 可直接启用。
-- 详见 `docs/reports/MDN_CfC_r307_2026-09-22.md`。
