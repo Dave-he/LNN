@@ -1,0 +1,7 @@
+2026-09-21 narrow-7step cron run (UTC 2026-09-21T01:07:06Z):
+- arXiv upstream sick: cron script's 3 curl attempts on http:// all HTTP 000 (trap #72 https rewrite needed)
+- direct https API: 1x HTTP 429 (14-byte 'Rate exceeded.'), then HTTP 000 x2, cleared on attempt 4 after 8s->30s->60s->90s ladder (HTTP 200, 236989 bytes)
+- export.arxiv.org/rss/cs.NE: 892-byte channel-only stub (trap #N+13 dead)
+- parse: total=100 entries, recent_24h=0, picked=0
+- top entry 2609.19674 published 2026-09-17 (4 days stale) -> genuine zero, not parse bug (verified by sorted top10)
+- outcome: 0 papers, no download, no commit, no push (per spec)
