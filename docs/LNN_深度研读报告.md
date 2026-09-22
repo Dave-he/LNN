@@ -1247,6 +1247,21 @@ positioning_updated: 2026-09-14
   - **arXiv 抓取正常**：未触发 transient 失败（与 2026-08-02 / 2026-08-15 一致）。
 - **结论**：今日完成 digest 抓取并软重置到 `origin/master = e4b883f`，新增 `docs/daily/2026-08-31_*` 重命名 + `papers/daily/2026-08-31_*` + index 8-31 cron 总结 + 3 篇 GH Actions 已生成的研读报告的 cross-reference。**强烈建议用户下次会话把 `scripts/run_lnn_research_pipeline.sh` 的 GIT_SSH_COMMAND 改为 `ssh -F /dev/null -i ~/.ssh/id_github_dave-he ...` 绕过 `~/.ssh/config` 的 ncat 代理**，并在 `step 3` 之前增加 `git fetch && git reset --soft origin/master && git checkout HEAD -- <冲突文件>` 兜底流程，避免 divergence 累积；或者在 GH Actions 与本机 cron 之间做互斥（cron 用 `git pull --rebase` 但仅当远端领先 0 时跑 daily_lnn_research.py，否则仅 push 已有 docs/）。
 
+### [2026-09-23] arXiv urllib 仍 406, GitHub 限流, 候选仍空; 沿用 9-22 digest fallback; 研读/复现均跳过
+- **digest 入口**：[[docs/daily/2026-09-23_LNN_research_digest.md|每日追踪]]（`papers/repos/models: 0/41/20`；0 篇 arXiv 因 arXiv 抓取失败 + 上轮 fallback 也是 9-22 的 25 篇 → 今日 0 新增；41 仓库来自 9-22 fallback `github_repos`）。
+- **抓取阻塞（异常告警 ⚠️, 9-22 已预警, 今日确认复发）**：
+  - **arXiv urllib TLS 指纹拦截**：连续 3 天 (`2026-09-21 / 09-22 / 09-23`) Python `urllib.request.urlopen('https://export.arxiv.org/api/query?...')` 返回 `HTTP Error 406: Not Acceptable`。本机 curl (TLS 指纹为 libcurl/openssl) 200 OK，本机 urllib 100% 触发 406。**已超"连续 3 天失败"红线**。今日未执行 curl 旁路（digest 阶段已被前置步骤 fallback 到 `papers/daily/2026-09-22_lnn_research.json`，并保留 9-22 论文池），故 digest 标 0 篇。**强烈建议下次 cron / 用户下次会话优先修复 `scripts/daily_lnn_research.py` 的 `request_text`**：(a) 给 `urllib.request.Request` 加 `headers={'Accept': 'application/atom+xml,application/xml;q=0.9,*/*;q=0.8'}`，(b) 用 `requests` 库 + retry fallback，或 (c) 直接 shell-out 到 `curl -sS --compressed`。否则 9-24 / 9-25 还会失败。
+  - **GitHub Search API 限流 403**：5 个 query 全部 `HTTP Error 403: rate limit exceeded`（cron prompt 严禁 export `GITHUB_TOKEN`），保留上一轮 `papers/daily/2026-09-22_lnn_research.json` 的 `github_repos` 41 个 fallback。
+- **挑选结果**：`python3 scripts/select_papers_for_report.py --date 2026-09-23 --top 3` 输出候选 **0 篇**（`n_total_arxiv=0`）。人工精确复核：今日 digest 0 篇 arXiv；回退到 9-22 的 25 篇：仅 1 篇未命中 `already_reported`（2607.08283v3 TFP），score=0（无 liquid / CfC / LTC / NCP / closed-form continuous-time 命中），按 cron 规则"跳过 score<=0"，无可生成对象。即使放宽阈值，全集已被 [[docs/reports/]] 7 周覆盖饱和（最近 r307 MDN-CfC head 2026-09-22）。
+- **`paper-analyzer` 技能状态**：系统开头警告技能缺失；今日无候选，无需兜底。
+- **生成 0 篇独立研读报告**：9 月下半月无新 CfC / LTC / NCP 投稿进 arXiv（推测与 ICML 录用结果公布后作者进入 rebuttal / camera-ready 阶段相关），持续观察 10 月 NeurIPS 投稿窗口。
+- **复现阶段**：`SKIP_REPORT=1 SKIP_DIGEST=1 SKIP_COMMIT=1 SKIP_REPRO=0 bash scripts/run_lnn_research_pipeline.sh` → `replicate_paper_dispatch.py` 1 秒退出 "digest 2026-09-23 无命中复现规则的论文, 跳过"。复现脚本目前不读历史 digest fallback，仅读当日 → 9-23 digest 为空 → 0 篇可复现，这是 dispatch 的设计行为（非 bug），但建议加 `--fallback-date 2026-09-22` 选项，让 digest 抓取失败的当日仍能复现前一日候选。
+- **同步**：SSH `id_github_dave-he` 推送两次均成功。
+  - 1st push: `c0367d1 chore(daily): LNN digest + 研读报告 2026-09-23` (Step 1 + Step 4)
+  - 2nd push: `af4549e fix(cron): use https for arXiv API in cron_lnn_arxiv_daily.sh` (顺手把 `scripts/cron_lnn_arxiv_daily.sh` 里 `http://export.arxiv.org/api/query` 改成 `https://`，工作树遗留)
+  - 3rd local commit: `490ccd8 chore(daily): reproduce LNN papers 2026-09-23` (Step 6, 已 push)。
+- **结论**：今日完成 digest 抓取（带已知阻塞 fallback）+ commit + push + 复现空跑。LNN 主题覆盖率连续 1 周保持 100% 饱和。⚠️ arXiv urllib 连续 3 天失败 = 触发 cron prompt 的"高亮告警"红线，建议下次 cron 或用户会话优先修复 `request_text`。
+
 ### [2026-09-22] digest 中 score>0 候选论文均已被研读覆盖，无新增；arXiv urllib TLS 指纹拦截 + GitHub 限流双阻塞已用 curl 旁路 + fallback 修复
 - **digest 入口**：[[docs/daily/2026-09-22_LNN_research_digest.md|每日追踪]]（25 论文 / 16 仓库 / 19 模型；`papers/repos/models: 25/16/19`）。
 - **抓取双阻塞（异常告警 ⚠️）**：
@@ -1265,7 +1280,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-09-23**：[[docs/daily/2026-09-23_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 20 个。
+- **2026-09-23**：[[docs/daily/2026-09-23_LNN_research_digest.md|每日追踪]]，候选论文 0 篇（arXiv urllib 连续 3 天 406 + GitHub 限流 fallback），仓库 41 个，模型 20 个；候选清单 0 篇新增（沿用 9-22 digest 复核，25 篇均已覆盖）。
 - **2026-09-22**：[[docs/daily/2026-09-22_LNN_research_digest.md|每日追踪]]，候选论文 25 篇（digest 列出 12 篇，候选清单 0 篇新增），仓库 16 个（GitHub 限流 fallback），模型 19 个。
 - **2026-09-21**：[[docs/daily/2026-09-21_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 22 个。
 - **2026-09-20**：[[docs/daily/2026-09-20_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 17 个。
