@@ -1,0 +1,12 @@
+[lnn-cron] 2026-09-22T01:01:19Z  starting arXiv daily tracker
+[lnn-cron]  cwd          = /Users/hyx/workspace/LNN
+[lnn-cron]  branch       = master
+[lnn-cron]  top_n        = 5  (window=24h)
+[lnn-cron]  fetch        = https://export.arxiv.org/api/query?search_query=all:"Liquid Neural Networks" OR all:"CfC" OR all:"LTC" OR all:"Neural OD...
+[lnn-cron]  fetch attempt 1 -> HTTP=000000 (retrying)
+[lnn-cron]  fetch attempt 2 -> HTTP=000000 (retrying)
+[lnn-cron]  fetch attempt 3 -> HTTP=000000 (retrying)
+[lnn-cron] ERROR: arXiv API unreachable (HTTP=none); skipping today.
+[lnn-cron] 2026-09-22T01:06:45Z script-loop 3x HTTP 000; manual ladder cleared at attempt 2 (30s) HTTP=200 size=237048
+[lnn-cron] parse: total=100 recent_24h=0 picked=0 — GENUINE zero (newest 2609.21986 @ 2026-09-18, 4d stale). No download/commit/push.
+[lnn-cron] fix applied: scripts/cron_lnn_arxiv_daily.sh ARXIV_API http->https (trap #72, uncommitted change)
