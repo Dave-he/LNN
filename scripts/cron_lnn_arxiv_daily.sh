@@ -19,7 +19,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 DAILY_DIR="papers/daily"
-ARXIV_API="http://export.arxiv.org/api/query"
+ARXIV_API="https://export.arxiv.org/api/query"
 QUERY_TERMS='all:"Liquid Neural Networks" OR all:"CfC" OR all:"LTC" OR all:"Neural ODEs"'
 MAX_RESULTS="${MAX_RESULTS:-100}"
 TOP_N="${TOP_N:-5}"
