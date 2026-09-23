@@ -66,14 +66,18 @@ KEYWORD_RE = re.compile(
 
 
 def request_json(url: str, headers: dict[str, str] | None = None) -> Any:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **(headers or {})})
+    request = urllib.request.Request(
+        url, headers={"User-Agent": USER_AGENT, "Accept": "*/*", **(headers or {})}
+    )
     with urllib.request.urlopen(request, timeout=30) as response:
         payload = response.read().decode("utf-8")
     return json.loads(payload)
 
 
 def request_text(url: str, headers: dict[str, str] | None = None) -> str:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **(headers or {})})
+    request = urllib.request.Request(
+        url, headers={"User-Agent": USER_AGENT, "Accept": "*/*", **(headers or {})}
+    )
     with urllib.request.urlopen(request, timeout=30) as response:
         return response.read().decode("utf-8")
 
@@ -253,7 +257,9 @@ def download_pdfs(papers: list[dict[str, Any]], output_dir: pathlib.Path, max_do
             downloaded.append(str(target.relative_to(ROOT)))
             continue
         try:
-            request = urllib.request.Request(pdf_url, headers={"User-Agent": USER_AGENT})
+            request = urllib.request.Request(
+                pdf_url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
+            )
             with urllib.request.urlopen(request, timeout=60) as response:
                 target.write_bytes(response.read())
             downloaded.append(str(target.relative_to(ROOT)))
