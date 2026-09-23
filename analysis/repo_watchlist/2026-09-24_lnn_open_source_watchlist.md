@@ -56,6 +56,27 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：clojure, neural-networks, python, research
 - 说明：Liquid Neural Networks (LNN): continuous-time neural dynamics inspired by C. elegans, with 19-302 neurons. Hybrid Clojure/Python implementation
 
+### [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer)
+- 更新：2026-09-15
+- Star / Fork：7 / 1
+- 语言：Python
+- Topics：contrastive-learning, dense-retrieval, embedding-models, lfm2, optuna, pytorch, wandb
+- 说明：Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data
+
+### [santos-sanz/spanish-wordle-slm](https://github.com/santos-sanz/spanish-wordle-slm)
+- 更新：2026-09-10
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Fine-tunes a 2.6B LiquidAI LFM2.5 model with QLoRA on Apple Silicon to play Spanish Wordle, benchmarked head-to-head against DeepSeek Flash.
+
+### [muhammedelsami/OnDeviceRAG](https://github.com/muhammedelsami/OnDeviceRAG)
+- 更新：2026-09-10
+- Star / Fork：0 / 0
+- 语言：Swift
+- Topics：未标注
+- 说明：Fully offline RAG for iOS — chat with your PDFs using on-device embeddings, Accelerate-powered vector search, and LiquidAI's LFM2. No server, no API key.
+
 ### [404reese/XWormNet](https://github.com/404reese/XWormNet)
 - 更新：2026-09-09
 - Star / Fork：0 / 0
@@ -112,40 +133,19 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：PhysLTCNet: A Physics-Aware ODE-Guided Liquid Time-Constant Network for Multivariate Production Forecasting of a Single Well
 
+### [shubhambaid/lfm2vl-lab](https://github.com/shubhambaid/lfm2vl-lab)
+- 更新：2026-08-27
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Component-wise quantization and edge-inference study of LiquidAI/LFM2.5-VL-3B on Apple Silicon (MLX)
+
 ### [dddd888wedwde/liquid-time-constants-as-an-instrument-for-spatial-non-stationarity](https://github.com/dddd888wedwde/liquid-time-constants-as-an-instrument-for-spatial-non-stationarity)
 - 更新：2026-08-25
 - Star / Fork：0 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：无
-
-### [prime-sandbox/LTC-World-Model](https://github.com/prime-sandbox/LTC-World-Model)
-- 更新：2026-08-24
-- Star / Fork：1 / 0
-- 语言：Python
-- Topics：liquid-time-constant, pytorch, world-models
-- 说明：A law-conditioned multi-step world model built around Liquid Time-Constant (LTC) dynamics.
-
-### [WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF](https://github.com/WANG-XU-create/Kinematic-Dynamic-Fusion-with-an-Improved-Liquid-Time-Constant-Network-for-Wearable--GRF)
-- 更新：2026-08-17
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：本研究提出了一种运动学-动力学融合框架，将来自七个惯性测量单元（IMU：足部、胫骨、股骨和骨盆）的运动学变量与压力鞋垫采集的动态足底压力数据相结合，用于估算行走和跑步过程中的三维地面反作用力。
-
-### [03-Richik/LTC-vs-CfC-Comparison-](https://github.com/03-Richik/LTC-vs-CfC-Comparison-)
-- 更新：2026-08-07
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：A Comparative Study of Liquid Time-Constant Networks and Closed-form Continuous-time Neural Networks
-
-### [middesurya/daily-webapp-2026-05-04-liquidlab](https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab)
-- 更新：2026-07-31
-- Star / Fork：2 / 0
-- 语言：HTML
-- Topics：ai-built, claude-code, daily-webapp, liquid-neural-networks, mit-csail, neural-ode
-- 说明：LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, adaptive inference, efficiency arena. Zero dependencies.
 
 ## Hugging Face 模型
 ### [software-mansion/react-native-executorch-lfm2.5-embedding-350m](https://huggingface.co/software-mansion/react-native-executorch-lfm2.5-embedding-350m)
@@ -196,9 +196,51 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：unknown
 - Tags：transformers, gguf, پښتو, pashto, pashto-language, urdu, اردو, Persian
 
+### [Dohyeon1/LFM2-HC-SMoE-ngroups24-re](https://huggingface.co/Dohyeon1/LFM2-HC-SMoE-ngroups24-re)
+- 更新：2026-09-23
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, conversational, arxiv:1910.09700, endpoints_compatible, region:us
+
+### [Dohyeon1/LFM2-Sub-MoE-ngroups24-maxcls4](https://huggingface.co/Dohyeon1/LFM2-Sub-MoE-ngroups24-maxcls4)
+- 更新：2026-09-23
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, conversational, arxiv:1910.09700, endpoints_compatible, region:us
+
+### [Dohyeon1/LFM2-M-SMoE-ngroups24-maxcls4](https://huggingface.co/Dohyeon1/LFM2-M-SMoE-ngroups24-maxcls4)
+- 更新：2026-09-23
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, conversational, arxiv:1910.09700, endpoints_compatible, region:us
+
+### [Dohyeon1/LFM2-M-SMoE-ngroups24-maxcls2](https://huggingface.co/Dohyeon1/LFM2-M-SMoE-ngroups24-maxcls2)
+- 更新：2026-09-23
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, conversational, arxiv:1910.09700, endpoints_compatible, region:us
+
+### [Dohyeon1/LFM2-Sub-MoE-ngroups24-maxcls2](https://huggingface.co/Dohyeon1/LFM2-Sub-MoE-ngroups24-maxcls2)
+- 更新：2026-09-23
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, conversational, arxiv:1910.09700, endpoints_compatible, region:us
+
+### [Dohyeon1/LFM2-HC-SMoE-ngroups24-maxcls4](https://huggingface.co/Dohyeon1/LFM2-HC-SMoE-ngroups24-maxcls4)
+- 更新：2026-09-23
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, conversational, arxiv:1910.09700, endpoints_compatible, region:us
+
+### [Dohyeon1/LFM2-HC-SMoE-ngroups24-maxcls2](https://huggingface.co/Dohyeon1/LFM2-HC-SMoE-ngroups24-maxcls2)
+- 更新：2026-09-23
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, conversational, arxiv:1910.09700, endpoints_compatible, region:us
+
 ### [LiquidAI/LFM2.5-2.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF)
 - 更新：2026-09-22
-- 下载 / Likes：1209007 / 350
+- 下载 / Likes：1209007 / 351
 - 任务：text-generation
 - Tags：gguf, safetensors, liquid, lfm2.5, llama.cpp, text-generation, ar, zh
 
@@ -225,27 +267,3 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：101 / 0
 - 任务：image-text-to-text
 - Tags：onnx, lfm2, torq, synaptics, sl2619, npu, edge, lfm2-vl
-
-### [LiquidAI/LFM2-2.6B-Longevity](https://huggingface.co/LiquidAI/LFM2-2.6B-Longevity)
-- 更新：2026-09-17
-- 下载 / Likes：5897 / 49
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, longevity, conversational
-
-### [LiquidAI/LFM2-1.2B-Longevity](https://huggingface.co/LiquidAI/LFM2-1.2B-Longevity)
-- 更新：2026-09-17
-- 下载 / Likes：759 / 47
-- 任务：unknown
-- Tags：safetensors, lfm2, liquid, lfm2.5, longevity, arxiv:2511.23404, base_model:LiquidAI/LFM2-1.2B, base_model:finetune:LiquidAI/LFM2-1.2B
-
-### [LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-JP-GGUF)
-- 更新：2026-09-11
-- 下载 / Likes：2976 / 32
-- 任务：audio-to-audio
-- Tags：llama.cpp, gguf, liquid, lfm2.5, edge, audio, speech, speech-to-speech
-
-### [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE)
-- 更新：2026-05-06
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
