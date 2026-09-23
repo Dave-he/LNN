@@ -1,0 +1,838 @@
+
+----- PAGE 1 -----
+2026 Asia Pacific Signal and Information Processing Association Annual Summit and Conference (APSIPA ASC)
+Liquid Neural Networks as a Drop-in
+Continuous-Time Deformation Field for Dynamic
+3D Gaussian Splatting
+Mingzhao Li∗,
+Arghya Pal∗,
+Guan Yuan Tan∗
+∗School of Information Technology, Monash University, Selangor, Malaysia
+E-mail: {mlii0259@student, arghya.pal, guan.tan}@monash.edu
+Abstract—Deformable 3D Gaussian Splatting (D-3DGS) re-
+constructs dynamic scenes from monocular video by deforming
+a canonical set of 3D Gaussians through a positional-encoded
+MLP of frame time t. Although fitted to a continuous variable,
+the MLP couples no two values of t in its architecture and
+effectively predicts discrete per-frame offsets, leaving temporal
+smoothness to emerge only as a byproduct of optimisation.
+We redesign the deformation field as a stack of Closed-form
+Continuous-time (CfC) cells—a Liquid Neural Network (LNN)
+that is the closed-form solution of the Liquid Time-constant
+ODE—while preserving every other part of the D-3DGS pipeline.
+Each cell exposes a sigmoidal time gate στ = σ(Waz · t + Wbz)
+that interpolates between two candidate hidden states, baking
+a learned smooth response to t into the loss landscape without
+invoking any numerical solver. On the eight D-NeRF and seven
+NeRF-DS scenes the liquid field matches or exceeds the MLP
+baseline in aggregate, with its largest gains concentrated on the
+scenes with the most high-frequency articulated motion. The
+result is a near-zero-friction architectural design that turns the
+discrete MLP deformation field into an explicit continuous-time
+function of t.
+Index Terms—4D reconstruction, dynamic 3D Gaussian splat-
+ting, liquid neural networks, continuous-time deformation, closed-
+form continuous-time cells.
+I. INTRODUCTION
+Reconstructing a dynamic 3D scene from a single moving
+camera—4D reconstruction—is a foundational problem at the
+intersection of computer vision and graphics, with applications
+in augmented reality, telepresence and digital twins. Differen-
+tiable rendering has made the task tractable at photorealistic
+quality. The neural radiance field family, extended to dynamic
+scenes by D-NeRF [1], established that a coordinate-based
+MLP can reconstruct moving objects from a small number
+of monocular views. Explicit 3D Gaussian Splatting [2] sub-
+sequently replaced the implicit field with an explicit collection
+of anisotropic 3D Gaussians, achieving real-time rendering,
+and Deformable 3DGS (D-3DGS) [3] adapted the disentangled
+formulation of D-NeRF to Gaussians by learning canonical
+Gaussians together with a positional-encoded MLP deforma-
+tion field Fθ(γ(x), γ(t))→(∆x, ∆r, ∆s).
+The discreteness gap: Even though t is a continuous
+physical variable, the D-3DGS deformation MLP is a feed-
+forward function with no temporal coupling between adjacent
+timesteps: it is fitted independently at each t that appears
+in the training set, and there is no built-in mechanism that
+constrains Fθ(t) to vary smoothly along t. The architecture is
+therefore best read as a discrete predictor of per-frame offsets.
+The literature on continuous-time neural networks—neural
+ODEs [4] and the more recent latent-ODE variants used by
+ODE-GS [5] for Gaussian-splat extrapolation—adds an explicit
+continuous-time prior, but at the cost of a numerical solver
+in the inner training loop. Stochastic differential equations
+(SDEs) provide stronger guarantees on robustness to jitter and
+partial observations, at an even higher solver cost. We seek a
+middle point: an architectural design that gives the deformation
+field continuous-time semantics, yet keeps inference identical
+to a feed-forward forward pass.
+This paper: We redesign the deformation field of D-
+3DGS as a stack of Closed-form Continuous-time cells
+(CfC) [6], the closed-form solution of the Liquid Time-
+constant (LTC) ODE [7]. The closed-form derivation elimi-
+nates the numerical solver entirely; each CfC cell is a feed-
+forward block whose nonlinearity is an explicit time-gated
+interpolation between two candidate hidden states. The frame
+time t enters every cell as the elapsed-time signal of the LTC
+ODE, so the deformation field becomes an explicit function of
+t rather than an MLP that happens to take γ(t) as input. We
+refer to this design as depth-as-time: the network’s depth plays
+the role of the temporal recurrence of a classical CfC sequence
+model. The design is strictly architectural and integrates with
+the public D-3DGS codebase as a self-contained network
+module; Sec. III-A enumerates exactly what is and is not
+inherited.
+Why an LNN?: Three properties motivate this design. (i)
+Closed-form continuous time. Unlike Neural ODEs and Latent-
+ODE-GS, CfC requires no ODE/SDE solver at training or
+inference; the continuous-time semantics are baked into the
+cell. (ii) Compact and accurate. An L-layer LNN delivers
+parameter count and MAC cost comparable to the eight-layer
+D-3DGS MLP, while its sigmoidal time gate acts as an implicit
+smoothness prior. (iii) Robustness to jitter. CfC was originally
+derived as an approximation to a noise-driven LTC ODE,
+the deterministic limit of a stochastic differential equation;
+this structure is what gives LNNs their reported robustness
+to noisy and irregularly-sampled signals [8], [9], properties
+directly relevant to the noisy supervision of monocular 4D
+reconstruction.
+arXiv:2606.07670v1  [cs.CV]  4 Jun 2026
+
+----- PAGE 2 -----
+Contributions:
+• A liquid deformation field for D-3DGS, built from a stack
+of CfC cells that exposes an explicit time-gated update
+over the frame time t. The remainder of the D-3DGS
+pipeline is preserved; the precise components retained are
+listed in Sec. III-A.
+• Empirical evaluation on D-NeRF (eight synthetic scenes)
+and NeRF-DS (seven real-world scenes), reporting PSNR,
+SSIM, LPIPS, parameters (M) and MACs (G) of the de-
+formation field measured with the open-source ptflops
+counter [10].
+• A positioning of CfC against the discrete-MLP baseline
+of D-3DGS and against ODE/SDE-based continuous-time
+alternatives such as ODE-GS [5], identifying when each
+family is preferable.
+II. RELATED WORK
+Dynamic 3D Gaussian splatting: Following 3D Gaussian
+Splatting [2], several works lift the static representation to
+4D. D-3DGS [3] learns a canonical Gaussian set together
+with an MLP deformation field; Gaussian-Flow [11] predicts
+explicit per-Gaussian flow trajectories; Shape of Motion [12]
+reconstructs from a single video; and FLAG-4D [13] couples
+local and global flow-guided deformations. None of these
+works treats the deformation as an explicit continuous-time
+function: deformations are predicted independently per frame.
+Continuous-time neural networks: Neural ODEs [4] pa-
+rameterise the time derivative of a hidden state, recovering
+it via a numerical solver; latent-ODE variants extend this to
+noisy, irregularly sampled signals. ODE-GS [5] applies this
+idea to Gaussian-splat extrapolation by training a Transformer
+encoder and a latent neural ODE on top of a frozen D-3DGS
+interpolator, paying the solver cost on every forward pass
+for the ability to forecast beyond the observed time window.
+SDE variants [14] replace the deterministic dynamics with
+a stochastic Itˆo integral, gaining robustness to observation
+noise at a still higher computational cost. Liquid Time-constant
+networks [7] parameterise an ODE ˙x = −[ 1
+τ + f(x, u, t)] x +
+f(x, u, t) A, that combines explicit time constants with input-
+dependent forcing. CfC [6] derives an analytic approximation
+of the solution of this ODE, replacing the solver with a
+sigmoidal time gate and reporting one-to-five orders of mag-
+nitude faster training and inference at competitive accuracy.
+Subsequent work has generalised LNNs to non-sequential
+tasks [9] and characterised their robustness for dynamic infor-
+mation processing [8], while Liquid-S4 [15] brings liquid time
+constants to the state-space-model family. To our knowledge
+CfC has not previously been used as the deformation backbone
+of a 3D-Gaussian dynamic-scene system.
+Positioning: Among the continuous-time families, CfC
+occupies a unique point: it has no solver (unlike Neural
+ODEs/SDEs and ODE-GS), it has feed-forward inference
+at the same cost as an MLP, and it nevertheless exposes
+an explicit time-gating step over t that an MLP lacks. We
+exploit exactly this point—the cheapest possible continuous-
+time prior—inside the D-3DGS pipeline.
+III. METHOD
+A. Background: D-3DGS Deformation Field
+We briefly recap the D-3DGS [3] formulation. A scene
+is
+represented
+by
+N
+canonical
+3D
+Gaussians
+{Gi
+=
+(xi, ri, si, αi, ci)}, where xi ∈R3 is the centre, ri a unit
+quaternion, si ∈R3
+>0 a per-axis scale, αi ∈[0, 1] opacity, and
+ci holds spherical-harmonic coefficients. To handle a dynamic
+scene observed at frame time t ∈[0, 1], an MLP deformation
+field Fθ produces per-Gaussian offsets:
+(∆xi, ∆ri, ∆si) = Fθ
+ γ(sg(xi)), γ(t)
+
+,
+(1)
+where γ(·) is a NeRF positional encoding and sg(·) is the
+stop-gradient operator. D-3DGS realises Fθ as an eight-layer
+MLP of width 256 with one NeRF-style skip at depth D/2.
+Equation (1) defines the locus of our design; the canonical
+Gaussian set, rasterizer, L1+SSIM loss, density control, AST
+schedule and 40 k-iteration Adam training are retained from
+the public D-3DGS pipeline.
+For the remainder of the paper, when we say the design is
+strictly architectural, this is the precise list of components we
+preserve. The contribution lives entirely inside Fθ.
+B. Liquid Deformation Field
+The CfC cell: A single Closed-form Continuous-time
+cell [6] maps an input u, hidden state h and elapsed-time
+signal τ to an updated hidden state. A backbone ϕ(·) produces
+a shared feature, four learned linear heads compute candidates,
+and a sigmoidal time gate combines them:
+z = ϕ([u; h]),
+g = tanh(Wgz),
+hcand = tanh(Whz),
+στ = σ
+ Waz·τ + Wbz
+
+,
+h′ = g ⊙(1 −στ) + hcand ⊙στ.
+(2)
+Equation (2) is the closed-form solution of the LTC ODE [6],
+[7]. Compared to a standard MLP layer, the CfC cell adds an
+explicit time-modulated interpolation between two candidate
+hidden states; the gate στ is a sigmoid of an affine function of
+τ, so the layer has a smooth, learned response to time variation.
+Continuous-depth deformation stack: We instantiate Fθ
+as a stack of D CfC cells. For every canonical Gaussian we
+set
+ui = [γ(sg(xi)); γ(t)],
+h(0)
+i
+= 0,
+h(ℓ+1)
+i
+= CfCℓ
+ ui, h(ℓ)
+i , t
+
+, ℓ= 0, . . . , D −1,
+(∆xi, ∆ri, ∆si) = Wout h(D)
+i
+.
+(3)
+A NeRF-style residual at depth ℓ= D/2 re-injects a learned
+linear projection of ui into the hidden state, mirroring the skip
+of the original MLP. Each cell receives the same ui, so the
+input concatenation inside ϕ acts as an implicit per-layer skip.
+The complete pipeline is shown in Fig. 1.
+
+----- PAGE 3 -----
+Fig. 1.
+Liquid deformation field: stack-level pipeline and per-cell structure. Top – Stack of D CfC cells (depth-as-time). For every canonical Gaussian i, the
+Fourier-encoded position γ(sg(xi)) and the time embedding γ(t) form the shared cell input. The hidden state is reset to h(0)
+i
+= 0 at the start of every pass and
+threads through D CfC cells; a NeRF-style skip at depth ⌈D/2⌉re-injects a learned linear projection of the input. A linear head Wout produces the deformation
+offsets (∆xi, ∆ri, ∆si). Bottom – Structure of one CfC cell. A shared backbone ϕ([ui; h(ℓ)
+i
+]) →z feeds four learned linear heads: g = tanh(Wgz) and
+hcand = tanh(Whz) produce two candidate hidden states, while ta = Waz and tb = Wbz produce the parameters of an affine function of the elapsed-time
+signal τ. The sigmoidal time gate στ = σ(ta·τ +tb) is the only path through which τ enters the cell; the closed-form update h′ = hcand ⊙στ + g ⊙(1−στ)
+interpolates between the two candidates.
+Depth-as-time, not recurrence: A CfC cell is naturally
+a recurrent unit. We deliberately do not use it that way: D-
+3DGS queries the deformation field at independent random
+frames during training, not in temporal order, and the per-
+Gaussian set is non-stationary because densification adds and
+removes Gaussians, so per-Gaussian recurrence has no stable
+correspondence across frames. Instead, t is supplied as the
+elapsed-time signal of every cell in the stack and the hidden
+state is reset to zero on every forward pass. The benefit we
+extract from CfC is therefore the smooth, time-gated nonlin-
+earity of Eq. (2) acting as an implicit smoothness prior on t,
+and the implicit per-layer skip through the input concatenation
+in ϕ, rather than long-horizon temporal memory.
+C. Why a Liquid Deformation Field
+Continuous-time semantics by construction: A deforma-
+tion field over t need not be computed as a continuous function
+of t. The D-3DGS MLP evaluates Fθ independently at each
+sampled frame: nothing in its architecture relates Fθ(t) to
+Fθ(t+δt), and smoothness is left to optimisation. The closed-
+form CfC cell of Eq. (2) instead bakes a smooth, learned
+response to δt into the loss landscape through the time gate
+στ.
+Placement on the cost–capability spectrum: Continuous-
+time methods form a cost–capability spectrum: Neural ODEs
+(e.g. ODE-GS [5]) and SDE variants [14] integrate dynamics
+with a solver on every forward pass, gaining extrapolation
+power and noise robustness in exchange. The closed-form
+Eq. (2) sits at the cheap end — no solver, feed-forward
+inference, training cost identical to a plain MLP — which is
+sufficient for the in-window interpolation regime of D-3DGS.
+Robustness as a structural byproduct: The Liquid Time-
+constant ODE underlying Eq. (2) was derived as a noise-driven
+dynamical system [7], of which the closed-form approximation
+is the deterministic limit. This lineage explains the reported
+jitter-robustness of LNNs [8], [9]: relevant here, because
+monocular 4D supervision (pose drift, lighting, motion blur)
+is noisy and the time-gated nonlinearity damps disturbances
+more gracefully than a piecewise-linear MLP.
+D. Implementation Details
+We build on the public D-3DGS PyTorch codebase [3]
+with
+our
+liquid
+deformation
+field
+instantiated
+in
+the
+DeformNetwork class of utils/time_utils.py. De-
+fault deformation hyperparameters: D = 6 CfC cells, hidden
+size W
+= 128, backbone width 64, backbone depth 2,
+GELU backbone activation. Positional encoding uses L = 10
+frequency bands for x and either L = 6 (synthetic Blender
+scenes) or L = 10 (real-world scenes) for t, matching D-
+3DGS. We use a single NVIDIA Tesla P100-PCIE-16GB for
+all runs; the training schedule itself is retained per Sec. III-A.
+
+----- PAGE 4 -----
+IV. EXPERIMENTS
+A. Setup
+Datasets: We evaluate on three datasets covering both
+synthetic and real-world dynamic scenes. D-NeRF [1]: eight
+synthetic monocular scenes (Hell Warrior, Mutant, Hook,
+Bouncing Balls, Lego, T-Rex, Stand Up, Jumping Jacks), each
+rendered at 800×800 from a moving camera, train/test split as
+released. NeRF-DS [16]: seven real-world scenes (Sieve, Plate,
+Bell, Press, Cup, As, Basin) capturing specular and dynamic
+objects.
+Baseline: The principal baseline is D-3DGS [3] re-run
+from the official codebase under identical hyperparameters and
+identical random seeds, with the deformation field as the sole
+architectural difference. We additionally compare against D-
+NeRF [1] and TiNeuVox [17], with reference numbers drawn
+from [3].
+Metrics: Following D-3DGS we report PSNR (dB, ↑),
+SSIM (↑) and LPIPS-VGG (↓), together with deformation-field
+parameters (M) and MACs (G) per forward pass at the per-
+scene Gaussian count, measured with ptflops [10].
+B. D-NeRF: Eight Synthetic Scenes
+Table I reports per-scene PSNR / SSIM / LPIPS on the
+eight D-NeRF scenes. The headline result is that the liquid
+deformation field matches or exceeds the MLP baseline on
+a majority of scenes while operating on the same image-
+space loss and the same canonical-Gaussian set. The retrained
+D-3DGS MLP baseline already saturates above 41 dB on
+Hell Warrior, 42 dB on Mutant, 41 dB on Bouncing Balls,
+and 44 dB on Stand Up, so improvements on these scenes
+are necessarily small in absolute terms; the value of our
+design is that continuous-time semantics are achievable at the
+architectural level without trading away pixel fidelity.
+Reading: Ours-CfC matches or exceeds D-3DGS (MLP)
+within 0.5 dB on 6/8 scenes and ties it in aggregate (mean
+PSNR 38.25 vs. 38.26 dB). The biggest CfC gains fall on Hook
+(+1.49 dB) and Hell Warrior (+0.82 dB), the two scenes with
+the most high-frequency articulated motion — consistent with
+the time-gated nonlinearity of Eq. (2) acting as an implicit
+smoothness prior (Fig. 2, left column).
+C. NeRF-DS: Real-World Scenes
+Table II reports the same three metrics on the seven NeRF-
+DS scenes. Real-world scenes are dominated by pose-noise
+error, so the absolute PSNRs are substantially below those
+of D-NeRF and the relative ordering of methods is the more
+informative quantity. In aggregate, Ours-CfC outperforms the
+D-3DGS (MLP) baseline on all mean metrics: PSNR 23.86 vs.
+23.39 dB, SSIM 0.8491 vs. 0.8403, LPIPS 0.1891 vs. 0.2011.
+The gain is driven by the As scene (+2.74 dB PSNR, −41%
+LPIPS, the most specular-motion-heavy in the benchmark); the
+remaining six scenes sit within ∼0.1 dB of the MLP. Ours-
+CfC is also the only generic method to surpass the specular-
+aware NeRF-DS baseline on mean PSNR (+0.26 dB). Overall,
+the design does not hurt on noisy real-world supervision and,
+on the hardest specular scene, materially helps. Fig. 2 (right
+column) shows the corresponding visible differences on As
+(top) and Sieve (bottom).
+D. Compute Budget: Params (M), MACs (G)
+Table III reports the parameter count and MACs of the defor-
+mation field. At matched depth and width (D=8, W=256), the
+CfC stack costs 0.78 M / 14.0 G against 0.52 M / 9.4 G for the
+D-3DGS MLP — a ∼50% overhead paying for the four heads
+g, hcand, Wa, Wb inside each cell. Our default (D=6, W=128),
+used for Tables I and II, instead lands at 0.33 M / 6.0 G — 36%
+below the MLP baseline in both axes. The liquid prior therefore
+delivers its quality advantage at a smaller compute footprint
+than the MLP, not a larger one, provided depth and width
+are chosen for the task rather than fixed to the MLP baseline’s
+values. Beyond the absolute numbers, the key qualitative point
+is that the design does not require an ODE/SDE solver in the
+loop and therefore does not push training time toward the much
+higher cost of latent-ODE alternatives such as ODE-GS [5].
+E. Activation and Architecture Ablations
+Table IV ablates three design choices of the liquid stack on
+Hell Warrior. The CfC cell beats the D-3DGS MLP baseline
+by +0.49 dB (42.03 vs. 41.54); depth saturates at D=6, with
+D=8 and D=10 slightly worse (41.82, 41.86). Activations
+rank GELU (42.03) > SiLU (41.53) > ReLU (41.47) > LeCun
+(40.88) > Tanh (40.74): an unbounded smooth backbone
+composes better with the cell-level tanh of Eq. (2) than a
+bounded one, against the simple smoothness intuition.
+V. DISCUSSION
+Discrete vs. continuous, revisited: A common counter-
+argument is that any MLP with γ(t) as input is already a
+continuous function of t. This is true at the level of evaluation,
+but the training signal the MLP receives is a sample-dense set
+of independent timesteps; nothing in the optimisation couples
+adjacent values of t. The CfC layer, in contrast, is the closed-
+form solution of an ODE in t, so the time-gating στ is in the
+loss landscape itself: a perturbation of t produces a structured,
+learned response. This is the structural reason the design helps
+without modifying the loss.
+Where ODEs and SDEs win: ODE-based variants like
+ODE-GS [5] are stronger than CfC on extrapolation: predicting
+deformations at times t outside the training horizon. SDE
+variants are stronger when supervision is heavily corrupted
+(large pose-noise, partial observations). CfC is the cheap end
+of the spectrum: a closed-form approximation that buys an
+architectural smoothness prior at the cost of an MLP. When
+extrapolation or strong noise robustness is the central goal,
+ODE-GS or an SDE variant will likely outperform CfC; for
+the standard interpolation regime addressed here, CfC is the
+more economical choice.
+
+----- PAGE 5 -----
+TABLE I
+PER-SCENE COMPARISON ON THE EIGHT D-NERF SYNTHETIC SCENES. PSNR (↑), SSIM (↑) AND LPIPS (↓) AT 800×800 TEST IMAGES. D-NERF AND
+TINEUVOX NUMBERS ARE QUOTED FROM [3], D-3DGS NUMBERS ARE RETRAINED ON OUR NVIDIA P100 GPU PLATFORM; OURS USES THE SAME
+PROTOCOL WITH THE LIQUID DEFORMATION FIELD IN PLACE OF THE MLP. CELLS ARE COLOURED AS
+BEST ,
+SECOND-BEST
+AND
+THIRD-BEST .
+Hell Warrior
+Mutant
+Hook
+Bouncing Balls
+Method
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+D-NeRF [1]
+24.06
+0.9440
+0.0707
+30.31
+0.9672
+0.0392
+29.02
+0.9595
+0.0546
+38.17
+0.9891
+0.0323
+TiNeuVox [17]
+27.10
+0.9638
+0.0768
+31.87
+0.9607
+0.0474
+30.61
+0.9599
+0.0592
+40.23
+0.9926
+0.0416
+D-3DGS (MLP) [3]
+41.13
+0.9863
+0.0264
+42.07
+0.9944
+0.0067
+36.77
+0.9852
+0.0173
+41.69
+0.9958
+0.0083
+Ours (CfC)
+41.95
+0.9885
+0.0238
+41.63
+0.9934
+0.0083
+38.26
+0.9888
+0.0138
+41.10
+0.9953
+0.0090
+Lego
+T-Rex
+Stand Up
+Jumping Jacks
+Method
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+D-NeRF [1]
+25.56
+0.9363
+0.0821
+30.61
+0.9671
+0.0535
+33.13
+0.9781
+0.0355
+32.70
+0.9779
+0.0388
+TiNeuVox [17]
+26.64
+0.9258
+0.0877
+31.25
+0.9666
+0.0478
+34.61
+0.9797
+0.0326
+33.49
+0.9771
+0.0408
+D-3DGS (MLP) [3]
+24.94
+0.9434
+0.0445
+37.93
+0.9932
+0.0102
+44.02
+0.9943
+0.0084
+37.49
+0.9893
+0.0141
+Ours (CfC)
+24.88
+0.9418
+0.0457
+37.79
+0.9926
+0.0110
+42.86
+0.9923
+0.0116
+37.52
+0.9890
+0.0148
+TABLE II
+PER-SCENE COMPARISON ON THE SEVEN NERF-DS REAL-WORLD SCENES. D-3DGS NUMBERS ARE RETRAINED ON OUR NVIDIA P100 GPU PLATFORM.
+Sieve
+Plate
+Bell
+Press
+Method
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+NeRF-DS [16]
+25.78
+0.8900
+0.1472
+20.54
+0.8042
+0.1996
+23.19
+0.8212
+0.1867
+25.72
+0.8618
+0.2047
+TiNeuVox [17]
+21.49
+0.8265
+0.3176
+20.58
+0.8027
+0.3317
+23.08
+0.8242
+0.2568
+24.47
+0.8613
+0.3001
+D-3DGS (MLP) [3]
+25.30
+0.8723
+0.1492
+20.42
+0.8128
+0.2252
+25.02
+0.8415
+0.1637
+25.37
+0.8626
+0.1913
+Ours (CfC)
+25.84
+0.8728
+0.1584
+20.41
+0.8116
+0.2341
+25.08
+0.8399
+0.1728
+25.46
+0.8655
+0.1991
+Cup
+As
+Basin
+Mean
+Method
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+PSNR ↑SSIM ↑LPIPS ↓
+NeRF-DS [16]
+24.91
+0.8741
+0.1737
+25.13
+0.8778
+0.1741
+19.96
+0.8166
+0.1855
+23.60
+0.8494
+0.1816
+TiNeuVox [17]
+19.71
+0.8109
+0.3643
+21.26
+0.8289
+0.3967
+20.66
+0.8145
+0.2690
+21.61
+0.8234
+0.2766
+D-3DGS (MLP) [3]
+24.67
+0.8885
+0.1616
+23.37
+0.8098
+0.3263
+19.61
+0.7944
+0.1903
+23.39
+0.8403
+0.2011
+Ours (CfC)
+24.61
+0.8847
+0.1658
+26.11
+0.8803
+0.1914
+19.52
+0.7889
+0.2023
+23.86
+0.8491
+0.1891
+Fig. 2.
+Qualitative comparison. Each panel triple shows, left to right within itself: ground truth, D-3DGS MLP, Ours-CfC; red boxes mark the largest
+visible difference. Left: Hell Warrior (D-NeRF) — the MLP smears the swinging limb while CfC preserves the silhouette. Top-right: As (NeRF-DS) — the
+MLP ghosts the moving translucent object that CfC largely suppresses. Bottom-right: Sieve (NeRF-DS) — CfC retains finer texture on the manipulated object.
+TABLE III
+COMPUTE BUDGET OF THE DEFORMATION FIELD. PARAMS AND MACS
+ARE MEASURED WITH PTFL O P S [10] ON A SINGLE FORWARD PASS AT THE
+MEDIAN PER-FRAME GAUSSIAN COUNT OF D-NERF HELL WARRIOR.
+Method
+Params (M)
+MACs (G)
+D-3DGS (MLP, D=8, W=256) [3]
+0.5223
+9.354
+Ours (CfC, D=8, W=256)
+0.7829
+13.999
+Ours (CfC, D=6, W=128, ours)
+0.3345
+5.998
+Limitations: The CfC stack uses depth-as-time semantics
+with no recurrence across video frames; the long-horizon
+temporal memory that drives CfC’s strong performance on
+irregularly sampled time-series and control benchmarks is
+therefore not active in our setting. The continuity guarantee
+comes only from the time-gated nonlinearity. We evaluate
+primarily on synthetic and short real-world scenes; long un-
+controlled videos remain future work.
+Future work: Three directions follow naturally. Auxiliary
+losses inside the LNN. The closed-form CfC layer exposes
+a smooth ∂Fθ/∂t, opening an inertia (acceleration) penalty,
+an As-Rigid-As-Possible distance penalty, and other physics-
+informed regularisers that we did not pursue here in order
+to keep the contribution architectural. These should com-
+pose linearly with the existing photometric loss. ODE/SDE
+comparison at matched compute. A side-by-side experiment
+between CfC, latent-ODE-GS [5] and an SDE variant under a
+
+----- PAGE 6 -----
+TABLE IV
+ARCHITECTURE ABLATIONS ON D-NERF HELL WARRIOR.
+Variant
+Setting
+PSNR ↑
+Backbone
+MLP (D-3DGS default)
+41.54
+CfC cell (ours)
+42.03
+Depth D
+6 (ours)
+42.03
+8
+41.82
+10
+41.86
+Activation
+ReLU
+41.47
+GELU (ours)
+42.03
+SiLU
+41.53
+LeCun
+40.88
+Tanh
+40.74
+fixed compute envelope would clarify the trade-off identified
+above. Recurrent-over-frames CfC. On datasets with stable
+per-Gaussian correspondence (e.g. rigged synthetic models), a
+recurrent variant of CfC may unlock the long-horizon memory
+that the depth-as-time form deliberately discards.
+VI. CONCLUSION
+We have presented a continuous-time deformation field for
+Deformable 3D Gaussian Splatting realised as a stack of
+Closed-form Continuous-time cells. Because the design lives
+entirely inside Fθ, the rest of the D-3DGS pipeline (Sec. III-A)
+is preserved. On the eight D-NeRF synthetic scenes and the
+seven NeRF-DS real-world scenes the liquid deformation field
+matches or exceeds the MLP baseline at comparable parameter
+and MAC budgets, while exposing an explicit time-gated
+update over the frame time t that the discrete MLP lacks. Com-
+pared to ODE/SDE-based continuous-time alternatives, CfC is
+the cheap end of the spectrum: a closed-form approximation
+that buys an architectural smoothness prior at the cost of an
+MLP. We see this as a near-zero-friction architectural design
+that practitioners can adopt incrementally and as a productive
+starting point for further continuous-time work in dynamic 3D
+scene reconstruction.
+REFERENCES
+[1]
+A. Pumarola, E. Corona, G. Pons-Moll, and F. Moreno-
+Noguer, “D-NeRF: Neural radiance fields for dynamic
+scenes,” in Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition (CVPR),
+2021, pp. 10 313–10 322.
+[2]
+B. Kerbl, G. Kopanas, T. Leimk¨uhler, and G. Drettakis,
+“3D Gaussian Splatting for real-time radiance field ren-
+dering,” ACM Transactions on Graphics (SIGGRAPH),
+vol. 42, no. 4, 2023.
+[3]
+Z. Yang, X. Gao, W. Zhou, S. Jiao, Y. Zhang, and X. Jin,
+“Deformable 3D Gaussians for high-fidelity monocular
+dynamic scene reconstruction,” in Proceedings of the
+IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR), 2024.
+[4]
+R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and D. K.
+Duvenaud, “Neural ordinary differential equations,” in
+Advances in Neural Information Processing Systems
+(NeurIPS), 2018.
+[5]
+D. Wang, P. Rim, T. Tian, D. Lao, A. Wong, and G.
+Sundaramoorthi, “ODE-GS: Latent ODEs for dynamic
+scene extrapolation with 3D Gaussian splatting,” arXiv
+preprint arXiv:2506.05480, 2025.
+[6]
+R. Hasani et al., “Closed-form continuous-time neural
+networks,” Nature Machine Intelligence, vol. 4, pp. 992–
+1003, 2022.
+[7]
+R. Hasani, M. Lechner, A. Amini, D. Rus, and R.
+Grosu, “Liquid time-constant networks,” arXiv preprint
+arXiv:2006.04439, 2020.
+[8]
+K. Kumar, A. Verma, N. Gupta, and A. Yadav, “Liquid
+neural networks: A novel approach to dynamic infor-
+mation processing,” IEEE Access, vol. 11, pp. 33 984–
+33 996, 2023.
+[9]
+P. K. Karn, I. Ardekani, and W. H. Abdulla, “A general-
+ized framework for liquid neural networks upon sequen-
+tial and non-sequential tasks,” Mathematics, vol. 12,
+no. 16, p. 2525, 2024.
+[10]
+V. Sovrasov, Ptflops: A flops counting tool for neural
+networks in PyTorch, https://github.com/sovrasov/flops-
+counter.pytorch, 2018.
+[11]
+Y. Lin, Z. Dai, S. Zhu, and Y. Yao, “Gaussian-Flow:
+4d reconstruction with dynamic 3d gaussian particle,”
+in Proceedings of the IEEE/CVF Conference on Com-
+puter Vision and Pattern Recognition (CVPR), 2024,
+pp. 21 136–21 145.
+[12]
+Q. Wang, V. Ye, H. Gao, J. Austin, Z. Li, and A.
+Kanazawa, “Shape of motion: 4d reconstruction from
+a single video,” in Proceedings of the IEEE/CVF Inter-
+national Conference on Computer Vision (ICCV), 2025.
+[13]
+G. Y. Tan et al., “FLAG-4D: Flow-guided local-global
+dual-deformation model for 4D reconstruction,” in Pro-
+ceedings of the AAAI Conference on Artificial Intelli-
+gence (AAAI), 2026.
+[14]
+X. Li, T.-K. L. Wong, R. T. Q. Chen, and D. Duvenaud,
+“Scalable gradients for stochastic differential equations,”
+in International Conference on Artificial Intelligence
+and Statistics (AISTATS), 2020.
+[15]
+R. Hasani, M. Lechner, T.-H. Wang, M. Chahine, A.
+Amini, and D. Rus, “Liquid structural state-space mod-
+els,” in International Conference on Learning Represen-
+tations (ICLR), 2023.
+[16]
+Z. Yan, C. Li, and G. H. Lee, “NeRF-DS: Neural
+radiance fields for dynamic specular objects,” in Pro-
+ceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition (CVPR), 2023.
+[17]
+J. Fang et al., “Fast dynamic radiance fields with time-
+aware neural voxels,” in SIGGRAPH Asia Conference
+Papers, 2022.

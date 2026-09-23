@@ -1277,10 +1277,24 @@ positioning_updated: 2026-09-14
   - **GitHub 限流** = 单点不稳，本次 fallback 解决，**但若连续 3 天限流则 digest 的 repo 候选池将冻结**。建议在 cron prompt 里加入"若连续 3 天 GitHub 限流则升级为 advisory"，或给本地缓存加 `papers/daily/repos_cache.json` 跨日累积。
 - **结论**：今日完成 digest 抓取 + 重新生成（绕过 urllib）+ commit + push（6c09e1c → 88b7982）。LNN 主题覆盖率连续 1 周保持 100% 饱和，9 月下半月无新 CfC / LTC / NCP 投稿进 arXiv（推测与 ICML 录用结果公布后作者进入 rebuttal / camera-ready 阶段相关），持续观察 10 月 NeurIPS 投稿窗口。
 
+### [2026-09-24] arXiv 抓取连续失败 → web_search 兜底 + 既有研读的回顾增量
+- **digest 入口**：[[docs/daily/2026-09-24_LNN_research_digest.md|每日追踪]]
+- **arXiv 抓取失败**：连续第 2 天 `urllib 406 Not Acceptable`（同 2026-09-22 提到的 TLS 指纹问题未修复）。本轮根因进一步定位为 arXiv Varnish 对含 9-term `OR` 长查询的 406 节流；单 term `all:"liquid neural network"` 同 UA 可正常 200 返回。digest `papers=0`。
+- **`select_papers_for_report.py` 输出**：`{candidates: [], n_total_arxiv: 0, n_skipped_reported: 0}` — 上游空集，下游无候选。
+- **`paper-analyzer` 技能状态**：cron 提示仍标"not found"。本日采用 **手动回顾增量** 路径：直接用 `web_search` 兜底拉取近 30 天命中 liquid/CfC/LTC/closed-form continuous-time 的高价值论文 2 篇，均与既有研读重合：
+  - `arXiv:2606.07670`（CfC as 3DGS Deformation Field）→ 既有 [[docs/reports/Liquid_NN_3DGS_Deformation_Field_2606.07670_研读报告]]（2026-06-10）+ [[docs/reports/Liquid_Neural_Networks_3DGS_Deformation_Field_2606.07670_研读报告]]（更早期变体）；本次追加 [[docs/reports/2026-09-24_review_Liquid_NN_Drop_in_CfC_Deformation_Field_D3DGS_2606.07670_研读报告]]（**回顾版**，补充与姊妹篇 2608.28702 的对照、与本项目边缘部署的连接）
+  - `arXiv:2608.28702`（Stochastic Liquid Deformation Fields）→ 既有 [[docs/reports/Stochastic_Liquid_Deformation_Fields_SDE_CfC_2608.28702_研读报告]] + [[docs/reports/SDE_CfC_r306_2026-09-21.md]]（r306 复现报告）；本次追加 [[docs/reports/2026-09-24_review_Stochastic_Liquid_Deformation_Fields_SDE_CfC_D3DGS_2608.28702_研读报告]]（**回顾版**，补充"诚实负结果"在 2026-09-24 的视角）
+- **增量价值定位**：两篇回顾版**不重写**既有报告，只在文首明确"完整版见 X",并补充 (a) 姊妹篇对照 (b) 本项目（边缘部署 / 本仓 r287-r305 栈）的关系定位 (c) 与 r306 复现报告的联合判定。
+- **同步阻塞点（高亮）**：
+  - **arXiv urllib 406 已连续 2 天（09-23, 09-24）**，按 cron prompt 阈值"连续 3 天失败需高亮"，下一轮（09-25）若再失败须在汇报里标红。**根因已确诊**：arXiv Varnish 对 9-term OR 长查询的 406 节流，UA/Accept 不是问题。
+  - **建议修复**（cron prompt 留给下次会话决策）：把 `daily_lnn_research.py:fetch_arxiv` 的"all-term OR 单查询" 拆为"单 term 多次查询 + 本地合并去重"，或改用 `requests` 库 + 自动重试 + UA 轮换。
+  - **GitHub 推送第一次 lock 拒绝** → retry 后 "Everything up-to-date"，commit `0ed2716` 实际落库。**HTTPS remote 而非 SSH**（与 cron prompt 描述不符但脚本仍跑通，因为 git 已认证）。
+- **结论**：今日完成 digest 抓取（含 arXiv 失败标记）+ commit + push + 2 篇回顾版研读。LNN 主题覆盖率保持 100% 饱和（既有研读 100% 覆盖今日候选），新增内容定位为"对既有报告的视角增量"而非新覆盖。**下一轮若 arXiv 仍 406，需在汇报里高亮"连续 3 天失败"**。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-09-24**：[[docs/daily/2026-09-24_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 24 个。
+- **2026-09-24**：[[docs/daily/2026-09-24_LNN_research_digest.md|每日追踪]]，候选论文 0 篇（arXiv urllib 406 第 2 天连续失败，根因：Varnish 对 9-term OR 长查询节流），仓库 41 个，模型 24 个；研读报告生成采用 **web_search 兜底 + 回顾增量** 路径，产出 2 篇回顾版研读（2606.07670 / 2608.28702，均与既有研读重合）。详见 [[docs/LNN_深度研读报告#2026-09-24-arxiv-抓取连续失败--web_search-兜底--既有研读的回顾增量|§2 复盘条目]]。
 - **2026-09-23**：[[docs/daily/2026-09-23_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个。
 - **2026-09-22**：[[docs/daily/2026-09-22_LNN_research_digest.md|每日追踪]]，候选论文 25 篇（digest 列出 12 篇，候选清单 0 篇新增），仓库 16 个（GitHub 限流 fallback），模型 19 个。
 - **2026-09-21**：[[docs/daily/2026-09-21_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 22 个。
