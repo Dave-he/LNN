@@ -10,8 +10,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：0 篇
-- GitHub 候选仓库：33 个
-- Hugging Face 候选模型：17 个
+- GitHub 候选仓库：41 个
+- Hugging Face 候选模型：24 个
 - 已下载 PDF：0 个
 
 ## 数据源状态
@@ -31,11 +31,11 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-20 | [m-swetanjali/Edge-AI-in-LNN](https://github.com/m-swetanjali/Edge-AI-in-LNN) | 0 | Jupyter Notebook | Edge AI for Cardiovascular Disease using Liquid Neural Network |
 | 2026-09-18 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 1 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
 | 2026-09-16 | [aygp-dr/liquid-neural-networks](https://github.com/aygp-dr/liquid-neural-networks) | 23 | Python | Liquid Neural Networks (LNN): continuous-time neural dynamics inspired by C. elegans, with 19-302 neurons. Hybrid Clojure/Python implementation |
+| 2026-09-15 | [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer) | 7 | Python | Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data |
+| 2026-09-10 | [santos-sanz/spanish-wordle-slm](https://github.com/santos-sanz/spanish-wordle-slm) | 0 | Python | Fine-tunes a 2.6B LiquidAI LFM2.5 model with QLoRA on Apple Silicon to play Spanish Wordle, benchmarked head-to-head against DeepSeek Flash. |
+| 2026-09-10 | [muhammedelsami/OnDeviceRAG](https://github.com/muhammedelsami/OnDeviceRAG) | 0 | Swift | Fully offline RAG for iOS — chat with your PDFs using on-device embeddings, Accelerate-powered vector search, and LiquidAI's LFM2. No server, no API key. |
 | 2026-09-09 | [404reese/XWormNet](https://github.com/404reese/XWormNet) | 0 | Python | Explainable Liquid Neural Network Framework for Real-Time Zero-Day Worm Detection in IoT and Enterprise Networks |
 | 2026-09-07 | [solluna100X/Bi-LENS](https://github.com/solluna100X/Bi-LENS) | 0 |  | Bi-LENS: A shape-scale decoupled deep learning framework for high-fidelity prediction of stress-strain curves of polyurethane elastomers, leveraging bidirectio… |
-| 2026-09-05 | [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant) | 2 |  | Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free p… |
-| 2026-09-05 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
-| 2026-09-03 | [asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL](https://github.com/asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL) | 0 | Python | MSc dissertation code: Closed-Form Continuous-Time Networks for Early Detection of Unsafe Trajectories in Multi-Turn LLM Conversations |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
@@ -48,10 +48,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-23 | [mradermacher/LFM2.5-2.6B-Pashto-Zi-GGUF](https://huggingface.co/mradermacher/LFM2.5-2.6B-Pashto-Zi-GGUF) | 674 | 0 |  |
 | 2026-09-23 | [ErtasAI/qmsum-summarizer-lfm2.5-1.2b-lora](https://huggingface.co/ErtasAI/qmsum-summarizer-lfm2.5-1.2b-lora) | 17 | 0 | summarization |
 | 2026-09-23 | [nassimjp/LFM2.5-2.6B-Pashto-Zi-b-GGUF](https://huggingface.co/nassimjp/LFM2.5-2.6B-Pashto-Zi-b-GGUF) | 1 | 0 |  |
-| 2026-09-22 | [LiquidAI/LFM2.5-2.6B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF) | 1209007 | 350 | text-generation |
-| 2026-09-22 | [LiquidAI/LFM2.5-230M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-230M-GGUF) | 580745 | 106 | text-generation |
-| 2026-09-22 | [LiquidAI/LFM2.5-1.2B-Instruct-GGUF](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF) | 318684 | 222 | text-generation |
-| 2026-09-22 | [LiquidAI/LFM2.5-350M-GGUF](https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF) | 72372 | 103 | text-generation |
+| 2026-09-23 | [Dohyeon1/LFM2-HC-SMoE-ngroups24-re](https://huggingface.co/Dohyeon1/LFM2-HC-SMoE-ngroups24-re) | 0 | 0 | text-generation |
+| 2026-09-23 | [Dohyeon1/LFM2-Sub-MoE-ngroups24-maxcls4](https://huggingface.co/Dohyeon1/LFM2-Sub-MoE-ngroups24-maxcls4) | 0 | 0 | text-generation |
+| 2026-09-23 | [Dohyeon1/LFM2-M-SMoE-ngroups24-maxcls4](https://huggingface.co/Dohyeon1/LFM2-M-SMoE-ngroups24-maxcls4) | 0 | 0 | text-generation |
+| 2026-09-23 | [Dohyeon1/LFM2-M-SMoE-ngroups24-maxcls2](https://huggingface.co/Dohyeon1/LFM2-M-SMoE-ngroups24-maxcls2) | 0 | 0 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
