@@ -8,11 +8,18 @@ tags: [LNN, repo-watchlist, automation]
 
 ## GitHub 仓库
 ### [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai)
-- 更新：2026-09-22
+- 更新：2026-09-23
 - Star / Fork：1 / 0
 - 语言：unknown
 - Topics：ai, apis-json, edge-ai, foundation-models, inference, liquid-networks, llm, on-device
 - 说明：Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs) - a new class of generative models based on liquid neural networks. Offers LFM2 (2.6B / 8B-A1B / 24B-A2B) and LFM2.5 (350M / 1.2B variants) with text, vision, audio, and thinking modes. The L
+
+### [NovaResearch9022/Fuzzy-LNN-Speech-Emotion-Recognition](https://github.com/NovaResearch9022/Fuzzy-LNN-Speech-Emotion-Recognition)
+- 更新：2026-09-23
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Implementation and experiments for the Fuzzy Liquid Neural Network framework for Speech Emotion Recognition
 
 ### [Think520change/gb-lnn](https://github.com/Think520change/gb-lnn)
 - 更新：2026-09-22
@@ -20,13 +27,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：unknown
 - Topics：未标注
 - 说明：To address these issues, a Multi-Scale Granular-Ball Liquid Neural Network (GB-LNN) is proposed as a common representation and temporal-modelling framework.
-
-### [NovaResearch9022/Fuzzy-LNN-Speech-Emotion-Recognition](https://github.com/NovaResearch9022/Fuzzy-LNN-Speech-Emotion-Recognition)
-- 更新：2026-09-22
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：Implementation and experiments for the Fuzzy Liquid Neural Network framework for Speech Emotion Recognition
 
 ### [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight)
 - 更新：2026-09-20
