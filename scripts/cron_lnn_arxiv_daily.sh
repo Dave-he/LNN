@@ -62,7 +62,13 @@ for attempt in 1 2 3; do
     break
   fi
   echo "$LOG_PREFIX  fetch attempt ${attempt} -> HTTP=${http_code} (retrying)" >&2
-  sleep $((attempt * 5))
+  # Varnish throttle clears on ~30-60s backoffs (8s/30s/60s ladder per skill);
+  # the original 5s/10s/15s ladder failed on 2026-09-22/23 while a manual ladder succeeded.
+  case $attempt in
+    1) sleep 8 ;;
+    2) sleep 30 ;;
+    *) sleep 60 ;;
+  esac
   http_code=""
 done
 
