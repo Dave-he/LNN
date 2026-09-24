@@ -41,14 +41,14 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
 | 2026-09-24 | [LiquidAI/LFM2.5-VL-3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B) | 24660 | 213 | image-text-to-text |
-| 2026-09-24 | [trymirai/LFM2.5-1.2B-Instruct-L](https://huggingface.co/trymirai/LFM2.5-1.2B-Instruct-L) | 688 | 1 | text-generation |
-| 2026-09-24 | [trymirai/LFM2.5-1.2B-Instruct-M](https://huggingface.co/trymirai/LFM2.5-1.2B-Instruct-M) | 685 | 0 | text-generation |
+| 2026-09-24 | [virtuanista/LFM2.5-8B-A1B-Uncensored-GGUF](https://huggingface.co/virtuanista/LFM2.5-8B-A1B-Uncensored-GGUF) | 1467 | 0 | text-generation |
+| 2026-09-24 | [trymirai/LFM2.5-1.2B-Thinking-M](https://huggingface.co/trymirai/LFM2.5-1.2B-Thinking-M) | 668 | 0 | text-generation |
 | 2026-09-24 | [trymirai/LFM2.5-2.6B-M](https://huggingface.co/trymirai/LFM2.5-2.6B-M) | 661 | 0 | text-generation |
 | 2026-09-24 | [trymirai/LFM2.5-2.6B-L](https://huggingface.co/trymirai/LFM2.5-2.6B-L) | 648 | 0 | text-generation |
 | 2026-09-24 | [trymirai/LFM2.5-230M-L](https://huggingface.co/trymirai/LFM2.5-230M-L) | 643 | 0 | text-generation |
 | 2026-09-24 | [trymirai/LFM2.5-350M-L](https://huggingface.co/trymirai/LFM2.5-350M-L) | 621 | 0 | text-generation |
-| 2026-09-24 | [trymirai/LFM2.5-230M-M](https://huggingface.co/trymirai/LFM2.5-230M-M) | 616 | 0 | text-generation |
 | 2026-09-24 | [trymirai/LFM2.5-350M-M](https://huggingface.co/trymirai/LFM2.5-350M-M) | 616 | 0 | text-generation |
+| 2026-09-24 | [trymirai/LFM2.5-230M-M](https://huggingface.co/trymirai/LFM2.5-230M-M) | 616 | 0 | text-generation |
 | 2026-09-24 | [LiquidAI/LFM2.5-VL-3B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-DSpark) | 37 | 10 | image-text-to-text |
 | 2026-09-24 | [LiquidAI/LFM2.5-VL-3B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-DSpark-GGUF) | 5 | 7 | image-text-to-text |
 | 2026-09-24 | [Synaptics/LiquidAI-LFM2.5-350M-w8a8-torq](https://huggingface.co/Synaptics/LiquidAI-LFM2.5-350M-w8a8-torq) | 2 | 0 | text-generation |
