@@ -96,7 +96,52 @@ npx skills add ./skills/living-field-researcher
   - **功能**：用于学术英语与中文的精准翻译，严格保留学术术语（如 *Liquid Neural Networks*）、数学公式及排版。
   - **触发场景**：需要精准中英互译摘要、特定段落或通篇文献时使用。
 - **`living-field-researcher` (领域持续研究专家)**
-  - **功能**：将“每日/定期搜索某一领域论文、代码、模型与前沿动态”的方法沉淀为可审计的 GitHub 知识库工作流，结合 Living Review、PRISMA-lite、雪球法、Zettelkasten 与 Progressive Summarization，持续更新检索协议、日更摘要、研读报告、全局索引和实验队列。
+  - **功能**：将”每日/定期搜索某一领域论文、代码、模型与前沿动态”的方法沉淀为可审计的 GitHub 知识库工作流，结合 Living Review、PRISMA-lite、雪球法、Zettelkasten 与 Progressive Summarization，持续更新检索协议、日更摘要、研读报告、全局索引和实验队列。
   - **触发场景**：需要为 LNN 或其他研究主题搭建/改进持续追踪、知识沉淀、开源生态观察和复现实验闭环时使用。
 
 您不仅可以在编辑器中调用，也可以将 `SKILL.md` 的内容发给 Web 端的 Claude, Gemini, Qwen 等大模型进行日常论文研读。
+
+---
+
+## 🚫 Agent 约束 (Claude / 其他 AI Agents 必读)
+
+> 本节为**所有 AI Agent** (Claude Code / Cursor / Windsurf / Trae / Codex / Gemini / Qwen) 的**强约束执行边界**。
+> 任何 LNN 相关文档 / 报告 / 代码注释 / 答辩内容**不得**违反下列约束。完整论证见:
+> - [[docs/research/2026-09-24_technical_route_landscape]] §五 “诚实约束”
+> - [[docs/LNN_深度研读报告]] §0 “项目定位”
+
+### 不得重复以下未经验证的 claim
+
+| # | 不可重复的 claim | 反驳证据 |
+|---|---|---|
+| 1 | ❌ “MDN-CfC 在模仿学习上 2.4× 改善” | r307 toy benchmark 复现失败 (toy_sin +25%~+56%, structured_irr ≈ MSE, random_irr 中性), 进 negative-result 目录 |
+| 2 | ❌ “SDE-LNN 比确定性 CfC 更鲁棒 / SOTA 横扫” | r306 toy benchmark 噪声反而略有害 (NeRF-DS -0.09 dB, λ=0 是甜蜜点), 仅在训练期 jitter robustness 备援场景有效 |
+| 3 | ❌ “LNN 可替代 LLM (PPL 维度)” | MT-LNN 125M WikiText-103 PPL 88.93 vs Transformer 78.86, 严格控制变量下输 ~10 PPL (9/14 validated) |
+| 4 | ❌ “MT-LNN Orch-OR / 意识门带来 AGI / new path to general intelligence” | README 已自撤回 (AVP failed, Φ̂ sign inverted, 训练路径 inert), 引用前必须查 retraction 段 |
+| 5 | ❌ “LFM2.5 是纯液态模型” | LiquidAI 自己把 ODE + RK4/Euler solver 替换为 double-gated conv + GQA, 是 “Liquid + X 混合” 而非纯 LNN |
+| 6 | ❌ “LNN 在标准 ML 任务 (NLP / CV 主基准) 上 SOTA 横扫 transformer” | 任何 LNN 变体均未在标准主基准上显著超过 transformer, 仅在长尾工业任务 (D-3DGS / FJSP / EEG) 上稳定选择 |
+| 7 | ❌ “MT-LNN M-series 是 O(1) 工作记忆” | M-series 在 transformer block 上叠 MT-adapter, **不是 O(1)**; 仅 O-series (attention-free) 才是 O(1) |
+| 8 | ❌ “SDE-CfC 改进确定性 CfC 形变场” | r306 mean PSNR +0.09 dB 在 run-to-run 方差内 (σ≈0.05 dB), 严格说**持平**, 不是”改进” |
+
+### 必须遵守的执行边界
+
+1. **写 LNN 报告前**, 必须先 recall `[[docs/LNN_深度研读报告]]` §0 与 `[[docs/research/2026-09-24_technical_route_landscape]]` §五 的约束
+2. **引用任何 LNN 仓库的 claims 时**, 必须先在 README / 论文里查 retraction 段 (MT-LNN 已自撤回 4 条主张)
+3. **报”重大突破” / “SOTA” / “AGI 路径” 时**, 必须先在 r301-r307 + MT-LNN 研读中找到对应 grounding, 否则标为”未验证” 并走诚实负结果路径
+4. **toy benchmark 复现失败的负结果**, 必须进 `negative-result` 目录而非默认 stack (r104/r126/r128/r130-133/r306/r307 已建)
+5. **新方案落地前**, 必须查 [[docs/research/2026-09-24_technical_route_landscape]] §四 “给未来的建议”, 避免重复 r306/r307 已验证的负结果路径
+6. **不允许触碰真实硬件控制** (沿用 2026-06-09 用户偏好 critical 级): 不接 ADB / devicectl / 传感器 / 设备驱动 / BMS / CAN / Modbus / mavlink / ROS, 仅做合成仿真 + in-house 模型
+
+### 强制约束触发后流程
+
+- 若任何 LNN 相关输出**无意中违反**上述约束 (例如: 在用户问”有没有突破” 时给出”MT-LNN 实现 AGI” 答复), Agent 必须:
+  1. **立即修正**: 在同一对话轮次内撤回错误 claim, 改为”诚实负结果 / 边界声明”
+  2. **引用 grounding**: 指向 r306/r307/MT-LNN 研读 + §0 项目定位
+  3. **如有必要**: 追加 negative-result 条目到 `analysis/negative_results/` 或 [[docs/LNN_深度研读报告]] §0
+
+---
+
+**约束维护说明**:
+- 本节由 [[docs/research/2026-09-24_technical_route_landscape]] §五 自动派生, 两者必须同步
+- 每月由 `lnn-daily-research.timer` 触发审视, 新负结果出现时即时追加
+- 任何对本节的反向修改 (放宽 / 删除某条约束) 必须先在 commit message 里 grounding 到对应 negative-result 研读

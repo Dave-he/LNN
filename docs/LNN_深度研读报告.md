@@ -9,9 +9,9 @@ positioning_updated: 2026-09-14
 
 > 💡 **维护说明**：本文档用于系统性沉淀 LNN 的底层数学原理、核心演进路线及各篇论文的深度剖析。后续若有新论文发布，请统一按格式追加至 **“2. 论文深度研读 (持续更新区)”**。
 
-## 0. 项目定位 (2026-09-14 更新)
+## 0. 项目定位 (2026-09-14 更新, 2026-09-24 路线分叉评估追加)
 
-> 本节为对所有读者的统一边界声明，与 `README.md` 的"项目定位"节、`docs/research/2026-09-08_technical_route_landscape.md` 的"主题 D / 主题 F"、以及 `docs/reports/AwareLiquid_M1_MT-LNN_研读报告.md` 的"§2.4 一句话定位" 保持一致。
+> 本节为对所有读者的统一边界声明，与 `README.md` 的"项目定位"节、`docs/research/2026-09-08_technical_route_landscape.md` 的"主题 D / 主题 F"、`docs/research/2026-09-24_technical_route_landscape.md` 的"§0 一句话判断"、以及 `docs/reports/AwareLiquid_M1_MT-LNN_研读报告.md` 的"§2.4 一句话定位" 保持一致。
 
 ### LNN 在本仓 / 在学界 / 在产业 的真实位置
 
@@ -20,6 +20,26 @@ positioning_updated: 2026-09-14
 1. **MT-LNN 125M PPL 88.93 vs modern Transformer 78.86** — 同 20K 步 / fp32 / WikiText-103 严格控制变量，9/14 deep-dive 验证为 ✅ validated。即便最优 LNN-O 系列仍输 ~10 PPL，"LNN 替代 LLM" 在 PPL 维度不成立。
 2. **MT-LNN 的 O(1) 状态 crossover = 17–976 tokens** — 低于此区间 Transformer 仍占优；高于此区间 O-series 状态更小。这是**工程拐点**，不是"替代"信号。
 3. **Liquid AI 自己的演进证据**: LFM2 → LFM2.5 把"完整 ODE + RK4/Euler solver" 替换为 "double-gated conv + GQA"，**等于 Liquid AI 自己把"液态"从 backbone 降级到组件**。HF 下载量（LFM2.5-1.2B-Instruct 252K+ / LFM2.5-2.6B 120K+）说明 Liquid AI 的产品路径已是"Liquid + X 混合"，不是纯 LNN。
+
+### 2026-09-24 路线分叉与突破评估 (本节追加)
+
+> 完整论证见 [[docs/research/2026-09-24_technical_route_landscape]]。本节为对 §0 定位的**强约束补充**:
+
+**4 条互不收敛的技术路线分叉** (2026-08/09 月窗口):
+
+| 路线 | 代表轮次 / 论文 | 状态 |
+|---|---|---|
+| **A · Parallel-CfC 边缘推理化** | r301-r305 + LFM2.5 整合 (r304) | **首选生产路径**, 已落地 Jetson Orin Nano |
+| **B · SDE 概率论重解释** | SDE-CfC (2608.28702) / r306 | **诚实负结果** — toy benchmark 噪声略有害, 仅作训练期 jitter robustness 备援 |
+| **C · 多模态动作分布 / MDN-CfC** | arXiv:2603.27058 / r307 | **诚实负结果** — toy benchmark 复现失败, 进 negative-result 目录 |
+| **D · 类脑 / MT-LNN** | AwareLiquid/M1 (9/14 研读) | O-series attention-free O(1) 记忆, 但 **1★ 单人项目**, Orch-OR 已自撤回 |
+
+**突破性评估**:
+- ✅ **方法论突破**: 诚实负结果常态化 (r306 / r307 是 LNN 社区罕见的实证负结果态度)
+- ✅ **工程突破**: Parallel-CfC + LFM2.5 整合 (r301-r304)
+- ⚠️ **架构突破**: MT-LNN O(1) 记忆 (条件性, 仍 1★)
+- ❌ **没有 SOTA 横扫**: 任何 LNN 变体均未在 NLP / CV 主基准上显著超过 transformer
+- ❌ **没有 "Sora 时刻"**: LNN 正从"一种 RNN 变体"演化成"多个互不收敛的技术家族", 这是健康演化, 不是颠覆
 
 ### LNN 真价值所在 (三角区)
 
