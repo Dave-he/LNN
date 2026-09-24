@@ -154,17 +154,17 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, edge, conversational
 
-### [trymirai/LFM2.5-1.2B-Instruct-L](https://huggingface.co/trymirai/LFM2.5-1.2B-Instruct-L)
+### [virtuanista/LFM2.5-8B-A1B-Uncensored-GGUF](https://huggingface.co/virtuanista/LFM2.5-8B-A1B-Uncensored-GGUF)
 - 更新：2026-09-24
-- 下载 / Likes：688 / 1
+- 下载 / Likes：1467 / 0
 - 任务：text-generation
-- Tags：uzu, safetensors, mirai, 8-bit, text-generation, base_model:LiquidAI/LFM2.5-1.2B-Instruct, base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct, license:other
+- Tags：gguf, liquid-ai, hybrid, moe, llama.cpp, ollama, lfm2, uncensored
 
-### [trymirai/LFM2.5-1.2B-Instruct-M](https://huggingface.co/trymirai/LFM2.5-1.2B-Instruct-M)
+### [trymirai/LFM2.5-1.2B-Thinking-M](https://huggingface.co/trymirai/LFM2.5-1.2B-Thinking-M)
 - 更新：2026-09-24
-- 下载 / Likes：685 / 0
+- 下载 / Likes：668 / 0
 - 任务：text-generation
-- Tags：uzu, safetensors, mirai, 4-bit, text-generation, base_model:LiquidAI/LFM2.5-1.2B-Instruct, base_model:quantized:LiquidAI/LFM2.5-1.2B-Instruct, license:other
+- Tags：uzu, safetensors, mirai, 4-bit, text-generation, base_model:LiquidAI/LFM2.5-1.2B-Thinking, base_model:quantized:LiquidAI/LFM2.5-1.2B-Thinking, license:other
 
 ### [trymirai/LFM2.5-2.6B-M](https://huggingface.co/trymirai/LFM2.5-2.6B-M)
 - 更新：2026-09-24
@@ -190,17 +190,17 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：uzu, safetensors, mirai, 8-bit, text-generation, base_model:LiquidAI/LFM2.5-350M, base_model:quantized:LiquidAI/LFM2.5-350M, license:other
 
-### [trymirai/LFM2.5-230M-M](https://huggingface.co/trymirai/LFM2.5-230M-M)
-- 更新：2026-09-24
-- 下载 / Likes：616 / 0
-- 任务：text-generation
-- Tags：uzu, safetensors, mirai, 4-bit, text-generation, base_model:LiquidAI/LFM2.5-230M, base_model:quantized:LiquidAI/LFM2.5-230M, license:other
-
 ### [trymirai/LFM2.5-350M-M](https://huggingface.co/trymirai/LFM2.5-350M-M)
 - 更新：2026-09-24
 - 下载 / Likes：616 / 0
 - 任务：text-generation
 - Tags：uzu, safetensors, mirai, 4-bit, text-generation, base_model:LiquidAI/LFM2.5-350M, base_model:quantized:LiquidAI/LFM2.5-350M, license:other
+
+### [trymirai/LFM2.5-230M-M](https://huggingface.co/trymirai/LFM2.5-230M-M)
+- 更新：2026-09-24
+- 下载 / Likes：616 / 0
+- 任务：text-generation
+- Tags：uzu, safetensors, mirai, 4-bit, text-generation, base_model:LiquidAI/LFM2.5-230M, base_model:quantized:LiquidAI/LFM2.5-230M, license:other
 
 ### [LiquidAI/LFM2.5-VL-3B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-DSpark)
 - 更新：2026-09-24
