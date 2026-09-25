@@ -50,22 +50,41 @@ class CfCModel {
     }
     
     static func createPreTrained() -> CfCModel {
+        // Try to load trained weights from the app bundle. The Python
+        // scripts/export_lnn_for_ios.py now emits `cfc_weights.json`
+        // alongside the traced .pt; CfCWeightLoader reads it if present.
+        if let w = CfCWeightLoader.loadFromBundle() {
+            return CfCModel(
+                hiddenSize: w.hiddenSize,
+                fGateWeight: w.fGateWeight,
+                fGateBias: w.fGateBias,
+                gBranchWeight: w.gBranchWeight,
+                gBranchBias: w.gBranchBias,
+                hBranchWeight: w.hBranchWeight,
+                hBranchBias: w.hBranchBias,
+                timeScale: w.timeScale,
+                outputWeight: w.outputWeight,
+                outputBias: w.outputBias
+            )
+        }
+        // Fallback: placeholder weights (used when cfc_weights.json is
+        // not bundled — the demo still runs but predictions are not trained).
         let hiddenSize = 8
-        
+
         let fGateWeight = [[Float]](repeating: [Float](repeating: 0.1, count: hiddenSize), count: 1 + hiddenSize)
         let fGateBias = [Float](repeating: 0.0, count: hiddenSize)
-        
+
         let gBranchWeight = [[Float]](repeating: [Float](repeating: 0.1, count: hiddenSize), count: 1 + hiddenSize)
         let gBranchBias = [Float](repeating: 0.0, count: hiddenSize)
-        
+
         let hBranchWeight = [[Float]](repeating: [Float](repeating: 0.1, count: hiddenSize), count: 1 + hiddenSize)
         let hBranchBias = [Float](repeating: 0.0, count: hiddenSize)
-        
+
         let timeScale = [Float](repeating: 1.0, count: hiddenSize)
-        
+
         let outputWeight = [[Float]](repeating: [Float](repeating: 0.1, count: 1), count: hiddenSize)
         let outputBias = [Float](repeating: 0.0, count: 1)
-        
+
         return CfCModel(
             hiddenSize: hiddenSize,
             fGateWeight: fGateWeight,

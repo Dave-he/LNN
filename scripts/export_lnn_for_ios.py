@@ -1,8 +1,15 @@
 
+import json
+import sys
+from pathlib import Path
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
 from lnn.core.cfc import CfCNetwork
 from lnn.data.timeseries import generate_sine_data, create_dataloader
 
@@ -148,7 +155,28 @@ def train_and_export_cfc_model():
     import json
     with open("/Users/hyx/workspace/LNN/ios/LNNDemo/LNNDemo/Models/example_data.json", "w") as f:
         json.dump(example_data, f)
-    
+
+    # Save trained weights as JSON so the Swift app can load them via
+    # CfCWeightLoader.loadFromBundle(). Closes the docstring-debt noted
+    # in the agent inventory: previously the .pt was shipped but the
+    # Swift runtime used constant 0.1 placeholder weights.
+    weights_json = {
+        "hidden_size": 8,
+        "f_gate_weight": exportable_model.f_gate[0].weight.detach().cpu().tolist(),
+        "f_gate_bias":   exportable_model.f_gate[0].bias.detach().cpu().tolist(),
+        "g_branch_weight": exportable_model.g_branch[0].weight.detach().cpu().tolist(),
+        "g_branch_bias":   exportable_model.g_branch[0].bias.detach().cpu().tolist(),
+        "h_branch_weight": exportable_model.h_branch[0].weight.detach().cpu().tolist(),
+        "h_branch_bias":   exportable_model.h_branch[0].bias.detach().cpu().tolist(),
+        "time_scale":      exportable_model.time_scale.detach().cpu().tolist(),
+        "output_weight":   exportable_model.output_proj.weight.detach().cpu().tolist(),
+        "output_bias":     exportable_model.output_proj.bias.detach().cpu().tolist(),
+    }
+    weights_path = "/Users/hyx/workspace/LNN/ios/LNNDemo/LNNDemo/Models/cfc_weights.json"
+    with open(weights_path, "w") as f:
+        json.dump(weights_json, f)
+    print(f"Weights JSON saved to {weights_path}")
+
     print("Export complete!")
     return exportable_model
 
