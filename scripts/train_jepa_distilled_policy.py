@@ -98,6 +98,36 @@ def distil_via_planner(
     return torch.cat(actions, dim=0)
 
 
+def learned_reward_fn_from_obs(obs_full: torch.Tensor) -> callable:
+    """Build a reward function that scores lower-distance-to-goal higher.
+
+    The PointMassNavLite obs has ``[pos.x, pos.y, goal_dx, goal_dy, ...]``
+    at positions [0, 1, 2, 3]. So distance to goal = sqrt(goal_dx² + goal_dy²).
+    Reward = -distance.
+
+    Returns a callable suitable as ``reward_fn`` for
+    :meth:`LatentPlanner.rollout`. The callable receives the world
+    model's ``z_next`` prediction; we need to convert it back to obs
+    space, but since z is just a latent we don't have that
+    inverse-mapping here. Instead, the planner will use the *current*
+    obs (passed by the caller) as the reward reference.
+    """
+    # Note: in our setup, the planner rollout uses ``z0 = encoder(obs)``
+    # then rolls out ``z_next``. We don't have z -> obs mapping. So we
+    # use a different reward: constant per candidate (no per-step
+    # refinement). This makes the planner effectively just sample
+    # uniform actions and pick the one closest to zero — which is
+    # *not* the same as the goal-distance reward.
+    #
+    # For real goal-distance planning we need an env simulator.
+    # For now, leave the planner with its default reward.
+    raise NotImplementedError(
+        "learned reward from obs not yet wired — the planner's "
+        "default latent-norm reward is the only path; for goal-"
+        "directed planning you need a learned reward model."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else "")
     parser.add_argument("--target", choices=["pd", "planner"], default="pd",

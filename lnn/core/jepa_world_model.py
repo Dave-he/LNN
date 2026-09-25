@@ -377,9 +377,15 @@ class LatentPlanner(nn.Module):
 
         For each candidate we roll out ``horizon`` steps in latent space
         using ``world_model`` with that candidate's per-step actions.
-        The reward surrogate is the *sum of negative predicted-latent
-        norms* (encouraging the latent to stay small / smooth). If
-        ``reward_fn`` is provided, it overrides the default.
+        The default reward surrogate is the *sum of negative predicted-
+        latent norms* (encouraging the latent to stay small / smooth).
+        This is intentionally simple: it makes the planner trainable
+        without a learned reward model, but it is **not** a proxy for
+        "reach the goal" — for that you need a learned reward model.
+
+        If ``reward_fn`` is provided, it overrides the default. The
+        ``reward_fn`` receives ``z_next`` (``[B, n_candidates, latent_dim]``)
+        and returns ``[B, n_candidates]`` rewards.
 
         Returns:
             :class:`PlannerResult` with ``best_action`` = the first-step
