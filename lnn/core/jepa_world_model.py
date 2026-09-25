@@ -515,6 +515,15 @@ class JEPAPolicy(nn.Module):
             action, _, _ = self.policy_head.sample(z)
         return action
 
+    def forward(self, obs_t: torch.Tensor) -> torch.Tensor:
+        """Alias for :meth:`forward_inference` (deterministic, mse head).
+
+        Required by ``torch.onnx.export`` and ``torch.jit.trace`` which
+        call ``model(input)``. Behaviourally identical to
+        ``forward_inference(obs_t, deterministic=True)``.
+        """
+        return self.forward_inference(obs_t, deterministic=True)
+
     def snapshot(self) -> StateSnapshot:
         """Capture the full JEPA policy state."""
         return StateSnapshot(self)
