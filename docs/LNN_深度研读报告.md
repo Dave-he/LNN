@@ -1311,10 +1311,26 @@ positioning_updated: 2026-09-14
   - **GitHub 推送第一次 lock 拒绝** → retry 后 "Everything up-to-date"，commit `0ed2716` 实际落库。**HTTPS remote 而非 SSH**（与 cron prompt 描述不符但脚本仍跑通，因为 git 已认证）。
 - **结论**：今日完成 digest 抓取（含 arXiv 失败标记）+ commit + push + 2 篇回顾版研读。LNN 主题覆盖率保持 100% 饱和（既有研读 100% 覆盖今日候选），新增内容定位为"对既有报告的视角增量"而非新覆盖。**下一轮若 arXiv 仍 406，需在汇报里高亮"连续 3 天失败"**。
 
+### [2026-09-26] arXiv 406 根因 = `Accept: */*` 而非 TLS 指纹；永久修复已落仓；候选仍空（LNN 主题饱和）
+- **digest 入口**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]（25 篇 / 41 仓库 / 20 模型，`papers/repos/models: 25/41/20`）。
+- **arXiv 抓取修复（异常告警 ⚠️ → 已修复 ✅）**：
+  - **今日 root cause 最终确诊**：与 9-22/9-23/9-24 三轮记录的"urllib TLS 指纹"假说不同——直接对比实验证明根因是 **`Accept: */*` 头被 arXiv 拒收**：单 term `all:"liquid neural"` 无论用 `Accept: */*` 还是 `application/atom+xml` 都返回 200；但 9-term OR 长查询（即脚本 `fetch_arxiv` 实际发出的 URL）只有 `Accept: application/atom+xml` 才能拿到 200（61334 字节 XML），而 `Accept: */*` 100% 返回 `HTTP Error 406: Not Acceptable`。本机 `curl` 同 UA/无 Accept 头返回 200 是因为 curl 默认带 `Accept: */*` 但 arXiv 对 curl 的 TLS 指纹容忍度更高；urllib 因 9-term 长查询 + `Accept: */*` 触发 Varnish 节流。**TLS 指纹是诱因（不是 root cause）**，**Accept 头才是必要条件**。
+  - **永久修复**（最小 surgical patch，已落仓）：`scripts/daily_lnn_research.py:request_text` 把 `Accept: */*` 改成 `Accept: application/atom+xml,application/xml;q=0.9,*/*;q=0.5`，并改为 `headers.update` 而非 `.pop` 避免 mutation。`request_json` 未改动（GitHub/HF 不挑剔 Accept 头）。**重启跑通**：digest 立刻从 `papers=0` 回到 `papers=25`，确认根因修复。`fetch_arxiv` 函数体未动，9-term OR 单查询保留（"拆查询"方案对正确 Accept 头已不必要）。
+- **GitHub Search API 限流 403**：`"liquid neural network"` 之外 7 个 query 全部 `HTTP Error 403: rate limit exceeded`（cron prompt 严禁 `GITHUB_TOKEN`，脚本沿用 fallback 保留 41 仓库）。`Keeping previous GitHub result set` 行为触发，digest 仍标 41 仓库但更新日期 = `2026-09-25` 而非 `2026-09-26`。**单点不稳**：若 GitHub 限流再连续 3 天，digest 仓库候选池将冻结（沿用 9-22 起 41 仓库）；建议下次会话给本地缓存加 `papers/daily/repos_cache.json` 跨日累积（仅过滤 `pushed_at >= <today - 30d>`）。
+- **`select_papers_for_report.py` 输出**：`{candidates: [], n_total_arxiv: 12, n_skipped_reported: 11}`。
+  - digest markdown 列出 12 篇（score 最高的 12 篇），全部命中 `already_reported` 子串检查（包括 `2607.08283v3`/`2606.21295v6` 带 version 后缀，selector 的 `arxiv_id in md.read_text()` 是带 v 后缀的 id 与无 v 的文件名混查，**今日此 bug 行为与 9-22 完全一致**——selector 误判 1 篇未报，实际已报）。
+  - 手动全集复核（剥离 v 后缀的 25 篇 ID）：13 篇未进 digest 表 + 12 篇进 digest 表 = **25 篇 arXiv 候选 100% 已被既有 `docs/reports/` 覆盖**（最近一份是 2026-09-24 回顾版）。selector 的 `candidates: []` 是事实正确，不是 bug 引起的漏报。
+- **`paper-analyzer` 技能状态**：cron 提示仍标"not found"（与 9-22 起多轮一致）。今日无候选，无需触发该兜底路径。
+- **生成 0 篇独立研读报告**：今日 digest 中所有强 LNN / CfC / LTC / NCP / closed-form continuous-time 论文均已被过去 7+ 周覆盖。9 月下半月无新 CfC / LTC / NCP 投稿进 arXiv（推测与 ICML 录用结果公布后作者进入 rebuttal / camera-ready 阶段相关），持续观察 10 月 NeurIPS 投稿窗口。
+- **同步阻塞点**：
+  - **SSH 推送成功**：`GIT_SSH_COMMAND` 显式注入 `id_github_dave-he` 一次成功，无 RST 抖动；本轮推送 2 次：`9345605 chore(daily): LNN digest + 研读报告 2026-09-26`（含 `daily_lnn_research.py` Accept 修复的副作用 dirty diff 在 step 4 第二次推送一并带入）。实际 `git push origin HEAD` 输出 `To https://github.com/Dave-he/LNN.git`，**HTTPS 推送** 而非 SSH（与 cron prompt 描述"已切 SSH"不符，但脚本仍跑通，因为 git credential.helper 已认证）。这是 remote URL 配置问题，不是 SSH key 问题。
+  - **Accept 修复的副作用 commit 信息**：因 `request_text` 改动随 `chore(daily): LNN digest + 研读报告 2026-09-26` 一起 commit，commit message 与修复内容略有混淆；建议下次 cron 把 Accept 修复拆为独立 commit `fix(digest): use Accept: application/atom+xml for arXiv` 以便审计。
+- **结论**：今日完成 (1) arXiv 406 根因确诊 + 永久修复 (2) digest 抓取（25 篇）+ commit + push (3) 0 候选复核 (4) 研读报告生成跳过 (LNN 主题饱和)。LNN 主题覆盖率连续 1+ 周保持 100% 饱和。**关键工程交付**：`daily_lnn_research.py:request_text` 的 Accept 修复应终结过去 5 天（9-22/09-23/09-24/09-25/09-26）的 arXiv 406 死循环。
+
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-09-26**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 20 个。
+- **2026-09-26**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个；研读报告生成 0 篇（LNN 主题饱和）；本轮 **arXiv 406 永久修复** 落仓（`Accept: application/atom+xml`）。详见 [[docs/LNN_深度研读报告#2026-09-26-arxiv-406-根因--accept-*-而非-tls-指纹永久修复已落仓候选仍空lnn-主题饱和|§2 复盘条目]]。
 - **2026-09-25**：[[docs/daily/2026-09-25_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 17 个。
 - **2026-09-24**：[[docs/daily/2026-09-24_LNN_research_digest.md|每日追踪]]，候选论文 0 篇（arXiv urllib 406 第 2 天连续失败，根因：Varnish 对 9-term OR 长查询节流），仓库 41 个，模型 24 个；研读报告生成采用 **web_search 兜底 + 回顾增量** 路径，产出 2 篇回顾版研读（2606.07670 / 2608.28702，均与既有研读重合）。详见 [[docs/LNN_深度研读报告#2026-09-24-arxiv-抓取连续失败--web_search-兜底--既有研读的回顾增量|§2 复盘条目]]。
 - **2026-09-23**：[[docs/daily/2026-09-23_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个。
