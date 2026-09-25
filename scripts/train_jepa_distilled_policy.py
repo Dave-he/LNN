@@ -51,11 +51,11 @@ def _ts() -> str:
 
 
 def load_latest_demos() -> tuple[torch.Tensor, torch.Tensor]:
-    """Find latest PD demos; return ``(obs, first_step_action)``."""
+    """Find latest PD demos (any n_ped); return ``(obs, first_step_action)``."""
     out_dir = REPO_ROOT / "analysis" / "decisions"
-    candidates = sorted(out_dir.glob("*_pointmass_pid_demos_n0.json"))
+    candidates = sorted(out_dir.glob("*_pointmass_pid_demos_*.json"))
     if not candidates:
-        raise FileNotFoundError(f"no *_pointmass_pid_demos_n0.json under {out_dir}")
+        raise FileNotFoundError(f"no *_pointmass_pid_demos_*.json under {out_dir}")
     payload = json.loads(candidates[-1].read_text())
     obs = torch.tensor(payload["obs"], dtype=torch.float32)
     actions = torch.tensor(payload["actions"], dtype=torch.float32)
@@ -104,6 +104,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="imitation source: PD expert or latent planner")
     parser.add_argument("--world-model-ckpt", type=Path, default=None,
                         help="(planner mode) path to trained JEPA state_dict")
+    parser.add_argument("--demos", type=Path, default=None,
+                        help="explicit demos file (default: latest PD demos)")
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--lr", type=float, default=3e-3)
@@ -204,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
     md_path = out_dir / f"{stamp}_jepa_distilled_{args.target}.md"
 
     payload = {
-        "config": vars(args),
+        "config": {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()},
         "n_states": N,
         "history": history,
         "initial_mse": initial_mse,

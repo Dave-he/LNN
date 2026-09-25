@@ -69,8 +69,15 @@ def fake_quantize_inplace(model: torch.nn.Module, num_bits: int = 8, per_channel
 
 def load_latest_demos() -> tuple[torch.Tensor, torch.Tensor]:
     out_dir = REPO_ROOT / "analysis" / "decisions"
-    candidates = sorted(out_dir.glob("*_pointmass_pid_demos_n0.json"))
+    candidates = sorted(out_dir.glob("*_pointmass_pid_demos_*.json"))
     payload = json.loads(candidates[-1].read_text())
+    obs = torch.tensor(payload["obs"], dtype=torch.float32)
+    actions = torch.tensor(payload["actions"], dtype=torch.float32)
+    return obs, actions
+
+
+def load_demos(path: Path) -> tuple[torch.Tensor, torch.Tensor]:
+    payload = json.loads(path.read_text())
     obs = torch.tensor(payload["obs"], dtype=torch.float32)
     actions = torch.tensor(payload["actions"], dtype=torch.float32)
     return obs, actions
@@ -92,13 +99,18 @@ def main(argv: list[str] | None = None) -> int:
                         help="re-quantize weights every N epochs")
     parser.add_argument("--quantize-bits", type=int, default=8,
                         help="simulated weight precision (default 8)")
+    parser.add_argument("--demos", type=Path, default=None,
+                        help="explicit demos file (default: latest)")
     parser.add_argument("--max-states", type=int, default=None)
     parser.add_argument("--save-checkpoint", action="store_true")
     parser.add_argument("--log-every", type=int, default=10)
     args = parser.parse_args(argv)
 
     torch.manual_seed(args.seed)
-    obs, pd_actions = load_latest_demos()
+    if args.demos is not None:
+        obs, pd_actions = load_demos(args.demos)
+    else:
+        obs, pd_actions = load_latest_demos()
     if args.max_states is not None:
         obs = obs[:args.max_states]
         pd_actions = pd_actions[:args.max_states]
@@ -157,7 +169,7 @@ def main(argv: list[str] | None = None) -> int:
         "final_mse": final_mse,
         "improvement_ratio": initial_mse / max(final_mse, 1e-9),
     }
-    json_path.write_text(json.dumps(payload, indent=2))
+    json_path.write_text(json.dumps(payload, default=str, indent=2))
     md = [
         f"# JEPA QAT distillation — {stamp}",
         "",

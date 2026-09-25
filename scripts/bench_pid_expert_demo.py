@@ -138,20 +138,38 @@ class PDExpert:
         # Avoid huge spinning when error is small.
         w = max(-self.p.w_max, min(self.p.w_max, w))
 
-        # Obstacle avoidance: add a small lateral nudge when near any static obstacle.
+        # Static-obstacle avoidance: lateral push when near.
         for (ox, oy) in env.obstacles:
             r = math.sqrt((float(pos[0]) - ox) ** 2 + (float(pos[1]) - oy) ** 2)
             if r < 2.0 * self.p.obstacle_radius:
-                # Vector from obstacle to agent, perpendicular to goal heading.
                 away_x = float(pos[0]) - ox
                 away_y = float(pos[1]) - oy
-                # Cross-product sign to choose left/right.
                 cross = dx * away_y - dy * away_x
                 sign = 1.0 if cross > 0 else -1.0
                 strength = self.p.obstacle_push * (2.0 * self.p.obstacle_radius - r) / (
                     2.0 * self.p.obstacle_radius
                 )
                 w += sign * strength
+
+        # Pedestrian avoidance: react to moving pedestrians within 2x radius.
+        # Pedestrian positions are deterministic circles; we read the *current*
+        # pedestrian positions from the env (env knows them via _ped_params).
+        if hasattr(env, "_ped_positions") and env.n_pedestrians > 0:
+            t_now = getattr(env, "_step_count", 0)
+            for (px, py) in env._ped_positions(t_now + 1):  # predict 1 step ahead
+                r = math.sqrt((float(pos[0]) - px) ** 2 + (float(pos[1]) - py) ** 2)
+                if r < 2.0 * env.PEDESTRIAN_RADIUS:
+                    away_x = float(pos[0]) - px
+                    away_y = float(pos[1]) - py
+                    cross = dx * away_y - dy * away_x
+                    sign = 1.0 if cross > 0 else -1.0
+                    strength = self.p.obstacle_push * (
+                        2.0 * env.PEDESTRIAN_RADIUS - r
+                    ) / (2.0 * env.PEDESTRIAN_RADIUS)
+                    w += sign * strength
+                    # Slow down when very close.
+                    if r < 2.0 * env.PEDESTRIAN_RADIUS:
+                        v *= max(0.3, r / (2.0 * env.PEDESTRIAN_RADIUS))
 
         w = max(-self.p.w_max, min(self.p.w_max, w))
 
