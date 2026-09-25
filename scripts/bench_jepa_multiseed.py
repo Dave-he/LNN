@@ -49,7 +49,11 @@ def train_one_seed(args, seed: int) -> tuple[JEPAPolicy, dict]:
     opt = torch.optim.Adam(policy.parameters(), lr=args.lr)
 
     # Load demos.
-    demos_path = sorted((REPO_ROOT / "analysis" / "decisions").glob("*_pointmass_pid_demos_n0.json"))[-1]
+    if getattr(args, "demos", None) is not None:
+        demos_path = args.demos
+    else:
+        demos_path = sorted((REPO_ROOT / "analysis" / "decisions").glob(
+            "*_pointmass_pid_demos_*.json"))[-1]
     payload = json.loads(demos_path.read_text())
     obs = torch.tensor(payload["obs"], dtype=torch.float32)
     actions = torch.tensor(payload["actions"], dtype=torch.float32)
@@ -139,6 +143,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--n-pedestrians", type=int, default=0)
     parser.add_argument("--max-steps", type=int, default=50)
     parser.add_argument("--max-states", type=int, default=None)
+    parser.add_argument("--demos", type=Path, default=None,
+                        help="explicit demos file (default: latest)")
     parser.add_argument("--log-every", type=int, default=20)
     args = parser.parse_args(argv)
 
@@ -191,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     json_path = out_dir / f"{stamp}_jepa_multiseed.json"
     md_path = out_dir / f"{stamp}_jepa_multiseed.md"
     json_path.write_text(json.dumps({
-        "config": vars(args),
+        "config": {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()},
         "per_seed": per_seed_results,
         "summary": summary,
     }, indent=2))

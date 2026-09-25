@@ -1,0 +1,41 @@
+{
+  "config": {
+    "checkpoint": "checkpoints/jepa_distilled_pd_2026-09-25_153307.pt",
+    "obs_dim": 17,
+    "action_dim": 2,
+    "latent_dim": 8,
+    "hidden_size": 16,
+    "n_tau": 4,
+    "head_type": "mse",
+    "episodes": 30,
+    "n_pedestrians": 2,
+    "max_steps": 50,
+    "seed": 7,
+    "modes": [
+      "fp32",
+      "int8"
+    ]
+  },
+  "results": [
+    {
+      "precision": "float32",
+      "n_reached": 30,
+      "n_total": 30,
+      "reach_rate": 1.0,
+      "p50_ms": 0.5386513657867908,
+      "p99_ms": 0.6369294365867972,
+      "n_params": 4596,
+      "notes": "baseline"
+    },
+    {
+      "precision": "float32",
+      "n_reached": 30,
+      "n_total": 30,
+      "reach_rate": 1.0,
+      "p50_ms": 0.5386401899158955,
+      "p99_ms": 0.6443806458264589,
+      "n_params": 4596,
+      "notes": "weight-only int8 PTQ; expect brittle for overfit BC ckpts"
+    }
+  ]
+}
