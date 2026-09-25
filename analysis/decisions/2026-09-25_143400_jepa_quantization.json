@@ -1,0 +1,41 @@
+{
+  "config": {
+    "checkpoint": "checkpoints/jepa_qat_8bit_2026-09-25_143343.pt",
+    "obs_dim": 17,
+    "action_dim": 2,
+    "latent_dim": 8,
+    "hidden_size": 16,
+    "n_tau": 4,
+    "head_type": "mse",
+    "episodes": 50,
+    "n_pedestrians": 0,
+    "max_steps": 50,
+    "seed": 11,
+    "modes": [
+      "fp32",
+      "int8"
+    ]
+  },
+  "results": [
+    {
+      "precision": "float32",
+      "n_reached": 50,
+      "n_total": 50,
+      "reach_rate": 1.0,
+      "p50_ms": 0.5389361176639795,
+      "p99_ms": 0.6582908798009157,
+      "n_params": 4596,
+      "notes": "baseline"
+    },
+    {
+      "precision": "float32",
+      "n_reached": 50,
+      "n_total": 50,
+      "reach_rate": 1.0,
+      "p50_ms": 0.545380637049675,
+      "p99_ms": 0.6810592487454414,
+      "n_params": 4596,
+      "notes": "weight-only int8 PTQ; expect brittle for overfit BC ckpts"
+    }
+  ]
+}
