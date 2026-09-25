@@ -1,0 +1,74 @@
+{
+  "gates": [
+    {
+      "name": "PD reach_rate n_ped=0",
+      "passed": true,
+      "value": 1.0,
+      "threshold": 0.95,
+      "unit": "",
+      "notes": "PD expert demos."
+    },
+    {
+      "name": "World model final MSE",
+      "passed": true,
+      "value": 3.7025773053755984e-05,
+      "threshold": 0.005,
+      "unit": "",
+      "notes": "n_ped=0 demos."
+    },
+    {
+      "name": "Distilled PD reach_rate",
+      "passed": true,
+      "value": 1.0,
+      "threshold": 0.85,
+      "unit": "",
+      "notes": "Vanilla BC ckpt."
+    },
+    {
+      "name": "QAT reach_rate",
+      "passed": true,
+      "value": 1.0,
+      "threshold": 0.85,
+      "unit": "",
+      "notes": "QAT-lite ckpt."
+    },
+    {
+      "name": "INT8 reach_rate (QAT PTQ)",
+      "passed": true,
+      "value": 1.0,
+      "threshold": 0.5,
+      "unit": "",
+      "notes": "INT8 weight-only PTQ on QAT ckpt."
+    },
+    {
+      "name": "PyTorch eager p99 latency",
+      "passed": true,
+      "value": 0.1684742467477917,
+      "threshold": 5.0,
+      "unit": "ms",
+      "notes": "CfC h=16."
+    },
+    {
+      "name": "ONNX max_abs_diff",
+      "passed": true,
+      "value": 1.1920928955078125e-07,
+      "threshold": 0.0001,
+      "unit": "",
+      "notes": "PyTorch vs onnxruntime."
+    },
+    {
+      "name": "ONNX runtime latency",
+      "passed": true,
+      "value": 0.06356626050546765,
+      "threshold": 0.5,
+      "unit": "ms",
+      "notes": "batch=1 inference."
+    }
+  ],
+  "all_passed": true,
+  "ckpts": {
+    "distill": "/Users/hyx/workspace/LNN/checkpoints/validate/distill.pt",
+    "qat": "/Users/hyx/workspace/LNN/checkpoints/validate/qat.pt",
+    "qat_int8": "/Users/hyx/workspace/LNN/checkpoints/validate/qat_int8.pt"
+  }
+}
