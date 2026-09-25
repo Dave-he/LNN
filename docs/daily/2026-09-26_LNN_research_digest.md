@@ -48,9 +48,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-25 | [ryugyosoft/LFM2-8B-A1B-onw](https://huggingface.co/ryugyosoft/LFM2-8B-A1B-onw) | 282 | 0 | text-generation |
 | 2026-09-25 | [FluidInference/lfm2-5-350m-rlcd-coreml](https://huggingface.co/FluidInference/lfm2-5-350m-rlcd-coreml) | 41 | 0 |  |
 | 2026-09-25 | [DavidAU/LFM2.5-2.6B-Qwen3.8-Turbo-Brilliance-Power-X12-NEO-MAX-GGUF](https://huggingface.co/DavidAU/LFM2.5-2.6B-Qwen3.8-Turbo-Brilliance-Power-X12-NEO-MAX-GGUF) | 4 | 51 | text-generation |
+| 2026-09-25 | [Panga-Azazia/LFM2.5-350M-TTS-v3](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS-v3) | 0 | 0 | text-generation |
 | 2026-09-25 | [baptistefrancois1/lfm2a-fr-checkpoints](https://huggingface.co/baptistefrancois1/lfm2a-fr-checkpoints) | 0 | 0 |  |
 | 2026-09-25 | [nodcai/turn-LFM2.5-2.6B-GGUF](https://huggingface.co/nodcai/turn-LFM2.5-2.6B-GGUF) | 0 | 0 |  |
-| 2026-09-25 | [Panga-Azazia/LFM2.5-350M-TTS-v3](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS-v3) | 0 | 0 |  |
 | 2026-09-24 | [LiquidAI/LFM2.5-VL-3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B) | 26015 | 213 | image-text-to-text |
 
 ## 建议动作
