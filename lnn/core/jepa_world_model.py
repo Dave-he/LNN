@@ -232,13 +232,18 @@ class JEPAWorldModel(nn.Module):
 
 
 class JEPAPolicyHead(nn.Module):
-    """Map latent to action.
+    """Map latent (and optionally raw obs) to action.
 
     Two modes:
-        'mse'   — single Linear(latent -> action_dim), deterministic
-        'gauss' — Gaussian head: Linear(latent -> mu) + learnable log_std
+        'mse'   — single Linear(input -> action_dim), deterministic
+        'gauss' — Gaussian head: Linear(input -> mu) + learnable log_std
                   (clamped to [-5, 2]). Returns (action, log_prob, entropy)
                   for compatibility with PPO-style rollouts.
+
+    Skip connection: if ``obs_dim > 0`` at construction time, the head
+    consumes ``concat([z_t, obs_t])`` (input dim = ``latent_dim + obs_dim``).
+    This dramatically helps on tasks where the latent needs to retain
+    raw task-relevant state (e.g. goal-relative position for PointMassNav).
 
     MDN is NOT supported here — r307 honest negative on single-mode
     targets (PD-expert action distributions are unimodal Gaussian).
@@ -252,6 +257,7 @@ class JEPAPolicyHead(nn.Module):
         latent_dim: int = DEFAULT_LATENT_DIM,
         action_dim: int = 2,
         head_type: str = "mse",
+        obs_dim: int = 0,
     ) -> None:
         super().__init__()
         head_type = head_type.lower()
@@ -260,19 +266,35 @@ class JEPAPolicyHead(nn.Module):
         self.head_type = head_type
         self.latent_dim = latent_dim
         self.action_dim = action_dim
-        self.mu = nn.Linear(latent_dim, action_dim)
+        self.obs_dim = obs_dim
+        self.input_dim = latent_dim + obs_dim
+        self.mu = nn.Linear(self.input_dim, action_dim)
         if head_type == "gauss":
             self.log_std = nn.Parameter(torch.full((action_dim,), -0.69))
 
-    def forward(self, z_t: torch.Tensor) -> torch.Tensor:
-        """Deterministic action prediction."""
-        return self.mu(z_t)
+    def forward(self, z_t: torch.Tensor, obs_t: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Deterministic action prediction.
 
-    def sample(self, z_t: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        Args:
+            z_t: ``[B, latent_dim]`` latent.
+            obs_t: optional ``[B, obs_dim]`` raw observation for skip
+                connection. If ``None``, falls back to plain ``z_t -> a``.
+        """
+        if self.obs_dim > 0 and obs_t is not None:
+            x = torch.cat([z_t, obs_t], dim=-1)
+        else:
+            x = z_t
+        return self.mu(x)
+
+    def sample(self, z_t: torch.Tensor, obs_t: Optional[torch.Tensor] = None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Sample action with reparameterisation; returns (action, log_prob, entropy)."""
         if self.head_type != "gauss":
             raise RuntimeError("sample() requires head_type='gauss'")
-        mu = self.mu(z_t)
+        if self.obs_dim > 0 and obs_t is not None:
+            x = torch.cat([z_t, obs_t], dim=-1)
+        else:
+            x = z_t
+        mu = self.mu(x)
         log_std = torch.clamp(self.log_std, self.MIN_LOG_STD, self.MAX_LOG_STD)
         log_std = log_std.expand_as(mu)
         std = log_std.exp()
@@ -306,10 +328,15 @@ class LatentPlanner(nn.Module):
     action sequences; the best one is distilled into the policy head
     via supervised behaviour cloning.
 
+    Per-step diverse actions: for each candidate we sample a full
+    K-step action trajectory (so different candidates use different
+    actions at each step), then roll out the world model with the
+    candidate's own trajectory.
+
     Args:
         world_model: trained :class:`JEPAWorldModel`.
         horizon: K — number of rollout steps per candidate action.
-        n_candidates: how many candidate actions to score per state.
+        n_candidates: how many candidate trajectories to score per state.
     """
 
     def __init__(
@@ -329,47 +356,51 @@ class LatentPlanner(nn.Module):
         self.action_low = action_low
         self.action_high = action_high
 
-    def _sample_candidates(self, batch: int, device: torch.device) -> torch.Tensor:
-        """Sample ``n_candidates`` actions uniformly per state."""
-        return torch.empty(batch, self.n_candidates, self.action_dim, device=device).uniform_(
-            self.action_low, self.action_high
-        )
+    def _sample_trajectories(self, batch: int, device: torch.device) -> torch.Tensor:
+        """Sample ``n_candidates`` full K-step trajectories per batch element.
+
+        Returns:
+            ``[B, n_candidates, horizon, action_dim]`` — each candidate is
+            a complete K-step action plan. Actions are uniform in
+            ``[action_low, action_high]``.
+        """
+        return torch.empty(
+            batch, self.n_candidates, self.horizon, self.action_dim, device=device,
+        ).uniform_(self.action_low, self.action_high)
 
     def rollout(
         self,
         z0: torch.Tensor,
         reward_fn: Optional[callable] = None,
     ) -> PlannerResult:
-        """Score ``n_candidates`` action sequences starting from ``z0``.
+        """Score ``n_candidates`` K-step trajectories starting from ``z0``.
 
         For each candidate we roll out ``horizon`` steps in latent space
-        using ``world_model``. The reward surrogate is the *sum of
-        negative predicted-latent norms* (encouraging the latent to
-        stay small / smooth). If ``reward_fn`` is provided, it overrides
-        the default.
+        using ``world_model`` with that candidate's per-step actions.
+        The reward surrogate is the *sum of negative predicted-latent
+        norms* (encouraging the latent to stay small / smooth). If
+        ``reward_fn`` is provided, it overrides the default.
 
-        Returns the action sequence with the highest cumulative reward.
+        Returns:
+            :class:`PlannerResult` with ``best_action`` = the first-step
+            action of the best-scoring trajectory per batch element,
+            and the rollout returns for diagnostics.
         """
         batch = z0.shape[0]
         device = z0.device
-        candidates = self._sample_candidates(batch, device)
-        # Expand z0 to [B, n_candidates, latent_dim] for vectorised rollout.
+        trajectories = self._sample_trajectories(batch, device)
+        # z is shared at the start: [B, n_candidates, latent_dim]
         z = z0.unsqueeze(1).expand(-1, self.n_candidates, -1).contiguous()
         returns = torch.zeros(batch, self.n_candidates, device=device)
         with torch.no_grad():
             for k in range(self.horizon):
-                a = candidates[:, :, :]  # full action sequence reused each step
-                # At step k, use the k-th action from each candidate sequence.
-                # For simplicity we just use a constant action per candidate;
-                # K-step diverse actions require per-step candidate tensors.
-                # Use a uniform mix: average of all candidates per rollout step.
-                a_mix = candidates.mean(dim=1, keepdim=True).expand(-1, self.n_candidates, -1)
+                a_k = trajectories[:, :, k, :]  # [B, n_candidates, action_dim]
                 # Predict next latent for each candidate.
                 z_flat = z.reshape(-1, z.shape[-1])
-                a_flat = a_mix.reshape(-1, a_mix.shape[-1])
+                a_flat = a_k.reshape(-1, a_k.shape[-1])
                 z_next_flat = self.world_model.predict_next(z_flat, a_flat)
                 z_next = z_next_flat.reshape(batch, self.n_candidates, -1)
-                # Reward surrogate: negative L2 norm of predicted latent.
+                # Reward surrogate.
                 if reward_fn is None:
                     r = -z_next.norm(dim=-1)
                 else:
@@ -377,13 +408,17 @@ class LatentPlanner(nn.Module):
                 returns += r
                 z = z_next
         best_idx = returns.argmax(dim=1)
-        best_action = candidates[torch.arange(batch, device=device), best_idx]
-        return PlannerResult(best_action=best_action, best_return=returns.max(dim=1).values,
-                             rollout_returns=returns)
+        # best_action = the *first-step* action of the best trajectory.
+        best_action = trajectories[torch.arange(batch, device=device), best_idx, 0, :]
+        return PlannerResult(
+            best_action=best_action,
+            best_return=returns.max(dim=1).values,
+            rollout_returns=returns,
+        )
 
     @torch.no_grad()
     def distill_action(self, z0: torch.Tensor) -> torch.Tensor:
-        """Convenience wrapper: returns only the best action per state."""
+        """Convenience wrapper: returns only the best first-step action per state."""
         return self.rollout(z0).best_action
 
 
@@ -417,17 +452,22 @@ class JEPAPolicy(nn.Module):
         hidden_size: int = DEFAULT_HIDDEN_SIZE,
         head_type: str = "mse",
         n_tau: int = DEFAULT_N_TAU,
+        head_obs_skip: bool = True,
     ) -> None:
         super().__init__()
         self.obs_dim = obs_dim
         self.action_dim = action_dim
         self.latent_dim = latent_dim
+        self.head_obs_skip = head_obs_skip
         self.encoder = JEPAEncoder(obs_dim=obs_dim, latent_dim=latent_dim,
                                    hidden_size=hidden_size, n_tau=n_tau)
         self.world_model = JEPAWorldModel(latent_dim=latent_dim, action_dim=action_dim,
                                           hidden_size=hidden_size, n_tau=n_tau)
-        self.policy_head = JEPAPolicyHead(latent_dim=latent_dim, action_dim=action_dim,
-                                          head_type=head_type)
+        self.policy_head = JEPAPolicyHead(
+            latent_dim=latent_dim, action_dim=action_dim,
+            head_type=head_type,
+            obs_dim=obs_dim if head_obs_skip else 0,
+        )
 
     def forward_train(
         self,
@@ -466,8 +506,13 @@ class JEPAPolicy(nn.Module):
         """Single-step decision: obs_t -> action."""
         z = self.encoder.encode_step(obs_t)
         if deterministic or self.policy_head.head_type == "mse":
+            if self.head_obs_skip:
+                return self.policy_head(z, obs_t)
             return self.policy_head(z)
-        action, _, _ = self.policy_head.sample(z)
+        if self.head_obs_skip:
+            action, _, _ = self.policy_head.sample(z, obs_t)
+        else:
+            action, _, _ = self.policy_head.sample(z)
         return action
 
     def snapshot(self) -> StateSnapshot:

@@ -34,6 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from lnn.core.jepa_world_model import JEPAPolicy  # noqa: E402
+from scripts.bench_pid_expert_demo import PDExpert  # noqa: E402
 from scripts.experiment_sncp_ppo_lite import PointMassNavLite  # noqa: E402
 
 
@@ -56,7 +57,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else "")
     parser.add_argument("--checkpoint", type=Path, default=None,
                         help="path to jepa_*.pt state_dict (default: build fresh)")
-    parser.add_argument("--obs-dim", type=int, default=14)
+    parser.add_argument("--obs-dim", type=int, default=17,
+                        help="17 = 14 base obs + [theta, sin(theta), cos(theta)]; "
+                             "matches PD-augmented demos used for distillation.")
     parser.add_argument("--action-dim", type=int, default=2)
     parser.add_argument("--latent-dim", type=int, default=8)
     parser.add_argument("--hidden-size", type=int, default=16)
@@ -103,6 +106,9 @@ def main(argv: list[str] | None = None) -> int:
     for ep in range(args.episodes):
         env = PointMassNavLite(seed=args.seed + ep, n_pedestrians=args.n_pedestrians)
         obs = env.reset(seed=args.seed + ep)
+        # If the model expects augmented obs (17 dims), wrap env obs with theta.
+        if args.obs_dim == 17:
+            obs = PDExpert.augmented_obs(env)
         ep_return = 0.0
         reached = False
         collision = False
@@ -114,6 +120,8 @@ def main(argv: list[str] | None = None) -> int:
             result = env.step(action)
             ep_return += float(result.reward)
             obs = result.obs
+            if args.obs_dim == 17:
+                obs = PDExpert.augmented_obs(env)
             if result.done:
                 reached = bool(result.info.get("reached", False))
                 collision = bool(result.info.get("collision", False))
@@ -154,8 +162,9 @@ def main(argv: list[str] | None = None) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = _ts()
     json_path = out_dir / f"{stamp}_jepa_e2e.json"
+    cfg = {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()}
     payload = {
-        "config": vars(args),
+        "config": cfg,
         "n_params": n_params,
         "n_episodes": args.episodes,
         "n_reached": n_reached,

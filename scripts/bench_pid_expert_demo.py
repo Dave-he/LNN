@@ -73,6 +73,12 @@ class PDExpert:
        obstacle, add a lateral push perpendicular to the goal direction.
 
     Returns action ``[v, w]`` in the env's coordinate frame.
+
+    Note: PD relies on ``theta`` (agent heading), which is NOT in the
+    env's ``obs``. Without theta, the demos are distribution-shifted
+    from the env rollouts. To fix this, we augment the saved obs with
+    ``theta`` as the 5th dimension (after ``[pos.x, pos.y, goal_dx, goal_dy]``).
+    See :meth:`augmented_obs` below.
     """
 
     def __init__(self, params: Optional[PDParams] = None) -> None:
@@ -81,6 +87,22 @@ class PDExpert:
 
     def reset(self) -> None:
         self._prev_heading_err = None
+
+    @staticmethod
+    def augmented_obs(env: PointMassNavLite) -> torch.Tensor:
+        """Return env obs augmented with ``theta`` (heading) and ``sin(theta)``, ``cos(theta)``.
+
+        PointMassNavLite's native obs lacks ``theta``, but PD depends on it.
+        We append three scalars: ``[theta, sin(theta), cos(theta)]`` so
+        downstream BC models can recover heading information without
+        engineering features manually.
+        """
+        base_obs = env._current_obs()  # type: ignore[attr-defined]
+        theta = float(env.theta)
+        return torch.cat([
+            base_obs,
+            torch.tensor([theta, math.sin(theta), math.cos(theta)]),
+        ])
 
     def __call__(self, obs: torch.Tensor, env: PointMassNavLite) -> tuple[float, float]:
         """Compute ``(v, w)`` from the current obs.
@@ -147,8 +169,14 @@ def collect_demos(
     max_steps_per_episode: int = 50,
     seed: int = 42,
     controller: Optional[PDExpert] = None,
+    augment_with_theta: bool = True,
 ) -> dict:
     """Roll out the PD expert on ``PointMassNavLite`` and collect ``(obs, action, next_obs)``.
+
+    Args:
+        augment_with_theta: if True (default), append ``[theta, sin(theta), cos(theta)]``
+            to every saved obs so downstream BC models can recover heading.
+            The augmented obs has 17 dims (14 base + 3 heading).
 
     Returns a dict with:
       - transitions: list of (obs_t.tolist(), action.tolist(), obs_tp1.tolist())
@@ -163,6 +191,8 @@ def collect_demos(
         env = PointMassNavLite(seed=seed + ep, n_pedestrians=n_pedestrians)
         controller.reset()
         obs = env.reset(seed=seed + ep)
+        if augment_with_theta:
+            obs = PDExpert.augmented_obs(env)
         ep_return = 0.0
         ep_reached = False
         ep_collision = False
@@ -173,6 +203,8 @@ def collect_demos(
             action = torch.tensor([v, w])
             next_step = env.step(action)
             next_obs = next_step.obs
+            if augment_with_theta:
+                next_obs = PDExpert.augmented_obs(env)
             ep_return += float(next_step.reward)
             n_steps += 1
             transitions.append((obs.tolist(), action.tolist(), next_obs.tolist()))

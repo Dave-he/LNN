@@ -84,7 +84,8 @@ def test_il_warmstart_actions_close_to_pd_on_validation_states():
     from lnn.utils.lnn_il_to_ppo_transfer import train_il_on_demos
 
     torch.manual_seed(0)
-    state_dim = 14
+    # PD demos now include theta-augmented features (17 dims).
+    state_dim = 17
     action_dim = 2
     # Generate PD demos.
     demos = collect_demos(
