@@ -10,7 +10,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：0 篇
-- GitHub 候选仓库：41 个
+- GitHub 候选仓库：31 个
 - Hugging Face 候选模型：19 个
 - 已下载 PDF：0 个
 
@@ -24,11 +24,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
-| 2026-09-26 | [tobert/lfm2d](https://github.com/tobert/lfm2d) | 0 | Rust | A System 1 service around LiquidAI's LFM2.5 suite on candle: encoder heads plus an opinion engine |
-| 2026-09-26 | [0kqnet/LFM.mcfunction](https://github.com/0kqnet/LFM.mcfunction) | 0 | Python | Running LiquidAI/LFM2.5-1.2B-JP-202606 on pure vanilla minecraft |
 | 2026-09-25 | [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant) | 2 |  | Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free p… |
 | 2026-09-25 | [Isobel2026/liquid-minds](https://github.com/Isobel2026/liquid-minds) | 0 |  | Research into liquid neural networks, weight plasticity, and continuous-time architectures |
-| 2026-09-25 | [PrithiveenKumaarRamkumar/lfm_case_study](https://github.com/PrithiveenKumaarRamkumar/lfm_case_study) | 0 | Python | LiquidAI LFM2.5 D-Spark Models case study on edge deployment |
 | 2026-09-24 | [QilinLi147/LiquidFocus](https://github.com/QilinLi147/LiquidFocus) | 0 | Python | Liquid neural networks for EEG emotion recognition with dual-timescale fusion and prediction-decoupled hierarchical evidence localisation. |
 | 2026-09-23 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
 | 2026-09-23 | [NovaResearch9022/Fuzzy-LNN-Speech-Emotion-Recognition](https://github.com/NovaResearch9022/Fuzzy-LNN-Speech-Emotion-Recognition) | 0 | Python | Implementation and experiments for the Fuzzy Liquid Neural Network framework for Speech Emotion Recognition |
@@ -36,6 +33,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-20 | [AlexanderRumyantcev/LNN-LowLight](https://github.com/AlexanderRumyantcev/LNN-LowLight) | 0 | Python | Liquid Neural Networks (CfC) for low-light video enhancement on top of a RetinexFormer pipeline. |
 | 2026-09-20 | [m-swetanjali/Edge-AI-in-LNN](https://github.com/m-swetanjali/Edge-AI-in-LNN) | 0 | Jupyter Notebook | Edge AI for Cardiovascular Disease using Liquid Neural Network |
 | 2026-09-18 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 1 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
+| 2026-09-07 | [solluna100X/Bi-LENS](https://github.com/solluna100X/Bi-LENS) | 0 |  | Bi-LENS: A shape-scale decoupled deep learning framework for high-fidelity prediction of stress-strain curves of polyurethane elastomers, leveraging bidirectio… |
+| 2026-09-05 | [heimdilon/sncp-ppo-crowdnav](https://github.com/heimdilon/sncp-ppo-crowdnav) | 0 | Python | PPO + LTC (Liquid Time Constant) crowd-aware navigation for TurtleBot3 Waffle. 5-phase curriculum, multi-scenario holdout, clipped value loss. Includes Colab n… |
+| 2026-09-03 | [asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL](https://github.com/asaravanabavan/Closed-Form-Continuous-Time-Networks-Multi-Turn-LLM-Safety-FINAL) | 0 | Python | MSc dissertation code: Closed-Form Continuous-Time Networks for Early Detection of Unsafe Trajectories in Multi-Turn LLM Conversations |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
