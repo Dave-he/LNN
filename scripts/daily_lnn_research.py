@@ -25,7 +25,7 @@ from typing import Any
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-USER_AGENT = "LNN-research-tracker/1.0 (https://github.com/Dave-he/LNN)"
+USER_AGENT = "LNN-research-tracker/1.0 mailto:hyx@nous.local (https://github.com/Dave-he/LNN)"
 
 ARXIV_TERMS = [
     "liquid neural network",
@@ -75,9 +75,11 @@ def request_json(url: str, headers: dict[str, str] | None = None) -> Any:
 
 
 def request_text(url: str, headers: dict[str, str] | None = None) -> str:
-    request = urllib.request.Request(
-        url, headers={"User-Agent": USER_AGENT, "Accept": "*/*", **(headers or {})}
-    )
+    # arXiv 返回 406 when Accept: */* 与复杂 OR 查询混用, 显式声明 atom+xml 即可.
+    merged = {"User-Agent": USER_AGENT, "Accept": "application/atom+xml,application/xml;q=0.9,*/*;q=0.5"}
+    if headers:
+        merged.update(headers)
+    request = urllib.request.Request(url, headers=merged)
     with urllib.request.urlopen(request, timeout=30) as response:
         return response.read().decode("utf-8")
 

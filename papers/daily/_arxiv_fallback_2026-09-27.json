@@ -1,0 +1,482 @@
+[
+  {
+    "id": "2608.28702v1",
+    "date": "2026-08-27",
+    "title": "Stochastic Liquid Deformation Fields: An SDE Generalisation of Closed-Form Continuous-Time Cells for Dynamic 3D Gaussian Splatting",
+    "authors": "Mingzhao Li, Arghya Pal",
+    "summary": "Deformable 3D Gaussian Splatting (D-3DGS) reconstructs dynamic scenes by deforming a canonical set of 3D Gaussians through a deformation field of frame time. Replacing its MLP with a stack of Closed-form Continuous-time (CfC) cells-a Liquid Neural Network that solves the Liquid Timeconstant ODE in closed form-gives the field continuous-time behaviour at feed-forward cost. That closed form, however, is only the deterministic limit of a noise-driven system, and drops the stochastic term usually credited for the robustness of liquid networks. We put it back: a small Gaussian perturbation is added to the time gate of every CfC cell, turning the deterministic field into a simple stochastic (SDE) one. The noise is used only during training, needs no solver, and reduces exactly to the CfC when switched off. On the synthetic D-NeRF scenes the stochastic field is on par with the deterministic CfC and beats the MLP baseline on most scenes; on the real-world NeRF-DS scenes the deterministic limit is already best and adding noise does not help. The study thus gives both a clean way to read the CfC field as an SDE and an honest account of when a plain noise term helps and when it does not.",
+    "abs_url": "https://arxiv.org/abs/2608.28702v1",
+    "pdf_url": "https://arxiv.org/pdf/2608.28702v1",
+    "score": 11
+  },
+  {
+    "id": "2606.07670v1",
+    "date": "2026-06-04",
+    "title": "Liquid Neural Networks as a Drop-in Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting",
+    "authors": "Mingzhao Li, Arghya Pal, Guan Yuan Tan",
+    "summary": "Deformable 3D Gaussian Splatting (D-3DGS) re-constructs dynamic scenes from monocular video by deforming a canonical set of 3D Gaussians through a positional-encoded MLP of frame time t. Although fitted to a continuous variable, the MLP couples no two values of t in its architecture and effectively predicts discrete per-frame offsets, leaving temporal smoothness to emerge only as a byproduct of optimisation. We redesign the deformation field as a stack of Closed-form Continuous-time (CfC) cells, a Liquid Neural Network (LNN), that is the closed-form solution of the Liquid Time-constant ODE while preserving every other part of the D-3DGS pipeline. Each cell exposes a sigmoidal time gate that interpolates between two candidate hidden states, baking a learned smooth response to t into the loss landscape without invoking any numerical solver. On the eight D-NeRF and seven NeRF-DS scenes the liquid field matches or exceeds the MLP baseline in aggregate, with its largest gains concentrated on the scenes with the most high-frequency articulated motion. The result is a near-zero-friction architectural design that turns the discrete MLP deformation field into an explicit continuous-time function of t.",
+    "abs_url": "https://arxiv.org/abs/2606.07670v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.07670v1",
+    "score": 9
+  },
+  {
+    "id": "2603.27403v1",
+    "date": "2026-03-28",
+    "title": "Conditional Factuality Controlled LLMs with Generalization Certificates via Conformal Sampling",
+    "authors": "Kai Ye, Qingtao Pan, Shuo Li",
+    "summary": "Large language models (LLMs) need reliable test-time control of hallucinations. Existing conformal methods for LLMs typically provide only \\emph{marginal} guarantees and rely on a single global threshold, which can under-cover hard prompts, over-cover easy ones, and produce oversized prediction sets. We propose \\emph{Conditional Factuality Control} (CFC), a post-hoc conformal framework that returns \\emph{set-valued} outputs with \\emph{conditional} coverage guarantees. CFC defines a continuous, feature-conditional acceptance threshold through augmented quantile regression on a latent ``success'' score, and deploys it through a fixed-point threshold rule at inference time. Theoretically, we show that CFC satisfies a conditional coverage guarantee under exchangeability and analyze its \\emph{efficiency}, proving that, under mild assumptions on the score distributions, the conditional rule is strictly more sample-efficient than marginal conformal prediction at the same target coverage. We further derive a PAC-style variant, CFC-PAC, which shrinks the nominal risk level based on a stability bound, yielding a finite-sample certificate that the conditional miscoverage deviates from the target by at most $O(\\sqrt{\\log(1/δ)/N})$. Empirically, on synthetic data, real-world reasoning and QA benchmarks, and a Flickr8k VLM setting, CFC and CFC-PAC consistently attain near-target coverage across difficulty groups while using smaller prediction sets than CP and non-CP baselines.",
+    "abs_url": "https://arxiv.org/abs/2603.27403v1",
+    "pdf_url": "https://arxiv.org/pdf/2603.27403v1",
+    "score": 8
+  },
+  {
+    "id": "2606.15807v1",
+    "date": "2026-06-14",
+    "title": "Continuous Cross-Domain Traffic State Prediction via Memory-Augmented Graph Liquid Time-Constant Networks",
+    "authors": "Jinrong Xiang, Ming Xu",
+    "summary": "Traffic state prediction is a fundamental task in intelligent transportation systems. In practical applications, some regions suffer from limited traffic observations due to insufficient sensing infrastructure, making cross-domain knowledge transfer an important solution for data-scarce traffic prediction. However, existing cross-domain traffic prediction methods still face several limitations, including coarse-grained source-target adaptation, limited capability in handling unseen target-domain patterns, and insufficient modeling of continuous traffic dynamics under irregular or heterogeneous temporal conditions. To address these issues, this paper proposes a continuous cross-domain traffic prediction framework, termed Memory-Augmented Graph Liquid Time-Constant Network (MA-GLTC). Specifically, we first construct spatio-temporal units (STUs) to decompose traffic networks into transferable local units, enabling fine-grained knowledge alignment across domains. Then, a graph liquid time-constant network (GLTC) is developed to model graph-coupled traffic evolution in continuous time. Different from generic graph neural ODE-based models, GLTC introduces graph-coupled recurrent conductance into liquid time-constant dynamics, allowing node states to evolve with leakage, adaptive time constants, and neighborhood-aware feedback. Furthermore, a Memory-based Transfer Storage (MTS) mechanism is designed to preserve source-domain knowledge, retrieve matched traffic patterns, and update reliable target-domain patterns when unseen states emerge. Experiments on five public traffic datasets demonstrate that MA-GLTC consistently outperforms representative innerdomain and cross-domain baselines in both short-term and longterm prediction tasks. Compared with the second-best method, MA-GLTC reduces the average prediction errors by 3.02%, 0.33%, 8.92%, 10.09%, and 2.11%, respectively.",
+    "abs_url": "https://arxiv.org/abs/2606.15807v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.15807v1",
+    "score": 7
+  },
+  {
+    "id": "2604.10815v2",
+    "date": "2026-04-12",
+    "title": "MeloTune: On-Device Arousal Learning and Peer-to-Peer Mood Coupling for Proactive Music Curation",
+    "authors": "Hongwei Xu",
+    "summary": "MeloTune is an iPhone-deployed music agent that instantiates the Mesh Memory Protocol (MMP) and Symbolic-Vector Attention Fusion (SVAF) as a production system for affect-aware music curation with peer-to-peer mood coupling. Each device runs two closed-form continuous-time (CfC) networks: a private listener-level CfC that predicts a short-horizon affective trajectory on Russell's circumplex and drives proactive curation, and a shared mesh-runtime CfC at MMP Layer 6 that integrates Cognitive Memory Blocks (CMBs) from co-listening peers. CfC hidden states never cross the wire; only structured CMBs do. A Personal Arousal Function (PAF) replaces the standard linear mapping from audio intensity to psychological arousal with a per-listener learned adjustment, trained from behavioral signals (skip, completion, favorite, volume) and from drift between user-declared mood and machine inference. The same track receives different arousal predictions for different listeners. The model (94,552 parameters) achieves trajectory MAE 0.414, pattern accuracy 96.6%, and intent accuracy 69.4% on held-out validation. PAF evidence from a live deployment session (46 observations across 11 genres) demonstrates that the learning loop operates end-to-end, with pop reaching full confidence after 22 observations. All inference runs on-device via CoreML. To our knowledge, this is the first production deployment of MMP/SVAF on consumer mobile hardware. The accompanying SDK (sym-swift v0.3.78, SYMCore v0.3.7) enforces strict protocol conformance. Music is the case study; the substrate is the contribution.",
+    "abs_url": "https://arxiv.org/abs/2604.10815v2",
+    "pdf_url": "https://arxiv.org/pdf/2604.10815v2",
+    "score": 7
+  },
+  {
+    "id": "2609.28716v1",
+    "date": "2026-09-23",
+    "title": "Temporal Learning for End-Effector Position Estimation under Aerodynamic Disturbances in Aerial Continuum Manipulation",
+    "authors": "Niloufar Amiri, Houman Masnavi, Farrokh Janabi-Sharifi",
+    "summary": "This paper investigates temporal neural networks for \\mbox{end-effector} position \\mbox{estimation} of an aerial continuum manipulator (ACM) operating under aerodynamic effects induced by the unmanned aerial vehicle (UAV). An experimental dataset is collected under stationary (\\mbox{rotor-off}) and \\mbox{free-hovering} conditions across continuum robot (CR) configurations and UAV altitudes, providing \\mbox{end-effector} position measurements with and without aerodynamic residuals. To establish a nominal framework, \\mbox{strain-parameterized} kinematic models with progressively richer strain bases are evaluated to balance model complexity and prediction accuracy. The selected nominal model then serves as the baseline for 3D position residual estimation using a \\mbox{closed-form} \\mbox{continuous-time} (CfC) neural network, with a multilayer perceptron (MLP) and a gated recurrent unit (GRU) used for comparison. On unseen test experiments, the CfC achieves an RMSE of \\(22.00\\pm1.70~\\mathrm{mm}\\) over five random seeds, compared with \\(36.38\\pm3.58~\\mathrm{mm}\\) for the MLP and \\(27.72\\pm2.92~\\mathrm{mm}\\) for the GRU, corresponding to reductions of \\(39.52\\%\\) and \\(20.62\\%\\), respectively. These results demonstrate the effectiveness of \\mbox{continuous-time} learning for \\mbox{end-effector} position estimation under aerodynamic disturbances relative to static and \\mbox{discrete-time} learning methods.",
+    "abs_url": "https://arxiv.org/abs/2609.28716v1",
+    "pdf_url": "https://arxiv.org/pdf/2609.28716v1",
+    "score": 6
+  },
+  {
+    "id": "2605.27467v1",
+    "date": "2026-05-26",
+    "title": "Comparative Analysis of Liquid Neural Networks and LSTM for Sequential Pattern Recognition: Robustness, Efficiency, and Clinical Utility",
+    "authors": "Ye Kyaw Thu, Thazin Myint Oo, Thepchai Supnithi",
+    "summary": "Traditional Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) units operate on discrete time steps, often failing to capture the fluid temporal dynamics of real-world physical processes. Liquid Neural Networks (LNNs), specifically Closed-form Continuous-time (CfC) networks, address this by modeling the hidden state evolution as a continuous differential equation. In this paper, we conduct a comprehensive benchmarking study across four distinct sequential modalities: neuromorphic event-based data (N-MNIST), stroke-based drawing (QuickDraw), visual handwriting (IAM), and physiological time-series (PhysioNet Sepsis-3). Furthermore, we perform a rigorous stress test using temporal dropout to evaluate model robustness against missing data. Our findings reveal that LNNs consistently provide superior parameter efficiency and significantly higher robustness in natively temporal domains and clinical environments where data sparsity is prevalent. This extended preprint provides additional background on related datasets and the LNN theoretical lineage, supplemented with a detailed appendix documenting our full implementation and experimental settings.",
+    "abs_url": "https://arxiv.org/abs/2605.27467v1",
+    "pdf_url": "https://arxiv.org/pdf/2605.27467v1",
+    "score": 6
+  },
+  {
+    "id": "2604.03955v1",
+    "date": "2026-04-05",
+    "title": "Symbolic-Vector Attention Fusion for Collective Intelligence",
+    "authors": "Hongwei Xu",
+    "summary": "When autonomous agents observe different domains of a shared environment, each signal they exchange mixes relevant and irrelevant dimensions. No existing mechanism lets the receiver evaluate which dimensions to absorb. We introduce Symbolic-Vector Attention Fusion (SVAF), the content-evaluation half of a two-level coupling engine for collective intelligence. SVAF decomposes each inter-agent signal into 7 typed semantic fields, evaluates each through a learned fusion gate, and produces a remix -- new knowledge from the intersection of two domains. A band-pass model yields four outcomes (redundant, aligned, guarded, rejected), solving both selectivity and redundancy. The fusion gate independently discovers a cross-domain relevance hierarchy: mood emerges as the highest-weight field by epoch 1, before accuracy plateaus -- consistent with independent mechanistic evidence that LLM emotion representations are structurally embedded along valence-arousal axes. SVAF forms Layer 4 of the Mesh Memory Protocol (MMP); the other half of the coupling engine is a per-agent Closed-form Continuous-time (CfC) neural network at Layer 6, whose learned per-neuron time constants (tau) create the temporal dynamics from which collective intelligence emerges: fast neurons synchronise affect across agents in seconds, while slow neurons preserve domain expertise indefinitely. SVAF determines what enters each agent's cognitive state; CfC determines how that state evolves. Trained on 237K samples from 273 narrative scenarios, SVAF achieves 78.7% three-class accuracy. We verify the complete mesh cognition loop -- from per-field evaluation through remix, CfC state evolution, tau-modulated peer blending, and autonomous action -- in a live deployment with 7 nodes across macOS, iOS, and web.",
+    "abs_url": "https://arxiv.org/abs/2604.03955v1",
+    "pdf_url": "https://arxiv.org/pdf/2604.03955v1",
+    "score": 6
+  },
+  {
+    "id": "2603.03664v2",
+    "date": "2026-03-04",
+    "title": "Principled Learning-to-Communicate with Quasi-Classical Information Structures",
+    "authors": "Xiangyu Liu, Haoyi You, Kaiqing Zhang",
+    "summary": "Learning-to-communicate (LTC) in partially observable environments has received increasing attention in deep multi-agent reinforcement learning, where the control and communication strategies are jointly learned. Meanwhile, the impact of communication on decision-making has been extensively studied in control theory. In this paper, we seek to formalize and better understand LTC by bridging these two lines of work, through the lens of information structures (ISs). To this end, we formalize LTC in decentralized partially observable Markov decision processes (Dec-POMDPs) under the common-information-based framework from decentralized stochastic control, and classify LTC problems based on the ISs before (additional) information sharing. We first show that non-classical LTCs are computationally intractable in general, and thus focus on quasi-classical (QC) LTCs. We then propose a series of conditions for QC LTCs, under which LTC preserves the QC IS after information sharing, whereas violating them can cause computational hardness in general. Further, we develop provable planning and learning algorithms for QC LTCs, and establish quasi-polynomial time and sample complexities for several QC LTC examples that satisfy the above conditions. Along the way, we also establish new results on a relationship between (strictly) QC IS and the condition of having strategy-independent common-information-based beliefs (SI-CIBs), as well as on solving Dec-POMDPs without computationally intractable oracles but beyond those with SI-CIBs, which may be of independent interest.",
+    "abs_url": "https://arxiv.org/abs/2603.03664v2",
+    "pdf_url": "https://arxiv.org/pdf/2603.03664v2",
+    "score": 6
+  },
+  {
+    "id": "2603.00459v1",
+    "date": "2026-02-28",
+    "title": "Explainable Continuous-Time Mask Refinement with Local Self-Similarity Priors for Medical Image Segmentation",
+    "authors": "Rajdeep Chatterjee, Sudip Chakrabarty, Trishaani Acharjee",
+    "summary": "Accurate semantic segmentation of foot ulcers is essential for automated wound monitoring, yet boundary delineation remains challenging due to tissue heterogeneity and poor contrast with surrounding skin. To overcome the limitations of standard intensity-based networks, we present LSS-LTCNet:an ante-hoc explainable framework synergizing deterministic structural priors with continuous-time neural dynamics. Our architecture departs from traditional black-box models by employing a Local Self-Similarity (LSS) mechanism that extracts dense, illumination-invariant texture descriptors to explicitly disentangle necrotic tissue from background artifacts. To enforce topological precision, we introduce a Liquid Time-Constant (LTC) refinement module that treats boundary evolution as an ODEgoverned dynamic system, iteratively refining masks over continuous time-steps. Comprehensive evaluation on the MICCAI FUSeg dataset demonstrates that LSS-LTCNet achieves state-of-the-art boundary alignment, securing a peak Dice score of 86.96% and an exceptional 95th percentile Hausdorff Distance (HD95) of 8.91 pixels. Requiring merely 25.70M parameters, the model significantly outperforms heavier U-Net and transformer baselines in efficiency. By providing inherent visual audit trails alongside high-fidelity predictions, LSS-LTCNet offers a robust and transparent solution for computer-aided diagnosis in mobile healthcare (mHealth) settings.",
+    "abs_url": "https://arxiv.org/abs/2603.00459v1",
+    "pdf_url": "https://arxiv.org/pdf/2603.00459v1",
+    "score": 6
+  },
+  {
+    "id": "2608.01593v1",
+    "date": "2026-08-03",
+    "title": "Latent Thought Credit: Multi-Answer Credit Assignment for Latent Reasoning",
+    "authors": "Xuyang Zhao, Liting Zhang, Zichen Xu, Yong Chen, Wenjia Zeng, Shiwan Zhao et al.",
+    "summary": "Latent reasoning allows language models to carry out intermediate reasoning in continuous latent representations rather than fully externalizing it as discrete chains of thought. However, assigning credit to such latent thoughts from answer-only rewards is difficult: a single final answer mixes thought quality with answer-sampling noise. We propose \\textbf{Latent Thought Credit (LTC)}, a hierarchical credit-assignment framework for latent reasoning. For each prompt, LTC samples multiple latent thoughts, fixes the context after each thought, and estimates thought-level expected reward by averaging rewards over multiple answers generated from that fixed context. LTC uses thought-level advantages to optimize the latent-thought phase, answer-level advantages to optimize the answer phase, and an advantage-weighted thought-matching objective that helps the policy reproduce high-credit latent thoughts. We instantiate LTC in a GRPO-style on-policy training framework and evaluate it across mathematical reasoning and STEM multiple-choice tasks. LTC achieves the best average accuracy among the compared methods, while ablations and fixed-context diagnostics show that multi-answer estimation reduces reward-estimation error and mitigates ambiguous or incorrect thought-level credit.",
+    "abs_url": "https://arxiv.org/abs/2608.01593v1",
+    "pdf_url": "https://arxiv.org/pdf/2608.01593v1",
+    "score": 5
+  },
+  {
+    "id": "2607.12909v1",
+    "date": "2026-07-14",
+    "title": "Real-time fall detection based on vision for low-power edge platforms",
+    "authors": "Wenjun Xia, Zhicheng Peng, Haopeng Li, Zhengdi Zhang",
+    "summary": "Falling detection is vital for elderly care and intelligent surveillance; however, prevailing vision-based approaches predominantly frame it as static pose classification or discrete temporal pattern matching, fundamentally overlooking the instability dynamics of the human support system. This paper proposes a physics-informed falling detection framework that recasts falling as a stability-loss event in a coupled dynamical system. We introduce a novel dual-LTC architecture comprising a Center-of-Mass (CoM) subsystem and a Base-of-Support (BoS) subsystem, both instantiated as Liquid Time-Constant (LTC) neural networks to continuously model inertial trajectory evolution and ground-contact adjustment through adaptive time constants, Physical interpretability of falling motion. A learnable coupling module emulates physical interaction between the two subsystems, while a Stability Manifold classifier operates in the joint latent space to detect boundary crossing via Lyapunov-inspired stability metrics. Complementary counterfactual trajectory projection and Time-to-Collision (TTC) estimation further enable irreversibility assessment and early warning. The architecture is designed to support a three-state prediction paradigm (Normal, Falling, Fallen); in this preliminary study, we validate the core stability discrimination capability on a two-class dataset (Normal vs. Falling), leaving the full three-state temporal transition to future work. Unlike conventional CNN--RNN pipelines, the proposed formulation encodes continuous-time mechanical inertia, yielding a sub-50K-parameter network capable of real-time inference on resource-constrained edge devices. Extensive experiments demonstrate competitive accuracy with superior physical interpretability, validating its efficacy for low-compute visual fall detection.",
+    "abs_url": "https://arxiv.org/abs/2607.12909v1",
+    "pdf_url": "https://arxiv.org/pdf/2607.12909v1",
+    "score": 5
+  },
+  {
+    "id": "2606.21295v6",
+    "date": "2026-06-19",
+    "title": "Topological Neural Dynamics: A Neuron-wise Framework for Sequence Modeling",
+    "authors": "Borui Cai, Yao Zhao",
+    "summary": "Existing sequence models, including RNNs, LSTMs, continuous-time networks, and Transformers, share a common structural principle: layer-wise dynamics, where all neurons in the same layer co-evolve through a shared parameterized operator, leaving individual neurons no freedom to evolve independently. Yet in many complex dynamical systems, rich global behavior emerges precisely from locally evolving units interacting through structured connectivity. Inspired by this principle, we introduce Topological Neural Dynamics (TND), a sequence modeling framework that shifts computation from layer-wise to neuron-wise dynamics. TND represents a neural system as a directed neuron graph, an interaction operator, and a local dynamics function, where each neuron evolves independently and collective computation emerges from interactions through the explicit graph topology. We instantiate TND as a discrete-time graph-coupled dynamical system and evaluate it as a case study on a behavior cloning task in single-player Pong. Compared with Vanilla RNN, Sparse RNN, LSTM, Closed-form continuous-time neural network (CfC), and Transformer baselines, TND achieves the best catch rate and a mean of 17.47 consecutive catches per round, more than three times that of the strongest baseline. These results suggest that shifting from layer-wise to neuron-wise dynamics provides an effective inductive bias for sequence modeling.",
+    "abs_url": "https://arxiv.org/abs/2606.21295v6",
+    "pdf_url": "https://arxiv.org/pdf/2606.21295v6",
+    "score": 5
+  },
+  {
+    "id": "2606.12240v1",
+    "date": "2026-06-10",
+    "title": "Multi-Rate Mixture of Experts for Accelerating Liquid Neural Network Training",
+    "authors": "Shilong Zong, Almuatazbellah Boker, Hoda Eldardiry",
+    "summary": "Multivariate time-series data often exhibit complex temporal dependencies, irregular sampling, and heterogeneous dynamics across multiple time scales, making accurate sequence modeling particularly challenging. Traditional recurrent neural networks (RNNs), such as Long Short-Term Memory (LSTM) networks, operate in discrete time and may struggle to effectively capture continuous and irregular temporal behaviors. Liquid Neural Networks (LNNs) address some of these limitations through continuous-time dynamics, but standard LNN architectures typically rely on a single dynamical system, limiting their ability to model heterogeneous temporal patterns. To address these challenges, we propose a Multi-Rate Mixture-of-Experts (MR-MoE) framework built on top of Liquid Neural Networks. In the proposed architecture, multiple LNN-based experts operate at distinct time scales, enabling the model to explicitly separate fast-changing dynamics from slow-evolving temporal trends. A gating network further enables adaptive expert specialization based on input conditions. In addition, we incorporate both feature-level and temporal attention mechanisms to improve robustness, interpretability, and long-range dependency modeling. Feature-level attention suppresses noisy or irrelevant variables, while temporal attention selectively focuses on informative historical states. We evaluate the proposed framework on a complex multivariate time-series prediction task and compare it against strong baselines, including LSTM, monolithic LNN, and standard MoE models. Experimental results demonstrate that the proposed MR-MoE framework consistently achieves improved AUROC and AUPRC performance while maintaining favorable computational efficiency. These results highlight the effectiveness of combining continuous-time dynamics, multi-scale expert decomposition, and adaptive attention mechanisms for time-series modeling.",
+    "abs_url": "https://arxiv.org/abs/2606.12240v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.12240v1",
+    "score": 5
+  },
+  {
+    "id": "2605.30567v2",
+    "date": "2026-05-28",
+    "title": "Valuation of GLWB-LTC Annuities with Lévy Equity Dynamics, Stochastic Interest Rates and Health-State Transitions",
+    "authors": "Andrea Molent",
+    "summary": "This paper develops a valuation framework for guaranteed lifetime withdrawal benefit (GLWB) contracts with long-term care (LTC) features when the reference fund follows exponential Levy dynamics and the short rate follows the Hull-White model. The contract combines financial guarantees, longevity protection, health-contingent LTC payments, and surrender optionality, requiring the joint treatment of jump risk, stochastic discounting, and disability risk. The numerical method couples a recombining Hull-White trinomial tree with an implicit-explicit (IMEX) finite difference scheme. The framework incorporates a seven-state health model, annual fees, LTC payments, guaranteed withdrawals, and bang-bang policyholder actions, and is benchmarked against Monte Carlo simulation. Numerical results show that the hybrid tree-IMEX method delivers stable long-maturity prices consistent with simulation benchmarks. They also show that Levy equity dynamics and stochastic interest rates have a material impact on fair fees and surrender incentives, and affect the decomposition of contract value. The findings highlight the importance of modelling financial tail risk and interest-rate risk jointly when pricing long-term insurance guarantees with LTC-contingent benefits.",
+    "abs_url": "https://arxiv.org/abs/2605.30567v2",
+    "pdf_url": "https://arxiv.org/pdf/2605.30567v2",
+    "score": 5
+  },
+  {
+    "id": "2605.08176v1",
+    "date": "2026-05-05",
+    "title": "Physics-Modeled Neural Networks",
+    "authors": "Raul Felipe-Sosa, Angel Martin del Rey, Maria Flores Ceballos",
+    "summary": "We introduce \\emph{Dynamical Physics-Modeled Neural Networks} (DynPMNNs), a continuous-time deep learning architecture in which each hidden layer is defined as the solution of an ordinary differential equation. Unlike classical feed-forward networks, this approach replaces static activation functions with time-evolving dynamical systems, providing a biologically inspired interpretation of hidden-layer behavior and enabling the integration of physically meaningful models. The framework is rigorously grounded in Reproducing Kernel Banach Spaces (RKBSs), allowing DynPMNNs to be characterized as finite-dimensional solutions of an abstract training problem and revealing structural connections with standard neural networks. We present a concrete implementation based on the FitzHugh--Nagumo model for neuronal activation, where numerical ODE solvers are embedded into the computational graph via Euler-type schemes. Both network weights and dynamical parameters are trained jointly. Through experiments on the California Housing dataset, we compare DynPMNNs with Neural ODEs (NODEs) and Closed-form Continuous-Time Networks (CfCs). Despite using fewer trainable parameters, DynPMNNs achieve competitive performance. These results position DynPMNNs as a principled bridge between dynamical systems and deep learning, with promising directions for further research in expressivity, stability, and physics-based modeling.",
+    "abs_url": "https://arxiv.org/abs/2605.08176v1",
+    "pdf_url": "https://arxiv.org/pdf/2605.08176v1",
+    "score": 5
+  },
+  {
+    "id": "2604.25576v1",
+    "date": "2026-04-28",
+    "title": "Tuning magnitude and direction of lattice thermal conductivity in transition metal dichalcogenide heterobilayers",
+    "authors": "Elliot Perviz, Antonio Cammarata",
+    "summary": "We investigate the nanoscale mechanisms determining lattice thermal conductivity (LTC) of pristine and W-doped MX$_2$-M$^\\prime$X$^\\prime_2$ transition metal dichalcogenide heterobilayers from first principles, using the exact solution of the linearised Boltzmann transport equation in both phonon and relaxon bases. Pristine heterobilayers exhibit isotropic in-plane LTC with preserved ordering across temperature. Relaxon analysis identifies descriptors linking LTC to phonon properties such as the phonon group velocity and layer localisation. While systems with lighter atoms generally favour higher LTC, a sufficiently large mass contrast is required to induce layer localisation of the transport-relevant vibrational modes. Further, we show through the thermal viscosity that the relative distribution of vibrational states between metal/non-metal sublattices influences the balance between Normal and Umklapp scattering processes. On the other hand, doped systems exhibit reduced and anisotropic in-plane LTC, retain a well-defined layer character, but are strongly affected by enhanced phonon-phonon scattering due to mass disorder. Notably, we find that both configuration and temperature dictate the direction of maximum thermal transport, which opens the possibility to tune the direction of maximum (and minimum) conductivity via doping in novel 2D functional materials. Thanks to its general formulation, the analysis protocol can be readily extended to other van der Waals heterostructures, and the descriptors may be implemented in high-throughput engines to identify promising layered materials with tailored thermal transport characteristics.",
+    "abs_url": "https://arxiv.org/abs/2604.25576v1",
+    "pdf_url": "https://arxiv.org/pdf/2604.25576v1",
+    "score": 5
+  },
+  {
+    "id": "2608.14125v1",
+    "date": "2026-08-14",
+    "title": "Traj-LeWM: Path-Aware World-Model Planning via Latent Trajectory Cost",
+    "authors": "Xiaodi Huang, Ziyi Ding, Jingtian Wan, Yuchen Liu, Yuan Zhang, Xiao-Ping Zhang et al.",
+    "summary": "LeWM is a lightweight visual world model that learns latent dynamics end-to-end from pixels and ranks candidate action sequences by the distance between their predicted endpoints and the goal. However, LeWM has two limitations. First, during training, it learns local next-step transitions without evaluating complete trajectories relative to the task goal. Second, during planning, it ranks candidates solely by predicted endpoint distance. Because model predictions may differ from actual execution outcomes, the candidate whose predicted endpoint is closest to the goal may not perform best when executed in the environment. The evolution of the complete predicted trajectory can therefore provide complementary information beyond endpoint distance. To address these limitations, we propose Traj-LeWM, which retains LeWM's local-dynamics objective and endpoint score while introducing a goal-conditioned latent trajectory cost (LTC) that aggregates trajectory-level information as a complementary signal. During training, LTC-based trajectory-preference supervision complements next-step prediction in shaping the shared representation. During planning, LTC is combined with endpoint distance to incorporate intermediate-path information into candidate ranking. With joint endpoint-plus-LTC scoring, Traj-LeWM outperforms LeWM on Push-T, OGBench-Cube, Reacher, and Two-Room by $3$, $14$, $7$, and $7$ percentage points, respectively. Controlled experiments and ablations further verify the complementary roles of trajectory-level representation shaping and path-aware candidate ranking.",
+    "abs_url": "https://arxiv.org/abs/2608.14125v1",
+    "pdf_url": "https://arxiv.org/pdf/2608.14125v1",
+    "score": 4
+  },
+  {
+    "id": "2609.00366v1",
+    "date": "2026-06-29",
+    "title": "Counterfactual Fragility Certificates: Exposing High-Confidence Brittleness under Structured Evidence Failure",
+    "authors": "Filippo Cenacchi, Longbing Cao, Runze Yang",
+    "summary": "High test accuracy and good aggregate calibration do not show whether an individual prediction is structurally supported by its evidence. In tabular decision systems, failures often occur when a feature family becomes unavailable, delayed, noisy, stale, or low-trust while the model remains highly confident. Existing calibration, uncertainty, selective-prediction, explanation, and perturbation methods provide scalar scores or attribution maps, but not a recomputable audit object answering: under a declared evidence-failure protocol, what trajectory makes this prediction lose support? We introduce Counterfactual Fragility Certificates (CFC), a model-agnostic protocol-level audit certificate-not a formal robustness certificate-that maps each prediction into an ordered evidence-failure trajectory summarized by greedy flip budget, normalized margin-collapse area, degradation thresholds, and fragility dominance score. Across seven tabular benchmarks and strong linear, tree-based, boosting, and neural baselines, CFC-FDS identifies independently brittle high-confidence cases with 0.915 AUROC, improving over the strongest non-certificate score by +0.405. The advantage persists across perturbation, permutation-importance, group-SHAP, baseline-choice, seed-variance, budgeted-review, and naturalistic field-unavailability checks. Under a 20% review budget, CFC-FDS captures 88.9% of brittle high-confidence cases, compared with 31.8-37.4% for confidence and energy scores. We also evaluate fragility-aware regularization and brittleness-aware temperature correction as secondary uses. CFC provides a concrete reliability framework for exposing high-confidence brittleness missed by ordinary score-centric evaluation.",
+    "abs_url": "https://arxiv.org/abs/2609.00366v1",
+    "pdf_url": "https://arxiv.org/pdf/2609.00366v1",
+    "score": 4
+  },
+  {
+    "id": "2605.24047v1",
+    "date": "2026-05-21",
+    "title": "EMMA: Extracting Multiple physical parameters from Multimodal Data",
+    "authors": "Farhat Shaikh, Ayan Banerjee, Sandeep Gupta",
+    "summary": "We introduce EMMA, a physics-informed multimodal framework that recovers all identifiable dynamical parameters of a system directly from raw video, audio, and image-based time-series observations. Unlike prior video-only approaches that struggle with occluded states, hidden actuation inputs, or assumptions about known initial conditions and coordinate frames, EMMA performs joint inference of explicit parameters, implicit dynamical components, and calibration invariants within a unified continuous-time model. EMMA leverages a Liquid Time-Constant (LTC) network to learn latent dynamics from heterogeneous modalities while a physics-constrained loss enforces consistency with the governing differential equations. A unified feature pipeline enables consistent alignment across video trajectories, acoustic signatures, and chart-derived measurements, allowing EMMA to estimate parameters under forced, implicit, and multivariate dynamics without requiring segmentation masks, differentiable rendering, or specialized sensors. Across 100+ scenarios including five standard dynamical benchmarks (75 Delfys videos), real-world rover and quadrotor systems with hidden inputs, and simulation-chart case studies spanning biological and chaotic systems, EMMA delivers robust multi-parameter recovery and significantly outperforms existing single-modality and equation-discovery baselines. Our results establish EMMA as a general, scalable solution for physics-consistent model extraction from opportunistic multimodal data. Code and data are available at: https://github.com/ImpactLabASU/EMMA-CVPR2026",
+    "abs_url": "https://arxiv.org/abs/2605.24047v1",
+    "pdf_url": "https://arxiv.org/pdf/2605.24047v1",
+    "score": 4
+  },
+  {
+    "id": "2605.20902v1",
+    "date": "2026-05-20",
+    "title": "Coherent Feedback Cooling of an Ultracoherent Phononic-Crystal Membrane at Room Temperature",
+    "authors": "Luiz Couto Correa Pinto Filho, Yingxuan Chen, Frederik Werner Isaksen, Daniel Allepuz-Requena, Angelo Manetta, Dennis Henneberg Høj et al.",
+    "summary": "Optomechanical systems provide a versatile platform for precision measurements and investigations of fundamental physics, where bringing macroscopic resonators into the quantum regime is a widely pursued goal. Achieving such quantum behavior of solid-state mechanical resonators at room temperature would greatly broaden their applications by removing the need for cryogenic environments. Reaching this goal requires efficient cooling of mechanical motion, among various laser cooling methods, dynamical backaction cooling (DBC) is widely utilized in experiments but fundamentally limited when operating in the sideband-unresolved regime. Coherent feedback cooling (CFC) can overcome this limitation, while avoiding state collapse and the electronic restrictions inherent to measurement-based feedback. Here, we experimentally demonstrate CFC using an ultracoherent density phononic crystal membrane. By combining CFC with strong DBC in a relatively narrow cavity, we achieve a phonon occupation reduction from $5.5\\times10^{6}$ to $166\\pm7$, corresponding to a cooling factor of $3.3\\times10^{4}$ at room temperature, even with current experimental limitations. Our results show the potential of CFC for approaching the ground state of high-$Q$ membranes at room temperature.",
+    "abs_url": "https://arxiv.org/abs/2605.20902v1",
+    "pdf_url": "https://arxiv.org/pdf/2605.20902v1",
+    "score": 4
+  },
+  {
+    "id": "2609.10350v1",
+    "date": "2026-09-09",
+    "title": "Cyber-Financial Contagion: Modeling the Propagation of an AI Vendor Compromise Through the Banking System",
+    "authors": "Alex Leytes",
+    "summary": "The banking system now depends on a small set of shared artificial intelligence vendors for fraud screening, credit decisioning, anti-money-laundering triage, customer analytics, and internal decision support. This paper studies how a compromise inside one of those vendors can propagate along a chain of operational, informational, and financial linkages until it triggers losses that look, from the outside, like a classical banking crisis. We build a four-layer heterogeneous network that couples AI vendors, financial institutions, interbank exposures, and customer accounts, and we propose CFC-Prop, a stochastic epidemic-and-clearing model that runs on that network. On a synthetic dataset with 60 vendors, 220 banks, roughly 2,500 vendor-bank service edges, and 1,400 interbank exposures, CFC-Prop reproduces the heavy-tailed loss distributions and the sharp dependence on patch latency that are consistent with prior cyber-financial evidence. We also train an early-warning model, CFC-GNN, that uses vendor-side incident telemetry and graph structure to flag high-cascade-risk vendors before impact. Across four baselines the proposed model reaches AUROC 0.82 and AUPRC 0.60 while keeping calibration errors bounded. We release the full code, synthetic data, and reproducible scripts. The results argue that cyber concentration among AI vendors is a first-order financial-stability problem and give supervisors a concrete quantitative tool for reasoning about it.",
+    "abs_url": "https://arxiv.org/abs/2609.10350v1",
+    "pdf_url": "https://arxiv.org/pdf/2609.10350v1",
+    "score": 3
+  },
+  {
+    "id": "2606.19579v1",
+    "date": "2026-06-17",
+    "title": "FlowFake: Liquid Networks for Audio Deepfake Detection",
+    "authors": "Shivaay Dhondiyal, Divyansh Sharma, Dinesh Kumar Vishwakarma",
+    "summary": "Audio deepfakes generated by neural text-to-speech and voice-cloning systems threaten speaker verification and public discourse at scale. The core challenge is cross-dataset generalization: detectors trained on one synthesis pipeline collapse on unseen forgeries. We argue that this failure is primarily because of structural synthetic speech artifacts which are multi-timescale trajectory anomalies. Though every existing detector aggregates a fixed-window frame statistics, this misaligns the architecture with the signal. We propose FlowFake, a Liquid Time-Constant (LTC) architecture whose hidden state evolves via a learned ODE, with per-neuron adaptive time constants simultaneously resolving spectral (10ms) and prosodic (2s) cues. At only 34K parameters FlowFake achieves formal BIBO stability and O(dt^4) integration error. On a four-dataset cross domain benchmark (ASVspoof2019-LA, FakeOrReal, InTheWild, MLAAD), FlowFake reaches 75.29% on ASVspoof2019 trained only on FakeOrReal and 79.97% trained only on MLAAD. It outperforms RawGAT-ST and Whisper-DF on every evaluated pair and matching SSL Wav2vec2 (300x larger) at 0.01% of its parameter count. The source code is available on : https://github.com/GhostRider2023/FlowFake",
+    "abs_url": "https://arxiv.org/abs/2606.19579v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.19579v1",
+    "score": 3
+  },
+  {
+    "id": "2603.13858v2",
+    "date": "2026-03-14",
+    "title": "Learning through Creation: A Hash-Free Framework for On-the-Fly Category Discovery",
+    "authors": "Bohan Zhang, Weidong Tang, Zhixiang Chi, Yi Jin, Zhenbo Li, Yang Wang et al.",
+    "summary": "On-the-Fly Category Discovery (OCD) aims to recognize known classes while simultaneously discovering emerging novel categories during inference, using supervision only from known classes during offline training. Existing approaches rely either on fixed label supervision or on diffusion-based augmentations to enhance the backbone, yet none of them explicitly train the model to perform the discovery task required at test time. It is fundamentally unreasonable to expect a model optimized on limited labeled data to carry out a qualitatively different discovery objective during inference. This mismatch creates a clear optimization misalignment between the offline learning stage and the online discovery stage. In addition, prior methods often depend on hash-based encodings or severe feature compression, which further limits representational capacity. To address these issues, we propose Learning through Creation (LTC), a fully feature-based and hash-free framework that injects novel-category awareness directly into offline learning. At its core is a lightweight, online pseudo-unknown generator driven by kernel-energy minimization and entropy maximization (MKEE). Unlike previous methods that generate synthetic samples once before training, our generator evolves jointly with the model dynamics and synthesizes pseudo-novel instances on the fly at negligible cost. These samples are incorporated through a dual max-margin objective with adaptive thresholding, strengthening the model's ability to delineate and detect unknown regions through explicit creation. Extensive experiments across seven benchmarks show that LTC consistently outperforms prior work, achieving improvements ranging from 1.5 percent to 13.1 percent in all-class accuracy. The code is available at https://github.com/brandinzhang/LTC",
+    "abs_url": "https://arxiv.org/abs/2603.13858v2",
+    "pdf_url": "https://arxiv.org/pdf/2603.13858v2",
+    "score": 3
+  },
+  {
+    "id": "2607.06104v4",
+    "date": "2026-07-07",
+    "title": "Refined reduction and standardisation of 53 years of UBV photometry at Hvar",
+    "authors": "Hrvoje Božić, Petr Harmanec, Miroslav Brož, Alžběta Oplištilová, Pavel Koubský, Petr Hadrava et al.",
+    "summary": "Emission-line stars classified as Be exhibit light and colour variability on various timescales, ranging from days to decades. Their evolution must be constrained by long-term observations that are accurately calibrated and stable. Here, we provide a new reduction of photoelectric UBV observations obtained at the Hvar observatory, spanning more than 50 years. This unique dataset is highly complementary to TESS. We used new, non-linear reduction equations, with temporally variable extinction over the course of the night, which allowed us to achieve long-term accuracy of 0.008 to 0.016 mag (1-sig uncertainty), as verified by the Johnson standards. We then classified 59 Be stars into five classes, based on their variability patterns; namely, long-term envelope (LTE), long-term cyclic (LTC), binarity (BIN), rapid low-amplitude (RLA), and long-term quiescence (LTQ). According to our observations, the percentages of stars in the individual classes are 44%, 24%, 25%, 66%, and 19%, respectively. The stars in the sample often exhibited more than one pattern. We confirm that the LTE-positive variability is more common than the inverse (20 vs 6); in addition, two stars exhibited both types (zeta Tau and V1294 Aql). According to our observations, the LTC variability and the LTE-positive variability are almost mutually exclusive. Among 26 binary systems, circular orbits are more common than eccentric ones (18 vs 8). As for the brightness variations between different quiescent phases, an increasing trend is less common than a decreasing one (4 vs 7), spanning from -6.5 to +6.0 mmag/yr. Our observations provide well-calibrated UBV light curves spanning several decades, offering a valuable dataset for investigations of Be-star variability and tests of various models, including the viscous decretion disc model. Continuous monitoring is important for beta Lyr, EW Lac, delta Sco, gamma Cas, and V1294 Aql.",
+    "abs_url": "https://arxiv.org/abs/2607.06104v4",
+    "pdf_url": "https://arxiv.org/pdf/2607.06104v4",
+    "score": 2
+  },
+  {
+    "id": "2606.31657v1",
+    "date": "2026-06-30",
+    "title": "Sensitivity Lower Bounds via Locally Testable Codes",
+    "authors": "Yuichi Yoshida, Zihan Zhang",
+    "summary": "Sensitivity quantifies how far an algorithm's output can move in Hamming distance when a single input element is perturbed. We present a general scheme turning any locally testable code (LTC) into a sensitivity lower bound for the CSP encoded by the code. Instantiating it with the $c^3$-LTC yields a constant $\\varepsilon > 0$ for which every $(1-\\varepsilon)$-approximation algorithm for satisfiable Max E3LIN2 has sensitivity $Ω(n)$, strengthening the previous $Ω(n^δ)$ lower bound known only for general instances. Standard reductions give an $n^{1-O(\\varepsilon)}$ lower bound for $n^{-\\varepsilon}$-approximation algorithms for maximum clique, and an $Ω(k)$ bound for $(1-\\varepsilon)$-approximation algorithms for maximum $k$-coverage, among others. These lower bounds match trivial upper bounds and imply that even slightly stable algorithms cannot achieve these approximations. A second instantiation, using a simple repetition code, shows that any $(1-\\varepsilon)$-approximation algorithm for Max Cut on bipartite graphs has sensitivity $Ω(1/\\varepsilon)$ as long as $\\varepsilon = O(1/\\sqrt{n})$, extending the prior result for exact algorithms (the regime $\\varepsilon < 1/n$). Thus even on bipartite graphs, where a perfect cut always exists, near-optimal solutions cannot be maintained stably. Our sensitivity lower bounds have two applications. First, they yield averaged sensitivity lower bounds, implying that any nearly optimal randomized algorithm for Max E3SAT has linearly many output bits that, after fixing the random seed, are Boolean functions with large influence. Second, via the sensitivity-to-locality connection, they imply locality lower bounds in the non-signaling model, which generalizes $\\mathsf{LOCAL}$ and quantum-$\\mathsf{LOCAL}$.",
+    "abs_url": "https://arxiv.org/abs/2606.31657v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.31657v1",
+    "score": 2
+  },
+  {
+    "id": "2606.09588v1",
+    "date": "2026-06-08",
+    "title": "Probabilistically Checking Quantum Proofs, with Interaction",
+    "authors": "Baocheng Sun, Thomas Vidick",
+    "summary": "The model of interactive oracle proofs (IOP) generalizes the notion of probabilistically checkable proof (PCP), in which a static proof is verified probabilistically by querying a small number of bits, to the interactive setting: a polynomial-time verifier interacts with an unbounded prover, but is restricted to only reading a small number of bits, in total, from the messages sent by the prover. IOPs provide a relaxed setting in which to study local probabilistic verification. They have proved instrumental in devising efficient methods for verification through subsequent compilation into non-interactive or succinct protocols. We study a quantum analogue of interactive oracle proofs (qIOP) in which the verifier and communication are both allowed to be quantum; yet the verifier is restricted to perform measurements only on a small number of qubits received from the prover. Our main result is a qIOP for any language in QMA, in which the total communication is polynomial but the verifier only reads a polylogarithmic number of qubits in total. The protocol has completeness parameter exponentially close to $1$ and soundness bounded away from $1$ by a constant. In the absence of a quantum PCP theorem, this provides the first information-theoretically sound local and robust characterization of QMA, albeit interactive. Our protocol combines the use of a quantum locally testable code (LTC) with classical techniques, notably probabilistically checkable proofs of proximity (PCPP). We avoid the necessity for complex multi-qubit tests employed in other settings by leveraging the local indistinguishability property of the quantum LTC.",
+    "abs_url": "https://arxiv.org/abs/2606.09588v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.09588v1",
+    "score": 2
+  },
+  {
+    "id": "2605.20683v2",
+    "date": "2026-05-20",
+    "title": "Layer-wise Token Compression for Efficient Document Reranking",
+    "authors": "Shengyao Zhuang, Zhichao Xu, Ivano Lauriola",
+    "summary": "Transformer-based document cross-encoder rerankers are a central component of modern information retrieval systems. Despite their success, these models suffer from high computational costs due to processing long query-document sequences at inference time. A known approach to improve efficiency is token compression, which consists of aggregating groups of tokens together in the initial embedding layer, reducing the effective number of tokens, and making the computation faster. While token compression has proven to be successful for bi-encoder retrievers, we empirically observed that this approach may be ineffective for cross-encoder rerankers. In this paper, we propose Layer-wise Token Compression (LTC), which applies adaptive token pooling at intermediate transformer layers. Through extensive ablation studies on MS MARCO passage and document ranking tasks, we demonstrate that compression at middle layers preserves ranking quality while increasing inference QPS by up to 25% for passage ranking and up to 116% for document ranking. We also extend LTC to listwise LLM rerankers and show that the same approach can be easily applied to long-context listwise reranking, where the QPS improvements are even greater. More surprisingly, when applying rerankers trained on short passages to long-document ranking tasks, models trained with compression outperform their uncompressed counterparts, suggesting that compression may act as a beneficial regularizer that encourages length-invariant representations.",
+    "abs_url": "https://arxiv.org/abs/2605.20683v2",
+    "pdf_url": "https://arxiv.org/pdf/2605.20683v2",
+    "score": 2
+  },
+  {
+    "id": "2604.24788v1",
+    "date": "2026-04-24",
+    "title": "Liquid Neural Network Models for Natural Gas Spot Price Time-Series Forecasting",
+    "authors": "Yiqian Liu, Jiayi Niu, Adam Kelleher, Subhabrata Das",
+    "summary": "Natural gas is undoubtedly an essential component of the global energy system. Accurate short-term forecasting of natural gas price is challenging due to pronounced volatility driven by seasonal demand patterns, geopolitical developments, and shifting macroeconomic conditions. The nonlinear dynamics and frequent regime changes can limit the effectiveness of traditional time-series models. In this study, we explore the use of Liquid Neural Networks (LNNs) for short-horizon forecasting of the Henry Hub spot price, a primary benchmark for pricing. LNNs are designed to adapt continuously to evolving temporal patterns through dynamic internal state updates, making them well suited for nonstationary price behavior. By improving forecast accuracy in volatile market conditions, this work aims to reduce uncertainty and enhance decision support across energy trading and power market applications.",
+    "abs_url": "https://arxiv.org/abs/2604.24788v1",
+    "pdf_url": "https://arxiv.org/pdf/2604.24788v1",
+    "score": 2
+  },
+  {
+    "id": "2604.18274v2",
+    "date": "2026-04-20",
+    "title": "LiquidTAD: Efficient Temporal Action Detection via Parallel Liquid-Inspired Temporal Relaxation",
+    "authors": "Zepeng Sun, Naichuan Zheng, Hailun Xia, Junjie Wu, Liwei Bao, Xiaotai Zhang",
+    "summary": "Temporal Action Detection (TAD) requires precise localization of action boundaries within long, untrimmed video sequences. While current high-performing methods achieve strong accuracy, they are often characterized by excessive parameter counts, substantial computational overhead, and a reliance on specialized operators that hinder deployment across diverse hardware platforms. This paper presents LiquidTAD, a framework that distills the exponential relaxation prior of liquid neural dynamics into a parallel temporal operator, rather than reproducing full Liquid Neural Network (LNN) dynamics. By introducing a Parallel Liquid-inspired Relaxation mechanism, sequential ODE solving is avoided through a fully vectorized, non-recursive formulation built entirely upon standard neural operations, enabling hardware-agnostic deployment with linear complexity with respect to the temporal length. A complementary Hierarchical Decay-Rate Sharing Strategy further adapts this relaxation prior across feature pyramid levels, stabilizing optimization and implicitly compensating for temporal compression in deeper layers. Experimental evaluations on THUMOS-14 and ActivityNet-1.3 demonstrate that LiquidTAD achieves accuracy competitive with strong baselines while substantially lowering the model footprint. Specifically, on THUMOS-14, LiquidTAD achieves 69.46\\% average mAP with only 10.82M parameters and 27.17G FLOPs, reducing the parameter count by over 60\\% compared with ActionFormer.",
+    "abs_url": "https://arxiv.org/abs/2604.18274v2",
+    "pdf_url": "https://arxiv.org/pdf/2604.18274v2",
+    "score": 2
+  },
+  {
+    "id": "2604.07219v1",
+    "date": "2026-04-08",
+    "title": "Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks",
+    "authors": "Xinquan Wang, Mingjun Ying, Hongren Chen, Guanyue Qian, Xingchen Liu, Peijie Ma et al.",
+    "summary": "Sub-terahertz (sub-THz) multi-user multiple-input multiple-output (MU-MIMO) systems unlock immense bandwidth for 6G wireless communications. However, practical deployment of wireless systems in sub-THz bands faces critical challenges such as increased atmospheric absorption, reduced channel coherence time due to increased Doppler spread at higher carrier frequencies, and hardware bottlenecks as low-loss sub-THz phase shifters are difficult to realize. To overcome the hardware and channel estimation challenges of sub-THz systems, this paper proposes a hybrid beamforming (BF) framework that integrates reconfigurable liquid crystal (LC) antennas with a liquid neural network (LNN) for transmitter. Specifically, we employ an LC antenna as the analog BF stage of a hybrid BF architecture, exploiting its voltage-driven permittivity tunability to achieve high-gain beam steering without the need for lossy phase shifters. For digital BF, we utilize an ordinary differential equations-defined LNN to learn temporal channel dynamics, and use a manifold optimization technique to compress the search space. We validated the proposed method on simulated site-specific 108 GHz ray-tracing channels in an urban scenario using NYURay, a ray-tracing simulator validated against 142 GHz propagation measurements. The 108 GHz carrier frequency matches the operating band of the LC antenna hardware. The proposed method achieves an 88.6\\% spectral efficiency (SE) gain and higher robustness to imperfect channel estimation compared to the learning-aided gradient descent and gated recurrent unit machine learning baselines, and 1.9 times higher SE than the 3GPP TR~38.901 standard antenna model, highlighting the potential of LC-based hardware for sub-THz communications.",
+    "abs_url": "https://arxiv.org/abs/2604.07219v1",
+    "pdf_url": "https://arxiv.org/pdf/2604.07219v1",
+    "score": 2
+  },
+  {
+    "id": "2604.02149v1",
+    "date": "2026-04-02",
+    "title": "AEGIS: Adversarial Entropy-Guided Immune System -- Thermodynamic State Space Models for Zero-Day Network Evasion Detection",
+    "authors": "Vickson Ferrel",
+    "summary": "As TLS 1.3 encryption limits traditional Deep Packet Inspection (DPI), the security community has pivoted to Euclidean Transformer-based classifiers (e.g., ET-BERT) for encrypted traffic analysis. However, these models remain vulnerable to byte-level adversarial morphing -- recent pre-padding attacks reduced ET-BERT accuracy to 25.68%, while VLESS Reality bypasses certificate-based detection entirely. We introduce AEGIS: an Adversarial Entropy-Guided Immune System powered by a Thermodynamic Variance-Guided Hyperbolic Liquid State Space Model (TVD-HL-SSM). Rather than competing in the Euclidean payload-reading domain, AEGIS discards payload bytes in favor of 6-dimensional continuous-time flow physics projected into a non-Euclidean Poincare manifold. Liquid Time-Constants measure microsecond IAT decay, and a Thermodynamic Variance Detector computes sequence-wide Shannon Entropy to expose automated C2 tunnel anomalies. A pure C++ eBPF Harvester with zero-copy IPC bypasses the Python GIL, enabling a linear-time O(N) Mamba-3 core to process 64,000-packet swarms at line-rate. Evaluated on a 400GB, 4-tier adversarial corpus spanning backbone traffic, IoT botnets, zero-days, and proprietary VLESS Reality tunnels, AEGIS achieves an F1-score of 0.9952 and 99.50% True Positive Rate at 262 us inference latency on an RTX 4090, establishing a new state-of-the-art for physics-based adversarial network defense.",
+    "abs_url": "https://arxiv.org/abs/2604.02149v1",
+    "pdf_url": "https://arxiv.org/pdf/2604.02149v1",
+    "score": 2
+  },
+  {
+    "id": "2603.29484v2",
+    "date": "2026-03-31",
+    "title": "Thermal Conductivity and Temperature-Induced Band Gap Renormalization in Crystalline and Amorphous Ga$_2$O$_3$",
+    "authors": "Rustam Arabov, Jiaxuan Li, Xiaotong Chen, Nikita Rybin, Alexander Shapeev",
+    "summary": "The lattice thermal conductivity (LTC) and electron-phonon interactions in crystalline and amorphous gallium oxide are herein determined by coupling a machine-learned interatomic potential, namely the moment tensor potential (MTP) model, to first-principles calculations. Crystalline $β$-Ga$_2$O$_3$ exhibits a substantial band gap renormalization (BGR) of $\\sim$0.45 eV at 700 K, with $\\sim$0.2 eV caused by zero-point BGR. The computed temperature dependence of BGR induced by classical nuclear motion in $β$-Ga$_2$O$_3$ is stronger than that in amorphous Ga$_2$O$_3$, with the difference in BGR reaching $\\sim$0.18 eV at 900 K. Thermal transport calculations reveal that the LTC of amorphous Ga$_2$O$_3$ remains near $0.9$ W$\\cdot$ m$^{-1}$$\\cdot$K$^{-1}$ for temperatures between 300 K and 700 K, which is approximately an order of magnitude lower than that of crystalline $β$-Ga$_2$O$_3$. Overall, the presented framework provides a computationally tractable and reliable route for predicting properties of semiconductors (both crystalline and amorphous) under operating conditions relevant to microelectronics and optoelectronics.",
+    "abs_url": "https://arxiv.org/abs/2603.29484v2",
+    "pdf_url": "https://arxiv.org/pdf/2603.29484v2",
+    "score": 2
+  },
+  {
+    "id": "2608.11789v3",
+    "date": "2026-08-12",
+    "title": "Anti-Shortcut Distillation via Temporal Negative Knowledge Transfer",
+    "authors": "Syed Muhammad Raza, Omer Tariq, Jeongbae Son",
+    "summary": "Knowledge distillation (KD) trains a compact student by attracting it towards a converged teacher. It is silent about which directions the teacher itself learned to suppress: repulsive and bias-aware objectives exist, but none exploits the teacher's own trajectory to identify what the student should avoid. We observe that the missing signal is already encoded in the teacher's optimization trajectory: features that an early-stage teacher emphasizes but that a converged teacher attenuates are precisely the shortcut directions worth pushing the student away from. We instantiate this observation as \\textbf{A}nti-\\textbf{S}hortcut \\textbf{D}istillation (ASD), a push--pull KD framework that treats the converged teacher $\\Tfinal$ as a positive semantic anchor and an early-checkpoint teacher $\\Tearly$ as a temporal negative reference. ASD couples two losses: a temporal contrastive loss ($\\Ltc$) that places the early-teacher feature as a same-sample negative against in-batch and memory-bank final-teacher features in an InfoNCE objective; and a shortcut suppression loss ($\\Lss$) that penalizes student projection onto the top eigenvectors of $\\E[\\Dh\\Dh^{\\top}]$, the uncentered second-moment matrix of early-to-final feature displacements. Across 13 teacher--student pairs on CIFAR-100, ImageNet-100, and TinyImageNet, ASD attains the highest clean top-1 accuracy on more than 10 pairs and outperforms standard KD on 12. On CIFAR-100-C corruption robustness, ASD obtains the lowest mean Corruption Error ($86.1$\\,mCE) on the most challenging cross-architecture pair (WRN-40-2$\\to$ShuffleNet-V2). Mechanistic diagnostics confirm the intended geometry: the ASD student is systematically anti-aligned with the shortcut direction, while its projection onto the robust subspace is substantially larger ($0.45$ vs.\\ $0.12$).",
+    "abs_url": "https://arxiv.org/abs/2608.11789v3",
+    "pdf_url": "https://arxiv.org/pdf/2608.11789v3",
+    "score": 1
+  },
+  {
+    "id": "2608.08809v1",
+    "date": "2026-08-09",
+    "title": "Tevatron-Elastic: A Unified Abstraction for Training Elastic Retrievers and Rerankers",
+    "authors": "Yu Wang, Shengyao Zhuang, Xueguang Ma, Zongyu Wu, Jimmy Lin, Vivek Srikumar et al.",
+    "summary": "A single model scale challenges the flexibility of a production retrieval system: some settings need it faster, others need a smaller index, and the right trade-off changes with the workload. In the context of information retrieval (IR), a transformer-based model can be made smaller in three ways---using fewer layers, passing fewer tokens through the upper layers, or producing a shorter embedding---and each way saves a different compute resource. These options have been studied one at a time, each as its own method with its own code and training setup, which makes them hard to combine or adapt to a new model. We present~\\ours to bring all three under one simple abstraction: a single object names any size the model can run at, and a short schedule lists the sizes to train. Training then produces one checkpoint that serves all of those sizes, and at deployment the user picks any of them. The same abstraction covers both retrievers and rerankers and both encoder and decoder models, as it works through interfaces that Hugging Face transformers already expose; a new backbone is a configuration change, not new modeling code. Prior methods---Matryoshka embeddings, early exit, 2D~Matryoshka (e.g., Starbucks), and layerwise token compression---become special cases of our unified abstraction. The same interface also enables Matryoshka~LTC (MLTC), which jointly trains several token-compression ratios in one retriever checkpoint. To validate our framework, we train 20 checkpoints across three backbones and two tasks: the quality curves are smooth, one checkpoint costs little over a model trained for a single size, and a controlled study confirms the wallclock speedups. We release the framework and all checkpoints as a resource for building elastic retrieval systems.",
+    "abs_url": "https://arxiv.org/abs/2608.08809v1",
+    "pdf_url": "https://arxiv.org/pdf/2608.08809v1",
+    "score": 1
+  },
+  {
+    "id": "2608.03041v1",
+    "date": "2026-08-04",
+    "title": "PLAN: Parallel Liquid-Inspired Approximation Network for Efficient Representation Learning in Flexible Job Shop Scheduling",
+    "authors": "Dhivya Dharshini Kannan, Wei Zhang, Jieyi Bi, Yingpeng Du, Tianjun Wei, Jie Zhang et al.",
+    "summary": "Deep reinforcement learning (DRL) approaches for flexible job shop scheduling (FJSP) heavily rely on attention-centric architectures to achieve state-of-the-art performance. However, these models suffer from excessive parameter counts and prohibitive inference latency as problem scales expand. While liquid neural networks (LNNs) offer a parameter-efficient alternative for modeling adaptive state evolution, their inherently sequential dynamics bottleneck computational efficiency. To resolve this trade-off, we propose PLAN (Parallel Liquid-inspired Approximation Network), a lightweight representation learning framework that reformulates continuous liquid-state dynamics into a discretized and parallelizable formulation. PLAN structurally decouples state evolution from context aggregation, where liquid-inspired updates handle the primary evolving state representation, and a lightweight context aggregation module provides complementary global context. Furthermore, PLAN acts as a versatile, plug-and-play backbone that generalizes to complex FJSP variants, pairing with a compact stochastic module for stochastic FJSP and replacing heavy heterogeneous graph transformers in multi-faceted dynamic FJSP. Extensive evaluations across deterministic, stochastic, and multi-faceted dynamic FJSP benchmarks show that PLAN reduces the average makespan by 1.2%, 1.4%, and 2.3%, respectively, compared with the corresponding state-of-the-art baselines, with the improvement reaching 10.2% in one benchmark setting. PLAN also reduces average inference latency by 13.2%, 31.7%, and 26.9%, respectively, with a maximum reduction of 69.2% on the largest instances, while using only 22$-$47% of the baseline parameters.",
+    "abs_url": "https://arxiv.org/abs/2608.03041v1",
+    "pdf_url": "https://arxiv.org/pdf/2608.03041v1",
+    "score": 1
+  },
+  {
+    "id": "2607.08283v3",
+    "date": "2026-07-09",
+    "title": "TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning",
+    "authors": "Yushen Liang, Yue Peng, Baosheng Jin, Tianluo Zhang, Xinyu Zhang, Shuyi Zhou et al.",
+    "summary": "Vision--Language--Action (VLA) policies such as $π_{0.5}$ and OpenVLA perform well on many manipulation tasks, but they are often reactive: the next action is predicted from the current observation, instruction, and proprioceptive state. This assumption breaks down in stage-dependent manipulation, where visually similar states may require different actions depending on latent task progress and previous interaction outcomes. We argue that such tasks require not only memory, but dynamics-aware belief updates: the policy should preserve task progress during stable or occluded phases and revise its belief near contact, release, or subgoal transitions. We introduce Temporally Conditioned Memory-Fusion Policies (TFP), a lightweight memory-action framework for VLA backbones. TFP maintains an episode-local task-progress belief with Liquid Time-Constant dynamics and injects the updated belief directly into the flow-matching action decoder through adaptive modulation. This lets temporally accumulated context shape the generated action chunk, rather than serving only as passive history context. With a 3.3B-parameter model, TFP improves the average success rate from 96.9% to 98.75% on LIBERO and from 91.4% to 93.77% on LIBERO-plus. On the memory-focused MIKASA ShellGameTouch diagnostic, TFP achieves success up to 75.0%. Mechanistic analyses show that write-gain changes near manipulation events are about 6 times larger than far non-event phases, and hidden-state interventions show that the belief causally modulates generated action chunks. These results suggest that compact, event-sensitive memory dynamics can improve VLA policies under occlusion, visual perturbation, and stage-dependent task structure.",
+    "abs_url": "https://arxiv.org/abs/2607.08283v3",
+    "pdf_url": "https://arxiv.org/pdf/2607.08283v3",
+    "score": 1
+  },
+  {
+    "id": "2607.01986v1",
+    "date": "2026-07-02",
+    "title": "Liquid Latent State Dynamics for Interpretable Turbofan Degradation Modeling",
+    "authors": "Weizhi Nie, Weijie Wang, Yuting Su",
+    "summary": "Multivariate time-series models for prognostics are often evaluated by point prediction accuracy, yet their internal states rarely expose a coherent degradation process. We study liquid neural networks as latent dynamics models for aircraft engine health monitoring on the C-MAPSS benchmark. The proposed model encodes a history window into a latent state, evolves that state with a liquid transition model, and decodes future sensor observations. To separate health evolution from operating-condition variation, the latent state is factorized into degradation and condition components. Remaining useful life, monotonic risk, and latent-consistency losses supervise the degradation component, while condition prediction and decorrelation losses discourage operating-condition leakage. Across FD001--FD004, the full disentangled model improves overall sensor forecasting RMSE from 0.2438 for a GRU baseline to 0.2266, with the largest gains on the multi-condition subsets FD002 and FD004. The learned degradation state also forms a clearer temporal degradation axis, reaching an average state-speed Spearman correlation of 0.5960. Direct remaining-useful-life regression remains stronger for the GRU baseline, indicating that the proposed representation is currently more effective as an interpretable world model for degradation dynamics than as a calibrated lifetime regressor. These results suggest that liquid latent dynamics can bridge predictive maintenance forecasting and inspectable health-state modeling.",
+    "abs_url": "https://arxiv.org/abs/2607.01986v1",
+    "pdf_url": "https://arxiv.org/pdf/2607.01986v1",
+    "score": 1
+  },
+  {
+    "id": "2606.26849v1",
+    "date": "2026-06-25",
+    "title": "Liquid Fusion of Heterogeneous Representations Towards General Salient Object Detection",
+    "authors": "Ke Chen, Ling Zhou, Guangqi Jiang, Gengshen Wu, Yi Liu, Shoukun Xu",
+    "summary": "General Salient Object Detection (SOD) aims to identify and segment visually interesting objects from uni-modality or multi-modality scenes, recently advanced by cutting-edge State Space Models (SSMs). However, a critical limitation of current approaches is their neglect of the inherent spectral biases exhibited by different neural network paradigms. By digging to the dataset-level spectral analysis of Convolutional Neural Networks (CNNs) and SSMs, their semantic representations are inherently complementary based on their complementary frequency preferences. Inspired by this, we harmonize heterogeneous representations from SSMs and CNNs to bridge their spectral biases for general salient object detection. To this end, inspired by the dynamic information propagation of Liquid Neural Networks (LNNs), we introduce a liquid fusion to dynamically integrates features from two backbones, including VMamba and ConvNeXt, referred to Liquid Fusion Network (LFNet). Concretely, by treating the continuous VMamba features and ConvNeXt features as evolving states and exogenous stimulus, respectively, LFNet employs a dynamic gating mechanism for content-aware feature aggregation. Crucially, this state-stimulus paradigm enables to scale to multi-modal cues, resulting in flexibility in general SOD. Besides, a Saliency-Guided Upsampling (SGU) operator to propagate the features to the shallow layer, which leverages a spectral-spatial co-design to suppress upsampling artifacts while preserving semantics. Extensive experiments across five diverse tasks (RGB, RGB-D, RGB-T, VSOD, and VDT) demonstrate that LFNet achieves state-of-the-art performance, offering a superior trade-off between detection accuracy and model efficiency. Code has been released at https://github.com/cke520/LFNet.",
+    "abs_url": "https://arxiv.org/abs/2606.26849v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.26849v1",
+    "score": 1
+  },
+  {
+    "id": "2606.20491v1",
+    "date": "2026-06-18",
+    "title": "Fast Human Attention Prediction for Fixation-guided Active Perception in Autonomous Navigation",
+    "authors": "Fatma Youssef Mohammed, Grzegorz Malczyk, Kostas Alexis",
+    "summary": "Human visual attention relies on structured scanpaths to efficiently process scenes, yet instilling this behavior into robot autonomy is in its infancy and hindered by the high,computational costs of existing predictive models. To address this, we introduce GazeLNN, a computationally lightweight,scanpath prediction model that leverages Liquid Neural Networks as its recurrent engine and employs MobileNetV3 for feature extraction. Operating auto-regressively, the architecture predicts sequential fixation heatmaps conditioned on the current visual stimulus and fixation history. Despite requiring only 0.61 GFLOPs, GazeLNN achieves state-of-the-art performance on the MIT Low Resolution dataset achieving 0.47 ScanMatch score. It outperforms existing recurrent baselines across diverse evaluation metrics, while reducing computational costs by 99.40% and accelerating inference by up to six times. To investigate the role of human attention modeling in robot autonomy and demonstrate the practical utility of this highly efficient architecture, we integrate GazeLNN into an active camera-robot control policy trained via Reinforcement Learning. This integration enables human-fixation-guided perception during autonomous navigation, validated through successful real-world deployments on an aerial robot.",
+    "abs_url": "https://arxiv.org/abs/2606.20491v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.20491v1",
+    "score": 1
+  },
+  {
+    "id": "2606.15571v1",
+    "date": "2026-06-14",
+    "title": "Liquid Random Feature Methods for Time-Dependent Partial Differential Equations",
+    "authors": "Jiale Linghu, Yangshuai Wang",
+    "summary": "A central challenge in mesh-free space--time approximation for time-dependent partial differential equations is to represent evolving temporal scales while keeping residual minimization computationally tractable. Random feature methods simplify this algebraic problem by freezing nonlinear trial functions and fitting only a linear readout, but standard static space--time activations provide no explicit relaxation-scale mechanism, making temporal-scale resolution a finite-dimensional bottleneck in stiff, dispersive, or multi-scale regimes. We introduce liquid random feature methods (L-RFM), which replace static temporal activations by closed-form liquid time-constant responses with sampled relaxation scales. The resulting frozen features form temporally structured local or global trial spaces with analytic space--time derivatives for residual least-squares assembly. A density theorem proves density of the deterministic trial spaces in the continuous space--time function class, and a temporal-rank calculation clarifies the role of sampled relaxation scales. Ablation and finite-feature tests identify the liquid temporal response as the primary source of the observed accuracy improvement. Across stiff reaction--diffusion, nonlinear transport, dispersive, complex-valued, and multidimensional benchmarks, L-RFM improves finite-feature accuracy in regimes where temporal-scale representation controls the approximation. By embedding relaxation scales directly into frozen trial functions, L-RFM provides a route to high-accuracy continuous space--time surrogates for evolutionary PDEs while preserving the simplicity of linear least-squares solvers.",
+    "abs_url": "https://arxiv.org/abs/2606.15571v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.15571v1",
+    "score": 1
+  },
+  {
+    "id": "2606.11397v1",
+    "date": "2026-06-09",
+    "title": "Invariant Price of Anarchy and Multiplicative Smoothness",
+    "authors": "Ilia Shilov, Heinrich H. Nax, Saverio Bolognani",
+    "summary": "The Price of Anarchy (PoA) is a popular measure of the costs of decentralization in terms of efficiency losses. Almost all PoA analyses operate within a framework assuming both Cardinal Full-Comparability (CFC) and smoothness, in which case any derived bounds conveniently extend beyond pure Nash to coarse correlated equilibria and no-regret learning outcomes. However, interpersonal utility comparability is an additional assumption that generally has to be justified. Without it, cardinal utilities (e.g. defined under classical von Neumann--Morgenstern framework) are unique only up to agent-specific affine transformations, rendering both the utilitarian PoA and the classical smoothness conditions representation-dependent. In this paper, we operate under a more general Cardinal Non-Comparability (CNC) framework, under which the weighted Nash welfare is a canonical admissible aggregator. We introduce multiplicative smoothness, a product-form condition matched to the multiplicative structure of Nash welfare, and obtain PoA bounds that are CNC-invariant and extend to coarse correlated equilibria. We demonstrate applicability of our framework on single-choice welfare games, deriving the bounds through simple proof relying on multiplicative retention envelope and geometric closure. The interpretation of this bound in terms of the true cost of decentralization depends crucially on interpersonal comparability of utilities.",
+    "abs_url": "https://arxiv.org/abs/2606.11397v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.11397v1",
+    "score": 1
+  },
+  {
+    "id": "2605.23124v1",
+    "date": "2026-05-22",
+    "title": "Deep-Learning-Aided Successive Cancellation List Flip Decoding for Polar Codes",
+    "authors": "Fu-Siang Liang, Shan Lu, Yeong-Luh Ueng",
+    "summary": "Polar codes are the first error-correcting code proven to achieve channel capacity based on infinite code length. The Successive Cancellation List Flip (SCLF) decoding algorithm was proposed by flipping an erroneous bit during the next decoding attempt. To identify the erroneous bits, the Log-Likelihood Ratio (LLR) is used to indicate the reliability of each decision bit. To improve the accuracy of the erroneous bit prediction, we propose deep-learning-aided (DL-aided) SCLF decoding algorithms. We first offer a stacked LSTM network that contains new features to train our models, which are able to improve the accuracy of the prediction of positions of erroneous bits. Then we separately train the stacked LSTM models to predict the position of both the first and second erroneous bits and whether to continue flipping. As a result, the DL-aided SCLF decoding algorithms based on the proposed stacked LSTM \\mbox{flip-1} model, stacked LSTM \\mbox{flip-2} model, and the stacked LSTM \\mbox{continue-flipping} check (CFC) model are able to provide a better performance at a lower number of average decoding attempts when compared to other state-of-the-art decoding algorithms.",
+    "abs_url": "https://arxiv.org/abs/2605.23124v1",
+    "pdf_url": "https://arxiv.org/pdf/2605.23124v1",
+    "score": 1
+  },
+  {
+    "id": "2605.18784v2",
+    "date": "2026-05-06",
+    "title": "The Insurability Frontier of AI Risk: Mapping Threats to Affirmative Coverage, Silent Exposures, and Exclusions",
+    "authors": "Alex Leung, Rex Zhang, Ervin Ling, Kentaroh Toyoda, SiewMei Loh",
+    "summary": "The rapid diffusion of agentic AI has created a new coverage problem for commercial insurance: some AI-mediated losses are now affirmatively insured, some create silent-AI exposure under legacy cyber, technology errors-and-omissions (E&O), directors-and-officers (D&O), employment practices liability (EPLI), crime, and media policies, and others are being actively excluded. This paper maps that emerging boundary by coding 55 AI threat classes against 26 insurance products, endorsements, and exclusion regimes using public carrier materials and OWASP/MITRE threat catalogs. We identify a four-tier insurability frontier: affirmatively insured perils, silent-AI exposures, actively excluded perils, and perils outside conventional private insurance structures. Our coding measures publicly claimed positioning rather than executed contract wording; the headline statistics describe what carriers publicly state about coverage, not what would be paid in any specific claim. Three patterns emerge. First, affirmative AI coverage is beginning to differentiate by primary risk emphasis: public materials often position Munich Re around model performance and drift, Armilla and parts of the Lloyd's market around hallucination and broader AI liability, Tokio Marine Kiln and CFC around IP and technology E&O concerns, Apollo ibott around emerging autonomous system liability, and Coalition around deepfake and AI-enabled cyber response. Second, legacy lines retain silent-AI exposure where AI is an instrumentality rather than the legal cause of loss. Third, foundation model concentration is the clearest genuinely novel insurability frontier because upstream model failure can correlate losses across many cedents at once; the relevant market design question is which insurability constraint each candidate structure relaxes, not merely which systemic risk template exists.",
+    "abs_url": "https://arxiv.org/abs/2605.18784v2",
+    "pdf_url": "https://arxiv.org/pdf/2605.18784v2",
+    "score": 1
+  },
+  {
+    "id": "2605.01540v1",
+    "date": "2026-05-02",
+    "title": "A Time-Synchronized Video Reference System for Data Analysis of Body-Attached Sensor Nodes in Outdoor Scenarios",
+    "authors": "Lukas Schulthess, Fabian Pleisch, Matheo Käch, Björn P. Bruhin, Michele Magno, Luca Benini et al.",
+    "summary": "Wearable body-attached multi-sensor systems enable detailed analysis of human motion and physiological signals in sports, rehabilitation, and movement research. While wireless synchronization techniques can reliably align sensor data streams, interpreting and validating complex or unconstrained activities often requires an additional, objective visual reference. Existing laboratory-grade reference systems provide high accuracy but are impractical for outdoor or field deployments. In contrast, commercial video timecode solutions typically rely on local device-to-device synchronization, which increases the power required to maintain synchronization. This is not desirable in many application scenarios. This paper presents a lightweight Timecode Generator (TCG) that converts Global Navigation Satellite System (GNSS)-derived time directly into a Linear Timecode (LTC) signal that is injected into the recording via a camera audio channel. The approach eliminates continuous handshaking, allowing the system to be activated immediately before the action of interest, thus reducing power consumption and enabling smaller batteries and unobtrusive hardware designs of body-attached sensor nodes. The TCG supports common video frame rates of 24, 25, and 30 frames per second (fps). Experimental evaluation confirms that accurate time alignment is maintained for several minutes without GNSS updates. At 30 fps, the alignment duration is 543 s before a potential frame-level shift occurs. With an average power consumption of 35.37 mW, the system achieves an operating time of up to 75 h when powered by two standard AAA alkaline batteries.",
+    "abs_url": "https://arxiv.org/abs/2605.01540v1",
+    "pdf_url": "https://arxiv.org/pdf/2605.01540v1",
+    "score": 1
+  },
+  {
+    "id": "2604.27293v1",
+    "date": "2026-04-30",
+    "title": "Student Classroom Behavior Recognition Based on Improved YOLOv8s",
+    "authors": "Xiang Gao, Shuai Hang",
+    "summary": "In classroom teaching, student behavior can reflect their learning state and classroom participation, which is of great significance for teaching quality analysis. To address the problems of dense student targets, numerous small objects, frequent occlusions, and imbalanced class distribution in real classroom scenes, this paper proposes an improved student classroom behavior recognition model named ALC-YOLOv8s based on YOLOv8s. The model introduces SPPF-LSKA to enhance contextual feature extraction, employs CFC-CRB and SFC-G2 to optimize multi-scale feature fusion, and incorporates ATFLoss to improve the learning ability for minority classes and hard samples. Experimental results show that compared with the baseline model, the improved model achieves increases of 1.8% in mAP50 and 2.1% in mAP50-95. Compared with several mainstream detection methods, the proposed model can well meet the requirements of automatic student behavior recognition in complex classroom scenarios.",
+    "abs_url": "https://arxiv.org/abs/2604.27293v1",
+    "pdf_url": "https://arxiv.org/pdf/2604.27293v1",
+    "score": 1
+  },
+  {
+    "id": "2604.13256v1",
+    "date": "2026-04-14",
+    "title": "Counterfactual Peptide Editing for Causal TCR--pMHC Binding Inference",
+    "authors": "Sanjar Khudoyberdiev, Arman Bekov",
+    "summary": "Neural models for TCR-pMHC binding prediction are susceptible to shortcut learning: they exploit spurious correlations in training data -- such as peptide length bias or V-gene co-occurrence -- rather than the physical binding interface. This renders predictions brittle under family-held-out and distance-aware evaluation, where such shortcuts do not transfer. We introduce \\emph{Counterfactual Invariant Prediction} (CIP), a training framework that generates biologically constrained counterfactual peptide edits and enforces invariance to edits at non-anchor positions while amplifying sensitivity at MHC anchor residues. CIP augments the base classifier with two auxiliary objectives: (1) an invariance loss penalizing prediction changes under conservative non-anchor substitutions, and (2) a contrastive loss encouraging large prediction changes under anchor-position disruptions. Evaluated on a curated VDJdb-IEDB benchmark under family-held-out, distance-aware, and random splits, CIP achieves AUROC 0.831 and counterfactual consistency (CFC) 0.724 under the challenging family-held-out protocol -- a 39.7\\% reduction in shortcut index relative to the unconstrained baseline. Ablations confirm that anchor-aware edit generation is the dominant driver of OOD gains, providing a practical recipe for causally-grounded TCR specificity modeling.",
+    "abs_url": "https://arxiv.org/abs/2604.13256v1",
+    "pdf_url": "https://arxiv.org/pdf/2604.13256v1",
+    "score": 1
+  },
+  {
+    "id": "2603.27058v1",
+    "date": "2026-03-28",
+    "title": "Liquid Networks with Mixture Density Heads for Efficient Imitation Learning",
+    "authors": "Nikolaus Correll",
+    "summary": "We compare liquid neural networks with mixture density heads against diffusion policies on Push-T, RoboMimic Can, and PointMaze under a shared-backbone comparison protocol that isolates policy-head effects under matched inputs, training budgets, and evaluation settings. Across tasks, liquid policies use roughly half the parameters (4.3M vs. 8.6M), achieve 2.4x lower offline prediction error, and run 1.8 faster at inference. In sample-efficiency experiments spanning 1% to 46.42% of training data, liquid models remain consistently more robust, with especially large gains in low-data and medium-data regimes. Closed-loop results on Push-T and PointMaze are directionally consistent with offline rankings but noisier, indicating that strong offline density modeling helps deployment while not fully determining closed-loop success. Overall, liquid recurrent multimodal policies provide a compact and practical alternative to iterative denoising for imitation learning.",
+    "abs_url": "https://arxiv.org/abs/2603.27058v1",
+    "pdf_url": "https://arxiv.org/pdf/2603.27058v1",
+    "score": 1
+  }
+]

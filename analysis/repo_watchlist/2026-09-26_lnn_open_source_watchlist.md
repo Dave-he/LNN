@@ -196,6 +196,12 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2.5, edge, 12 reasoning modes, 12 instruct modes, Turbo-Brilliance, NEO Imatrix
 
+### [Panga-Azazia/LFM2.5-350M-TTS-v3](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS-v3)
+- 更新：2026-09-25
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, generated_from_trainer, sft, trl, unsloth
+
 ### [baptistefrancois1/lfm2a-fr-checkpoints](https://huggingface.co/baptistefrancois1/lfm2a-fr-checkpoints)
 - 更新：2026-09-25
 - 下载 / Likes：0 / 0
@@ -207,12 +213,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：gguf, region:us
-
-### [Panga-Azazia/LFM2.5-350M-TTS-v3](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS-v3)
-- 更新：2026-09-25
-- 下载 / Likes：0 / 0
-- 任务：unknown
-- Tags：region:us
 
 ### [LiquidAI/LFM2.5-VL-3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B)
 - 更新：2026-09-24

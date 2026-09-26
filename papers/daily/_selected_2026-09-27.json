@@ -1,0 +1,92 @@
+[
+  {
+    "id": "2608.28702v1",
+    "date": "2026-08-27",
+    "title": "Stochastic Liquid Deformation Fields: An SDE Generalisation of Closed-Form Continuous-Time Cells for Dynamic 3D Gaussian Splatting",
+    "authors": "Mingzhao Li, Arghya Pal",
+    "summary": "Deformable 3D Gaussian Splatting (D-3DGS) reconstructs dynamic scenes by deforming a canonical set of 3D Gaussians through a deformation field of frame time. Replacing its MLP with a stack of Closed-form Continuous-time (CfC) cells-a Liquid Neural Network that solves the Liquid Timeconstant ODE in closed form-gives the field continuous-time behaviour at feed-forward cost. That closed form, however, is only the deterministic limit of a noise-driven system, and drops the stochastic term usually credited for the robustness of liquid networks. We put it back: a small Gaussian perturbation is added to the time gate of every CfC cell, turning the deterministic field into a simple stochastic (SDE) one. The noise is used only during training, needs no solver, and reduces exactly to the CfC when switched off. On the synthetic D-NeRF scenes the stochastic field is on par with the deterministic CfC and beats the MLP baseline on most scenes; on the real-world NeRF-DS scenes the deterministic limit is already best and adding noise does not help. The study thus gives both a clean way to read the CfC field as an SDE and an honest account of when a plain noise term helps and when it does not.",
+    "abs_url": "https://arxiv.org/abs/2608.28702v1",
+    "pdf_url": "https://arxiv.org/pdf/2608.28702v1",
+    "score": 11
+  },
+  {
+    "id": "2609.28716v1",
+    "date": "2026-09-23",
+    "title": "Temporal Learning for End-Effector Position Estimation under Aerodynamic Disturbances in Aerial Continuum Manipulation",
+    "authors": "Niloufar Amiri, Houman Masnavi, Farrokh Janabi-Sharifi",
+    "summary": "This paper investigates temporal neural networks for \\mbox{end-effector} position \\mbox{estimation} of an aerial continuum manipulator (ACM) operating under aerodynamic effects induced by the unmanned aerial vehicle (UAV). An experimental dataset is collected under stationary (\\mbox{rotor-off}) and \\mbox{free-hovering} conditions across continuum robot (CR) configurations and UAV altitudes, providing \\mbox{end-effector} position measurements with and without aerodynamic residuals. To establish a nominal framework, \\mbox{strain-parameterized} kinematic models with progressively richer strain bases are evaluated to balance model complexity and prediction accuracy. The selected nominal model then serves as the baseline for 3D position residual estimation using a \\mbox{closed-form} \\mbox{continuous-time} (CfC) neural network, with a multilayer perceptron (MLP) and a gated recurrent unit (GRU) used for comparison. On unseen test experiments, the CfC achieves an RMSE of \\(22.00\\pm1.70~\\mathrm{mm}\\) over five random seeds, compared with \\(36.38\\pm3.58~\\mathrm{mm}\\) for the MLP and \\(27.72\\pm2.92~\\mathrm{mm}\\) for the GRU, corresponding to reductions of \\(39.52\\%\\) and \\(20.62\\%\\), respectively. These results demonstrate the effectiveness of \\mbox{continuous-time} learning for \\mbox{end-effector} position estimation under aerodynamic disturbances relative to static and \\mbox{discrete-time} learning methods.",
+    "abs_url": "https://arxiv.org/abs/2609.28716v1",
+    "pdf_url": "https://arxiv.org/pdf/2609.28716v1",
+    "score": 6
+  },
+  {
+    "id": "2608.01593v1",
+    "date": "2026-08-03",
+    "title": "Latent Thought Credit: Multi-Answer Credit Assignment for Latent Reasoning",
+    "authors": "Xuyang Zhao, Liting Zhang, Zichen Xu, Yong Chen, Wenjia Zeng, Shiwan Zhao et al.",
+    "summary": "Latent reasoning allows language models to carry out intermediate reasoning in continuous latent representations rather than fully externalizing it as discrete chains of thought. However, assigning credit to such latent thoughts from answer-only rewards is difficult: a single final answer mixes thought quality with answer-sampling noise. We propose \\textbf{Latent Thought Credit (LTC)}, a hierarchical credit-assignment framework for latent reasoning. For each prompt, LTC samples multiple latent thoughts, fixes the context after each thought, and estimates thought-level expected reward by averaging rewards over multiple answers generated from that fixed context. LTC uses thought-level advantages to optimize the latent-thought phase, answer-level advantages to optimize the answer phase, and an advantage-weighted thought-matching objective that helps the policy reproduce high-credit latent thoughts. We instantiate LTC in a GRPO-style on-policy training framework and evaluate it across mathematical reasoning and STEM multiple-choice tasks. LTC achieves the best average accuracy among the compared methods, while ablations and fixed-context diagnostics show that multi-answer estimation reduces reward-estimation error and mitigates ambiguous or incorrect thought-level credit.",
+    "abs_url": "https://arxiv.org/abs/2608.01593v1",
+    "pdf_url": "https://arxiv.org/pdf/2608.01593v1",
+    "score": 5
+  },
+  {
+    "id": "2607.12909v1",
+    "date": "2026-07-14",
+    "title": "Real-time fall detection based on vision for low-power edge platforms",
+    "authors": "Wenjun Xia, Zhicheng Peng, Haopeng Li, Zhengdi Zhang",
+    "summary": "Falling detection is vital for elderly care and intelligent surveillance; however, prevailing vision-based approaches predominantly frame it as static pose classification or discrete temporal pattern matching, fundamentally overlooking the instability dynamics of the human support system. This paper proposes a physics-informed falling detection framework that recasts falling as a stability-loss event in a coupled dynamical system. We introduce a novel dual-LTC architecture comprising a Center-of-Mass (CoM) subsystem and a Base-of-Support (BoS) subsystem, both instantiated as Liquid Time-Constant (LTC) neural networks to continuously model inertial trajectory evolution and ground-contact adjustment through adaptive time constants, Physical interpretability of falling motion. A learnable coupling module emulates physical interaction between the two subsystems, while a Stability Manifold classifier operates in the joint latent space to detect boundary crossing via Lyapunov-inspired stability metrics. Complementary counterfactual trajectory projection and Time-to-Collision (TTC) estimation further enable irreversibility assessment and early warning. The architecture is designed to support a three-state prediction paradigm (Normal, Falling, Fallen); in this preliminary study, we validate the core stability discrimination capability on a two-class dataset (Normal vs. Falling), leaving the full three-state temporal transition to future work. Unlike conventional CNN--RNN pipelines, the proposed formulation encodes continuous-time mechanical inertia, yielding a sub-50K-parameter network capable of real-time inference on resource-constrained edge devices. Extensive experiments demonstrate competitive accuracy with superior physical interpretability, validating its efficacy for low-compute visual fall detection.",
+    "abs_url": "https://arxiv.org/abs/2607.12909v1",
+    "pdf_url": "https://arxiv.org/pdf/2607.12909v1",
+    "score": 5
+  },
+  {
+    "id": "2608.14125v1",
+    "date": "2026-08-14",
+    "title": "Traj-LeWM: Path-Aware World-Model Planning via Latent Trajectory Cost",
+    "authors": "Xiaodi Huang, Ziyi Ding, Jingtian Wan, Yuchen Liu, Yuan Zhang, Xiao-Ping Zhang et al.",
+    "summary": "LeWM is a lightweight visual world model that learns latent dynamics end-to-end from pixels and ranks candidate action sequences by the distance between their predicted endpoints and the goal. However, LeWM has two limitations. First, during training, it learns local next-step transitions without evaluating complete trajectories relative to the task goal. Second, during planning, it ranks candidates solely by predicted endpoint distance. Because model predictions may differ from actual execution outcomes, the candidate whose predicted endpoint is closest to the goal may not perform best when executed in the environment. The evolution of the complete predicted trajectory can therefore provide complementary information beyond endpoint distance. To address these limitations, we propose Traj-LeWM, which retains LeWM's local-dynamics objective and endpoint score while introducing a goal-conditioned latent trajectory cost (LTC) that aggregates trajectory-level information as a complementary signal. During training, LTC-based trajectory-preference supervision complements next-step prediction in shaping the shared representation. During planning, LTC is combined with endpoint distance to incorporate intermediate-path information into candidate ranking. With joint endpoint-plus-LTC scoring, Traj-LeWM outperforms LeWM on Push-T, OGBench-Cube, Reacher, and Two-Room by $3$, $14$, $7$, and $7$ percentage points, respectively. Controlled experiments and ablations further verify the complementary roles of trajectory-level representation shaping and path-aware candidate ranking.",
+    "abs_url": "https://arxiv.org/abs/2608.14125v1",
+    "pdf_url": "https://arxiv.org/pdf/2608.14125v1",
+    "score": 4
+  },
+  {
+    "id": "2609.00366v1",
+    "date": "2026-06-29",
+    "title": "Counterfactual Fragility Certificates: Exposing High-Confidence Brittleness under Structured Evidence Failure",
+    "authors": "Filippo Cenacchi, Longbing Cao, Runze Yang",
+    "summary": "High test accuracy and good aggregate calibration do not show whether an individual prediction is structurally supported by its evidence. In tabular decision systems, failures often occur when a feature family becomes unavailable, delayed, noisy, stale, or low-trust while the model remains highly confident. Existing calibration, uncertainty, selective-prediction, explanation, and perturbation methods provide scalar scores or attribution maps, but not a recomputable audit object answering: under a declared evidence-failure protocol, what trajectory makes this prediction lose support? We introduce Counterfactual Fragility Certificates (CFC), a model-agnostic protocol-level audit certificate-not a formal robustness certificate-that maps each prediction into an ordered evidence-failure trajectory summarized by greedy flip budget, normalized margin-collapse area, degradation thresholds, and fragility dominance score. Across seven tabular benchmarks and strong linear, tree-based, boosting, and neural baselines, CFC-FDS identifies independently brittle high-confidence cases with 0.915 AUROC, improving over the strongest non-certificate score by +0.405. The advantage persists across perturbation, permutation-importance, group-SHAP, baseline-choice, seed-variance, budgeted-review, and naturalistic field-unavailability checks. Under a 20% review budget, CFC-FDS captures 88.9% of brittle high-confidence cases, compared with 31.8-37.4% for confidence and energy scores. We also evaluate fragility-aware regularization and brittleness-aware temperature correction as secondary uses. CFC provides a concrete reliability framework for exposing high-confidence brittleness missed by ordinary score-centric evaluation.",
+    "abs_url": "https://arxiv.org/abs/2609.00366v1",
+    "pdf_url": "https://arxiv.org/pdf/2609.00366v1",
+    "score": 4
+  },
+  {
+    "id": "2609.10350v1",
+    "date": "2026-09-09",
+    "title": "Cyber-Financial Contagion: Modeling the Propagation of an AI Vendor Compromise Through the Banking System",
+    "authors": "Alex Leytes",
+    "summary": "The banking system now depends on a small set of shared artificial intelligence vendors for fraud screening, credit decisioning, anti-money-laundering triage, customer analytics, and internal decision support. This paper studies how a compromise inside one of those vendors can propagate along a chain of operational, informational, and financial linkages until it triggers losses that look, from the outside, like a classical banking crisis. We build a four-layer heterogeneous network that couples AI vendors, financial institutions, interbank exposures, and customer accounts, and we propose CFC-Prop, a stochastic epidemic-and-clearing model that runs on that network. On a synthetic dataset with 60 vendors, 220 banks, roughly 2,500 vendor-bank service edges, and 1,400 interbank exposures, CFC-Prop reproduces the heavy-tailed loss distributions and the sharp dependence on patch latency that are consistent with prior cyber-financial evidence. We also train an early-warning model, CFC-GNN, that uses vendor-side incident telemetry and graph structure to flag high-cascade-risk vendors before impact. Across four baselines the proposed model reaches AUROC 0.82 and AUPRC 0.60 while keeping calibration errors bounded. We release the full code, synthetic data, and reproducible scripts. The results argue that cyber concentration among AI vendors is a first-order financial-stability problem and give supervisors a concrete quantitative tool for reasoning about it.",
+    "abs_url": "https://arxiv.org/abs/2609.10350v1",
+    "pdf_url": "https://arxiv.org/pdf/2609.10350v1",
+    "score": 3
+  },
+  {
+    "id": "2607.06104v4",
+    "date": "2026-07-07",
+    "title": "Refined reduction and standardisation of 53 years of UBV photometry at Hvar",
+    "authors": "Hrvoje Božić, Petr Harmanec, Miroslav Brož, Alžběta Oplištilová, Pavel Koubský, Petr Hadrava et al.",
+    "summary": "Emission-line stars classified as Be exhibit light and colour variability on various timescales, ranging from days to decades. Their evolution must be constrained by long-term observations that are accurately calibrated and stable. Here, we provide a new reduction of photoelectric UBV observations obtained at the Hvar observatory, spanning more than 50 years. This unique dataset is highly complementary to TESS. We used new, non-linear reduction equations, with temporally variable extinction over the course of the night, which allowed us to achieve long-term accuracy of 0.008 to 0.016 mag (1-sig uncertainty), as verified by the Johnson standards. We then classified 59 Be stars into five classes, based on their variability patterns; namely, long-term envelope (LTE), long-term cyclic (LTC), binarity (BIN), rapid low-amplitude (RLA), and long-term quiescence (LTQ). According to our observations, the percentages of stars in the individual classes are 44%, 24%, 25%, 66%, and 19%, respectively. The stars in the sample often exhibited more than one pattern. We confirm that the LTE-positive variability is more common than the inverse (20 vs 6); in addition, two stars exhibited both types (zeta Tau and V1294 Aql). According to our observations, the LTC variability and the LTE-positive variability are almost mutually exclusive. Among 26 binary systems, circular orbits are more common than eccentric ones (18 vs 8). As for the brightness variations between different quiescent phases, an increasing trend is less common than a decreasing one (4 vs 7), spanning from -6.5 to +6.0 mmag/yr. Our observations provide well-calibrated UBV light curves spanning several decades, offering a valuable dataset for investigations of Be-star variability and tests of various models, including the viscous decretion disc model. Continuous monitoring is important for beta Lyr, EW Lac, delta Sco, gamma Cas, and V1294 Aql.",
+    "abs_url": "https://arxiv.org/abs/2607.06104v4",
+    "pdf_url": "https://arxiv.org/pdf/2607.06104v4",
+    "score": 2
+  },
+  {
+    "id": "2606.31657v1",
+    "date": "2026-06-30",
+    "title": "Sensitivity Lower Bounds via Locally Testable Codes",
+    "authors": "Yuichi Yoshida, Zihan Zhang",
+    "summary": "Sensitivity quantifies how far an algorithm's output can move in Hamming distance when a single input element is perturbed. We present a general scheme turning any locally testable code (LTC) into a sensitivity lower bound for the CSP encoded by the code. Instantiating it with the $c^3$-LTC yields a constant $\\varepsilon > 0$ for which every $(1-\\varepsilon)$-approximation algorithm for satisfiable Max E3LIN2 has sensitivity $Ω(n)$, strengthening the previous $Ω(n^δ)$ lower bound known only for general instances. Standard reductions give an $n^{1-O(\\varepsilon)}$ lower bound for $n^{-\\varepsilon}$-approximation algorithms for maximum clique, and an $Ω(k)$ bound for $(1-\\varepsilon)$-approximation algorithms for maximum $k$-coverage, among others. These lower bounds match trivial upper bounds and imply that even slightly stable algorithms cannot achieve these approximations. A second instantiation, using a simple repetition code, shows that any $(1-\\varepsilon)$-approximation algorithm for Max Cut on bipartite graphs has sensitivity $Ω(1/\\varepsilon)$ as long as $\\varepsilon = O(1/\\sqrt{n})$, extending the prior result for exact algorithms (the regime $\\varepsilon < 1/n$). Thus even on bipartite graphs, where a perfect cut always exists, near-optimal solutions cannot be maintained stably. Our sensitivity lower bounds have two applications. First, they yield averaged sensitivity lower bounds, implying that any nearly optimal randomized algorithm for Max E3SAT has linearly many output bits that, after fixing the random seed, are Boolean functions with large influence. Second, via the sensitivity-to-locality connection, they imply locality lower bounds in the non-signaling model, which generalizes $\\mathsf{LOCAL}$ and quantum-$\\mathsf{LOCAL}$.",
+    "abs_url": "https://arxiv.org/abs/2606.31657v1",
+    "pdf_url": "https://arxiv.org/pdf/2606.31657v1",
+    "score": 2
+  }
+]
