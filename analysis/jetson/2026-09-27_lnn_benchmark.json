@@ -1,0 +1,321 @@
+{
+  "status": "ok_cpu_fallback",
+  "generated_at": "2026-09-26T20:38:03.745455+00:00",
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.10.12",
+    "device_tree_model": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
+    "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "tegrastats_available": true,
+    "jetson_clocks_available": true,
+    "torch_version": "2.10.0",
+    "cuda_available": true,
+    "cuda_version": "12.6",
+    "cudnn_version": 90300,
+    "cuda_device": {
+      "name": "Orin",
+      "total_memory_mb": 7619.79,
+      "multi_processor_count": 8
+    }
+  },
+  "device": "cpu",
+  "config": {
+    "samples": 384,
+    "seq_len": 48,
+    "hidden_size": 24,
+    "epochs": 3,
+    "batch_size": 64,
+    "lr": 0.003,
+    "seed": 42
+  },
+  "results": [
+    {
+      "name": "CfCStyle",
+      "parameters": 2521,
+      "test_mse": 0.3129754662513733,
+      "train_seconds": 1.3146941250015516,
+      "inference_steps_per_sec": 139868.16101502092,
+      "energy_mj_per_step": 0.06681547619047619
+    },
+    {
+      "name": "LTC",
+      "parameters": 1321,
+      "test_mse": 0.46435126662254333,
+      "train_seconds": 4.046597988999565,
+      "inference_steps_per_sec": 36745.00972473813,
+      "energy_mj_per_step": 0.2740056818181818
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 3170,
+      "test_mse": 0.28447896242141724,
+      "train_seconds": 1.8241093820033711,
+      "inference_steps_per_sec": 80905.95405031409,
+      "energy_mj_per_step": 0.13384063852813854
+    },
+    {
+      "name": "GRU",
+      "parameters": 1969,
+      "test_mse": 0.39430785179138184,
+      "train_seconds": 0.5850836359968525,
+      "inference_steps_per_sec": 274990.8694507351
+    }
+  ],
+  "tegrastats_summary": {
+    "available": true,
+    "n_samples": 82,
+    "duration_s": 8.7538,
+    "interval_ms": 100,
+    "power_mw": {
+      "VDD_IN": {
+        "mean": 8043.8,
+        "peak": 8916,
+        "min": 7108
+      },
+      "VDD_CPU_GPU_CV": {
+        "mean": 2937.4,
+        "peak": 3968,
+        "min": 2153
+      },
+      "VDD_SOC": {
+        "mean": 1611.0,
+        "peak": 1674,
+        "min": 1552
+      }
+    },
+    "energy_mj": {
+      "VDD_IN": 70413.7,
+      "VDD_CPU_GPU_CV": 25713.7,
+      "VDD_SOC": 14102.5
+    },
+    "temp_c": {
+      "cpu": {
+        "mean": 53.21,
+        "peak": 54.093
+      },
+      "soc2": {
+        "mean": 51.8,
+        "peak": 52.187
+      },
+      "soc0": {
+        "mean": 52.31,
+        "peak": 52.593
+      },
+      "gpu": {
+        "mean": 53.28,
+        "peak": 53.843
+      },
+      "tj": {
+        "mean": 53.38,
+        "peak": 54.093
+      },
+      "soc1": {
+        "mean": 52.74,
+        "peak": 53.125
+      }
+    },
+    "gpu_util_pct": {
+      "mean": 0.0,
+      "peak": 0
+    },
+    "ram_used_mb": {
+      "mean": 5851.4,
+      "peak": 5973
+    }
+  },
+  "model_tegrastats": {
+    "CfCStyle": {
+      "available": true,
+      "n_samples": 1,
+      "duration_s": 0.1337,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 7388.0,
+          "peak": 7388,
+          "min": 7388
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 2348.0,
+          "peak": 2348,
+          "min": 2348
+        },
+        "VDD_SOC": {
+          "mean": 1594.0,
+          "peak": 1594,
+          "min": 1594
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 987.8,
+        "VDD_CPU_GPU_CV": 313.9,
+        "VDD_SOC": 213.1
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 52.81,
+          "peak": 52.812
+        },
+        "soc2": {
+          "mean": 51.56,
+          "peak": 51.562
+        },
+        "soc0": {
+          "mean": 52.34,
+          "peak": 52.343
+        },
+        "gpu": {
+          "mean": 53.38,
+          "peak": 53.375
+        },
+        "tj": {
+          "mean": 53.38,
+          "peak": 53.375
+        },
+        "soc1": {
+          "mean": 52.62,
+          "peak": 52.625
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 5839.0,
+        "peak": 5839
+      }
+    },
+    "LTC": {
+      "available": true,
+      "n_samples": 4,
+      "duration_s": 0.508,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 7973.8,
+          "peak": 8173,
+          "min": 7695
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 2784.8,
+          "peak": 2941,
+          "min": 2587
+        },
+        "VDD_SOC": {
+          "mean": 1643.2,
+          "peak": 1671,
+          "min": 1634
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 4050.9,
+        "VDD_CPU_GPU_CV": 1414.7,
+        "VDD_SOC": 834.8
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 53.09,
+          "peak": 53.281
+        },
+        "soc2": {
+          "mean": 51.8,
+          "peak": 51.937
+        },
+        "soc0": {
+          "mean": 52.37,
+          "peak": 52.437
+        },
+        "gpu": {
+          "mean": 53.2,
+          "peak": 53.25
+        },
+        "tj": {
+          "mean": 53.22,
+          "peak": 53.281
+        },
+        "soc1": {
+          "mean": 52.73,
+          "peak": 52.843
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 5848.2,
+        "peak": 5972
+      }
+    },
+    "PDNAPulse": {
+      "available": true,
+      "n_samples": 1,
+      "duration_s": 0.2229,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 8877.0,
+          "peak": 8877,
+          "min": 8877
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 3934.0,
+          "peak": 3934,
+          "min": 3934
+        },
+        "VDD_SOC": {
+          "mean": 1552.0,
+          "peak": 1552,
+          "min": 1552
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 1978.7,
+        "VDD_CPU_GPU_CV": 876.9,
+        "VDD_SOC": 345.9
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 53.88,
+          "peak": 53.875
+        },
+        "soc2": {
+          "mean": 52.12,
+          "peak": 52.125
+        },
+        "soc0": {
+          "mean": 52.44,
+          "peak": 52.437
+        },
+        "gpu": {
+          "mean": 53.47,
+          "peak": 53.468
+        },
+        "tj": {
+          "mean": 53.88,
+          "peak": 53.875
+        },
+        "soc1": {
+          "mean": 52.84,
+          "peak": 52.843
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 5811.0,
+        "peak": 5811
+      }
+    },
+    "GRU": {
+      "available": false,
+      "reason": "tegrastats produced no parseable samples (window too short? try a longer run or smaller --interval)",
+      "n_samples": 0
+    }
+  },
+  "cuda_fallback_reason": "RuntimeError: NVML_SUCCESS == r INTERNAL ASSERT FAILED at \"/opt/pytorch/c10/cuda/CUDACachingAllocator.cpp\":1154, please report a bug to PyTorch."
+}
