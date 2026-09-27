@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：0 篇
 - GitHub 候选仓库：41 个
-- Hugging Face 候选模型：18 个
+- Hugging Face 候选模型：19 个
 - 已下载 PDF：0 个
 
 ## 数据源状态
@@ -45,13 +45,13 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-27 | [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec) | 3297 | 0 | text-generation |
 | 2026-09-27 | [ryugyosoft/LFM2-8B-A1B-onw](https://huggingface.co/ryugyosoft/LFM2-8B-A1B-onw) | 1549 | 0 | text-generation |
 | 2026-09-27 | [Panga-Azazia/LFM2.5-350M-TTS-v3](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS-v3) | 15 | 0 | text-generation |
+| 2026-09-27 | [Theboukadida/laura-lfm2.5-1.2b-GGUF](https://huggingface.co/Theboukadida/laura-lfm2.5-1.2b-GGUF) | 0 | 0 | text-generation |
 | 2026-09-27 | [Panga-Azazia/LFM2.5M-ASR-bam](https://huggingface.co/Panga-Azazia/LFM2.5M-ASR-bam) | 0 | 0 |  |
-| 2026-09-26 | [blaj/LFM2.5-8B-A1B-heretic-int4-ov](https://huggingface.co/blaj/LFM2.5-8B-A1B-heretic-int4-ov) | 110 | 0 | text-generation |
+| 2026-09-27 | [stardude1/LFM2-12B-A1B-SpeedDemon-The-Deckard-II-HERETIC-Uncensored-mlx-4Bit](https://huggingface.co/stardude1/LFM2-12B-A1B-SpeedDemon-The-Deckard-II-HERETIC-Uncensored-mlx-4Bit) | 0 | 0 | text-generation |
 | 2026-09-26 | [blaj/LFM2.5-8B-A1B-heretic-int8-ov](https://huggingface.co/blaj/LFM2.5-8B-A1B-heretic-int8-ov) | 105 | 0 | text-generation |
 | 2026-09-26 | [blaj/LFM2.5-2.6B-heretic-int8-ov](https://huggingface.co/blaj/LFM2.5-2.6B-heretic-int8-ov) | 86 | 0 | text-generation |
 | 2026-09-26 | [damienlusson/LiquidAI_LFM2-350M-Extract_b2b-data_Lora_only](https://huggingface.co/damienlusson/LiquidAI_LFM2-350M-Extract_b2b-data_Lora_only) | 0 | 0 |  |
 | 2026-09-24 | [LiquidAI/LFM2.5-VL-3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B) | 26353 | 214 | image-text-to-text |
-| 2026-09-24 | [LiquidAI/LFM2.5-VL-3B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-DSpark-GGUF) | 598 | 9 | image-text-to-text |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
