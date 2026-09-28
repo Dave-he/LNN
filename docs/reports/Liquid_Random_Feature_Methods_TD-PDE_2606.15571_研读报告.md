@@ -245,3 +245,24 @@ Allen-Cahn 1D 在相对 $L_2=10^{-4}$ 目标下:
 ## 7. 一句话总结
 
 > L-RFM 把 "liquid time-constant" 响应从序列神经元搬进偏微分方程求解器, 用**冻结的多尺度 $\tau$ 采样 + 解析闭式导数 + 加权残差最小二乘**, 在 Allen-Cahn / Burgers / KdV / NLS 这 4 个代表性 1-D 时间依赖 PDE 上, 以匹配的 readout 维度取得 1-4 个数量级的精度优势, 同时 LS 条件数低 2-5 个数量级; 它是 LTC 思想在 PDE 代理方向的一次干净落地, 与本仓序列建模路线数学同源但应用域不同.
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 本仓 LRFM 实现路径在 `lnn/core/lrfm.py` 系列 + `analysis/lrfm/`
+
+### 实施步骤
+1. **数据**: 合成 PDE 解 (heat / Burgers / Allen-Cahn), 沿用 `lnn/data/physics.py`
+2. **模型** (`lnn/core/lrfm_xxx.py`): Random feature + ODE 残差
+4. **实验** (`analysis/lrfm_xxx/`): 3 PDE × 3 noise × 3 seed = 27 run
+5. **诚实负结果预防**: 比 MLP 残差差 → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

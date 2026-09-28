@@ -135,3 +135,23 @@ tags: [LNN, LTC, CfC, NCP, LFM2, taxonomy, gap-analysis, jetson, orin-nano]
 - [[Liquid_Neural_Networks_Latest_Papers_Summary]]
 - [[Orin_Nano_Super_LNN_Deployment_v2_2026-08-03]]
 - `analysis/jetson/2026-08-03-cpu-pareto_*` / `analysis/jetson/2026-08-03-gpu-pareto_*`
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **N/A (综述类)**: 不直接实施, 仅作为方法论指引
+
+### 维护说明
+- 本报告是综合 survey / training paradigm / retention survey
+- 实施时定位相应领域的 r* 报告作 entry point
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

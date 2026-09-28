@@ -63,3 +63,24 @@ tags: [LNN, Neuromorphic-Computing, Loihi-2, Spiking-Neural-Networks, Image-Clas
 - **状态维持与有功功耗**：由于 LNN 内部状态是随时间连续流动的，为了保持“液态”动力学，硬件在持续接收信息时需要频繁更新状态，这可能带来额外的有功静态功耗。
 - **映射兼容性限制**：在片上内存和算力极其受限的类脑核中，LNN 的连续状态转移微分方程需要进行更高程度的离散化和近似。这可能导致在更大、更深的模型结构中出现精度衰减。
 - **应用泛化探讨**：目前的物理落地局限于 CIFAR-10 图像分类，未来应探索其在移动机器人自动导航、工业实时异常检测等高度依赖时间序列的动态环境中的实际表现。
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **低-中**: Loihi 是神经形态硬件, 本仓不接真实 neuromorphic chip
+
+### 实施步骤
+1. **数据**: 沿用现有时序数据
+2. **模型**: 在 `lnn/core/` 加 Loihi-style 脉冲编码
+3. **仿真**: 仅在 CPU/GPU 上跑仿真, 不接 Intel Loihi 真机
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

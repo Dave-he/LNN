@@ -120,3 +120,31 @@ TFP 论文声称的"elapsed-time consistency built-in"在 **VLA belief filtering
 - 论文引用
   - [TFP arXiv 2607.08283](https://arxiv.org/abs/2607.08283)
   - [Lechner 2022 CfC arXiv 2106.13898](https://arxiv.org/abs/2106.13898)
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 本仓 CfC 实现路径 (`lnn/core/closed_form_continuous_cell.py` 等同类) 是本论文落地基础
+- **可与 r301-r305 (PLAN/STE/Midpoint 平行化) 合并**
+
+### 实施步骤
+1. **数据生成器** (`lnn/data/cfc_xxx_synth.py`):
+   - Irregular Δt 序列 + 输入 mask (本仓 `lnn/data/timeseries.py` 已有基础)
+   - 边界: 仅合成数据
+2. **模型** (在 `lnn/core/` 新建 `cfc_xxx.py`):
+   - 复用 CfC closed-form + gating 结构, 在 forward 加论文特定归纳偏置
+3. **实验队列** (`analysis/cfc_xxx/`):
+   - 5 seed × 3 regime = 15 run
+   - 对照: vanilla CfC / LTC / Transformer
+4. **诚实负结果预防**: 若论文主张的归纳偏置反而劣化 CfC baseline → 进 `analysis/negative_results/`
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

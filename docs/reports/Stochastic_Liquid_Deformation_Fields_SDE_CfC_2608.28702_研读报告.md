@@ -206,3 +206,24 @@ $$
 ---
 
 > **消化判定**：本文是 LNN 在 4D 视觉方向上 **"机制清晰化" > "benchmark 拼分"** 的一个范例。其 SDE 视角可作为后续 liquid 鲁棒性工作的引用基础；λ 作为 free knob 的设计哲学值得在 PLAN / MR-MoE 等其他 liquid 训练范式中复用。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 3DGS 是视觉应用, 本仓视觉方向落地在 `analysis/multimodal/`
+
+### 实施步骤
+1. **数据**: 合成 3D Gaussian 序列 (`lnn/data/multimodal_physreg.py` 已有 frame stacking)
+2. **模型** (`lnn/core/cfc_deformation_field.py`): CfC backbone per Gaussian attribute
+3. **实验** (`analysis/3dgs_cfc/`): 与 vanilla MLP deformation field 对照
+4. **诚实负结果预防**: PSNR 与 MLP baseline 比 < +0.5 dB 在方差内 → 进 negative_results (r306 经验)
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

@@ -485,3 +485,23 @@ class EREIsolation:
 ## 11. 一句话总结
 
 **MeloTune 在 iPhone CoreML 上同时跑两个独立 CfC (私有 listener-level 64 维 + 共享 mesh-runtime Layer 6), 用 94,552 参数 / sub-ms 推理实现 proactive affect-aware 音乐策展; 通过 MMP/SVAF 协议用 7 字段 CMB (CAT7 schema) 共享结构化情绪而不泄露 hidden state; 配合 PAF 在 20 次行为观测内实现 per-listener arousal 校准, 是已发布文献中 CfC 在消费移动硬件上的首个生产级端到端参考实现** — 对 Jetson Orin Nano 端侧推理、LFM2.5 子任务改造、以及多 agent 协议设计都有直接的方法论与工程借鉴价值。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 音乐推荐 / 端侧 CfC
+
+### 实施步骤
+1. **数据**: 合成音乐特征时序
+2. **模型** (`lnn/core/melotune.py`): CfC + 端侧推理
+3. **实验** (`analysis/melotune/`)
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

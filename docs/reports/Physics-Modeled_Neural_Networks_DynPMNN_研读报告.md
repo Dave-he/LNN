@@ -150,3 +150,25 @@ CfC/LTC 0 wins。**如果 DynPMNN 能在 mackey_glass / gradual_multi_regime
   - `scripts/ablation_lnn_vs_lstm_timeseries.py`
 - 关联报告: [[LiquidTAD_Efficient_Temporal_Action_Detection_研读报告]] (另一种 LNN 派生)
 - PRD: [[PRD_LNN_Edge_Research]] §10 #1 (本轮新增)
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **待 grounding**: 本报告归类不明, 需先 grounding 到具体方法论
+
+### 实施步骤
+1. **数据**: 沿用 `lnn/data/` 现有合成器
+2. **模型**: 在 `lnn/core/` 新建对应模块
+3. **实验**: 进 `analysis/<新域>/`
+4. **诚实负结果预防**: 任何 baseline 退化 → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

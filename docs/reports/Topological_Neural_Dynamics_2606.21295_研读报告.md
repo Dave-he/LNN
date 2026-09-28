@@ -163,3 +163,23 @@ $$\mathcal{I}(i, v^{t-1}) = \{\psi(v^{t-1}_j) : j \in \mathcal{N}_G(i)\}$$
   - **TARGET-POSITIVE** — 神经元级解耦为 LNN 变体库新增维度（"神经元内 ODE + 神经元间图交互"）；
   - **TARGET-NEGATIVE-WITH-NUANCE** — 边缘部署（800 神经元规模对 MCU 偏大，但 Pong task 量级说明 small-data regime 友好）；
   - **TARGET-DEPENDENT-WITH-NUANCE** — 长期 horizon / 大规模序列（作者未验证，但神经元级解耦可能反而带来并行化优势）。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 与 NCP 拓扑视角同源, 本仓 `analysis/sncp_ppo_lite/` 是承接域
+
+### 实施步骤
+1. **数据**: 合成 sequence 数据 (本仓 `lnn/data/long_sequence.py`)
+2. **模型** (`lnn/core/topological_dynamics.py`): 单神经元拓扑动力学 + 守恒约束
+3. **实验** (`analysis/topological_dynamics/`): 5 seed × 多尺度
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

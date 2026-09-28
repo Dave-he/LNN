@@ -207,3 +207,24 @@ Backbone ablation 显示 MobileNetV3 在性能接近最优的同时成本最低�
 **状态：read_now + experiment。**
 
 GazeLNN 值得进入本仓实验队列。它提供了一个很清楚的工程靶点：`MobileNetV3 feature extractor + CfC autoregressive heatmap predictor + fixation reward`。短期不建议直接做真机闭环；应先在合成 heatmap / 2D gridworld 中验证 CfC scanpath 模块和 Jetson 延迟，再决定是否接入真实机器人平台。
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 时序预测, 本仓 `lnn/data/timeseries.py` 已有基础
+
+### 实施步骤
+1. **数据**: 合成 gaze scanpath 时序 (本仓已有基础)
+2. **模型** (`lnn/core/gazelnn.py`): CfC + 边缘可部署 (hidden=8)
+3. **实验** (`analysis/gazelnn/`): 5 seed × 3 noise, 边缘 latency benchmark
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

@@ -160,3 +160,23 @@ $$
 - **"原生时序" 数据** (神经形态 / 生理 / 事件流) 是 LNN 的 sweet spot, 与语言/字符序列是不同战场 — 工程上要按数据模态挑选架构。
 - **CfC 的闭式特性让它不再比 LSTM 慢**, 但 $\tau(x,t)$ 的可解释性是个未挖的金矿 (论文承诺但未深入)。
 - **临床 "Alarm Fatigue" 视角** 把 LNN 的优势具象化到 1 个指标 (FP 数), 这是少数能把 LNN 推荐进医院工作流的量化论证。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 对比研究, 主要作为方法论指引
+
+### 实施步骤
+1. **数据**: 沿用 `lnn/data/timeseries.py`
+2. **模型**: 跑对比矩阵 (CfC / LTC / LSTM / Transformer / ODE-RNN)
+3. **实验** (`analysis/lstm_vs_lnn/`): head-to-head 矩阵
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

@@ -139,3 +139,27 @@ tags: [LNN, LiquidAI, LFM2, Encoder, Masked-LM, Edge, ModernBERT, Multilingual, 
   - **TARGET-DEPENDENT (MDLM)** — masked-diffusion 头在 TS 缺失填补上可移植,但需要与 QuITE 嵌入对照才能定优劣
 - **新机制维度**: 引入 (1) 共享 forward 多目标评分 (Prompt-Router),(2) 5-seed ± std 评测骨架 (encoder_eval) — 这两个与本仓现存的单-seed + 单目标评测范式**正交**,可作为新评测轴
 - **对 LNN 家族的意义**: LFM 系是 LTC/CfC 的语言侧工程化,**这组 encoder 给了"液态动力学在 NLP 边缘"的可复用底座**;LNN 系内部长期偏序列/控制,这组是语言域进入的天然桥梁
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 本仓 `projects/lfm25_orin_nano_smoke/` 与 `lnn/lfm2/` 是落地基础
+- 已在 r304 (LFM2.5 + Parallel CfC Integration) 完成整合
+
+### 实施步骤
+1. **数据**: 走 LFM2.5 自带 tokenizer + WikiText-103 / SlimPajama 抽样 (本仓 `lnn/data/` 已有 generator)
+2. **模型**: 沿用 `lnn/lfm2/parallel_integration.py` + `parallel_cfC` gate, 加本论文特定 adapter
+4. **Jetson 实测**: `scripts/jetson_lnn_benchmark.py` 已有 LFM2.5 smoke baseline
+5. **合规边界**: Jetson Orin Nano 已部署 (非真机 binder / 工业控制)
+6. **诚实负结果预防**: PPL 比 baseline > +5% → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

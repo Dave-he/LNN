@@ -243,3 +243,24 @@ $$
 ## 8. 一句话总结
 
 > **MR-MoE-Attention = 多个 LNN 专家 + 奇摄动多速率分离 + 双层注意力**; 论文在 sepsis 时序上把它跑成了"基线 → 单一 LNN → MoE → MR-MoE → MR-MoE+Attn"的清晰 ladder, 用连续时间 + 专家分工 + 多尺度 + 注意力四个机制叠加拿到 0.65-0.68 AUROC, 但仅一个数据集、无统计检验、无开源代码, 真正落地还需要 Jetson 部署 + 跨域泛化的二次验证.
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 已在 r304 + LFM2.5 整合完成
+
+### 实施步骤
+1. **数据**: 沿用 `lnn/data/`
+2. **模型**: Multi-Rate + MoE 蒸馏到 CfC backbone
+3. **实验** (`analysis/mr_moe/`)
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
