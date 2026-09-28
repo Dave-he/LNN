@@ -267,3 +267,14 @@ $$\text{TTC} = 0.5 \cdot \frac{D_M(H(t))}{\|v(t)\|} + 0.5 \cdot \text{MLP}_{ttc}
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2607.12909.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> 1  Real-time fall detection based on vision for low-power edge platforms  arXiv:2607.12909v1 [q-bio.NC] 14 Jul 2026  Wenjun Xia, Zhicheng Peng, Haopeng Li, and Zhengdi Zhang  Abstract—Falling detection is vital for elderly care and intelligent surveillance; however, prevailing vision-based approaches predominantly frame it as static pose classification or discrete temporal pattern matching, fundamentally overlooking the instability dynamics of the human support system. This paper proposes a physics-informed falling detection framework that recasts falling as a stability-loss event in a coupled dynamical system. We introduce a novel dual-LTC architecture comprising a Center-of-Mass (CoM) subsystem and a Base-of-Support (BoS) subsystem, both instantiated as Liquid Time-Constant (LTC) neural networks to continuously model inertial trajectory evolution and ground-contact adjustment through adaptive time constants, Physical interpretability of falling motion. A learnable coupling module emulates physical interaction between the two subsystems, while a Stability Manifold classifier operates in the joint latent space to detect boundary crossing via Lyapunovinspired stability metrics. Comp
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

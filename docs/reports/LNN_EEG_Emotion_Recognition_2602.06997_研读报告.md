@@ -214,3 +214,14 @@ LNN 学习到的注意力模式是 **U 形曲线** — 同时关注 EEG 早期�
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2602.06997.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> 1  Adaptive Temporal Dynamics for Personalized Emotion Recognition: A Liquid Neural Network Approach  arXiv:2602.06997v1 [eess.SP] 28 Jan 2026  Anindya Bhattacharjee , Nittya Ananda Biswas , K. A. Shahriar , Adib Rahman Department of Electrical and Electronic Engineering, Bangladesh University of Engineering and Technology  Abstract—Emotion recognition from physiological signals remains challenging due to their non-stationary, noisy, and subjectdependent characteristics. This work presents, to the best of our knowledge, the first comprehensive application of liquid neural networks for EEG-based emotion recognition. The proposed multimodal framework combines convolutional feature extraction, liquid neural networks with learnable time constants, and attention-guided fusion to model temporal EEG dynamics with complementary peripheral physiological and personality features. Dedicated subnetworks are used to process EEG features and auxiliary modalities, and a shared autoencoder-based fusion module is used to learn discriminative latent representations before classification. Subject-dependent experiments conducted on the PhyMER dataset across seven emotional classes achieve an accuracy 
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

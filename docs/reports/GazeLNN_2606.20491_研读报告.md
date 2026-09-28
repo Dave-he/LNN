@@ -177,3 +177,14 @@ $$
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.20491.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Fast Human Attention Prediction for Fixation-guided Active Perception in Autonomous Navigation  arXiv:2606.20491v1 [cs.RO] 18 Jun 2026  Fatma Youssef Mohammed∗ , Grzegorz Malczyk∗ , and Kostas Alexis Abstract— Human visual attention relies on structured scanpaths to efficiently process scenes, yet instilling this behavior into robot autonomy is in its infancy and hindered by the high computational costs of existing predictive models. To address this, we introduce GazeLNN, a computationally lightweight scanpath prediction model that leverages Liquid Neural Networks as its recurrent engine and employs MobileNetV3 for feature extraction. Operating auto-regressively, the architecture predicts sequential fixation heatmaps conditioned on the current visual stimulus and fixation history. Despite requiring only 0.61 GFLOPs, GazeLNN achieves state-of-the-art performance on the MIT Low Resolution dataset achieving 0.47 ScanMatch score. It outperforms existing recurrent baselines across diverse evaluation metrics, while reducing computational costs by 99.40% and accelerating inference by up to six times. To investigate the role of human attention modeling in robot autonomy and demonstrate the
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

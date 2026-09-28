@@ -97,3 +97,13 @@ grounding: 本地 PDF 首 600 字符已用 pdftotext 验证 (Mohammed Ashraf, Ay
 ## 维护说明
 - 本报告为 **extracted-from-pdf-text 状态** (比 tracker-only 高一档), 待全文 grounding 后升级.
 - 升级路径: pdftotext 全文 → 验证 §关键成果数字 → 升级 `status: standard`
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.22075.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Frequency-Domain Neural ODEs for Modeling Non-Linear Dynamical Systems Mohammed Ashraf Department of Mechatronics Engineering, German University in Cairo, Cairo, Egypt email: mohammed.abdelrehim@guc.edu.eg  arXiv:2606.22075v1 [cs.LG] 20 Jun 2026  Ayman A. El-Badawy Department of Mechatronics Engineering, German University in Cairo, Cairo, Egypt email: ayman.elbadawy@guc.edu.eg  Abstract: Standard continuous-depth models, such as Neural Ordinary Differential Equations (NODEs), offer significant advantages in modeling physical systems by learning continuous vector fields rather than discrete temporal steps. However, when applied to complex dynamical systems, standard NODEs frequently struggle with highly nonlinear dynamics. This paper investigates the Frequency-domain Neural ODE (FNODE), an architecture that projects continuous temporal dynamics into the frequency domain using the Fast Fourier Transform (FFT). By operating in the frequency domain, the model provides better generalization to the dynamical system. The architecture is empirically evaluated against discrete models, specifically Gated Recurrent Units (GRUs) and Long Short-Term Memory (LSTMs), and other continuous-depth va
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

@@ -139,3 +139,14 @@ $$H = \hat{H} + \Delta t \cdot \frac{\tanh(W\hat{H} + U_X) - \hat{H}}{\tau}$$
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2608.03041.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> Deep reinforcement learning (DRL) approaches for flexible job shop scheduling (FJSP) heavily rely on attention-centric architectures to achieve state-of-the-art performance. However, these models suffer from excessive parameter counts and prohibitive inference latency as problem scales expand. While liquid neural networks (LNNs) offer a parameter-efficient alternative for modeling adaptive state evolution, their inherently sequential dynamics bottleneck computational efficiency. To resolve this trade-off, we propose PLAN (Parallel Liquid-inspired Approximation Network), a lightweight representation learning framework that reformulates continuous liquid-state dynamics into a discretized and parallelizable formulation. PLAN structurally decouples state evolution from context aggregation, where liquid-inspired updates handle the primary evolving state representation, and a lightweight context aggregation module provides complementary global context. Furthermore, PLAN acts as a versatile, plug-and-play backbone that generalizes to complex FJSP variants, pairing with a compact stochastic module for stochastic FJSP and replacing heavy heterogeneous graph transformers in multifaceted dyna
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

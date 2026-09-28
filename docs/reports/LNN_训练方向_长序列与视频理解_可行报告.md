@@ -204,3 +204,14 @@ mixed_precision: 可开启
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2011.04006.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Preprint  L ONG R ANGE A RENA : A B ENCHMARK FOR E FFICIENT T RANSFORMERS  arXiv:2011.04006v1 [cs.LG] 8 Nov 2020  Yi Tay1∗, Mostafa Dehghani1∗ , Samira Abnar1 , Yikang Shen1 , Dara Bahri1 , Philip Pham1 Jinfeng Rao1 , Liu Yang1 , Sebastian Ruder2 , Donald Metzler1 1 Google Research 2 Google DeepMind {yitay, dehghani}@google.com  A BSTRACT Transformers do not scale very well to long sequence lengths largely because of quadratic self-attention complexity. In the recent months, a wide spectrum of efficient, fast Transformers have been proposed to tackle this problem, more often than not claiming superior or comparable model quality to vanilla Transformer models. To this date, there is no well-established consensus on how to evaluate this class of models. Moreover, inconsistent benchmarking on a wide spectrum of tasks and datasets makes it difficult to assess relative model quality amongst many models. This paper proposes a systematic and unified benchmark, Long-Range Arena, specifically focused on evaluating model quality under long-context scenarios. Our benchmark is a suite of tasks consisting of sequences ranging from 1K to 16K tokens, encompassing a wide range of data types and mo
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

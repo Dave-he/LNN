@@ -278,3 +278,14 @@ $$
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2506.05480.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Published as a conference paper at ICLR 2026  ODE-GS: L ATENT ODE S FOR DYNAMIC S CENE E XTRAPOLATION WITH 3D G AUSSIAN S PLATTING  arXiv:2506.05480v4 [cs.GR] 26 Apr 2026  Daniel Wang1 Patrick Rim1 Tian Tian2 Dong Lao3 Alex Wong1 Ganesh Sundaramoorthi4 1 Yale University 2 TU Delft 3 Louisiana State University 4 RTX 1 {daniel.wang.dhw33, patrick.rim, alex.wong}@yale.edu 2 4 T.Tian@student.tudelft.nl 3 dlao1@lsu.edu ganesh.sundaramoorthi@rtx.com  A BSTRACT We introduce ODE-GS, a novel approach that integrates 3D Gaussian Splatting with latent neural ordinary differential equations (ODEs) to enable future extrapolation of dynamic 3D scenes. Unlike existing dynamic scene reconstruction methods, which rely on time-conditioned deformation networks and are limited to interpolation within a fixed time window, ODE-GS eliminates timestamp dependency by modeling Gaussian parameter trajectories as continuous-time latent dynamics. Our approach first learns an interpolation model to generate accurate Gaussian trajectories within the observed window, then trains a Transformer encoder to aggregate past trajectories into a latent state evolved via a neural ODE. Finally, numerical integration produc
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

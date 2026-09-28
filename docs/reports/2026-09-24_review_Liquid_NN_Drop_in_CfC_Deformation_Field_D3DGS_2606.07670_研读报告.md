@@ -215,3 +215,14 @@ $$
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.07670.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> 2026 Asia Pacific Signal and Information Processing Association Annual Summit and Conference (APSIPA ASC)  Liquid Neural Networks as a Drop-in Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting Mingzhao Li∗ ,  Arghya Pal∗ ,  Guan Yuan Tan∗  ∗ School of Information Technology, Monash University, Selangor, Malaysia  arXiv:2606.07670v1 [cs.CV] 4 Jun 2026  E-mail: {mlii0259@student, arghya.pal, guan.tan}@monash.edu  Abstract—Deformable 3D Gaussian Splatting (D-3DGS) reconstructs dynamic scenes from monocular video by deforming a canonical set of 3D Gaussians through a positional-encoded MLP of frame time t. Although fitted to a continuous variable, the MLP couples no two values of t in its architecture and effectively predicts discrete per-frame offsets, leaving temporal smoothness to emerge only as a byproduct of optimisation. We redesign the deformation field as a stack of Closed-form Continuous-time (CfC) cells—a Liquid Neural Network (LNN) that is the closed-form solution of the Liquid Time-constant ODE—while preserving every other part of the D-3DGS pipeline. Each cell exposes a sigmoidal time gate στ = σ(Wa z · t + Wb z) that interpolates between two candidate hi
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

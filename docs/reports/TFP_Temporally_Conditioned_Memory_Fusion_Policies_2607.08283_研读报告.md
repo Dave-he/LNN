@@ -200,3 +200,14 @@ $$R_{t,r} = \lambda_j J_{t,r} + \lambda_b B_{t,r} + \lambda_c C_{t,r}$$
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2607.08283.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning Yushen Liang1,† , Yue Peng1,† , Baosheng Jin1,† , Tianluo Zhang1 , Xinyu Zhang2 , Shuyi Zhou, Zhuoran Chen1 , Xinqi Liu1 , Shenji Wan1 1  2  NYU Shanghai, Shanghai, China University of Electronic Science and Technology of China, Chengdu, China † Equal contribution  arXiv:2607.08283v3 [cs.RO] 30 Aug 2026  § Code: github.com/Mirage415/TFP-Temporally-conditioned-Memory-Fusion-Policies-for-Visuomotor-Learning  Abstract—Vision–Language–Action (VLA) policies such as π0.5 and OpenVLA perform well on many manipulation tasks, but they are often reactive: the next action is predicted from the current observation, instruction, and proprioceptive state. This assumption breaks down in stage-dependent manipulation, where visually similar states may require different actions depending on latent task progress and previous interaction outcomes. We argue that such tasks require not only memory, but dynamicsaware belief updates: the policy should preserve task progress during stable or occluded phases and revise its belief near contact, release, or subgoal transitions. We introduce Temporally Conditioned Memory-Fusion Policies
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

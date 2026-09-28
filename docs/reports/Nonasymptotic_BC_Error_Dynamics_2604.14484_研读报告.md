@@ -164,3 +164,14 @@ $$
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2604.14484.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Behavior Cloning Under PD Control: A Finite-Horizon Theory of Gain-Dependent Error Amplification  arXiv:2604.14484v3 [cs.RO] 19 Jun 2026  Junghoon Seo Abstract— Behavior cloning (BC) on position-controlled robots is shaped by the PD loop that executes policy actions. We give a finite-horizon, nonasymptotic analysis of how controller gains affect BC failure. Independent sub-Gaussian action errors propagate through gain-dependent closed-loop dynamics into sub-Gaussian position errors. The resulting failure tail is controlled by controller amplification multiplied by validation loss and generalization slack, so validation loss alone can misrank gains. Under shape-preserving upper-bound assumptions, the analysis separates label difficulty, injection strength, and contraction, ranking compliant-overdamped gains as tightest and stiff-underdamped gains as loosest, with the mixed regimes system-dependent. In the canonical scalar second-order PD system, stationary position-error variance increases with stiffness and decreases with damping over the stable range, and exact zero-order-hold discretization inherits the ordering to leading order. This extends the error-attenuation explanation of 
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

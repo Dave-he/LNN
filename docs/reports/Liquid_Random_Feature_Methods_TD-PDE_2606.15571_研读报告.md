@@ -266,3 +266,14 @@ Allen-Cahn 1D 在相对 $L_2=10^{-4}$ 目标下:
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.15571.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> A central challenge in mesh-free space–time approximation for time-dependent partial differential equations is to represent evolving temporal scales while keeping residual minimization computationally tractable. Random feature methods simplify this algebraic problem by freezing nonlinear trial functions and fitting only a linear readout, but standard static space–time activations provide no explicit relaxation-scale mechanism, making temporal-scale resolution a finite-dimensional bottleneck in stiff, dispersive, or multi-scale regimes. We introduce liquid random feature methods (L-RFM), which replace static temporal activations by closed-form liquid time-constant responses with sampled relaxation scales. The resulting frozen features form temporally structured local or global trial spaces with analytic space–time derivatives for residual least-squares assembly. A density theorem proves density of the deterministic trial spaces in the continuous space–time function class, and a temporal-rank calculation clarifies the role of sampled relaxation scales. Ablation and finite-feature tests identify the liquid temporal response as the primary source of the observed accuracy improvement. A
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

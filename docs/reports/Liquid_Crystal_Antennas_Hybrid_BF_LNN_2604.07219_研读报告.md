@@ -219,3 +219,14 @@ $$
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2604.07219.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> X. Wang, M. Ying, H. Chen, G. Qian, X. Liu, P. Ma, D. Shakya, C. Argyropoulos, and T. S. Rappaport, “Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks,” to appear in IEEE 103rd Vehicular Technology Conference (VTC2026-Spring), Nice, France, Jun. 2026, pp. 1–6.  Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks Xinquan Wang1∗ , Mingjun Ying1 , Hongren Chen2 , Guanyue Qian1 , Xingchen Liu1 , Peijie Ma1 , Dipankar Shakya1 , Christos Argyropoulos2 , and Theodore S. Rappaport1†  arXiv:2604.07219v1 [cs.IT] 8 Apr 2026  1  NYU WIRELESS, New York University, Brooklyn, NY 11201, USA 2 Pennsylvania State University, University Park, PA 16802, USA {xinquanwang∗ , tsr† }@nyu.edu  Abstract—Sub-terahertz (sub-THz) multi-user multiple-input multiple-output (MU-MIMO) systems unlock immense bandwidth for 6G wireless communications. However, practical deployment of wireless systems in sub-THz bands faces critical challenges such as increased atmospheric absorption, reduced channel coherence time due to increased Doppler spread at higher carrier frequencies, and hardware bottlenecks as low-loss sub-THz phase shifters are difficult to real
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

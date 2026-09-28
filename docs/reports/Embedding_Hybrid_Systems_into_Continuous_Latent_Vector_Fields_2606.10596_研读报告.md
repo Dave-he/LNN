@@ -92,3 +92,13 @@ grounding: 本地 PDF 文本层不可用 (扫描图), 仅基于 papers/daily/*_p
 ## 维护说明
 - 本报告为 **extracted-from-tracker 状态**, 待 PDF 全文 grounding 后升级到 standard.
 - 一旦 OCR 完成, 把 `status: extracted-from-tracker` 改为 `status: standard`, 补全 §关键成果 / §局限性 的 grounding 数字.
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.10596.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> This work proves that an n-dimensional hybrid system can be embedded into an m-dimensional Euclidean space equipped with a continuous vector field on its embedded image whenever m > 2n. This result suggests that an intrinsically discontinuous hybrid system generically admits a continuous extrinsic representation that is wellposed for differentiable optimization. Building on this existence theorem, we show that a latent Neural ODE with consistency loss in both the latent and state space can accurately recover the flow of hybrid systems. Extensive experiments suggest the proposed method outperforms the existing method in learning hybrid systems with varying geometries from only time series data.  Figure 1: We proved that the n−dimensional discontinuous flow of a hybrid system can be embedded into a latent space equipped with an m−dimensional continuous extrinsic vector field when m > 2n. The latent embedding can be learned by the proposed latent ODE framework CHyLL++.  ory (Simic et al., 2005) suggests that the state reset functions induce an equivalence relationship to glue the partitioned state space into a continuous latent manifold. Furthermore, the glued manifold can be reconstr
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

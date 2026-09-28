@@ -144,3 +144,14 @@ $$U_\theta(q) = \sum_{i<j} \varphi_\theta(q_i - q_j), \quad V(q, c) = G \cdot U_
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2609.19674.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> C ONSERVATION B UYS S TABILITY AND FACTORING B UYS C OUNTERFACTUALS IN P HYSICAL W ORLD M ODELS Yufeng Wang ∗ Stony Brook University  Lu Wei ∗ Stony Brook University  Parivesh Priye ∗ Georgia Institute of Technology  arXiv:2609.19674v2 [cs.LG] 24 Sep 2026  Haibin Ling Westlake University  A BSTRACT A learned simulator can reproduce its training conditions accurately yet fail in two distinct ways once those conditions change. Over long rollouts, small errors accumulate until the trajectory drifts away from physically plausible behavior; under an intervention on a physical parameter, the model may continue to follow the law seen during training rather than the intervened one. We show that these two failures require different structural remedies. Evolving a learned energy with a symplectic integrator preserves the geometry of the conservative dynamics and keeps rollouts bounded and physically meaningful for up to 100× the training horizon, while equal-capacity predictors, an energy-regularized predictor, and a tuned neural ODE diverge. By contrast, encoding the physical coupling through an explicit linear factorization enables the model to follow a never-seen sign of that coupling, wh
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

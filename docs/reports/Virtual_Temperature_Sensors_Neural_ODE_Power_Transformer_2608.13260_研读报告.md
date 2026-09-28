@@ -100,3 +100,13 @@ grounding: 本地 PDF 首 600 字符已用 pdftotext 验证 (Berk Hadzhamolla, A
 ## 维护说明
 - 本报告为 **extracted-from-pdf-text 状态**, 待全文 grounding 后升级.
 - 升级路径: pdftotext 全文 → 验证 §关键成果数字 → 升级 `status: standard`
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2608.13260.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Virtual Temperature Sensors in Power Transformers Using Neural Ordinary Differential Equations Berk Hadzhamolla1 , Alexander Johannes Stasik2 , and Signe Riemer-Sørensen3 1  University of Oslo, Oslo, 0316, Norway berkh@uio.no  2,3  SINTEF AS, Department of Mathematics and Cybernetics, Oslo, Norway signe.riemer-sorensen@sintef.no alexander.stasik@sintef.no  2  Department of Data Science, Norwegian University of Life Sciences, Ås, Norway  arXiv:2608.13260v1 [cs.LG] 13 Aug 2026  alexander.johannes.stasik@nmbu.no  A BSTRACT Accurate modeling and forecasting of power transformer thermal behavior are critical for ensuring reliability, extending asset lifetime, and enabling optimized power system operation. Numerical approaches, such as finite element methods (FEM) and computational fluid dynamics (CFD), offer high fidelity but suffer from prohibitive computational costs, complex mesh generation, and limited feasibility in real-time or large-scale applications, as well as often unknown geometries. Lumped-parameter thermal models provide a more practical alternative but depend on transformer-specific thermal constants and often fail to capture dynamic responses under varying operating and
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

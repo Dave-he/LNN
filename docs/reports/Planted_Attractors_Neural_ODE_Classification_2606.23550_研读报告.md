@@ -101,3 +101,13 @@ grounding: 本地 PDF 首 600 字符已用 pdftotext 验证 (Pacifico, Fanelli, 
 ## 维护说明
 - 本报告为 **extracted-from-pdf-text 状态**, 待全文 grounding 后升级.
 - 升级路径: pdftotext 全文 → 验证 §关键成果数字 → 升级 `status: standard`
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.23550.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Approximating velocity fields with planted attractors via Neural-ODEs for classification purposes Feliciano Giuseppe Pacifico 1,2 , Duccio Fanelli 2 , Lorenzo Buffoni 2 , Lorenzo Chicchi 2 , Diego Febbe 2 , Raffaele Marino 2  arXiv:2606.23550v2 [cond-mat.dis-nn] 24 Jun 2026  1 Department of Informatics and Computer Science, University of Pisa, Italy and 2 Department of Physics and Astronomy, University of Florence, Sesto Fiorentino, Italy INFN, Italy In this work, Neural ODEs equipped with a curated collection of equilibrium points have been successfully employed for classification tasks. The planted attractors serve as indicators for the target classes, while the velocity field —leveraging the universal approximation capabilities of the architecture— shapes the dynamical landscape. This process defines the basins of attraction of the trained model, effectively directing each input (provided as an initial condition) toward its corresponding destination target.  I.  INTRODUCTION  Neural ordinary differential equations (Neural-ODEs)[2] define a class of deep learning models designed to parameterize the derivative of a multi-dimensional state vector, via a neural network. In practice,
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

@@ -209,3 +209,14 @@ $$
 - 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
 - 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
 - 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.19579.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> 1  Existing countermeasures fall into three families, all of which collapse out of distribution. Graph attention networks (Jung et al., 2022a;b) memorise dataset-specific spectral artifacts: RawGAT-ST trained on FakeOrReal reaches only 49.1±18.1% on ASVspoof 2019, near random chance. Selfsupervised frontends (Tak et al., 2022) fine-tune ∼300 M parameter transformers with fixed attention windows; deployment is prohibitive and the cross-seed variance is large (±17.5 pp on MLAAD→ITW, Table 1). ASR encoder repurposing (Radford et al., 2023; Müller et al., 2024) inherits representations optimised for recognition semantics, not low-level forgery cues, yielding only 44.9% on MLAAD when trained on ASVspoof 2019. Our central hypothesis is that the shared failure mode is architectural, not data-driven: synthetic-speech artifacts are trajectory anomalies in how spectro-temporal features evolve over time, but every existing detector aggregates frame-level statistics over a fixed context window, structurally erasing the trajectory information. Physical articulation imposes well-characterised dynamical constraints (vocal tract changes at ∼10–100 ms, prosodic contours at ∼100-2000 ms). TTS syste
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.
