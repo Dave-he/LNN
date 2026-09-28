@@ -178,17 +178,23 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, generated_from_trainer, sft, trl, unsloth
 
+### [Theboukadida/laura-lfm2.5-1.2b-GGUF](https://huggingface.co/Theboukadida/laura-lfm2.5-1.2b-GGUF)
+- 更新：2026-09-27
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：gguf, lfm2, german, language-learning, on-device, text-generation, de, en
+
 ### [Panga-Azazia/LFM2.5M-ASR-bam](https://huggingface.co/Panga-Azazia/LFM2.5M-ASR-bam)
 - 更新：2026-09-27
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：pytorch, region:us
 
-### [blaj/LFM2.5-8B-A1B-heretic-int4-ov](https://huggingface.co/blaj/LFM2.5-8B-A1B-heretic-int4-ov)
-- 更新：2026-09-26
-- 下载 / Likes：110 / 0
+### [stardude1/LFM2-12B-A1B-SpeedDemon-The-Deckard-II-HERETIC-Uncensored-mlx-4Bit](https://huggingface.co/stardude1/LFM2-12B-A1B-SpeedDemon-The-Deckard-II-HERETIC-Uncensored-mlx-4Bit)
+- 更新：2026-09-27
+- 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：openvino, lfm2_moe, int4, intel, arc, lfm2.5, moe, heretic
+- Tags：transformers, safetensors, lfm2_moe, text-generation, finetune, unsloth, mixture of experts, sparse moe
 
 ### [blaj/LFM2.5-8B-A1B-heretic-int8-ov](https://huggingface.co/blaj/LFM2.5-8B-A1B-heretic-int8-ov)
 - 更新：2026-09-26

@@ -1359,6 +1359,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-09-29**：[[docs/daily/2026-09-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
 - **2026-09-28**：[[docs/daily/2026-09-28_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 18 个。
 - **2026-09-27**：[[docs/daily/2026-09-27_LNN_research_digest.md|每日追踪]]，候选论文 48 条 LNN/CfC/LTC/closed-form-continuous-time 相关（由 `_parse_arxiv_fallback.py` 离线解析 `/tmp/arxiv_2026-09-27.xml` 还原，今日 `daily_lnn_research.py` urllib 路径 406 仍复现，待下一会话诊），仓库 41 个，模型 19 个；研读报告生成 **1 篇新增**（2609.28716，ACM + CfC 残差估计，从 STRONG_KEYWORDS 候选中人工复核选出）。详见 [[docs/LNN_深度研读报告#2026-09-27-arcf-parse-arxiv-fallback--新增-aeriacm-cfc-1-篇研读推送再次受阻|§2 复盘条目]]。
 - **2026-09-26**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个；研读报告生成 0 篇（LNN 主题饱和）；本轮 **arXiv 406 永久修复** 落仓（`Accept: application/atom+xml`）。详见 [[docs/LNN_深度研读报告#2026-09-26-arxiv-406-根因--accept-*-而非-tls-指纹永久修复已落仓候选仍空lnn-主题饱和|§2 复盘条目]]。
@@ -1388,5 +1389,4 @@ positioning_updated: 2026-09-14
 - **2026-09-05**：[[docs/daily/2026-09-05_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 17 个。
 - **2026-09-04**：[[docs/daily/2026-09-04_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 18 个。
 - **2026-09-03**：[[docs/daily/2026-09-03_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 20 个。
-- **2026-09-02**：[[docs/daily/2026-09-02_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 22 个。
 <!-- daily-lnn-index:end -->
