@@ -226,3 +226,35 @@ $$
 **研读者**: paper-analyzer skill（LNN 每日研读流水线）
 **PDF 路径**: `papers/2026-09-24/pdf_2608.28702.pdf` (2.0 MB)
 **姊妹篇**: `docs/reports/Liquid_Neural_Networks_Drop_in_CfC_Deformation_Field_D3DGS_2606.07670_研读报告.md`
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 3DGS 是视觉应用, 本仓视觉方向落地在 `analysis/multimodal/`
+
+### 实施步骤
+1. **数据**: 合成 3D Gaussian 序列 (`lnn/data/multimodal_physreg.py` 已有 frame stacking)
+2. **模型** (`lnn/core/cfc_deformation_field.py`): CfC backbone per Gaussian attribute
+3. **实验** (`analysis/3dgs_cfc/`): 与 vanilla MLP deformation field 对照
+4. **诚实负结果预防**: PSNR 与 MLP baseline 比 < +0.5 dB 在方差内 → 进 negative_results (r306 经验)
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2608.28702.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> 2026 Asia Pacific Signal and Information Processing Association Annual Summit and Conference (APSIPA ASC)  Stochastic Liquid Deformation Fields: An SDE Generalisation of Closed-form Continuous-time Cells for Dynamic 3D Gaussian Splatting Mingzhao Li∗ ,  Arghya Pal∗  ∗ School of Information Technology, Monash University, Selangor, Malaysia  E-mail: {mlii0259@student, arghya.pal}@monash.edu  arXiv:2608.28702v1 [cs.CV] 27 Aug 2026  Abstract—Deformable 3D Gaussian Splatting (D-3DGS) reconstructs dynamic scenes by deforming a canonical set of 3D Gaussians through a deformation field of frame time. Replacing its MLP with a stack of Closed-form Continuous-time (CfC) cells—a Liquid Neural Network that solves the Liquid Timeconstant ODE in closed form—gives the field continuous-time behaviour at feed-forward cost. That closed form, however, is only the deterministic limit of a noise-driven system, and drops the stochastic term usually credited for the robustness of liquid networks. We put it back: a small Gaussian perturbation is added to the time gate of every CfC cell, turning the deterministic field into a simple stochastic (SDE) one. The noise is used only during training, needs no solv
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

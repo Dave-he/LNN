@@ -173,3 +173,34 @@ quantization: int8 post-training 起步，必要时 QAT
 - *When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics*：https://arxiv.org/abs/2601.06227
 - *Closed-form continuous-time neural networks*：https://www.nature.com/articles/s42256-022-00556-7
 - 本项目 Jetson 说明：[[docs/每日自动化任务与Jetson验证]]
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **N/A (训练方向指引类)**: 不直接实施, 给出多方向实施优先级
+
+### 维护说明
+- 本报告是训练方向可行报告 (机器人 / 边缘 / 长序列 / 物理 / 医疗金融 / 图时空)
+- 实施时按本报告优先级排序进入各 `analysis/<方向>/`
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2407.20590.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Exploring Liquid Neural Networks on Loihi-2 Wiktoria Agata Pawlak  Murat Isik  Dexter Le  Tilburg University Tilburg, The Netherlands Email: w.a.pawlak@tilburguniversity.edu  Stanford University Stanford, United States Email: mrtisik@stanford.edu  Drexel University Philadelphia, United States Email: dql27@drexel.edu  Ismail Can Dikmen∗  arXiv:2407.20590v1 [cs.ET] 30 Jul 2024  TEMSA R&D Center Adana, Türkiye Email: can.dikmen@temsa.com Corresponding author  LNN models were developed using new mathematical formulations and connectivity patterns to improve energy efficiency and causality in robots and other devices. Despite significant advancements in neural network (NN) technologies, a substantial gap persisted between the computational intelligence of biological brains and the capabilities of deep learning models. This gap is particularly evident in areas such as representation, learning capacity, understanding and interacting with the world while capturing causality, learning abstract actions for reasoning or planning, and the efficiency and flexibility of achieving goals [5], [6]. To bridge this gap, researchers explored the fundamental elements of the neuronal system, including 
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

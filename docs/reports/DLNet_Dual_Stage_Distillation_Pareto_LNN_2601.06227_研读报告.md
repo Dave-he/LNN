@@ -170,3 +170,34 @@ A-F 全部在 CPU 上即可完成;G 需真实硬件 (Jetson / Arduino)。
 - 关联路线图: [[LNN_训练方向_边缘部署与压缩_可行报告]]
 - 本研读父索引: [[LNN_深度研读报告]]
 - 复现脚本目标位置: `scripts/replicate_dlnet.py`(待创建)
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 蒸馏路径, 与本仓 `analysis/cfc_nad/` 协同
+
+### 实施步骤
+1. **数据**: 沿用 `lnn/data/timeseries.py`
+2. **模型** (`lnn/core/dlnet.py`): Teacher-student 蒸馏到 CfC
+3. **实验** (`analysis/dlnet/`): 5 seed × Pareto sweep
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2601.06227.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> When Smaller Wins: Dual-Stage Distillation and Pareto-Guided Compression of Liquid Neural Networks for Edge Battery Prognostics  arXiv:2601.06227v3 [cs.LG] 11 Jun 2026  Dhivya Dharshini Kannan1 , Wei Li1 , Wei Zhang1⋆ , Jianbiao Wang2 , Zhi Wei Seh2 , and Man-Fai Ng3 Singapore Institute of Technology (SIT), Singapore 828608 {dhivyadharshini.kannan, wei.li, wei.zhang}@singaporetech.edu.sg 2 Institute of Materials Research and Engineering (IMRE), Agency for Science, Technology and Research (A*STAR), 2 Fusionopolis Way, Innovis #08-03, Singapore 138634, Republic of Singapore {wang_jianbiao, sehzw}@a-star.edu.sg 3 Institute of High Performance Computing (IHPC), Agency for Science, Technology and Research (A*STAR), 1 Fusionopolis Way, #16–16 Connexis, Singapore 138632, Republic of Singapore ngmf@a-star.edu.sg 1  Abstract. Battery management systems increasingly require accurate battery health prognostics under strict on-device constraints. This paper presents DLNet, a practical framework with dual-stage distillation of liquid neural networks that turns a high-capacity model into compact and edge-deployable models for battery health prediction. DLNet first applies Euler discretization to
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

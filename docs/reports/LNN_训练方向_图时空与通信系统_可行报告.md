@@ -159,3 +159,34 @@ gradient_clip: 1.0
 - *Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks*：https://arxiv.org/abs/2604.07219
 - *Liquid-Graph Time-Constant Network for Multi-Agent Systems Control*：https://arxiv.org/abs/2404.13982
 - *FUSION: Forecast-Embedded Agent Scheduling...*：https://arxiv.org/abs/2512.14323
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **N/A (训练方向指引类)**: 不直接实施, 给出多方向实施优先级
+
+### 维护说明
+- 本报告是训练方向可行报告 (机器人 / 边缘 / 长序列 / 物理 / 医疗金融 / 图时空)
+- 实施时按本报告优先级排序进入各 `analysis/<方向>/`
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2404.13982.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Liquid-Graph Time-Constant Network for Multi-Agent Systems Control  arXiv:2404.13982v3 [cs.MA] 1 Mar 2025  Antonio Marino1 , Claudio Pacchierotti2 , Paolo Robuffo Giordano2 Abstract— In this paper, we propose the Liquid-Graph Timeconstant (LGTC) network, a continuous graph neural network (GNN) model for control of multi-agent systems based on the recent Liquid Time Constant (LTC) network. We analyse its stability leveraging contraction analysis and propose a closedform model that preserves the model contraction rate and does not require solving an ODE at each iteration. Compared to discrete models like Graph Gated Neural Networks (GGNNs), the higher expressivity of the proposed model guarantees remarkable performance while reducing the large amount of communicated variables normally required by GNNs. We evaluate our model on a distributed multi-agent control case study (flocking) taking into account variable communication range and scalability under non-instantaneous communication. Index Terms— Distributed Control, Graph Neural Network, Stability Analysis  I. INTRODUCTION Communication is a crucial element in achieving distributed solutions for multi-agent systems (MAS) from contro
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

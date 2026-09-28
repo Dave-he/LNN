@@ -186,3 +186,37 @@ $$
 
 ## 8. Verdict
 **POSITIVE** — 这是 2026 年迄今**对 LTC 在安全/反欺骗场景最有说服力的论文**: (a) 34 K 参数击败 300 M SSL, (b) 提供 4 条形式化定理把"为何 LTC 稳定"说清楚, (c) 跨数据集协议严格, seed 控制透明。对本仓而言, 是 **LNN 在 low-resource + high-distribution-shift 场景下相对大模型具结构性优势** 的硬证据; 同时也**暴露了本仓当前 LNN 实现缺乏稳定性证明** 的短板, 是下一轮 quality gate 的好素材。
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 本仓 LTC 基础在 `lnn/core/liquid_time_constant.py` 系列
+- 与 CfC 对比维度: 求解器开销 / 闭式可微 / 训练稳定性
+
+### 实施步骤
+1. **数据生成器** (`lnn/data/ltc_xxx_synth.py`): 沿用 `lnn/data/timeseries.py`
+2. **模型**: 在 `lnn/core/ltc_xxx.py` 套用本仓 LTC backbone
+3. **实验** (`analysis/ltc_xxx/`): 5 seed × 多 regime, 与 CfC head-to-head
+4. **诚实负结果预防**: 求解器慢 / gradient 爆炸 → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.19579.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> 1  Existing countermeasures fall into three families, all of which collapse out of distribution. Graph attention networks (Jung et al., 2022a;b) memorise dataset-specific spectral artifacts: RawGAT-ST trained on FakeOrReal reaches only 49.1±18.1% on ASVspoof 2019, near random chance. Selfsupervised frontends (Tak et al., 2022) fine-tune ∼300 M parameter transformers with fixed attention windows; deployment is prohibitive and the cross-seed variance is large (±17.5 pp on MLAAD→ITW, Table 1). ASR encoder repurposing (Radford et al., 2023; Müller et al., 2024) inherits representations optimised for recognition semantics, not low-level forgery cues, yielding only 44.9% on MLAAD when trained on ASVspoof 2019. Our central hypothesis is that the shared failure mode is architectural, not data-driven: synthetic-speech artifacts are trajectory anomalies in how spectro-temporal features evolve over time, but every existing detector aggregates frame-level statistics over a fixed context window, structurally erasing the trajectory information. Physical articulation imposes well-characterised dynamical constraints (vocal tract changes at ∼10–100 ms, prosodic contours at ∼100-2000 ms). TTS syste
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

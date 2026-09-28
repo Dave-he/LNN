@@ -143,3 +143,35 @@ $$
   - Bronars et al. (asymptotic gain-dependent error attenuation)
   - Hasani et al. 2021（CfC 原始论文，提供"闭式连续时间"的 LNN 范式）
   - Lehman et al. (LNN for drones, 提供 LNN 闭环控制的实证基线)
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **低**: 行为克隆误差分析是综述类, 主要用于设计选择
+
+### 实施步骤
+1. **数据**: 沿用 `lnn/data/robotics.py` 模仿学习轨迹
+2. **模型**: 不直接落地, 仅作为 IL 算法设计指南
+3. **实验** (`analysis/bc_error/`): 与 baseline BC 的对比误差
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2604.14484.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Behavior Cloning Under PD Control: A Finite-Horizon Theory of Gain-Dependent Error Amplification  arXiv:2604.14484v3 [cs.RO] 19 Jun 2026  Junghoon Seo Abstract— Behavior cloning (BC) on position-controlled robots is shaped by the PD loop that executes policy actions. We give a finite-horizon, nonasymptotic analysis of how controller gains affect BC failure. Independent sub-Gaussian action errors propagate through gain-dependent closed-loop dynamics into sub-Gaussian position errors. The resulting failure tail is controlled by controller amplification multiplied by validation loss and generalization slack, so validation loss alone can misrank gains. Under shape-preserving upper-bound assumptions, the analysis separates label difficulty, injection strength, and contraction, ranking compliant-overdamped gains as tightest and stiff-underdamped gains as loosest, with the mixed regimes system-dependent. In the canonical scalar second-order PD system, stationary position-error variance increases with stiffness and decreases with damping over the stable range, and exact zero-order-hold discretization inherits the ordering to leading order. This extends the error-attenuation explanation of 
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

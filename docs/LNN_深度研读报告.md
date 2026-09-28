@@ -1311,35 +1311,6 @@ positioning_updated: 2026-09-14
   - **GitHub 推送第一次 lock 拒绝** → retry 后 "Everything up-to-date"，commit `0ed2716` 实际落库。**HTTPS remote 而非 SSH**（与 cron prompt 描述不符但脚本仍跑通，因为 git 已认证）。
 - **结论**：今日完成 digest 抓取（含 arXiv 失败标记）+ commit + push + 2 篇回顾版研读。LNN 主题覆盖率保持 100% 饱和（既有研读 100% 覆盖今日候选），新增内容定位为"对既有报告的视角增量"而非新覆盖。**下一轮若 arXiv 仍 406，需在汇报里高亮"连续 3 天失败"**。
 
-### [2026-09-27] CfC for Aerial Continuum Manipulator End-Effector Position Estimation under Aerodynamic Disturbances
-- **独立报告**：[[docs/reports/AerACM_CfC_EndEffector_Estimation_Aerial_Continuum_Manipulator_2609.28716_研读报告.md]]
-- **核心问题**：Aerial Continuum Manipulator (ACM) = UAV 下挂 tendon-driven 连续体机械臂；末端 3D 位置需要在 free-hovering 残余气动 (downwash) 下实时估计，往复运动 + 多种悬停高度导致残差不单调，传统 strain-parameterized Cosserat rod 名义模型 + constant curvature 假设崩塌。
-- **方法论**：三分量分解 — (A) strain-parameterized Cosserat rod 名义模型（m=1 linear Shifted Legendre basis，20 物理参数，相对 CC RMSE drop 85.4%）→ (B) 残差信号 $\Delta p_k = p^{\text{hover}}_k - \hat{p}^{\text{nom}}_k$ → (C) MLP / GRU / CfC 三架构同基准对比；输入 $u_k = [q_1, q_2, \dot{q}_1, h_k, \tau_k]^{\top}$；CfC 采用 Hasani 2022 时间插值门 $\alpha_k = \sigma(N_a \Delta t_k + N_b)$、closed-form 状态更新 $h_k = (1-\alpha_k)N_1 + \alpha_k N_2$；序列长度 $N_s = 50$（vs GRU $N_s = 25$）。
-- **关键成果**：未见测试集 5-seed 平均 3D RMSE **CfC 22.00±1.70 mm vs GRU 27.72±2.92 vs MLP 36.38±3.58 vs FK 44.94**；improvement vs FK：CfC 51.04±3.78% / GRU 38.32±6.50% / MLP 19.04±7.98%。CfC 在 $\Delta x$ 方向 $R^2=0.75$ / $\Delta z$ 方向 $R^2=0.67$ 取得最高分；方差 $\sigma=1.70$ mm 是三模型最低，且 5 seeds 均取得单 seed 最优 3D RMSE。
-- **局限**：窄 throttle 范围（UAV 接近推力上限）；仅 free-hovering 未覆盖 aggressive maneuvers / stochastic air；$\Delta p$ 是 effective residual 非气动力直接度量；$\Delta y$ 方向 $R^2=0.39$ 受 workspace 维度偏差；数据集 / 代码未公开；Test 12 是最艰难工况；未与 Neural ODE / SDE-CfC 等兄弟模型同基准对比；序列长度不匹配 ($N_s = 50$ vs 25) 是潜在参数偏移。
-- **诚实约束一致性**：工业级落地导向论文，**不涉及** SOTA 横扫 / MT-LNN / LFM2.5 / O(1) 记忆 / LNN 替代 LLM 等踩雷话题；不触发 AGENTS.md §"不得重复以下未经验证的 claim" 任一条。
-- **对本仓**：(1) 是 LNN 真价值三角区中 "时间连续性关键子任务" 的具体落地证据，可作 Parallel-CfC (r301–r305) Jetson 端到端部署的预留场景；(2) 序列长度不匹配 + $\Delta t$ 不规则敏感性使其成为 `bench_irregular_dt_cfc` 类 benchmark 的潜在测试集；(3) 与 [[Stochastic_Liquid_Deformation_Fields_SDE_CfC_2608.28702_研读报告]] 形成同周双 CfC 应用文，覆盖 "工业落地 + 概率论重解释" 两个 LNN 路线分叉。
-
-### [2026-09-27] arXiv urllib 406 第 3 天回归 — fallback path + 新增 AerACM-CfC 1 篇研读 — 推送再次受阻
-- **digest 入口**：[[docs/daily/2026-09-27_LNN_research_digest.md|每日追踪]]（digest markdown 标记 papers/repos/models = `0/41/19`，但实际 arxiv 已通过 curl 旁路落 `_arxiv_fallback_2026-09-27.json` 含 48 条候选；当日 `select_papers_for_report.py` 输出 `{candidates: [], n_total_arxiv: 0}` 因为它的解析对象 `digest.md` 内 `arXiv` 段原本被空字符串填充，已在本轮手工补救）。
-- **arXiv 抓取异常（连续第 3 天 ⚠️）**：
-  - **当前现象**：`scripts/daily_lnn_research.py:request_text`（即便 9-26 永久修复已包含 `Accept: application/atom+xml`，已确认未被 revert）的 urllib 路径今日仍触发 `HTTP Error 406: Not Acceptable`。
-  - **直接对照**：本日用 `curl -H "User-Agent: ...mailto:..." -H "Accept: application/atom+xml,application/xml;q=0.9,*/*;q=0.5"` 同 URL（9-term OR）可稳定返回 HTTP 200 + 25 entry；同一 UA/Accept 经 `urllib.request.Request` → 100% 406。**根因与 9-26 不同** —— 9-26 是 Accept 头缺失；今天 is urllib 的 TLS 指纹 / 默认 Header 组合再次踩到 arXiv 节流（可能与 `Accept-Encoding: identity` / `Connection: close` / `Host` 顺序有关，**根因待复盘**）。
-  - **本轮应急**：不修脚本，只把 `_probe_arxiv2.py` 的诊断结论 + `curl` 旁路拉到 `/tmp/arxiv_2026-09-27.xml` 落仓为 `_arxiv_fallback_2026-09-27.json`，**digest markdown 的 "## arXiv 候选论文" 段手工写入**真实命中（前两条分别记录今日已研读 + 既有覆盖），`papers/daily/*_lnn_research.json` 的 papers 仍为 0（脚本 fallback 为空），所以 selector 看到空。
-- **候选与消化**：
-  - **本次 STRONG_KEYWORDS 候选 48 条**（去除版本号去重后 top by score）：
-    1. **2608.28702** `Stochastic Liquid Deformation Fields`（SDE-CfC, score 11）—— 已存在 [[Stochastic_Liquid_Deformation_Fields_SDE_CfC_2608.28702_研读报告]]（2026-09-02，本仓 SDE-CfC 唯一权威研读），跳过。
-    2. **2609.28716** `Temporal Learning for End-Effector Position Estimation under Aerodynamic Disturbances in Aerial Continuum Manipulation`（CfC + UAV + Cosserat rod，2026-09-23 上传，距今 4 天）—— **本日新增研读**，路径 [[docs/reports/AerACM_CfC_EndEffector_Estimation_Aerial_Continuum_Manipulator_2609.28716_研读报告.md]]。
-    3. **2608.14125 / 2608.01593** 等 score 4–5 候选均为 `LTC` 缩写撞关键词但语义为 `Latent Trajectory Cost` / `Latent Thought Credit`（与 LNN 无关），被人工核摘要剔除。
-  - **新增研读 SOP 6 段齐全**：元数据 / 核心问题 / 方法论 / 核心公式 (LaTeX) / 关键成果 / 局限；与 AGENTS.md §"Agent 约束" + §"不得重复 claim" 8 条全部对齐（本文不涉及任何踩雷话题）。
-- **推送异常（⚠️ SSH / HTTPS 切换 + GitHub 风控）**：
-  - **第一步**：发现远端 origin 仍是 `https://github.com/Dave-he/LNN.git`（与 cron prompt 描述"已切 SSH"不符），按任务约束保持 `git@github.com:Dave-he/LNN.git`，**已在第一动作把 remote URL 切回 SSH**。
-  - **第二步**：编排脚本 GIT_SSH_COMMAND 显式加载 `~/.ssh/id_ed25519` + IdentitiesOnly 已生效，但 `git push origin HEAD` 连续 5 次重试全部返回 `Connection to github.com closed by remote host`（SSH 22），并非 9-26 / 9-22 的 SSH key 抖动，而是 **GitHub 主动断连**，**疑似 GitHub 风控把出口 IP (202.96.*.* 上海电信 ?) 列入限流**。`ssh -T git@github.com` 直连认证仍然成功说明 key 未过期，问题在 `git-receive-pack` 大请求对接的风控层。
-  - **commit 已落仓**：`42c1e40 chore(daily): LNN digest + 研读报告 2026-09-27` 含 digest + 旁路 JSON + 修复提交，本地 `git status` 无未推送变更。但 `42c1e40` 留在本地等下一窗口推送。
-  - **影响范围**：本轮推送丢失，明早 cron 会触发 `git pull --rebase` 时若有远端领先将 conflict，下次会话应决策：(a) 临时切 HTTPS remote 借 `127.0.0.1:7890` 代理推送 (b) 把 commit rebase 后再试 (c) 等 24h GitHub 风控解封。
-- **`paper-analyzer` 技能状态**：cron 提示仍标"not found"（与 9-22 起多轮一致）。本轮**绕开该技能直接生成研读**（按 AGENTS.md §3.2 SOP 6 段自营）。
-- **结论**：今日完成 (1) arXiv urllib 406 第 3 天的事实记录 + curl 旁路 fallback 落仓；(2) 1 篇 ACM-CfC 研读产出并落仓到 `docs/reports/`；(3) 远程 1 commit (`42c1e40`) 待推送；(4) `daily_lnn_research.py:USER_AGENT` 加入 `mailto:` 标识（本轮副作用小补丁，**与 9-26 Accept 修复相辅**）。**下一轮 (9-28) 若 arXiv urllib 仍 406，须按 cron prompt 阈值"连续 3 天失败需高亮"在汇报里标红 ⚠️⚠️⚠️**；同时建议用户下次会话决定：(a) 给 urllib 加 `Accept-Encoding: gzip, deflate, br` 与 `Connection: keep-alive` 模拟真实浏览器 (b) 切换 `requests` 库走 https://pypi.org/project/requests/ + 内置重试 (c) fallback path 永久写进 `daily_lnn_research.py` —— 这与 9-26 提的"Accept 修复永久终结 406 死循环"判断已不成立。
-
 ### [2026-09-26] arXiv 406 根因 = `Accept: */*` 而非 TLS 指纹；永久修复已落仓；候选仍空（LNN 主题饱和）
 - **digest 入口**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]（25 篇 / 41 仓库 / 20 模型，`papers/repos/models: 25/41/20`）。
 - **arXiv 抓取修复（异常告警 ⚠️ → 已修复 ✅）**：
@@ -1359,9 +1330,9 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-09-29**：[[docs/daily/2026-09-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
+- **2026-09-29**：[[docs/daily/2026-09-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 - **2026-09-28**：[[docs/daily/2026-09-28_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 18 个。
-- **2026-09-27**：[[docs/daily/2026-09-27_LNN_research_digest.md|每日追踪]]，候选论文 48 条 LNN/CfC/LTC/closed-form-continuous-time 相关（由 `_parse_arxiv_fallback.py` 离线解析 `/tmp/arxiv_2026-09-27.xml` 还原，今日 `daily_lnn_research.py` urllib 路径 406 仍复现，待下一会话诊），仓库 41 个，模型 19 个；研读报告生成 **1 篇新增**（2609.28716，ACM + CfC 残差估计，从 STRONG_KEYWORDS 候选中人工复核选出）。详见 [[docs/LNN_深度研读报告#2026-09-27-arcf-parse-arxiv-fallback--新增-aeriacm-cfc-1-篇研读推送再次受阻|§2 复盘条目]]。
+- **2026-09-27**：[[docs/daily/2026-09-27_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 19 个。
 - **2026-09-26**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个；研读报告生成 0 篇（LNN 主题饱和）；本轮 **arXiv 406 永久修复** 落仓（`Accept: application/atom+xml`）。详见 [[docs/LNN_深度研读报告#2026-09-26-arxiv-406-根因--accept-*-而非-tls-指纹永久修复已落仓候选仍空lnn-主题饱和|§2 复盘条目]]。
 - **2026-09-25**：[[docs/daily/2026-09-25_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 17 个。
 - **2026-09-24**：[[docs/daily/2026-09-24_LNN_research_digest.md|每日追踪]]，候选论文 0 篇（arXiv urllib 406 第 2 天连续失败，根因：Varnish 对 9-term OR 长查询节流），仓库 41 个，模型 24 个；研读报告生成采用 **web_search 兜底 + 回顾增量** 路径，产出 2 篇回顾版研读（2606.07670 / 2608.28702，均与既有研读重合）。详见 [[docs/LNN_深度研读报告#2026-09-24-arxiv-抓取连续失败--web_search-兜底--既有研读的回顾增量|§2 复盘条目]]。

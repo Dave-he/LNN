@@ -61,3 +61,25 @@ tags: [LNN, 6G, Telecommunications, ISAC, SON, Channel-Prediction, Beamforming]
 - **零样本学习（Zero-Shot Learning）理论根基**：尽管 LNN 具备极强分布外（OOD）鲁棒性，但其在完全未见的极端通信频段或特殊天线架构下的 ZSL 物理层特征提取机制仍缺少完备的数学证明。
 - **分布式协作与边缘联邦（Distributed LNNs）**：电信系统规模庞大，未来如何让多节点协作本地运行 LNN，并通过轻量级 Federated Learning 联邦训练来降低分布式通信与同步延迟，需要深入攻坚。
 - **亚毫秒极低响应延迟（Training & Inference Latency）**：信道相干时间极短。求解 LTC 微分方程时，数值求解器的计算时间必须绝对压缩到亚毫秒级（Sub-millisecond）以内，以满足超可靠低延迟通信（URLLC）的硬性指标。
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **待 grounding**: 本报告归类不明, 需先 grounding 到具体方法论
+
+### 实施步骤
+1. **数据**: 沿用 `lnn/data/` 现有合成器
+2. **模型**: 在 `lnn/core/` 新建对应模块
+3. **实验**: 进 `analysis/<新域>/`
+4. **诚实负结果预防**: 任何 baseline 退化 → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用

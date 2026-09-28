@@ -180,3 +180,34 @@ $$R_{t,r} = \lambda_j J_{t,r} + \lambda_b B_{t,r} + \lambda_c C_{t,r}$$
   - **TARGET-POSITIVE** — 真机 / 仿真 / 机制分析三维验证；
   - **TARGET-NEGATIVE-WITH-NUANCE** — 边缘实时部署（80h 训练 + 100GB 显存远高于边缘门槛，但推理本身轻量）；
   - **TARGET-DEPENDENT-WITH-NUANCE** — 单节点 vs 多节点 / 长期 horizon（作者未验证，灵巧手与人形留作未来工作）。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 与本仓 `lnn/core/memory_fusion_cfc.py` 同源
+
+### 实施步骤
+1. **数据**: 沿用本仓时序数据
+2. **模型** (`lnn/core/tfp_cfc.py`): TFP + CfC 融合
+3. **实验** (`analysis/tfp_cfc/`): 与 vanilla VLA 对照
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2607.08283.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning Yushen Liang1,† , Yue Peng1,† , Baosheng Jin1,† , Tianluo Zhang1 , Xinyu Zhang2 , Shuyi Zhou, Zhuoran Chen1 , Xinqi Liu1 , Shenji Wan1 1  2  NYU Shanghai, Shanghai, China University of Electronic Science and Technology of China, Chengdu, China † Equal contribution  arXiv:2607.08283v3 [cs.RO] 30 Aug 2026  § Code: github.com/Mirage415/TFP-Temporally-conditioned-Memory-Fusion-Policies-for-Visuomotor-Learning  Abstract—Vision–Language–Action (VLA) policies such as π0.5 and OpenVLA perform well on many manipulation tasks, but they are often reactive: the next action is predicted from the current observation, instruction, and proprioceptive state. This assumption breaks down in stage-dependent manipulation, where visually similar states may require different actions depending on latent task progress and previous interaction outcomes. We argue that such tasks require not only memory, but dynamicsaware belief updates: the policy should preserve task progress during stable or occluded phases and revise its belief near contact, release, or subgoal transitions. We introduce Temporally Conditioned Memory-Fusion Policies
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

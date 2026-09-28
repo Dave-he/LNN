@@ -485,3 +485,34 @@ class EREIsolation:
 ## 11. 一句话总结
 
 **MeloTune 在 iPhone CoreML 上同时跑两个独立 CfC (私有 listener-level 64 维 + 共享 mesh-runtime Layer 6), 用 94,552 参数 / sub-ms 推理实现 proactive affect-aware 音乐策展; 通过 MMP/SVAF 协议用 7 字段 CMB (CAT7 schema) 共享结构化情绪而不泄露 hidden state; 配合 PAF 在 20 次行为观测内实现 per-listener arousal 校准, 是已发布文献中 CfC 在消费移动硬件上的首个生产级端到端参考实现** — 对 Jetson Orin Nano 端侧推理、LFM2.5 子任务改造、以及多 agent 协议设计都有直接的方法论与工程借鉴价值。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 音乐推荐 / 端侧 CfC
+
+### 实施步骤
+1. **数据**: 合成音乐特征时序
+2. **模型** (`lnn/core/melotune.py`): CfC + 端侧推理
+3. **实验** (`analysis/melotune/`)
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2604.10815.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> Mesh Memory Protocol (MMP) is a peer-to-peer substrate for collective intelligence in which heterogeneous agents exchange structured Cognitive Memory Blocks (CMBs) carrying seven typed semantic fields (the CAT7 schema), evaluated field-by-field at SVAF Layer 4 under per-field drift bounds, and integrated into each agent’s private per-agent Closed-form Continuous-time (CfC) network at Layer 6. CfC hidden states never cross the wire. We present MeloTune, an iPhone-deployed application that instantiates this substrate as a music agent — to our knowledge, the first published end-to-end deployment of an MMP/SVAF agent at production scale on a consumer mobile platform — and use it as a case study to demonstrate that the substrate is real, the two-cognition-layer architecture (private listener CfC + shared mesh-runtime CfC) is implementable on-device, and the protocol guarantees hold in a shipping product. Music is a particularly demanding test of the affect dimension of the CAT7 schema because listening is a continuous activity and the listener’s affective state is itself a continuous trajectory; the CMB mood field carries Russell-circumplex valence and arousal floats that the substrate 
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

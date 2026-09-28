@@ -184,3 +184,34 @@ mixed_precision: 可开启
 - *LiquidTAD: Efficient Temporal Action Detection via Parallel Liquid-Inspired Temporal Relaxation*：https://arxiv.org/abs/2604.18274
 - Long Range Arena：https://arxiv.org/abs/2011.04006
 - Liquid-S4 官方实现：https://github.com/raminmh/liquid-s4
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **N/A (训练方向指引类)**: 不直接实施, 给出多方向实施优先级
+
+### 维护说明
+- 本报告是训练方向可行报告 (机器人 / 边缘 / 长序列 / 物理 / 医疗金融 / 图时空)
+- 实施时按本报告优先级排序进入各 `analysis/<方向>/`
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2011.04006.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Preprint  L ONG R ANGE A RENA : A B ENCHMARK FOR E FFICIENT T RANSFORMERS  arXiv:2011.04006v1 [cs.LG] 8 Nov 2020  Yi Tay1∗, Mostafa Dehghani1∗ , Samira Abnar1 , Yikang Shen1 , Dara Bahri1 , Philip Pham1 Jinfeng Rao1 , Liu Yang1 , Sebastian Ruder2 , Donald Metzler1 1 Google Research 2 Google DeepMind {yitay, dehghani}@google.com  A BSTRACT Transformers do not scale very well to long sequence lengths largely because of quadratic self-attention complexity. In the recent months, a wide spectrum of efficient, fast Transformers have been proposed to tackle this problem, more often than not claiming superior or comparable model quality to vanilla Transformer models. To this date, there is no well-established consensus on how to evaluate this class of models. Moreover, inconsistent benchmarking on a wide spectrum of tasks and datasets makes it difficult to assess relative model quality amongst many models. This paper proposes a systematic and unified benchmark, Long-Range Arena, specifically focused on evaluating model quality under long-context scenarios. Our benchmark is a suite of tasks consisting of sequences ranging from 1K to 16K tokens, encompassing a wide range of data types and mo
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

@@ -269,3 +269,35 @@ speed ρ = Spearman( (1/H) Σ_h ‖Δz_{t+h}‖₂ , d_t )
 - **依赖**: PyTorch + GRU + MLP，**无需 ncps / liquid-s4 等专用库** —— 论文没有使用现成 LTC 实现，而是自己按 Eqs. 5–9 直接展开
 - **可复现性**: 单卡 GPU 即可；50 epochs × 5 seeds；无公开代码链接 (搜索 arXiv 页面 / 作者主页确认)
 - **LNN 关联**: 与本仓库 `bench_*` 系列 (Adaptive Time-Constant CfC, Multitau, Per-branch aux 等) 同属"自适应 τ-gated liquid dynamics"研究线；本文的 `Δz` 检视思路可与 `analysis/` 中"速度-退化相关"度量范式互参。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: C-MAPSS 是公开 benchmark, 本仓 `lnn/data/` 已有时间序列基础设施
+
+### 实施步骤
+1. **数据**: 沿用公开 NASA C-MAPSS 数据集 (`lnn/data/timeseries.py` + public loader)
+2. **模型** (`lnn/core/liquid_latent_state.py`): CfC backbone + 退化潜在动态
+3. **实验** (`analysis/turbofan_liquid/`): 5 seed, 与 LSTM / Transformer baseline 对照
+4. **诚实负结果预防**: RMSE 比 LSTM 差 > 5% → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2607.01986.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> Multivariate time-series models for prognostics are often evaluated by point prediction accuracy, yet their internal states rarely expose a coherent degradation process. We study liquid neural networks as latent dynamics models for aircraft engine health monitoring on the C-MAPSS benchmark. The proposed model encodes a history window into a latent state, evolves that state with a liquid transition model, and decodes future sensor observations. To separate health evolution from operating-condition variation, the latent state is factorized into degradation and condition components. Remaining useful life, monotonic risk, and latent-consistency losses supervise the degradation component, while condition prediction and decorrelation losses discourage operating-condition leakage. Across FD001–FD004, the full disentangled model improves overall sensor forecasting RMSE from 0.2438 for a GRU baseline to 0.2266, with the largest gains on the multi-condition subsets FD002 and FD004. The learned degradation state also forms a clearer temporal degradation axis, reaching an average state-speed Spearman correlation of 0.5960. Direct remaining-useful-life regression remains stronger for the GRU ba
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

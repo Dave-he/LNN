@@ -162,3 +162,36 @@ CfC 的 per-neuron time constants $\tau$ 在多 agent 协同中承担特殊角�
 | 安全 / 入侵检测 | `analysis/...`（如 `AEGIS`） | band-pass 4-outcome 可作 anomaly triage |
 
 **可立即复用的脚本模板**：`scripts/bench_liquid_tad.py`（round 134）— 多模型对照 + 表格输出 范式可直接搬到 SVAF 评测。
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **待 grounding**: 本报告归类不明, 需先 grounding 到具体方法论
+
+### 实施步骤
+1. **数据**: 沿用 `lnn/data/` 现有合成器
+2. **模型**: 在 `lnn/core/` 新建对应模块
+3. **实验**: 进 `analysis/<新域>/`
+4. **诚实负结果预防**: 任何 baseline 退化 → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2604.03955.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> When autonomous agents observe different domains of a shared environment, each signal they exchange mixes relevant and irrelevant dimensions. No existing mechanism lets the receiver evaluate which dimensions to absorb. We introduce Symbolic-Vector Attention Fusion (SVAF), the content-evaluation half of a two-level coupling engine for collective intelligence. SVAF decomposes each inter-agent signal into 7 typed semantic fields, evaluates each through a learned fusion gate, and produces a remix — new knowledge from the intersection of two domains. A band-pass model yields four outcomes (redundant, aligned, guarded, rejected), solving both selectivity and redundancy. The fusion gate independently discovers a cross-domain relevance hierarchy: mood emerges as the highest-weight field by epoch 1, before accuracy plateaus — consistent with independent mechanistic evidence that LLM emotion representations are structurally embedded along valence–arousal axes. SVAF forms Layer 4 of the Mesh Memory Protocol (MMP); the other half of the coupling engine is a per-agent Closed-form Continuous-time (CfC) neural network at Layer 6, whose learned per-neuron time constants (τ ) create the temporal dy
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

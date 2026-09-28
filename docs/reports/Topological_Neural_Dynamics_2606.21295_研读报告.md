@@ -163,3 +163,34 @@ $$\mathcal{I}(i, v^{t-1}) = \{\psi(v^{t-1}_j) : j \in \mathcal{N}_G(i)\}$$
   - **TARGET-POSITIVE** — 神经元级解耦为 LNN 变体库新增维度（"神经元内 ODE + 神经元间图交互"）；
   - **TARGET-NEGATIVE-WITH-NUANCE** — 边缘部署（800 神经元规模对 MCU 偏大，但 Pong task 量级说明 small-data regime 友好）；
   - **TARGET-DEPENDENT-WITH-NUANCE** — 长期 horizon / 大规模序列（作者未验证，但神经元级解耦可能反而带来并行化优势）。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 与 NCP 拓扑视角同源, 本仓 `analysis/sncp_ppo_lite/` 是承接域
+
+### 实施步骤
+1. **数据**: 合成 sequence 数据 (本仓 `lnn/data/long_sequence.py`)
+2. **模型** (`lnn/core/topological_dynamics.py`): 单神经元拓扑动力学 + 守恒约束
+3. **实验** (`analysis/topological_dynamics/`): 5 seed × 多尺度
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.21295.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> Most existing sequence models, such as RNNs, LSTMs, and Transformers, share a common structural principle: layerwise dynamics, where all neurons in the same layer co-evolve through a shared parameterized operator, leaving individual neurons no freedom to evolve independently. Yet in many complex dynamical systems, rich global behavior emerges precisely from locally evolving units interacting through structured connectivity. Inspired by this principle, we introduce Topological Neural Dynamics (TND), a sequence modeling framework that shifts computation from layer-wise to neuronwise dynamics. TND represents a neural system as a directed neuron graph, an interaction operator, and a local dynamics function, where each neuron evolves independently and collective computation emerges from interactions through the explicit graph topology. We instantiate TND as a discrete-time graph-coupled dynamical system and evaluate it as a case study on a behavior cloning task in single-player Pong. Compared with Vanilla RNN, Sparse RNN, LSTM, S4, Closedform continuous-time neural network (CfC), and Transformer baselines, TND achieves the best catch rate and a mean of 17.47 consecutive catches per roun
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

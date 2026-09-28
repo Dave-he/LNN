@@ -39,6 +39,16 @@ ARXIV_TERMS = [
     "liquid structural state-space",
 ]
 
+# RSS fallback categories — used when /api/query is throttled by Varnish (HTTP 406).
+# These mirror the categories most likely to contain LNN / Neural ODE papers.
+ARCHIVE_RSS_CATEGORIES = [
+    "cs.LG",
+    "cs.AI",
+    "cs.NE",
+    "cs.RO",
+    "cs.SY",
+]
+
 GITHUB_QUERIES = [
     '"liquid neural network"',
     '"liquid neural networks"',
@@ -162,6 +172,67 @@ def fetch_arxiv(max_results: int) -> list[dict[str, Any]]:
                 "keyword_score": score,
             }
         )
+    return papers
+
+
+def fetch_arxiv_rss(max_results: int) -> list[dict[str, Any]]:
+    """Fallback to arXiv category RSS feeds when /api/query is throttled (HTTP 406).
+
+    Walks each category in ARCHIVE_RSS_CATEGORIES, extracts <item> entries, applies
+    the same keyword filter, dedups by arxiv id. RSS feeds return atom-style items
+    so parsing mirrors fetch_arxiv() but iterates ``atom:item`` inside ``rss/channel``.
+    """
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    seen: set[str] = set()
+    papers: list[dict[str, Any]] = []
+    for category in ARCHIVE_RSS_CATEGORIES:
+        url = f"https://export.arxiv.org/rss/{category}"
+        try:
+            feed = request_text(url)
+        except Exception as exc:
+            print(f"[warn] RSS fetch failed for {category}: {exc}", file=sys.stderr)
+            continue
+        try:
+            root = ET.fromstring(feed)
+        except ET.ParseError as exc:
+            print(f"[warn] RSS parse failed for {category}: {exc}", file=sys.stderr)
+            continue
+        channel = root.find("channel")
+        if channel is None:
+            continue
+        for item in channel.findall("item"):
+            title = clean_text(item.findtext("title", default=""))
+            summary = clean_text(item.findtext("description", default=""))
+            score = keyword_score(title, summary)
+            if score <= 0:
+                continue
+            link = clean_text(item.findtext("link", default=""))
+            arxiv_id = arxiv_id_from_url(link)
+            if not arxiv_id or arxiv_id in seen:
+                continue
+            seen.add(arxiv_id)
+            authors_raw = clean_text(item.findtext("author", default=""))
+            authors = [authors_raw] if authors_raw else []
+            pub = clean_text(item.findtext("pubDate", default=""))
+            papers.append(
+                {
+                    "id": arxiv_id,
+                    "title": title,
+                    "authors": authors,
+                    "published": pub[:10],
+                    "updated": "",
+                    "summary": summary,
+                    "categories": [category],
+                    "abs_url": link,
+                    "pdf_url": link.replace("/abs/", "/pdf/") if "/abs/" in link else "",
+                    "keyword_score": score,
+                    "source": f"rss:{category}",
+                }
+            )
+            if len(papers) >= max_results:
+                break
+        if len(papers) >= max_results:
+            break
     return papers
 
 
@@ -496,12 +567,28 @@ def main() -> int:
             previous_payload = {}
 
     errors: list[str] = []
+    papers: list[dict[str, Any]] = []
     try:
         papers = fetch_arxiv(args.max_results)
+        if not papers:
+            raise RuntimeError("arXiv /api/query returned 0 papers (likely HTTP 406 throttle)")
     except Exception as exc:
-        papers = []
-        errors.append(f"arXiv fetch failed: {exc}")
-        print(f"[warn] {errors[-1]}", file=sys.stderr)
+        primary_error = f"arXiv /api/query failed: {exc}"
+        print(f"[warn] {primary_error}", file=sys.stderr)
+        errors.append(primary_error)
+        # Fallback to RSS feeds (less likely to be Varnish-throttled).
+        try:
+            rss_papers = fetch_arxiv_rss(args.max_results)
+            if rss_papers:
+                papers = rss_papers
+                errors.append(
+                    f"arXiv RSS fallback recovered {len(rss_papers)} papers across "
+                    f"{', '.join(ARCHIVE_RSS_CATEGORIES)}"
+                )
+            else:
+                errors.append("arXiv RSS fallback returned 0 papers (likely weekend or empty category)")
+        except Exception as rss_exc:
+            errors.append(f"arXiv RSS fallback failed: {rss_exc}")
 
     repos = []
     if not args.skip_github:

@@ -156,3 +156,35 @@ $$
 
 ## 8. Verdict
 **TARGET-DEPENDENT-WITH-NUANCE** — 对"边缘机器人 scanpath 预测"这是 **NEGATIVE-on-CfC-overall (cf. paper) but POSITIVE-on-deployability**: 论文的 6.42× 加速 + 99.40% GFLOPs 节省在 Jetson 上得到真实验证, 但**没有干净地把 CfC vs 其他 LNN 变体的 isolated 收益拆出来**, 且 RNN ablation 的 backbone 不一致削弱了论文主张。对本仓而言, 价值在于: (a) **又一个 CfC 在真实机器人上跑通的案例**, (b) **scanpath + active-camera 的 RL 奖励设计范式** ($h_t$ 项), 可迁移到本仓的 edge LNN 部署实验。
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 时序预测, 本仓 `lnn/data/timeseries.py` 已有基础
+
+### 实施步骤
+1. **数据**: 合成 gaze scanpath 时序 (本仓已有基础)
+2. **模型** (`lnn/core/gazelnn.py`): CfC + 边缘可部署 (hidden=8)
+3. **实验** (`analysis/gazelnn/`): 5 seed × 3 noise, 边缘 latency benchmark
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.20491.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Fast Human Attention Prediction for Fixation-guided Active Perception in Autonomous Navigation  arXiv:2606.20491v1 [cs.RO] 18 Jun 2026  Fatma Youssef Mohammed∗ , Grzegorz Malczyk∗ , and Kostas Alexis Abstract— Human visual attention relies on structured scanpaths to efficiently process scenes, yet instilling this behavior into robot autonomy is in its infancy and hindered by the high computational costs of existing predictive models. To address this, we introduce GazeLNN, a computationally lightweight scanpath prediction model that leverages Liquid Neural Networks as its recurrent engine and employs MobileNetV3 for feature extraction. Operating auto-regressively, the architecture predicts sequential fixation heatmaps conditioned on the current visual stimulus and fixation history. Despite requiring only 0.61 GFLOPs, GazeLNN achieves state-of-the-art performance on the MIT Low Resolution dataset achieving 0.47 ScanMatch score. It outperforms existing recurrent baselines across diverse evaluation metrics, while reducing computational costs by 99.40% and accelerating inference by up to six times. To investigate the role of human attention modeling in robot autonomy and demonstrate the
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

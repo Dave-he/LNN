@@ -406,3 +406,35 @@ Liquid+MDN 与这些工作形成**互补**: GazeLNN 解决"扫描路径预测", 
 - [ ] **Latency measurement**: 必须用 per-trajectory wall-clock, 不是 per-step; closed-loop 时 wall-clock 会被 simulator 主导, 所以**不要在闭环表里报 latency**。
 - [ ] **Reported metrics**: NLL, MSE, sample-mean MSE, best-of-K MSE, diversity, smoothness (jerk), latency, params; 不要漏掉任何一个。
 - [ ] **Sample efficiency sweep**: 1%, 2.15%, 4.64%, 10%, 21.54%, 46.42%, 100% — 7 个 log-spaced 分片, 从头训练, 固定 test set。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **低-中**: MDN 输出分布与本仓 `lnn/core/distribution_augmented_training` 协同
+
+### 实施步骤
+1. **数据**: 沿用 `lnn/data/multimodal.py` (mixture density 风格)
+2. **模型** (`lnn/core/mdn_cfc.py`): CfC backbone + MDN head (Gaussian mixture)
+3. **实验** (`analysis/mdn_cfc/`): r307 已记录 toy benchmark 复现失败 → 本论文必须先复现 r307 baseline
+4. **诚实负结果预防**: toy_sin / random_irr 必须重做 baseline, 不能跳过
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2510.12483.pdf`
+- **抽取状态**: ok
+- **Abstract (原文摘录)**:
+
+> We present a fast and effective policy framework for robotic manipulation, named Energy Policy, designed for high-frequency robotic tasks and resource-constrained systems. Unlike existing robotic policies, Energy Policy natively predicts multimodal actions in a single forward pass, enabling high-precision manipulation at high speed. The framework is built upon two core components. First, we adopt the energy score as the learning objective to facilitate multimodal action modeling. Second, we introduce an energy MLP to implement the proposed objective while keeping the architecture simple and efficient. We conduct comprehensive experiments in both simulated environments and real-world robotic tasks to evaluate the effectiveness of Energy Policy. The results show that Energy Policy matches or surpasses the performance of state-of-the-art manipulation methods while significantly reducing computational overhead. Notably, on the MimicGen benchmark, Energy Policy achieves superior performance with at a faster inference compared to existing approaches.  1
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

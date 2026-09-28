@@ -245,3 +245,36 @@ $$\text{TTC} = 0.5 \cdot \frac{D_M(H(t))}{\|v(t)\|} + 0.5 \cdot \text{MLP}_{ttc}
 - **TARGET-NEGATIVE-WITH-NUANCE** — 二分类实验 + 3 seed + F1 标准差偏大，统计证据偏弱；
 - **TARGET-NEGATIVE-WITH-NUANCE** — 未开源代码、未公开数据集、协方差对角近似，完整复现需自行实现；
 - **TARGET-DEPENDENT-WITH-NUANCE** — 三状态建模、跨数据集、CfC 对照留作未来工作，本仓可作为跟进方向。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 本仓 LTC 基础在 `lnn/core/liquid_time_constant.py` 系列
+- 与 CfC 对比维度: 求解器开销 / 闭式可微 / 训练稳定性
+
+### 实施步骤
+1. **数据生成器** (`lnn/data/ltc_xxx_synth.py`): 沿用 `lnn/data/timeseries.py`
+2. **模型**: 在 `lnn/core/ltc_xxx.py` 套用本仓 LTC backbone
+3. **实验** (`analysis/ltc_xxx/`): 5 seed × 多 regime, 与 CfC head-to-head
+4. **诚实负结果预防**: 求解器慢 / gradient 爆炸 → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2607.12909.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> 1  Real-time fall detection based on vision for low-power edge platforms  arXiv:2607.12909v1 [q-bio.NC] 14 Jul 2026  Wenjun Xia, Zhicheng Peng, Haopeng Li, and Zhengdi Zhang  Abstract—Falling detection is vital for elderly care and intelligent surveillance; however, prevailing vision-based approaches predominantly frame it as static pose classification or discrete temporal pattern matching, fundamentally overlooking the instability dynamics of the human support system. This paper proposes a physics-informed falling detection framework that recasts falling as a stability-loss event in a coupled dynamical system. We introduce a novel dual-LTC architecture comprising a Center-of-Mass (CoM) subsystem and a Base-of-Support (BoS) subsystem, both instantiated as Liquid Time-Constant (LTC) neural networks to continuously model inertial trajectory evolution and ground-contact adjustment through adaptive time constants, Physical interpretability of falling motion. A learnable coupling module emulates physical interaction between the two subsystems, while a Stability Manifold classifier operates in the joint latent space to detect boundary crossing via Lyapunovinspired stability metrics. Comp
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

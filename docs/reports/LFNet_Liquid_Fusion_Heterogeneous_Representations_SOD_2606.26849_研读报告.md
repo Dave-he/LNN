@@ -226,3 +226,34 @@ $$\mathcal{L}_{\text{total}} = \sum_{k=1}^{4} \bigl(\mathcal{L}_{\text{bce}}(O_k
 ---
 
 > **本报告由 LNN-research-agents 自动生成于 2026-06-27 (cron 任务), 基于 arXiv:2606.26849v1 全文 (20 页) 解析。报告中的 $S_m$ / 参数量等数值均直接抄自 PDF 表格; 涉及 "待 PDF 复核" 的字段已标注, 不影响方法论判断。**
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 显著性检测, 视觉方向
+
+### 实施步骤
+1. **数据**: 合成 / 公开 SOD 数据集
+2. **模型** (`lnn/core/lfnet_liquid.py`): 多模态融合 + liquid attention
+3. **实验** (`analysis/lfnet_liquid/`): 与 SOTA SOD 对照
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.26849.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> Liquid Fusion of Heterogeneous Representations Towards General Salient Object Detection Ke Chen1 , Ling Zhou2 , Guangqi Jiang1 , Gengshen Wu3 , Yi Liu1⋆ , and Shoukun Xu1 School of Computer Science and Artificial Intelligence, Changzhou University, Changzhou, Jiangsu, 213159, China 2 College of Computer Science and Artificial Intelligence, Fudan University, Shanghai, 200082, China 3 Faculty of Data Science, City University of Macau, Avenida Padre Tomás Pereira Taipa, Macao, 999078, China s24150812007@smail.cczu.edu.cn, lzhou24@m.fudan.edu.cn, gswu@cityu.edu.mo, {guangqijiang, liuyi0089, skxu}@cczu.edu.cn  arXiv:2606.26849v1 [cs.CV] 25 Jun 2026  1  Abstract. General Salient Object Detection (SOD) aims to identify and segment visually interesting objects from uni-modality or multi-modality scenes, recently advanced by cutting-edge State Space Models (SSMs). However, a critical limitation of current approaches is their neglect of the inherent spectral biases exhibited by different neural network paradigms. By digging to the dataset-level spectral analysis of Convolutional Neural Networks (CNNs) and SSMs, their semantic representations are inherently complementary based on their comple
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

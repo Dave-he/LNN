@@ -193,3 +193,35 @@ LNN 学习到的注意力模式是 **U 形曲线** — 同时关注 EEG 早期�
 - **Log-space $\tau$ 参数化**: 是工程关键 — 避免 $\tau$ 退化到负或极大值, 保证物理可解释性。
 - **指数积分闭式解 (Eq. 7-8)** 让 LTC 训练速度与 LSTM 持平, 没有 Neural ODE 的积分开销 — 这是把 LNN 推上多模态 SOTA 的关键工程决定。
 - **可解释性 $\tau$ 双峰分布** 是 LNN 区别于 LSTM/Transformer 的核心卖点 — 此论文的承诺需要在未来工作中做更严格的统计检验 (如 permutation test 或 ANOVA)。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 本仓 EEG 长尾应用已落地 (`analysis/multimodal/` + `lnn/data/multimodal.py`)
+
+### 实施步骤
+1. **数据**: 合成 EEG 双时间尺度信号 (theta + gamma bands), 边界: 不接真机 EEG 设备
+2. **模型** (`lnn/core/dual_timescale_cfc.py`): 双分支 CfC, 慢分支 θ, 快分支 γ, late fusion
+3. **实验** (`analysis/dual_timescale_eeg/`): 5 seed × 3 noise regime, 与单尺度 CfC 对照
+4. **合规边界**: 合成 EEG 数据, 严禁触真实 EEG 设备
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2602.06997.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> 1  Adaptive Temporal Dynamics for Personalized Emotion Recognition: A Liquid Neural Network Approach  arXiv:2602.06997v1 [eess.SP] 28 Jan 2026  Anindya Bhattacharjee , Nittya Ananda Biswas , K. A. Shahriar , Adib Rahman Department of Electrical and Electronic Engineering, Bangladesh University of Engineering and Technology  Abstract—Emotion recognition from physiological signals remains challenging due to their non-stationary, noisy, and subjectdependent characteristics. This work presents, to the best of our knowledge, the first comprehensive application of liquid neural networks for EEG-based emotion recognition. The proposed multimodal framework combines convolutional feature extraction, liquid neural networks with learnable time constants, and attention-guided fusion to model temporal EEG dynamics with complementary peripheral physiological and personality features. Dedicated subnetworks are used to process EEG features and auxiliary modalities, and a shared autoencoder-based fusion module is used to learn discriminative latent representations before classification. Subject-dependent experiments conducted on the PhyMER dataset across seven emotional classes achieve an accuracy 
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

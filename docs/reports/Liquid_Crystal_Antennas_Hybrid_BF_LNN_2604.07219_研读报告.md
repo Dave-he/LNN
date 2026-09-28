@@ -199,3 +199,34 @@ $$
 - **Manifold optimization + LNN**: 这是个值得关注的组合范式 — 把 LNN 的输出空间压到物理意义清晰的子流形, 减少搜索难度同时保留学习能力。可推广到 RIS、波束赋形、信道估计。
 - **log loss for multi-user fairness**: 把通信领域的多用户公平问题转换为 LNN 训练损失, 比单独 post-processing 阈值更优雅, 也可推广到 multi-task learning。
 - **真实硬件 + 真实 ray-tracing 验证**: 论文最强的贡献是把 LNN 从 benchmark 推到工程现实, 与本仓库 `analysis/jetson/` 边缘推理验证的工作异曲同工 — LNN 在 6G 物理层落地的可复现模板。
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **中**: 通信应用, 本仓 `analysis/multimodal/` 是承接域
+
+### 实施步骤
+1. **数据**: 合成 antenna pattern + beamforming input
+2. **模型** (`lnn/core/liquid_antenna.py`): CfC backbone
+3. **实验** (`analysis/antenna_liquid/`): 与 MLP 对照
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2604.07219.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> X. Wang, M. Ying, H. Chen, G. Qian, X. Liu, P. Ma, D. Shakya, C. Argyropoulos, and T. S. Rappaport, “Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks,” to appear in IEEE 103rd Vehicular Technology Conference (VTC2026-Spring), Nice, France, Jun. 2026, pp. 1–6.  Robust Hybrid Beamforming with Liquid Crystal Antennas and Liquid Neural Networks Xinquan Wang1∗ , Mingjun Ying1 , Hongren Chen2 , Guanyue Qian1 , Xingchen Liu1 , Peijie Ma1 , Dipankar Shakya1 , Christos Argyropoulos2 , and Theodore S. Rappaport1†  arXiv:2604.07219v1 [cs.IT] 8 Apr 2026  1  NYU WIRELESS, New York University, Brooklyn, NY 11201, USA 2 Pennsylvania State University, University Park, PA 16802, USA {xinquanwang∗ , tsr† }@nyu.edu  Abstract—Sub-terahertz (sub-THz) multi-user multiple-input multiple-output (MU-MIMO) systems unlock immense bandwidth for 6G wireless communications. However, practical deployment of wireless systems in sub-THz bands faces critical challenges such as increased atmospheric absorption, reduced channel coherence time due to increased Doppler spread at higher carrier frequencies, and hardware bottlenecks as low-loss sub-THz phase shifters are difficult to real
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

@@ -144,3 +144,37 @@ MTS 的三段式：
 | OOD 评测 | `analysis/timeseries_ablation/` | 1-D 序列 OOD，可扩展到 graph |
 
 **可立即复用的脚本模板**：`scripts/bench_liquid_tad.py`（round 134）— 数据生成器 + 多模型对照 + 表格输出 范式可直接搬到 GLTC 评测。
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 本仓 LTC 基础在 `lnn/core/liquid_time_constant.py` 系列
+- 与 CfC 对比维度: 求解器开销 / 闭式可微 / 训练稳定性
+
+### 实施步骤
+1. **数据生成器** (`lnn/data/ltc_xxx_synth.py`): 沿用 `lnn/data/timeseries.py`
+2. **模型**: 在 `lnn/core/ltc_xxx.py` 套用本仓 LTC backbone
+3. **实验** (`analysis/ltc_xxx/`): 5 seed × 多 regime, 与 CfC head-to-head
+4. **诚实负结果预防**: 求解器慢 / gradient 爆炸 → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
+
+
+## PDF Abstract (grounded from papers/arxiv_pdf/) (2026-09-28 升级)
+
+- **PDF 路径**: `papers/arxiv_pdf/2606.15807.pdf`
+- **抽取状态**: no_marker
+- **Abstract (原文摘录)**:
+
+> 1  Continuous Cross-Domain Traffic State Prediction via Memory-Augmented Graph Liquid Time-Constant Networks  arXiv:2606.15807v1 [cs.LG] 14 Jun 2026  Jinrong Xiang and Ming Xu∗  Abstract—Traffic state prediction is a fundamental task in intelligent transportation systems. In practical applications, some regions suffer from limited traffic observations due to insufficient sensing infrastructure, making cross-domain knowledge transfer an important solution for data-scarce traffic prediction. However, existing cross-domain traffic prediction methods still face several limitations, including coarse-grained source-target adaptation, limited capability in handling unseen target-domain patterns, and insufficient modeling of continuous traffic dynamics under irregular or heterogeneous temporal conditions. To address these issues, this paper proposes a continuous cross-domain traffic prediction framework, termed Memory-Augmented Graph Liquid TimeConstant Network (MA-GLTC). Specifically, we first construct spatio-temporal units (STUs) to decompose traffic networks into transferable local units, enabling fine-grained knowledge alignment across domains. Then, a graph liquid time-constant netwo
+
+- **实施路径补充**: 上述 abstract 描述的核心方法已在 `本仓具体实现路径` 段映射到 `lnn/core/` 与 `lnn/data/` 模块. 后续实验落地时, 应引用本段 abstract 验证 main equation / experimental setup 与报告 grounding 数字一致.

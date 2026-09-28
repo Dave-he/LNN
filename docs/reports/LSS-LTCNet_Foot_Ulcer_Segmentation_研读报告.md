@@ -209,3 +209,26 @@ $$
 - 与 LFM2 / Liquid Foundation Models 衔接，把 LTC bottleneck 替换为预训练 liquid 编码器，验证在医疗影像上的 scaling 行为；
 - **mHealth 部署实证**：论文强调 25.70M 参数对 mHealth 友好，但未给出 Jetson / iPhone / 树莓派等端侧延迟 / 功耗数据；
 - 把 BAL 的"梯度对齐"思路推广到其他结构先验 + 连续时间动力学的组合 (例如与 6G 通信中的 Liquid Crystal Antenna 几何先验结合)。
+
+
+## 本仓具体实现路径 (in-house, 合成数据, 2026-09-28 批量化补丁)
+
+### 适配度
+- **高**: 本仓 LTC 基础在 `lnn/core/liquid_time_constant.py` 系列
+- 与 CfC 对比维度: 求解器开销 / 闭式可微 / 训练稳定性
+
+### 实施步骤
+1. **数据生成器** (`lnn/data/ltc_xxx_synth.py`): 沿用 `lnn/data/timeseries.py`
+2. **模型**: 在 `lnn/core/ltc_xxx.py` 套用本仓 LTC backbone
+3. **实验** (`analysis/ltc_xxx/`): 5 seed × 多 regime, 与 CfC head-to-head
+4. **诚实负结果预防**: 求解器慢 / gradient 爆炸 → 进 negative_results
+**合规边界** (沿用 2026-06-09 用户偏好 critical 级 + AGENTS §约束):
+- 仅合成数据 (`lnn/data/<synth>.py` 新建), 不接真机 / ROS / CAN / Modbus / mavlink / BMS / 真实电网
+- 仅 in-house 模型 (基于本仓 `lnn/core/` 现有 ODE / CfC / LTC / 守恒 / 蒸馏栈)
+- 任何负结果 (rollout fold / F1 < baseline / 长尾塌缩) → 进 `analysis/negative_results/` 而非默认报告
+- 严禁触碰 8 条不可重复 claim ([[AGENTS]] §约束), 严禁宣称"AGI / 意识 / SOTA 横扫"
+
+**维护说明**:
+- 本实现路径段为 **standardized 模板**, grounding 到本报告核心方法论
+- 实施时需按本报告 grounding 数字调整 λ, hidden, solver, seed 等超参
+- 一旦实验落地, 把落地结果附在 `analysis/<新域>/<日期>_results.md` 并在本段维护交叉引用
