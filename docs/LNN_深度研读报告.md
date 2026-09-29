@@ -105,6 +105,14 @@ positioning_updated: 2026-09-14
 
 > ⚠️ **添加指南**：出现新论文时，请通过 `Summarization Agent` 生成独立报告到 `docs/reports/` 目录，并在此处追加精简版与链接。
 
+### [2026-09-30] MTLiquid — CfC × Multi-Task for ICU Monitoring (eBRAIN Lab NYU Abu Dhabi)
+- **独立报告**：[[docs/reports/MTLiquid_Multi_Task_LNN_Healthcare_Monitoring_2609.33232_研读报告.md]]
+- **核心问题**：ICU 监护需要同时预测 in-hospital mortality (P12) 与 sepsis early detection (P19), 但传统 SOTA 是"一任务一模型", 边缘部署资源消耗线性增长; 现有 CfC 工作只覆盖单任务, LNN 在多任务场景的可行性从未被研究过.
+- **方法论**：per-task input projection (D_k^in → d=64) + **shared CfC backbone (256 hidden)** + per-task linear head; 训练用 Kendall uncertainty weighting (Eq. 7, learned log-variance per task) + capped-cycling data loader (R=3); 输入侧 GRU-D forward-fill imputation 处理不规则 missing data.
+- **关键公式**：Eq. 1 (LTC ODE) → Eq. 2 (CfC closed-form) → Eq. 3 (forward-fill) → Eq. 4-6 (MTLiquid 双 tanh 候选分支 + sigmoid 时间门) → Eq. 7 (Kendall uncertainty loss); 共 7 个核心公式 + Algorithm 1+2.
+- **关键成果**：**P12 AUROC 0.8418** (vs 单任务 CfC 0.8409, +0.09 pp 持平), **P19 AUROC 0.9379** (vs 单任务 CfC 0.9472, -0.93 pp 持平); **P19 AUPRC 反超 +1.3 pp** (0.7662 vs 0.7532); 模型 **0.40 MB / 105K 参数** (vs 两个独立 CfC 0.71 MB / 188K, -44.1%; vs 两个独立 LSTM 6.83 MB / 1.79M, **-94.1%**); 多任务训练功耗比 LSTM backbone 低 43.1%, 比 RNN backbone 低 36.9%.
+- **对本项目 CfC bench 栈的意义**：MTLiquid 是 **"LNN 单任务 → 多任务"** 的关键桥梁工作; 证明既有 CfC 闭式 cell 已具备跨任务复用能力, 工程技巧是 per-task 边界化 + 数据调度平衡. `bench_cfc.py` / `bench_learned_beta_cfc.py` / `experiment_timeseries.py` 可直接借鉴此 scaffold 扩展到多任务变体 (例如 CmAPSS 退化 + Henry Hub 预测联合, 或 decompensation + LoS + AKI 联合).
+
 ### [2024] Exploring Liquid Neural Networks on Loihi-2
 - **独立报告**：[[docs/reports/Exploring_Liquid_Neural_Networks_on_Loihi-2_研读报告.md]]
 - **核心问题**：将基于连续常微分方程（ODE）的 LNN 算法高效部署在运行离散时间步、资源极其受限的神经拟态芯片（Loihi-2）上面临的软硬件协同适配难题。
@@ -1297,6 +1305,26 @@ positioning_updated: 2026-09-14
   - **GitHub 限流** = 单点不稳，本次 fallback 解决，**但若连续 3 天限流则 digest 的 repo 候选池将冻结**。建议在 cron prompt 里加入"若连续 3 天 GitHub 限流则升级为 advisory"，或给本地缓存加 `papers/daily/repos_cache.json` 跨日累积。
 - **结论**：今日完成 digest 抓取 + 重新生成（绕过 urllib）+ commit + push（6c09e1c → 88b7982）。LNN 主题覆盖率连续 1 周保持 100% 饱和，9 月下半月无新 CfC / LTC / NCP 投稿进 arXiv（推测与 ICML 录用结果公布后作者进入 rebuttal / camera-ready 阶段相关），持续观察 10 月 NeurIPS 投稿窗口。
 
+### [2026-09-30] digest 抓到 MTLiquid (CfC × Multi-Task, 9/27 提交) — 9 月下半月首个新增研读; SSH push 失败 → HTTPS 兜底
+- **digest 入口**：[[docs/daily/2026-09-30_LNN_research_digest.md|每日追踪]]（25 篇 / 41 仓库 / 14 模型，`papers/repos/models: 25/41/14`）。
+- **arXiv 抓取稳定 ✅**：9-26 永久修复 `Accept: application/atom+xml` 后 digest 恢复正常（25 篇 arXiv, 与 9-26 修复后同水平），未见 urllib 406。
+- **`select_papers_for_report.py` 输出**：`{candidates: [{id: 2609.33232v1, score: 8}], n_total_arxiv: 12, n_skipped_reported: 11}`。**MTLiquid 是 9 月下半月首个 score>0 的新候选**（其余 11 篇已被既有 `docs/reports/` 覆盖）。
+- **`paper-analyzer` 技能状态**：cron 提示仍标"not found"（与 9 月全月一致）；今日采用 **LLM 直读 arXiv HTML 全文兜底** 路径：`curl -sL https://arxiv.org/html/2609.33232v1` 拉完整 LaTeXML HTML（204KB，含 7 个核心公式 + Algorithm 1/2 + Table 1/2）→ 按 AGENTS.md SOP 生成独立报告。
+- **生成 1 篇独立研读报告 + 索引追加**：
+  - [[docs/reports/MTLiquid_Multi_Task_LNN_Healthcare_Monitoring_2609.33232_研读报告.md|MTLiquid 研读]]
+- **MTLiquid 核心数字**：
+  - **架构**：per-task input projection (D_k^in → 64) + **shared CfC backbone (256 hidden)** + per-task linear head，是首个把 CfC 推到 ICU 多任务的工作
+  - **P12 AUROC 0.8418** (vs 单任务 CfC 0.8409, +0.09 pp 持平), **P19 AUROC 0.9379** (vs 单任务 CfC 0.9472, -0.93 pp 持平)
+  - **参数数**：105,350 (vs 两个独立 CfC 合计 188K, -44.1%; vs 两个独立 LSTM 合计 1.79M, -94.1%)
+  - **功耗**：多任务 MTLiquid 比 LSTM backbone **低 43.1%**, 比 RNN backbone **低 36.9%**
+  - **训练策略**：Kendall uncertainty weighting (Eq. 7) + capped-cycling data loader (R=3); ablation 显示 forward-fill 是 P12 最大单一增益 (+6.8 pp AUROC), capped-cycling 把 P19 从 `--truncate_to_shorter` 的 0.8799 救回 0.9379
+- **对本项目的位置**：MTLiquid 是 **"LNN 单任务 → 多任务"** 的关键桥梁工作；证明既有 CfC 闭式 cell 已具备跨任务复用能力，工程技巧是 per-task 边界化 + 数据调度平衡。这对本仓 CfC bench 栈 (`bench_cfc.py`, `bench_learned_beta_cfc.py`, `experiment_timeseries.py`) 直接借鉴 — 任何想把 CfC 从单任务扩展到多任务的尝试，只需按本论文 scaffold 实施即可，无需解决"连续时间多任务"开放问题。
+- **同步阻塞点（异常告警 ⚠️ → 已 workaround ✅）**：
+  - **SSH push 5/5 失败**：`git push origin HEAD` 全部 5 次重试均 `Connection to github.com closed by remote host`（GitHub server-side RST，与 8-31 / 8-29 类似；与 cron prompt 描述"SSH 已切"不一致, 怀疑是 GitHub 路由抖动或本机出口 IP 被限速）；`id_github_dave-he` SSH auth 单独 `ssh -T` 测试 OK（"Hi Dave-he! You've successfully authenticated"），SSH 本身没问题，是 git over ssh 的 data channel 被 RST。
+  - **workaround**：临时通过 `git push https://github.com/Dave-he/LNN.git HEAD`（走 127.0.0.1:7890 proxy + `gh auth git-credential`）成功（中间 GH Actions 也插队推了一次 digest，force-fetch + accept 远端 digest + rebase-style commit）。**remote.origin.url 仍为 `git@github.com:Dave-he/LNN.git`**，未改成 HTTPS（按 cron prompt 要求）。
+  - **arXiv 抓取正常 ✅**：9-26 修复稳定生效。
+- **结论**：今日完成 digest 抓取 + 1 篇独立研读报告（MTLiquid, 19.4KB, 10 节）+ 索引追加 + HTTPS 兜底推送。LNN 主题覆盖率连续 1+ 周保持 100% 饱和，9 月下半月首个新增候选已覆盖。**关键工程交付**：MTLiquid scaffold 可直接复用到本仓 CfC bench 栈，建议下次会话启动 `replicate_paper_experiment.py` 的 multi-task 改造。
+
 ### [2026-09-24] arXiv 抓取连续失败 → web_search 兜底 + 既有研读的回顾增量
 - **digest 入口**：[[docs/daily/2026-09-24_LNN_research_digest.md|每日追踪]]
 - **arXiv 抓取失败**：连续第 2 天 `urllib 406 Not Acceptable`（同 2026-09-22 提到的 TLS 指纹问题未修复）。本轮根因进一步定位为 arXiv Varnish 对含 9-term `OR` 长查询的 406 节流；单 term `all:"liquid neural network"` 同 UA 可正常 200 返回。digest `papers=0`。
@@ -1330,7 +1358,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-09-30**：[[docs/daily/2026-09-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 14 个。
+- **2026-09-30**：[[docs/daily/2026-09-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 14 个；研读报告生成 **1 篇** [[docs/reports/MTLiquid_Multi_Task_LNN_Healthcare_Monitoring_2609.33232_研读报告.md|MTLiquid]] (CfC × multi-task, 9 月下半月首个 score>0 新候选; arXiv 抓取稳定 ✅ Accept 修复生效; SSH push 5 次均失败 → HTTPS 兜底推送).
 - **2026-09-29 自动化健康度排查**：调度层健康（timer enabled + Linger=yes，09-16~09-29 连续 14 天 digest/watchlist 无缺口，本地 04:30 与 GH Action 06:30 错峰无 race，HEAD == origin/master `9c0ab41`）；今日研读覆盖率 **25/25**。**异常发现**：Jetson benchmark 于 09-23 起连续 7 天静默 CPU 回退（7/7 报告带「CUDA 回退」且 `device: cpu`，而 08-03/08-04 曾真跑 cuda）。根因是**系统 RAM 耗尽**而非显存不足 —— Orin Nano 统一内存架构下 nvmap 从系统 RAM 划 carve-out，`NvMapMemAllocInternalTagged error 12` 在 CUDA context 创建阶段就失败，而模型仅 2.5K~3.2K 参数。同一脚本 7 小时后手动重跑即 `device: cuda` 成功，证实是内存余量抖动。**诚实边界**：功耗/温度来自 tegrastats 真实传感器仍然有效，但报告中的「推理步/秒、训练秒、测试 MSE」**不是边缘推理性能证据**，不得外推为「LNN 在 Jetson 上快」。已修复 `jetson_lnn_benchmark.py`：报告新增系统内存行 + 回退段显式告警。详见 [[docs/research/2026-09-29_automation_health_audit.md|自动化健康度排查]]。
 - **2026-09-29**：[[docs/daily/2026-09-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
 - **2026-09-28**：[[docs/daily/2026-09-28_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 18 个。
