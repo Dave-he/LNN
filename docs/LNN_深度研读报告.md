@@ -1330,7 +1330,9 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-09-29**：[[docs/daily/2026-09-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
+- **2026-09-29 自动化健康度排查**：调度层健康（timer enabled + Linger=yes，09-16~09-29 连续 14 天 digest/watchlist 无缺口，本地 04:30 与 GH Action 06:30 错峰无 race，HEAD == origin/master `9c0ab41`）；今日研读覆盖率 **25/25**。**异常发现**：Jetson benchmark 于 09-23 起连续 7 天静默 CPU 回退（7/7 报告带「CUDA 回退」且 `device: cpu`，而 08-03/08-04 曾真跑 cuda）。根因是**系统 RAM 耗尽**而非显存不足 —— Orin Nano 统一内存架构下 nvmap 从系统 RAM 划 carve-out，`NvMapMemAllocInternalTagged error 12` 在 CUDA context 创建阶段就失败，而模型仅 2.5K~3.2K 参数。同一脚本 7 小时后手动重跑即 `device: cuda` 成功，证实是内存余量抖动。**诚实边界**：功耗/温度来自 tegrastats 真实传感器仍然有效，但报告中的「推理步/秒、训练秒、测试 MSE」**不是边缘推理性能证据**，不得外推为「LNN 在 Jetson 上快」。已修复 `jetson_lnn_benchmark.py`：报告新增系统内存行 + 回退段显式告警。详见 [[docs/research/2026-09-29_automation_health_audit.md|自动化健康度排查]]。
+
+- **2026-09-29**：[[docs/daily/2026-09-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
 - **2026-09-28**：[[docs/daily/2026-09-28_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 18 个。
 - **2026-09-27**：[[docs/daily/2026-09-27_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 19 个。
 - **2026-09-26**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个；研读报告生成 0 篇（LNN 主题饱和）；本轮 **arXiv 406 永久修复** 落仓（`Accept: application/atom+xml`）。详见 [[docs/LNN_深度研读报告#2026-09-26-arxiv-406-根因--accept-*-而非-tls-指纹永久修复已落仓候选仍空lnn-主题饱和|§2 复盘条目]]。

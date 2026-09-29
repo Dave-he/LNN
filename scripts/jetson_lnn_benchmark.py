@@ -145,6 +145,31 @@ def write_pareto_plot(run_date: str, payload: dict[str, Any], output_dir: pathli
     return plot_path
 
 
+def _read_meminfo() -> dict[str, float]:
+    """Parse /proc/meminfo into MB.
+
+    On Jetson the GPU carve-out is backed by system RAM via nvmap, so a CUDA
+    context fails with `NvMapMemAllocInternalTagged ... error 12` when the box is
+    out of free memory -- which looks like a CUDA OOM but is not one. Recording
+    the numbers here keeps that failure mode distinguishable in the report.
+    """
+    stats: dict[str, float] = {}
+    for line in read_text("/proc/meminfo").splitlines():
+        key, _, rest = line.partition(":")
+        parts = rest.split()
+        if not parts:
+            continue
+        try:
+            stats[key] = round(int(parts[0]) / 1024, 1)
+        except ValueError:
+            continue
+    return {
+        "total_mb": stats.get("MemTotal", 0.0),
+        "free_mb": stats.get("MemFree", 0.0),
+        "available_mb": stats.get("MemAvailable", 0.0),
+    }
+
+
 def detect_environment(torch_module: Any | None = None) -> dict[str, Any]:
     model = read_text("/proc/device-tree/model")
     nv_tegra = read_text("/etc/nv_tegra_release")
@@ -156,6 +181,7 @@ def detect_environment(torch_module: Any | None = None) -> dict[str, Any]:
         "nv_tegra_release": nv_tegra,
         "tegrastats_available": command_output(["which", "tegrastats"]) is not None,
         "jetson_clocks_available": command_output(["which", "jetson_clocks"]) is not None,
+        "system_memory": _read_meminfo(),
     }
     if torch_module is not None:
         env.update(
@@ -236,6 +262,12 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
         f"- PyTorch：{env.get('torch_version') or 'not installed'}",
         f"- CUDA：{env.get('cuda_available')} ({env.get('cuda_version')})",
     ]
+    mem = env.get("system_memory") or {}
+    if mem.get("total_mb"):
+        lines.append(
+            f"- 系统内存：total {mem['total_mb']:.0f} MB / free {mem['free_mb']:.0f} MB / "
+            f"available {mem['available_mb']:.0f} MB"
+        )
     if env.get("nv_tegra_release"):
         lines.extend(["- Jetson BSP：", "", "```text", env["nv_tegra_release"], "```"])
     else:
@@ -388,6 +420,8 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
                     "## CUDA 回退",
                     "- 本次优先尝试 Jetson CUDA 路径，但 CUDA 运行时返回内存/加速器错误，"
                     "已自动回退到 CPU smoke benchmark。",
+                    "- ⚠️ 下表的**速度与精度不是边缘推理性能证据**，只是 CPU smoke；"
+                    "上方功耗/温度采样仍来自真实 Jetson 传感器，有效。",
                     "- 回退原因：",
                     "",
                     "```text",
