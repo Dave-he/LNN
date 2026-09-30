@@ -1,0 +1,326 @@
+{
+  "status": "ok_cpu_fallback",
+  "generated_at": "2026-09-30T20:39:50.294856+00:00",
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.10.12",
+    "device_tree_model": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
+    "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "tegrastats_available": true,
+    "jetson_clocks_available": true,
+    "system_memory": {
+      "total_mb": 7619.8,
+      "free_mb": 109.4,
+      "available_mb": 4496.1
+    },
+    "torch_version": "2.10.0",
+    "cuda_available": true,
+    "cuda_version": "12.6",
+    "cudnn_version": 90300,
+    "cuda_device": {
+      "name": "Orin",
+      "total_memory_mb": 7619.78,
+      "multi_processor_count": 8
+    }
+  },
+  "device": "cpu",
+  "config": {
+    "samples": 384,
+    "seq_len": 48,
+    "hidden_size": 24,
+    "epochs": 3,
+    "batch_size": 64,
+    "lr": 0.003,
+    "seed": 42
+  },
+  "results": [
+    {
+      "name": "CfCStyle",
+      "parameters": 2521,
+      "test_mse": 0.3129754662513733,
+      "train_seconds": 1.1372990939999,
+      "inference_steps_per_sec": 141676.30843713394,
+      "energy_mj_per_step": 0.05551948051948052
+    },
+    {
+      "name": "LTC",
+      "parameters": 1321,
+      "test_mse": 0.46435126662254333,
+      "train_seconds": 3.7931166350026615,
+      "inference_steps_per_sec": 37744.16069933958,
+      "energy_mj_per_step": 0.20808982683982685
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 3170,
+      "test_mse": 0.28447896242141724,
+      "train_seconds": 1.6176526040071622,
+      "inference_steps_per_sec": 91625.09735297215,
+      "energy_mj_per_step": 0.11868912337662338
+    },
+    {
+      "name": "GRU",
+      "parameters": 1969,
+      "test_mse": 0.39430785179138184,
+      "train_seconds": 0.5013673520006705,
+      "inference_steps_per_sec": 400946.91155209474
+    }
+  ],
+  "tegrastats_summary": {
+    "available": true,
+    "n_samples": 74,
+    "duration_s": 7.9608,
+    "interval_ms": 100,
+    "power_mw": {
+      "VDD_IN": {
+        "mean": 6704.2,
+        "peak": 8492,
+        "min": 6160
+      },
+      "VDD_CPU_GPU_CV": {
+        "mean": 2019.1,
+        "peak": 3775,
+        "min": 1517
+      },
+      "VDD_SOC": {
+        "mean": 1480.2,
+        "peak": 1517,
+        "min": 1472
+      }
+    },
+    "energy_mj": {
+      "VDD_IN": 53371.1,
+      "VDD_CPU_GPU_CV": 16073.3,
+      "VDD_SOC": 11783.4
+    },
+    "temp_c": {
+      "cpu": {
+        "mean": 48.44,
+        "peak": 49.718
+      },
+      "soc2": {
+        "mean": 47.24,
+        "peak": 47.843
+      },
+      "soc0": {
+        "mean": 47.92,
+        "peak": 48.125
+      },
+      "gpu": {
+        "mean": 48.76,
+        "peak": 49.343
+      },
+      "tj": {
+        "mean": 48.83,
+        "peak": 49.781
+      },
+      "soc1": {
+        "mean": 48.07,
+        "peak": 48.531
+      }
+    },
+    "gpu_util_pct": {
+      "mean": 0.0,
+      "peak": 0
+    },
+    "ram_used_mb": {
+      "mean": 4175.1,
+      "peak": 4186
+    }
+  },
+  "model_tegrastats": {
+    "CfCStyle": {
+      "available": true,
+      "n_samples": 1,
+      "duration_s": 0.1315,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 6240.0,
+          "peak": 6240,
+          "min": 6240
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 1597.0,
+          "peak": 1597,
+          "min": 1597
+        },
+        "VDD_SOC": {
+          "mean": 1480.0,
+          "peak": 1480,
+          "min": 1480
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 820.8,
+        "VDD_CPU_GPU_CV": 210.1,
+        "VDD_SOC": 194.7
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 47.84,
+          "peak": 47.843
+        },
+        "soc2": {
+          "mean": 47.06,
+          "peak": 47.062
+        },
+        "soc0": {
+          "mean": 47.84,
+          "peak": 47.843
+        },
+        "gpu": {
+          "mean": 48.59,
+          "peak": 48.593
+        },
+        "tj": {
+          "mean": 48.59,
+          "peak": 48.593
+        },
+        "soc1": {
+          "mean": 47.94,
+          "peak": 47.937
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 4174.0,
+        "peak": 4174
+      }
+    },
+    "LTC": {
+      "available": true,
+      "n_samples": 4,
+      "duration_s": 0.493,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 6240.0,
+          "peak": 6240,
+          "min": 6240
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 1587.0,
+          "peak": 1597,
+          "min": 1557
+        },
+        "VDD_SOC": {
+          "mean": 1480.0,
+          "peak": 1480,
+          "min": 1480
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 3076.4,
+        "VDD_CPU_GPU_CV": 782.4,
+        "VDD_SOC": 729.6
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 48.54,
+          "peak": 48.75
+        },
+        "soc2": {
+          "mean": 47.19,
+          "peak": 47.218
+        },
+        "soc0": {
+          "mean": 47.99,
+          "peak": 48.125
+        },
+        "gpu": {
+          "mean": 48.73,
+          "peak": 48.843
+        },
+        "tj": {
+          "mean": 48.74,
+          "peak": 48.843
+        },
+        "soc1": {
+          "mean": 48.05,
+          "peak": 48.187
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 4177.0,
+        "peak": 4177
+      }
+    },
+    "PDNAPulse": {
+      "available": true,
+      "n_samples": 1,
+      "duration_s": 0.2076,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 8452.0,
+          "peak": 8452,
+          "min": 8452
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 3775.0,
+          "peak": 3775,
+          "min": 3775
+        },
+        "VDD_SOC": {
+          "mean": 1475.0,
+          "peak": 1475,
+          "min": 1475
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 1754.7,
+        "VDD_CPU_GPU_CV": 783.7,
+        "VDD_SOC": 306.2
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 49.56,
+          "peak": 49.562
+        },
+        "soc2": {
+          "mean": 47.81,
+          "peak": 47.812
+        },
+        "soc0": {
+          "mean": 48.19,
+          "peak": 48.187
+        },
+        "gpu": {
+          "mean": 49.19,
+          "peak": 49.187
+        },
+        "tj": {
+          "mean": 49.56,
+          "peak": 49.562
+        },
+        "soc1": {
+          "mean": 48.31,
+          "peak": 48.312
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 4183.0,
+        "peak": 4183
+      }
+    },
+    "GRU": {
+      "available": false,
+      "reason": "tegrastats produced no parseable samples (window too short? try a longer run or smaller --interval)",
+      "n_samples": 0
+    }
+  },
+  "cuda_fallback_reason": "RuntimeError: CUDA error: CUBLAS_STATUS_ALLOC_FAILED when calling `cublasCreate(handle)`"
+}
