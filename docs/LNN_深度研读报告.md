@@ -1358,6 +1358,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-10-02**：[[docs/daily/2026-10-02_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 18 个。
 - **2026-10-01**：[[docs/daily/2026-10-01_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 - **2026-09-30**：[[docs/daily/2026-09-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 14 个；研读报告生成 **1 篇** [[docs/reports/MTLiquid_Multi_Task_LNN_Healthcare_Monitoring_2609.33232_研读报告.md|MTLiquid]] (CfC × multi-task, 9 月下半月首个 score>0 新候选; arXiv 抓取稳定 ✅ Accept 修复生效; SSH push 5 次均失败 → HTTPS 兜底推送).
 - **2026-09-29 自动化健康度排查**：调度层健康（timer enabled + Linger=yes，09-16~09-29 连续 14 天 digest/watchlist 无缺口，本地 04:30 与 GH Action 06:30 错峰无 race，HEAD == origin/master `9c0ab41`）；今日研读覆盖率 **25/25**。**异常发现**：Jetson benchmark 于 09-23 起连续 7 天静默 CPU 回退（7/7 报告带「CUDA 回退」且 `device: cpu`，而 08-03/08-04 曾真跑 cuda）。根因是**系统 RAM 耗尽**而非显存不足 —— Orin Nano 统一内存架构下 nvmap 从系统 RAM 划 carve-out，`NvMapMemAllocInternalTagged error 12` 在 CUDA context 创建阶段就失败，而模型仅 2.5K~3.2K 参数。同一脚本 7 小时后手动重跑即 `device: cuda` 成功，证实是内存余量抖动。**诚实边界**：功耗/温度来自 tegrastats 真实传感器仍然有效，但报告中的「推理步/秒、训练秒、测试 MSE」**不是边缘推理性能证据**，不得外推为「LNN 在 Jetson 上快」。已修复 `jetson_lnn_benchmark.py`：报告新增系统内存行 + 回退段显式告警。详见 [[docs/research/2026-09-29_automation_health_audit.md|自动化健康度排查]]。
@@ -1387,5 +1388,4 @@ positioning_updated: 2026-09-14
 - **2026-09-09**：[[docs/daily/2026-09-09_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 21 个。
 - **2026-09-08**：[[docs/daily/2026-09-08_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 11 个，模型 17 个。
 - **2026-09-07**：[[docs/daily/2026-09-07_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 18 个。
-- **2026-09-06**：[[docs/daily/2026-09-06_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 23 个。
 <!-- daily-lnn-index:end -->
