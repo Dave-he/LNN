@@ -1358,6 +1358,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-10-03**：[[docs/daily/2026-10-03_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 33 个，模型 13 个。
 - **2026-10-02**：[[docs/daily/2026-10-02_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 18 个。
 - **2026-10-01**：[[docs/daily/2026-10-01_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 - **2026-09-30**：[[docs/daily/2026-09-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 14 个；研读报告生成 **1 篇** [[docs/reports/MTLiquid_Multi_Task_LNN_Healthcare_Monitoring_2609.33232_研读报告.md|MTLiquid]] (CfC × multi-task, 9 月下半月首个 score>0 新候选; arXiv 抓取稳定 ✅ Accept 修复生效; SSH push 5 次均失败 → HTTPS 兜底推送).
@@ -1387,5 +1388,4 @@ positioning_updated: 2026-09-14
 - **2026-08-31**：[[docs/daily/2026-08-31_LNN_research_digest.md|每日追踪]]，候选论文 25 篇（digest 列出 12 篇；JSON 全集中 3 篇 DynPMNN/LSS-LTCNet/PDNA 已被 GH Actions [[docs/reports/Physics-Modeled_Neural_Networks_DynPMNN_研读报告.md|覆盖]]），仓库 40 个，模型 21 个。
 - **2026-09-09**：[[docs/daily/2026-09-09_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 21 个。
 - **2026-09-08**：[[docs/daily/2026-09-08_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 11 个，模型 17 个。
-- **2026-09-07**：[[docs/daily/2026-09-07_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 18 个。
 <!-- daily-lnn-index:end -->
