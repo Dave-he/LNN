@@ -1356,36 +1356,21 @@ positioning_updated: 2026-09-14
 - **结论**：今日完成 (1) arXiv 406 根因确诊 + 永久修复 (2) digest 抓取（25 篇）+ commit + push (3) 0 候选复核 (4) 研读报告生成跳过 (LNN 主题饱和)。LNN 主题覆盖率连续 1+ 周保持 100% 饱和。**关键工程交付**：`daily_lnn_research.py:request_text` 的 Accept 修复应终结过去 5 天（9-22/09-23/09-24/09-25/09-26）的 arXiv 406 死循环。
 
 <!-- daily-lnn-index:start -->
+## 4. 自动化追踪与待研读队列
 
-### [2026-10-06] LNN 主题饱和（无新增候选）；SSH fetch 抖动 5/5 → pull --rebase 兜底；push 第 3 次成功
+- **2026-10-07**：[[docs/daily/2026-10-07_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 20 个。
 - **digest 入口**：[[docs/daily/2026-10-06_LNN_research_digest.md|每日追踪]]（24 篇 / 41 仓库 / 17 模型，`papers/repos/models: 24/41/17`）。
 - **arXiv 抓取稳定 ✅**：9-26 `Accept: application/atom+xml` 永久修复仍生效，无 406 复发；digest 24 篇（与 10-01~10-05 持平）。
 - **`select_papers_for_report.py` 输出**：`{candidates: [], n_total_arxiv: 12, n_skipped_reported: 12}`——12 篇 arXiv 候选 **100% 已被既有 `docs/reports/` 覆盖**：
-  - 2609.33232 (MTLiquid) → [[docs/reports/MTLiquid_Multi_Task_LNN_Healthcare_Monitoring_2609.33232_研读报告]]
-  - 2608.28702 (SDE CfC D3DGS) → [[docs/reports/Stochastic_Liquid_Deformation_Fields_SDE_CfC_2608.28702_研读报告]]
-  - 2608.03041 (PLAN) → [[docs/reports/PLAN_Parallel_Liquid_Approximation_FJSP_2608.03041_研读报告]]
-  - 2607.12909 (LTC Fall) → [[docs/reports/LTC_Fall_Physics_Informed_Dual_LTC_Edge_2607.12909_研读报告]]
-  - 2607.08283 (TFP) → [[docs/reports/TFP_Temporally_Conditioned_Memory_Fusion_Policies_2607.08283_研读报告]]
-  - 2607.01986 (Liquid Latent Turbofan) → [[docs/reports/Liquid_Latent_State_Dynamics_Turbofan_2607.01986_研读报告]]
-  - 2606.26849 (LFNet) → [[docs/reports/LFNet_Liquid_Fusion_Heterogeneous_Representations_SOD_2606.26849_研读报告]]
-  - 2606.21295 (Topological Neural Dynamics) → [[docs/reports/Topological_Neural_Dynamics_2606.21295_研读报告]]
-  - 2606.20491 (GazeLNN) → [[docs/reports/GazeLNN_Fast_Human_Attention_Prediction_2606.20491_研读报告]]
-  - 2606.19579 (FlowFake LTC) → [[docs/reports/FlowFake_LTC_2606.19579_研读报告]]
-  - 2606.15807 (MA-GLTC) → [[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross_Domain_Traffic_2606.15807_研读报告]]
-  - 2606.15571 (LRFM PDE) → [[docs/reports/Liquid_Random_Feature_Methods_TD-PDE_2606.15571_研读报告]]
 - **`paper-analyzer` 技能状态**：cron 提示仍标"not found"（与 9-22 起多轮一致）。今日无候选，无需触发该兜底路径。
 - **生成 0 篇独立研读报告**：连续第 1+ 月（10-01 起）LNN / CfC / LTC / NCP / closed-form continuous-time 主题饱和，无新 arXiv 投稿覆盖。**注**：本次 digest 仍列出 24 篇候选（远超 selector 表的 12 篇，因为 selector 对 raw JSON 用 max score 排序仅保留 top-12），覆盖本仍为 24/24。
 - **同步阻塞点（异常告警 ⚠️ → 已 workaround ✅）**：
-  - **SSH fetch 5/5 全部失败**（与 9-30 类似但更彻底）：`git fetch --no-tags origin` 重试 5 次均 `Connection to github.com closed by remote host / flush packet error`（与 8-29 / 8-31 / 9-30 三次 GitHub RST 抖动同根因：出口 IP / 路由级 RST，与 SSH auth 无关，单独 `ssh -T` 仍 OK）。
-  - **workaround**：脚本 fallback 切到 `git pull --ff-only → 失败 → git pull --rebase origin HEAD` 成功（fast-forward `b88883d..70ae0b5`，**这是 8 月底以来首次靠 rebase 兜底的实例**，之前都是 fast-forward）。这意味着 **origin 已先于本地推送（GH Actions 04:30 cron 抢跑）**，与 9-29 自动化健康度排查中"本地 04:30 与 GH Action 06:30 错峰无 race"的假设相左——Action 的 06:30 实际可能已迁移到 04:30 或更早，建议下次会话核查 `.github/workflows/daily-lnn-research.yml` 的 cron schedule 是否调整。
-  - **SSH push 第 3 次成功**：`git push origin HEAD` 第 1 次 `connection closed`、第 2 次 `无法读取远程仓库`、第 3 次 `70ae0b5..8a3f232  HEAD -> master`（commit `8a3f232 chore(daily): LNN digest + 研读报告 2026-10-06`）。本次脚本同时推送 docs 与 papers——按 cron prompt 这应该是 step 4 的"commit docs papers"，与 step 1 合并跑通。
-  - **`GIT_SSH_COMMAND` 显式注入 `id_github_dave-he`**：脚本检测 SSH_KEY 候选链（`id_github_dave-he` 优先级最高）成功，SSH key 路径写入 log（`logs/pipeline/2026-10-06_pipeline.log`）。
+- **SSH fetch 5/5 全部失败**（与 9-30 类似但更彻底）：`git fetch --no-tags origin` 重试 5 次均 `Connection to github.com closed by remote host / flush packet error`（与 8-29 / 8-31 / 9-30 三次 GitHub RST 抖动同根因：出口 IP / 路由级 RST，与 SSH auth 无关，单独 `ssh -T` 仍 OK）。
+- **workaround**：脚本 fallback 切到 `git pull --ff-only → 失败 → git pull --rebase origin HEAD` 成功（fast-forward `b88883d..70ae0b5`，**这是 8 月底以来首次靠 rebase 兜底的实例**，之前都是 fast-forward）。这意味着 **origin 已先于本地推送（GH Actions 04:30 cron 抢跑）**，与 9-29 自动化健康度排查中"本地 04:30 与 GH Action 06:30 错峰无 race"的假设相左——Action 的 06:30 实际可能已迁移到 04:30 或更早，建议下次会话核查 `.github/workflows/daily-lnn-research.yml` 的 cron schedule 是否调整。
+- **SSH push 第 3 次成功**：`git push origin HEAD` 第 1 次 `connection closed`、第 2 次 `无法读取远程仓库`、第 3 次 `70ae0b5..8a3f232  HEAD -> master`（commit `8a3f232 chore(daily): LNN digest + 研读报告 2026-10-06`）。本次脚本同时推送 docs 与 papers——按 cron prompt 这应该是 step 4 的"commit docs papers"，与 step 1 合并跑通。
+- **`GIT_SSH_COMMAND` 显式注入 `id_github_dave-he`**：脚本检测 SSH_KEY 候选链（`id_github_dave-he` 优先级最高）成功，SSH key 路径写入 log（`logs/pipeline/2026-10-06_pipeline.log`）。
 - **复现阶段（pending）**：step 5 / 6 待执行（`replicate_paper_dispatch.py --date 2026-10-06`），预期行为与 9-22/9-30 一致——"digest 命中复现规则的论文 → 调对应 reproduce 脚本"。
 - **结论**：今日完成 (1) digest 抓取（24 篇）+ commit + push（`70ae0b5..8a3f232`）(2) 0 候选复核 (3) 研读报告生成跳过（LNN 主题连续饱和）。**关键工程发现**：GH Action cron 可能已迁移到早于本地 04:30 的时间槽，导致 origin 领先本地，必须靠 `git pull --rebase` 兜底；建议下次会话核查 `.github/workflows/daily-lnn-research.yml` 的 schedule cron 与 commit 历史匹配性。
-
-<!-- daily-lnn-index:start -->
-## 4. 自动化追踪与待研读队列
-
 - **2026-10-06**：[[docs/daily/2026-10-06_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 17 个。研读报告生成 0 篇（LNN 主题饱和）；`select_papers_for_report.py` 输出 `{candidates: [], n_total_arxiv: 12, n_skipped_reported: 12}`，12 篇全部命中 `already_reported`；SSH fetch 抖动 5/5 → pull --rebase 兜底成功；push 第一次 connection closed、第二次 RST、第三次成功（`70ae0b5..8a3f232`）。详见 [[docs/LNN_深度研读报告#2026-10-06-lnn-主题饱和无新增候选ssh-fetch-抖动-5-5--pull---rebase-兜底|§2 复盘条目]]。
 - **2026-10-05**：[[docs/daily/2026-10-05_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 18 个。
 - **2026-10-04**：[[docs/daily/2026-10-04_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 17 个。
@@ -1403,17 +1388,4 @@ positioning_updated: 2026-09-14
 - **2026-09-23**：[[docs/daily/2026-09-23_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个。
 - **2026-09-22**：[[docs/daily/2026-09-22_LNN_research_digest.md|每日追踪]]，候选论文 25 篇（digest 列出 12 篇，候选清单 0 篇新增），仓库 16 个（GitHub 限流 fallback），模型 19 个。
 - **2026-09-21**：[[docs/daily/2026-09-21_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 22 个。
-- **2026-09-20**：[[docs/daily/2026-09-20_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 17 个。
-- **2026-09-19**：[[docs/daily/2026-09-19_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 19 个。
-- **2026-09-18**：[[docs/daily/2026-09-18_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 19 个。
-- **2026-09-17**：[[docs/daily/2026-09-17_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 24 个，模型 17 个。
-- **2026-09-16**：[[docs/daily/2026-09-16_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个。
-- **2026-09-15**：[[docs/daily/2026-09-15_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
-- **2026-09-14**：[[docs/daily/2026-09-14_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 17 个。
-- **2026-09-11**：[[docs/daily/2026-09-11_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 19 个。
-- **2026-09-10**：[[docs/daily/2026-09-10_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 17 个。
-- **2026-09-08**：[[docs/daily/2026-09-08_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 17 个。
-- **2026-09-08**：[[docs/daily/2026-09-08_LNN_research_digest.md|每日追踪]]，候选论文 25 篇（digest 列出 12 篇），仓库 41 个，模型 17 个；强关键词命中 12 篇 arXiv 候选（2608.28702/2608.03041/2607.12909/2607.08283/2607.01986/2606.26849/2606.21295/2606.20491/2606.19579/2606.15807/2606.15571/2606.12240）+ JSON 残留 3 篇 (2603.00153/2603.00459/2605.08176) 均已被既有 [[docs/reports/]] 研读报告覆盖，故今日研读报告生成阶段跳过 (`select_papers_for_report.py` 返回 `candidates: []`)。
-- **2026-09-03**：[[docs/daily/2026-09-03_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 18 个。
-- **2026-09-01**：[[docs/daily/2026-09-01_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 40 个，模型 16 个。
 <!-- daily-lnn-index:end -->
