@@ -148,27 +148,75 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Fully offline RAG for iOS — chat with your PDFs using on-device embeddings, Accelerate-powered vector search, and LiquidAI's LFM2. No server, no API key.
 
 ## Hugging Face 模型
-### [mradermacher/LFM2.5-VL-3B-absolute-heresy-GGUF](https://huggingface.co/mradermacher/LFM2.5-VL-3B-absolute-heresy-GGUF)
+### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu)
 - 更新：2026-10-07
-- 下载 / Likes：907 / 1
-- 任务：unknown
-- Tags：transformers, gguf, liquid, lfm2.5, edge, heretic, uncensored, decensored
+- 下载 / Likes：102 / 2
+- 任务：summarization
+- Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-fine-tuned, en
+
+### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor)
+- 更新：2026-10-07
+- 下载 / Likes：70 / 1
+- 任务：summarization
+- Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-fine-tuned, en
+
+### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-rouge)
+- 更新：2026-10-07
+- 下载 / Likes：68 / 0
+- 任务：summarization
+- Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-fine-tuned, en
+
+### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-meteor-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-meteor-rouge)
+- 更新：2026-10-07
+- 下载 / Likes：59 / 1
+- 任务：summarization
+- Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-included, en
+
+### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu-rouge)
+- 更新：2026-10-07
+- 下载 / Likes：58 / 1
+- 任务：summarization
+- Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-fine-tuned, en
+
+### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-rouge)
+- 更新：2026-10-07
+- 下载 / Likes：55 / 0
+- 任务：summarization
+- Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-fine-tuned, en
+
+### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-bleu](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-bleu)
+- 更新：2026-10-07
+- 下载 / Likes：55 / 0
+- 任务：summarization
+- Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-fine-tuned, en
+
+### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-rouge)
+- 更新：2026-10-07
+- 下载 / Likes：46 / 0
+- 任务：summarization
+- Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-included, en
 
 ### [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M)
 - 更新：2026-10-07
-- 下载 / Likes：28 / 33
+- 下载 / Likes：28 / 39
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, d1_omni, feature-extraction, liquid, lfm2.5, edge, decision
 
 ### [LiquidAI/d1-3B-GGUF](https://huggingface.co/LiquidAI/d1-3B-GGUF)
 - 更新：2026-10-07
-- 下载 / Likes：22 / 13
+- 下载 / Likes：22 / 15
+- 任务：image-text-to-text
+- Tags：gguf, liquid, lfm2.5, edge, decision, classification, calibration, system-one
+
+### [LiquidAI/d1-omni-600M-GGUF](https://huggingface.co/LiquidAI/d1-omni-600M-GGUF)
+- 更新：2026-10-07
+- 下载 / Likes：18 / 13
 - 任务：image-text-to-text
 - Tags：gguf, liquid, lfm2.5, edge, decision, classification, calibration, system-one
 
 ### [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B)
 - 更新：2026-10-07
-- 下载 / Likes：15 / 60
+- 下载 / Likes：15 / 73
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, edge, decision
 
@@ -177,48 +225,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：0 / 2
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, edge, decision
-
-### [mamelles/LFM2.5-2.6B-Wolof-Instruct-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-2.6B-Wolof-Instruct-v3-GGUF)
-- 更新：2026-10-07
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：gguf, llama.cpp, wolof, lfm2.5, private-production-artifact, text-generation, base_model:Tonic/LFM2.5-2.6B-Wolof-Instruct-v3, base_model:quantized:Tonic/LFM2.5-2.6B-Wolof-Instruct-v3
-
-### [mamelles/LFM2.5-2.6B-Wolof-CPT-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-2.6B-Wolof-CPT-v3-GGUF)
-- 更新：2026-10-07
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：gguf, llama.cpp, wolof, lfm2.5, private-production-artifact, text-generation, base_model:Tonic/LFM2.5-2.6B-Wolof-CPT-v3, base_model:quantized:Tonic/LFM2.5-2.6B-Wolof-CPT-v3
-
-### [mamelles/LFM2.5-1.2B-Wolof-Instruct-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-1.2B-Wolof-Instruct-v3-GGUF)
-- 更新：2026-10-07
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：gguf, llama.cpp, wolof, lfm2.5, private-production-artifact, text-generation, base_model:Tonic/LFM2.5-1.2B-Wolof-Instruct-v3, base_model:quantized:Tonic/LFM2.5-1.2B-Wolof-Instruct-v3
-
-### [mamelles/LFM2.5-1.2B-Wolof-CPT-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-1.2B-Wolof-CPT-v3-GGUF)
-- 更新：2026-10-07
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：gguf, llama.cpp, wolof, lfm2.5, private-production-artifact, text-generation, base_model:Tonic/LFM2.5-1.2B-Wolof-CPT-v3, base_model:quantized:Tonic/LFM2.5-1.2B-Wolof-CPT-v3
-
-### [mamelles/LFM2.5-350M-Wolof-Instruct-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-350M-Wolof-Instruct-v3-GGUF)
-- 更新：2026-10-07
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：gguf, llama.cpp, wolof, lfm2.5, private-production-artifact, text-generation, base_model:Tonic/LFM2.5-350M-Wolof-Instruct-v3, base_model:quantized:Tonic/LFM2.5-350M-Wolof-Instruct-v3
-
-### [mamelles/LFM2.5-350M-Wolof-CPT-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-350M-Wolof-CPT-v3-GGUF)
-- 更新：2026-10-07
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：gguf, llama.cpp, wolof, lfm2.5, private-production-artifact, text-generation, base_model:Tonic/LFM2.5-350M-Wolof-CPT-v3, base_model:quantized:Tonic/LFM2.5-350M-Wolof-CPT-v3
-
-### [mamelles/LFM2.5-230M-Wolof-Instruct-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-230M-Wolof-Instruct-v3-GGUF)
-- 更新：2026-10-07
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：gguf, llama.cpp, wolof, lfm2.5, private-production-artifact, text-generation, base_model:Tonic/LFM2.5-230M-Wolof-Instruct-v3, base_model:quantized:Tonic/LFM2.5-230M-Wolof-Instruct-v3
 
 ### [Synaptics/LiquidAI-LFM2-VL-450M](https://huggingface.co/Synaptics/LiquidAI-LFM2-VL-450M)
 - 更新：2026-10-03
@@ -237,12 +243,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：371 / 6
 - 任务：fill-mask
 - Tags：gguf, liquid, lfm2, lfm2.5, bidirectional, masked-lm, encoder, llama.cpp
-
-### [Synaptics/LiquidAI-LFM2.5-230M](https://huggingface.co/Synaptics/LiquidAI-LFM2.5-230M)
-- 更新：2026-09-29
-- 下载 / Likes：493 / 0
-- 任务：text-generation
-- Tags：onnx, lfm2, torq, synaptics, sl2619, npu, edge, text-generation
 
 ### [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE)
 - 更新：2026-05-06
