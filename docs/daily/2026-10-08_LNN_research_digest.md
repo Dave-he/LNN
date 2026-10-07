@@ -49,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-10-07 | [mradermacher/LFM2.5-VL-3B-absolute-heresy-GGUF](https://huggingface.co/mradermacher/LFM2.5-VL-3B-absolute-heresy-GGUF) | 907 | 1 |  |
-| 2026-10-07 | [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M) | 28 | 33 | image-text-to-text |
-| 2026-10-07 | [LiquidAI/d1-3B-GGUF](https://huggingface.co/LiquidAI/d1-3B-GGUF) | 22 | 13 | image-text-to-text |
-| 2026-10-07 | [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B) | 15 | 60 | image-text-to-text |
-| 2026-10-07 | [LiquidAI/d1-3B-w8a8](https://huggingface.co/LiquidAI/d1-3B-w8a8) | 0 | 2 | image-text-to-text |
-| 2026-10-07 | [mamelles/LFM2.5-2.6B-Wolof-Instruct-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-2.6B-Wolof-Instruct-v3-GGUF) | 0 | 0 | text-generation |
-| 2026-10-07 | [mamelles/LFM2.5-2.6B-Wolof-CPT-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-2.6B-Wolof-CPT-v3-GGUF) | 0 | 0 | text-generation |
-| 2026-10-07 | [mamelles/LFM2.5-1.2B-Wolof-Instruct-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-1.2B-Wolof-Instruct-v3-GGUF) | 0 | 0 | text-generation |
-| 2026-10-07 | [mamelles/LFM2.5-1.2B-Wolof-CPT-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-1.2B-Wolof-CPT-v3-GGUF) | 0 | 0 | text-generation |
-| 2026-10-07 | [mamelles/LFM2.5-350M-Wolof-Instruct-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-350M-Wolof-Instruct-v3-GGUF) | 0 | 0 | text-generation |
-| 2026-10-07 | [mamelles/LFM2.5-350M-Wolof-CPT-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-350M-Wolof-CPT-v3-GGUF) | 0 | 0 | text-generation |
-| 2026-10-07 | [mamelles/LFM2.5-230M-Wolof-Instruct-v3-GGUF](https://huggingface.co/mamelles/LFM2.5-230M-Wolof-Instruct-v3-GGUF) | 0 | 0 | text-generation |
+| 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu) | 102 | 2 | summarization |
+| 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor) | 70 | 1 | summarization |
+| 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-rouge) | 68 | 0 | summarization |
+| 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-meteor-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-meteor-rouge) | 59 | 1 | summarization |
+| 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu-rouge) | 58 | 1 | summarization |
+| 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-rouge) | 55 | 0 | summarization |
+| 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-bleu](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-bleu) | 55 | 0 | summarization |
+| 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-rouge) | 46 | 0 | summarization |
+| 2026-10-07 | [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M) | 28 | 39 | image-text-to-text |
+| 2026-10-07 | [LiquidAI/d1-3B-GGUF](https://huggingface.co/LiquidAI/d1-3B-GGUF) | 22 | 15 | image-text-to-text |
+| 2026-10-07 | [LiquidAI/d1-omni-600M-GGUF](https://huggingface.co/LiquidAI/d1-omni-600M-GGUF) | 18 | 13 | image-text-to-text |
+| 2026-10-07 | [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B) | 15 | 73 | image-text-to-text |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
