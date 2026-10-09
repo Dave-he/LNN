@@ -1358,6 +1358,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-10-10**：[[docs/daily/2026-10-10_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 24 个，模型 24 个。
 - **2026-10-09**：[[docs/daily/2026-10-09_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 19 个。
 - **2026-10-08**：[[docs/daily/2026-10-08_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 17 个。
 - **2026-10-07**：[[docs/daily/2026-10-07_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 20 个。
@@ -1387,5 +1388,4 @@ positioning_updated: 2026-09-14
 - **2026-09-26**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个；研读报告生成 0 篇（LNN 主题饱和）；本轮 **arXiv 406 永久修复** 落仓（`Accept: application/atom+xml`）。详见 [[docs/LNN_深度研读报告#2026-09-26-arxiv-406-根因--accept-*-而非-tls-指纹永久修复已落仓候选仍空lnn-主题饱和|§2 复盘条目]]。
 - **2026-09-25**：[[docs/daily/2026-09-25_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 17 个。
 - **2026-09-24**：[[docs/daily/2026-09-24_LNN_research_digest.md|每日追踪]]，候选论文 0 篇（arXiv urllib 406 第 2 天连续失败，根因：Varnish 对 9-term OR 长查询节流），仓库 41 个，模型 24 个；研读报告生成采用 **web_search 兜底 + 回顾增量** 路径，产出 2 篇回顾版研读（2606.07670 / 2608.28702，均与既有研读重合）。详见 [[docs/LNN_深度研读报告#2026-09-24-arxiv-抓取连续失败--web_search-兜底--既有研读的回顾增量|§2 复盘条目]]。
-- **2026-09-23**：[[docs/daily/2026-09-23_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个。
 <!-- daily-lnn-index:end -->
