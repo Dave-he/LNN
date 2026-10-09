@@ -1358,7 +1358,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-10-10**：[[docs/daily/2026-10-10_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 33 个，模型 24 个。
+- **2026-10-10**：[[docs/daily/2026-10-10_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 33 个，模型 24 个；研读报告生成 **1 篇** [[docs/reports/ContiLNN_Mitigating_Slice_Sampling_Discontinuity_LNN_2610.12337_研读报告.md|ContiLNN (2610.12337v1)]] —— Bi-CfC 在 2D 医学影像修复 (CT/MRI/PET) 主干上的 plugin 增广; **本仓第一个"延迟 -52.8%、显存 -57% 而 PSNR +1.31 dB vs Bi-GRU" 的工程级证据**, 已记录 7 个仓内可嫁接改造点 (Eq. 6-8 直接进 `lnn/core/variants.py`).
 - **2026-10-08**：[[docs/daily/2026-10-08_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 17 个。
 - **2026-10-07**：[[docs/daily/2026-10-07_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 20 个。
 - **digest 入口**：[[docs/daily/2026-10-06_LNN_research_digest.md|每日追踪]]（24 篇 / 41 仓库 / 17 模型，`papers/repos/models: 24/41/17`）。
