@@ -1359,7 +1359,8 @@ positioning_updated: 2026-09-14
 ## 4. 自动化追踪与待研读队列
 
 - **2026-10-11**：[[docs/daily/2026-10-11_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 20 个。
-- **2026-10-10**：[[docs/daily/2026-10-10_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 33 个，模型 24 个；研读报告生成 **1 篇** [[docs/reports/ContiLNN_Mitigating_Slice_Sampling_Discontinuity_LNN_2610.12337_研读报告.md|ContiLNN (2610.12337v1)]] —— Bi-CfC 在 2D 医学影像修复 (CT/MRI/PET) 主干上的 plugin 增广; **本仓第一个"延迟 -52.8%、显存 -57% 而 PSNR +1.31 dB vs Bi-GRU" 的工程级证据**, 已记录 7 个仓内可嫁接改造点 (Eq. 6-8 直接进 `lnn/core/variants.py`).
+- **2026-10-10**：[[docs/daily/2026-10-10_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 24 个，模型 24 个。
+- **2026-10-09**：[[docs/daily/2026-10-09_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 19 个。
 - **2026-10-08**：[[docs/daily/2026-10-08_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 17 个。
 - **2026-10-07**：[[docs/daily/2026-10-07_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 20 个。
 - **digest 入口**：[[docs/daily/2026-10-06_LNN_research_digest.md|每日追踪]]（24 篇 / 41 仓库 / 17 模型，`papers/repos/models: 24/41/17`）。
@@ -1387,5 +1388,4 @@ positioning_updated: 2026-09-14
 - **2026-09-27**：[[docs/daily/2026-09-27_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 19 个。
 - **2026-09-26**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 20 个；研读报告生成 0 篇（LNN 主题饱和）；本轮 **arXiv 406 永久修复** 落仓（`Accept: application/atom+xml`）。详见 [[docs/LNN_深度研读报告#2026-09-26-arxiv-406-根因--accept-*-而非-tls-指纹永久修复已落仓候选仍空lnn-主题饱和|§2 复盘条目]]。
 - **2026-09-25**：[[docs/daily/2026-09-25_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 17 个。
-- **2026-09-24**：[[docs/daily/2026-09-24_LNN_research_digest.md|每日追踪]]，候选论文 0 篇（arXiv urllib 406 第 2 天连续失败，根因：Varnish 对 9-term OR 长查询节流），仓库 41 个，模型 24 个；研读报告生成采用 **web_search 兜底 + 回顾增量** 路径，产出 2 篇回顾版研读（2606.07670 / 2608.28702，均与既有研读重合）。详见 [[docs/LNN_深度研读报告#2026-09-24-arxiv-抓取连续失败--web_search-兜底--既有研读的回顾增量|§2 复盘条目]]。
 <!-- daily-lnn-index:end -->

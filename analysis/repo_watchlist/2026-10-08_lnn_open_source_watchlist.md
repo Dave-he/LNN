@@ -7,19 +7,33 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-10-08
 
 ## GitHub 仓库
+### [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection)
+- 更新：2026-10-08
+- Star / Fork：2 / 0
+- 语言：Swift
+- Topics：未标注
+- 说明：On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm
+
+### [itssanjay206-cell/liquid-neural-networks](https://github.com/itssanjay206-cell/liquid-neural-networks)
+- 更新：2026-10-08
+- Star / Fork：0 / 0
+- 语言：HTML
+- Topics：未标注
+- 说明：Liquid Neural Networks: BAENG101 technical presentation, VIT
+
+### [NoeFlandre/filter-osm-datasets-llms-landuse](https://github.com/NoeFlandre/filter-osm-datasets-llms-landuse)
+- 更新：2026-10-08
+- Star / Fork：0 / 0
+- 语言：Python
+- Topics：未标注
+- 说明：Resumable multi-site Grid'5000 pipeline labelling OSM polygon sentences for land-use relevance with LiquidAI LFM2.5-2.6B + DSpark (SGLang)
+
 ### [blacklike02/Liquid-Network-Model](https://github.com/blacklike02/Liquid-Network-Model)
 - 更新：2026-10-07
 - Star / Fork：2 / 0
 - 语言：Python
 - Topics：未标注
 - 说明：Liquid Neural Network language model with LTC and CfC dynamics
-
-### [NoeFlandre/filter-osm-datasets-llms-landuse](https://github.com/NoeFlandre/filter-osm-datasets-llms-landuse)
-- 更新：2026-10-07
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：Resumable multi-site Grid'5000 pipeline labelling OSM polygon sentences for land-use relevance with LiquidAI LFM2.5-2.6B + DSpark (SGLang)
 
 ### [jainilbavishi24/LFM2.5-VL-Optimization](https://github.com/jainilbavishi24/LFM2.5-VL-Optimization)
 - 更新：2026-10-07
@@ -126,13 +140,6 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Implementation and experiments for the Fuzzy Liquid Neural Network framework for Speech Emotion Recognition
 
-### [Think520change/gb-lnn](https://github.com/Think520change/gb-lnn)
-- 更新：2026-09-22
-- Star / Fork：0 / 0
-- 语言：unknown
-- Topics：未标注
-- 说明：To address these issues, a Multi-Scale Granular-Ball Liquid Neural Network (GB-LNN) is proposed as a common representation and temporal-modelling framework.
-
 ### [santos-sanz/spanish-wordle-slm](https://github.com/santos-sanz/spanish-wordle-slm)
 - 更新：2026-09-10
 - Star / Fork：0 / 0
@@ -140,14 +147,13 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：Fine-tunes a 2.6B LiquidAI LFM2.5 model with QLoRA on Apple Silicon to play Spanish Wordle, benchmarked head-to-head against DeepSeek Flash.
 
-### [muhammedelsami/OnDeviceRAG](https://github.com/muhammedelsami/OnDeviceRAG)
-- 更新：2026-09-10
-- Star / Fork：0 / 0
-- 语言：Swift
-- Topics：未标注
-- 说明：Fully offline RAG for iOS — chat with your PDFs using on-device embeddings, Accelerate-powered vector search, and LiquidAI's LFM2. No server, no API key.
-
 ## Hugging Face 模型
+### [everand4ever/LFM2.5-8B-A1B-Fab_Clean1](https://huggingface.co/everand4ever/LFM2.5-8B-A1B-Fab_Clean1)
+- 更新：2026-10-08
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：gguf, lfm2_moe, llama.cpp, llama-cpp, unsloth, endpoints_compatible, region:us, conversational
+
 ### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu)
 - 更新：2026-10-07
 - 下载 / Likes：102 / 2
@@ -165,12 +171,6 @@ tags: [LNN, repo-watchlist, automation]
 - 下载 / Likes：68 / 0
 - 任务：summarization
 - Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-fine-tuned, en
-
-### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-meteor-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-meteor-rouge)
-- 更新：2026-10-07
-- 下载 / Likes：59 / 1
-- 任务：summarization
-- Tags：mlx, safetensors, lfm2, grpo, summarization, reinforcement-learning, length-penalty-included, en
 
 ### [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu-rouge)
 - 更新：2026-10-07
@@ -198,25 +198,25 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M)
 - 更新：2026-10-07
-- 下载 / Likes：28 / 39
+- 下载 / Likes：28 / 52
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, d1_omni, feature-extraction, liquid, lfm2.5, edge, decision
 
 ### [LiquidAI/d1-3B-GGUF](https://huggingface.co/LiquidAI/d1-3B-GGUF)
 - 更新：2026-10-07
-- 下载 / Likes：22 / 15
+- 下载 / Likes：22 / 27
 - 任务：image-text-to-text
 - Tags：gguf, liquid, lfm2.5, edge, decision, classification, calibration, system-one
 
 ### [LiquidAI/d1-omni-600M-GGUF](https://huggingface.co/LiquidAI/d1-omni-600M-GGUF)
 - 更新：2026-10-07
-- 下载 / Likes：18 / 13
+- 下载 / Likes：18 / 17
 - 任务：image-text-to-text
 - Tags：gguf, liquid, lfm2.5, edge, decision, classification, calibration, system-one
 
 ### [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B)
 - 更新：2026-10-07
-- 下载 / Likes：15 / 73
+- 下载 / Likes：15 / 116
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, edge, decision
 

@@ -33,8 +33,10 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-10-08 | [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection) | 2 | Swift | On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm |
+| 2026-10-08 | [itssanjay206-cell/liquid-neural-networks](https://github.com/itssanjay206-cell/liquid-neural-networks) | 0 | HTML | Liquid Neural Networks: BAENG101 technical presentation, VIT |
+| 2026-10-08 | [NoeFlandre/filter-osm-datasets-llms-landuse](https://github.com/NoeFlandre/filter-osm-datasets-llms-landuse) | 0 | Python | Resumable multi-site Grid'5000 pipeline labelling OSM polygon sentences for land-use relevance with LiquidAI LFM2.5-2.6B + DSpark (SGLang) |
 | 2026-10-07 | [blacklike02/Liquid-Network-Model](https://github.com/blacklike02/Liquid-Network-Model) | 2 | Python | Liquid Neural Network language model with LTC and CfC dynamics |
-| 2026-10-07 | [NoeFlandre/filter-osm-datasets-llms-landuse](https://github.com/NoeFlandre/filter-osm-datasets-llms-landuse) | 0 | Python | Resumable multi-site Grid'5000 pipeline labelling OSM polygon sentences for land-use relevance with LiquidAI LFM2.5-2.6B + DSpark (SGLang) |
 | 2026-10-07 | [jainilbavishi24/LFM2.5-VL-Optimization](https://github.com/jainilbavishi24/LFM2.5-VL-Optimization) | 0 | Python | Optimizing the inference speed, energy efficiency, and kernel performance of LiquidAI LFM2.5-VL-1.6B on NVIDIA Blackwell GPUs using profiling, CUDA kernels, CU… |
 | 2026-10-07 | [tobert/lfm2d](https://github.com/tobert/lfm2d) | 0 | Rust | A System 1 service around LiquidAI's LFM2.5 suite on candle: encoder heads plus an opinion engine |
 | 2026-10-06 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
@@ -43,24 +45,22 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-09-30 | [almo-intellect/flyvisu](https://github.com/almo-intellect/flyvisu) | 0 | Python | Are connectome-constrained fly vision models mechanistically identifiable? Dale's law and liquid time constants in flyvis: preregistration, code, results. |
 | 2026-09-29 | [FennecLadd/MRI-Brain-Tumor-Classification-Hybrid-Model](https://github.com/FennecLadd/MRI-Brain-Tumor-Classification-Hybrid-Model) | 0 | Jupyter Notebook | This project implements a hybrid deep learning architecture combining Convolutional Neural Networks (CNN), Long Short-Term Memory (LSTM), and Liquid Neural Net… |
 | 2026-09-28 | [smparc/murmur](https://github.com/smparc/murmur) | 2 | Python | An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages… |
-| 2026-09-27 | [GhostPanda-Sec/LTCore](https://github.com/GhostPanda-Sec/LTCore) | 0 | Python | LTCore 是 Liquid Time-Constant 网络的零依赖纯标准库实现，用 42 个测试和 16 项判据把它的数学性质、解算器一致性与梯度正确性逐条证明到位。 LTCore is a zero-dependency, pure standard library implementation of the… |
-| 2026-09-26 | [0kqnet/LFM.mcfunction](https://github.com/0kqnet/LFM.mcfunction) | 0 | Python | Running LiquidAI/LFM2.5-1.2B-JP-202606 on pure vanilla minecraft |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
+| 2026-10-08 | [everand4ever/LFM2.5-8B-A1B-Fab_Clean1](https://huggingface.co/everand4ever/LFM2.5-8B-A1B-Fab_Clean1) | 0 | 0 |  |
 | 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu) | 102 | 2 | summarization |
 | 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor) | 70 | 1 | summarization |
 | 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-rouge) | 68 | 0 | summarization |
-| 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-meteor-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-meteor-rouge) | 59 | 1 | summarization |
 | 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-bleu-rouge) | 58 | 1 | summarization |
 | 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-rouge) | 55 | 0 | summarization |
 | 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-bleu](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-quality-meteor-bleu) | 55 | 0 | summarization |
 | 2026-10-07 | [YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-rouge](https://huggingface.co/YuvrajSingh9886/LFM2.5-350M-grpo-summarization-length-quality-rouge) | 46 | 0 | summarization |
-| 2026-10-07 | [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M) | 28 | 39 | image-text-to-text |
-| 2026-10-07 | [LiquidAI/d1-3B-GGUF](https://huggingface.co/LiquidAI/d1-3B-GGUF) | 22 | 15 | image-text-to-text |
-| 2026-10-07 | [LiquidAI/d1-omni-600M-GGUF](https://huggingface.co/LiquidAI/d1-omni-600M-GGUF) | 18 | 13 | image-text-to-text |
-| 2026-10-07 | [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B) | 15 | 73 | image-text-to-text |
+| 2026-10-07 | [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M) | 28 | 52 | image-text-to-text |
+| 2026-10-07 | [LiquidAI/d1-3B-GGUF](https://huggingface.co/LiquidAI/d1-3B-GGUF) | 22 | 27 | image-text-to-text |
+| 2026-10-07 | [LiquidAI/d1-omni-600M-GGUF](https://huggingface.co/LiquidAI/d1-omni-600M-GGUF) | 18 | 17 | image-text-to-text |
+| 2026-10-07 | [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B) | 15 | 116 | image-text-to-text |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

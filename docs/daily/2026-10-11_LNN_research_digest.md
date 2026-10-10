@@ -52,8 +52,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-10 | [saidutta69/LFM2.5-350M-heretic](https://huggingface.co/saidutta69/LFM2.5-350M-heretic) | 51 | 0 | text-generation |
 | 2026-10-10 | [saidutta69/LFM2.5-1.2B-Instruct-heretic](https://huggingface.co/saidutta69/LFM2.5-1.2B-Instruct-heretic) | 48 | 0 | text-generation |
 | 2026-10-10 | [haddockaihamburg/LFM2.5-2.6B-abliterated](https://huggingface.co/haddockaihamburg/LFM2.5-2.6B-abliterated) | 17 | 0 | text-generation |
-| 2026-10-10 | [Panga-Azazia/LFM2.5-350M-TTS-v4](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS-v4) | 0 | 0 |  |
 | 2026-10-10 | [Rcarvalo/lfm2a-fr-v3-checkpoints](https://huggingface.co/Rcarvalo/lfm2a-fr-v3-checkpoints) | 0 | 0 | text-to-speech |
+| 2026-10-10 | [Panga-Azazia/LFM2.5-350M-TTS-v4](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS-v4) | 0 | 0 |  |
 | 2026-10-10 | [aoiandroid/LFM2-350M-ENJP-MT-GGUF](https://huggingface.co/aoiandroid/LFM2-350M-ENJP-MT-GGUF) | 0 | 0 |  |
 | 2026-10-10 | [haddockaihamburg/LFM2.5-350M-abliterated](https://huggingface.co/haddockaihamburg/LFM2.5-350M-abliterated) | 0 | 0 | text-generation |
 | 2026-10-09 | [phntmwvs/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v3-4bit-MLX](https://huggingface.co/phntmwvs/LFM2.5-8B-A1B-Hermes-Agentic-Coder-Abliterated-v3-4bit-MLX) | 63 | 0 |  |

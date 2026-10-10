@@ -10,7 +10,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：24 篇
-- GitHub 候选仓库：33 个
+- GitHub 候选仓库：24 个
 - Hugging Face 候选模型：24 个
 - 已下载 PDF：0 个
 

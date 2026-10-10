@@ -140,12 +140,12 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：未标注
 - 说明：A Comparative Study of Liquid Time-Constant Networks and Closed-form Continuous-time Neural Networks
 
-### [middesurya/daily-webapp-2026-05-04-liquidlab](https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab)
-- 更新：2026-07-31
-- Star / Fork：2 / 0
-- 语言：HTML
-- Topics：ai-built, claude-code, daily-webapp, liquid-neural-networks, mit-csail, neural-ode
-- 说明：LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, adaptive inference, efficiency arena. Zero dependencies.
+### [ys260106/lnn-benchmark](https://github.com/ys260106/lnn-benchmark)
+- 更新：2026-07-13
+- Star / Fork：0 / 0
+- 语言：unknown
+- Topics：未标注
+- 说明：LNN (CFC) vs LSTM — UAV-SEAD Benchmark: Closed-Form Continuous-Time neural network outperforms LSTM 3/3 tests with 66 params vs 105
 
 ## Hugging Face 模型
 ### [DavidAU/LFM2.5-8B-A1B-Qwen3.8-Turbo-Brilliance-Power-X12-NEO-MAX-GGUF](https://huggingface.co/DavidAU/LFM2.5-8B-A1B-Qwen3.8-Turbo-Brilliance-Power-X12-NEO-MAX-GGUF)
@@ -240,7 +240,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M)
 - 更新：2026-10-07
-- 下载 / Likes：9473 / 92
+- 下载 / Likes：9473 / 91
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, d1_omni, feature-extraction, liquid, lfm2.5, edge, decision
 
@@ -252,7 +252,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B)
 - 更新：2026-10-07
-- 下载 / Likes：7302 / 234
+- 下载 / Likes：7302 / 232
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, edge, decision
 
