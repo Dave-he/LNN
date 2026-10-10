@@ -113,6 +113,14 @@ positioning_updated: 2026-09-14
 - **关键成果**：**P12 AUROC 0.8418** (vs 单任务 CfC 0.8409, +0.09 pp 持平), **P19 AUROC 0.9379** (vs 单任务 CfC 0.9472, -0.93 pp 持平); **P19 AUPRC 反超 +1.3 pp** (0.7662 vs 0.7532); 模型 **0.40 MB / 105K 参数** (vs 两个独立 CfC 0.71 MB / 188K, -44.1%; vs 两个独立 LSTM 6.83 MB / 1.79M, **-94.1%**); 多任务训练功耗比 LSTM backbone 低 43.1%, 比 RNN backbone 低 36.9%.
 - **对本项目 CfC bench 栈的意义**：MTLiquid 是 **"LNN 单任务 → 多任务"** 的关键桥梁工作; 证明既有 CfC 闭式 cell 已具备跨任务复用能力, 工程技巧是 per-task 边界化 + 数据调度平衡. `bench_cfc.py` / `bench_learned_beta_cfc.py` / `experiment_timeseries.py` 可直接借鉴此 scaffold 扩展到多任务变体 (例如 CmAPSS 退化 + Henry Hub 预测联合, 或 decompensation + LoS + AKI 联合).
 
+### [2026-10-09] ContiLNN — Bidirectional CfC for Medical Image Slice Restoration (He, Liu, Song et al.)
+- **独立报告**：[[docs/reports/ContiLNN_Mitigating_Slice_Sampling_Discontinuity_LNN_2610.12337_研读报告.md]]
+- **核心问题**：3D 体数据 MRI / CT 重建后, 矢状面/冠状面/横断面间的 in-between 切片因采样间距不一 + 解剖结构非连续, 2D CNN 单独轴向恢复会出现明显断层伪影; 现有工作或用 3D CNN (算力高), 或用 Neural ODE (稳定性差), 缺乏"沿切片方向的连续性 + 双向闭式时间常数"复合方案。
+- **方法论**：以 2D restoration backbone (作者用 EDSR-style) 输出 per-slice feature → 在 slice-axis 方向堆叠 **bidirectional CfC** (forward + backward 闭式 ODE, 共享 hidden 状态) → 引入 **slice-position aware learnable τ** 让每个体素的自适应时间常数受局部解剖结构调制; 训练 loss = L1 reconstruction + SSIM + cycle-consistency (前向 CfC 重建 → 反向 CfC 重建原 slice)。
+- **关键公式**：Eq. 1 (LTC ODE) → Eq. 2 (CfC closed-form) → Eq. 3 (双向 hidden 拼接) → Eq. 4 (slice-aware τ modulation) → Eq. 5 (复合 loss)。
+- **关键成果**：在 IXI / fastMRI / BraTS 三个公开脑部数据集上, PSNR 比 EDSR 2D baseline 提升 **+1.4~+2.1 dB**, SSIM +0.018~0.029, 且对各向异性采样间距 (z-spacing 1mm~5mm) 鲁棒; inference 时间仅比 2D baseline 多 11% (vs 3D CNN +140%)。
+- **对本项目 CfC bench 栈的意义**：ContiLNN 是 **"LNN 1D 序列 → 3D 体积"** 的首例 CfC 工作, 与 r301-r305 (1D edge inference) / r306 (SDE gate) 互补; 提示本仓可扩展 `experiment_timeseries.py` 到 volumetric 输入, 或把 bidirectional CfC 单元挪到 `bench_cfc.py` 作为新 cell-type 选项 (forward-only / bidirectional)。
+
 ### [2024] Exploring Liquid Neural Networks on Loihi-2
 - **独立报告**：[[docs/reports/Exploring_Liquid_Neural_Networks_on_Loihi-2_研读报告.md]]
 - **核心问题**：将基于连续常微分方程（ODE）的 LNN 算法高效部署在运行离散时间步、资源极其受限的神经拟态芯片（Loihi-2）上面临的软硬件协同适配难题。
