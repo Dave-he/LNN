@@ -148,17 +148,23 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Liquid neural networks for EEG emotion recognition with dual-timescale fusion and prediction-decoupled hierarchical evidence localisation.
 
 ## Hugging Face 模型
-### [Rcarvalo/lfm2a-fr-v3-checkpoints](https://huggingface.co/Rcarvalo/lfm2a-fr-v3-checkpoints)
+### [mradermacher/LFM2.5-VL-1.6B-absolute-heresy-GGUF](https://huggingface.co/mradermacher/LFM2.5-VL-1.6B-absolute-heresy-GGUF)
 - 更新：2026-10-11
-- 下载 / Likes：0 / 0
-- 任务：text-to-speech
-- Tags：safetensors, speech-to-speech, liquid, lfm2-audio, text-to-speech, fr, en, base_model:LiquidAI/LFM2.5-Audio-1.5B
+- 下载 / Likes：296 / 0
+- 任务：unknown
+- Tags：transformers, gguf, liquid, lfm2, lfm2-vl, edge, lfm2.5-vl, lfm2.5
 
 ### [Panga-Azazia/LFM2.5-350M-TTS-v4](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS-v4)
 - 更新：2026-10-11
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：transformers, safetensors, generated_from_trainer, unsloth, sft, trl, base_model:Panga-Azazia/LFM2.5-350M-TTS-v3, base_model:finetune:Panga-Azazia/LFM2.5-350M-TTS-v3
+
+### [Rcarvalo/lfm2a-fr-v3-checkpoints](https://huggingface.co/Rcarvalo/lfm2a-fr-v3-checkpoints)
+- 更新：2026-10-11
+- 下载 / Likes：0 / 0
+- 任务：text-to-speech
+- Tags：safetensors, speech-to-speech, liquid, lfm2-audio, text-to-speech, fr, en, base_model:LiquidAI/LFM2.5-Audio-1.5B
 
 ### [roman220220/LFM2.5-VL-3B-gptq-mlx-jang](https://huggingface.co/roman220220/LFM2.5-VL-3B-gptq-mlx-jang)
 - 更新：2026-10-11
@@ -196,12 +202,6 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2, quantized, gptq, jang, liquid, text-generation
 
-### [dokoomae/LFM2.5-230M-cMoE-e8s2a2-LoRA-merged](https://huggingface.co/dokoomae/LFM2.5-230M-cMoE-e8s2a2-LoRA-merged)
-- 更新：2026-10-11
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2_moe, text-generation, lfm2, lfm2-moe, moe, conditional-moe
-
 ### [LiquidAI/d1-3B-GGUF](https://huggingface.co/LiquidAI/d1-3B-GGUF)
 - 更新：2026-10-07
 - 下载 / Likes：13742 / 43
@@ -210,13 +210,13 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B)
 - 更新：2026-10-07
-- 下载 / Likes：10843 / 294
+- 下载 / Likes：10843 / 296
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, edge, decision
 
 ### [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M)
 - 更新：2026-10-07
-- 下载 / Likes：10489 / 105
+- 下载 / Likes：10489 / 106
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, d1_omni, feature-extraction, liquid, lfm2.5, edge, decision
 
