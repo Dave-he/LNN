@@ -49,18 +49,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-10-11 | [Rcarvalo/lfm2a-fr-v3-checkpoints](https://huggingface.co/Rcarvalo/lfm2a-fr-v3-checkpoints) | 0 | 0 | text-to-speech |
+| 2026-10-11 | [mradermacher/LFM2.5-VL-1.6B-absolute-heresy-GGUF](https://huggingface.co/mradermacher/LFM2.5-VL-1.6B-absolute-heresy-GGUF) | 296 | 0 |  |
 | 2026-10-11 | [Panga-Azazia/LFM2.5-350M-TTS-v4](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS-v4) | 0 | 0 |  |
+| 2026-10-11 | [Rcarvalo/lfm2a-fr-v3-checkpoints](https://huggingface.co/Rcarvalo/lfm2a-fr-v3-checkpoints) | 0 | 0 | text-to-speech |
 | 2026-10-11 | [roman220220/LFM2.5-VL-3B-gptq-mlx-jang](https://huggingface.co/roman220220/LFM2.5-VL-3B-gptq-mlx-jang) | 0 | 0 | image-text-to-text |
 | 2026-10-11 | [roman220220/LFM2.5-8B-A1B-gptq-mlx-jang-q4](https://huggingface.co/roman220220/LFM2.5-8B-A1B-gptq-mlx-jang-q4) | 0 | 0 | text-generation |
 | 2026-10-11 | [roman220220/LFM2.5-8B-A1B-gptq-mlx-jang](https://huggingface.co/roman220220/LFM2.5-8B-A1B-gptq-mlx-jang) | 0 | 0 | text-generation |
 | 2026-10-11 | [roman220220/LFM2.5-2.6B-gptq-mlx-jang](https://huggingface.co/roman220220/LFM2.5-2.6B-gptq-mlx-jang) | 0 | 0 | text-generation |
 | 2026-10-11 | [roman220220/LFM2.5-1.2B-Thinking-gptq-mlx-jang](https://huggingface.co/roman220220/LFM2.5-1.2B-Thinking-gptq-mlx-jang) | 0 | 0 | text-generation |
 | 2026-10-11 | [roman220220/LFM2.5-1.2B-Instruct-gptq-mlx-jang](https://huggingface.co/roman220220/LFM2.5-1.2B-Instruct-gptq-mlx-jang) | 0 | 0 | text-generation |
-| 2026-10-11 | [dokoomae/LFM2.5-230M-cMoE-e8s2a2-LoRA-merged](https://huggingface.co/dokoomae/LFM2.5-230M-cMoE-e8s2a2-LoRA-merged) | 0 | 0 | text-generation |
 | 2026-10-07 | [LiquidAI/d1-3B-GGUF](https://huggingface.co/LiquidAI/d1-3B-GGUF) | 13742 | 43 | image-text-to-text |
-| 2026-10-07 | [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B) | 10843 | 294 | image-text-to-text |
-| 2026-10-07 | [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M) | 10489 | 105 | image-text-to-text |
+| 2026-10-07 | [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B) | 10843 | 296 | image-text-to-text |
+| 2026-10-07 | [LiquidAI/d1-omni-600M](https://huggingface.co/LiquidAI/d1-omni-600M) | 10489 | 106 | image-text-to-text |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
