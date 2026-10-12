@@ -18,6 +18,10 @@ Documentation=https://github.com/Dave-he/LNN
 Type=oneshot
 WorkingDirectory=$ROOT_DIR
 Environment=PYTHON_BIN=/usr/bin/python3.10
+# The benchmark needs a torch that imports; /usr/bin/python3.10's cu130 wheel
+# fails with libcudss.so.0 on this Jetson, so pin a working interpreter here.
+# run_daily_lnn_task.sh:resolve_bench_python auto-detects if this one is stale.
+Environment=PYTHON_BENCH_BIN=/home/hyx/.pyenv/versions/3.14.4/bin/python3
 Environment=RUN_BENCHMARK=auto
 Environment=DOWNLOAD_PDFS=0
 Environment=COMMIT_AND_PUSH=1

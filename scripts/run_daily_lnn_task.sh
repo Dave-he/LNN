@@ -117,6 +117,28 @@ if [[ "$DOWNLOAD_PDFS" == "1" ]]; then
   research_args+=(--download-pdfs)
 fi
 
+resolve_bench_python() {
+  # The digest only needs stdlib, but the benchmark needs a torch that actually
+  # imports. On this Jetson (R36) the /usr/bin/python3.10 cu130 wheel fails with
+  # "libcudss.so.0: cannot open shared object file" every time, which is why
+  # 2026-10-09..12 produced no benchmark artifact. Pick the first interpreter
+  # whose torch imports; fall back to PYTHON_BIN so the report still records the
+  # failure instead of the run dying silently.
+  if [[ -n "${PYTHON_BENCH_BIN:-}" ]] && "$PYTHON_BENCH_BIN" -c "import torch" >/dev/null 2>&1; then
+    echo "$PYTHON_BENCH_BIN"
+    return 0
+  fi
+  local candidate
+  for candidate in "$PYTHON_BIN" python3 /usr/bin/python3.10 \
+                   /home/hyx/.pyenv/versions/3.14.4/bin/python3 python3.12 python3.11; do
+    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c "import torch" >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+  echo "$PYTHON_BIN"
+}
+
 run_jetson_benchmark() {
   if [[ "$JETSON_USE_DOCKER" != "0" ]] && command -v docker >/dev/null 2>&1 && docker image inspect "$JETSON_DOCKER_IMAGE" >/dev/null 2>&1; then
     run_docker_benchmark() {
@@ -142,9 +164,12 @@ run_jetson_benchmark() {
       return 0
     fi
     echo "[warn] Jetson Docker benchmark failed; retrying with host Python CPU smoke benchmark." >&2
-    "$PYTHON_BIN" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" --quick --cpu
+    "$(resolve_bench_python)" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" --quick --cpu
   else
-    "$PYTHON_BIN" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" --quick
+    local bench_python
+    bench_python="$(resolve_bench_python)"
+    echo "[info] benchmark interpreter: $bench_python" >&2
+    "$bench_python" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" --quick
   fi
 }
 

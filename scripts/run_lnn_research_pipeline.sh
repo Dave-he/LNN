@@ -129,8 +129,8 @@ fi
 # 3. commit + push: docs/ papers/ analysis/ 的当日变更
 # -----------------------------------------------------------------------------
 if [[ "$SKIP_COMMIT" != "1" ]]; then
-  plog "[3/4] commit: 提交当日 docs/ papers/ 变更"
-  prun "git add docs papers"
+  plog "[3/4] commit: 提交当日 docs/ papers/ analysis/ 变更"
+  prun "git add docs papers analysis"
   if git diff --cached --quiet; then
     plog "  无 staged 变更, 跳过 commit"
   else

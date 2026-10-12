@@ -13,6 +13,7 @@ import argparse
 import contextlib
 import datetime as dt
 import io
+import importlib.util
 import json
 import math
 import os
@@ -897,6 +898,39 @@ def looks_like_cuda_runtime_error(exc: BaseException) -> bool:
     )
 
 
+def _is_torch_load_failure(exc: BaseException) -> bool:
+    """True when an ImportError comes from dlopen-ing a native dependency.
+
+    Covers messages such as "libcudss.so.0: cannot open shared object file",
+    which torch raises on import when a CUDA library cannot be loaded. The
+    message itself never mentions torch (only the traceback does), so torch is
+    checked for presence rather than named in the text.
+    """
+    text = f"{type(exc).__name__}: {exc}".lower()
+    if not any(marker in text for marker in ("shared object file", "cannot load", "undefined symbol")):
+        return False
+    try:
+        return importlib.util.find_spec("torch") is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def mark_cpu_only_run(payload: dict[str, Any]) -> dict[str, Any]:
+    """Relabel a plain "ok" CPU run so it is never read as GPU evidence.
+
+    A Jetson host can produce a clean run with no usable CUDA, and "ok" alone
+    reads as GPU/edge performance. Only an exact "ok" is renamed; an existing
+    "ok_cpu_fallback" already means CPU and keeps its cuda_fallback_reason.
+    """
+    if payload.get("status") == "ok" and payload.get("device") == "cpu":
+        payload["status"] = "ok_cpu"
+        payload["status_note"] = (
+            "CUDA was unavailable, so these are CPU timings measured on the Jetson host. "
+            "They are not GPU/edge performance evidence."
+        )
+    return payload
+
+
 def exception_summary(exc: BaseException) -> str:
     summary = "".join(traceback.format_exception_only(type(exc), exc)).strip()
     return " ".join(summary.split())
@@ -947,6 +981,19 @@ def main() -> int:
             "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
             "environment": detect_environment(None),
         }
+    except ImportError as exc:
+        # torch is installed but a native dependency failed to dlopen, e.g.
+        # "ImportError: libcudss.so.0: cannot open shared object file". The CPU
+        # fallback cannot help either (same interpreter), so record a skipped
+        # report instead of dying without leaving an auditable artifact.
+        if not _is_torch_load_failure(exc):
+            raise
+        payload = {
+            "status": "skipped",
+            "reason": f"PyTorch is installed but a native library failed to load: {exception_summary(exc)}",
+            "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "environment": detect_environment(None),
+        }
     except Exception as exc:
         if args.cpu or args.no_cpu_fallback or not looks_like_cuda_runtime_error(exc):
             raise
@@ -956,6 +1003,8 @@ def main() -> int:
         payload = run_pareto_benchmark(args) if args.pareto else run_benchmark(args)
         payload["status"] = "ok_cpu_fallback"
         payload["cuda_fallback_reason"] = reason
+
+    payload = mark_cpu_only_run(payload)
 
     json_path, md_path = write_report(args.date, payload)
     print(f"Jetson LNN benchmark report written: {json_path.relative_to(ROOT)}")
