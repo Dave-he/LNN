@@ -15,7 +15,9 @@ from __future__ import annotations
 import importlib.util
 import pathlib
 import sys
+import tempfile
 import unittest
+from unittest import mock
 
 _ROOT = pathlib.Path(__file__).resolve().parents[1]
 _SCRIPT = _ROOT / "scripts" / "jetson_lnn_benchmark.py"
@@ -97,6 +99,75 @@ class TestStatusIsHonestAboutCpuRuns(unittest.TestCase):
         payload = self._normalize({"status": "ok_cpu_fallback", "device": "cpu", "cuda_fallback_reason": "boom"})
         self.assertEqual(payload["status"], "ok_cpu_fallback")
         self.assertEqual(payload["cuda_fallback_reason"], "boom")
+
+
+class TestSuccessStatusesCoverEveryProducibleStatus(unittest.TestCase):
+    """Every status the run path can emit must still render the result tables.
+
+    2026-10-12: `mark_cpu_only_run` started emitting `ok_cpu`, but `write_report`
+    gated the results section on `{"ok", "ok_cpu_fallback"}`. The report then
+    rendered only "## 状态 / ok_cpu: None" while the sibling JSON held all six
+    model results and a Pareto PNG was on disk. A new status must not be added
+    to the emitters without adding it here.
+    """
+
+    def test_ok_cpu_is_a_success_status(self):
+        self.assertIn("ok_cpu", _mod.SUCCESS_STATUSES)
+
+    def test_fallback_status_is_preserved(self):
+        self.assertIn("ok_cpu_fallback", _mod.SUCCESS_STATUSES)
+
+    def test_plain_ok_is_a_success_status(self):
+        self.assertIn("ok", _mod.SUCCESS_STATUSES)
+
+
+class TestOkCpuReportRendersResults(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp_cleanup)
+
+    def tmp_cleanup(self):
+        self.tmp.cleanup()
+
+    def test_ok_cpu_report_contains_result_rows_and_cpu_caveat(self):
+        payload = _mod.mark_cpu_only_run(
+            {
+                "status": "ok",
+                "device": "cpu",
+                "experiment": "jetson_lnn_benchmark",
+                "environment": {},
+                "config": {},
+                "results": [
+                    {
+                        "name": "LTC",
+                        "parameters": 185,
+                        "test_mse": 0.5,
+                        "inference_steps_per_sec": 1234.5,
+                        "train_seconds": 3.0,
+                    }
+                ],
+            }
+        )
+        with mock.patch.object(_mod, "ROOT", pathlib.Path(self.tmp.name)):
+            with mock.patch.object(_mod, "write_benchmark_plot", return_value=None):
+                _, md_path = _mod.write_report("2099-01-01", payload)
+        text = md_path.read_text(encoding="utf-8")
+
+        self.assertIn("| LTC | 185 | 0.500000 | 1234.5 | 3.00 |", text)
+        self.assertIn("CPU-only", text)
+        self.assertNotIn("## 状态", text)
+
+    def test_failed_status_still_reports_the_reason(self):
+        with mock.patch.object(_mod, "ROOT", pathlib.Path(self.tmp.name)):
+            with mock.patch.object(_mod, "write_benchmark_plot", return_value=None):
+                _, md_path = _mod.write_report(
+                    "2099-01-02",
+                    {"status": "skipped", "reason": "torch import failed", "environment": {}},
+                )
+        text = md_path.read_text(encoding="utf-8")
+
+        self.assertIn("## 状态", text)
+        self.assertIn("torch import failed", text)
 
 
 if __name__ == "__main__":

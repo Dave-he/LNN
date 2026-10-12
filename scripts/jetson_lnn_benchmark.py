@@ -292,7 +292,7 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
             lines.extend(["", f"### {model_name}"])
             lines.extend(_format_power_summary(summary))
 
-    if payload.get("status") not in {"ok", "ok_cpu_fallback"}:
+    if payload.get("status") not in SUCCESS_STATUSES:
         lines.extend(["", "## 状态", f"- {payload.get('status')}: {payload.get('reason')}"])
     elif payload.get("experiment") == "jetson_lnn_pareto_sweep":
         config = payload.get("config", {})
@@ -440,6 +440,17 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
                 "- `GRU` 是同等隐藏维度的传统循环网络基线。",
                 "- 该脚本是 smoke benchmark；正式论文复现应替换为论文数据集、"
                 "固定随机种子、多次重复和置信区间。",
+            ]
+        )
+
+    if payload.get("status") == "ok_cpu":
+        lines.extend(
+            [
+                "",
+                "## ⚠️ CPU-only 运行",
+                f"- {payload.get('status_note')}",
+                "- 上方功耗/温度采样来自真实 Jetson 传感器，有效；"
+                "但下方**速度与精度不是边缘推理性能证据**。",
             ]
         )
 
@@ -913,6 +924,13 @@ def _is_torch_load_failure(exc: BaseException) -> bool:
         return importlib.util.find_spec("torch") is not None
     except (ImportError, ValueError):
         return False
+
+
+# Statuses whose payload carries real results, so write_report must render the
+# result tables. Keep in sync with the statuses mark_cpu_only_run / the CUDA
+# fallback path can produce: a status missing here silently strips the results
+# section while the JSON still holds them (2026-10-12 regression).
+SUCCESS_STATUSES = frozenset({"ok", "ok_cpu", "ok_cpu_fallback"})
 
 
 def mark_cpu_only_run(payload: dict[str, Any]) -> dict[str, Any]:

@@ -84,13 +84,62 @@ CUDA（一个缺库，一个 driver 太旧）。
 06:32 那次把 `analysis/repo_watchlist/2026-10-12_lnn_open_source_watchlist.md` 落在工作区未提交，
 只能手工补 `7a923b1`。已把 `run_lnn_research_pipeline.sh:132-133` 改为与注释一致。
 
+## 缺陷 3：`write_report` 状态白名单漏 `ok_cpu`，结果表被吞（已修）
+
+缺陷 1 的修复（`mark_cpu_only_run()`）在 04:33 产出 `status: "ok_cpu"` 的当天**没有被自己覆盖到**：
+`write_report()` 用 `payload["status"] not in {"ok", "ok_cpu_fallback"}` 决定要不要渲染结果段，
+而新引入的 `ok_cpu` 不在这个集合里。于是 10-12 报告只剩：
+
+```text
+## 状态
+- ok_cpu: None
+```
+
+6 个模型的结果表、Pareto 解读、以及已经写到磁盘的 `2026-10-12_lnn_benchmark.png` 链接**全部消失**，
+而同目录的 `.json` 里 `results` 有完整 6 条。这是典型的"状态枚举加了一处、判消费方没跟"的回归 ——
+JSON 完好所以从数据层面看不出来，只有读 md 才会发现。
+
+**修复**：抽出 `SUCCESS_STATUSES = frozenset({"ok", "ok_cpu", "ok_cpu_fallback"})` 常量与
+`mark_cpu_only_run()` 并排放置，`write_report` 改为引用它；并给 `ok_cpu` 补一段
+"⚠️ CPU-only 运行"警告，把 `status_note` 原文写进 md（此前只在 JSON 里）。回归测试 +5 项
+（`TestSuccessStatusesCoverEveryProducibleStatus` 钉住状态集合、`TestOkCpuReportRendersResults`
+端到端断言 md 里有结果行且没有 `## 状态`）。
+
+**方法论教训**：诚实状态重命名这类改动必须同时审计**消费该状态的判据**。
+`status` 从 `"ok"` 变成 `"ok_cpu"` 是给 JSON 的诚实性改进，但 `write_report` 用同一个字段做分支，
+于是同一个 commit 同时"让 JSON 更诚实"和"让 md 少信息"。加新枚举值时要 grep 出所有比较点。
+
+**旁证**：`analysis/jetson/2026-06-09_test_{quick,single}_lnn_benchmark.md` 曾显示为未提交修改，
+症状相同（`ok_cpu: None` + 结果表消失）。它们是 `tests/test_jetson_lnn_benchmark.py` 的副作用产物
+（run_date 硬编码 `2026-06-09_test_*`），不是真实跑损坏的存档；已 `git checkout` 回滚并保持原样。
+
+## 环境噪音：本机 pytest 全面收集失败（非本次改动引入）
+
+`python -m pytest tests/` 报 **229 errors during collection**，两类根因都是环境问题：
+
+1. `ImportError: libcudss.so.0` —— 与缺陷 1 同源，`/usr/bin/python3.10` 的 torch cu130 wheel 缺库。
+   凡是在模块顶层 `import torch` 的测试文件（如 `tests/test_core.py`）都无法收集。
+2. `ModuleNotFoundError: No module named 'lnn'` —— 本机未做 `pip install -e .`。
+
+另有一个**全局插件**在启动期就炸：用户级 site-packages 的 `deepeval` pytest 插件
+经 `eventlet` → `pyOpenSSL`（`AttributeError: module 'lib' has no attribute 'GEN_EMAIL'`）
+导入失败，导致 `python3 -m pytest` **任何文件都收集 0 条**，且**退出码为 0**。
+加 `-p no:deepeval` 可绕过。
+
+**风险**：这会让 CI 式的"跑一遍 pytest 看是否全绿"在本机静默变成 no-op。
+本次验证 Jetson 相关测试时用 `python3 -m unittest`（不加载插件）与
+`pytest -p no:deepeval` 双路跑：unittest 15/15、pytest 7/7 通过。
+`test_jetson_lnn_benchmark.py` / `test_jetson_benchmark_failure_handling.py` 不在
+`.github/workflows/lnn_weekly_verify.yml` 的 pytest 列表里（该 CI 只跑 core + paper_models +
+liquid_tad_hierarchical），CI 用 Python 3.11 且装 CPU torch，所以本地收集失败不影响 CI。
+
 ## 今日研究产出
 
 - digest：`docs/daily/2026-10-12_LNN_research_digest.md`（24 篇 / 41 仓库 / 18 模型，`errors: []`）
 - 研读报告：**0 篇**，selector 判定 `n_skipped_reported: 12/12` —— LNN / CfC / LTC / NCP 主题
   持续饱和，最新一篇为 ContiLNN (arXiv:2610.12337, 2026-10-08)，已覆盖。
-- Jetson benchmark：`analysis/jetson/2026-10-12_lnn_benchmark.{json,md}`（本次审计补齐，
-  `status: "ok_cpu"`）。
+- Jetson benchmark：`analysis/jetson/2026-10-12_lnn_benchmark.{json,md,png}`（本次审计补齐，
+  `status: "ok_cpu"`，md 结果表经缺陷 3 修复后已回填 6 个模型）。
 - 两份 digest 快照的 HF 模型列表不同（`Rcarvalo/lfm2a-fr-v3-checkpoints` vs
   `mradermacher/LFM2.5-VL-1.6B-...`），系不同时刻抓取所致，非抓取失败。
 
@@ -102,3 +151,6 @@ CUDA（一个缺库，一个 driver 太旧）。
    建议：同日已跑过 timer 时不再手工重跑，或给 pipeline 脚本加"当日 digest 已存在则跳过抓取"守卫。
 3. `analysis/pipeline_notes/` 未被 `git add docs papers analysis` 覆盖时会遗漏 —— 当前两个入口
    都已含 `analysis`，但若新增其它产物目录需同步检查。
+4. **本机 `python3 -m pytest` 静默 no-op**：全局 `deepeval` 插件导入失败导致收集 0 条但退出码为 0。
+   任何"跑 pytest 验证"的本地检查都必须加 `-p no:deepeval`（或改用 `python3 -m unittest`），
+   否则会把"没跑"误读成"全绿"。另需 `pip install -e .` 才能收集依赖 `lnn` 包的测试。
