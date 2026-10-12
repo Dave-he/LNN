@@ -56,11 +56,11 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-12 | [LiquidAI/d1-3B-MLX-fp16](https://huggingface.co/LiquidAI/d1-3B-MLX-fp16) | 6 | 1 | image-text-to-text |
 | 2026-10-12 | [amd/LFM2-1.2B_rai_1.8.0_m0.9.2_npu_4K](https://huggingface.co/amd/LFM2-1.2B_rai_1.8.0_m0.9.2_npu_4K) | 3 | 0 | text-generation |
 | 2026-10-12 | [amd/LFM2-2.6B_rai_1.8.0_m0.9.2_npu_4K](https://huggingface.co/amd/LFM2-2.6B_rai_1.8.0_m0.9.2_npu_4K) | 2 | 1 | text-generation |
+| 2026-10-12 | [TheStageAI/LFM2.5-VL-450M](https://huggingface.co/TheStageAI/LFM2.5-VL-450M) | 1 | 0 |  |
 | 2026-10-12 | [llmware/bling-lfm2-3b](https://huggingface.co/llmware/bling-lfm2-3b) | 0 | 0 |  |
 | 2026-10-12 | [Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Answer-EN-SV](https://huggingface.co/Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Answer-EN-SV) | 0 | 1 | text-generation |
 | 2026-10-12 | [Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Answer-SV](https://huggingface.co/Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Answer-SV) | 0 | 1 | text-generation |
 | 2026-10-12 | [Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Answer-EN](https://huggingface.co/Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Answer-EN) | 0 | 1 | text-generation |
-| 2026-10-12 | [jayyun98/LFM2.5-8B-A1B-Draftfit-DSpark](https://huggingface.co/jayyun98/LFM2.5-8B-A1B-Draftfit-DSpark) | 0 | 0 |  |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

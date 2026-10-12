@@ -190,11 +190,17 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：onnx, lfm2, amd, ryzenai, m0.9.2_npu_4K, text-generation, conversational, en
 
+### [TheStageAI/LFM2.5-VL-450M](https://huggingface.co/TheStageAI/LFM2.5-VL-450M)
+- 更新：2026-10-12
+- 下载 / Likes：1 / 0
+- 任务：unknown
+- Tags：region:us
+
 ### [llmware/bling-lfm2-3b](https://huggingface.co/llmware/bling-lfm2-3b)
 - 更新：2026-10-12
 - 下载 / Likes：0 / 0
 - 任务：unknown
-- Tags：license:cc-by-nc-sa-4.0, region:us
+- Tags：pytorch, license:cc-by-nc-sa-4.0, region:us
 
 ### [Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Answer-EN-SV](https://huggingface.co/Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Answer-EN-SV)
 - 更新：2026-10-12
@@ -238,15 +244,9 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2, text-generation, medical, multiple-choice, swedish, conversational
 
-### [Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Trace-EN](https://huggingface.co/Anonymiserad/SweMedMCQ-LFM2.5-1.2B-Trace-EN)
-- 更新：2026-10-12
-- 下载 / Likes：0 / 1
-- 任务：text-generation
-- Tags：transformers, safetensors, lfm2, text-generation, medical, multiple-choice, swedish, conversational
-
 ### [LiquidAI/d1-3B](https://huggingface.co/LiquidAI/d1-3B)
 - 更新：2026-10-07
-- 下载 / Likes：11866 / 336
+- 下载 / Likes：11866 / 342
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm2_vl, image-text-to-text, liquid, lfm2.5, edge, decision
 
