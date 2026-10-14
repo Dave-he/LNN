@@ -49,6 +49,12 @@ ARCHIVE_RSS_CATEGORIES = [
     "cs.SY",
 ]
 
+# arXiv 重试退避 (秒). Varnish 的 406/read-timeout 窗口通常在 30~60s 内清掉.
+ARXIV_RETRY_BACKOFF = (8, 30, 60)
+
+# 每日索引保留的**天数**上限 (子条目跟随其日期条目一起保留, 不单独计数).
+INDEX_MAX_DAYS = 30
+
 GITHUB_QUERIES = [
     '"liquid neural network"',
     '"liquid neural networks"',
@@ -94,6 +100,30 @@ def request_text(url: str, headers: dict[str, str] | None = None) -> str:
         return response.read().decode("utf-8")
 
 
+def request_text_retry(url: str, backoff: tuple[int, ...] = ARXIV_RETRY_BACKOFF) -> str:
+    """带退避重试的 arXiv 文本抓取.
+
+    arXiv 前置的 Varnish 缓存会偶发 406 / read timeout —— 实测同一 URL 反复请求
+    0.3~2.3s 即成功, 说明是窗口期抖动而非持续故障。旧实现只尝试一次, 一次抖动就
+    让整轮退回前一日候选池 (09-22、09-23、10-12/13/14 连续命中), 退避按 Varnish
+    清理窗口取到 60s。最后一次仍失败则抛出原异常, 由调用方走 RSS / 前日 fallback。
+    """
+    last: Exception | None = None
+    for attempt, delay in enumerate((0, *backoff)):
+        if delay:
+            print(
+                f"[warn] arXiv 请求失败 ({last}); {delay}s 后重试 {attempt + 1}/{len(backoff)}",
+                file=sys.stderr,
+            )
+            time.sleep(delay)
+        try:
+            return request_text(url)
+        except Exception as exc:
+            last = exc
+    assert last is not None
+    raise last
+
+
 def clean_text(value: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(value or "")).strip()
 
@@ -131,7 +161,7 @@ def fetch_arxiv(max_results: int) -> list[dict[str, Any]]:
         }
     )
     url = f"https://export.arxiv.org/api/query?{params}"
-    feed = request_text(url)
+    feed = request_text_retry(url)
     root = ET.fromstring(feed)
     ns = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
     papers: list[dict[str, Any]] = []
@@ -188,7 +218,7 @@ def fetch_arxiv_rss(max_results: int) -> list[dict[str, Any]]:
     for category in ARCHIVE_RSS_CATEGORIES:
         url = f"https://export.arxiv.org/rss/{category}"
         try:
-            feed = request_text(url)
+            feed = request_text_retry(url)
         except Exception as exc:
             print(f"[warn] RSS fetch failed for {category}: {exc}", file=sys.stderr)
             continue
@@ -519,6 +549,52 @@ def update_marked_section(path: pathlib.Path, marker: str, content: str) -> None
     path.write_text(updated, encoding="utf-8")
 
 
+DAY_ENTRY_RE = re.compile(r"- \*\*\d{4}-\d\d-\d\d")
+
+
+def split_index_entries(block: str) -> list[list[str]]:
+    """把索引区块切成条目: 每条 = 一个顶格日期行 + 其后所有缩进/续行.
+
+    旧实现按行过滤 ``- **`` 前缀再截断前 29 行, 有两个数据丢失通道:
+      1. 缩进子条目 (每日复盘明细) 整段被丢弃;
+      2. 老条目里 ``- **workaround**`` 这类**续行**也被当成条目计数, 29 行的容量
+         先被续行吃光, 于是 10-06~10-01 这些真实日期条目被挤出索引 (2026-10-14
+         重跑时实测: 42 个顶格 ``- **`` 里 12 个是续行)。
+    """
+    entries: list[list[str]] = []
+    for raw in block.splitlines():
+        if not raw.strip():
+            continue
+        if raw.startswith("- **") and DAY_ENTRY_RE.match(raw):
+            entries.append([raw])
+        elif entries:
+            entries[-1].append(raw)
+        else:
+            entries.append([raw])
+    return entries
+
+
+def cap_index_entries(rows: list[str], max_days: int = INDEX_MAX_DAYS) -> list[str]:
+    """按**天数**截断索引行 (子条目跟随所属日期条目, 不单独占容量).
+
+    被挤掉的日期条目必须连同它的缩进明细一起丢弃, 否则会在上一个保留条目下面
+    留下孤儿子项, 比原来的静默截断更难读。
+    """
+    days = 0
+    skipped = False
+    kept: list[str] = []
+    for row in rows:
+        if DAY_ENTRY_RE.match(row):
+            skipped = days >= max_days
+            if skipped:
+                continue
+            days += 1
+        elif skipped:
+            continue
+        kept.append(row)
+    return kept
+
+
 def update_indexes(run_date: str, digest_path: pathlib.Path, papers: list[dict[str, Any]], repos: list[dict[str, Any]], models: list[dict[str, Any]]) -> None:
     rel_digest = digest_path.relative_to(ROOT).as_posix()
     summary_path = ROOT / "docs" / "Liquid_Neural_Networks_Latest_Papers_Summary.md"
@@ -531,9 +607,12 @@ def update_indexes(run_date: str, digest_path: pathlib.Path, papers: list[dict[s
             text = path.read_text(encoding="utf-8")
             match = re.search(r"<!-- daily-lnn-index:start -->(.*?)<!-- daily-lnn-index:end -->", text, re.DOTALL)
             if match:
-                existing = [item.strip() for item in match.group(1).splitlines() if item.strip().startswith("- **")]
-        existing = [item for item in existing if f"**{run_date}**" not in item]
-        items = [line, *existing[:29]]
+                for chunk in split_index_entries(match.group(1)):
+                    if any(f"**{run_date}**" in row for row in chunk):
+                        continue  # 今日条目由本次运行重写
+                    existing.extend(chunk)
+                existing = cap_index_entries(existing)
+        items = [line, *existing]
         return f"## {heading}\n\n" + "\n".join(items)
 
     update_marked_section(summary_path, "daily-lnn-index", merge_existing(summary_path, "4. 自动化每日追踪索引"))

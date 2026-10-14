@@ -257,6 +257,11 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
         "",
         f"# Jetson LNN 基准验证 - {run_date}",
         "",
+        # 运行状态横幅: ok_cpu / failed 这类诚实标注必须出现在 md 里。只写在 JSON 里
+        # 会让只读报告的人把 CPU 步/秒当成边缘性能证据 (2026-10-14 之前就是这个状态).
+        f"> ⚠️ **运行状态：`{payload.get('status', 'unknown')}`**",
+        f"> {payload.get('status_note') or '（本次运行未记录 status_note）'}",
+        "",
         "## 环境",
         f"- 平台：{env.get('platform')}",
         f"- 设备树型号：{env.get('device_tree_model') or 'unknown'}",
