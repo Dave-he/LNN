@@ -1,0 +1,23 @@
+
+=== 2026-10-14 09:15:45 reproducing 2606.26849v1 via scripts/experiment_imitation_lnn.py ===
+title : [Liquid Fusion of Heterogeneous Representations Towards General Salient Object Detection](https://arxiv.org/abs/2606.26849v1)
+cmd   : python3 scripts/experiment_imitation_lnn.py
+[exit] 1
+
+
+=== 2026-10-14 09:16:54 [re-run with conda lnn env] ===
+root cause: dispatcher mistakenly routed Liquid Fusion SOD (imitation keyword match) to experiment_imitation_lnn.py;
+            previous run exit 1 because PYTHON_BIN=python3 (no torch). Re-running with /Users/hyx/miniconda3/envs/lnn/bin/python
+(注: Liquid Fusion SOD 与 imitation learning 任务无关, 本次重跑仅为恢复成产物以归档 analysis/, 不构成对原论文的复现)
+
+=== LNN Imitation Learning Experiment ===
+Model: cfc + mdn | Device: cpu | Samples: 1000
+Parameters: 18,025
+Epoch   1 | Train 1.7603 | Val loss 1.6650 | Val MSE 0.0054
+Epoch   5 | Train -0.4195 | Val loss -1.2315 | Val MSE 0.0013
+Epoch  10 | Train -3.7059 | Val loss -3.8218 | Val MSE 0.0010
+Epoch  12 | Train -3.7994 | Val loss -3.8676 | Val MSE 0.0010
+Test loss: -3.733517 | Test MSE: 0.001116
+JSON written: analysis/control/2026-10-14_091700_imitation_lnn.json
+Report written: analysis/control/2026-10-14_091700_imitation_lnn.md
+[exit] 0
