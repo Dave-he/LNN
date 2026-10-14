@@ -11,7 +11,7 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：24 篇
 - GitHub 候选仓库：42 个
-- Hugging Face 候选模型：16 个
+- Hugging Face 候选模型：17 个
 - 已下载 PDF：0 个
 
 ## arXiv 候选论文
@@ -52,15 +52,15 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-14 | [mlx-community/LFM2.5-8B-A1B-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-8B-A1B-OptiQ-4bit) | 608 | 2 | text-generation |
 | 2026-10-14 | [mlx-community/LFM2.5-2.6B-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-2.6B-OptiQ-4bit) | 522 | 2 | text-generation |
 | 2026-10-14 | [mlx-community/LFM2.5-1.2B-Instruct-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-1.2B-Instruct-OptiQ-4bit) | 125 | 0 | text-generation |
+| 2026-10-14 | [mlx-community/LFM2.5-1.2B-Thinking-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-1.2B-Thinking-OptiQ-4bit) | 99 | 0 | text-generation |
 | 2026-10-14 | [mlx-community/LFM2.5-1.2B-JP-202606-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-1.2B-JP-202606-OptiQ-4bit) | 95 | 0 | text-generation |
 | 2026-10-14 | [mlx-community/LFM2.5-230M-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-230M-OptiQ-4bit) | 94 | 0 | text-generation |
 | 2026-10-14 | [mlx-community/LFM2.5-350M-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-350M-OptiQ-4bit) | 67 | 0 | text-generation |
-| 2026-10-14 | [bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF](https://huggingface.co/bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF) | 0 | 0 | text-generation |
-| 2026-10-14 | [0xzknw/LFM2.5-24B-A2B-EXL3-4bpw](https://huggingface.co/0xzknw/LFM2.5-24B-A2B-EXL3-4bpw) | 0 | 0 | text-generation |
-| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) | 17807 | 114 | text-generation |
-| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B) | 4067 | 293 | text-generation |
-| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B-FP8](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8) | 1074 | 16 | text-generation |
-| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-8bit) | 220 | 5 | text-generation |
+| 2026-10-14 | [bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF](https://huggingface.co/bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF) | 0 | 1 | text-generation |
+| 2026-10-14 | [Lottolabs/LFM2.5-24B-A2B-TT-Mixed-BFP4-BFP8-P150](https://huggingface.co/Lottolabs/LFM2.5-24B-A2B-TT-Mixed-BFP4-BFP8-P150) | 0 | 0 | text-generation |
+| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) | 17807 | 115 | text-generation |
+| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B) | 4067 | 297 | text-generation |
+| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B-FP8](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8) | 1074 | 18 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

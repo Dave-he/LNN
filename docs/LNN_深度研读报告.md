@@ -1366,7 +1366,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-10-15**：[[docs/daily/2026-10-15_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 16 个。
+- **2026-10-15**：[[docs/daily/2026-10-15_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
 ## 4. 自动化追踪与待研读队列
 - **2026-10-14**：[[docs/daily/2026-10-14_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 19 个；研读报告生成 **0 篇**（`select_papers_for_report.py` → `{candidates: [], n_total_arxiv: 12, n_skipped_reported: 12}`，12/12 已被 `docs/reports/` 覆盖）。本条与前几日"饱和"复盘的关键差别：**今日 arXiv 为实时抓取成功（`errors=[]`），已核验 10-08 之后确实没有新的 LNN 论文**，所以饱和是领域事实而不是抓取故障。
   - **数据源核验（本次重抓，`generated_at` 08:45 UTC）**：arXiv `/api/query` **成功**（`errors` 为空数组）；同一 9 词 OR 查询连续 3 次直连均成功（0.3s / 0.4s / 2.3s，63.5KB），证明此前 10-12/13/14 的 timeout 是**瞬时抖动而非持续故障**。结果集与 10-13 池**逐 id 完全一致**（24 篇，最新 `2610.12337v1` ContiLNN @ 2026-10-08）。**订正前几日的告警叙事**："arXiv 连续 3 天失败 / digest 其实是昨日池复用"成立（单次尝试失败 + fallback 保留旧池），但**内容本身并未失真**——旧池就是正确答案。

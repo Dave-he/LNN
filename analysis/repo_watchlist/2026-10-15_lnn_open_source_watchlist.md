@@ -166,6 +166,12 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2, optiq, quantized, 4bit, mixed-precision, liquid-ai
 
+### [mlx-community/LFM2.5-1.2B-Thinking-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-1.2B-Thinking-OptiQ-4bit)
+- 更新：2026-10-14
+- 下载 / Likes：99 / 0
+- 任务：text-generation
+- Tags：mlx, safetensors, lfm2, optiq, quantized, 4bit, mixed-precision, liquid-ai
+
 ### [mlx-community/LFM2.5-1.2B-JP-202606-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-1.2B-JP-202606-OptiQ-4bit)
 - 更新：2026-10-14
 - 下载 / Likes：95 / 0
@@ -186,55 +192,55 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF](https://huggingface.co/bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF)
 - 更新：2026-10-14
-- 下载 / Likes：0 / 0
+- 下载 / Likes：0 / 1
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2.5, edge, moe, text-generation, en, ar
 
-### [0xzknw/LFM2.5-24B-A2B-EXL3-4bpw](https://huggingface.co/0xzknw/LFM2.5-24B-A2B-EXL3-4bpw)
+### [Lottolabs/LFM2.5-24B-A2B-TT-Mixed-BFP4-BFP8-P150](https://huggingface.co/Lottolabs/LFM2.5-24B-A2B-TT-Mixed-BFP4-BFP8-P150)
 - 更新：2026-10-14
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：mlx, safetensors, lfm2_moe, exl3, lfm2.5, moe, quantized, apple-silicon
+- Tags：liquid, lfm2.5, moe, tenstorrent, blackhole, p150, tt-metal, vllm
 
 ### [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF)
 - 更新：2026-10-13
-- 下载 / Likes：17807 / 114
+- 下载 / Likes：17807 / 115
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2.5, llama.cpp, text-generation, en, ar, zh
 
 ### [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)
 - 更新：2026-10-13
-- 下载 / Likes：4067 / 293
+- 下载 / Likes：4067 / 297
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, moe
 
 ### [LiquidAI/LFM2.5-24B-A2B-FP8](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8)
 - 更新：2026-10-13
-- 下载 / Likes：1074 / 16
+- 下载 / Likes：1074 / 18
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, moe
 
 ### [LiquidAI/LFM2.5-24B-A2B-MLX-8bit](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-8bit)
 - 更新：2026-10-13
-- 下载 / Likes：220 / 5
+- 下载 / Likes：220 / 6
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
 
 ### [LiquidAI/LFM2.5-24B-A2B-MLX-5bit](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-5bit)
 - 更新：2026-10-13
-- 下载 / Likes：126 / 3
+- 下载 / Likes：126 / 4
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
 
 ### [LiquidAI/LFM2.5-24B-A2B-MLX-6bit](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-6bit)
 - 更新：2026-10-13
-- 下载 / Likes：105 / 0
+- 下载 / Likes：105 / 1
 - 任务：text-generation
 - Tags：mlx, safetensors, lfm2_moe, liquid, lfm2.5, edge, moe, text-generation
 
 ### [LiquidAI/LFM2.5-24B-A2B-Base](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-Base)
 - 更新：2026-10-13
-- 下载 / Likes：73 / 31
+- 下载 / Likes：73 / 32
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, moe
 
