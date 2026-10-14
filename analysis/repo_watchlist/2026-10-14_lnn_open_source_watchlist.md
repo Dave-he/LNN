@@ -7,6 +7,20 @@ tags: [LNN, repo-watchlist, automation]
 # LNN 开源生态观察 - 2026-10-14
 
 ## GitHub 仓库
+### [pRodrigues79129/bebelm](https://github.com/pRodrigues79129/bebelm)
+- 更新：2026-10-14
+- Star / Fork：0 / 0
+- 语言：Rust
+- Topics：cpu, inference, llm, local-ai, local-llm, rust
+- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
+
+### [joshuaronto25/bebelm](https://github.com/joshuaronto25/bebelm)
+- 更新：2026-10-14
+- Star / Fork：0 / 0
+- 语言：Rust
+- Topics：cpu, inference, llm, local-ai, local-llm, rust
+- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
+
 ### [blacklike02/Liquid-Network-Model](https://github.com/blacklike02/Liquid-Network-Model)
 - 更新：2026-10-13
 - Star / Fork：4 / 0
@@ -132,20 +146,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Jupyter Notebook
 - Topics：未标注
 - 说明：This project implements a hybrid deep learning architecture combining Convolutional Neural Networks (CNN), Long Short-Term Memory (LSTM), and Liquid Neural Networks (LNN) for multi-class classification of brain MRI images into 38 distinct tumor categories.
-
-### [smparc/murmur](https://github.com/smparc/murmur)
-- 更新：2026-09-28
-- Star / Fork：2 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：An enterprise-grade predictive maintenance engine that turns ambient mechanical noise into actionable text telemetry. Deployed on Kubernetes, Murmur leverages CUDA-accelerated Kafka streams, Spatio-Temporal GNNs, Liquid Neural Networks, and an Audio LLM to localize physical anomalies and forecast equipment failures in continuous time.
-
-### [GhostPanda-Sec/LTCore](https://github.com/GhostPanda-Sec/LTCore)
-- 更新：2026-09-27
-- Star / Fork：0 / 0
-- 语言：Python
-- Topics：未标注
-- 说明：LTCore 是 Liquid Time-Constant 网络的零依赖纯标准库实现，用 42 个测试和 16 项判据把它的数学性质、解算器一致性与梯度正确性逐条证明到位。 LTCore is a zero-dependency, pure standard library implementation of the Liquid Time-Constant network that proves its math, solver agreement and gradient correctness with 42 tests and 16 criteria.
 
 ## Hugging Face 模型
 ### [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)

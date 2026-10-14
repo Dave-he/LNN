@@ -14,11 +14,6 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - Hugging Face 候选模型：19 个
 - 已下载 PDF：0 个
 
-## 数据源状态
-- `arXiv /api/query failed: The read operation timed out`
-- `arXiv RSS fallback returned 0 papers (likely weekend or empty category)`
-- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
-
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
@@ -38,6 +33,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-10-14 | [pRodrigues79129/bebelm](https://github.com/pRodrigues79129/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-14 | [joshuaronto25/bebelm](https://github.com/joshuaronto25/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-13 | [blacklike02/Liquid-Network-Model](https://github.com/blacklike02/Liquid-Network-Model) | 4 | Python | Liquid Neural Network language model with LTC and CfC dynamics |
 | 2026-10-13 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
 | 2026-10-13 | [Elysian3/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data](https://github.com/Elysian3/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data) | 1 | C |  |
@@ -48,8 +45,6 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-12 | [NoeFlandre/filter-osm-datasets-llms-landuse](https://github.com/NoeFlandre/filter-osm-datasets-llms-landuse) | 0 | Python | Resumable multi-site Grid'5000 pipeline labelling OSM polygon sentences for land-use relevance with LiquidAI LFM2.5-2.6B + DSpark (SGLang) |
 | 2026-10-11 | [dhrumi2004/session-recommendation-lnn](https://github.com/dhrumi2004/session-recommendation-lnn) | 0 | Python | Undergraduate project: session-based next-item recommendation comparing popularity, GRU, and Liquid Time-Constant networks. |
 | 2026-10-10 | [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant) | 1 |  | Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free p… |
-| 2026-10-09 | [Noah-hjl/ContiLNN](https://github.com/Noah-hjl/ContiLNN) | 3 | Python | ContiLNN: Mitigating Slice Sampling Discontinuity with Liquid Neural Networks for Medical Image Restoration |
-| 2026-10-08 | [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection) | 2 | Swift | On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |

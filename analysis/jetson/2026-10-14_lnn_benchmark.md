@@ -6,6 +6,9 @@ tags: [LNN, Jetson, benchmark, edge-ai]
 
 # Jetson LNN 基准验证 - 2026-10-14
 
+> ⚠️ **运行状态：`ok_cpu`**
+> CUDA was unavailable, so these are CPU timings measured on the Jetson host. They are not GPU/edge performance evidence.
+
 ## 环境
 - 平台：Linux-5.15.148-tegra-aarch64-with-glibc2.35
 - 设备树型号：NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super
