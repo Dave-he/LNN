@@ -148,59 +148,59 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Are connectome-constrained fly vision models mechanistically identifiable? Dale's law and liquid time constants in flyvis: preregistration, code, results.
 
 ## Hugging Face 模型
-### [BennyDaBall/LFM2.5-1.2B-Z-Image-Engineer-V4](https://huggingface.co/BennyDaBall/LFM2.5-1.2B-Z-Image-Engineer-V4)
-- 更新：2026-10-15
-- 下载 / Likes：826 / 25
-- 任务：text-generation
-- Tags：transformers, safetensors, gguf, text-generation, prompt-engineering, image-generation, lfm, liquid
-
-### [saidutta69/LFM2.5-1.2B-Instruct-heretic](https://huggingface.co/saidutta69/LFM2.5-1.2B-Instruct-heretic)
-- 更新：2026-10-15
-- 下载 / Likes：719 / 0
-- 任务：text-generation
-- Tags：transformers, safetensors, gguf, lfm2, text-generation, liquid, lfm2.5, edge
-
-### [pgmharikrishnan/LFM2.5-24B-A2B-MLX-Serve-mixed-4-8bit](https://huggingface.co/pgmharikrishnan/LFM2.5-24B-A2B-MLX-Serve-mixed-4-8bit)
-- 更新：2026-10-15
-- 下载 / Likes：113 / 1
-- 任务：text-generation
-- Tags：mlx-serve, safetensors, lfm2_moe, mlx, moe, apple-silicon, text-only, text-generation
-
-### [prithivMLmods/LiquidAI-LFM2.5-24B-A2B-GGUF](https://huggingface.co/prithivMLmods/LiquidAI-LFM2.5-24B-A2B-GGUF)
-- 更新：2026-10-15
-- 下载 / Likes：0 / 1
-- 任务：text-generation
-- Tags：transformers, gguf, text-generation-inference, llama-cpp, liquid, lfm2.5, edge, moe
-
-### [aiprimebuilds/LFM2.5-24B-A2B-AWQ](https://huggingface.co/aiprimebuilds/LFM2.5-24B-A2B-AWQ)
-- 更新：2026-10-15
-- 下载 / Likes：0 / 0
+### [Arki05/LFM2.5-2.6B-GGUF-shards](https://huggingface.co/Arki05/LFM2.5-2.6B-GGUF-shards)
+- 更新：2026-10-16
+- 下载 / Likes：11007 / 0
 - 任务：unknown
-- Tags：license:mit, region:us
+- Tags：gguf, base_model:LiquidAI/LFM2.5-2.6B, base_model:quantized:LiquidAI/LFM2.5-2.6B, license:other, region:us
 
-### [saidutta69/LFM2.5-1.2B-Thinking-heretic](https://huggingface.co/saidutta69/LFM2.5-1.2B-Thinking-heretic)
-- 更新：2026-10-15
+### [mlx-community/LFM2.5-24B-A2B-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-24B-A2B-OptiQ-4bit)
+- 更新：2026-10-16
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：transformers, safetensors, gguf, lfm2, text-generation, liquid, lfm2.5, edge
+- Tags：mlx, safetensors, lfm2_moe, optiq, quantized, 4bit, mixed-precision, lfm2
 
-### [mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-GGUF](https://huggingface.co/mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-GGUF)
-- 更新：2026-10-15
+### [mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-i1-GGUF](https://huggingface.co/mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-i1-GGUF)
+- 更新：2026-10-16
 - 下载 / Likes：0 / 0
 - 任务：unknown
 - Tags：transformers, gguf, lfm2, heretic, uncensored, decensored, abliterated, coding-agent
 
-### [CoolJohn-AI/LFM2.5-24B-A2B-NVFP4-AutoRound](https://huggingface.co/CoolJohn-AI/LFM2.5-24B-A2B-NVFP4-AutoRound)
-- 更新：2026-10-15
+### [mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-GGUF](https://huggingface.co/mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-GGUF)
+- 更新：2026-10-16
 - 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：vllm, safetensors, lfm2_moe, lfm2.5, moe, nvfp4, auto-round, compressed-tensors
+- 任务：unknown
+- Tags：transformers, gguf, lfm2, heretic, uncensored, decensored, abliterated, coding-agent
 
-### [primitive-ai/LFM2.5-24B-A2B-NVFP4A16](https://huggingface.co/primitive-ai/LFM2.5-24B-A2B-NVFP4A16)
+### [prithivMLmods/LiquidAI-LFM2.5-24B-A2B-GGUF](https://huggingface.co/prithivMLmods/LiquidAI-LFM2.5-24B-A2B-GGUF)
+- 更新：2026-10-15
+- 下载 / Likes：0 / 2
+- 任务：text-generation
+- Tags：transformers, gguf, text-generation-inference, llama-cpp, liquid, lfm2.5, edge, moe
+
+### [WatchDG/LFM2.5-24B-A2B-DERISKED-EXL3-3.25bpw](https://huggingface.co/WatchDG/LFM2.5-24B-A2B-DERISKED-EXL3-3.25bpw)
+- 更新：2026-10-15
+- 下载 / Likes：0 / 1
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, exl3, lfm2.5, lfm2, moe
+
+### [DavidAU/LFM2.5-24B-A2B-Turbo-Brilliance-50X-NEO-MAX-Imatrix-GGUF](https://huggingface.co/DavidAU/LFM2.5-24B-A2B-Turbo-Brilliance-50X-NEO-MAX-Imatrix-GGUF)
+- 更新：2026-10-15
+- 下载 / Likes：0 / 16
+- 任务：text-generation
+- Tags：gguf, liquid, lfm2.5, edge, moe, 27 reasoning modes, 15 AI Constructs, 5 Super AI Constructs
+
+### [aiprimebuilds/LFM2.5-24B-A2B-GPTQ](https://huggingface.co/aiprimebuilds/LFM2.5-24B-A2B-GPTQ)
+- 更新：2026-10-15
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us
+
+### [notfakerv/LFM2.5-24B-A2B-abliterated-MLX-4bit](https://huggingface.co/notfakerv/LFM2.5-24B-A2B-abliterated-MLX-4bit)
 - 更新：2026-10-15
 - 下载 / Likes：0 / 0
 - 任务：text-generation
-- Tags：vllm, safetensors, lfm2_moe, compressed-tensors, nvfp4, quantized, moe, lfm2.5
+- Tags：mlx, safetensors, lfm2_moe, mlx-lm, lfm2.5, moe, abliterated, 4-bit
 
 ### [bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF](https://huggingface.co/bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF)
 - 更新：2026-10-14
@@ -210,13 +210,13 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF)
 - 更新：2026-10-13
-- 下载 / Likes：45676 / 166
+- 下载 / Likes：45676 / 169
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2.5, llama.cpp, text-generation, en, ar, zh
 
 ### [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)
 - 更新：2026-10-13
-- 下载 / Likes：6286 / 382
+- 下载 / Likes：6286 / 392
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, moe
 

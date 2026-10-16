@@ -82,6 +82,33 @@ def parse_digest(date: str) -> dict[str, Any]:
     return {"path": str(path), "arxiv": arxiv, "repos": repos}
 
 
+def parse_json_pool(date: str) -> list[dict[str, str]]:
+    """从当日 JSON 取全量论文池.
+
+    digest markdown 的表格被渲染层截断 (daily_lnn_research.py 的 DIGEST_TABLE_LIMIT),
+    只解析 markdown 会让排名靠后的新论文永远进不了研读队列, 因此这里以 JSON 为准.
+    """
+    path = ROOT / "papers" / "daily" / f"{date}_lnn_research.json"
+    if not path.exists():
+        return []
+    try:
+        papers = json.loads(path.read_text(encoding="utf-8")).get("papers", [])
+    except (json.JSONDecodeError, OSError):
+        return []
+    return [
+        {
+            "id": p.get("id", ""),
+            "date": p.get("published") or p.get("updated") or "",
+            "title": p.get("title", ""),
+            "authors": ", ".join(p.get("authors", [])[:3]),
+            "summary": p.get("summary", ""),
+            "url": p.get("abs_url", ""),
+        }
+        for p in papers
+        if p.get("id")
+    ]
+
+
 def already_reported(arxiv_id: str) -> bool:
     if not REPORTS_DIR.exists():
         return False
@@ -115,8 +142,10 @@ def main() -> int:
     args = parser.parse_args()
 
     digest = parse_digest(args.date)
+    pool = parse_json_pool(args.date) or digest["arxiv"]
+    source = "json" if parse_json_pool(args.date) else "digest_markdown"
     candidates: list[dict[str, Any]] = []
-    for paper in digest["arxiv"]:
+    for paper in pool:
         if already_reported(paper["id"]):
             continue
         s = score_paper(paper)
@@ -128,11 +157,10 @@ def main() -> int:
     payload = {
         "date": args.date,
         "digest_path": digest["path"],
+        "pool_source": source,
         "candidates": candidates[: args.top],
-        "n_total_arxiv": len(digest["arxiv"]),
-        "n_skipped_reported": sum(
-            1 for p in digest["arxiv"] if already_reported(p["id"])
-        ),
+        "n_total_arxiv": len(pool),
+        "n_skipped_reported": sum(1 for p in pool if already_reported(p["id"])),
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0

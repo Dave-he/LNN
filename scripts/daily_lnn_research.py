@@ -54,6 +54,8 @@ ARXIV_RETRY_BACKOFF = (8, 30, 60)
 
 # 每日索引保留的**天数**上限 (子条目跟随其日期条目一起保留, 不单独计数).
 INDEX_MAX_DAYS = 30
+# digest markdown 表格最多渲染多少行; 摘要里的总数是全量, 表格是前 N, 必须同时标注
+DIGEST_TABLE_LIMIT = 12
 
 GITHUB_QUERIES = [
     '"liquid neural network"',
@@ -407,6 +409,7 @@ def render_daily_digest(
         f"- GitHub 候选仓库：{len(repos)} 个",
         f"- Hugging Face 候选模型：{len(models)} 个",
         f"- 已下载 PDF：{len(downloaded)} 个",
+        f"- 下表每类仅渲染前 {DIGEST_TABLE_LIMIT} 条；全量候选池见 `papers/daily/{run_date}_lnn_research.json`，研读选择器以该 JSON 为准。",
     ]
     if errors:
         lines.extend(["", "## 数据源状态"])
@@ -417,7 +420,7 @@ def render_daily_digest(
 
     if papers:
         lines.extend(["| 日期 | 论文 | 作者 | 摘要 |", "|---|---|---|---|"])
-        for paper in papers[:12]:
+        for paper in papers[:DIGEST_TABLE_LIMIT]:
             authors = ", ".join(paper.get("authors", [])[:3])
             if len(paper.get("authors", [])) > 3:
                 authors += " 等"
@@ -436,7 +439,7 @@ def render_daily_digest(
     lines.extend(["", "## GitHub 候选仓库"])
     if repos:
         lines.extend(["| 更新 | 仓库 | Star | 语言 | 说明 |", "|---|---|---:|---|---|"])
-        for repo in repos[:12]:
+        for repo in repos[:DIGEST_TABLE_LIMIT]:
             lines.append(
                 "| {updated} | [{name}]({url}) | {stars} | {language} | {desc} |".format(
                     updated=repo.get("updated_at") or repo.get("pushed_at") or "",
@@ -453,7 +456,7 @@ def render_daily_digest(
     lines.extend(["", "## Hugging Face 候选模型"])
     if models:
         lines.extend(["| 更新 | 模型 | 下载 | Likes | 任务 |", "|---|---|---:|---:|---|"])
-        for model in models[:12]:
+        for model in models[:DIGEST_TABLE_LIMIT]:
             lines.append(
                 "| {updated} | [{model}]({url}) | {downloads} | {likes} | {task} |".format(
                     updated=model.get("last_modified") or "",
