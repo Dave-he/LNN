@@ -63,6 +63,8 @@ date: 2026-05-24
 - **GitHub Actions**：`.github/workflows/daily-lnn-research.yml`，每天自动生成研究摘要并推送回仓库。
 - **Jetson 验证脚本**：`scripts/jetson_lnn_benchmark.py`，在 Jetson 上执行 LNN/CfC 风格模型与 GRU 的 quick benchmark，输出到 `analysis/jetson/`。
 - **领域持续研究 Skill**：`skills/living-field-researcher`，将每日搜索、PRISMA-lite 追踪、雪球法扩展、研读报告、全局索引与实验队列维护沉淀为可复用流程；LNN 画像见 [[LNN_持续研究协议]]。
+- **负结果台账**：`analysis/negative_results/README.md`，约束 #4 的落地实体。收录门槛、9 条已判定负结果 (NR-01~NR-09) 及其 grounding 路径与引用纪律。采用**指针式**设计：台账只存判定 + 证据路径，不复制原文，避免与权威报告漂移。
+- **台账门禁**：`scripts/check_negative_results.py`，校验每条 `grounding:` 路径真实存在、表格与正文一一对应、`AGENTS.md` 约束表未悬空；退出码非 0 即失败。已接入每日流水线 `run_daily_lnn_task.sh`（失败时**大声报 + 写日志**，但**不阻断**当天研究产物产出）。
 - **使用说明**：详见 [[每日自动化任务与Jetson验证]]。
 
 ---
@@ -112,23 +114,29 @@ npx skills add ./skills/living-field-researcher
 
 ### 不得重复以下未经验证的 claim
 
-| # | 不可重复的 claim | 反驳证据 |
-|---|---|---|
-| 1 | ❌ “MDN-CfC 在模仿学习上 2.4× 改善” | r307 toy benchmark 复现失败 (toy_sin +25%~+56%, structured_irr ≈ MSE, random_irr 中性), 进 negative-result 目录 |
-| 2 | ❌ “SDE-LNN 比确定性 CfC 更鲁棒 / SOTA 横扫” | r306 toy benchmark 噪声反而略有害 (NeRF-DS -0.09 dB, λ=0 是甜蜜点), 仅在训练期 jitter robustness 备援场景有效 |
-| 3 | ❌ “LNN 可替代 LLM (PPL 维度)” | MT-LNN 125M WikiText-103 PPL 88.93 vs Transformer 78.86, 严格控制变量下输 ~10 PPL (9/14 validated) |
-| 4 | ❌ “MT-LNN Orch-OR / 意识门带来 AGI / new path to general intelligence” | README 已自撤回 (AVP failed, Φ̂ sign inverted, 训练路径 inert), 引用前必须查 retraction 段 |
-| 5 | ❌ “LFM2.5 是纯液态模型” | LiquidAI 自己把 ODE + RK4/Euler solver 替换为 double-gated conv + GQA, 是 “Liquid + X 混合” 而非纯 LNN |
-| 6 | ❌ “LNN 在标准 ML 任务 (NLP / CV 主基准) 上 SOTA 横扫 transformer” | 任何 LNN 变体均未在标准主基准上显著超过 transformer, 仅在长尾工业任务 (D-3DGS / FJSP / EEG) 上稳定选择 |
-| 7 | ❌ “MT-LNN M-series 是 O(1) 工作记忆” | M-series 在 transformer block 上叠 MT-adapter, **不是 O(1)**; 仅 O-series (attention-free) 才是 O(1) |
-| 8 | ❌ “SDE-CfC 改进确定性 CfC 形变场” | r306 mean PSNR +0.09 dB 在 run-to-run 方差内 (σ≈0.05 dB), 严格说**持平**, 不是”改进” |
+> 每条 claim 对应 [[analysis/negative_results/README]] 台账中的一条 (NR-xx),
+> 台账给出完整判定、grounding 路径与引用纪律。**改本表必须同步台账并通过**
+> `python3 scripts/check_negative_results.py`。
+
+| # | 台账 | 不可重复的 claim | 反驳证据 |
+|---|---|---|---|
+| 1 | NR-01 | ❌ “MDN-CfC 在模仿学习上 2.4× 改善” | r307 toy benchmark 复现失败 (toy_sin +25%~+56%, structured_irr ≈ MSE, random_irr 中性) |
+| 2 | NR-02 | ❌ “SDE-LNN 比确定性 CfC 更鲁棒 / SOTA 横扫” | r306 toy benchmark 噪声反而略有害 (NeRF-DS -0.09 dB, λ=0 是甜蜜点), 仅在训练期 jitter robustness 备援场景有效 |
+| 3 | NR-03 | ❌ “LNN 可替代 LLM (PPL 维度)” | MT-LNN 125M WikiText-103 PPL 88.93 vs Transformer 78.86, 严格控制变量下输 ~10 PPL (9/14 validated) |
+| 4 | NR-04 | ❌ “MT-LNN Orch-OR / 意识门带来 AGI / new path to general intelligence” | README 已自撤回 (AVP failed, Φ̂ sign inverted, 训练路径 inert), 引用前必须查 retraction 段 |
+| 5 | NR-05 | ❌ “LFM2.5 是纯液态模型” | LiquidAI 自己把 ODE + RK4/Euler solver 替换为 double-gated conv + GQA, 是 “Liquid + X 混合” 而非纯 LNN |
+| 6 | NR-06 | ❌ “LNN 在标准 ML 任务 (NLP / CV 主基准) 上 SOTA 横扫 transformer” | 任何 LNN 变体均未在标准主基准上显著超过 transformer, 仅在长尾工业任务 (D-3DGS / FJSP / EEG) 上稳定选择 |
+| 7 | NR-07 | ❌ “MT-LNN M-series 是 O(1) 工作记忆” | M-series 在 transformer block 上叠 MT-adapter, **不是 O(1)**; 仅 O-series (attention-free) 才是 O(1) |
+| 8 | NR-08 | ❌ “SDE-CfC 改进确定性 CfC 形变场” | r306 mean PSNR +0.09 dB 在 run-to-run 方差内 (σ≈0.05 dB), 严格说**持平**, 不是”改进” |
+| 9 | NR-09 | ❌ “LNN 优于经典模型 (金融时序预测)” | 外部第三方 120 次校正比较 0 次显著胜出 (DM+HLN / Holm)。**我方未复现, 引用须标注** |
+
 
 ### 必须遵守的执行边界
 
 1. **写 LNN 报告前**, 必须先 recall `[[docs/LNN_深度研读报告]]` §0 与 `[[docs/research/2026-09-24_technical_route_landscape]]` §五 的约束
 2. **引用任何 LNN 仓库的 claims 时**, 必须先在 README / 论文里查 retraction 段 (MT-LNN 已自撤回 4 条主张)
 3. **报”重大突破” / “SOTA” / “AGI 路径” 时**, 必须先在 r301-r307 + MT-LNN 研读中找到对应 grounding, 否则标为”未验证” 并走诚实负结果路径
-4. **toy benchmark 复现失败的负结果**, 必须进 `negative-result` 目录而非默认 stack (r104/r126/r128/r130-133/r306/r307 已建)
+4. **toy benchmark 复现失败的负结果**, 必须登记到 [[analysis/negative_results/README]] 负结果台账而非默认 stack。台账只存判定 + `grounding:` 路径, **不复制原文** (复制必然漂移); 权威证据留在原研读/实验报告。收录门槛与新增流程见台账 §1 / §4。台账一致性由 `python3 scripts/check_negative_results.py` 门禁, 提交前必须通过
 5. **新方案落地前**, 必须查 [[docs/research/2026-09-24_technical_route_landscape]] §四 “给未来的建议”, 避免重复 r306/r307 已验证的负结果路径
 6. **不允许触碰真实硬件控制** (沿用 2026-06-09 用户偏好 critical 级): 不接 ADB / devicectl / 传感器 / 设备驱动 / BMS / CAN / Modbus / mavlink / ROS, 仅做合成仿真 + in-house 模型
 
@@ -145,3 +153,4 @@ npx skills add ./skills/living-field-researcher
 - 本节由 [[docs/research/2026-09-24_technical_route_landscape]] §五 自动派生, 两者必须同步
 - 每月由 `lnn-daily-research.timer` 触发审视, 新负结果出现时即时追加
 - 任何对本节的反向修改 (放宽 / 删除某条约束) 必须先在 commit message 里 grounding 到对应 negative-result 研读
+- 本表与 [[analysis/negative_results/README]] 台账**双向绑定**: 改本表必须同步台账并通过 `python3 scripts/check_negative_results.py`。门禁校验 grounding 路径真实存在 —— 台账指向已删证据时**会失败**, 防止过期 claim 借台账继续生效

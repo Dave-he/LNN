@@ -95,14 +95,38 @@ Leuphana University Lüneburg 本科毕业论文（B.Sc. Business Informatics 20
 - `pool_source=json total=24`（修复前 `total=12`），10-13 ~ 10-16 四天均确认读到全量 24。
 - 合成渲染测试（20 条输入）：渲染行数 = 12，标注行存在，摘要总数仍为 20 —— 截断可见且不再伪装成覆盖。
 
-## 5. 文档与现实漂移（待处理，未在今日修）
+## 5. 文档与现实漂移（**已解决**，同日闭环）
 
-`AGENTS.md` 约束节声称"负结果已建 `negative-result` 目录（r104/r126/r128/r130-133/r306/r307）"，但：
+排查时发现：`AGENTS.md` 约束节声称"负结果已建 `negative-result` 目录（r104/r126/r128/r130-133/r306/r307）"，但：
 
 - `analysis/negative_results/` **不存在**；
-- 负结果实际**散落**在 `analysis/research/`、`analysis/timeseries_ablation/`、`analysis/loop_status/`、`docs/research/` 等处，无统一台账。
+- 点名的 **r104 / r126 / r128 / r130–r133 在全库无任何实体** —— 全库实际只有 **r301–r307**
+  （r301–r305 是 PLAN/Midpoint/STE/LFM2.5 并行 CfC 等**正向**实验，只有 r306/r307 是负结果）；
+- 负结果实际**散落**在 `docs/reports/`、`analysis/research/`、`analysis/timeseries_ablation/`、
+  `analysis/loop_status/`、`docs/research/` 等处，无统一台账。
 
-AGENTS.md 约束 #4（"负结果必须进 negative-result 目录"）目前**无法机械执行**。本项目自身的负结果纪律是核心资产，建议后续把散落的 r30x 条目归拢成真实目录，否则约束只存在于文字里。
+即 AGENTS.md 约束 #4（"负结果必须进 negative-result 目录"）**无法机械执行**，且其证据清单本身是错的。
+
+### 已做的修复
+
+1. **建 `analysis/negative_results/README.md` 负结果台账**：9 条已判定负结果（NR-01~NR-09），
+   每条含被否证主张 / 判定 / 证据 / grounding 路径 / 引用纪律 / 复现状态。
+   采用**指针式**设计（只存判定 + 路径，不复制原文）—— 搬移会打断既有 `[[wikilink]]`，
+   复制必然漂移，而**漂移后的台账比没有台账更危险**。
+2. **建 `scripts/check_negative_results.py` 门禁**：校验 grounding 路径真实存在、
+   表格与正文一一对应、`AGENTS.md` 约束表未悬空。**已做负向测试**（改坏路径 / 删 grounding /
+   断开 AGENTS.md 引用，三种破坏均正确失败退出 1），确认是真门禁而非恒过桩。
+3. **接入每日流水线** `run_daily_lnn_task.sh`：失败时**大声报 + 写日志**，但**不阻断**
+   当天研究产出（数据采集不该因文档索引漂移而停摆）。刻意**不用** `|| true` 吞掉。
+4. **修正 AGENTS.md**：约束表新增 NR-xx 列与第 9 条（NR-09 外部负结果），
+   约束 #4 改为指向真实台账，删掉不存在的 r104/r126/r128/r130-133 引用，
+   并把台账 + 门禁登记进"已落地自动化能力"。
+
+### 教训
+
+**"约束"与"落地实体"必须能互相校验，否则约束只存在于文字里。**
+本项目此前已栽在同类的"文字声称已建、实际没建"上（本次是负结果目录）。
+门禁脚本 + 负向测试是让约束具备牙齿的最低成本做法。
 
 ---
 

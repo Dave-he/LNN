@@ -11,14 +11,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：24 篇
 - GitHub 候选仓库：42 个
-- Hugging Face 候选模型：17 个
+- Hugging Face 候选模型：18 个
 - 已下载 PDF：0 个
 - 下表每类仅渲染前 12 条；全量候选池见 `papers/daily/2026-10-16_lnn_research.json`，研读选择器以该 JSON 为准。
-
-## 数据源状态
-- `arXiv /api/query failed: HTTP Error 429: Unknown Error`
-- `arXiv RSS fallback returned 0 papers (likely weekend or empty category)`
-- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
@@ -56,6 +51,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
 | 2026-10-16 | [Arki05/LFM2.5-2.6B-GGUF-shards](https://huggingface.co/Arki05/LFM2.5-2.6B-GGUF-shards) | 11007 | 0 |  |
+| 2026-10-16 | [Willie999/anidane-lfm25-vl450m-lora](https://huggingface.co/Willie999/anidane-lfm25-vl450m-lora) | 0 | 0 |  |
+| 2026-10-16 | [Ishowbackup/LFM2.5-24B-A2B-Uncensored-GGUF](https://huggingface.co/Ishowbackup/LFM2.5-24B-A2B-Uncensored-GGUF) | 0 | 0 | text-generation |
 | 2026-10-16 | [mlx-community/LFM2.5-24B-A2B-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-24B-A2B-OptiQ-4bit) | 0 | 0 | text-generation |
 | 2026-10-16 | [mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-i1-GGUF](https://huggingface.co/mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-i1-GGUF) | 0 | 0 |  |
 | 2026-10-16 | [mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-GGUF](https://huggingface.co/mradermacher/lfm2.5-2.6b-fable5-coding-agent-heretic-GGUF) | 0 | 0 |  |
@@ -63,10 +60,8 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-15 | [WatchDG/LFM2.5-24B-A2B-DERISKED-EXL3-3.25bpw](https://huggingface.co/WatchDG/LFM2.5-24B-A2B-DERISKED-EXL3-3.25bpw) | 0 | 1 | text-generation |
 | 2026-10-15 | [DavidAU/LFM2.5-24B-A2B-Turbo-Brilliance-50X-NEO-MAX-Imatrix-GGUF](https://huggingface.co/DavidAU/LFM2.5-24B-A2B-Turbo-Brilliance-50X-NEO-MAX-Imatrix-GGUF) | 0 | 16 | text-generation |
 | 2026-10-15 | [aiprimebuilds/LFM2.5-24B-A2B-GPTQ](https://huggingface.co/aiprimebuilds/LFM2.5-24B-A2B-GPTQ) | 0 | 0 |  |
-| 2026-10-15 | [notfakerv/LFM2.5-24B-A2B-abliterated-MLX-4bit](https://huggingface.co/notfakerv/LFM2.5-24B-A2B-abliterated-MLX-4bit) | 0 | 0 | text-generation |
 | 2026-10-14 | [bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF](https://huggingface.co/bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF) | 1487 | 2 | text-generation |
-| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) | 45676 | 169 | text-generation |
-| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B) | 6286 | 392 | text-generation |
+| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) | 45676 | 170 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

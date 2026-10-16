@@ -175,6 +175,21 @@ run_jetson_benchmark() {
 
 "$PYTHON_BIN" scripts/daily_lnn_research.py "${research_args[@]}"
 
+# -----------------------------------------------------------------------------
+# 负结果台账门禁 (AGENTS.md 约束 #4)
+#
+# 台账漂移 (grounding 指向已删文件 / 条目与 AGENTS.md 约束表脱节) 会让一条看起来
+# 有据、实际已过期的负结果继续生效, 所以这里**大声报**, 不用 `|| true` 吞掉。
+# 但它**不阻断**当天的研究产物产出 —— 数据采集不该因为文档索引漂移而停摆。
+# -----------------------------------------------------------------------------
+LEDGER_STATUS="ok"
+if ! "$PYTHON_BIN" scripts/check_negative_results.py; then
+  LEDGER_STATUS="FAIL"
+  echo "[$(date '+%F %T')] [error] 负结果台账门禁未通过 (详见上方输出); 研究产物照常产出, 但 AGENTS.md 约束 #4 当前不可执行" >> "$LOG_FILE"
+  echo "[error] 负结果台账门禁未通过, 请运行 python3 scripts/check_negative_results.py 排查" >&2
+fi
+echo "negative-results ledger: $LEDGER_STATUS" >> "$LOG_FILE"
+
 if [[ "$RUN_BENCHMARK" == "1" ]]; then
   run_jetson_benchmark || true
 elif [[ "$RUN_BENCHMARK" == "auto" ]]; then

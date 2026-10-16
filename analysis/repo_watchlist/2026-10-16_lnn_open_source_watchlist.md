@@ -154,6 +154,18 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：unknown
 - Tags：gguf, base_model:LiquidAI/LFM2.5-2.6B, base_model:quantized:LiquidAI/LFM2.5-2.6B, license:other, region:us
 
+### [Willie999/anidane-lfm25-vl450m-lora](https://huggingface.co/Willie999/anidane-lfm25-vl450m-lora)
+- 更新：2026-10-16
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, multimodal, ophthalmic, lfm, lora, medical-screening-support, base_model:LiquidAI/LFM2.5-VL-450M, base_model:adapter:LiquidAI/LFM2.5-VL-450M
+
+### [Ishowbackup/LFM2.5-24B-A2B-Uncensored-GGUF](https://huggingface.co/Ishowbackup/LFM2.5-24B-A2B-Uncensored-GGUF)
+- 更新：2026-10-16
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：gguf, atomic-chat, liquid, lfm2.5, lfm2moe, moe, imatrix, llama.cpp
+
 ### [mlx-community/LFM2.5-24B-A2B-OptiQ-4bit](https://huggingface.co/mlx-community/LFM2.5-24B-A2B-OptiQ-4bit)
 - 更新：2026-10-16
 - 下载 / Likes：0 / 0
@@ -196,12 +208,6 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：unknown
 - Tags：region:us
 
-### [notfakerv/LFM2.5-24B-A2B-abliterated-MLX-4bit](https://huggingface.co/notfakerv/LFM2.5-24B-A2B-abliterated-MLX-4bit)
-- 更新：2026-10-15
-- 下载 / Likes：0 / 0
-- 任务：text-generation
-- Tags：mlx, safetensors, lfm2_moe, mlx-lm, lfm2.5, moe, abliterated, 4-bit
-
 ### [bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF](https://huggingface.co/bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF)
 - 更新：2026-10-14
 - 下载 / Likes：1487 / 2
@@ -210,13 +216,13 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF)
 - 更新：2026-10-13
-- 下载 / Likes：45676 / 169
+- 下载 / Likes：45676 / 170
 - 任务：text-generation
 - Tags：gguf, liquid, lfm2.5, llama.cpp, text-generation, en, ar, zh
 
 ### [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)
 - 更新：2026-10-13
-- 下载 / Likes：6286 / 392
+- 下载 / Likes：6286 / 393
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, moe
 
