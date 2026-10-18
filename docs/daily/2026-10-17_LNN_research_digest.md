@@ -10,8 +10,13 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：24 篇
+<<<<<<< HEAD
 - GitHub 候选仓库：42 个
 - Hugging Face 候选模型：21 个
+=======
+- GitHub 候选仓库：32 个
+- Hugging Face 候选模型：9 个
+>>>>>>> c27ee54 (chore(daily): LNN digest + 研读报告 2026-10-17)
 - 已下载 PDF：0 个
 - 下表每类仅渲染前 12 条；全量候选池见 `papers/daily/2026-10-17_lnn_research.json`，研读选择器以该 JSON 为准。
 
@@ -34,22 +39,35 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+<<<<<<< HEAD
 | 2026-10-16 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
+=======
+| 2026-10-17 | [Poojag54/bebelm](https://github.com/Poojag54/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-17 | [cDixon577/bebelm](https://github.com/cDixon577/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+>>>>>>> c27ee54 (chore(daily): LNN digest + 研读报告 2026-10-17)
 | 2026-10-16 | [almo-intellect/flyvisu](https://github.com/almo-intellect/flyvisu) | 0 | Python | Are connectome-constrained fly vision models mechanistically identifiable? Dale's law and liquid time constants in flyvis: preregistration, code, results. |
 | 2026-10-16 | [Katerina2882/bebelm](https://github.com/Katerina2882/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-16 | [jainilbavishi24/LFM2.5-VL-Optimization](https://github.com/jainilbavishi24/LFM2.5-VL-Optimization) | 0 | Python | Optimizing the inference speed, energy efficiency, and kernel performance of LiquidAI LFM2.5-VL-1.6B on NVIDIA Blackwell GPUs using profiling, CUDA kernels, CU… |
 | 2026-10-16 | [nwulff20/bebelm](https://github.com/nwulff20/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-16 | [Hannah9646/bebelm](https://github.com/Hannah9646/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-16 | [asmirnov65766/bebelm](https://github.com/asmirnov65766/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+<<<<<<< HEAD
 | 2026-10-15 | [julschmidtJJL/lnn-vs-classical-forecasting](https://github.com/julschmidtJJL/lnn-vs-classical-forecasting) | 2 | Python | Bachelor's thesis: do liquid neural networks beat classical models on daily financial returns? No — 0 of 120 corrected comparisons. 11 LTC/CfC variants vs 8 ba… |
 | 2026-10-15 | [Tariq50145/bebelm](https://github.com/Tariq50145/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-15 | [teresaguo01759/bebelm](https://github.com/teresaguo01759/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-14 | [enricosavorgnan/liquid-neural-networks](https://github.com/enricosavorgnan/liquid-neural-networks) | 0 | Python | Understanding and reproducing paper results on Liquid Neural Network architecture. |
 | 2026-10-14 | [pRodrigues79129/bebelm](https://github.com/pRodrigues79129/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+=======
+| 2026-10-15 | [Tariq50145/bebelm](https://github.com/Tariq50145/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-13 | [Elysian3/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data](https://github.com/Elysian3/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data) | 1 | C |  |
+| 2026-10-11 | [dhrumi2004/session-recommendation-lnn](https://github.com/dhrumi2004/session-recommendation-lnn) | 0 | Python | Undergraduate project: session-based next-item recommendation comparing popularity, GRU, and Liquid Time-Constant networks. |
+| 2026-10-10 | [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant) | 1 |  | Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free p… |
+>>>>>>> c27ee54 (chore(daily): LNN digest + 研读报告 2026-10-17)
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
+<<<<<<< HEAD
 | 2026-10-16 | [gyung/lfm2-1.2b-koen-mt-v8-rl-10k-merged](https://huggingface.co/gyung/lfm2-1.2b-koen-mt-v8-rl-10k-merged) | 53 | 2 | text-generation |
 | 2026-10-16 | [baptistefrancois1/lfm2a-fr](https://huggingface.co/baptistefrancois1/lfm2a-fr) | 26 | 1 |  |
 | 2026-10-16 | [edgebites/LFM2.5-230M-Q8-NPU](https://huggingface.co/edgebites/LFM2.5-230M-Q8-NPU) | 9 | 0 |  |
@@ -62,6 +80,17 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-16 | [OS-Software/LFM2.5-24B-A2B-Uncensored-Heretic-GGUF](https://huggingface.co/OS-Software/LFM2.5-24B-A2B-Uncensored-Heretic-GGUF) | 0 | 0 | text-generation |
 | 2026-10-16 | [OS-Software/LFM2.5-24B-A2B-Uncensored-Heretic](https://huggingface.co/OS-Software/LFM2.5-24B-A2B-Uncensored-Heretic) | 0 | 0 | text-generation |
 | 2026-10-16 | [Ishowbackup/LFM2.5-24B-A2B-Uncensored-GGUF](https://huggingface.co/Ishowbackup/LFM2.5-24B-A2B-Uncensored-GGUF) | 0 | 0 | text-generation |
+=======
+| 2026-10-17 | [DavidAU/LFM2.5-2.6B-Qwen3.8-Turbo-Brilliance-Power-X12-NEO-MAX-GGUF](https://huggingface.co/DavidAU/LFM2.5-2.6B-Qwen3.8-Turbo-Brilliance-Power-X12-NEO-MAX-GGUF) | 37397 | 160 | text-generation |
+| 2026-10-17 | [mradermacher/LFM2.5-24B-A2B-Uncensored-Heretic-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-24B-A2B-Uncensored-Heretic-i1-GGUF) | 0 | 0 |  |
+| 2026-10-17 | [sapidlabs/LFM2.5-24B-A2B-NVFP4-W4A16](https://huggingface.co/sapidlabs/LFM2.5-24B-A2B-NVFP4-W4A16) | 0 | 1 | text-generation |
+| 2026-10-17 | [mradermacher/LFM2.5-24B-A2B-Uncensored-Heretic-GGUF](https://huggingface.co/mradermacher/LFM2.5-24B-A2B-Uncensored-Heretic-GGUF) | 0 | 1 |  |
+| 2026-10-17 | [DavidAU/LFM2.5-24B-A2B-Turbo-Brilliance-50X-NEO-MAX-Imatrix-GGUF](https://huggingface.co/DavidAU/LFM2.5-24B-A2B-Turbo-Brilliance-50X-NEO-MAX-Imatrix-GGUF) | 0 | 26 | text-generation |
+| 2026-10-17 | [roman220220/LFM2.5-1.2B-Thinking-GGUF-jang-imatrix](https://huggingface.co/roman220220/LFM2.5-1.2B-Thinking-GGUF-jang-imatrix) | 0 | 0 | text-generation |
+| 2026-10-17 | [roman220220/LFM2.5-1.2B-Instruct-GGUF-jang-imatrix](https://huggingface.co/roman220220/LFM2.5-1.2B-Instruct-GGUF-jang-imatrix) | 0 | 0 | text-generation |
+| 2026-10-17 | [roman220220/LFM2.5-2.6B-GGUF-jang-imatrix](https://huggingface.co/roman220220/LFM2.5-2.6B-GGUF-jang-imatrix) | 0 | 0 | text-generation |
+| 2026-05-06 | [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE) | 0 | 0 |  |
+>>>>>>> c27ee54 (chore(daily): LNN digest + 研读报告 2026-10-17)
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
