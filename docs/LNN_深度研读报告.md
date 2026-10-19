@@ -1367,15 +1367,10 @@ positioning_updated: 2026-09-14
 ## 4. 自动化追踪与待研读队列
 
 - **2026-10-19**：[[docs/daily/2026-10-19_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
-## 4. 自动化追踪与待研读队列
 - **2026-10-18**：[[docs/daily/2026-10-18_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
-## 4. 自动化追踪与待研读队列
 - **2026-10-17**：[[docs/daily/2026-10-17_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 21 个。
-## 4. 自动化追踪与待研读队列
 - **2026-10-16**：[[docs/daily/2026-10-16_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
-## 4. 自动化追踪与待研读队列
 - **2026-10-15**：[[docs/daily/2026-10-15_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
-## 4. 自动化追踪与待研读队列
 - **2026-10-14**：[[docs/daily/2026-10-14_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 19 个；研读报告生成 **0 篇**（`select_papers_for_report.py` → `{candidates: [], n_total_arxiv: 12, n_skipped_reported: 12}`，12/12 已被 `docs/reports/` 覆盖）。本条与前几日"饱和"复盘的关键差别：**今日 arXiv 为实时抓取成功（`errors=[]`），已核验 10-08 之后确实没有新的 LNN 论文**，所以饱和是领域事实而不是抓取故障。
   - **数据源核验（本次重抓，`generated_at` 08:45 UTC）**：arXiv `/api/query` **成功**（`errors` 为空数组）；同一 9 词 OR 查询连续 3 次直连均成功（0.3s / 0.4s / 2.3s，63.5KB），证明此前 10-12/13/14 的 timeout 是**瞬时抖动而非持续故障**。结果集与 10-13 池**逐 id 完全一致**（24 篇，最新 `2610.12337v1` ContiLNN @ 2026-10-08）。**订正前几日的告警叙事**："arXiv 连续 3 天失败 / digest 其实是昨日池复用"成立（单次尝试失败 + fallback 保留旧池），但**内容本身并未失真**——旧池就是正确答案。
   - **今日修掉的 4 个流水线缺陷**（均有离线回归测试，`tests/test_daily_pipeline_matching.py`，18 条全绿；本机 `python3 -m pytest` 会静默收集 0 条，故用 unittest）：
@@ -1386,7 +1381,6 @@ positioning_updated: 2026-09-14
   - **Jetson benchmark（04:38 自动跑）**：`status=ok_cpu`、`CUDA: False`、系统内存 `free 230 MB / total 7620 MB`（与 2026-09-29 记录的 RAM 耗尽回退同签名）。`status_note` 原文："CUDA was unavailable, so these are CPU timings measured on the Jetson host. They are not GPU/edge performance evidence." —— 功耗/温度采样来自真实传感器有效，**步/秒与精度不是边缘推理性能证据，不得外推**。本次给 `write_report` 补了标题下的状态横幅，让 `ok_cpu` 在正文顶部可见（原先该段在结果表之后第 191 行，只读报告容易漏看）。
   - **复现 dispatcher**：修复后今日 **0 个 target**（正确早返回，不空跑）。此前 09:15 的 `[exit] 1` 记录是上一会话对 Liquid Fusion SOD 的误路由所致，与 imitation 实验无关；`logs/pipeline/2026-10-14_reproduce.log` 中的 conda 环境重跑仅作归档，不构成对原论文的复现。
   - **LNN 约束自检**：本日未新增任何论文级 claim，§0 八条禁止 claim 与 §五 诚实约束均未触碰；`2606.26849v1` LFNet 报告 2026-09-29 已存在（LFNet 属 SSM+异构表征融合的 SOD 方法，**不构成"LNN 改进主基准"证据**）。
-## 4. 自动化追踪与待研读队列
 - **2026-10-13**：[[docs/daily/2026-10-13_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 20 个；研读报告生成 0 篇（**LNN 主题连续饱和第 2 段+ 月**，`select_papers_for_report.py` 输出 `candidates: []`，12/12 已覆盖）。**异常告警 ⚠️**：(1) 启动时 `git pull --ff-only` 全部 5 次 + `--rebase` 都报 `Connection to github.com closed by remote host`（与 9-30/10-06/10-11/10-12 同根因 — SSH 22 端口被前置代理截断 flush packet）。本地创建 a69cc03 commit 时远端已领先 3 commits（996ee55 / 3d1b5bf / 66c94c3），需手工 `git fetch` (attempt 5 成功) + `git rebase origin/master` 解决 digest/index 的添加/添加冲突 + `GIT_EDITOR=true git rebase --continue` 才追上。修复路径：把 `git pull --rebase` + `GIT_EDITOR=true` 默认进编排脚本 step 0，nff-only 抖动时直接 reb 而非"留待后续重试"。(2) `experiment_imitation_lnn.py` 复现脚本 **连续 ≥4 天 exit 1**（10-10/11/12/13），根因同 10-12：`PYTHON_BIN=python3` 走无 torch 解释器。今日唯一触发复现目标 = 2606.26849 (Liquid Fusion SOD)；dispatcher 命中但脚本秒退，无 `analysis/replication/` 新产物。(3) `paper-analyzer` 技能今日仍标"not found"（自 9-22 起一致），本次走"手动读 arxiv 摘要 + 按 AGENTS.md SOP 生成报告"的兜底路径；本日因候选为空无影响。(4) digest 重生成后 selector 输出是严格的"已覆盖 → 跳过"，但人工审计发现 2606.26849v1 (Liquid Fusion of Heterogeneous Representations) 虽命中"liquid"，在 `docs/reports/` 下**无独立文件**（仅 2606.20491 GazeLNN / 2607.01986 Turbofan 有），建议下次 cron 用 `--force` 路径或放宽"24 篇候选覆盖"阈值。**当日审计与修复**：(a) 重新 step1 step2 并 verify `git push origin HEAD` 第二次 attempt 1 即成功（384d4fe，本地 master 已与 origin 同步），无残留 non-ff；(b) 复现日志写到 `logs/pipeline/2026-10-13_reproduce.log`（290B，单条 exit 1），未触发分析目录归档（无新产物）。
 - **2026-10-12**：[[docs/daily/2026-10-12_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 18 个；研读报告生成 0 篇（LNN 主题连续饱和，第 2 段+ 月）。**异常告警 ⚠️**：(1) `experiment_imitation_lnn.py` 复现脚本 **连续 ≥3 天 exit 1**（10-10/11/12），`ModuleNotFoundError: No module named 'torch'`；根因 `PYTHON_BIN=python3` 默认走 `/Users/hyx/miniconda3/bin/python3`（无 torch），真环境在 `/Users/hyx/miniconda3/envs/lnn/bin/python`。修复路径：cron 启动前 `conda activate lnn` 或 `export PYTHON_BIN=/Users/hyx/miniconda3/envs/lnn/bin/python`。(2) step [3/4] commit 脚本仅 `git add docs papers` → 当日新增的 `analysis/repo_watchlist/2026-10-12_lnn_open_source_watchlist.md` 未被自动提交，已手工 `chore(daily): repo watchlist 2026-10-12` (commit `7a923b1`) + 第 5 次重试 push 成功（`ddf9b27..7a923b1`）；建议下次会话改 `git add docs papers analysis` 或在 cron prompt 提示补一步手工 push。(3) SSH fetch/push 抖动持续，第 1-4 次均 `Connection closed by remote host`，第 5 次成功（与 9-30/10-06/10-11 同根因）。`paper-analyzer` 仍标"not found"（与 9-22 起一致），今日无候选无影响。
 - **2026-10-11**：[[docs/daily/2026-10-11_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 20 个。

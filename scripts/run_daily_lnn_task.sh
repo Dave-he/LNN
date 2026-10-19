@@ -199,6 +199,19 @@ elif [[ "$RUN_BENCHMARK" == "auto" ]]; then
 fi
 
 if [[ "$COMMIT_AND_PUSH" == "1" ]]; then
+  # -----------------------------------------------------------------------------
+  # 仓库完整性门禁 (阻断式)
+  #
+  # 与台账门禁不同, 这里**必须阻断**: 2026-10-17 有 5 个被跟踪的文件带着 merge
+  # 冲突标记进了 origin, 潜伏两天没人发现, 直到下游读 JSON 才炸。根因是一次带
+  # 冲突的合并被提交 —— 产物一旦损坏, 流水线却仍"照常产出", 所以不能只报不拦。
+  # -----------------------------------------------------------------------------
+  if ! "$PYTHON_BIN" scripts/check_repo_integrity.py; then
+    echo "[$(date '+%F %T')] [error] 仓库完整性门禁未通过 (冲突标记或坏 JSON), 拒绝提交" >> "$LOG_FILE"
+    echo "[error] 仓库完整性门禁未通过, 拒绝提交; 详见 python3 scripts/check_repo_integrity.py" >&2
+    exit 1
+  fi
+
   git add docs papers analysis
   if ! git diff --cached --quiet; then
     git commit -m "chore(daily): update LNN research digest ${RUN_DATE}"

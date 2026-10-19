@@ -626,11 +626,18 @@ def split_index_entries(block: str) -> list[list[str]]:
       2. 老条目里 ``- **workaround**`` 这类**续行**也被当成条目计数, 29 行的容量
          先被续行吃光, 于是 10-06~10-01 这些真实日期条目被挤出索引 (2026-10-14
          重跑时实测: 42 个顶格 ``- **`` 里 12 个是续行)。
+
+    **结构行必须丢掉, 不能当条目**: 区块开头的 ``## 4. 自动化每日追踪索引``
+    不是日期条目, 落到孤儿分支后会变成一条独立条目, 而写回时 merge_existing
+    又自己补一个标题 —— 于是每跑一天索引里就多一个重复标题 (10-16 4 个,
+    10-19 涨到 7 个)。标题和 HTML 注释在这里没有任何信息量, 直接剔除。
     """
     entries: list[list[str]] = []
     for raw in block.splitlines():
         if not raw.strip():
             continue
+        if raw.lstrip().startswith("#") or raw.lstrip().startswith("<!--"):
+            continue  # 标题 / 注释: 由 merge_existing 统一重建
         if raw.startswith("- **") and DAY_ENTRY_RE.match(raw):
             entries.append([raw])
         elif entries:
