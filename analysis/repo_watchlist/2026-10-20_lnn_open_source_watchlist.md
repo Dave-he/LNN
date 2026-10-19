@@ -35,6 +35,27 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：deep-learning, flood-prediction, hydrology, liquid-neural-networks, liquid-time-constant-networks, pytorch, time-series-forecasting, urban-drainage
 - 说明：Official PyTorch implementation & benchmark of Liquid Time-Constant Networks (LNN) for urban drainage water level forecasting (MDPI Water 2026).
 
+### [minnief69553/bebelm](https://github.com/minnief69553/bebelm)
+- 更新：2026-10-19
+- Star / Fork：0 / 0
+- 语言：Rust
+- Topics：cpu, inference, llm, local-ai, local-llm, rust
+- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
+
+### [ViktorCosta6156/bebelm](https://github.com/ViktorCosta6156/bebelm)
+- 更新：2026-10-19
+- Star / Fork：0 / 0
+- 语言：Rust
+- Topics：cpu, inference, llm, local-ai, local-llm, rust
+- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
+
+### [rajtakahashi/bebelm](https://github.com/rajtakahashi/bebelm)
+- 更新：2026-10-19
+- Star / Fork：0 / 0
+- 语言：Rust
+- Topics：cpu, inference, llm, local-ai, local-llm, rust
+- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
+
 ### [kTorun9403/bebelm](https://github.com/kTorun9403/bebelm)
 - 更新：2026-10-19
 - Star / Fork：0 / 0
@@ -65,27 +86,6 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [Nicolas44345/bebelm](https://github.com/Nicolas44345/bebelm)
 - 更新：2026-10-19
-- Star / Fork：0 / 0
-- 语言：Rust
-- Topics：cpu, inference, llm, local-ai, local-llm, rust
-- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
-
-### [Mitchell98738/bebelm](https://github.com/Mitchell98738/bebelm)
-- 更新：2026-10-19
-- Star / Fork：0 / 0
-- 语言：Rust
-- Topics：cpu, inference, llm, local-ai, local-llm, rust
-- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
-
-### [daniellebaran22544/bebelm](https://github.com/daniellebaran22544/bebelm)
-- 更新：2026-10-19
-- Star / Fork：0 / 0
-- 语言：Rust
-- Topics：cpu, inference, llm, local-ai, local-llm, rust
-- 说明：CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM
-
-### [elizabeth2756/bebelm](https://github.com/elizabeth2756/bebelm)
-- 更新：2026-10-18
 - Star / Fork：0 / 0
 - 语言：Rust
 - Topics：cpu, inference, llm, local-ai, local-llm, rust

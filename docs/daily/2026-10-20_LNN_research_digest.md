@@ -15,6 +15,14 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - 已下载 PDF：0 个
 - 下表每类仅渲染前 12 条；全量候选池见 `papers/daily/2026-10-20_lnn_research.json`，研读选择器以该 JSON 为准。
 
+## 数据源状态
+- `Hugging Face query failed for 'LiquidAI': <urlopen error timed out>`
+- `Hugging Face query failed for 'LFM2': <urlopen error timed out>`
+- `Hugging Face query failed for 'LFM2.5': <urlopen error timed out>`
+- `Hugging Face query failed for 'liquid neural': <urlopen error timed out>`
+- `Hugging Face query failed for 'closed-form continuous-time': <urlopen error timed out>`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
+
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
@@ -38,14 +46,14 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-19 | [julschmidtJJL/lnn-vs-classical-forecasting](https://github.com/julschmidtJJL/lnn-vs-classical-forecasting) | 2 | Python | Bachelor's thesis: do liquid neural networks beat classical models on daily financial returns? No: 0 of 120 corrected comparisons. 11 LTC/CfC variants vs 8 bas… |
 | 2026-10-19 | [di-omics/liquid-policy-robustness](https://github.com/di-omics/liquid-policy-robustness) | 0 | Python | Do liquid neural networks control a robot arm better under sensor noise than matched-size MLPs and LSTMs? Behavior cloning on Reacher-v5. |
 | 2026-10-19 | [BuczynskiRafal/ltc-hydrology-flood-prediction](https://github.com/BuczynskiRafal/ltc-hydrology-flood-prediction) | 0 | Python | Official PyTorch implementation & benchmark of Liquid Time-Constant Networks (LNN) for urban drainage water level forecasting (MDPI Water 2026). |
+| 2026-10-19 | [minnief69553/bebelm](https://github.com/minnief69553/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-19 | [ViktorCosta6156/bebelm](https://github.com/ViktorCosta6156/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-19 | [rajtakahashi/bebelm](https://github.com/rajtakahashi/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-19 | [kTorun9403/bebelm](https://github.com/kTorun9403/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-19 | [kerstinbrouwer1119/bebelm](https://github.com/kerstinbrouwer1119/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-19 | [dabdullah1589/bebelm](https://github.com/dabdullah1589/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-19 | [Renatah8659/bebelm](https://github.com/Renatah8659/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-19 | [Nicolas44345/bebelm](https://github.com/Nicolas44345/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
-| 2026-10-19 | [Mitchell98738/bebelm](https://github.com/Mitchell98738/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
-| 2026-10-19 | [daniellebaran22544/bebelm](https://github.com/daniellebaran22544/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
-| 2026-10-18 | [elizabeth2756/bebelm](https://github.com/elizabeth2756/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
