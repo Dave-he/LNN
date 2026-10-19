@@ -92,6 +92,54 @@ def request_json(url: str, headers: dict[str, str] | None = None) -> Any:
     return json.loads(payload)
 
 
+def _rate_limit_wait(exc: Exception) -> int:
+    """403 里还剩多少秒可等 —— 只认 GitHub 自己的限额头, 认不出就返回 0.
+
+    `x-ratelimit-remaining: 0` 是一级限额 (search API 未认证 10 次/分);
+    `retry-after` 多见于二级限额 (突发流量封禁). 两者都不是的话不当成限额,
+    因为普通 403 (token 无效 / 权限不足) 等再久也没用。
+    """
+    if not isinstance(exc, urllib.error.HTTPError) or exc.code != 403:
+        return 0
+    head = {k.lower(): v for k, v in (exc.headers or {}).items()}
+    if head.get("retry-after", "").isdigit():
+        return min(int(head["retry-after"]), 120)
+    if head.get("x-ratelimit-remaining", "").strip() == "0":
+        try:
+            reset = int(head["x-ratelimit-reset"])
+        except (KeyError, ValueError):
+            return 0
+        # 限额窗口按 UTC 分钟走, 多等 2s 避免踩在边界上被再次拒.
+        return max(0, min(reset - int(time.time()) + 2, 120))
+    return 0
+
+
+def request_json_rate_limited(
+    url: str, headers: dict[str, str] | None = None, attempts: int = 2
+) -> Any:
+    """撞 GitHub 速率限额时等窗口重开, 而不是直接放弃这条查询.
+
+    未认证的 search API 只有 10 次/分且**按出口 IP 计**, 一台机器上别的工具
+    随手调一次 GitHub 就能把整轮 digest 的查询预算吃光。2026-10-19 就有 3/8 条
+    查询这么被吞掉, 且失败只进 stderr, 产物里看不出来 (见 fetch_github_repos)。
+    """
+    last: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            return request_json(url, headers)
+        except Exception as exc:
+            last = exc
+            wait = _rate_limit_wait(exc)
+            if not wait or attempt == attempts - 1:
+                raise
+            print(
+                f"[warn] GitHub 速率限额, {wait}s 后重试 {attempt + 1}/{attempts - 1}: {exc}",
+                file=sys.stderr,
+            )
+            time.sleep(wait)
+    raise last  # pragma: no cover - 循环内必然 return 或 raise
+
+
 def request_text(url: str, headers: dict[str, str] | None = None) -> str:
     # arXiv 返回 406 when Accept: */* 与复杂 OR 查询混用, 显式声明 atom+xml 即可.
     merged = {"User-Agent": USER_AGENT, "Accept": "application/atom+xml,application/xml;q=0.9,*/*;q=0.5"}
@@ -273,6 +321,15 @@ def fetch_github_repos(per_query: int, errors: list[str] | None = None) -> list[
     token = os.environ.get("GITHUB_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    else:
+        # search API 未认证只有 10 次/分 (且按出口 IP 计), 8 条查询挤在同一分钟里
+        # 很容易被自己或同机其他工具的调用吃光预算。值得在 stderr 明说一次, 否则
+        # 只看产物的人无法区分"限额"和"查询真的没结果"。
+        print(
+            "[warn] GITHUB_TOKEN 未设置: GitHub 查询按未认证限额 (10 次/分) 执行, "
+            "失败概率显著升高。给 systemd service 配 EnvironmentFile 可根治。",
+            file=sys.stderr,
+        )
 
     repos: dict[str, dict[str, Any]] = {}
     for query in GITHUB_QUERIES:
@@ -286,7 +343,7 @@ def fetch_github_repos(per_query: int, errors: list[str] | None = None) -> list[
         )
         url = f"https://api.github.com/search/repositories?{params}"
         try:
-            payload = request_json(url, headers=headers)
+            payload = request_json_rate_limited(url, headers=headers)
         except Exception as exc:
             print(f"[warn] GitHub query failed for {query!r}: {exc}", file=sys.stderr)
             # 未认证的 search API 限额很容易触发 (HTTP 403); 不记进 errors 的话,

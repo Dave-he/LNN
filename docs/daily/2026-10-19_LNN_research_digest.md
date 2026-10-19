@@ -15,11 +15,6 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 - 已下载 PDF：0 个
 - 下表每类仅渲染前 12 条；全量候选池见 `papers/daily/2026-10-19_lnn_research.json`，研读选择器以该 JSON 为准。
 
-## 数据源状态
-- `arXiv /api/query failed: The read operation timed out`
-- `arXiv RSS fallback returned 0 papers (likely weekend or empty category)`
-- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
-
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
 |---|---|---|---|
