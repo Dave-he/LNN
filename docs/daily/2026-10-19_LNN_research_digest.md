@@ -10,10 +10,15 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：24 篇
-- GitHub 候选仓库：24 个
-- Hugging Face 候选模型：17 个
+- GitHub 候选仓库：42 个
+- Hugging Face 候选模型：18 个
 - 已下载 PDF：0 个
 - 下表每类仅渲染前 12 条；全量候选池见 `papers/daily/2026-10-19_lnn_research.json`，研读选择器以该 JSON 为准。
+
+## 数据源状态
+- `arXiv /api/query failed: The read operation timed out`
+- `arXiv RSS fallback returned 0 papers (likely weekend or empty category)`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
@@ -34,34 +39,34 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## GitHub 候选仓库
 | 更新 | 仓库 | Star | 语言 | 说明 |
 |---|---|---:|---|---|
+| 2026-10-19 | [di-omics/liquid-policy-robustness](https://github.com/di-omics/liquid-policy-robustness) | 0 | Python | Do liquid neural networks control a robot arm better under sensor noise than matched-size MLPs and LSTMs? Behavior cloning on Reacher-v5. |
+| 2026-10-19 | [kerstinbrouwer1119/bebelm](https://github.com/kerstinbrouwer1119/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-19 | [dabdullah1589/bebelm](https://github.com/dabdullah1589/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-19 | [Renatah8659/bebelm](https://github.com/Renatah8659/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-19 | [Nicolas44345/bebelm](https://github.com/Nicolas44345/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-19 | [Mitchell98738/bebelm](https://github.com/Mitchell98738/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-19 | [daniellebaran22544/bebelm](https://github.com/daniellebaran22544/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-18 | [BuczynskiRafal/ltc-hydrology-flood-prediction](https://github.com/BuczynskiRafal/ltc-hydrology-flood-prediction) | 0 | Python | Official PyTorch implementation & benchmark of Liquid Time-Constant Networks (LNN) for urban drainage water level forecasting (MDPI Water 2026). |
+| 2026-10-18 | [elizabeth2756/bebelm](https://github.com/elizabeth2756/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
+| 2026-10-18 | [Naoki09383/bebelm](https://github.com/Naoki09383/bebelm) | 0 | Rust | CPU-only, pure-Rust implementation of LiquidAI's LFM2.5-8B-A1B LLM |
 | 2026-10-17 | [Ipsedo/LiquidNetworks](https://github.com/Ipsedo/LiquidNetworks) | 29 | Python | Liquid Time-constant Networks implementation with PyTorch |
 | 2026-10-16 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
-| 2026-10-16 | [almo-intellect/flyvisu](https://github.com/almo-intellect/flyvisu) | 0 | Python | Are connectome-constrained fly vision models mechanistically identifiable? Dale's law and liquid time constants in flyvis: preregistration, code, results. |
-| 2026-10-15 | [julschmidtJJL/lnn-vs-classical-forecasting](https://github.com/julschmidtJJL/lnn-vs-classical-forecasting) | 2 | Python | Bachelor's thesis: do liquid neural networks beat classical models on daily financial returns? No — 0 of 120 corrected comparisons. 11 LTC/CfC variants vs 8 ba… |
-| 2026-10-14 | [enricosavorgnan/liquid-neural-networks](https://github.com/enricosavorgnan/liquid-neural-networks) | 0 | Python | Understanding and reproducing paper results on Liquid Neural Network architecture. |
-| 2026-10-13 | [blacklike02/Liquid-Network-Model](https://github.com/blacklike02/Liquid-Network-Model) | 4 | Python | Liquid Neural Network language model with LTC and CfC dynamics |
-| 2026-10-13 | [AlanL182/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data](https://github.com/AlanL182/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data) | 1 | C |  |
-| 2026-10-12 | [niharmaddina/Liquidity](https://github.com/niharmaddina/Liquidity) | 1 | Jupyter Notebook | Next-day stock price prediction with a liquid neural network and a neural ODE (torchdiffeq), served by FastAPI over a websocket to a React chart. Research prot… |
-| 2026-10-11 | [dhrumi2004/session-recommendation-lnn](https://github.com/dhrumi2004/session-recommendation-lnn) | 0 | Python | Undergraduate project: session-based next-item recommendation comparing popularity, GRU, and Liquid Time-Constant networks. |
-| 2026-10-10 | [kds1123001/liquid-time-constant](https://github.com/kds1123001/liquid-time-constant) | 1 |  | Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free p… |
-| 2026-10-09 | [Noah-hjl/ContiLNN](https://github.com/Noah-hjl/ContiLNN) | 3 | Python | ContiLNN: Mitigating Slice Sampling Discontinuity with Liquid Neural Networks for Medical Image Restoration |
 
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
+| 2026-10-19 | [Ninnix96/LFM2.5-24B-A2B-gguf](https://huggingface.co/Ninnix96/LFM2.5-24B-A2B-gguf) | 82 | 0 | text-generation |
+| 2026-10-19 | [PollardWeights/LFM2.5-24B-A2B-Pollard](https://huggingface.co/PollardWeights/LFM2.5-24B-A2B-Pollard) | 0 | 0 | text-generation |
+| 2026-10-19 | [Rcarvalo/lfm2a-fr-front-desk](https://huggingface.co/Rcarvalo/lfm2a-fr-front-desk) | 0 | 0 | audio-to-audio |
+| 2026-10-19 | [electroglyph/LFM2.5-24B-A2B-uncensored](https://huggingface.co/electroglyph/LFM2.5-24B-A2B-uncensored) | 0 | 0 |  |
 | 2026-10-18 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 2535 | 12 | text-generation |
-| 2026-10-18 | [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec) | 2448 | 0 | text-generation |
-| 2026-10-18 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 2394 | 0 | text-generation |
 | 2026-10-18 | [mfgcvguy/LFM2.5-1.2B-Kids-Tutor-GGUF](https://huggingface.co/mfgcvguy/LFM2.5-1.2B-Kids-Tutor-GGUF) | 12 | 0 |  |
-| 2026-10-18 | [aiprimebuilds/LFM2.5-24B-A2B-GPTQ](https://huggingface.co/aiprimebuilds/LFM2.5-24B-A2B-GPTQ) | 1 | 0 | text-generation |
+| 2026-10-18 | [randmaru/LFM2.5-24B-A2B-mlx-mxfp4](https://huggingface.co/randmaru/LFM2.5-24B-A2B-mlx-mxfp4) | 0 | 0 | text-generation |
+| 2026-10-18 | [LLlamaAPI/LFM2.5-24B-A2B-RAMPool-e2g128r4](https://huggingface.co/LLlamaAPI/LFM2.5-24B-A2B-RAMPool-e2g128r4) | 0 | 0 | text-generation |
 | 2026-10-18 | [janihal/LFM2.5-230M-Chess-oQ8](https://huggingface.co/janihal/LFM2.5-230M-Chess-oQ8) | 0 | 0 | text-generation |
-| 2026-10-18 | [PollardWeights/LFM2.5-24B-A2B-Pollard](https://huggingface.co/PollardWeights/LFM2.5-24B-A2B-Pollard) | 0 | 0 | text-generation |
-| 2026-10-18 | [electroglyph/LFM2.5-24B-A2B-uncensored](https://huggingface.co/electroglyph/LFM2.5-24B-A2B-uncensored) | 0 | 0 |  |
 | 2026-10-17 | [LiquidAI/d1-omni-600M-GGUF](https://huggingface.co/LiquidAI/d1-omni-600M-GGUF) | 8808 | 45 | image-text-to-text |
 | 2026-10-15 | [prithivMLmods/LiquidAI-LFM2.5-24B-A2B-GGUF](https://huggingface.co/prithivMLmods/LiquidAI-LFM2.5-24B-A2B-GGUF) | 442 | 2 | text-generation |
 | 2026-10-14 | [bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF](https://huggingface.co/bartowski/LiquidAI_LFM2.5-24B-A2B-GGUF) | 4849 | 2 | text-generation |
-| 2026-10-13 | [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) | 107599 | 204 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

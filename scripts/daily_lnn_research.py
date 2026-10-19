@@ -268,7 +268,7 @@ def fetch_arxiv_rss(max_results: int) -> list[dict[str, Any]]:
     return papers
 
 
-def fetch_github_repos(per_query: int) -> list[dict[str, Any]]:
+def fetch_github_repos(per_query: int, errors: list[str] | None = None) -> list[dict[str, Any]]:
     headers = {"Accept": "application/vnd.github+json"}
     token = os.environ.get("GITHUB_TOKEN")
     if token:
@@ -289,6 +289,10 @@ def fetch_github_repos(per_query: int) -> list[dict[str, Any]]:
             payload = request_json(url, headers=headers)
         except Exception as exc:
             print(f"[warn] GitHub query failed for {query!r}: {exc}", file=sys.stderr)
+            # 未认证的 search API 限额很容易触发 (HTTP 403); 不记进 errors 的话,
+            # 部分覆盖会以"查询全成功"的假象进 digest, 读者无从判断缺了几路查询.
+            if errors is not None:
+                errors.append(f"GitHub query failed for {query!r}: {exc}")
             continue
 
         for item in payload.get("items", []):
@@ -315,7 +319,7 @@ def fetch_github_repos(per_query: int) -> list[dict[str, Any]]:
     return sorted(repos.values(), key=lambda repo: (repo.get("updated_at") or "", repo.get("stars") or 0), reverse=True)
 
 
-def fetch_huggingface_models(per_query: int) -> list[dict[str, Any]]:
+def fetch_huggingface_models(per_query: int, errors: list[str] | None = None) -> list[dict[str, Any]]:
     models: dict[str, dict[str, Any]] = {}
     for query in HF_QUERIES:
         params = urllib.parse.urlencode({"search": query, "limit": per_query, "sort": "lastModified", "direction": -1})
@@ -324,6 +328,8 @@ def fetch_huggingface_models(per_query: int) -> list[dict[str, Any]]:
             payload = request_json(url)
         except Exception as exc:
             print(f"[warn] Hugging Face query failed for {query!r}: {exc}", file=sys.stderr)
+            if errors is not None:
+                errors.append(f"Hugging Face query failed for {query!r}: {exc}")
             continue
 
         for item in payload:
@@ -674,11 +680,11 @@ def main() -> int:
 
     repos = []
     if not args.skip_github:
-        repos = fetch_github_repos(args.per_query)
+        repos = fetch_github_repos(args.per_query, errors)
 
     models = []
     if not args.skip_huggingface:
-        models = fetch_huggingface_models(args.per_query)
+        models = fetch_huggingface_models(args.per_query, errors)
 
     previous_papers = previous_payload.get("papers") or []
     previous_repos = previous_payload.get("github_repos") or []
