@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+# 宿主驱动 540.4.0 (JetPack R36) 最高只支持 CUDA 12.6 —— 宿主 torch 2.11.0+cu130
+# 起不来正是因为 cu130 要求驱动 >= 13.0。
+#
+# 两个坑 (都实测踩过):
+#   1. download.pytorch.org 的 cu126 索引对 aarch64 **只有 dev 夜间版**
+#      (2.13.0.dev20260610+cu126), 稳定版一个都没有 —— 钉 2.10.0+cu126 会让 pip
+#      回退源码编译。而 `pip index versions` 仍会列出该版本, 不能用来判断有无 wheel。
+#   2. 该 dev 版依赖 triton==3.7.1+git5d6048aa, 这个 git 版本号只在 **nightly**
+#      索引里有, 所以必须把 nightly 也加成 extra-index-url。
+RUN pip install --no-cache-dir \
+      --index-url https://download.pytorch.org/whl/cu126 \
+      --extra-index-url https://download.pytorch.org/whl/nightly/cu126 \
+      "torch==2.13.0.dev20260610+cu126" \
+ && pip install --no-cache-dir torchdiffeq numpy scikit-learn pandas
+
+WORKDIR /workspace/LNN

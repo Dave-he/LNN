@@ -1,0 +1,86 @@
+{
+  "status": "ok_cpu",
+  "generated_at": "2026-10-19T20:29:17+0800",
+  "environment": {
+    "torch": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda_runtime": null,
+    "device_name": "cpu",
+    "python": "3.14.4",
+    "host": "hyx-desktop"
+  },
+  "model": {
+    "name": "MTLiquid-style shared-CfC multitask",
+    "hidden": 160,
+    "n_features": 8,
+    "n_tasks": 2,
+    "seq_len": 48,
+    "data": "synthetic (seeded generator, no real patient data)",
+    "params": 107364,
+    "params_trainable": 107364,
+    "fp32_size_bytes": 429456,
+    "fp32_size_mb": 0.4096,
+    "reference_mtliquid_params": 105000,
+    "delta_vs_mtliquid_pct": 2.25
+  },
+  "train": {
+    "epochs": 20,
+    "batch_size": 128,
+    "n_train": 4096,
+    "epoch_time_s_mean": 20.2688,
+    "epoch_time_s_median": 20.2532,
+    "total_train_s": 405.376
+  },
+  "eval": {
+    "task0": {
+      "acc": 0.9492,
+      "recall": 0.918,
+      "specificity": 0.9596,
+      "pos_rate_true": 0.25
+    },
+    "task1": {
+      "acc": 0.9365,
+      "recall": 0.7981,
+      "specificity": 0.9729,
+      "pos_rate_true": 0.208
+    }
+  },
+  "inference": {
+    "on": "cpu",
+    "gpu": null,
+    "cpu": {
+      "1": {
+        "latency_ms_mean": 248.8962,
+        "latency_ms_p50": 240.8878,
+        "throughput_samples_per_s": 4.0,
+        "per_sample_ms": 248.8962
+      },
+      "16": {
+        "latency_ms_mean": 240.778,
+        "latency_ms_p50": 234.4611,
+        "throughput_samples_per_s": 66.5,
+        "per_sample_ms": 15.0486
+      },
+      "64": {
+        "latency_ms_mean": 265.6253,
+        "latency_ms_p50": 256.265,
+        "throughput_samples_per_s": 240.9,
+        "per_sample_ms": 4.1504
+      },
+      "128": {
+        "latency_ms_mean": 307.5422,
+        "latency_ms_p50": 306.3411,
+        "throughput_samples_per_s": 416.2,
+        "per_sample_ms": 2.4027
+      }
+    }
+  },
+  "status_note": "CPU-only run. The CUDA leg could NOT be completed: the torch cu126 aarch64 wheel tree (~3.5 GB) stalled at 0 KB/s mid-download and pip has no socket timeout on that transfer. See scripts/bench_mtliquid_105k_cuda.py -- rerun inside the lnn-cuda126:local image once egress recovers to fill in the 'gpu' section. Do not read this file as GPU/edge evidence.",
+  "cuda_blocker": {
+    "driver": "540.4.0 (JetPack R36) -> CUDA 12.6 max",
+    "why_cu126_dev": "download.pytorch.org cu126 index has 0 stable aarch64 wheels; only 2.13.0.dev20260610+cu126 (cp310-cp314)",
+    "cu130_rejected": "PyPI default cu130 aarch64 wheels are stable but CUDA 13 needs driver >= 13.0",
+    "container_cuda_verified": true,
+    "download_observed": "31 wheels fetched OK, then torch-2.13.0.dev20260610+cu126-cp312 stalled at 0 KB/s"
+  }
+}
