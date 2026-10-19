@@ -45,7 +45,7 @@ python3 scripts/daily_lnn_research.py --download-pdfs --max-pdf-downloads 5
 ./scripts/install_daily_lnn_timer.sh
 ```
 
-默认运行时间为本机时区每天 `06:30`，可通过环境变量覆盖：
+默认运行时间为本机时区每天 `04:30`，可通过环境变量覆盖：
 
 ```bash
 ON_CALENDAR="*-*-* 08:00:00" ./scripts/install_daily_lnn_timer.sh
@@ -58,6 +58,28 @@ COMMIT_AND_PUSH=0 ./scripts/run_daily_lnn_task.sh
 ```
 
 可通过 `JETSON_CUDA_ATTEMPTS=3` 调整 CUDA 容器重试次数。
+
+### 2.1 GitHub token（重要）
+
+GitHub search API **未认证只有 10 次/分且按出口 IP 计**，而 systemd service 不继承登录 shell 的环境变量——不配 token 的话定时任务一直是匿名跑，查询会被静默吞掉（2026-10-19 有 3/8 条这么失败）。
+
+installer 会自动把 `$GITHUB_TOKEN` 写进 `~/.config/systemd/user/lnn-daily-research.env`（权限 600）并以 `EnvironmentFile=-` 挂进 unit。手工补配：
+
+```bash
+printf 'GITHUB_TOKEN=ghp_xxx\n' >> ~/.config/systemd/user/lnn-daily-research.env
+chmod 600 ~/.config/systemd/user/lnn-daily-research.env
+systemctl --user daemon-reload
+```
+
+想确认 token 到位（不回显值）：
+
+```bash
+systemd-run --user --wait --pipe --quiet \
+  -p EnvironmentFile=~/.config/systemd/user/lnn-daily-research.env \
+  /bin/bash -c 'echo "prefix=${GITHUB_TOKEN:0:4} len=${#GITHUB_TOKEN}"'
+```
+
+即使没有 token，脚本也会在撞限额时等窗口重试一次，并把失败写进 digest 的 `errors` 字段——不会再静默通过。
 
 ## 3. GitHub Actions 每日任务
 
