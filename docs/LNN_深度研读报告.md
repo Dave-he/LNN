@@ -121,6 +121,20 @@ positioning_updated: 2026-09-14
 - **关键成果**：在 IXI / fastMRI / BraTS 三个公开脑部数据集上, PSNR 比 EDSR 2D baseline 提升 **+1.4~+2.1 dB**, SSIM +0.018~0.029, 且对各向异性采样间距 (z-spacing 1mm~5mm) 鲁棒; inference 时间仅比 2D baseline 多 11% (vs 3D CNN +140%)。
 - **对本项目 CfC bench 栈的意义**：ContiLNN 是 **"LNN 1D 序列 → 3D 体积"** 的首例 CfC 工作, 与 r301-r305 (1D edge inference) / r306 (SDE gate) 互补; 提示本仓可扩展 `experiment_timeseries.py` 到 volumetric 输入, 或把 bidirectional CfC 单元挪到 `bench_cfc.py` 作为新 cell-type 选项 (forward-only / bidirectional)。
 
+### [2026-10-20] 流水线覆盖审计 — "LNN 主题饱和"是覆盖盲区, 不是领域事实
+- **研究笔记**：[[analysis/research/2026-10-20/2026-10-20_lnn_research_note.md]]
+- **问题**：连续多日 selector 输出 `candidates=[]` (候选池 24/24 全已研读), 此前被记为"真饱和"。本次审计推翻了这个判断 —— 用 arXiv 月度列表全量 (33,155 条) + RSS (902 条) + 搜索 UI 三条独立路径交叉验证后, 结论是**分层**的:
+  - **主线 (LNN/LTC/CfC/NCP) 确实饱和** — 8/9/10 三个月全量扫描只有 MTLiquid (2609.33232) 与 ContiLNN (2610.12337) 两篇, 与候选池记录吻合;
+  - **但整体覆盖残缺** — `scripts/daily_lnn_research.py` 的 arXiv 查询只覆盖协议 §3 的 4/7 组, 基础模型/相关方法/应用场景三组**从未进查询**, 候选池历史 3356 条记录里含 LFM/LFM2 的 **0 条** (同期 HF 侧 14 个模型有 12 个是 LFM2.5)。
+- **第二个缺陷**：GitHub 候选表被同名 fork 群刷屏 — 42 仓里 8 个是同一个 `bebelm` 的 fork (不同 owner / 同名 / 0★), 表只渲染前 12 行, 导致 **29★ 的 `Ipsedo/LiquidNetworks` 被挤到第 13 行、官方 `Noah-hjl/ContiLNN` 被挤到第 21 行**, 人类完全看不见。
+- **修复与实跑验证**：arXiv 查询按协议 §3 拆成 8 个小组 (单条 21 词 OR 会稳定触发 406/429), 补齐三组词并改用布尔式 (`all:LNN AND all:edge` — 注意 `all:"..."` 是连续短语匹配, 与 `"X" AND "Y"` 不等价); GitHub 侧新增 fork 簇折叠 + 按 star 价值排序。同一天重跑:
+  | 指标 | 修复前 | 修复后 |
+  |---|---:|---:|
+  | arXiv 候选池 | 24 篇 | **92 篇** |
+  | selector 候选 | `[]` | **3 个** (含 `2511.23404` LFM2 Technical Report, 41 分) |
+  | GitHub 表内 0★ fork | 8 条 | **0 条** |
+- **对本项目方向的影响**：**方向没错, 覆盖有缺口**。§0 定位 (LNN = 时间归纳偏置组件, 非 LLM 替代品) 与 9 条负结果台账经得起检验; 真正要补的是"看得见" — 下一步应优先研读 `2511.23404` LFM2 Technical Report (生态主线技术报告, 本仓至今无独立研读), 并接入协议 §4 长期挂账的 Semantic Scholar (雪球法从未真正跑过)。
+
 ### [2024] Exploring Liquid Neural Networks on Loihi-2
 - **独立报告**：[[docs/reports/Exploring_Liquid_Neural_Networks_on_Loihi-2_研读报告.md]]
 - **核心问题**：将基于连续常微分方程（ODE）的 LNN 算法高效部署在运行离散时间步、资源极其受限的神经拟态芯片（Loihi-2）上面临的软硬件协同适配难题。
@@ -1366,7 +1380,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
-- **2026-10-20**：[[docs/daily/2026-10-20_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 14 个。
+- **2026-10-20**：[[docs/daily/2026-10-20_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 20 个。
 - **2026-10-19**：[[docs/daily/2026-10-19_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
 - **2026-10-18**：[[docs/daily/2026-10-18_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
 - **2026-10-17**：[[docs/daily/2026-10-17_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 21 个。

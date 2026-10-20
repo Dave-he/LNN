@@ -1,10 +1,21 @@
 #!/usr/bin/env python3
-"""Probe arXiv API directly with the script's USER_AGENT."""
-import sys, urllib.request, urllib.parse
-sys.path.insert(0, "/Users/hyx/workspace/LNN/scripts")
+"""Probe arXiv API directly with the script's USER_AGENT.
+
+Uses the shared `build_arxiv_query` so the probe exercises the SAME query
+syntax the daily pipeline uses (including boolean fragments). The old version
+re-wrapped every term as `all:"..."`, which silently produced broken queries
+once boolean fragments were introduced (2026-10-20).
+"""
+import pathlib
+import re
+import sys
+import urllib.parse
+import urllib.request
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import daily_lnn_research as m
 
-q = " OR ".join(f'all:"{t}"' for t in m.ARXIV_TERMS)
+q = m.build_arxiv_query([f for _g, _ts in m.ARXIV_TERM_GROUPS for f in _ts])
 params = urllib.parse.urlencode({
     "search_query": q, "start": 0, "max_results": 25,
     "sortBy": "submittedDate", "sortOrder": "descending",
@@ -19,8 +30,6 @@ try:
         body = r.read().decode("utf-8")
         print(f"HTTP OK, size={len(body)}")
         print("entries:", body.count("<entry>"))
-        # print first 2 entry ids+title
-        import re
         for m2 in re.finditer(r"<id>(http[^<]+)</id>\s*<updated>([^<]+)</updated>\s*<title>([^<]+)</title>", body):
             print("  ", m2.group(1), m2.group(2), "::", m2.group(3)[:80])
             break

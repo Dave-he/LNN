@@ -27,16 +27,67 @@ from typing import Any
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 USER_AGENT = "LNN-research-tracker/1.0 mailto:hyx@nous.local (https://github.com/Dave-he/LNN)"
 
-ARXIV_TERMS = [
-    "liquid neural network",
-    "liquid neural networks",
-    "liquid time-constant",
-    "liquid time constant",
-    "closed-form continuous-time",
-    "closed form continuous time",
-    "neural circuit policy",
-    "neural circuit policies",
-    "liquid structural state-space",
+# arXiv `/api/query` 按查询串长度限流: 单条 21 词 OR (~810 字符) 会稳定触发 406/429。
+# 所以按 protocol §3 的分组拆成多个小查询, 每组独立重试, 一组挂掉不牵连其他组。
+#
+# ⚠️ 语法要点 (2026-10-20 实测, 见协议 §3.2):
+#   arXiv API 的 `all:"..."` 是**连续短语**匹配, 而搜索 UI 的 `"X" AND "Y"` 是
+#   **布尔**匹配 (X 和 Y 各自出现即可, 位置不限)。两者不等价:
+#     API  all:"LNN edge"   -> 0 篇 (要求 "LNN edge" 连续出现)
+#     UI   "LNN" AND "edge" -> 2 篇 (LNN 与 edge 各自出现即可)
+#   所以应用场景组必须写成布尔式 `all:LNN AND all:edge`, 不能写成 `all:"LNN edge"` ——
+#   否则该组会**静默返回 0 篇**, 看起来像"该场景没论文", 实际是查询写错了。
+#
+# 各组词的选择依据 (arXiv 搜索 UI 全库实测, 2026-10-20):
+#   基础模型: LFM2=6 篇 / "liquid foundation model"=3 篇
+#             —— 含从未进池的 2511.23404 LFM2 Technical Report、2603.03517 MMAI Gym
+#   相关方法: "continuous-time RNN"=6 篇 —— 含 1811.00321
+#   应用场景: LNN time series=8 / robotics=4 / forecasting=3 / edge=2 / medical=2
+#
+# 被剔除的协议词 (附实测理由, 避免以后被重新加回来):
+#   "Liquid AI"          -> 1 篇, 但唯一命中是 "Illiquid Markets" 金融论文 (纯误伤)
+#   "neural ODE"         -> 715 篇, 噪声淹没主线, 且 selector 的 STRONG_KEYWORDS
+#                           本就含 neural[- ]ode, 放开会把 715 篇灌进研读队列
+#   "state-space liquid" -> 0 篇
+#   "LNN finance"        -> 0 篇
+#   "NCP liquid"         -> 0 篇
+ARXIV_TERM_GROUPS: list[tuple[str, list[str]]] = [
+    ("主线-LNN", ['all:"liquid neural network"', 'all:"liquid neural networks"']),
+    ("主线-LTC", ['all:"liquid time-constant"', 'all:"liquid time constant"']),
+    ("主线-CfC", ['all:"closed-form continuous-time"', 'all:"closed form continuous time"']),
+    ("主线-NCP", ['all:"neural circuit policy"', 'all:"neural circuit policies"']),
+    ("主线-state-space", ['all:"liquid structural state-space"']),
+    ("基础模型", ['all:"liquid foundation model"', "all:LFM2"]),
+    ("相关方法", ['all:"continuous-time RNN"']),
+    # 布尔式: LNN 缩写与场景词各自出现即命中 (实测 UI 计数 LNN time series=8,
+    # LNN robotics=4, LNN forecasting=3, LNN edge=2, LNN medical=2)
+    ("应用场景", [
+        "all:LNN AND all:edge",
+        "all:LNN AND all:\"time series\"",
+        "all:LNN AND all:forecasting",
+        "all:LNN AND all:medical",
+        "all:LNN AND all:robotics",
+    ]),
+]
+
+def _strip_all_prefix(fragment: str) -> str:
+    """`all:"foo bar"` -> `"foo bar"`;  `all:LFM2` -> `LFM2`; 其余原样。"""
+    if not fragment.startswith("all:"):
+        return fragment
+    body = fragment[len("all:"):]
+    if len(body) >= 2 and body.startswith('"') and body.endswith('"'):
+        body = body[1:-1]
+    return body
+
+
+# 扁平**短语**列表 (供文档 / 探针脚本引用). **从 ARXIV_TERM_GROUPS 派生**, 避免两份
+# 清单各自漂移 —— 2026-10-20 的审计根因就是"协议 §3 有一组词, 但脚本里没有"。
+# 只收纯短语; 布尔 fragment (all:LNN AND all:edge) 不是短语, 由 ARXIV_TERM_GROUPS 承载。
+ARXIV_TERMS: list[str] = [
+    _strip_all_prefix(fragment)
+    for _group, _terms in ARXIV_TERM_GROUPS
+    for fragment in _terms
+    if " AND " not in fragment
 ]
 
 # RSS fallback categories — used when /api/query is throttled by Varnish (HTTP 406).
@@ -51,6 +102,10 @@ ARCHIVE_RSS_CATEGORIES = [
 
 # arXiv 重试退避 (秒). Varnish 的 406/read-timeout 窗口通常在 30~60s 内清掉.
 ARXIV_RETRY_BACKOFF = (8, 30, 60)
+
+# arXiv 查询组之间的间隔 (秒). 2026-10-20 实测 /api/query 处于 429 硬限流时,
+# 连续请求会把所有组一起推进限流窗口; 留 3s 让 Varnish 窗口有机会滑动.
+ARXIV_GROUP_PAUSE_S = 3
 
 # 每日索引保留的**天数**上限 (子条目跟随其日期条目一起保留, 不单独计数).
 INDEX_MAX_DAYS = 30
@@ -78,7 +133,12 @@ HF_QUERIES = [
 
 KEYWORD_RE = re.compile(
     r"liquid neural|liquid time[- ]constant|closed[- ]form continuous[- ]time|"
-    r"neural circuit polic|liquid structural state[- ]space|\bCfC\b|\bLTC\b|\bLFM2",
+    r"neural circuit polic|liquid structural state[- ]space|\bCfC\b|\bLTC\b|\bLFM2|"
+    # 2026-10-20: 补上基础模型 / 相关方法 / 应用场景三组的判定词, 否则新加的查询组
+    # 抓回来的论文会被 keyword_score 判 0 分丢弃 (score<=0 直接 continue)。
+    # 只包含实测有真实命中的词 —— "liquid ai" 唯一命中是金融 "Illiquid Markets" 论文,
+    # 属误伤, 不收; "neural ode" 715 篇噪声, 交给 selector 的 STRONG_KEYWORDS 处理。
+    r"liquid foundation model|continuous[- ]time rnn|\bLNN\b",
     re.IGNORECASE,
 )
 
@@ -199,8 +259,78 @@ def keyword_score(title: str, summary: str) -> int:
     return score
 
 
-def fetch_arxiv(max_results: int) -> list[dict[str, Any]]:
-    query = " OR ".join(f'all:"{term}"' for term in ARXIV_TERMS)
+def fetch_arxiv(max_results: int, errors: list[str] | None = None) -> list[dict[str, Any]]:
+    """Query arXiv with SEVERAL small term groups instead of one giant OR.
+
+    Why not one big OR: arXiv's `/api/query` throttles (406/429) aggressively as the
+    query string grows. A 21-term OR is ~810 URL chars and reliably trips the
+    throttle, which is exactly the failure the 2026-10-20 audit ran into.
+    Splitting into themed groups keeps each request small, and a group that
+    throttles no longer takes the other groups down with it.
+
+    Groups mirror `docs/LNN_持续研究协议.md` §3 keyword table.
+
+    **部分失败必须留痕**: 某组 429 限流时, 其余组照常产出, 但失败必须记进 `errors`
+    —— 否则 digest 会把"只查到 5/8 组"显示成"查询全成功", 读者无从判断漏了几路。
+    (与 GitHub/HF 侧同一纪律, 见 2026-10-19 的 a556476 修复。)
+    """
+    papers: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for group_name, terms in ARXIV_TERM_GROUPS:
+        group_papers, group_error = _fetch_arxiv_group(terms, max_results)
+        if group_error:
+            message = f"arXiv group {group_name!r} failed: {group_error}"
+            print(f"[warn] {message}", file=sys.stderr)
+            if errors is not None:
+                errors.append(message)
+            continue
+        added = 0
+        for paper in group_papers:
+            if paper["id"] in seen:
+                continue
+            seen.add(paper["id"])
+            papers.append(paper)
+            added += 1
+        print(
+            f"[info] arXiv group {group_name!r}: {len(group_papers)} hits, {added} new",
+            file=sys.stderr,
+        )
+        # arXiv 对连续请求敏感: 组间留间隔, 避免把后面的组也推进限流窗口
+        time.sleep(ARXIV_GROUP_PAUSE_S)
+
+    if not papers and errors is not None:
+        raise RuntimeError("all arXiv term groups failed")
+    return papers
+
+
+def build_arxiv_query(terms: list[str]) -> str:
+    """Build one arXiv `search_query` string from a list of fragments.
+
+    A fragment may be:
+      - a bare phrase          -> wrapped as `all:"phrase"`
+      - an already-quoted phrase (`"foo bar"`) -> wrapped as `all:"foo bar"` (不重复加引号)
+      - a complete fragment    -> used as-is (already contains `all:` / `AND` / `OR`)
+
+    Fragments containing `AND` get explicit parentheses: when several fragments are
+    joined with `OR`, we should not depend on arXiv's operator precedence to keep
+    `A AND B` from splitting across the OR boundary.
+    """
+    fragments = []
+    for term in terms:
+        if "all:" in term or " AND " in term or " OR " in term:
+            fragments.append(f"({term})" if " AND " in term and " OR " not in term else term)
+        elif len(term) >= 2 and term.startswith('"') and term.endswith('"'):
+            # 已经带引号的短语, 直接补 all: 前缀, 不要套第二层引号
+            fragments.append(f"all:{term}")
+        else:
+            fragments.append(f'all:"{term}"')
+    return " OR ".join(fragments)
+
+
+def _fetch_arxiv_group(terms: list[str], max_results: int) -> tuple[list[dict[str, Any]], str]:
+    """Fetch one arXiv term group. Returns (papers, error_message)."""
+    query = build_arxiv_query(terms)
     params = urllib.parse.urlencode(
         {
             "search_query": query,
@@ -211,8 +341,12 @@ def fetch_arxiv(max_results: int) -> list[dict[str, Any]]:
         }
     )
     url = f"https://export.arxiv.org/api/query?{params}"
-    feed = request_text_retry(url)
-    root = ET.fromstring(feed)
+    try:
+        feed = request_text_retry(url)
+        root = ET.fromstring(feed)
+    except Exception as exc:  # noqa: BLE001
+        return [], f"{type(exc).__name__}: {exc}"
+
     ns = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
     papers: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -250,9 +384,10 @@ def fetch_arxiv(max_results: int) -> list[dict[str, Any]]:
                 "abs_url": abs_url,
                 "pdf_url": pdf_url,
                 "keyword_score": score,
+                "arxiv_group": query,
             }
         )
-    return papers
+    return papers, ""
 
 
 def fetch_arxiv_rss(max_results: int) -> list[dict[str, Any]]:
@@ -363,6 +498,7 @@ def fetch_github_repos(per_query: int, errors: list[str] | None = None) -> list[
                 "html_url": item.get("html_url"),
                 "stars": item.get("stargazers_count", 0),
                 "forks": item.get("forks_count", 0),
+                "is_fork": bool(item.get("fork")),
                 "language": item.get("language"),
                 "updated_at": (item.get("updated_at") or "")[:10],
                 "pushed_at": (item.get("pushed_at") or "")[:10],
@@ -373,7 +509,68 @@ def fetch_github_repos(per_query: int, errors: list[str] | None = None) -> list[
                 repos[full_name] = candidate
         time.sleep(1)
 
-    return sorted(repos.values(), key=lambda repo: (repo.get("updated_at") or "", repo.get("stars") or 0), reverse=True)
+    return rank_repos(list(repos.values()))
+
+
+def rank_repos(repos: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collapse fork spam and order by research value, not by API order.
+
+    2026-10-20 审计: GitHub 侧 42 个候选里有 8 个是同一个 `bebelm` 仓库的 fork
+    (不同 owner、同名、0 star、同描述), 而 digest 表只渲染前 12 行 —— 结果
+    **10 行是 0-star fork**, 真正有价值的 `Ipsedo/LiquidNetworks` (29★) 被挤到
+    第 13 行, `Noah-hjl/ContiLNN` (官方 ContiLNN 实现) 被挤到第 21 行, 人类完全看不见。
+
+    两步修:
+    1. **折叠 fork 簇**: 同名 (repo 名 stem 相同) 的多个 owner 视为同一上游的 fork 群,
+       保留 star 最多的那个为主条目, 并记录 `fork_variants` 计数 (不丢信息)。
+       真正的 fork (GitHub `fork: true`) 一律降级到主条目后面。
+    2. **按研究价值排序**: star 为主, 最近更新为辅 —— 而不是 API 的 "best match" 顺序。
+    """
+    # --- 1) 按 repo 名 stem 分组, 找出 fork 簇 ---------------------------------
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for repo in repos:
+        stem = (repo.get("full_name") or "").split("/")[-1].lower()
+        groups.setdefault(stem, []).append(repo)
+
+    kept: list[dict[str, Any]] = []
+    for stem, members in groups.items():
+        if len(members) == 1:
+            repo = dict(members[0])
+            repo["fork_variants"] = 0
+            kept.append(repo)
+            continue
+
+        # 簇内: 非 fork 优先, 其次 star 多者为主条目
+        def primary_key(repo: dict[str, Any]) -> tuple:
+            return (
+                not repo.get("is_fork"),
+                repo.get("stars", 0) or 0,
+                repo.get("updated_at") or "",
+            )
+
+        ordered = sorted(members, key=primary_key, reverse=True)
+        head = dict(ordered[0])
+        head["fork_variants"] = len(members) - 1
+        head["fork_family"] = stem
+        kept.append(head)
+        # 簇内其余成员保留在池里 (JSON 里仍可查), 但明确标记为变体
+        for variant in ordered[1:]:
+            v = dict(variant)
+            v["fork_variants"] = 0
+            v["fork_of"] = head.get("full_name")
+            v["is_fork_variant"] = True
+            kept.append(v)
+
+    # --- 2) 按研究价值排序 ----------------------------------------------------
+    # star 降序; 同 star 用最近更新优先。is_fork_variant 永远排到普通条目之后。
+    def value_key(repo: dict[str, Any]) -> tuple:
+        return (
+            not repo.get("is_fork_variant"),
+            repo.get("stars", 0) or 0,
+            repo.get("updated_at") or "",
+        )
+
+    return sorted(kept, key=value_key, reverse=True)
 
 
 def fetch_huggingface_models(per_query: int, errors: list[str] | None = None) -> list[dict[str, Any]]:
@@ -501,17 +698,28 @@ def render_daily_digest(
 
     lines.extend(["", "## GitHub 候选仓库"])
     if repos:
-        lines.extend(["| 更新 | 仓库 | Star | 语言 | 说明 |", "|---|---|---:|---|---|"])
+        lines.extend(["| 更新 | 仓库 | Star | Fork | 语言 | 说明 |", "|---|---|---:|---:|---|---|"])
         for repo in repos[:DIGEST_TABLE_LIMIT]:
+            fork_note = ""
+            if repo.get("fork_variants"):
+                fork_note = f" (另有 {repo['fork_variants']} 个同名 fork)"
             lines.append(
-                "| {updated} | [{name}]({url}) | {stars} | {language} | {desc} |".format(
+                "| {updated} | [{name}]({url}){fnote} | {stars} | {forks} | {language} | {desc} |".format(
                     updated=repo.get("updated_at") or repo.get("pushed_at") or "",
                     name=md_escape(repo.get("full_name", "")),
                     url=repo.get("html_url", ""),
+                    fnote=fork_note,
                     stars=repo.get("stars", 0),
+                    forks=repo.get("forks", 0),
                     language=repo.get("language") or "",
                     desc=md_escape(truncate(repo.get("description", ""), 160)),
                 )
+            )
+        variants = sum(1 for repo in repos if repo.get("is_fork_variant"))
+        if variants:
+            lines.append(
+                f"- 同名 fork 已折叠 {variants} 条（见 `papers/daily/{run_date}_lnn_research.json` 的 "
+                "`fork_variants` / `fork_of` 字段）"
             )
     else:
         lines.append("- 本次未发现可记录的 GitHub 仓库。")
@@ -569,6 +777,11 @@ def render_repo_watchlist(run_date: str, repos: list[dict[str, Any]], models: li
     ]
     for repo in repos[:20]:
         topics = ", ".join(repo.get("topics", [])[:8])
+        fork_note = ""
+        if repo.get("is_fork_variant"):
+            fork_note = f"- 归属：同源 fork 簇，主条目 `{repo.get('fork_of')}`"
+        elif repo.get("fork_variants"):
+            fork_note = f"- 同源 fork：另有 {repo['fork_variants']} 个同名 fork 已折叠"
         lines.extend(
             [
                 f"### [{repo.get('full_name')}]({repo.get('html_url')})",
@@ -577,9 +790,11 @@ def render_repo_watchlist(run_date: str, repos: list[dict[str, Any]], models: li
                 f"- 语言：{repo.get('language') or 'unknown'}",
                 f"- Topics：{topics or '未标注'}",
                 f"- 说明：{repo.get('description') or '无'}",
-                "",
             ]
         )
+        if fork_note:
+            lines.append(fork_note)
+        lines.append("")
 
     lines.append("## Hugging Face 模型")
     for model in models[:20]:
@@ -721,7 +936,8 @@ def main() -> int:
     errors: list[str] = []
     papers: list[dict[str, Any]] = []
     try:
-        papers = fetch_arxiv(args.max_results)
+        # errors 传进去: 单组失败要留痕, 否则"5/8 组成功"会被显示成"查询全成功"
+        papers = fetch_arxiv(args.max_results, errors)
         if not papers:
             raise RuntimeError("arXiv /api/query returned 0 papers (likely HTTP 406 throttle)")
     except Exception as exc:

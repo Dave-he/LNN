@@ -53,6 +53,56 @@ tags: [LNN, research-protocol, living-review, automation, skill]
 | 基础模型 | `Liquid AI`, `LFM`, `LFM2`, `liquid foundation model` | 捕获 Liquid AI / LFM 系列模型进展 | 中 |
 | 应用场景 | `LNN time series`, `LNN robotics`, `LNN edge`, `LNN forecasting`, `LNN medical`, `LNN finance` | 捕获落地论文与工程项目 | 中高 |
 
+### 3.1 查询词与实现的对应关系（2026-10-20 审计后对齐）
+
+> 此前本表描述的是**意图**，`scripts/daily_lnn_research.py` 的 `ARXIV_TERM_GROUPS`
+> 实际只实现了核心概念/LTC/CfC/NCP 四组 —— 基础模型、相关方法、应用场景三组
+> **从未进过 arXiv 查询**。后果已量化：候选池历史 3356 条记录里含 LFM/LFM2 的 **0 条**，
+> 而同期 Hugging Face 侧 14 个模型有 12 个是 LFM2.5（论文侧对生态主线 100% 失明）。
+> 下表是**已落地**的词及其 arXiv 全库实测命中数（2026-10-20，用 arXiv 搜索 UI 交叉核对）：
+
+| 组别 | 已落地查询词 | 实测命中数 | 备注 |
+|---|---|---:|---|
+| 主线-LNN | `all:"liquid neural network"`, `all:"liquid neural networks"` | 38 | 未变 |
+| 主线-LTC | `all:"liquid time-constant"`, `all:"liquid time constant"` | 28 | 未变 |
+| 主线-CfC | `all:"closed-form continuous-time"`, `all:"closed form continuous time"` | 16 | 未变 |
+| 主线-NCP | `all:"neural circuit policy"`, `all:"neural circuit policies"` | 7 | 未变 |
+| 主线-state-space | `all:"liquid structural state-space"` | 1 | 未变 |
+| 基础模型 | `all:"liquid foundation model"`, `all:LFM2` | 3 / 6 | **新增**，含从未进池的 `2511.23404` LFM2 Technical Report |
+| 相关方法 | `all:"continuous-time RNN"` | 6 | **新增**，含 `1811.00321` |
+| 应用场景 | `all:LNN AND all:edge` / `"time series"` / `forecasting` / `medical` / `robotics` | 2 / 8 / 3 / 2 / 4 | **新增** |
+
+**端到端验证**（2026-10-20，真实 `/api/query`）：
+`基础模型` 组返回 8 篇（含 `2511.23404`，`keyword_score=14`，全场最高），
+`应用场景` 组返回 18 篇（含从未见过的 `2606.28827` LNN-Fly UAV 导航）。
+即：**修复合入当天，论文侧就抓到了此前完全看不见的生态主线论文。**
+
+**被剔除的协议词**（附实测理由，避免以后被重新加回来）：
+
+| 词 | 实测 | 剔除理由 |
+|---|---:|---|
+| `Liquid AI` | 1 | 唯一命中是金融 "**Illiquid** Markets" 论文 —— 纯误伤 |
+| `Neural ODE` | 715 | 噪声淹没主线；且 `select_papers_for_report.py` 的 `STRONG_KEYWORDS` 本就含 `neural[- ]ode`，放开会把 715 篇灌进研读队列 |
+| `state-space liquid` | 0 | 无命中 |
+| `LNN finance` | 0 | 无命中（`LNN medical` 等其余场景词保留） |
+| `NCP liquid` | 0 | 无命中 |
+
+### 3.2 arXiv 查询语法要点（易错，2026-10-20 实测）
+
+- **`all:"..."` 是连续短语匹配**，`"X" AND "Y"` 是布尔匹配（X、Y 各自出现即可，位置不限）。**两者不等价**：
+  `all:"LNN edge"` → 0 篇，但 `all:LNN AND all:edge` → 2 篇。应用场景组必须用布尔式。
+- **查询串长度触发限流**：单条 21 词 OR（~810 字符）会稳定触发 406/429。因此实现按上表拆成
+  **8 个小组**，每组独立重试、一组失败不牵连其他组，组间留 3s 间隔。
+- 含 `AND` 的 fragment 必须加括号，避免依赖 arXiv 的运算符优先级实现细节。
+
+### 3.3 覆盖度自检（新增维护动作）
+
+新增或修改查询词后，**必须**跑一次覆盖度自检，确认两件事：
+1. 新词在 arXiv 上确实有非零命中（用 arXiv 搜索 UI 或月度 HTML 列表，**不要只信 API 返回**）；
+2. 新词不会把无关论文灌进候选池（`neural ODE` 是反面教材）。
+
+自检结果记入当日研究笔记；**不要**在没跑过自检的情况下把词加进 `ARXIV_TERM_GROUPS`。
+
 ## 4. 数据源与输出
 
 | 数据源 | 当前方式 | 频率 | 输出位置 | 备注 |
@@ -63,6 +113,13 @@ tags: [LNN, research-protocol, living-review, automation, skill]
 | Semantic Scholar / OpenAlex | 待扩展 | weekly | `papers/daily/` 或 `analysis/citations/` | 引用、forward snowballing |
 | Papers with Code / OpenReview | 待扩展 | weekly/monthly | `docs/daily/` | benchmark 与会议论文 |
 | Liquid AI / MIT CSAIL / 项目主页 | 手动或脚本扩展 | weekly | `docs/daily/` | 官方技术报告和发布说明 |
+
+> **2026-10-20 审计提醒**：标"待扩展"的 3 行（Semantic Scholar / OpenAlex / OpenReview）
+> 自协议建立（2026-05-27）起**从未实现** —— `grep` 全仓零命中。
+> 后果是**雪球法（§2 方法框架里的一条）从未真正跑过**：引用扩展、forward snowballing
+> 都没有落地，候选池只能靠关键词检索这一个入口。
+> 在 arXiv 关键词表继续扩容之前，**优先把 Semantic Scholar 引用扩展接上** ——
+> 它补的是"关键词检索根本找不到的论文"，比再加关键词更有效。
 
 当前已落地入口：
 - `scripts/daily_lnn_research.py`
