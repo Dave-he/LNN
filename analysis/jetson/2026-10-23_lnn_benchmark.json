@@ -1,0 +1,519 @@
+{
+  "status": "ok_cpu",
+  "generated_at": "2026-10-22T20:45:07.456516+00:00",
+  "environment": {
+    "platform": "Linux-5.15.148-tegra-aarch64-with-glibc2.35",
+    "machine": "aarch64",
+    "python": "3.14.4",
+    "device_tree_model": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
+    "nv_tegra_release": "# R36 (release), REVISION: 4.7, GCID: 42132812, BOARD: generic, EABI: aarch64, DATE: Thu Sep 18 22:54:44 UTC 2025\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "tegrastats_available": true,
+    "jetson_clocks_available": true,
+    "system_memory": {
+      "total_mb": 7619.8,
+      "free_mb": 93.7,
+      "available_mb": 1751.8
+    },
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": false,
+    "cuda_version": "13.0",
+    "cudnn_version": 91900
+  },
+  "device": "cpu",
+  "config": {
+    "samples": 384,
+    "seq_len": 48,
+    "hidden_size": 24,
+    "epochs": 3,
+    "batch_size": 64,
+    "lr": 0.003,
+    "seed": 42
+  },
+  "results": [
+    {
+      "name": "CfCStyle",
+      "parameters": 2521,
+      "test_mse": 0.3120669424533844,
+      "train_seconds": 18.569686993003415,
+      "inference_steps_per_sec": 8517.39659357004,
+      "energy_mj_per_step": 1.2976799242424244
+    },
+    {
+      "name": "LTC",
+      "parameters": 1321,
+      "test_mse": 0.4653664529323578,
+      "train_seconds": 43.317509405002056,
+      "inference_steps_per_sec": 5619.897538874339,
+      "energy_mj_per_step": 1.9477746212121214
+    },
+    {
+      "name": "PDNAPulse",
+      "parameters": 3170,
+      "test_mse": 0.2861168682575226,
+      "train_seconds": 27.48677250599576,
+      "inference_steps_per_sec": 8395.262243456564,
+      "energy_mj_per_step": 1.4564258658008657
+    },
+    {
+      "name": "GRU",
+      "parameters": 1969,
+      "test_mse": 0.39335811138153076,
+      "train_seconds": 9.416681971000799,
+      "inference_steps_per_sec": 17849.40564392313,
+      "energy_mj_per_step": 0.6521577380952381
+    },
+    {
+      "name": "NCPS-LTC",
+      "parameters": 2547,
+      "test_mse": 0.6212541460990906,
+      "train_seconds": 121.88534517600056,
+      "inference_steps_per_sec": 1212.7850222994773,
+      "energy_mj_per_step": 8.867660984848484
+    },
+    {
+      "name": "NCPS-CfC",
+      "parameters": 15737,
+      "test_mse": 0.10634367913007736,
+      "train_seconds": 27.65668953400018,
+      "inference_steps_per_sec": 3450.7129973450287,
+      "energy_mj_per_step": 3.4033820346320347
+    }
+  ],
+  "tegrastats_summary": {
+    "available": true,
+    "n_samples": 2404,
+    "duration_s": 280.0001,
+    "interval_ms": 100,
+    "power_mw": {
+      "VDD_IN": {
+        "mean": 9042.2,
+        "peak": 9474,
+        "min": 8598
+      },
+      "VDD_CPU_GPU_CV": {
+        "mean": 3857.7,
+        "peak": 4364,
+        "min": 3491
+      },
+      "VDD_SOC": {
+        "mean": 1579.8,
+        "peak": 1671,
+        "min": 1470
+      }
+    },
+    "energy_mj": {
+      "VDD_IN": 2531817.8,
+      "VDD_CPU_GPU_CV": 1080157.4,
+      "VDD_SOC": 442352.4
+    },
+    "temp_c": {
+      "cpu": {
+        "mean": 55.51,
+        "peak": 56.093
+      },
+      "soc2": {
+        "mean": 54.0,
+        "peak": 54.375
+      },
+      "soc0": {
+        "mean": 54.29,
+        "peak": 54.656
+      },
+      "gpu": {
+        "mean": 55.3,
+        "peak": 55.812
+      },
+      "tj": {
+        "mean": 55.52,
+        "peak": 56.093
+      },
+      "soc1": {
+        "mean": 54.78,
+        "peak": 55.187
+      }
+    },
+    "gpu_util_pct": {
+      "mean": 0.0,
+      "peak": 0
+    },
+    "ram_used_mb": {
+      "mean": 5896.7,
+      "peak": 6182
+    }
+  },
+  "model_tegrastats": {
+    "CfCStyle": {
+      "available": true,
+      "n_samples": 18,
+      "duration_s": 2.1148,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 9071.6,
+          "peak": 9116,
+          "min": 8996
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 4018.2,
+          "peak": 4047,
+          "min": 3968
+        },
+        "VDD_SOC": {
+          "mean": 1545.3,
+          "peak": 1552,
+          "min": 1512
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 19184.9,
+        "VDD_CPU_GPU_CV": 8497.9,
+        "VDD_SOC": 3268.1
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 55.63,
+          "peak": 55.875
+        },
+        "soc2": {
+          "mean": 54.12,
+          "peak": 54.218
+        },
+        "soc0": {
+          "mean": 54.38,
+          "peak": 54.5
+        },
+        "gpu": {
+          "mean": 55.41,
+          "peak": 55.593
+        },
+        "tj": {
+          "mean": 55.65,
+          "peak": 55.812
+        },
+        "soc1": {
+          "mean": 54.89,
+          "peak": 55.031
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 6009.3,
+        "peak": 6025
+      }
+    },
+    "LTC": {
+      "available": true,
+      "n_samples": 26,
+      "duration_s": 3.2086,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 8974.5,
+          "peak": 9076,
+          "min": 8916
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 3877.5,
+          "peak": 4007,
+          "min": 3735
+        },
+        "VDD_SOC": {
+          "mean": 1562.8,
+          "peak": 1592,
+          "min": 1552
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 28795.9,
+        "VDD_CPU_GPU_CV": 12441.7,
+        "VDD_SOC": 5014.4
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 55.59,
+          "peak": 55.812
+        },
+        "soc2": {
+          "mean": 54.12,
+          "peak": 54.25
+        },
+        "soc0": {
+          "mean": 54.4,
+          "peak": 54.562
+        },
+        "gpu": {
+          "mean": 55.38,
+          "peak": 55.687
+        },
+        "tj": {
+          "mean": 55.58,
+          "peak": 55.812
+        },
+        "soc1": {
+          "mean": 54.87,
+          "peak": 55.062
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 6007.2,
+        "peak": 6033
+      }
+    },
+    "PDNAPulse": {
+      "available": true,
+      "n_samples": 19,
+      "duration_s": 2.3643,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 9107.2,
+          "peak": 9394,
+          "min": 8837
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 3758.4,
+          "peak": 3968,
+          "min": 3616
+        },
+        "VDD_SOC": {
+          "mean": 1609.8,
+          "peak": 1632,
+          "min": 1589
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 21531.8,
+        "VDD_CPU_GPU_CV": 8885.9,
+        "VDD_SOC": 3806.1
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 55.48,
+          "peak": 55.906
+        },
+        "soc2": {
+          "mean": 53.98,
+          "peak": 54.093
+        },
+        "soc0": {
+          "mean": 54.3,
+          "peak": 54.406
+        },
+        "gpu": {
+          "mean": 55.26,
+          "peak": 55.437
+        },
+        "tj": {
+          "mean": 55.47,
+          "peak": 55.906
+        },
+        "soc1": {
+          "mean": 54.76,
+          "peak": 54.968
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 5828.4,
+        "peak": 5855
+      }
+    },
+    "GRU": {
+      "available": true,
+      "n_samples": 8,
+      "duration_s": 1.0583,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 9110.5,
+          "peak": 9155,
+          "min": 9036
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 3908.1,
+          "peak": 3968,
+          "min": 3809
+        },
+        "VDD_SOC": {
+          "mean": 1591.2,
+          "peak": 1592,
+          "min": 1589
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 9641.5,
+        "VDD_CPU_GPU_CV": 4135.9,
+        "VDD_SOC": 1684.0
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 55.7,
+          "peak": 55.968
+        },
+        "soc2": {
+          "mean": 54.02,
+          "peak": 54.125
+        },
+        "soc0": {
+          "mean": 54.28,
+          "peak": 54.375
+        },
+        "gpu": {
+          "mean": 55.32,
+          "peak": 55.5
+        },
+        "tj": {
+          "mean": 55.68,
+          "peak": 55.968
+        },
+        "soc1": {
+          "mean": 54.78,
+          "peak": 54.968
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 5897.1,
+        "peak": 5916
+      }
+    },
+    "NCPS-LTC": {
+      "available": true,
+      "n_samples": 120,
+      "duration_s": 14.5875,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 8987.1,
+          "peak": 9155,
+          "min": 8797
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 3824.4,
+          "peak": 4047,
+          "min": 3616
+        },
+        "VDD_SOC": {
+          "mean": 1579.0,
+          "peak": 1632,
+          "min": 1512
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 131099.5,
+        "VDD_CPU_GPU_CV": 55788.3,
+        "VDD_SOC": 23033.7
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 55.4,
+          "peak": 55.781
+        },
+        "soc2": {
+          "mean": 53.88,
+          "peak": 54.031
+        },
+        "soc0": {
+          "mean": 54.16,
+          "peak": 54.375
+        },
+        "gpu": {
+          "mean": 55.19,
+          "peak": 55.5
+        },
+        "tj": {
+          "mean": 55.41,
+          "peak": 55.781
+        },
+        "soc1": {
+          "mean": 54.63,
+          "peak": 54.875
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 5741.0,
+        "peak": 5813
+      }
+    },
+    "NCPS-CfC": {
+      "available": true,
+      "n_samples": 48,
+      "duration_s": 5.631,
+      "interval_ms": 100,
+      "power_mw": {
+        "VDD_IN": {
+          "mean": 8935.5,
+          "peak": 9116,
+          "min": 8757
+        },
+        "VDD_CPU_GPU_CV": {
+          "mean": 3715.5,
+          "peak": 3888,
+          "min": 3610
+        },
+        "VDD_SOC": {
+          "mean": 1603.7,
+          "peak": 1632,
+          "min": 1592
+        }
+      },
+      "energy_mj": {
+        "VDD_IN": 50315.6,
+        "VDD_CPU_GPU_CV": 20922.0,
+        "VDD_SOC": 9030.2
+      },
+      "temp_c": {
+        "cpu": {
+          "mean": 55.35,
+          "peak": 55.75
+        },
+        "soc2": {
+          "mean": 53.89,
+          "peak": 54.0
+        },
+        "soc0": {
+          "mean": 54.18,
+          "peak": 54.343
+        },
+        "gpu": {
+          "mean": 55.21,
+          "peak": 55.562
+        },
+        "tj": {
+          "mean": 55.37,
+          "peak": 55.75
+        },
+        "soc1": {
+          "mean": 54.65,
+          "peak": 54.937
+        }
+      },
+      "gpu_util_pct": {
+        "mean": 0.0,
+        "peak": 0
+      },
+      "ram_used_mb": {
+        "mean": 5812.2,
+        "peak": 5910
+      }
+    }
+  },
+  "status_note": "CUDA was unavailable, so these are CPU timings measured on the Jetson host. They are not GPU/edge performance evidence."
+}
