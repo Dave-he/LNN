@@ -573,6 +573,31 @@ def rank_repos(repos: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(kept, key=value_key, reverse=True)
 
 
+def _hf_model_is_empty(model_id: str) -> bool | None:
+    """判定一个 HF 仓库是否为空壳 (无权重 / 无 config)。
+
+    2026-10-22 实测: `qualcomm/LFM2.5-1.2B-Instruct` 是个**只有 .gitattributes 的
+    空占位仓库** (storage=0, files=1), 却能挤进 digest 的 HF 候选表并占掉可见行。
+
+    ⚠️ **不能用 downloads/likes/tags 启发式判空**: 实测
+    `ryugyosoft/LFM2.5-24B-A2B-onwx-kit` downloads=0 / likes=0 / tags 里没有任何
+    safetensors|transformers|gguf 标记, 但它**有 5.4GB 权重、134 个文件** ——
+    启发式会把它误杀。唯一可靠的判据是 detail 端点报的实际存储与文件数。
+
+    返回 True=空壳, False=有内容, None=查不动 (调用方按"保留"处理, 宁可留噪声
+    也不误杀真模型)。
+    """
+    try:
+        detail = request_json(f"https://huggingface.co/api/models/{model_id}")
+    except Exception as exc:
+        print(f"[warn] HF detail query failed for {model_id!r}: {exc}", file=sys.stderr)
+        return None
+    siblings = detail.get("siblings") or []
+    storage = detail.get("usedStorage")
+    # storage 明确为 0, 或只有 .gitattributes 这类元文件而没有任何权重
+    return storage == 0 or (storage is not None and storage < 1024 and len(siblings) <= 1)
+
+
 def fetch_huggingface_models(per_query: int, errors: list[str] | None = None) -> list[dict[str, Any]]:
     models: dict[str, dict[str, Any]] = {}
     for query in HF_QUERIES:
@@ -605,6 +630,17 @@ def fetch_huggingface_models(per_query: int, errors: list[str] | None = None) ->
             if current is None or candidate["downloads"] > current.get("downloads", 0):
                 models[model_id] = candidate
         time.sleep(0.5)
+
+    # 去掉空壳仓库 (只有 .gitattributes / 零存储)。只对**零下载零点赞**的
+    # 边缘项做 detail 查询 —— 有下载/点赞的必然有内容, 不必多打 API。
+    candidates = [
+        m for m in models.values()
+        if m.get("downloads", 0) == 0 and m.get("likes", 0) == 0
+    ]
+    for candidate in candidates:
+        if _hf_model_is_empty(candidate["model_id"]) is True:
+            print(f"[info] 跳过 HF 空壳仓库: {candidate['model_id']}", file=sys.stderr)
+            models.pop(candidate["model_id"], None)
 
     return sorted(models.values(), key=lambda model: (model.get("last_modified") or "", model.get("downloads") or 0), reverse=True)
 

@@ -160,7 +160,7 @@ prior_landscape: "docs/research/2026-09-08_technical_route_landscape.md"
 3. ❌ "SDE-LNN 比确定性 CfC 更鲁棒" — r306 toy benchmark 噪声反而略有害, 仅在训练期 jitter robustness 备援场景有效
 4. ❌ "LNN 可替代 LLM (PPL 维度)" — MT-LNN 125M WikiText-103 PPL 88.93 vs Transformer 78.86, 严格控制变量下输 ~10 PPL
 5. ❌ "MT-LNN Orch-OR / 意识门带来 AGI" — README 已自撤回 (AVP failed, Φ̂ sign inverted, 训练路径 inert)
-6. ❌ "LFM2.5 是纯液态模型" — LiquidAI 自己把 ODE + RK4/Euler solver 替换为 double-gated conv + GQA, 是"Liquid + X 混合" 而非纯 LNN
+6. ❌ "LFM2.5 是纯液态模型" — LiquidAI 在 LFM2 架构搜索里把 CfC/SSM/线性注意力显式实测并**否决** (输在质量轴), LFM2.5-24B-A2B 的 config 40 层零 ODE, 是"Liquid + X 混合" 而非纯 LNN
 7. ❌ "LNN 在标准 ML 任务上 SOTA 横扫 transformer" — 任何 LNN 变体均未在 NLP / CV 主基准上显著超过 transformer
 8. ❌ "MT-LNN M-series 是 O(1) 记忆" — M-series 在 transformer block 上叠 MT-adapter, **不是 O(1)**, 仅 O-series 是
 

@@ -19,7 +19,8 @@ positioning_updated: 2026-09-14
 
 1. **MT-LNN 125M PPL 88.93 vs modern Transformer 78.86** — 同 20K 步 / fp32 / WikiText-103 严格控制变量，9/14 deep-dive 验证为 ✅ validated。即便最优 LNN-O 系列仍输 ~10 PPL，"LNN 替代 LLM" 在 PPL 维度不成立。
 2. **MT-LNN 的 O(1) 状态 crossover = 17–976 tokens** — 低于此区间 Transformer 仍占优；高于此区间 O-series 状态更小。这是**工程拐点**，不是"替代"信号。
-3. **Liquid AI 自己的演进证据**: LFM2 → LFM2.5 把"完整 ODE + RK4/Euler solver" 替换为 "double-gated conv + GQA"，**等于 Liquid AI 自己把"液态"从 backbone 降级到组件**。HF 下载量（LFM2.5-1.2B-Instruct 252K+ / LFM2.5-2.6B 120K+）说明 Liquid AI 的产品路径已是"Liquid + X 混合"，不是纯 LNN。
+3. **Liquid AI 自己的演进证据**: 在 **LFM2 (arXiv:2511.23404) 的硬件在环架构搜索**里，LiquidAI 把 **CfC / Liquid-S4 / S4 / S5 / Mamba / Mamba2 / 线性注意力显式放进候选空间实测**，在边缘延迟–内存预算下**选择了纯 gated short conv + 少量 GQA** —— 原文 §2.1 Outcomes："augmenting these stacks … with linear-attention, state-space, or additional convolution operators **does not improve aggregate quality** … and **typically worsens device metrics**"。**等于 Liquid AI 自己把"液态"从 backbone 降级到组件**（原文 §8.2 把 LTC 定位为 "inspired" 而非架构组件）。2026-10-21 发布的 `LFM2.5-24B-A2B` 的 `config.json` 复核：40 层中 **30 层 `conv` + 10 层 `full_attention`，零层 ODE/LTC/CfC**。HF 下载量（LFM2.5-1.2B-Instruct 252K+ / LFM2.5-2.6B 120K+）说明 Liquid AI 的产品路径已是"Liquid + X 混合"，不是纯 LNN。
+   > **⚠️ 版本 off-by-one 已纠正**（2026-10-22）：本条旧版写作"LFM2 → LFM2.5 把 ODE 换成 double-gated conv"，**错** —— **LFM2 的 abstract 本身就已是 conv + GQA，LFM2 里就没有 ODE**；切换发生在 **LFM1 → LFM2**，比旧版早一代。且 "double-gated" 是 LFM2.5 的 conv 变体，LFM2 是单门控。详见 [[docs/reports/LFM2_Technical_Report_2511.23404_研读报告]] §7 与 [[analysis/negative_results/README]] NR-05。
 
 ### 2026-09-24 路线分叉与突破评估 (本节追加)
 
@@ -134,6 +135,19 @@ positioning_updated: 2026-09-14
   | selector 候选 | `[]` | **3 个** (含 `2511.23404` LFM2 Technical Report, 41 分) |
   | GitHub 表内 0★ fork | 8 条 | **0 条** |
 - **对本项目方向的影响**：**方向没错, 覆盖有缺口**。§0 定位 (LNN = 时间归纳偏置组件, 非 LLM 替代品) 与 9 条负结果台账经得起检验; 真正要补的是"看得见" — 下一步应优先研读 `2511.23404` LFM2 Technical Report (生态主线技术报告, 本仓至今无独立研读), 并接入协议 §4 长期挂账的 Semantic Scholar (雪球法从未真正跑过)。
+
+### [2026-10-22] LFM2 Technical Report — LiquidAI 架构搜索里把液态算子测了并否决了 (arXiv:2511.23404)
+- **独立报告**：[[docs/reports/LFM2_Technical_Report_2511.23404_研读报告.md]]
+- **研究笔记**：[[analysis/research/2026-10-22/2026-10-22_lnn_research_note.md]]
+- **为何是它**：10-20 覆盖度审计点名的"下一步优先研读、本仓至今无独立研读"那一篇; selector 给它 41 分 (全场最高)。
+- **核心问题**：在边缘设备 (手机/笔记本 CPU) 的延迟与内存硬预算下, 什么样的序列建模 backbone 能同时拿到最好质量与最好部署指标?
+- **方法论**：**硬件在环 (hardware-in-the-loop) 架构搜索** — 每个候选架构在目标硬件 (Galaxy S24 Ultra / Snapdragon 8 Gen 3, Ryzen HX 370) 上以相同设置 (batch=1, ExecuTorch 8da4w + llama.cpp Q4_0) 编译实测; 三轴目标 = 质量 (内部 50+ 评测, 每候选真实训练) / 延迟 (TTFT + p50/p95 decode + prefill 吞吐) / 峰值内存 (prefill+decode 最大 RSS, 4K/32K 窗口); 违反设备预算者丢弃, 余者按质量–延迟–内存 Pareto 前沿的**超体积改进**排序。
+- **关键发现 (对液态路线最重要的一条)**：**搜索空间显式包含液态/亚二次家族** — "Liquid-Time Constant networks such as CfC (Hasani et al. 2022) … state-space variants such as S4, Liquid-S4, S5, RTF, Mamba, Mamba2 … linear attention"。**§2.1 Outcomes 结论**: "augmenting these stacks … with linear-attention, state-space, or additional convolution operators **does not improve aggregate quality** … and **typically worsens device metrics**"。最终收敛到**纯 gated short conv + 少量 GQA**。原文 §8.2 把 LTC 定位为 **"inspired"** (启发) 而非架构组件, 并把 SSM 与 conv 归为"同一类局部上下文块" (因检索密集任务受限)。
+- **关键公式**：gated short conv block — $(B,C,\tilde h)=\mathrm{Linear}(h),\ y=B\odot\tilde h,\ z=\mathrm{Conv}_k(y),\ o=\mathrm{Linear}_{out}(C\odot z)$ (depthwise 1D 卷积 + 输入相关乘性门控)。
+- **关键成果**：CPU 上 prefill/decode 相对同尺寸基线**最高 ~2× 加速**; 350M/700M/1.2B/2.6B 稠密 + 8B-A1B MoE (8.3B 总/1.5B 激活), 全系 32K; LFM2-2.6B IFEval **79.56%** / GSM8K **82.41%**; 衍生 LFM2-VL / LFM2-Audio / LFM2-ColBERT-350M。
+- **⚠️ 纠正本仓 §0 的一处 off-by-one**：旧版写"LFM2 → LFM2.5 把 ODE 换成 double-gated conv", **错** — **LFM2 的 abstract 本身已是 conv + GQA, LFM2 里没有 ODE**; 切换发生在 **LFM1 → LFM2** (早一代)。且 "double-gated" 是 LFM2.5 的变体, LFM2 是单门控; 换掉的方式是**架构搜索正面测过并否决** (输在**质量**轴), 不是"悄悄替换"。2026-10-21 发布的 `LFM2.5-24B-A2B` 的 `config.json` 复核: 40 层 = **30 conv + 10 full_attention, 零 ODE/LTC/CfC**。→ [[analysis/negative_results/README]] NR-05 已同步修订。
+- **对本仓路线 A 的影响 (不冲突但需重新定位)**：本仓 CfC 的用法是"**LFM2.5 之上的时序 head / adapter**", 不是替换 LFM backbone。§2.1 恰恰支持这种用法 (液态块作为**局部时序组件**才可能有价值)。但 r304 报告的表述需从"LFM2.5 是液态模型所以我们在液态模型上加 CfC" 改为"**在生产级边缘 backbone 之上挂载连续时间时序 head**"。
+- **Verdict**：**TARGET-POSITIVE (厂商工程方法论) / NEGATIVE-POSITIVE (对"液态必须做 backbone")**。⚠️ 未验证: 内部 50+ 评测套件未公开 → 质量轴无法外部复核; 我方未复现 §2.1 搜索; 24B-A2B 未在 Jetson 实测 (且 24B 档不适合本仓 Orin Nano 目标, 路线仍锚定 350M–2.6B)。
 
 ### [2024] Exploring Liquid Neural Networks on Loihi-2
 - **独立报告**：[[docs/reports/Exploring_Liquid_Neural_Networks_on_Loihi-2_研读报告.md]]

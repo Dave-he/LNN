@@ -50,11 +50,11 @@ python3 scripts/check_negative_results.py     # 退出码 0 = 台账与证据一
 | [NR-02](#nr-02) | SDE-LNN 比确定性 CfC 更鲁棒 / SOTA 横扫 | **证伪** | 本项目 toy benchmark (r306) | ✅ 已复现 |
 | [NR-03](#nr-03) | LNN 可替代 LLM (PPL 维度) | **不成立** | MT-LNN 严格控制变量对比 | ⚠️ 引上游数据 |
 | [NR-04](#nr-04) | MT-LNN Orch-OR / 意识门带来 AGI 路径 | **上游已自撤回** | MT-LNN README retraction 段 | ✅ 撤稿可核 |
-| [NR-05](#nr-05) | LFM2.5 是纯液态模型 | **事实错误** | LiquidAI 自身架构变更 | ✅ 可核 |
+| [NR-05](#nr-05) | LFM2.5 是纯液态模型 | **事实错误** | LiquidAI 架构搜索实测否决液态算子 + 24B-A2B config | ✅ 可核 |
 | [NR-06](#nr-06) | LNN 在标准 ML 主基准上 SOTA 横扫 transformer | **无证据支持** | 多来源 (NR-01/02/03/09) | ➖ 综合判定 |
 | [NR-07](#nr-07) | MT-LNN M-series 是 O(1) 工作记忆 | **事实错误** | MT-LNN 架构说明 | ✅ 可核 |
 | [NR-08](#nr-08) | SDE-CfC 改进确定性 CfC 形变场 | **持平（非改进）** | 本项目 toy benchmark (r306) | ✅ 已复现 |
-| [NR-09](#nr-09) | LNN 优于经典模型（金融时序预测） | **证伪（外部）** | 第三方本科论文，120 次校正比较 | ❌ 未复现 |
+| [NR-09](#nr-09) | LNN 优于经典模型（金融时序预测） | **证伪（外部）** | 第三方本科论文，120 次校正比较（数据级已复核）+ 第二独立来源 | ❌ 未复现 |
 
 ---
 
@@ -117,11 +117,30 @@ python3 scripts/check_negative_results.py     # 退出码 0 = 台账与证据一
 <a id="nr-05"></a>
 ### NR-05 · LFM2.5 是纯液态模型 → **事实错误**
 
-- **事实**：LiquidAI 自家把 LFM2 → LFM2.5 的 backbone 从「完整 ODE + RK4/Euler solver」
-  换成「**double-gated conv + GQA**」。
-- **结论**：**LiquidAI 自己把"液态"从 backbone 降级为组件**。LFM2.5 是
-  **"Liquid + X 混合"**，不是纯 LNN —— 这不是外部质疑，是厂商自己的演进路径。
-- `grounding: docs/LNN_深度研读报告.md`
+- **事实（2026-10-22 按 LFM2 Technical Report 原文核对后修订）**：
+  LiquidAI 在 **LFM2 (arXiv:2511.23404, 2025-11-28) 的硬件在环架构搜索**里，
+  把 **CfC / Liquid-S4 / S4 / S5 / Mamba / Mamba2 / 线性注意力显式放进候选空间实测**，
+  在边缘延迟–内存预算下**选择了纯 gated short conv + 少量 GQA**。
+  原文 §2.1 Outcomes："augmenting these stacks … with linear-attention, state-space, or
+  additional convolution operators **does not improve aggregate quality** … and
+  **typically worsens device metrics**."
+- **⚠️ 版本 off-by-one 纠正**（本条旧版写作"LFM2 → LFM2.5 替换 ODE"，**错**）：
+  - **LFM2 自己的 abstract 已是** "gated short convolutions with a small number of
+    grouped query attention blocks" —— **LFM2 里就没有 ODE**，切换发生在
+    **LFM1 → LFM2**，比旧版记录早一代。
+  - LFM2 = **gated** short conv（单门控）；"double-gated" 是 **LFM2.5** 的 conv 变体。
+  - 不是"悄悄替换"，是**架构搜索里正面测过并否决**（且输在**质量**轴，不只延迟轴）。
+- **2026-10-21 新证据**：`LiquidAI/LFM2.5-24B-A2B` 的 `config.json` 核对 ——
+  40 层中 **30 层 `conv` + 10 层 `full_attention`**，
+  **零层是 ODE / LTC / CfC**（`model_type: lfm2_moe`, 64 experts top-4）。
+- **结论**：**LiquidAI 把"液态"从 backbone 降级为组件**。LFM2.5 是
+  **"Liquid + X 混合"**，不是纯 LNN —— 这不是外部质疑，是厂商自己的演进路径，
+  且是**上游一手证据**（作者自述 + 搜索空间描述 + 量化结论）。
+  原文 §8.2 把 LTC 定位为 **"inspired"**（启发）而非架构组件。
+- **引用纪律**：本条只否证"LFM2.5 是纯液态模型"这**一个**主张；
+  **不得**被引为"LNN 无用"或"液态在所有形态下都无效"——
+  液态作为**局部时序组件**（本仓 CfC head / r304 路线）**不受本条否定**。
+- `grounding: docs/reports/LFM2_Technical_Report_2511.23404_研读报告.md`
 
 <a id="nr-06"></a>
 ### NR-06 · LNN 在标准 ML 任务 (NLP / CV 主基准) 上 SOTA 横扫 transformer → **无证据支持**
@@ -175,10 +194,30 @@ python3 scripts/check_negative_results.py     # 退出码 0 = 台账与证据一
 - **作者归因**：**限制来自数据而非模型** —— 日频收益率信号太少。
 - **来源方自述局限（引用必须一并带上）**：ARMA baseline 拟合时未加截距
   （statsmodels SARIMAX 默认）；论文声明补截距重拟合后零结果不变。
-- **复现状态**：❌ **我方未复现**（未 clone、未跑 grid）。本条仅核验了 README
-  方法学陈述与结论自洽性，**不对其 120 次比较的数字本身背书**。
-  若要升级为一手负结果，须先本地复现。
-- `grounding: analysis/research/2026-10-16/2026-10-16_lnn_research_note.md`
+  另有三条（2026-10-22 核对 `src/docs/methods_dm_test_limitations.md` +
+  `src/docs/thesis_results.md` 时确认）：
+  (a) **DM 的 HAC 带宽问题** —— 不重叠 walk-forward fold 的损失差分存在自相关，
+      朴素方差估计会**高估**显著性（p 偏乐观）；
+  (b) **"k of 5 seeds" 不是独立重复** —— seed 间不构成独立重采样；
+  (c) **"未检测到差异" ≠ "等效"** —— 缺等效性检验。
+- **复现状态（2026-10-22 更新）**：
+  - ✅ **数据级独立复核通过** —— 来源仓库现已提交结果表，从 `main` 分支拉取
+    `src/docs/figures/data/dm_cfc_vs_sarimax_audit.csv` **逐行核对 120 行**：
+    `significant` 全 0、`p_corrected` 全为 **1.0**，与来源方 "0 of 120" 声明吻合。
+    另核对 `mae_run2a.csv`（`cfc_pure_ncp` 三标的均第 1 但领先幅度仅 ~0.4%）与
+    `directional_skill.csv`（`edge_vs_always_long` 三标的全为负）。
+  - ✅ **方法学实现已核对源码** —— `src/evaluation/evaluator.py`:
+    `dm_test_stat(e1,e2,h=1)` 用平方误差损失差分 + Newey-West HAC（h=1 退化为普通方差）
+    + HLN 小样本校正 $\sqrt{(T+1-2h+h(h-1)/T)/T}$，$t(T-1)$ 分布；
+    `apply_holm_bonferroni` 用 `statsmodels.multipletests(method="holm")`；
+    显著性族为 **30 个 (arm, ticker, seed) 族 × 4 baseline = 120**。
+  - ✅ **第二独立来源印证** —— `niharmaddina/Liquidity`（2026-10-12）独立用
+    walk-forward（502 交易日 × 4 标的）得出同向结论：LNN+ODE 在**全部 4 标的**上
+    RMSE 劣于 persistence（AAPL 7.03 vs 2.54 等），方向命中率**一致低于"永远预测上涨"**。
+  - ❌ **我方仍未复现其 grid**（未 clone 全仓、未重跑 11 变体 × 8 baseline ×
+    3 标的 × 5 seed）。故本条维持 **"证伪（外部，我方未复现）"** 判定，
+    **引用时必须标注"我方未复现"**；若要升级为一手负结果，须先本地复现。
+- `grounding: analysis/research/2026-10-22/2026-10-22_lnn_research_note.md`
 
 ---
 

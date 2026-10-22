@@ -124,11 +124,11 @@ npx skills add ./skills/living-field-researcher
 | 2 | NR-02 | ❌ “SDE-LNN 比确定性 CfC 更鲁棒 / SOTA 横扫” | r306 toy benchmark 噪声反而略有害 (NeRF-DS -0.09 dB, λ=0 是甜蜜点), 仅在训练期 jitter robustness 备援场景有效 |
 | 3 | NR-03 | ❌ “LNN 可替代 LLM (PPL 维度)” | MT-LNN 125M WikiText-103 PPL 88.93 vs Transformer 78.86, 严格控制变量下输 ~10 PPL (9/14 validated) |
 | 4 | NR-04 | ❌ “MT-LNN Orch-OR / 意识门带来 AGI / new path to general intelligence” | README 已自撤回 (AVP failed, Φ̂ sign inverted, 训练路径 inert), 引用前必须查 retraction 段 |
-| 5 | NR-05 | ❌ “LFM2.5 是纯液态模型” | LiquidAI 自己把 ODE + RK4/Euler solver 替换为 double-gated conv + GQA, 是 “Liquid + X 混合” 而非纯 LNN |
+| 5 | NR-05 | ❌ “LFM2.5 是纯液态模型” | LiquidAI 在 LFM2 架构搜索里把 CfC/SSM 显式实测并**否决** (输在质量轴), LFM2.5-24B-A2B config 40 层零 ODE。是 “Liquid + X 混合” 而非纯 LNN |
 | 6 | NR-06 | ❌ “LNN 在标准 ML 任务 (NLP / CV 主基准) 上 SOTA 横扫 transformer” | 任何 LNN 变体均未在标准主基准上显著超过 transformer, 仅在长尾工业任务 (D-3DGS / FJSP / EEG) 上稳定选择 |
 | 7 | NR-07 | ❌ “MT-LNN M-series 是 O(1) 工作记忆” | M-series 在 transformer block 上叠 MT-adapter, **不是 O(1)**; 仅 O-series (attention-free) 才是 O(1) |
 | 8 | NR-08 | ❌ “SDE-CfC 改进确定性 CfC 形变场” | r306 mean PSNR +0.09 dB 在 run-to-run 方差内 (σ≈0.05 dB), 严格说**持平**, 不是”改进” |
-| 9 | NR-09 | ❌ “LNN 优于经典模型 (金融时序预测)” | 外部第三方 120 次校正比较 0 次显著胜出 (DM+HLN / Holm)。**我方未复现, 引用须标注** |
+| 9 | NR-09 | ❌ “LNN 优于经典模型 (金融时序预测)” | 外部第三方 120 次校正比较 0 次显著胜出 (DM+HLN / Holm), 我方已从提交数据表逐行复核 + 第二独立来源印证。**我方未复现 grid, 引用须标注** |
 
 
 ### 必须遵守的执行边界
