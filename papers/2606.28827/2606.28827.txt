@@ -1,0 +1,764 @@
+LNN-Fly: Continuous-Time UA V Navigation for Robust Obstacle
+Avoidance under Timing Mismatch
+Yulin Huang, Shaojie Chen, Di Feng, Jiahao Wang, Ping Liu †, and Jianxiao Zou
+© 2026 IEEE. Personal use of this material is permitted. Permission
+from IEEE must be obtained for all other uses, in any current
+or future media, including reprinting/republishing this material for
+advertising or promotional purposes, creating new collective works,
+for resale or redistribution to servers or lists, or reuse of any
+copyrighted component of this work in other works.
+Abstract— End-to-end unmanned aerial vehicle (UA V) nav-
+igation can achieve impressive agility in simulation, yet its
+obstacle-avoidance behavior often degrades after deployment
+because the policy must tolerate simulator mismatch, sensing ir-
+regularity, and variable-rate control. These effects are especially
+dangerous in cluttered environments, where stale observations
+or short control irregularities can directly lead to collisions.
+We present LNN-Fly, a deployment-oriented continuous-time
+navigation policy for LiDAR-based UA V obstacle avoidance.
+The policy combines a dynamic-programming-inspired struc-
+tured recurrent update, explicit conditioning on the elapsed
+control interval∆t, and an input-driven adaptive forgetting gate
+that refreshes stale latent state near hazards while preserving
+consistency during sustained maneuvers. It is trained with
+differentiable rollouts that incorporate deployment-relevant
+sensing and timing perturbations. In simulation, LNN-Fly
+improves obstacle-avoidance performance in the tested settings
+and shows better tolerance to reduced control frequency, sparse
+observations, and control-period jitter. It also transfers zero-
+shot from a simplified differentiable simulator to a physical
+quadrotor. In indoor cross-frequency real-world tests, the sys-
+tem achieves 100% success over 20 flights, while policy inference
+has a median latency of 0.514 ms on a desktop graphics
+processing unit (GPU) and about 2.5 ms on the onboard central
+processing unit (CPU), with onboard P95 latency below 30 ms.
+I. INTRODUCTION
+End-to-end learning for unmanned aerial vehicle (UA V)
+navigation has advanced rapidly, with recent breakthroughs
+in champion-level high-speed racing [1], [2], agile flight
+in forests and the wild [3]–[5], and fully autonomous in-
+door navigation for search-and-rescue [6], [7]. These results
+demonstrate the potential of learned flight policies, but they
+do not fully resolve a more practical requirement: reliable,
+*This work was supported by the National Key R&D Program of China
+(No. 2021YFB2206602), the Shenzhen Science and Technology Program
+(No. ZDCYKCX20250901092001001, No. SYSRD 20250529114504006,
+and No. JCYJ20240813114206010), and the Graduate Teaching Research
+and Reform Project of the Shenzhen Institute for Advanced Study (No.
+JYJG2026007).
+Yulin Huang, Shaojie Chen, Di Feng, and Jiahao Wang are master’s
+students with the Shenzhen Institute for Advanced Study, University of Elec-
+tronic Science and Technology of China, Shenzhen, Guangdong 518000,
+China. Ping Liu and Jianxiao Zou are with the Shenzhen Institute for
+Advanced Study, University of Electronic Science and Technology of China,
+Shenzhen, Guangdong 518000, China. Corresponding author: Ping Liu
+(liup81@uestc.edu.cn).
+Fig. 1.Real-world evaluations in diverse environments.Subfigures
+(a) and (b) show real-flight experiments in an outdoor forest environment,
+while (c) and (d) show real-flight experiments in a narrow indoor laboratory
+corridor. The results demonstrate robust navigation performance across
+highly cluttered natural terrain and confined man-made spaces.
+collision-free navigation in cluttered environments under real
+onboard constraints. In many target applications, including
+industrial inspection, indoor security, search-and-rescue [8],
+and wildfire monitoring [9], safety and robustness matter
+more than pushing the maximum achievable speed. Despite
+substantial progress, end-to-end policies still degrade notice-
+ably when transferred across simulators, sensing pipelines,
+and onboard control stacks [10]. We focus on two coupled
+challenges that are especially important for deployment:
+Challenge 1: Strong and transfer-stable obstacle avoid-
+ance.Existing end-to-end policies often prioritize speed or
+trajectory completion, while obstacle avoidance is treated
+as a downstream consequence of good control. In practice,
+however, dense clutter leaves little margin for error: small
+discrepancies in physics models, sensor processing, or flight-
+control pipelines can accumulate into collisions after transfer
+[11]. For deployment, the policy must therefore do more
+than succeed in its training simulator; it must preserve
+strong obstacle-avoidance behavior when the evaluation stack
+differs from the training setup.
+Challenge 2: Robustness to timing mismatch in real
+control loops.Real onboard systems rarely maintain a fixed
+control period: irregular sensor sampling, rate drops, and
+scheduling jitter are common on resource-constrained edge
+computers. Yet many learned sequence policies are trained
+and deployed as if control updates arrived at a constant
+rate. When the effective∆tchanges at deployment, latent-
+arXiv:2606.28827v1  [cs.RO]  27 Jun 2026
+state evolution and physical motion can become misaligned,
+producing unsafe commands [12]–[14]. This mismatch is
+particularly dangerous during close-proximity avoidance,
+where even brief control irregularities can directly lead to
+collisions.
+To address these challenges jointly, we proposeLNN-
+Fly, a lightweight continuous-time framework for UA V ob-
+stacle avoidance under deployment mismatch. It combines
+a recurrent update explicitly conditioned on the elapsed
+control interval∆twith an input-driven adaptive forgetting
+mechanism that refreshes stale latent state near hazards while
+preserving consistency during sustained maneuvers.
+Architecture alone is not sufficient for robust deployment.
+We therefore train the policy with differentiable rollouts that
+expose it to sensing and timing perturbations relevant to
+real operation, including asynchronous observations, control-
+period variation, and actuation delay [15]. This yields a
+compact policy whose design, training setting, and evaluation
+protocol are all organized around the same deployment
+bottleneck: maintaining reliable obstacle avoidance when
+timing and system conditions differ from those seen during
+nominal training.
+This work treats continuous-time recurrence as a task-
+structured component for UA V obstacle avoidance: the re-
+current state should evolve with time while remaining tied
+to local obstacle context. The dynamic-programming analogy
+motivates recursive local consistency rather than a Bellman
+optimization claim, and is combined with measured-time
+conditioning, input-driven memory refresh, and deployment-
+oriented evaluation.
+In summary, our main contributions are as follows:
+•A timing-aware continuous-time policy:We propose
+LNN-Fly, a lightweight recurrent policy for UA V obsta-
+cle avoidance with explicit∆tconditioning and input-
+driven adaptive forgetting.
+•A deployment-oriented training and evaluation
+pipeline:We train with differentiable rollouts under
+sensing and timing perturbations, and evaluate across
+simulator shifts, temporal mismatch, and physical-
+quadrotor deployment.
+•Zero-shot transfer to cluttered real-world flight:We
+integrate the policy into a LiDAR-based navigation sys-
+tem and validate it in Gazebo+PX4 and physical flight,
+including outdoor forest and narrow indoor corridor
+tests (Fig. 1).
+II. RELATED WORK
+A. End-to-End UAV Navigation and Obstacle Avoidance
+Modular planning-and-control pipelines construct explicit
+environmental representations and generate trajectories via
+optimization [16]–[18], achieving reliable flight but intro-
+ducing cumulative latency and error propagation that limit
+responsiveness in dense clutter.
+End-to-end learning sidesteps these limitations by map-
+ping sensor observations directly to control commands, span-
+ning indoor autonomy, search-and-rescue, trail following,
+and self-supervised avoidance [6], [7], [19], as well as high-
+speed agile flight [1]–[3], [5], [20]–[24].
+Despite this progress, most of these methods primarily op-
+timize for speed or trajectory tracking, while strong obstacle-
+avoidance capability and its stability under deployment shifts
+receive comparatively less attention. In practice, avoidance
+performance often degrades significantly when policies are
+transferred across simulators, sensors, or flight stacks [10],
+[11], and learning-based control can further suffer from
+limited interpretability and hard-to-diagnose failure modes
+under distribution shifts [25]. Existing remedies include
+domain randomization, scene transfer, adaptation, improved
+dynamics modeling, and explicit safety mechanisms [26]–
+[34]. These directions are useful, but transfer-stable avoid-
+ance remains difficult when sensing and control timing also
+vary. We therefore treat obstacle avoidance as the primary
+objective and evaluate transfer behavior under deployment-
+relevant shifts.
+B. Timing Mismatch and Continuous-Time Policies
+Timing variability (e.g., irregular sampling, rate drops,
+and scheduling jitter) is pervasive on resource-constrained
+onboard computers. Such irregular updates challenge discrete
+sequence learners. Traditional discrete-time sequence models
+[12], [35] implicitly assume a constant timestep, causing
+performance to degrade when the effective∆tfluctuates at
+deployment. Continuous-time models, such as Neural ODEs
+[36], Neural CDEs [37], and liquid/closed-form continuous-
+time networks [38], [39], address this by providing principled
+mechanisms to evolve hidden states under variable∆t.
+Recent studies have leveraged liquid networks for robust
+flight navigation and sim-to-real transfer [40]. These models
+provide useful mechanisms for irregular timing, but they are
+often used as generic temporal filters. Our focus is narrower
+and task-structured: we shape the recurrent dynamics around
+obstacle-avoidance behavior, where stale perception, local
+target consistency, and variable control intervals jointly affect
+safety. LNN-Fly combines a dynamic-programming-inspired
+consistency view with a∆t-conditioned update and input-
+driven forgetting to improve tolerance across the tested
+simulator, sensing, and timing shifts.
+III. METHOD
+A. Problem Formulation and System Overview
+We formulate the UA V navigation task as a sampled-data
+Partially Observable Markov Decision Process (POMDP)
+under irregular sampling intervals and potential deployment
+shifts. Lets k ∈Sdenote the physical state (position, ve-
+locity, orientation),y k ∈Othe observation (LiDAR scans,
+inertial measurement unit (IMU) data), andu k ∈Uthe
+control action. The system evolves ass k+1 =Φ d(sk,u k,∆tk)
+withy k =Ψ d(sk), whereddenotes the operating domain and
+∆tk =t k+1 −t k.
+In real deployment, both the dynamics and sensing models,
+as well as timing, can deviate from simulation (Φ real ̸=Φ sim,
+Ψreal ̸=Ψ sim, and variable∆t k). Our goal is to learn a
+continuous-time policyπ θ (hk,y k,∆tk)that maps a recurrent
+Fig. 2.Overview of the LNN-Fly framework.The system processes LiDAR sectors [41] and state cues via a lightweight encoder and a Closed-form
+Continuous-time (CfC) core. An input-driven forgetting mechanism dynamically modulates the temporal scale to balance smoothness and agility, optimized
+end-to-end via differentiable physics.
+belief surrogateh k to actionsu k while remaining robust to
+these discrepancies.
+To this end, we propose theLNN-Fly Navigation Frame-
+work(Fig. 2) with three components: a compact continuous-
+time policy architecture (Sec. III-B and III-C), an end-to-
+end differentiable-physics learning loop (Sec. III-D), and
+a real-world closed-loop deployment system enabling zero-
+shot transfer.
+Policy Network Architecture.To meet lightweight on-
+board execution requirements, we adopt a compact encoder–
+recurrent–head design. The LiDAR input (60×15 angular
+resolution) is reshaped to[B,1,15,60]and encoded by a 4-
+layer convolutional neural network (CNN) (1→12→24→
+36) followed by a 2-layer multilayer perceptron (MLP), pro-
+ducing a 64-d feature. The 10-d state vector is encoded by an
+MLP (10→48→48). These features are concatenated into
+a 112-d fused vector and fed to the Closed-form Continuous-
+time (CfC) temporal unit (hidden size 32). Finally, a policy
+head (32→32→6) outputs a 6-D commandu k = [a⊤
+k ,c ⊤
+k ]⊤,
+wherea k ∈R 3 is the desired body/world-frame acceleration
+andc k ∈R 3 is a velocity-feedback correction term used to
+compensate velocity drift in the absence of odometry.
+B. Dynamic-Programming-Inspired Neural Liquid Dynamics
+Standard recurrent neural networks (RNNs) (e.g., long
+short-term memory networks (LSTMs)) are typically applied
+with discrete updates, making them sensitive to irregular
+timing and stale latent state during deployment. Rather than
+using a generic recurrent transition, we parameterize the
+hidden-state dynamics with an explicit contraction form that
+is compatible with variable control intervals.
+Formulation via Structured Continuous Consistency:In-
+spired by recursive planning, we interpret the hidden state
+h(t)as a compact latent summary that should remain con-
+sistent with an observation-conditioned local target. Let
+κ(xt ,h t )denote this learned local target, predicted from
+the current observation and latent context. The dynamic-
+programming analogy is used only as a design motivation
+for this contraction structure; the model does not optimize
+a Bellman objective or perform value iteration. Instead of
+adding an explicit consistency supervision term, we encode
+this preference directly in the recurrent dynamics. Define the
+local consistency energy
+E(t) = 1
+2 ∥h(t)−κ(x t ,h t )∥2
+2.(1)
+Ignoring higher-order dependence ofκonhwithin an
+infinitesimal interval, descent dynamics onEwith an ad-
+ditional input-driven leakage term yield
+dh
+dt =ω(x,h)⊙
+ 
+κ(x,h)−h
+
+| {z }
+Structured Target Contraction
+−λ(x)⊙h| {z }
+Stimulus-Driven Discounting
+.(2)
+This parameterization restricts each hidden channel to a
+contraction form toward a local target, rather than an un-
+constrained recurrent rewrite.
+Closed-Form Discrete Transition:To handle irregular∆t k,
+we solve (2) under a piecewise-constant approximation on
+[tk,tk+1):
+κ(t)≈κ k,ω(t)≈ω k,λ(t)≈λ k,(3)
+which gives the linear ODE
+˙h(t) =−(ω k +λ k)⊙h(t) +ω k ⊙κ k.(4)
+We explicitly inject the time interval by conditioning the
+network parameters onδ k =log(∆t k +ε). The discrete state
+update is:
+hk+1 =α k ⊙h k + (1−α k)⊙ ωk
+ωk +λ k +ε s
+⊙κ k,(5)
+αk =exp(−(ω k +λ k)∆tk).(6)
+Here,κ k,ω k,λ k,α k,h k ∈R 32 are channel-wise hidden-state
+quantities,⊙denotes the Hadamard product,ε s is a small
+numerical constant, andα k acts as a time-aware gating factor.
+The boundsλ f loor andλ max are not separately optimized;
+they serve as conservative lower/upper limits for adaptive for-
+getting. We useλ f loor =0 to preserve near-memory retention
+in benign conditions and a finiteλ max to avoid unstable over-
+forgetting; empirically, performance is stable under moderate
+changes of these bounds, except whenλ max is set too small.
+In our implementation,δ k scales the generation ofκ k,ω k, and
+the forgetting gateλ k, as detailed in Sec. III-C. The effective
+neural time constantτ k = (ωk +λk)−1 therefore adapts jointly
+to the input features and the physical time elapsed, allowing
+the recurrent update to remain synchronized with variable-
+rate control.
+How the Inductive Bias Enters Learning:During training,
+we donotdirectly minimize a supervised consistency resid-
+ual. Instead, Backpropagation Through Time (BPTT) updates
+parameters through the constrained transition:
+∂L total
+∂ θ = ∑
+k
+∂L total
+∂h k+1
+∂h k+1
+∂(κ k,ω k,λ k)
+∂(κ k,ω k,λ k)
+∂ θ .(7)
+Moreover, the hidden-to-hidden Jacobian admits the first-
+order decomposition
+∂h k+1
+∂h k
+≈Diag(α k) + ∂h k+1
+∂ κk
+∂ κk
+∂h k
++ ∂h k+1
+∂ ωk
+∂ ωk
+∂h k
+,(8)
+where the dominant self-transition term is Diag(α k)with
+αk =exp(−(ω k +λ k)∆tk)∈(0,1]. Compared with an un-
+constrained recurrent Jacobian, this transition is centered on
+an explicit temporal contraction factor, while the remaining
+terms act as target-shaping corrections. In this sense, the
+proposed update introduces an implicit consistency bias
+during BPTT through the contraction-to-κ k transition in (4)–
+(7).
+C. Input-Driven Adaptive Time-Scale Regulation
+Instead of using a hand-crafted scheduling rule, we let the
+current observation directly regulate the forgetting rate. We
+defineλ k as a channel-wise gate driven by fused sensory
+inputx k:
+λraw =W λ xk +b λ +δ k ·θ λ ,(9)
+λk =clip
+ 
+softplus(λraw) +λ f loor,0,λ max
+
+,(10)
+whereW λ ,b λ , andθ λ are learnable parameters. During
+differentiable-physics training, the gate is optimized only
+through long-horizon task loss, so its behavior emerges from
+Fig. 3.Visualization of the adaptive forgetting rateλ k.The trajectory
+color transitions from blue (lowλ k) to red (highλ k). During sustained
+avoidance of a large obstacle,λ k remains low to preserve memory and
+maintain a consistent avoidance direction. After the obstacle is cleared,λ k
+spikes to rapidly refresh the latent state for the subsequent flight segment.
+the need to trade off memory retention and rapid correction.
+In open regions or during sustained avoidance around the
+same obstacle, the learned optimum is typically a small
+λk, which preserves latent momentum and avoids oscilla-
+tory overreaction. Near abrupt hazards or under deployment
+perturbations, acute proximity cues increaseλ k, shorten
+the effective time constant, and suppress stale hidden-state
+history.
+This mechanism supports the behavior studied in the
+experiments. First, it improves agility without sacrificing
+smoothness: the policy can remain inertial when the scene is
+stable and become sharply reactive only when new evidence
+demands it. Second, it reduces sensitivity to stale latent
+history under timing or dynamics mismatch by allowing the
+controller to refresh internal state more aggressively when
+needed. Fig. 3 visualizes this pattern, with lowλ k during
+sustained avoidance and a post-clearance spike when the
+latent state is refreshed for the next flight segment.
+D. Learning via Differentiable Physics
+We train the compact policy with differentiable physics,
+which keeps optimization efficient while exposing the re-
+current dynamics to deployment-relevant timing and sensing
+effects.
+Forward Propagation:The policy outputs an acceleration
+command ˜ak and a correction term ˜ck, which are combined
+with gravity compensation to form the final controlu k. We
+then roll out the differentiable dynamicss k+1 =Φ(s k,u k,∆tk)
+using the same sampled control interval∆t k as the recurrent
+update, so latent-state evolution and physical propagation
+remain temporally consistent during training. To narrow
+sim-to-real mismatch, the rollout preserves simulation-real
+shared invariants, including sectorized LiDAR geometry,
+local obstacle layout, and control semantics, while injecting
+deployment-relevant disturbances such as LiDAR noise and
+drift, partial observations, asynchronous sensing, control-
+period jitter, and actuation latency. The goal is not to
+Fig. 4.Benchmark results with previous systems under different maximum speeds.Figures (a)–(c) illustrate the success-rate comparisons in Scenarios
+I, II, and III, respectively (50 trials per speed). (d) Example trajectory visualizations in Scenario II with the speed constraint of 4.0 m/s, where the flight
+distances (trajectory lengths) are provided.
+reproduce the full real world, but to emphasize features that
+are shared across simulation and hardware while reducing
+sensitivity to deployment-specific perturbations.
+Objective Function:We unroll the system for a horizon
+Tand optimize a composite lossL total , defined in (11), via
+Backpropagation Through Time (BPTT):
+Ltotal =w 1Ltrack +w 2Lsa f e+w 3Lsmooth +w 4Lreg.(11)
+wherew i are scalar weights.
+•L track: Penalizes deviations from target velocity, head-
+ing direction, and altitude.
+•L sa f e: Enforces collision avoidance using a smooth bar-
+rier functionφ(d) =softplus(d safe −d)on the distance
+to nearest obstacles, weighted by closing speed, where
+dsafe is the safety threshold.
+•L smooth: Penalizes control effort (acceleration) and
+higher-order derivatives (jerk, snap) to ensure feasible
+trajectories.
+•L reg: Regularizes the input-driven forgetting distribu-
+tion (via L1, mean target, and soft-range penalties) to
+maintain stable long-term memory while allowing agile
+reactions.
+These objectives supervise the policy only through the
+differentiable rollout and the structured recurrent transition
+of Sec. III-B, shapingκ,ω, andλso that the induced
+latent dynamics improve long-horizon tracking, safety, and
+smoothness.
+IV. EXPERIMENTS
+A. Setup and Implementation
+To assess scenario generalization, training is performed
+in a differentiable simulator with a simplified point-
+mass quadrotor model, and evaluation is performed in a
+Gazebo+PX4 software-in-the-loop (SITL) stack, creating
+shifts in simulator implementation, sensing, and dynamics.
+Training and simulation-based tests run on a workstation
+with an Intel i7-13700 central processing unit (CPU) and an
+NVIDIA RTX 5080 graphics processing unit (GPU), while
+real flights use an onboard Intel Core Ultra 7 155H CPU
+only. We optimize with AdamW (learning rate 5×10 −4) for
+10,000 iterations using rollout horizonT=150 and batch
+size 128. Training includes a 2-step action buffer, perturbed
+control intervals around 30 Hz, and asynchronous LiDAR
+updates to expose the policy to latency and timing jitter.
+B. Benchmark with Previous Systems
+Evaluation setup and baselines.Evaluations run in a
+35×10×6 m Gazebo+PX4 SITL workspace (quadrotor safety
+envelope≈0.335 m) across three static scenarios with in-
+creasing obstacle density and occlusion. Scenario I contains
+100 obstacles with radius[0.06,0.50]m (7.17% coverage,
+1.09±0.36 m spacing), Scenario II contains 100 obstacles
+with radius[0.16,0.60]m (9.91% coverage, 0.98±0.38 m
+spacing), and Scenario III contains 130 obstacles with radius
+[0.06,0.55]m (9.39% coverage, 0.88±0.38 m critical spac-
+ing). We compare againstStandard CfC[39],Diff-Fly[4],
+andEGO-Planner V2[18]. Specifically,Standard CfCis
+a reconstructed baseline adapted from [39] with a parameter
+count comparable to our method for a fair comparison.
+Unless otherwise noted,Standard CfCandDiff-Flyuse the
+same observations, differentiable-physics training pipeline,
+rollout horizon, optimization setting, and update frequency
+asLNN-Fly.EGO-Planner V2is provided with the full
+observations used in its original pipeline and is evaluated at
+the same update frequency.
+Safety, efficiency and domain transfer.Across 50 trials
+per speed in Fig. 4(a)–(c),LNN-Flyachieves the best overall
+combination of success rate and path efficiency as speed and
+scene density increase. The gap is most visible in Scenario III
+at 5.0 m/s, whereEGO-Planner V2drops to 18% success.
+Relative to the training ablation in Sec. IV-D,Diff-Fly
+also shows a larger transfer drop, whileLNN-Flypreserves
+performance more consistently, suggesting that its structured
+continuous-time design captures obstacle-avoidance cues that
+remain informative across simulator and flight-stack changes.
+C. Robustness to Temporal Semantic Mismatch
+Evaluation Protocol.We evaluate robustness to temporal
+mismatch by deploying policies trained at a fixed 30 Hz
+in Scenario II at 4.0 m/s under two timing perturbations.
+Reduced Control Frequency with Sparse Observations:
+inference runs atf∈ {30,10,8,5}Hz, while the LiDAR
+observation is refreshed everyN∈ {1,3,5}inference steps.
+ForN>1, the controller must act on stale observations,
+emulating perception latency or reduced sensor refresh rates.
+Control-Frequency Jitter:the control frequency alternates
+between 30 Hz and a lower frequencyf low, simulating vari-
+able compute availability. To isolate the role of explicit time-
+awareness, we includeLNN-Fly (Fixed∆t), which ignores
+the true∆t k and always integrates with a constant 30 Hz step
+(0.033 s).
+Cross-Frequency Generalization.As the control fre-
+quency departs from the 30 Hz training setting, discrete-time
+baselines degrade sharply (Table I). At5 Hz(∆t=0.2 s,
+6×the training interval), theLSTMexhibits catastrophic
+failure across allN. Comparing the two continuous-time
+variants highlights the impact of correct time-conditioning:
+at 5 Hz (N=1),LNN-Flyremains controllable with 12/20
+successes, whereasLNN-Fly (Fixed∆t)drops to 5/20. This
+suggests that a continuous-time (ODE) formulation alone
+is insufficient; conditioning on the true elapsed time∆t
+is necessary to propagate latent state over large inter-step
+displacements.
+Robustness to Perception Latency.Observation sparsity
+further stresses temporal alignment. At 30 Hz, increasingN
+to 5 reduces the LSTM success rate from 20 to 11, while
+LNN-Flyremains robust (18/20). Even at 8 Hz with severe
+sparsity (N=5),LNN-Flyachieves the highest success rate
+(13/20), outperforming bothLNN-Fly (Fixed∆t)(9/20) and
+LSTM (5/20).
+Robustness to Frequency Jitter.Table II evaluates stabil-
+ity under time-varying control intervals. Under severe jitter
+(30 Hz↔5 Hz),LNN-Flyattains 14/20 successes, doubling
+LNN-Fly (Fixed∆t)(7/20). Because the Fixed∆tmodel
+integrates with 0.033 s even when the true interval is 0.2 s,
+its internal state quickly desynchronizes from the underlying
+physics. In contrast,LNN-Flyleverages the varying∆tinput
+to adapt its recurrent dynamics online, supporting reliable
+deployment under unstable timing.
+D. Ablation Study on Training Dynamics
+To analyze key design choices in our differentiable training
+pipeline, we evaluate four variants at 10,000 training steps
+(Fig. 5):LNN-Fly(ours),Diff-Fly,Standard CfC, and
+LNN-Fly w/oλ. During training, the target maximum speed
+is randomly sampled from[3,13)m/s. We report collision-
+free success rate (safety) and average/maximum speeds
+(agility).LNN-Fly w/oλfollows the same setting asLNN-
+Flybut removes the adaptive forgetting term.
+The ablation highlights complementary roles for the two
+temporal-design choices. ComparingLNN-FlyagainstLNN-
+Fly w/oλisolates the effect of adaptive forgetting: removing
+λpreserves much of the safety but sharply reduces speed,
+suggesting that the forgetting gate enables rapid state refresh
+near hazards while retaining the structured continuous-time
+core. ComparingLNN-Fly w/oλagainstStandard CfCfur-
+ther supports the structured dynamic-programming-inspired
+core design.Diff-Flyremains competitive during training,
+but the transfer results above show that this advantage is
+less stable under timing and simulator shifts.
+E. Real-world Demonstrations
+To validate transferability, the policy trained in the dif-
+ferentiable simulator is deployed to a physical quadrotor
+without fine-tuning. Sim-to-real consistency is maintained
+through a unified sector-based LiDAR encoding, where raw
+Livox Mid-360 point clouds are converted into the sparse
+sector features used by the policy.
+We validate the policy in both outdoor and indoor real-
+world flights (Fig. 1). In the outdoor forest, the quadrotor
+reaches4.0 m/swhile avoiding dense obstacles. In the in-
+door corridor, it runs at both 10 Hz and 30 Hz, maintains
+stable flight at2.0 m/s, and achieves100%success over
+20 flights with zero collisions. Table III shows that the
+median perception-and-inference cost stays well below the
+control periods, while the longer onboard tail mainly reflects
+occasional real-flight scheduling and communication jitter.
+V. CONCLUSIONS, LIMITATIONS AND FUTURE
+WORK
+We presentedLNN-Fly, a deployment-oriented
+continuous-time UA V navigation framework for LiDAR-
+based obstacle avoidance in cluttered environments. By
+combining adynamic-programming-inspired structured
+recurrent updatewith explicit∆tconditioning and
+input-driven adaptive forgetting, LNN-Fly improves
+obstacle-avoidance tolerance in the tested simulator-transfer,
+TABLE I
+MAIN RESULTS UNDER VARYING CONTROL FREQUENCIES AND PERCEPTION LATENCIES.PERFORMANCE IS MEASURED BY MINIMUM DISTANCE
+dmin (M,HIGHER IS BETTER),DISTANCE-BELOW-THRESHOLD RATIOd BELOW (LOWER IS BETTER),AND OVERALL SUCCESS RATE ACROSS20TRIALS.
+HYPHENS(-)DENOTE CATASTROPHIC FAILURES.
+Freq. Model N=1 N=3 N=5
+dmin dbelow Succ.d min dbelow Succ.d min dbelow Succ.
+30 Hz
+LNN-Fly 0.368 0.068 20 0.351 0.130 20 0.322 0.134 18
+LNN-Fly (Fixed∆t) 0.343 0.073 20 0.313 0.155 18 0.323 0.140 19
+Standard CfC 0.366 0.107 20 0.359 0.123 19 0.401 0.159 17
+LSTM 0.389 0.156 20 0.247 0.185 14 0.108 0.178 11
+10 Hz
+LNN-Fly 0.306 0.118 20 0.325 0.159 20 0.319 0.182 17
+LNN-Fly (Fixed∆t) 0.298 0.177 20 0.276 0.161 17 0.272 0.186 17
+Standard CfC 0.385 0.155 20 0.307 0.192 17 0.358 0.158 15
+LSTM 0.204 0.255 20 0.156 0.193 11 0.102 0.283 9
+8 Hz
+LNN-Fly 0.385 0.135 18 0.313 0.118 14 0.277 0.196 13
+LNN-Fly (Fixed∆t) 0.213 0.291 15 0.178 0.329 11 0.230 0.365 9
+Standard CfC 0.337 0.108 18 0.273 0.141 15 0.330 0.205 13
+LSTM 0.172 0.274 15 0.149 0.314 8 0.147 0.373 5
+5 Hz
+LNN-Fly 0.281 0.116 12 0.309 0.135 9 - - -
+LNN-Fly (Fixed∆t) 0.271 0.461 5 - - - - - -
+Standard CfC 0.274 0.102 10 0.262 0.147 7 - - -
+LSTM - - - - - - - - -
+TABLE II
+MODEL ROBUSTNESS UNDER CONTROL-FREQUENCY JITTER.
+PERCEPTION IS FIXED ATN=3. JITTER IS MODELED AS A50%DUTY
+CYCLE ALTERNATING BETWEEN30 HZ ANDf LOW EVERY2.0S.
+Jitter Mode Modeld min (m)↑d below ↓Success↑
+30↔8 Hz
+(Moderate)
+LNN-Fly0.3310.11117/20
+LNN-Fly (Fixed∆t) 0.271 0.156 12/20
+Standard CfC 0.3090.10916/20
+LSTM 0.267 0.126 9/20
+30↔5 Hz
+(Severe)
+LNN-Fly0.3260.14514/20
+LNN-Fly (Fixed∆t) 0.232 0.179 7/20
+Standard CfC 0.2950.13614/20
+LSTM - - -
+TABLE III
+LATENCY STATISTICS ON DESKTOP AND ONBOARD PLATFORMS.
+LIDARPREPROCESSING CONVERTS RAWLIVOXMID-360POINT
+CLOUDS INTO SECTOR FEATURES. DESKTOP MEASUREMENTS ARE
+REPORTED ON THE WORKSTATION PLATFORM,WHILE ONBOARD
+MEASUREMENTS ARE COLLECTED DURING REAL-FLIGHT DEPLOYMENT.
+WE REPORT BOTH THE MEDIAN AND THE95TH PERCENTILE(P95).
+Stage Platform Median (ms) P95 (ms)
+LiDAR preprocessing desktop workstation 2.88 3.55
+LiDAR preprocessing onboard computer 3.93 8.70
+Policy inference desktop workstation 0.514 0.591
+Policy inference onboard computer (10 Hz) 2.48 28.31
+Policy inference onboard computer (30 Hz) 2.57 27.23
+sparse-observation, and control-jitter settings. Trained
+viadifferentiable physics, the policy achievessub-
+millisecond policy-network inference on a desktop GPU,
+millisecond-level onboard CPU execution, and zero-shot
+physical deployment in representative cluttered scenes.
+These results suggest that task-structured continuous-time
+policies are a practical direction for reliable learned UA V
+Fig. 5.Comparison of training dynamics over 10,000 steps.From left
+to right and top to bottom, the subplots show loss, success rate, maximum
+speed, and average speed, respectively, for the four methods.
+navigation under deployment-relevant shifts.
+Limitations.Despite these gains, performance can still
+degrade during high-speed flight, where reduced reaction
+margins amplify residual discretization and actuation delays
+and ultimately lower the success rate. In addition, the current
+system does not incorporate an explicit dynamic-obstacle
+prediction module; consequently, avoidance success drops
+substantially in scenarios with fast-moving obstacles because
+the policy has limited ability to anticipate obstacle motion.
+Future work.We will further lighten the architecture
+for resource-constrained onboard deployment and extend the
+framework todynamic obstacle avoidancethrough motion
+prediction and uncertainty-aware planning.
+REFERENCES
+[1] E. Kaufmann, L. Bauersfeld, A. Loquercio, M. M ¨uller, V . Koltun, and
+D. Scaramuzza, “Champion-level drone racing using deep reinforce-
+ment learning,”Nature, vol. 620, no. 7976, pp. 982–987, 2023.
+[2] Y . Song, A. Romero, M. M ¨uller, V . Koltun, and D. Scaramuzza,
+“Reaching the limit in autonomous racing: Optimal control versus
+reinforcement learning,”Science Robotics, vol. 8, no. 82, p. eadg1462,
+2023.
+[3] A. Loquercio, E. Kaufmann, R. Ranftl, M. M ¨uller, V . Koltun, and
+D. Scaramuzza, “Learning high-speed flight in the wild,”Science
+Robotics, vol. 6, no. 59, p. eabg5810, 2021.
+[4] Y . Zhang, Y . Hu, Y . Song, D. Zou, and W. Lin, “Learning vision-based
+agile flight via differentiable physics,”Nature Machine Intelligence,
+vol. 7, no. 6, pp. 954–966, 2025.
+[5] Y . Hu, Y . Zhang, Y . Song, Y . Deng, F. Yu, L. Zhang, W. Lin, D. Zou,
+and W. Yu, “Seeing through pixel motion: Learning obstacle avoidance
+from optical flow with one camera,”IEEE Robotics and Automation
+Letters, 2025.
+[6] C. Sampedro, A. Rodriguez-Ramos, H. Bavle, A. Carrio, P. De la
+Puente, and P. Campoy, “A fully-autonomous aerial robot for search
+and rescue applications in indoor environments using learning-based
+techniques,”Journal of Intelligent & Robotic Systems, vol. 95, no. 2,
+pp. 601–627, 2019.
+[7] A. Kouris and C.-S. Bouganis, “Learning to fly by myself: A self-
+supervised cnn-based approach for autonomous navigation,” in2018
+IEEE/RSJ International Conference on Intelligent Robots and Systems
+(IROS). IEEE, 2018, pp. 1–9.
+[8] Y . Zhang, B. Luo, A. Mukhopadhyay, D. Stojcsics, D. Elenius, A. Roy,
+S. Jha, M. Maroti, X. Koutsoukos, G. Karsaiet al., “Shrinking
+pomcp: A framework for real-time uav search and rescue,” in2024
+International Conference on Assured Autonomy (ICAA). IEEE, 2024,
+pp. 48–57.
+[9] Z. Hasan, S. Kumar, V . Patel, N. Poplavskyy, P. Subbaraman, and
+N. Xue, “Uav path planning for wildfires-sustainably fighting wildfires
+with automated path planning for uavs,” 2022.
+[10] E. Salvato, G. Fenu, E. Medvet, and F. A. Pellegrino, “Crossing the
+reality gap: A survey on sim-to-real transferability of robot controllers
+in reinforcement learning,”IEEE Access, vol. 9, pp. 153 171–153 187,
+2021.
+[11] H. Wu, W. Wang, T. Wang, and S. Suzuki, “Model-free uav navigation
+in unknown complex environments using vision-based reinforcement
+learning,”Drones, vol. 9, no. 8, p. 566, 2025.
+[12] S. Hochreiter and J. Schmidhuber, “Long short-term memory,”Neural
+computation, vol. 9, no. 8, pp. 1735–1780, 1997.
+[13] A. Quach, M. Chahine, A. Amini, R. Hasani, and D. Rus, “Gaussian
+splatting to real world flight navigation transfer with liquid networks,”
+arXiv preprint arXiv:2406.15149, 2024.
+[14] Y . Rubanova, R. T. Chen, and D. K. Duvenaud, “Latent ordinary
+differential equations for irregularly-sampled time series,”Advances
+in neural information processing systems, vol. 32, 2019.
+[15] J. Pan, J. Xing, R. Reiter, Y . Zhai, E. Aljalbout, and D. Scaramuzza,
+“Learning on the fly: Rapid policy adaptation via differentiable simu-
+lation,”IEEE Robotics and Automation Letters, 2026.
+[16] B. Zhou, F. Gao, L. Wang, C. Liu, and S. Shen, “Robust and efficient
+quadrotor trajectory generation for fast autonomous flight,”IEEE
+Robotics and Automation Letters, vol. 4, no. 4, pp. 3529–3536, 2019.
+[17] X. Zhou, Z. Wang, H. Ye, C. Xu, and F. Gao, “Ego-planner: An esdf-
+free gradient-based local planner for quadrotors,”IEEE Robotics and
+Automation Letters, vol. 6, no. 2, pp. 478–485, 2020.
+[18] X. Zhou, J. Zhu, H. Zhou, C. Xu, and F. Gao, “Ego-swarm: A fully
+autonomous and decentralized quadrotor swarm system in cluttered
+environments,” in2021 IEEE international conference on robotics and
+automation (ICRA). IEEE, 2021, pp. 4101–4107.
+[19] N. Smolyanskiy, A. Kamenev, J. Smith, and S. Birchfield, “Toward
+low-flying autonomous mav trail navigation using deep neural net-
+works for environmental awareness,” in2017 IEEE/RSJ international
+conference on intelligent robots and systems (IROS). IEEE, 2017,
+pp. 4241–4247.
+[20] J. Lu, X. Zhang, H. Shen, L. Xu, and B. Tian, “You only plan once:
+A learning-based one-stage planner with guidance learning,”IEEE
+Robotics and Automation Letters, vol. 9, no. 7, pp. 6083–6090, 2024.
+[21] J. Lu, Y . Hui, X. Zhang, W. Feng, H. Shen, Z. Li, and B. Tian,
+“Yopov2-tracker: An end-to-end agile tracking and navigation frame-
+work from perception to action,”arXiv preprint arXiv:2505.06923,
+2025.
+[22] A. Bhattacharya, N. Rao, D. Parikh, P. Kunapuli, Y . Wu, Y . Tao,
+N. Matni, and V . Kumar, “Vision transformers for end-to-end vision-
+based quadrotor obstacle avoidance,” in2025 IEEE International
+Conference on Robotics and Automation (ICRA). IEEE, 2025, pp.
+1–8.
+[23] A. Romero, A. Shenai, I. Geles, E. Aljalbout, and D. Scaramuzza,
+“Dream to fly: Model-based reinforcement learning for vision-based
+drone flight,”arXiv preprint arXiv:2501.14377, 2025.
+[24] M. Adang, J. Low, O. Shorinwa, and M. Schwager, “Singer: An
+onboard generalist vision-language navigation policy for drones,”
+arXiv preprint arXiv:2509.18610, 2025.
+[25] Z. Xu,Reasoning for Representations for Learning-Based Control.
+University of California, Berkeley, 2021.
+[26] J. Tobin, R. Fong, A. Ray, J. Schneider, W. Zaremba, and P. Abbeel,
+“Domain randomization for transferring deep neural networks from
+simulation to the real world,” in2017 IEEE/RSJ international con-
+ference on intelligent robots and systems (IROS). IEEE, 2017, pp.
+23–30.
+[27] I. Akkaya, M. Andrychowicz, M. Chociej, M. Litwin, B. McGrew,
+A. Petron, A. Paino, M. Plappert, G. Powell, R. Ribaset al., “Solving
+rubik’s cube with a robot hand,”arXiv preprint arXiv:1910.07113,
+2019.
+[28] J. Xing, L. Bauersfeld, Y . Song, C. Xing, and D. Scaramuzza,
+“Contrastive learning for enhancing robust scene transfer in vision-
+based agile flight,” in2024 IEEE international conference on robotics
+and automation (ICRA). IEEE, 2024, pp. 5330–5337.
+[29] H. Wang, J. Xing, N. Messikommer, and D. Scaramuzza, “Environ-
+ment as policy: Learning to race in unseen tracks,” in2025 IEEE
+International Conference on Robotics and Automation (ICRA). IEEE,
+2025, pp. 11 333–11 339.
+[30] C. Finn, P. Abbeel, and S. Levine, “Model-agnostic meta-learning
+for fast adaptation of deep networks,” inInternational conference on
+machine learning. PMLR, 2017, pp. 1126–1135.
+[31] A. Kumar, Z. Fu, D. Pathak, and J. Malik, “Rma: Rapid motor
+adaptation for legged robots,”arXiv preprint arXiv:2107.04034, 2021.
+[32] L. Bauersfeld, E. Kaufmann, P. Foehn, S. Sun, and D. Scaramuzza,
+“Neurobem: Hybrid aerodynamic quadrotor model,”arXiv preprint
+arXiv:2106.08015, 2021.
+[33] M. Alshiekh, R. Bloem, R. Ehlers, B. K ¨onighofer, S. Niekum, and
+U. Topcu, “Safe reinforcement learning via shielding,” inProceedings
+of the AAAI conference on artificial intelligence, vol. 32, no. 1, 2018.
+[34] Z. Xu, X. Han, H. Shen, H. Jin, and K. Shimada, “Navrl: Learning
+safe flight in dynamic environments,”IEEE Robotics and Automation
+Letters, 2025.
+[35] J. Ou, X. Guo, M. Zhu, and W. Lou, “Autonomous quadrotor obstacle
+avoidance based on dueling double deep recurrent q-learning with
+monocular vision,”Neurocomputing, vol. 441, pp. 300–310, 2021.
+[36] R. T. Chen, Y . Rubanova, J. Bettencourt, and D. K. Duvenaud, “Neu-
+ral ordinary differential equations,”Advances in neural information
+processing systems, vol. 31, 2018.
+[37] P. Kidger, J. Morrill, J. Foster, and T. Lyons, “Neural controlled
+differential equations for irregular time series,”Advances in neural
+information processing systems, vol. 33, pp. 6696–6707, 2020.
+[38] R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu, “Liquid
+time-constant networks,” inProceedings of the AAAI conference on
+artificial intelligence, vol. 35, no. 9, 2021, pp. 7657–7666.
+[39] R. Hasani, M. Lechner, A. Amini, L. Liebenwein, A. Ray,
+M. Tschaikowski, G. Teschl, and D. Rus, “Closed-form continuous-
+time neural networks,”Nature Machine Intelligence, vol. 4, no. 11,
+pp. 992–1003, 2022.
+[40] P. Kao, “Robust flight navigation with liquid neural networks,” Ph.D.
+dissertation, Massachusetts Institute of Technology, 2022.
+[41] G. Xu, T. Wu, Z. Wang, Q. Wang, and F. Gao, “Flying on point
+clouds with reinforcement learning,” in2025 IEEE/RSJ International
+Conference on Intelligent Robots and Systems (IROS). IEEE, 2025,
+pp. 7231–7238.

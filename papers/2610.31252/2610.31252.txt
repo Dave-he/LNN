@@ -1,0 +1,508 @@
+QUERY-CONDITIONED LIQUID TEMPORAL GROUNDING FOR LONG-FORM AUDIO
+Yuelan Cheng1, Yonggang Zhu3, Yongqiang Chen1, Peiwei Chang1, Yingyi Chen2, Wenwu Wang1
+1Centre for Vision, Speech and Signal Processing, University of Surrey, UK
+2College of Information and Electrical Engineering, China Agricultural University, China
+3School of Artificial Intelligence, Beijing University of Posts and Telecommunications, China
+ABSTRACT
+Long-form temporal audio grounding (TAG) is challenging
+because target events often occupy only a small portion of a
+recording, while queries may impose multiple semantic con-
+straints over a large temporal search space. We propose a
+query-conditioned liquid temporal grounding framework that
+injects query semantics through FiLM before a closed-form
+continuous-time (CfC) network models long-range temporal
+dependencies. Multiple query-relevant candidates are gen-
+erated, from which a frozen large audio-language model se-
+lects the most compatible one for lightweight local boundary
+refinement. The pretrained backbone remains frozen, with
+only lightweight grounding modules optimized. Experiments
+on the English TAG subset of LAT-Bench show consistent
+improvements across MOSS-Audio and Qwen3-Omni, while
+ablations confirm the complementary roles of FiLM and CfC.
+Index Terms—Temporal audio grounding, long-form au-
+dio, query conditioning, liquid neural networks, large audio-
+language models
+1. INTRODUCTION
+Temporal audio grounding (TAG) aims to localize the tem-
+poral boundaries of audio content described by a natural-
+language query [1, 2]. Early TAG studies focus on learning
+fine-grained correspondences between textual descriptions
+and localized acoustic events, while recent audio-language
+pretraining methods further improve fine-grained audio-text
+alignment [3, 4]. Long-form TAG extends temporal ground-
+ing to substantially longer recordings, introducing greater
+localization difficulty. The target segment may occupy only
+a small fraction of the recording and can be surrounded by
+acoustically or semantically similar content [5, 6]. Mean-
+while, the grounding query may contain multiple semantic
+constraints involving speakers, events, attributes, and tem-
+poral relations [5]. As illustrated in Fig. 1, long-form TAG
+requires localizing short target segments corresponding to po-
+tentially complex queries over a substantially larger temporal
+search space. Recent studies also report substantial perfor-
+mance degradation as audio duration increases and show that
+precise temporal localization remains challenging for current
+audio-language models [7, 5, 6].
+(a) Short-form TAG
+(b) Long-form TAG
+Query
+Audio
+Output
+What is the time interval for the query ‘a dog barking’ in the audio?
+0 s 10 s
+Temporal segment [s, e]
+Query
+Audio
+Output
+Locate the short, passionate quote where the speaker rapidly cites four distinct historical examples to 
+illustrate his point: Rosa Parks on the bus, Gandhi’s salt marches, the suffragettes’ slogan, and Kennedy’s 
+moonshot program.
+… … …
+0 s 1800 s (30 min)
+Temporal segment [s, e]
+Fig. 1: Comparison between short-form and long-form tem-
+poral audio grounding.
+Existing approaches improve temporal audio understand-
+ing through explicit temporal encoding, grounding supervi-
+sion, or global-to-local reasoning [7, 8, 5]. However, long-
+form TAG requires searching for query-relevant events over
+a large temporal space, motivating temporal modeling that is
+directly guided by the query. To this end, we propose a query-
+conditioned liquid temporal grounding framework. FiLM [9]
+first injects query semantics into temporal audio representa-
+tions, which are then modeled by a closed-form continuous-
+time (CfC) network [10]. Here, “liquid” refers to the input-
+adaptive continuous-time dynamics of CfC, allowing tempo-
+ral evolution to depend on the query-conditioned representa-
+tions. The resulting temporal evidence is used to generate
+multiple candidate intervals, from which a frozen LALM se-
+lects the most semantically compatible one. A lightweight
+local refiner further adjusts its boundaries to obtain the final
+prediction. The pretrained audio-language backbone remains
+frozen throughout training, and only the proposed temporal
+grounding modules are optimized, enabling training on a sin-
+gle NVIDIA A100 GPU while maintaining competitive local-
+ization performance.
+Experiments on the English TAG subset of LAT-Bench [5]
+demonstrate consistent improvements with both MOSS-
+Audio [11] and Qwen3-Omni [12] backbones. Ablation
+studies demonstrate a strong interaction between FiLM-
+based query conditioning and CfC-based temporal modeling.
+Lightweight boundary refinement provides additional gains
+in localization precision.
+arXiv:2610.31252v1  [cs.SD]  22 Oct 2026
+Long-form Audio
+e.g., up to 30 min
+Complex Query
+Audio
+Encoder
+MOSS-Audio /
+Qwen3-Omni
+Query
+Encoder
+MOSS-Audio /
+Qwen3-Omni
+Audio Features
+H
+Projection & pooling
+Query
+Representations
+Q, q
+Projection & pooling
+Query-
+conditioned
+FiLM
+Liquid CfC
+Long-range
+Temporal Modeling
+Feature
+Fusion
+Audio–Query
+Matching
+Start
+Head
+End
+Head
+Relevance
+Head
+Candidate Extraction
+Candidate Pool
+C₁
+C₂
+C₃
+…
+Audio
+Cropping
+Frozen LALM
+Candidate
+Selection
+Top-1
+Candidate
+Lightweight
+Boundary
+Refinement
+Final Segment
+[ŝ, ê]
+q H
+Q, q
+H̃
+Z
+pᵐ
+Original waveform
+Original query text
+Multiple temporal hypotheses, semantic selection, and local boundary refinement
+GT event
+Candidate pool
+Selected candidate
+Final prediction
+[s, e]
+C₁ C₂ C₃
+Selected Top-1
+[ŝ, ê]
+0 Time D
+“Locate the part where
+the speaker, in a serious
+and guiding tone, explains 
+the practical necessity of 
+packing light …”
+Fig. 2: Overview of the proposed query-conditioned liquid temporal grounding framework.
+2. PROPOSED METHOD
+2.1. Framework Overview
+As illustrated in Fig. 2, our framework performs query-
+conditioned temporal grounding over long-form audioA.
+Instead of directly regressing a single temporal interval
+from the full recording, the model first preserves mul-
+tiple query-relevant temporal hypotheses through query-
+conditioned temporal modeling. A frozen large audio-
+language model (LALM) [12, 11] then selects the candidate
+that is most semantically compatible with the query, followed
+by lightweight local boundary refinement to obtain the final
+predictionˆτ= (ˆs,ˆe).
+2.2. Query-Conditioned Temporal Modeling
+The audio encoder first produces high-resolution audio rep-
+resentations, which are temporally projected and pooled into
+H= [h 1, . . . ,hT ]. The query encoder produces token-level
+representationsQ= [q 1, . . . ,qL]and a pooled query repre-
+sentationq.
+SinceHis initially query-independent, we first in-
+ject query semantics using feature-wise linear modulation
+(FiLM) [9]:
+˜ht = (1 +f γ(q))⊙h∗t+f∗β(q),(1)
+wheref γ andf β are learnable projections. The same query-
+conditioned modulation parameters are shared across all tem-
+poral steps, allowing the model to emphasize query-relevant
+feature dimensions while preserving temporal order.
+The query-conditioned sequence ˜H= [ ˜h1, . . . ,˜hT ]is
+then processed by a closed-form continuous-time (CfC) net-
+work [10]:
+xt = CfCCell(˜ht,x t−1; ∆t).(2)
+The resulting states are normalized and regularized asz t =
+Dropout(LN(xt)), yieldingZ= [z 1, . . . ,zT ], where∆ t =
+D/(T−1)for a recording of durationD. Thus, the CfC dy-
+namics depend on both the query-conditioned audio represen-
+tation and the physical time span represented by each tempo-
+ral step. Since FiLM is applied before CfC, query semantics
+directly influence long-range temporal information propaga-
+tion rather than only downstream candidate scoring.
+2.3. Temporal Candidate Generation
+In parallel with the query-conditioned temporal modeling
+branch, we compute a frame-wise audio–query matching sig-
+nalp m from the original temporal representationsH. Audio
+frames interact with the query tokens to obtain a token-level
+matching scoreS tok
+i , which is combined with the global
+similarityS glb
+i to the pooled query representation:
+pm
+i = (1−w g)Stok
+i +w gSglb
+i .(3)
+The matching signal is then fused with the FiLM-conditioned
+features and CfC outputs asF= LN([ ˜H;Z;p m]), from
+which three lightweight heads predict the start, end, and
+frame-wise relevance distributionsp s,p e, andp r, respec-
+tively.
+Candidate intervals are generated from high-response re-
+gions of the relevance and matching signals. We first combine
+the normalized relevance and matching curves:
+u=w r ¯pr +w m¯pm.(4)
+Seeds are selected above a fixed seed quantileρ s = 0.85
+ofuand grown toward neighboring positions exceeding a
+growth quantileρ g, whereρ g = 0.65by default. Nearby
+regions are then merged, and multi-scale temporal variants
+are generated. Finally, local responses inp s andp e are used
+to adjust the proposal boundaries, yielding the candidate set
+C={c i = (s i, ei)}M
+i=1. The candidate extraction proce-
+dure itself contains no trainable parameters and operates on
+the temporal evidence predicted by the model.
+Training objective.The temporal predictor is trained to
+estimate boundary locations, identify relevant regions, and
+learn audio–query correspondence. The boundary lossL bnd
+supervises the start and end distributions using soft boundary
+targets. A focal-style class-balanced binary cross-entropy
+lossL rel supervises frame-wise relevance to address the
+foreground–background imbalance in long recordings. For
+the matching signalp m, a hard-negative lossL match encour-
+ages responses inside the ground-truth interval to exceed
+strong responses outside it. We additionally apply a one-
+dimensional GIoU lossL gIoU to supervise the predicted
+interval and an end-boundary hard-negative lossL ehn to
+suppress spurious end responses far from the ground-truth
+endpoint.
+The overall training objective is
+Lgen =λ bndLbnd +λ relLrel +λ matchLmatch
++λ gIoULgIoU +λ ehnLehn, (5)
+where theλcoefficients control the contributions of the in-
+dividual losses. These losses optimize the temporal evidence
+predictor, while candidate extraction remains parameter-free.
+They do not directly supervise candidate-level ranking; se-
+mantic candidate selection is subsequently performed by the
+frozen LALM.
+2.4. LALM-Based Candidate Selection
+For each candidate intervalc i = (s i, ei), the frozen LALM
+independently evaluates the corresponding audio crop to-
+gether with the original queryQusing a Yes/No compatibil-
+ity prompt. We apply a two-way softmax to the next-token
+logits forYesandNo, and use the probability assigned toYes
+as the candidate’s compatibility score. The highest-scoring
+candidate is selected, yielding the interval˜τ= (˜s,˜e).
+2.5. Local Boundary Refinement
+For the Qwen3-Omni system, we apply a lightweight local
+refiner to the LALM-selected candidate˜τ= (˜s,˜e). A local
+window extending 5 seconds beyond both candidate bound-
+aries is encoded through two complementary paths: a frozen
+Qwen3-Omni audio encoder provides semantic representa-
+tions, while a lightweight Conv1D encoder operating on the
+mel spectrogram provides higher-resolution acoustic features.
+Both representations are query-conditioned by FiLM, fused,
+and pooled around the candidate start, center, and end to ob-
+tain a local boundary representation.
+The refiner predicts bounded residual corrections and
+gates,∆b=δ max tanh(rb)andα b =σ(g b), forb∈ {s, e},
+whereδ max = 5seconds. The refined boundaries are com-
+puted as ˆb= clip( ˜b+α b∆b,0, D), yielding the final interval
+ˆτ= (ˆs,ˆe).
+The refiner is trained withL ref =λ regLreg +λ IoULIoU,
+whereL reg is a SmoothL1 loss on the bounded pre-gate
+boundary residuals andL IoU = 1−IoU([ˆs,ˆe],[s∗, e∗]). Can-
+didates requiring a start or end correction larger thanδmax are
+excluded during training, since such targets fall outside the
+correction range of the local refiner.
+Table 1: Temporal grounding performance on the English
+TAG subset of LAT-Bench. SW denotes sliding-window lo-
+calization, QA-SFT denotes QA-only supervised fine-tuning,
+and Ref. denotes boundary refinement. Union combines the
+candidate pools generated withρ g=0.65andρ g=0.80before
+LALM-based selection. All metrics are percentages.
+Model Setting mIoU R@0.3 R@0.5 R@0.7
+Reported results [5]
+LAT-Audio Main Model 50.00 68.10 54.10 34.50
+Gemini-2.5-Pro Main Model 45.30 65.20 53.90 27.70
+Gemini-3.0-Pro Main Model 41.00 51.40 44.80 22.90
+Qwen3-Omni SW 26.20 41.90 25.80 15.50
+Qwen3-Omni QA-SFT 39.20 54.20 41.70 24.50
+Our experiments
+MOSS-Audio Direct 15.71 22.77 14.79 8.69
+MOSS-Audio SW 26.39 36.15 14.79 4.23
+MOSS-Audio QA-SFT 17.75 27.00 18.08 9.86
+MOSS-AudioOurs 38.52 57.98 40.61 19.25
+Qwen3-Omni Direct 15.80 26.40 16.00 7.00
+Qwen3-Omni Ours (ρ g=0.65) 42.72 65.02 42.49 19.95
+Qwen3-Omni Ours (ρ g=0.65) + Ref. 43.2065.2642.96 21.13
+Qwen3-Omni Ours (Union) 43.4565.2645.54 21.13
+Qwen3-OmniOurs (Union) + Ref. 44.1365.0246.95 22.07
+3. EXPERIMENTS
+Datasets.We conduct experiments on the English TAG data
+fromListening with Time[5]. For training, we use the En-
+glish TAG subset of LAT Chronicle, containing 3,737 query–
+segment pairs, with a 9:1 train–validation split. Evaluation is
+conducted on the English TAG subset of LAT-Bench, which
+contains long-form recordings of up to 30 minutes with cor-
+responding grounding queries.
+Evaluation Metrics.Following the official LAT-Bench pro-
+tocol, we report mean intersection over union (mIoU) and Re-
+call@IoU at thresholds of 0.3, 0.5, and 0.7.
+Implementation Details.We use frozen MOSS-Audio-8B-
+Instruct [11] and Qwen3-Omni-30B-A3B-Instruct [12] as
+backbones. The temporal grounding modules are trained for
+three epochs using AdamW with a learning rate of1×10 −4
+over 1,024 temporal bins. The loss weights in Eq. (5) are
+set to(0.3,1.0,0.5,0.5,0.3). For Qwen3-Omni, the LALM-
+selected Top-1 candidate is further processed by a lightweight
+boundary refiner trained on a±5s local window. All experi-
+ments are conducted on a single NVIDIA A100 GPU.
+4. RESULTS
+4.1. Main Localization Results
+We evaluate the proposed framework with two audio-language
+backbones, MOSS-Audio and Qwen3-Omni. For reference,
+we also include the official English TAG results reported
+inListening with Time[5]. The results are summarized in
+Table 1.
+The proposed framework consistently improves tempo-
+ral grounding across both audio-language backbones. With
+MOSS-Audio, our method achieves 38.52 mIoU and 40.61
+R@0.5, outperforming direct localization, sliding-window
+Table 2: Pre-refinement Top-1 and oracle performance of dif-
+ferent candidate pools. Oracle denotes selection of the candi-
+date with the highest IoU to the ground-truth interval from the
+same pool. All metrics are percentages.
+Backbone Pool Selection mIoU R@0.3 R@0.5 R@0.7
+MOSS-Audio Ours Top-1 38.52 57.98 40.61 19.25
+Oracle 46.72 68.31 50.94 26.76
+Qwen3-Omniρ g=0.65Top-1 42.72 65.02 42.49 19.95
+Oracle 51.04 74.41 55.63 30.52
+Qwen3-Omniρ g=0.80Top-1 41.47 62.44 43.90 18.31
+Oracle 50.66 74.18 54.93 31.22
+Qwen3-Omni Union Top-1 43.45 65.26 45.54 21.13
+Oracle 55.20 78.40 61.97 38.26
+localization, and QA-SFT. On Qwen3-Omni, theρ g = 0.65
+configuration reaches 42.72 mIoU, exceeding the reported
+SW and QA-SFT results in mIoU. While LAT-Audio achieves
+the strongest absolute localization performance among the re-
+ported systems, our method focuses on lightweight adaptation
+of frozen audio-language backbones and shows consistent
+gains across different backbone architectures.
+Combining the candidate pools generated withρ g=0.65
+andρ g=0.80further improves Qwen3-Omni performance.
+Compared with theρ g=0.65configuration, the union pool
+increases mIoU from 42.72 to 43.45, R@0.5 from 42.49 to
+45.54, and R@0.7 from 19.95 to 21.13. This suggests that
+the two proposal configurations provide complementary tem-
+poral hypotheses, allowing the frozen LALM to select from a
+more diverse candidate pool.
+The lightweight boundary refiner provides additional
+gains under both candidate-pool configurations. Forρg=0.65,
+mIoU improves from 42.72 to 43.20 and R@0.7 from 19.95
+to 21.13. For the union pool, mIoU increases from 43.45 to
+44.13, while R@0.5 and R@0.7 increase from 45.54 to 46.95
+and from 21.13 to 22.07, respectively. These improvements
+across different candidate pools support the effectiveness of
+local boundary refinement. Although the refined system re-
+mains below QA-SFT at R@0.7, it achieves higher overall
+mIoU without end-to-end backbone adaptation.
+4.2. Candidate Pool Analysis
+We further analyze the generated candidate pools by compar-
+ing the LALM-selected Top-1 predictions with oracle selec-
+tion before boundary refinement. For each candidate pool,
+the oracle selects the candidate with the highest IoU to the
+ground-truth interval from the same pool. The results are re-
+ported in Table 2.
+The oracle consistently outperforms the LALM-selected
+Top-1 predictions, showing that the candidate pools often
+preserve higher-quality temporal hypotheses than those fi-
+nally selected. Combining the two Qwen3-Omni proposal
+configurations further improves both Top-1 and oracle perfor-
+mance, suggesting that the union pool provides more diverse
+and complementary temporal hypotheses. The remaining
+Top-1–oracle gap indicates that candidate selection remains
+a key bottleneck, particularly under stricter IoU thresholds
+Table 3: Ablation of query conditioning and temporal mod-
+eling. All metrics are percentages. Bold indicates the best
+result within each backbone.
+FiLM Temporal mIoU R@0.3 R@0.5 R@0.7
+MOSS-Audio
+No None 36.29 54.92 36.38 18.31
+Yes None 33.85 51.88 34.04 17.14
+No CfC 37.21 54.67 37.7919.71
+Yes GRU 32.00 46.95 32.86 17.84
+Yes CfC38.52 57.98 40.6119.25
+Qwen3-Omni
+No None 35.43 53.52 37.10 15.25
+Yes None 35.31 53.29 37.79 17.14
+No CfC 38.37 59.62 39.44 14.79
+Yes GRU 31.29 48.83 30.05 12.68
+Yes CfC42.72 65.02 42.49 19.95
+requiring more precise localization.
+4.3. Ablation Study
+We ablate FiLM and CfC on both audio-language backbones
+and further replace CfC with a standard GRU to examine
+the role of liquid temporal modeling. To isolate the effects
+of these components, all ablation experiments use the same
+ρg=0.65candidate-generation configuration. The results are
+reported in Table 3.
+The full FiLM+CfC configuration achieves the highest
+mIoU on both backbones. FiLM alone does not improve
+mIoU over using neither component, whereas adding FiLM
+to CfC increases mIoU from 37.21 to 38.52 on MOSS-Audio
+and from 38.37 to 42.72 on Qwen3-Omni. This suggests that
+query conditioning becomes more effective when coupled
+with CfC-based liquid temporal modeling.
+More importantly, replacing CfC with a standard GRU re-
+duces mIoU to 32.00 on MOSS-Audio and 31.29 on Qwen3-
+Omni. The gain therefore cannot be explained simply by
+introducing recurrent temporal modeling. Instead, the results
+are consistent with the benefit of the continuous-time, input-
+adaptive dynamics provided by CfC for modeling query-
+conditioned temporal evolution in long-form audio.
+5. CONCLUSION
+We presented a query-conditioned liquid temporal ground-
+ing framework for long-form audio using FiLM, CfC, frozen
+LALM candidate selection, and lightweight boundary re-
+finement. Experiments on LAT-Bench show consistent im-
+provements across MOSS-Audio and Qwen3-Omni, while
+ablations confirm the complementary roles of FiLM and CfC.
+The multi-candidate design further preserves diverse tem-
+poral hypotheses, and local refinement improves boundary
+precision after candidate selection. With frozen backbones
+and lightweight trainable modules, the framework supports
+single-GPU training. The Top-1–oracle gap motivates future
+work on stronger candidate selection.
+6. REFERENCES
+[1] Xuenan Xu, Heinrich Dinkel, Mengyue Wu, and Kai
+Yu, “Text-to-audio grounding: Building correspon-
+dence between captions and sound events,” inICASSP
+2021-2021 IEEE international conference on acoustics,
+speech and signal processing (ICASSP). IEEE, 2021,
+pp. 606–610.
+[2] Xuenan Xu, Ziyang Ma, Mengyue Wu, and Kai Yu,
+“Towards weakly supervised text-to-audio grounding,”
+IEEE Transactions on Multimedia, vol. 26, pp. 11126–
+11138, 2024.
+[3] Yiming Li, Zhifang Guo, Xiangdong Wang, and Hong
+Liu, “Advancing multi-grained alignment for con-
+trastive language-audio pre-training,” inProceedings of
+the 32nd ACM International Conference on Multimedia,
+2024, pp. 7356–7365.
+[4] Xiquan Li, Xuenan Xu, Ziyang Ma, Wenxi Chen,
+Haolin He, Qiuqiang Kong, and Xie Chen, “Finelap:
+Taming heterogeneous supervision for fine-grained
+language-audio pretraining,” inProceedings of the 64th
+Annual Meeting of the Association for Computational
+Linguistics (Volume 1: Long Papers), 2026, pp. 10393–
+10408.
+[5] Mingchen Shao, Hang Su, Wenjie Tian, Bingshen Mu,
+Zhennan Lin, Lichun Fan, Zhenbo Luo, Jian Luan, and
+Lei Xie, “Listening with time: Precise temporal aware-
+ness for long-form audio understanding,”arXiv preprint
+arXiv:2604.22245, 2026.
+[6] Yuhang Dai, Xin Shu, Zengxi Li, Lei Xie, Xiangang Li,
+and Jianwei Yu, “Tag-bench: Benchmarking temporal
+audio grounding in large audio language models,”arXiv
+preprint arXiv:2609.01542, 2026.
+[7] Hualei Wang, Yiming Li, Shuo Ma, Hong Liu, and Xi-
+angdong Wang, “Listening between the frames: Bridg-
+ing temporal gaps in large audio-language models,” in
+Proceedings of the AAAI Conference on Artificial Intel-
+ligence, 2026, vol. 40, pp. 26233–26241.
+[8] Luoyi Sun, Xiao Zhou, Zeqian Li, Ya Zhang, Yan-
+feng Wang, and Weidi Xie, “Spotsound: Enhancing
+large audio-language models with fine-grained temporal
+grounding,”arXiv preprint arXiv:2604.13023, 2026.
+[9] Ethan Perez, Florian Strub, Harm De Vries, Vincent Du-
+moulin, and Aaron Courville, “Film: Visual reasoning
+with a general conditioning layer,” inProceedings of the
+AAAI conference on artificial intelligence, 2018, vol. 32.
+[10] Ramin Hasani, Mathias Lechner, Alexander Amini, Lu-
+cas Liebenwein, Aaron Ray, Max Tschaikowski, Gerald
+Teschl, and Daniela Rus, “Closed-form continuous-time
+neural networks,”Nature Machine Intelligence, vol. 4,
+no. 11, pp. 992–1003, 2022.
+[11] Chen Yang, Chufan Yu, Hanfu Chen, Jie Zhu, Jingqi
+Chen, Ke Chen, Wenxuan Wang, Yang Wang, Yaozhou
+Jiang, Yi Jiang, et al., “Moss-audio technical report,”
+arXiv preprint arXiv:2606.01802, 2026.
+[12] Jin Xu, Zhifang Guo, Hangrui Hu, Yunfei Chu, Xiong
+Wang, Jinzheng He, Yuxuan Wang, Xian Shi, Ting He,
+Xinfa Zhu, et al., “Qwen3-omni technical report,”arXiv
+preprint arXiv:2509.17765, 2025.

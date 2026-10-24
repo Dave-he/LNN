@@ -11,17 +11,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：93 篇
 - GitHub 候选仓库：42 个
-- Hugging Face 候选模型：0 个
+- Hugging Face 候选模型：18 个
 - 已下载 PDF：0 个
 - 下表每类仅渲染前 12 条；全量候选池见 `papers/daily/2026-10-25_lnn_research.json`，研读选择器以该 JSON 为准。
-
-## 数据源状态
-- `Hugging Face query failed for 'LiquidAI': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'LFM2': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'LFM2.5': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'liquid neural': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'closed-form continuous-time': <urlopen error [Errno 104] Connection reset by peer>`
-- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
@@ -47,16 +39,29 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-24 | [paragontasx/ferro](https://github.com/paragontasx/ferro) | 5 | 0 | C++ | Native OpenCL inference engine for Intel N100-class SoCs: EmbeddingGemma-2, LiquidAI d1-omni and LFM2.5 chat in one C++ binary, on the iGPU. Measured ~2x llama… |
 | 2026-10-21 | [blacklike02/Liquid-Network-Model](https://github.com/blacklike02/Liquid-Network-Model) | 4 | 0 | Python | Liquid Neural Network language model with LTC and CfC dynamics |
 | 2025-11-04 | [siddharthk27/Neural-Circuit-Policies](https://github.com/siddharthk27/Neural-Circuit-Policies) | 4 | 0 | Jupyter Notebook | This contains my experiments with Liquid Time Constant Networks (LTCs) and Closed Form Continuous Network (CFCs) architectures. |
-| 2026-10-09 | [Noah-hjl/ContiLNN](https://github.com/Noah-hjl/ContiLNN) | 3 | 0 | Python | ContiLNN: Mitigating Slice Sampling Discontinuity with Liquid Neural Networks for Medical Image Restoration |
 | 2026-10-21 | [julschmidtJJL/lnn-vs-classical-forecasting](https://github.com/julschmidtJJL/lnn-vs-classical-forecasting) | 2 | 0 | Python | Bachelor's thesis: do liquid neural networks beat classical models on daily financial returns? No: 0 of 120 corrected comparisons. 11 LTC/CfC variants vs 8 bas… |
 | 2026-10-08 | [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection) | 2 | 0 | Swift | On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm |
 | 2026-07-31 | [middesurya/daily-webapp-2026-05-04-liquidlab](https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab) | 2 | 0 | HTML | LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, a… |
 | 2026-10-24 | [api-evangelist/liquid-ai](https://github.com/api-evangelist/liquid-ai) | 1 | 0 |  | Liquid AI — independent third-party profile of a public API surface, by API Evangelist. Liquid AI is an MIT spinoff developing Liquid Foundation Models (LFMs)… |
 | 2026-10-22 | [niharmaddina/Liquidity](https://github.com/niharmaddina/Liquidity) | 1 | 0 | Jupyter Notebook | Next-day stock price prediction with a liquid neural network and a neural ODE (torchdiffeq), served by FastAPI over a websocket to a React chart. Research prot… |
 | 2026-10-13 | [AlanL182/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data](https://github.com/AlanL182/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data) | 1 | 0 | C |  |
+| 2026-10-13 | [pinion05/decision-lfm2.5-1.2b](https://github.com/pinion05/decision-lfm2.5-1.2b) | 1 | 0 | Python | Non-generative decision model built from LiquidAI LFM2.5-1.2B — LM head replaced with a scalar decision head, LoRA fine-tuned on Open-Jev-v1.1 (test brier 0.36… |
 
 ## Hugging Face 候选模型
-- 本次未发现可记录的 Hugging Face 模型。
+| 更新 | 模型 | 下载 | Likes | 任务 |
+|---|---|---:|---:|---|
+| 2026-10-24 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 1780 | 11 | text-generation |
+| 2026-10-24 | [mradermacher/LFM2.5-Queen-Opus-4.7-8B-A1B-GGUF](https://huggingface.co/mradermacher/LFM2.5-Queen-Opus-4.7-8B-A1B-GGUF) | 273 | 1 |  |
+| 2026-10-24 | [iromu/LFM2.5-230M-tools](https://huggingface.co/iromu/LFM2.5-230M-tools) | 257 | 0 | text-generation |
+| 2026-10-24 | [iromu/LFM2.5-230M-tools-GGUF](https://huggingface.co/iromu/LFM2.5-230M-tools-GGUF) | 193 | 0 |  |
+| 2026-10-24 | [Panga-Azazia/LFM2.5-350M-TTS](https://huggingface.co/Panga-Azazia/LFM2.5-350M-TTS) | 32 | 0 | text-generation |
+| 2026-10-24 | [hotocooo/lfm25-quant-research-checkpoints](https://huggingface.co/hotocooo/lfm25-quant-research-checkpoints) | 0 | 0 |  |
+| 2026-10-24 | [lavendercomputing/LFM2.5-24B-A2B-Heretic-GSQ-RCO-GGUF](https://huggingface.co/lavendercomputing/LFM2.5-24B-A2B-Heretic-GSQ-RCO-GGUF) | 0 | 0 | text-generation |
+| 2026-10-24 | [akpsahan/LFM2.5-2.6B](https://huggingface.co/akpsahan/LFM2.5-2.6B) | 0 | 0 | text-generation |
+| 2026-10-24 | [yclicc/PsalmOMR-LFM2.5-VL-450M-GGUF](https://huggingface.co/yclicc/PsalmOMR-LFM2.5-VL-450M-GGUF) | 0 | 0 | image-text-to-text |
+| 2026-10-23 | [LiquidAI/LFM2.5-2.6B](https://huggingface.co/LiquidAI/LFM2.5-2.6B) | 99777 | 853 | text-generation |
+| 2026-10-21 | [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B) | 19800 | 578 | text-generation |
+| 2026-10-21 | [LiquidAI/LFM2.5-24B-A2B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-DSpark-GGUF) | 710 | 6 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
