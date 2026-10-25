@@ -14,6 +14,13 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：liquid-network, liquid-neural-networks, pytorch
 - 说明：Liquid Time-constant Networks implementation with PyTorch
 
+### [paragontasx/ferro](https://github.com/paragontasx/ferro)
+- 更新：2026-10-25
+- Star / Fork：7 / 0
+- 语言：C++
+- Topics：c-plus-plus, decision-models, embeddings, gguf, inference, intel-n100, llama-cpp, llm
+- 说明：Native OpenCL inference engine for Intel N100-class SoCs: EmbeddingGemma-2, LiquidAI d1-omni and LFM2.5 chat in one C++ binary, on the iGPU. Measured ~2x llama.cpp's own Vulkan backend on the same N100 (2.1-2.3x); OpenAI-compatible server, CPU fallback, bit-exact batch invariance.
+
 ### [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer)
 - 更新：2026-10-21
 - Star / Fork：7 / 1
@@ -21,12 +28,12 @@ tags: [LNN, repo-watchlist, automation]
 - Topics：contrastive-learning, dense-retrieval, embedding-models, lfm2, optuna, pytorch, wandb
 - 说明：Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data
 
-### [paragontasx/ferro](https://github.com/paragontasx/ferro)
+### [zhangshuibai/molten](https://github.com/zhangshuibai/molten)
 - 更新：2026-10-25
-- Star / Fork：6 / 0
-- 语言：C++
-- Topics：c-plus-plus, decision-models, embeddings, gguf, inference, intel-n100, llama-cpp, llm
-- 说明：Native OpenCL inference engine for Intel N100-class SoCs: EmbeddingGemma-2, LiquidAI d1-omni and LFM2.5 chat in one C++ binary, on the iGPU. Measured ~2x llama.cpp's own Vulkan backend on the same N100 (2.1-2.3x); OpenAI-compatible server, CPU fallback, bit-exact batch invariance.
+- Star / Fork：4 / 0
+- 语言：Metal
+- Topics：apple-silicon, gpu-kernels, inference-engine, inference-optimization, lfm2, liquid-ai, llama-cpp, llm
+- 说明：Run a coding model at 300+ tok/s on your Mac. Native Rust + Metal inference engine for LiquidAI LFM2.5-24B-A2B (MLX 4-bit) on Apple Silicon.
 
 ### [blacklike02/Liquid-Network-Model](https://github.com/blacklike02/Liquid-Network-Model)
 - 更新：2026-10-21
@@ -48,13 +55,6 @@ tags: [LNN, repo-watchlist, automation]
 - 语言：Python
 - Topics：ai-research, attention-free, catastrophic-forgetting, continual-learning, edge-ai, edge-computing, liquid-neural-networks, llm
 - 说明：MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory
-
-### [zhangshuibai/molten](https://github.com/zhangshuibai/molten)
-- 更新：2026-10-25
-- Star / Fork：2 / 0
-- 语言：Metal
-- Topics：apple-silicon, gpu-kernels, inference-engine, inference-optimization, lfm2, liquid-ai, llama-cpp, llm
-- 说明：Run a coding model at 300+ tok/s on your Mac. Native Rust + Metal inference engine for LiquidAI LFM2.5-24B-A2B (MLX 4-bit) on Apple Silicon.
 
 ### [julschmidtJJL/lnn-vs-classical-forecasting](https://github.com/julschmidtJJL/lnn-vs-classical-forecasting)
 - 更新：2026-10-21
@@ -148,3 +148,122 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Official PyTorch implementation & benchmark of Liquid Time-Constant Networks (LNN) for urban drainage water level forecasting (MDPI Water 2026).
 
 ## Hugging Face 模型
+### [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec)
+- 更新：2026-10-25
+- 下载 / Likes：2194 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, gguf, lfm2, text-generation, cybersecurity, conversational, unsloth
+
+### [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil)
+- 更新：2026-10-25
+- 下载 / Likes：1686 / 11
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, causal-lm, lfm, liquid-ai, reasoning
+
+### [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT)
+- 更新：2026-10-25
+- 下载 / Likes：1528 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, causal-lm, distillation, knowledge-distillation, sft
+
+### [litert-community/LFM2.5-VL-450M](https://huggingface.co/litert-community/LFM2.5-VL-450M)
+- 更新：2026-10-25
+- 下载 / Likes：657 / 4
+- 任务：image-text-to-text
+- Tags：litert-lm, litert, litertlm, on-device, edge, vision, vlm, hybrid
+
+### [litert-community/LFM2.5-VL-3B](https://huggingface.co/litert-community/LFM2.5-VL-3B)
+- 更新：2026-10-25
+- 下载 / Likes：448 / 2
+- 任务：image-text-to-text
+- Tags：litert-lm, litert, litertlm, on-device, edge, vision, vlm, hybrid
+
+### [kingjones777/LFM2.5-1.2B-Instruct-ROCmFP4-GGUF](https://huggingface.co/kingjones777/LFM2.5-1.2B-Instruct-ROCmFP4-GGUF)
+- 更新：2026-10-25
+- 下载 / Likes：30 / 0
+- 任务：text-generation
+- Tags：gguf, llama.cpp, rocm, amd, rocmfp4, rocmfpx, strix-halo, amd-strix-halo
+
+### [fraQtl/LFM2-1.2B-Hi-Fi-GGUF](https://huggingface.co/fraQtl/LFM2-1.2B-Hi-Fi-GGUF)
+- 更新：2026-10-25
+- 下载 / Likes：3 / 0
+- 任务：unknown
+- Tags：gguf, llama.cpp, npu, edge, calibrated-quantization, fraqtl, base_model:LiquidAI/LFM2-1.2B, base_model:quantized:LiquidAI/LFM2-1.2B
+
+### [hotocooo/lfm25-quant-research-checkpoints](https://huggingface.co/hotocooo/lfm25-quant-research-checkpoints)
+- 更新：2026-10-25
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：safetensors, quantization, gsq, gptq, trellis-quantization, qtip, research-checkpoints, private
+
+### [kingjones777/LFM2.5-24B-A2B-ROCmFP4-GGUF](https://huggingface.co/kingjones777/LFM2.5-24B-A2B-ROCmFP4-GGUF)
+- 更新：2026-10-25
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：gguf, llama.cpp, rocm, amd, rocmfp4, rocmfpx, gfx1151, strix-halo
+
+### [qiusizhan/swe-audit-lfm25-2p6b-01](https://huggingface.co/qiusizhan/swe-audit-lfm25-2p6b-01)
+- 更新：2026-10-25
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, model-auditing, conversational, base_model:LiquidAI/LFM2.5-2.6B, base_model:finetune:LiquidAI/LFM2.5-2.6B
+
+### [chimorris/LFM2.5-24B-A2B-exl3-3.25bpw](https://huggingface.co/chimorris/LFM2.5-24B-A2B-exl3-3.25bpw)
+- 更新：2026-10-25
+- 下载 / Likes：0 / 0
+- 任务：text-generation
+- Tags：exllamav3, safetensors, lfm2_moe, exl3, quantized, lfm2, moe, text-generation
+
+### [LiquidAI/LFM2.5-2.6B](https://huggingface.co/LiquidAI/LFM2.5-2.6B)
+- 更新：2026-10-23
+- 下载 / Likes：97589 / 853
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2, text-generation, liquid, lfm2.5, edge, conversational
+
+### [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)
+- 更新：2026-10-21
+- 下载 / Likes：20480 / 579
+- 任务：text-generation
+- Tags：transformers, safetensors, lfm2_moe, text-generation, liquid, lfm2.5, edge, moe
+
+### [LiquidAI/LFM2.5-24B-A2B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-DSpark-GGUF)
+- 更新：2026-10-21
+- 下载 / Likes：945 / 7
+- 任务：text-generation
+- Tags：llama.cpp, gguf, speculative-decoding, dspark, lfm2, lfm2_moe, draft-model, text-generation
+
+### [LiquidAI/LFM2.5-24B-A2B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-DSpark)
+- 更新：2026-10-21
+- 下载 / Likes：791 / 7
+- 任务：text-generation
+- Tags：sglang, safetensors, qwen3, speculative-decoding, dspark, lfm2, lfm2_moe, draft-model
+
+### [Synaptics/LiquidAI-LFM2.5-230M](https://huggingface.co/Synaptics/LiquidAI-LFM2.5-230M)
+- 更新：2026-10-19
+- 下载 / Likes：570 / 0
+- 任务：text-generation
+- Tags：onnx, lfm2, torq, synaptics, sl2619, npu, edge, text-generation
+
+### [Synaptics/LiquidAI-LFM2.5-350M-w8a8-torq](https://huggingface.co/Synaptics/LiquidAI-LFM2.5-350M-w8a8-torq)
+- 更新：2026-10-19
+- 下载 / Likes：103 / 0
+- 任务：text-generation
+- Tags：lfm2, torq, synaptics, sl2619, npu, edge, lfm2.5, text-generation
+
+### [Synaptics/LiquidAI-LFM2.5-230M-w8a8-torq](https://huggingface.co/Synaptics/LiquidAI-LFM2.5-230M-w8a8-torq)
+- 更新：2026-10-19
+- 下载 / Likes：98 / 0
+- 任务：text-generation
+- Tags：lfm2, torq, synaptics, sl2619, npu, edge, lfm2.5, text-generation
+
+### [LiquidAI/d1-omni-600M-GGUF](https://huggingface.co/LiquidAI/d1-omni-600M-GGUF)
+- 更新：2026-10-17
+- 下载 / Likes：11101 / 52
+- 任务：image-text-to-text
+- Tags：gguf, liquid, lfm2.5, edge, decision, classification, calibration, system-one
+
+### [P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE](https://huggingface.co/P2SAMAPA/P2-ETF-LIQUID-NEURAL-ODE)
+- 更新：2026-05-06
+- 下载 / Likes：0 / 0
+- 任务：unknown
+- Tags：region:us

@@ -11,17 +11,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：93 篇
 - GitHub 候选仓库：42 个
-- Hugging Face 候选模型：0 个
+- Hugging Face 候选模型：20 个
 - 已下载 PDF：0 个
 - 下表每类仅渲染前 12 条；全量候选池见 `papers/daily/2026-10-26_lnn_research.json`，研读选择器以该 JSON 为准。
-
-## 数据源状态
-- `Hugging Face query failed for 'LiquidAI': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'LFM2': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'LFM2.5': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'liquid neural': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'closed-form continuous-time': <urlopen error [Errno 104] Connection reset by peer>`
-- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
@@ -43,12 +35,12 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 更新 | 仓库 | Star | Fork | 语言 | 说明 |
 |---|---|---:|---:|---|---|
 | 2026-10-17 | [Ipsedo/LiquidNetworks](https://github.com/Ipsedo/LiquidNetworks) | 29 | 6 | Python | Liquid Time-constant Networks implementation with PyTorch |
+| 2026-10-25 | [paragontasx/ferro](https://github.com/paragontasx/ferro) | 7 | 0 | C++ | Native OpenCL inference engine for Intel N100-class SoCs: EmbeddingGemma-2, LiquidAI d1-omni and LFM2.5 chat in one C++ binary, on the iGPU. Measured ~2x llama… |
 | 2026-10-21 | [RESMP-DEV/lfm25-embedding-trainer](https://github.com/RESMP-DEV/lfm25-embedding-trainer) | 7 | 1 | Python | Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data |
-| 2026-10-25 | [paragontasx/ferro](https://github.com/paragontasx/ferro) | 6 | 0 | C++ | Native OpenCL inference engine for Intel N100-class SoCs: EmbeddingGemma-2, LiquidAI d1-omni and LFM2.5 chat in one C++ binary, on the iGPU. Measured ~2x llama… |
+| 2026-10-25 | [zhangshuibai/molten](https://github.com/zhangshuibai/molten) | 4 | 0 | Metal | Run a coding model at 300+ tok/s on your Mac. Native Rust + Metal inference engine for LiquidAI LFM2.5-24B-A2B (MLX 4-bit) on Apple Silicon. |
 | 2026-10-21 | [blacklike02/Liquid-Network-Model](https://github.com/blacklike02/Liquid-Network-Model) | 4 | 0 | Python | Liquid Neural Network language model with LTC and CfC dynamics |
 | 2025-11-04 | [siddharthk27/Neural-Circuit-Policies](https://github.com/siddharthk27/Neural-Circuit-Policies) | 4 | 0 | Jupyter Notebook | This contains my experiments with Liquid Time Constant Networks (LTCs) and Closed Form Continuous Network (CFCs) architectures. |
 | 2026-10-25 | [AwareLiquid/M1](https://github.com/AwareLiquid/M1) | 2 | 0 | Python | MT-LNN: Microtubule-inspired liquid neural network — bio-inspired LLM architecture with O(1) working memory |
-| 2026-10-25 | [zhangshuibai/molten](https://github.com/zhangshuibai/molten) | 2 | 0 | Metal | Run a coding model at 300+ tok/s on your Mac. Native Rust + Metal inference engine for LiquidAI LFM2.5-24B-A2B (MLX 4-bit) on Apple Silicon. |
 | 2026-10-21 | [julschmidtJJL/lnn-vs-classical-forecasting](https://github.com/julschmidtJJL/lnn-vs-classical-forecasting) | 2 | 0 | Python | Bachelor's thesis: do liquid neural networks beat classical models on daily financial returns? No: 0 of 120 corrected comparisons. 11 LTC/CfC variants vs 8 bas… |
 | 2026-10-08 | [PicoMLX/SmartToolSelection](https://github.com/PicoMLX/SmartToolSelection) | 2 | 0 | Swift | On-device semantic tool selection demo (SwiftUI + MLX) using LiquidAI LFM2.5 retrievers via mlx-swift-lm |
 | 2026-07-31 | [middesurya/daily-webapp-2026-05-04-liquidlab](https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab) | 2 | 0 | HTML | LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, a… |
@@ -56,7 +48,20 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-22 | [niharmaddina/Liquidity](https://github.com/niharmaddina/Liquidity) | 1 | 0 | Jupyter Notebook | Next-day stock price prediction with a liquid neural network and a neural ODE (torchdiffeq), served by FastAPI over a websocket to a React chart. Research prot… |
 
 ## Hugging Face 候选模型
-- 本次未发现可记录的 Hugging Face 模型。
+| 更新 | 模型 | 下载 | Likes | 任务 |
+|---|---|---:|---:|---|
+| 2026-10-25 | [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec) | 2194 | 0 | text-generation |
+| 2026-10-25 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 1686 | 11 | text-generation |
+| 2026-10-25 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 1528 | 0 | text-generation |
+| 2026-10-25 | [litert-community/LFM2.5-VL-450M](https://huggingface.co/litert-community/LFM2.5-VL-450M) | 657 | 4 | image-text-to-text |
+| 2026-10-25 | [litert-community/LFM2.5-VL-3B](https://huggingface.co/litert-community/LFM2.5-VL-3B) | 448 | 2 | image-text-to-text |
+| 2026-10-25 | [kingjones777/LFM2.5-1.2B-Instruct-ROCmFP4-GGUF](https://huggingface.co/kingjones777/LFM2.5-1.2B-Instruct-ROCmFP4-GGUF) | 30 | 0 | text-generation |
+| 2026-10-25 | [fraQtl/LFM2-1.2B-Hi-Fi-GGUF](https://huggingface.co/fraQtl/LFM2-1.2B-Hi-Fi-GGUF) | 3 | 0 |  |
+| 2026-10-25 | [hotocooo/lfm25-quant-research-checkpoints](https://huggingface.co/hotocooo/lfm25-quant-research-checkpoints) | 0 | 0 |  |
+| 2026-10-25 | [kingjones777/LFM2.5-24B-A2B-ROCmFP4-GGUF](https://huggingface.co/kingjones777/LFM2.5-24B-A2B-ROCmFP4-GGUF) | 0 | 0 | text-generation |
+| 2026-10-25 | [qiusizhan/swe-audit-lfm25-2p6b-01](https://huggingface.co/qiusizhan/swe-audit-lfm25-2p6b-01) | 0 | 0 | text-generation |
+| 2026-10-25 | [chimorris/LFM2.5-24B-A2B-exl3-3.25bpw](https://huggingface.co/chimorris/LFM2.5-24B-A2B-exl3-3.25bpw) | 0 | 0 | text-generation |
+| 2026-10-23 | [LiquidAI/LFM2.5-2.6B](https://huggingface.co/LiquidAI/LFM2.5-2.6B) | 97589 | 853 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
