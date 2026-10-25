@@ -1,0 +1,211 @@
+Blockage Prediction in Directional mmWave Links Using Liquid Time
+Constant Network
+Martin H. Nielsen 1,2, Chia-Yi Yeh1, Ming Shen 2, and Muriel M ´edard1
+1Massachusetts Institute of Technology, Cambridge, MA, 02139 USA
+2Aalborg University, Aalborg, 9000 DK
+Abstract—We propose to use a liquid time constant (LTC)
+network to predict the future blockage status of a millimeter
+wave (mmWave) link using only the received signal power as
+the input to the system. The LTC network is based on an
+ordinary differential equation (ODE) system inspired by biology
+and specialized for near-future prediction for time sequence
+observation as the input. Using an experimental dataset at 60
+GHz, we show that our proposed use of LTC can reliably
+predict the occurrence of blockage and the length of the blockage
+without the need for scenario-specific data. The results show
+that the proposed LTC can predict with upwards of 97.85%
+accuracy without prior knowledge of the outdoor scenario or
+retraining/tuning. These results highlight the promising gains of
+using LTC networks to predict time series-dependent signals,
+which can lead to more reliable and low-latency communication.
+I. I NTRODUCTION
+M
+ILLIMETER (mmWave) and terahertz (THz) commu-
+nication is a promising technology for achieving high
+data rates in 6G and beyond. However, highly directional
+transmission in these bands makes the link vulnerable to
+blockage, causing sudden interruptions to a communication
+link. Consequently, reliable mmWave and THz communication
+requires predicting the occurrence of blockage [1].
+Blockage prediction using machine learning based ap-
+proaches has been investigated in the literature for both in-
+band and out-of-band solutions. While the state-of-the-art
+methods rely on information from multiple sources, either
+from other frequency spectrums [2] or a camera feed [3], it
+is more advantageous if we can predict without these addi-
+tional resources or hardware. Prior work also proposed to use
+prior statistical observations for meta-learning [4], however,
+it requires prior information about the surrounding and thus
+is costly to generalize. In [5], an in-band proactive predictor
+based on a pre-blockage power signature was proposed using
+deep learning to enable the prediction of the wireless link sta-
+tus. However, the prediction accuracy decreases significantly
+when predicting even just slightly further into the future.
+In this work, we propose to use Liquid Time Constant
+(LTC) network [6] for blockage prediction. Since the LTC
+network is based on ordinary differential equations (ODEs),
+it has strong expressiveness, stability, and performance in
+handling time series. Using the publicly available dataset on
+mmWave blockage scenarios [5], we demonstrate the superior
+generalization of LTC networks by training using the indoor
+dataset, which contains pre-blockage power signature under
+controlled blockage movement and apply the trained model
+to the outdoor dataset with uncontrolled blockage events. We
+1
+0
+Received signal LTC network
+Input neuron 
+Inter neuron 
+Command neuron 
+Output neuron 
+Prediction
+x̂[t]
+r[t]
+r[t]
+x[t]
+Fig. 1. Proposed architecture and system model for THz blockage prediction
+x[t] using LTC network. The input data is the received signal as a function of
+time samples r[t]. The LTC is trained to recognize the pre-blockage signature
+contained in the data.
+show accuracy in blockage prediction above 97.85% for all
+outdoor scenarios for the immediate future timeslot ( t + 1). In
+addition, we demonstrate a 12% to 39% accuracy improvement
+in predicting blockage in the near future ( t + 5 and t + 10
+timeslots) compared to the baseline [5]. The proposed model’s
+sparse network and high generalization capabilities make it an
+attractive option for pre-blockage prediction in high-frequency
+communication systems.
+II. P ROBLEM FORMULATION
+We address the problem of proactively identifying direc-
+tional link blockage status using received mmWave signal
+power. We consider a system with one transmitter and one
+receiver, each equipped with a directional beam. After the
+link is established, the link can experience short blockages
+at unknown times.
+We formulate the blockage prediction as a discrete-time
+problem where t ∈ Z is the index of the time samples.
+The received signal power is represented by r[t], and the link
+blockage status is defined as x[t] ∈ { 0, 1} where 1 indicates
+blockage and 0 indicates no blockage. At time t, given
+the received signal power samples Sob with an observation
+duration of Tob, we predict whether the link is blocked in the
+future Tk timeslots. That is,
+Sob = {r[t − Tob + 1], · · · , r[t − 1], r[t]}, (1)
+and the prediction is represented by
+ˆx[t + K], ∀K ∈ {1, · · · , Tk} (2)
+Our goal is to maximize the blockage prediction success
+probability:
+max P(ˆx[t + K] = x[t + K]|Sob), ∀K ∈ {1, · · · , Tk}. (3)
+In this paper, we propose to solve the blockage prediction
+problem using a LTC network, as illustrated in Fig. 1.
+arXiv:2306.04997v1  [eess.SP]  8 Jun 2023
+III. P ROPOSED ARCHITECTURE WITH LIQUID TIME
+CONSTANT NETWORK
+Liquid Time Constant (LTC) network was first proposed
+in [6], where LTC is introduced as variations of continuous
+time models loosely inspired by biological signals. Since LTC
+networks are based on a system of ordinary differential equa-
+tions (ODEs), they have strong expressiveness, stability, and
+performance in modeling time series over a short to medium
+time. For time-series prediction tasks, the LTC network has
+been shown to outperform other modern RNNs, and long
+short-term memory networks on most metrics [6]. Moreover,
+the LTC network requires fewer neurons and generalizes easier
+than conventional RNN networks [6]. This behavior of the LTC
+networks makes it a perfect fit for handling the time series
+blockage prediction problem.
+Neural Circuit Policy (NCP), which creates a sparse network
+according to [7], is jointly employed to implement an LTC
+network with fewer resources. Further, the NCPs allow the
+LTC network to be adaptable to previously unseen data and
+provide robustness to nonideal data samples, which enables
+offline training using pre-blockage signature. Once the LTC
+network is trained, it is deployed to make blockage prediction
+at each time slot t for the future Tk time slots.
+IV. E VALUATION
+To evaluate the performance of an LTC network on blockage
+prediction, we use a publicly available dataset collected with
+a directional transmitter and a directional receiver at 60 GHz,
+consisting of indoor and outdoor scenarios [2], [5]. For the
+indoor scenario, a controlled blockage event happened during
+data collection. In comparison, for the outdoor scenarios,
+uncontrolled blockage events were caused by passing vehicles.
+The dataset includes the power readings and the ground truth
+labels for blockage for all time instances. We use the pre-
+blockage signature under a controlled blockage [5] from the
+indoor dataset to train the neural network. We then use the
+trained LTC network to predict blockage events on the outdoor
+dataset.
+We construct an 8-neuron LTC network consisting of two
+input neurons, four inter neurons, two control neurons, and
+one output neuron as described in [6] and illustrated in Fig. 1.
+We then use the NCPs defined in [7] to construct the neural
+network, which helps create a very sparse and efficient network
+for training. We define the input as a series of time data with
+64 beam indexes, with power values over time. The output
+is then determined by the output neuron, either 0 or 1. We
+then train the neural network for 40 epochs over the complete
+indoor data set using an Adam optimizer, a cross-entropy loss
+function, and a learning rate of 0.02. After the training, the
+LTC network is evaluated on the outdoor scenarios. Since
+not all 64 beams receive a strong enough signal, we exclude
+the predictions where the received power is lower than 0.4
+normalized received power.
+Fig. 2 presents the accuracy of blockage prediction in dif-
+ferent outdoor scenarios with the scenario numbers defined in
+the dataset. Fig. 2 shows that our proposed model outperforms
+Scenario 17 Scenario 18 Scenario 19 Scenario 20 Scenario 21 Scenario 22
+0
+20
+40
+60
+80
+100
+Accuracy (%)
+Accuracy in Prediction of t+k
+t+1 (Ours)
+t+1
+t+5 (Ours)
+t+5
+t+10 (Ours)
+t+10
+Fig. 2. Blckage prediction accuracy of different outdoor scenarios, using our
+approach (red) and the baseline approach [2] (blue).
+the baseline approach given in [2]. The LTC network accuracy
+scores range from 73.95% to 99.6%, with the lowest score be-
+ing significantly better than the state-of-the-art. Our approach
+shows, in some scenarios, an above 80% accuracy for t + 5
+and above 70% for t + 10, indicating our model’s advantage
+in predicting further time in the future. The proposed model’s
+sparse network and high generalization capabilities make it an
+attractive option for pre-blockage prediction in sub-terahertz
+communication systems.
+Further, the neural network can be quickly deployed and
+does not need to be trained for individual environments
+but shows high generalization capabilities for pre-blockage
+prediction. For future work, we will explore how this pre-
+blockage prediction can help improve reliability and latency
+in THz communication systems.
+REFERENCES
+[1] Akyildiz, Ian, et al. ”TeraHertz Band Communication: An Old Problem
+Revisited and Research Directions for the Next Decade.” arXiv, 2021,
+https://doi.org/10.48550/arXiv.2112.13187.
+[2] M. Alrabeiah and A. Alkhateeb, ”Deep Learning for mmWave Beam and
+Blockage Prediction Using Sub-6 GHz Channels,” in IEEE Transactions
+on Communications, vol. 68, no. 9, pp. 5504-5518, Sept. 2020, doi:
+10.1109/TCOMM.2020.3003670.
+[3] Alkhateeb, Ahmed, and Beltagy, Iz. ”Machine Learning for Reliable
+mmWave Systems: Blockage Prediction and Proactive Handoff.” arXiv,
+2018, https://doi.org/10.48550/arXiv.1807.02723.
+[4] A. E. Kalør, O. Simeone and P. Popovski, ”Prediction of mmWave/THz
+Link Blockages Through Meta-Learning and Recurrent Neural Net-
+works,” in IEEE Wireless Communications Letters, vol. 10, no. 12, pp.
+2815-2819, Dec. 2021, doi: 10.1109/LWC.2021.3118269.
+[5] S. Wu, et al., ”Blockage Prediction Using Wireless Signatures: Deep
+Learning Enables Real-World Demonstration,” in IEEE Open Journal of
+the Communications Society, vol. 3, pp. 776-796, 2022, doi: 10.1109/OJ-
+COMS.2022.3162591.
+[6] Hasani, Ramin, et al. ”Liquid Time-constant Networks.” arXiv, 2020,
+https://doi.org/10.48550/arXiv.2006.04439.
+[7] Lechner, Mathias, et al. “Neural circuit policies enabling auditable
+autonomy.” Nature Machine Intelligence 2 (2020): 642-652.
