@@ -1,31 +1,49 @@
-FROM python:3.12-slim
+FROM lnn-cuda126:local
 
 # 宿主: Jetson Orin Nano, JetPack R36, 驱动 540.4.0 (最高 CUDA 12.6), GPU 架构 **sm_87**。
 #
-# 为什么要这个镜像 (2026-10-26 实测踩坑记录)
-# ------------------------------------------------
-# 第一版用的是 Dockerfile.lnn-cuda126: 走 download.pytorch.org/whl/cu126 索引,
-# 钉 torch==2.13.0.dev20260610+cu126 (该索引对 aarch64 只有 dev 夜轮版)。
-# 结果是:
-#   - torch.cuda.is_available() == True, 能拿到设备名 "Orin"  ✅ 看起来没问题
-#   - 但**任何 kernel 都跑不起来**:
-#       CUDA error: no kernel image is available for execution on the device
-#     伴随警告: "Found GPU0 Orin which is of compute capability (CC) 8.7 ...
-#     No published PyTorch CUDA builds for release 2.13.0.dev20260610+cu126
-#     support this GPU"
-#   原因: 该夜轮版只编了 sm_80 与 sm_90, **且显式排除 8.7**, 也没有编 PTX
-#   供 JIT 回退 —— 所以"CUDA 可见"与"CUDA 可用"是两回事。
+# 这个镜像干什么用的
+# ------------------
+# 它把 `lnn-cuda126:local` 当作**纯 CUDA 运行时库供体** —— 那个镜像里已经装好
+# 全部 cu126 版 nvidia 库 (cublas 12.6.4.1 / cuda-runtime 12.6.77 / nvrtc 12.6.85 /
+# cudnn 9.10 / nccl 2.29 ...), 体积大、下载慢 (约 3.5GB), 但装一次就够。
+# 本镜像只**替换 torch 本体**, 让它带上 sm_87 的 SASS kernel。
 #
-# 结论: 驱动支持 CUDA 12.6 不等于有 cu126 的 wheel 能跑 sm_87。
-# 正确路线是 **PyPI 上的 aarch64 官方 wheel** (它们是 JetPack 上唯一
-# 长期带 sm_87 SASS 的发行版):
-#   torch 2.7.0 (默认 cu126)  ← 首选, 与驱动 540.4.0 的 CUDA 12.6 匹配
-#   torch 2.6.0 / 2.5.1 (默认 cu124) ← 备选, 靠 CUDA minor-version 兼容跑
+# 为什么必须换 torch
+# ------------------
+# `lnn-cuda126:local` 里的 torch 是 `2.13.0.dev20260610+cu126` (cu126 索引对
+# aarch64 只有 dev 夜轮版)。该版**只编了 sm_80 与 sm_90, 并显式排除 8.7**,
+# 也没有编 PTX 供 JIT 回退 —— 而 Orin Nano 是 sm_87, 于是:
 #
-# 不要用 `pip index versions` 判断有没有 wheel —— 它会把无 wheel 的版本也列出来
-# (踩过: 钉 2.10.0+cu126 会被 pip 拉去源码编译)。
+#   torch.cuda.is_available() == True        ← 驱动和 runtime 都正常
+#   torch.cuda.get_device_name(0) == "Orin"  ← 看着完全没问题
+#   x = torch.randn(64, 64, device='cuda'); x @ x
+#   → torch.AcceleratorError: CUDA error: no kernel image is available for
+#     execution on the device
+#
+# **"CUDA 可见" 与 "CUDA 可用" 是两回事。** 验收必须真跑一个 kernel,
+# 只测 `is_available()` 会把一个完全跑不起来的镜像判成"可用"。
+#
+# 为什么是 torch 2.7.0
+# -------------------
+# PyPI 上的官方 aarch64 wheel 是唯一长期带 sm_87 SASS 的发行版:
+#   2.7.0 → 默认 cu126 ← 与驱动 540.4.0 正好对齐
+#   2.6.0 / 2.5.1 → 默认 cu124, 靠 CUDA minor-version 兼容
+#   2.8.0+ → cu128, 超出驱动上限, ❌
+#
+# 附带更正: 2026-10-19 记的 "cu126 索引对 aarch64 只有 dev 夜轮" **是错的** ——
+# 该索引其实有稳定版 `torch-2.10.0+cu126-cp312-cp312-manylinux_2_28_aarch64.whl`
+# (2026-01-21 上传)。当时的检查方法漏了它。
+#
+# 为什么用 --no-deps
+# -----------------
+# 基础镜像里的 nvidia 库与 torch 2.7.0 声明的依赖**逐个对得上**
+# (cublas 12.6.4.1 完全一致; 其余是同 soname 的更新补丁版本, 如 cudnn
+# 9.10.2.21 vs 想要的 9.7.1.26、nccl 2.29.3 vs 2.26.2 —— torch 通过 RPATH
+# 按 soname 加载, 补丁版本差异不影响)。让 pip 再解析一遍依赖只会重下 2.5GB,
+# 而 torch 本体只有 99MB。
 ARG TORCH_SPEC=2.7.0
-RUN pip install --no-cache-dir "torch==${TORCH_SPEC}" \
+RUN pip install --no-cache-dir --no-deps "torch==${TORCH_SPEC}" \
  && pip install --no-cache-dir torchdiffeq numpy scikit-learn pandas
 
 WORKDIR /workspace/LNN

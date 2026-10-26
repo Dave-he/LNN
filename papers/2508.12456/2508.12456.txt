@@ -1,0 +1,1435 @@
+                                         Highlights
+                                         Autonomous Oil Spill Response Through Liquid Neural Trajectory Modeling and Coordinated Marine Robotics
+                                         Hadas C.Kuzmenko, David Ehevich, Oren Gal
+
+                                            • Novel LTC framework for real-time oil spill trajectory prediction
+                                            • 23% improvement over LSTM in spatial accuracy (0.96 vs 0.74)
+                                            • MOOS-IvP integration enables autonomous multi-agent coordination
+                                            • Validated on Deepwater Horizon with complex spill geometries
+arXiv:2508.12456v1 [cs.RO] 17 Aug 2025
+
+
+
+
+                                            • Scalable architecture supports dynamic fleet reconfiguration
+   Autonomous Oil Spill Response Through Liquid Neural Trajectory Modeling
+                       and Coordinated Marine Robotics
+
+                                       Hadas C.Kuzmenkoa,∗, David Ehevicha , Oren Gala
+a Swarm & AI Lab (SAIL), Hatter Department of Marine Technologies, Leon H. Charney School of Marine Sciences, University of Haifa, 199 Aba
+
+                                            Khoushy Ave, Mount Carmel, Haifa 3498838, Israel
+
+
+
+
+Abstract
+Marine oil spills pose grave environmental and economic risks, threatening marine ecosystems, coastlines, and de-
+pendent industries. Predicting and managing oil spill trajectories is highly complex, due to the interplay of physical,
+chemical, and environmental factors such as wind, currents, and temperature, which makes timely and effective re-
+sponse challenging. Accurate real-time trajectory forecasting and coordinated mitigation are vital for minimizing
+the impact of these disasters. This study introduces an integrated framework combining a multi-agent swarm robotics
+system built on the MOOS-IvP platform with Liquid Time-Constant Neural Networks (LTCNs). The proposed system
+fuses adaptive machine learning with autonomous marine robotics, enabling real-time prediction, dynamic tracking,
+and rapid response to evolving oil spills. By leveraging LTCNs—well-suited for modeling complex, time-dependent
+processes—the framework achieves real-time, high-accuracy forecasts of spill movement. Swarm intelligence enables
+decentralized, scalable, and resilient decision-making among robot agents, enhancing collective monitoring and con-
+tainment efforts. Our approach was validated using data from the Deepwater Horizon spill, where the LTC-RK4 model
+achieved 0.96 spatial accuracy, surpassing LSTM approaches by 23%. The integration of advanced neural modeling
+with autonomous, coordinated robotics demonstrates substantial improvements in prediction precision, flexibility, and
+operational scalability. Ultimately, this research advances the state-of-the-art for sustainable, autonomous oil spill
+management and environmental protection by enhancing both trajectory prediction and response coordination.
+Keywords: oil spills, neural networks, swarm robotics, autonomous systems, marine monitoring, trajectory
+prediction
+
+
+
+1. Introduction
+
+    Oil spills remain one of the most pressing environmental challenges of our time, with devastating consequences
+for marine ecosystems, biodiversity, and coastal livelihoods. The 2010 Deepwater Horizon incident exemplifies the
+catastrophic impact of such disasters, where more than 4 million barrels of oil were released into the Gulf of Mexico,
+creating long-lasting environmental and economic damage [1]. Effective mitigation of these disasters requires pre-
+cise prediction of oil spill trajectories to inform containment and recovery efforts, necessitating the development of
+sophisticated monitoring and prediction systems.
+    Traditional oil spill response methods often rely on satellite imagery and manual monitoring systems, which can
+be limited by weather conditions, spatial resolution, and temporal delays [10]. Recent advances in remote sensing
+technology have significantly improved detection capabilities, with radar and optical sensors providing enhanced
+monitoring of oil spill extent and movement patterns. However, the dynamic nature of marine environments and the
+complexity of oil weathering processes demand more sophisticated, adaptive approaches that can operate in real-time.
+    Multi-agent systems (MAS) have emerged as a promising approach to address these challenges by deploying
+autonomous agents capable of distributed sensing, communication, and decision-making. These systems leverage the
+
+   ∗ Corresponding author. Tel.: +972-4-824-0493
+
+   Email addresses: hadascohenk@gmail.com (Hadas C.Kuzmenko), david.ehevich@university.haifa.ac.il (David Ehevich),
+oren.gal@university.haifa.ac.il (Oren Gal)
+
+Preprint submitted to Elsevier                                                                                            August 19, 2025
+collective intelligence of multiple agents to provide scalable and efficient solutions for large-scale spill detection and
+tracking [7]. The integration of unmanned aerial vehicles (UAVs) and autonomous underwater vehicles (AUVs) within
+multi-agent frameworks has demonstrated significant potential for enhancing oil spill response capabilities through
+coordinated surveillance and data collection.
+    Recent developments in neural network architectures, particularly Liquid Time-Constant Networks (LTCNs), offer
+unprecedented capabilities for modeling temporal dynamics and adapting to changing environmental conditions [11].
+These networks, characterized by their ability to process continuous-time data and maintain stable long-term mem-
+ory, are particularly well suited for predicting the complex, time-dependent behavior of oil spill trajectories. When
+combined with multi-agent systems, LTCNs provide a powerful framework for distributed, adaptive decision-making
+that can respond to the dynamic nature of marine oil spill scenarios.
+    This research proposes an integrated approach combining multi-agent systems with Liquid Time-Constant Net-
+works to enhance oil spill trajectory prediction and response coordination. Through this framework, our goal is to
+advance the state-of-the-art in oil spill response technologies, ultimately contributing to the development of sustain-
+able and effective marine environmental management systems that can operate autonomously in real-time. Despite
+advances in swarm robotics and predictive modeling, no system currently combines real-time temporal learning (e.g.,
+LTCNs) with decentralized agent coordination for spill tracking.
+The main contribution of this work lies in the development of OilSpill, an integrated framework that combines Liq-
+uid Time-Constant Neural Networks (LTCNs) with multi-agent autonomous systems to enable real-time oil spill
+trajectory prediction and coordinated response. This study introduces a novel multi-scale temporal modeling
+approach and a modular neural-robotic interface via MOOS-IvP, allowing predictive models to directly inform
+autonomous vehicle deployment under dynamically evolving marine conditions. By systematically comparing differ-
+ent numerical solvers within the LTC framework and validating performance on real-world Deepwater Horizon data,
+the proposed system demonstrates superior spatial accuracy, temporal consistency, and operational reliability
+over traditional LSTM-based models. This is the first study, to the best of our knowledge, to integrate continuous-
+time neural dynamics with decentralized robotic decision-making for environmental disaster mitigation.
+
+2. Theoretical Background
+2.1. Oil Spill Detection and Monitoring
+    The foundation of effective oil spill response lies in accurate and timely detection. Remote monitoring technolo-
+gies have revolutionized oil spill monitoring capabilities, providing comprehensive coverage of large marine areas.
+[10] provide an extensive review of oil spill remote sensing techniques, highlighting the evolution from basic visual
+detection to sophisticated satellite-based systems that incorporate synthetic aperture radar (SAR), optical sensors, and
+hyperspectral imaging. Modern remote sensing approaches leverage multiple data sources and spectral bands to dis-
+tinguish oil from natural phenomena such as algae blooms or sediment plumes. [22] demonstrate the integration of
+machine learning techniques with traditional remote detection and monitoring data, showing how feature extraction
+and classification algorithms can significantly improve detection accuracy and reduce false-positive rates. The Deep-
+water Horizon oil spill provided an unprecedented opportunity to test and refine oil spill modeling approaches.[1]
+conducted a comprehensive review of ten years of modeling efforts related to this disaster, highlighting the advances
+made and the remaining challenges. Their analysis demonstrates the importance of integrating multiple modeling
+approaches and data sources to achieve accurate trajectory predictions. These advances in monitoring technology and
+data processing create the foundation upon which autonomous monitoring systems can be built.
+
+2.2. Multi-Agent Systems for Oil Spill Response
+    Multi-agent systems (MAS) offer distributed sensing, scalability, and fault tolerance advantages for oil spill moni-
+toring. These systems enable coordinated surveillance across large marine areas through autonomous agents that col-
+laborate while maintaining individual decision-making capabilities. Recent research has focused on swarm robotics
+and UAV applications. [2] developed distributed drone systems using local sensory information without direct com-
+munication. [7] created a comprehensive UAV framework with intelligent task allocation algorithms that optimize
+coverage while minimizing energy consumption using the PANGEA platform. [8] introduced OSM (Oil Spill Mon-
+itoring), integrating oceanographic models with agent-based sensing for continuous spill tracking and trajectory pre-
+diction. [18]developed CROS (Contingency Response Multi-agent System for Oil Spills) for emergency response
+                                                            2
+scenarios, combining real-time data acquisition with decision support systems for rapid resource deployment. [15]
+demonstrated agent-based mission management for UAVs, emphasizing the BDI (Belief-Desire-Intention) framework
+for autonomous decision-making in dynamic environments.
+
+2.3. Swarm Intelligence and Distributed Decision Making
+    Swarm intelligence principles enable coordinated behavior in multi-agent oil spill monitoring through local agent
+interactions that achieve global objectives without centralized control, making them ideal for dynamic marine environ-
+ments with unreliable communication. [3] demonstrated swarm aquabots for oil spill detection, emphasizing scalable
+solutions for large-scale spill tracking with adaptive network reconfiguration. [21] developed a particle swarm opti-
+mization (PSO) framework for dynamic decision making in response to marine oil spills, enabling agents to optimize
+positioning and detection strategies based on evolving conditions. Advanced coordination systems implement hier-
+archical finite state machines that enable UAVs to operate in multiple modes including station maintenance, route
+execution, and coordinated containment operations through distributed sensor networks and real-time communication
+protocols. The MOOS-IvP framework provides a robust foundation for autonomous marine vehicle operations, offer-
+ing a behavior-based architecture for complex mission execution [4]. It supports distributed decision making while
+maintaining centralized coordination capabilities through a publish-subscribe communication architecture [5]. The
+modular design of the framework enables real-time adaptation and fault tolerance, making it suitable for dynamic en-
+vironmental response scenarios [24]. MOOS-IvP has been extensively used in multi-vehicle coordination scenarios,
+with applications in oceanographic data gathering using market-based approaches [13]. Its proven reliability in marine
+environments and standardized interfaces make it an ideal platform for integrating advanced techniques with multi-
+agent coordination systems [5]. The versatility of the framework is further demonstrated by its integration with other
+robotic architectures such as ROS, which combines the strengths of both systems for maritime autonomy applications
+[24].
+
+2.4. Liquid Time-Constant Networks
+    Liquid Time-Constant Networks (LTCNs) offer powerful capabilities for capturing the temporal dynamics of oil
+spill behavior through continuous-time processing and adaptive time constants. [11] introduced LTCNs as a novel
+approach to modeling time-dependent systems with improved stability and interpretability compared to traditional
+recurrent architectures. LTCNs incorporate differential equations directly into the network structure, enabling natural
+handling of irregularly sampled data and varying time constants, which are particularly valuable for oil spill modeling
+where environmental conditions and sampling frequencies vary significantly. [12] established the theoretical foun-
+dations demonstrating LTCNs’ capacity as universal approximates for continuous-time dynamical systems, ensuring
+that they can capture complex temporal dependencies in oil spill dispersion processes including changing weather
+conditions, ocean currents, and oil properties over time.[6] demonstrated the robustness of liquid neural networks in
+out-of-distribution scenarios, showing their ability to maintain stable performance when encountering environmental
+conditions different from training data, crucial for oil spill response systems operating across diverse marine environ-
+ments. [16] enhanced the mathematical rigor of liquid neural network architectures through closed-form continuous-
+time neural networks, providing a solid theoretical framework for applying LTCNs to real-world dynamic systems,
+including oil spill trajectory prediction.
+
+2.5. Integration of Multi-Agent Systems and Neural Networks
+    The convergence of multi-agent systems and advanced neural networks creates new opportunities for enhanced
+oil spill monitoring by combining distributed intelligence with pattern recognition and prediction capabilities. [17]
+demonstrated multi-UAV distributed trajectory generation using end-to-end learning approaches, showcasing coop-
+erative behavior for real-time navigation and decision-making challenges applicable to oil spill trajectory prediction,
+where multiple agents must coordinate to track evolving spill boundaries. The integration of LTCNs with swarm-
+based approaches provides a framework for adaptive and decentralized decision-making. LTCNs enable real-time
+prediction of oil spill trajectories based on current environmental conditions and historical patterns. When combined
+with swarm-based sensing networks, they create systems capable of both distributed data collection and sophisti-
+cated temporal modeling. This integrated approach addresses key limitations by combining the spatial coverage
+advantages of multi-agent systems with the temporal modeling capabilities of advanced neural networks, enabling
+
+                                                           3
+adaptive response to changing conditions while maintaining scalability and fault tolerance.[9] demonstrated the effec-
+tiveness of the RAPSODI (Remote-sensing Anti-Pollution System for geOgraphic Data Integration) project in com-
+bining multiple sensor technologies including SAR, infrared/ultraviolet scanners, and conventional radar systems.
+The project emphasized that no single sensor provides complete oil spill monitoring capabilities, which requires inte-
+grated approaches with complementary sensing technologies. [23] advanced multi-sensor data processing through the
+MEDUSA (Multispectral Environmental Data Unit for Surveillance Applications) system, integrating various sensors
+including side-looking airborne radar, infrared/ultraviolet scanners, microwave radiometers, and laser fluorosensors
+with real-time data acquisition and processing capabilities. [10] provided an extensive review of oil spill remote
+sensing technologies, highlighting the evolution from single-sensor approaches to integrated multisensor platforms,
+highlighting the complementary nature of different sensing modalities.
+
+2.6. Oil Spill Modeling: Challenges and Solutions
+    The Deepwater Horizon experience revealed critical limitations in traditional static modeling approaches, high-
+lighting the need for adaptive systems that can incorporate real-time data and adjust predictions as conditions evolve.
+Oil spills undergo complex weathering processes that include spreading, evaporation, emulsification, and biodegrada-
+tion, each with distinct temporal characteristics that conventional mathematical models struggle to capture accurately.
+[21] and [20] highlighted the importance of dynamic decision making in marine oil spill responses through simulation-
+based multi-agent particle swarm optimization (PSO) frameworks, demonstrating how optimization algorithms can
+be integrated with multi-agent systems to adapt to changing environmental conditions in real time. Multi-agent sys-
+tems offer inherent scalability advantages, allowing additional agents to be deployed as spill size increases, expanding
+monitoring coverage and response capabilities. The distributed intelligence approach enables autonomous decision
+making based on local information while contributing to global system objectives. This distributed decision-making is
+enhanced by integrating Liquid Time-Constant Networks (LTCNs), which can process local temporal patterns while
+maintaining awareness of global system dynamics. Despite significant advances in multi-agent systems and neural
+network architectures, their integration for oil spill response remains largely unexplored. Current systems often rely
+on simplified models that do not capture the full complexity of oil spill dynamics or provide the real-time adaptability
+required for an effective response. Although the RAPSODI project and systems such as MEDUSA have demonstrated
+the value of multisensor integration and real-time data processing, they lack the adaptive learning capabilities that
+modern neural networks provide. Recent UAV-based multi-agent systems for oil spill detection show promise but rely
+primarily on traditional computer vision and rule-based decision making. [19] highlighted limitations of traditional
+static modeling approaches and the need for adaptive systems that learn from real-time observations. This research
+addresses these gaps by developing an integrated framework combining the distributed intelligence of multi-agent
+systems with the temporal modeling capabilities of liquid-time constant networks, promising more accurate trajec-
+tory prediction, better coordination between response agents, and improved adaptability to changing environmental
+conditions.
+
+
+3. Methodology
+
+3.1. Study Case: Deepwater Horizon Shapefile Dataset
+    The methodology used in this research centers on the analysis of the Deepwater Horizon oil spill incident, using
+comprehensive satellite observation data and advanced neural network modeling techniques. This section presents
+a systematic approach to evaluate liquid-time-constant network performance against traditional methods using real-
+world spill data.
+
+3.1.1. Study Case: Deepwater Horizon Shapefile Dataset
+    The primary case study focuses on the Deepwater Horizon oil spill incident on April 24, 2010-May 2, 2010, which
+is one of the most significant marine environmental disasters in recent history. This incident provides an ideal testbed
+for the evaluation of the oil spill prediction model due to the extensive satellite monitoring data available and the
+complex environmental conditions present during the evolution of the spill.
+    The Deepwater Horizon dataset, illustrated in Figure 1, provides comprehensive information about the evolution
+of the spill under real operational conditions. The incident occurred at coordinates 28°44’12” N / 88°23’14” W, with
+                                                           4
+                                                                                                                                                                             89°0'W                               88°0'W
+
+                                                                                                                                                                    MS                                                              AL
+                                                                                                                                                                                                                 Mobile Bay
+                                                                                             EXPERIMENTAL MARINE
+                                                                                            POLLUTION SURVEILLANCE
+                                                                                                    REPORT
+
+
+
+
+                                                                                                                                                         30°0'N
+                                                                                         Analysis Provided by: The National Oceanic and
+                                                                                         Atmospheric Administration/National Environmental
+                                                                                         Satellite, Data and Information Service (NOAA/NESDIS)
+
+
+                                                                                         REPORT DATE: April 24, 2010                                                                                       Anomaly
+                                                                                         REPORT TIME: 2215Z (4/23/10 0515 CDT)                                                                               m
+                                                                                         ANALYST: SPAMPATA
+
+                                                                                                                                                                  LA
+                                                                                         DATA SOURCE: ALOS PALSAR
+                                                                                         MODE: FBS
+                                                                                         IMAGE DATE/TIME: 4/24/2010 1643Z ( 1143 CDT)
+
+
+
+
+                                                                                               m     Anomaly
+
+
+
+
+                                                                                                                                                         29°0'N
+                                                                                                     Center Point of Anomaly:
+                                                                                                     [ 29°01'35" N / 88°19'01" W ]
+                                                                                                      Location of Horizon Oil Rig:
+                                                                                             A        [ 28°44'12" N / 88°23'14" W ]
+                                                                                             !
+                                                                                                                                                                                                       A
+                                                                                                                                                                                                       !
+
+                                                                                         REMARKS:
+
+                                                                                         The anomaly has expanded somewhat since
+
+
+
+
+                                                                                                                                                                                                                                     µ
+                                                                                         yesterday's report. The northeastern section appears to
+                                                                                         be the lightest in nature. At is furthest point, the
+                                                                                                                                                                               Kilometers
+                                                                                         anomaly is seen stretching 36NM from the well. Based                     0 4 8 16 24 32
+                                                                                         upon our current data, we have no knowledge of oil                                           Miles
+                                                                                         north of 29° 23' 13.2".                                                  0 4 8 16 24 32
+                                                                                      This is an experimental product of the Satellite Analysis Branch
+                                                                                      and not operationally maintained. We will do our best to make it                                Nautical Miles
+                                                                                                        available in a timely manner.                             03.757.5   15 22.5 30                              © JAXA, METI
+
+
+
+
+(a) OilSpill system Spill Boundary Analysis showing detected spill boundaries        (b) NOAA/NESDIS Satellite Analysis Report from April 24, 2010, showing
+with complex geometric features and multi-lobe configuration characteristic of       ALOS PALSAR radar imagery and official spill boundary delineation used as
+the Deepwater Horizon incident                                                       ground truth for model validation
+
+Figure 1: Deepwater Horizon case study data from April 24, 2010: (a) OilSpill boundary analysis, (b) NOAA/NESDIS satellite surveillance report.
+
+
+the spill center documented at 29°01’35” N / 88°19’01” W on April 24, 2010. The NOAA/NESDIS experimental
+marine pollution surveillance report indicates that the anomaly had expanded significantly, with the northeastern
+section appearing lightest in nature and extending approximately 36 nautical miles from the wellhead.
+
+3.1.2. Data Source Characteristics
+    The satellite data used in this study originate from multiple sources to ensure comprehensive coverage and valida-
+tion capabilities:
+
+ALOS PALSAR Radar Data. The primary data source consists of advanced land observation satellite (ALOS) Phased
+Array type L-band Synthetic Aperture Radar (PALSAR) images acquired on April 24, 2010, at 1643Z (1143 CDT).
+This radar-based system provides an all-weather monitoring capability essential for continuous spill tracking regard-
+less of cloud cover or lighting conditions.
+
+NOAA/NESDIS Analysis. Official analysis provided by the National Oceanic and Atmospheric Administration/National
+Environmental Satellite, Data and Information Service offers professionally validated spill boundary delineations.
+These reports serve as ground-truth data for model validation and provide expert interpretation of satellite imagery
+under operational conditions.
+
+Shapefile Geometric Data. The dataset includes precise geometric representations of the spill boundaries in shapefile
+format, allowing quantitative analysis of the evolution of the area, the movement of centroids and the complexity of
+the boundaries over time.
+
+3.1.3. Methodological Framework
+    The experimental methodology employs a comparative analysis framework that evaluates multiple prediction
+approaches under identical initial conditions:
+
+Model Initialization. All models (LTC-RK4, LTC-Euler, LTC-Explicit, and LSTM) are initialized using identical spill
+parameters derived from the April 24, 2010- May 2, 2010 observations. This ensures a fair comparison by eliminating
+initialization bias and focusing evaluation on predictive capability differences.
+
+Environmental Condition Integration. The methodology incorporates real environmental conditions present during
+the Deepwater Horizon incident, including wind patterns, ocean currents, and weather conditions documented in
+NOAA reports. This integration ensures that model performance evaluation reflects real-world operational challenges.
+                                                                                 5
+Multi-Scale Analysis. The evaluation framework addresses both local-scale boundary evolution and large-scale tra-
+jectory prediction, providing a comprehensive assessment of model capabilities across different spatial and temporal
+scales relevant to emergency response operations.
+
+3.1.4. Training and Testing Data Configuration
+    The data set configuration follows a systematic approach to ensure robust model training and unbiased perfor-
+mance evaluation.
+    Training Dataset: The LTC networks were trained using shapefile data from multiple dates during the Deepwater
+Horizon incident to capture various patterns of evolution of the spill and environmental conditions. The training data
+set comprises:
+   • April 25, 2010 - Post-initial expansion phase
+   • April 29, 2010 - Mid-stage spill development
+   • May 01, 2010 - Complex multi-lobe geometry phase
+   • May 02, 2010 - Advanced weathering and dispersion stage
+   • February 4, 2010 - Pre-incident baseline conditions for environmental modeling
+    This temporal distribution ensures that the models learn from various stages of the evolution of the spill, the envi-
+ronmental forcing conditions, and the geometric complexity patterns characteristic of major marine oil spill incidents.
+    Testing and Analysis Dataset: Model performance evaluation and results analysis utilize independent data not
+included in the training process:
+   • April 24, 2010 - Primary evaluation case (early expansion phase)
+   • April 26-28, 2010 - Extended temporal sequence analysis (progressive evolution tracking)
+    This separation between training and testing datasets prevents overfitting and ensures that performance metrics
+reflect the models’ true generalization capability for operational deployment scenarios.
+
+3.1.5. Validation Protocol
+    The validation protocol rigorously evaluates model performance by comparing predictions against official NOAA/NESDIS
+spill boundaries using multiple complementary metrics: spatial overlap, centroid displacement, area accuracy, and
+boundary fidelity. The methodology assesses both short-term accuracy and long-term trajectory stability in multi-
+ple time steps, while incorporating uncertainty analysis to gauge prediction confidence under varying environmental
+conditions. This comprehensive approach enables a thorough evaluation of the LTC network’s oil spill prediction
+capabilities and informs optimal deployment strategies for emergency response. The Deepwater Horizon case study
+provides a demanding testbed with complex environmental conditions and irregular spill geometry characteristic of
+major marine incidents.
+
+3.2. System Overview
+    The proposed oil spill trajectory prediction system (OilSpill) integrates Liquid Time-Constant Networks (LTCNs)
+with multi-agent architectures to create an adaptive, real-time prediction, and response framework. The system ar-
+chitecture consists of four primary components: (1) a distributed data acquisition layer utilizing shapefile-based oil
+spill observations, (2) an enhanced feature extraction pipeline that processes geometric, temporal and environmental
+characteristics, (3) a sophisticated LTC-based prediction engine capable of modeling complex spill dynamics across
+multiple temporal scales, and (4) multi-robot system, which autonomously navigates and tracks oil spills on sea
+surfaces, allowing it to quickly respond to changing environmental conditions. The architectural design emphasizes
+modularity and scalability, allowing seamless integration with existing marine monitoring systems such as MOOS-IvP.
+The system processes geospatial data in real-time, extracting comprehensive feature sets that capture both instanta-
+neous spill characteristics and temporal evolution patterns. The prediction engine generates multi-horizon forecasts,
+providing trajectory estimates at 3, 7, 11, and 15-hour intervals to support both immediate response operations and
+strategic planning activities.
+                                                           6
+3.2.1. Data Acquisition and Processing Pipeline
+     The data acquisition layer processes oil spill observations encoded as ESRI shapefiles, which contain precise
+polygon representations of spill boundaries at discrete time intervals. Each shapefile undergoes comprehensive repro-
+cessing to extract a 25-dimensional feature vector encompassing geometric properties (area, perimeter, compactness,
+convexity), spatial characteristics (centroid coordinates, aspect ratio, orientation), temporal features (time since spill
+initiation, cyclical time encoding) and environmental conditions (wind vectors, current patterns, temperature). The
+preprocessing pipeline implements robust coordinate system transformations to ensure geographic accuracy, con-
+verting all spatial measurements to the WGS84 coordinate system (EPSG:4326) and applying latitude-dependent
+corrections for area calculations. The system handles multi-polygon geometries by selecting the largest component,
+ensuring consistency in feature extraction across varied spill configurations.
+
+3.2.2. Multi-Scale Temporal Modeling
+    The system implements a novel multi-scale temporal modeling approach that stratifies training data based on pre-
+diction horizons. Short-term sequences (0-48 hours) utilize interpolated hourly observations to capture rapid spill evo-
+lution dynamics, while medium-term sequences (1-7 days) focus on daily progression patterns influenced by persistent
+environmental forcing. This stratification enables the LTC network to learn scale-appropriate dynamics, improving
+prediction accuracy across different temporal horizons. Environmental forcing is incorporated through historically ac-
+curate atmospheric and oceanographic conditions specific to the Gulf of Mexico region during the Deepwater Horizon
+incident [14]. Wind patterns, ocean currents, and temperature variations are encoded as additional features, allowing
+the model to account for the complex interplay between spill behavior and environmental drivers.
+
+3.3. OilSpill model Architecture
+    The core prediction engine utilizes an OilSpill Model based on Liquid Time-Constant Networks, specifically
+designed to handle the continuous-time dynamics inherent in oil spill evolution. The LTC architecture addresses key
+limitations of traditional recurrent networks by incorporating differential equations directly into the network structure,
+enabling natural handling of irregularly sampled data and varying temporal scales characteristic of environmental
+monitoring systems.
+
+3.3.1. LTC Cell Design and Solver Implementation
+    The LTC cell implementation follows the mathematical formulation introduced by [11], where the state evolution
+is governed by:
+                                      τdx/dt = −x + f (W x · u + Wr · h + b)                                   (1)
+where τ represents learnable time constants, x denotes the cell state, u is the input, h represents the recurrent state,
+and f is the activation function. The system implements three solver variants.
+   This shows that the effective time constant is input-dependent, and given by:
+
+                                               τsys = τ/(1 + τ f (x(t), I(t), t, θ))                                  (2)
+
+LTC-EX (Explicit Adaptive):. To compute updates, a Fused Euler ODE solver is introduced to accommodate different
+computational requirements and accuracy:
+
+                     x(t + ∆t) = [x(t) + ∆t · f (x(t), I(t), t, θ) · A]/[1 + ∆t · (1/τ + f (x(t), I(t), t, θ))]       (3)
+
+    The LTC-EX incorporates adaptive time stepping based on state magnitude, automatically adjusting integration
+steps to maintain numerical stability while optimizing computational efficiency. The adaptive mechanism scales the
+time step according to:
+                                            adaptive dt = dt/(1 + ∥state∥)                                     (4)
+   This approach balances computational speed with numerical accuracy, making it suitable for real-time operational
+deployments where rapid prediction updates are essential.
+   Our LTC framework also supports two other numerical solvers, each based on distinct integration schemes:
+
+
+                                                                 7
+LTC-RK (Runge-Kutta 4th Order):. Provides high-accuracy integration suitable for complex oil spill dynamics re-
+quiring precise temporal modeling. The RK4 solver implements:
+
+                                           k1 = f (tn , yn )                                                         (5)
+                                           k2 = f (tn + h/2, yn + hk1 /2)                                            (6)
+                                           k3 = f (tn + h/2, yn + hk2 /2)                                            (7)
+                                           k4 = f (tn + h, yn + hk3 )                                                (8)
+                                         yn+1 = yn + h/6(k1 + 2k2 + 2k3 + k4 )                                       (9)
+
+This solver excels in scenarios requiring high temporal resolution and accurate modeling of nonlinear spill dynamics,
+particularly during critical early phases of spill evolution.
+
+LTC-Euler (Baseline):. Implements simple forward Euler integration for rapid prototyping and baseline compar-
+isons. While computationally efficient, this solver requires careful time step selection to maintain stability, making it
+appropriate for initial model development and testing phases.
+
+LSTM Implementation:. The OilSpill model can also model the temporal dynamics of oil spill evolution using a deep
+LSTM network architecture specifically designed for multi-step prediction of spill characteristics.
+
+                                             ft = σ(W f · [ht−1 , xt ] + b f )                                      (10)
+                                             it = σ(Wi · [ht−1 , xt ] + bi )                                        (11)
+                                            C̃t = tanh(WC · [ht−1 , xt ] + bC )                                     (12)
+                                            Ct = ft ∗ Ct−1 + it ∗ C̃t                                               (13)
+                                             ot = σ(Wo · [ht−1 , xt ] + bo )                                        (14)
+                                            ht = ot ∗ tanh(Ct )                                                     (15)
+
+where ft , it , and ot represent forget, input, and output gates respectively, σ denotes the sigmoid activation and ∗
+indicates element-wise multiplication. The first LSTM layer with 128 hidden units captures the primary temporal
+dependencies, while the second layer (64 units) refines the representations. Dropout regularization (p = 0.1) prevents
+overfitting during the training process of 150 epochs. The final dense layer maps the learned temporal features back to
+the 28-dimensional output space, enabling multi-step ahead prediction of spill geometry, position, and environmental
+interactions.
+
+3.3.2. Enhanced Architecture Components
+    The OilSpill Model incorporates several architectural innovations beyond the core LTC layers:
+
+Multi-Head Attention Mechanism:. The attention mechanism operates on different time scales, allowing the model to
+focus on relevant historical patterns when making predictions. The attention mechanism computes:
+                                                                          p
+                                      Attention(Q, K, V) = softmax(QK T / dk )V                             (16)
+
+where query, key, and value matrices are derived from the LTC layer output, allowing the model to selectively weight
+historical observations based on their relevance to current predictions.
+
+Feature Processing Pipeline:. Input features undergo projection to a 128-dimensional hidden space through a fully
+connected layer with ReLU activation, followed by layer normalization to ensure stable training dynamics. This
+processing enables the model to learn complex feature interactions while maintaining numerical stability.
+
+Uncertainty Quantification:. The model implements an additional output branch that estimates prediction uncertainty
+through a softplus activation layer, providing confidence bounds for trajectory predictions. This capability is crucial
+for operational decision making, allowing response teams to assess prediction reliability.
+
+                                                               8
+                                  Table 1: Comparison of LTC and LSTM Model Characteristics
+
+  Aspect                               LTC Networks                                       LSTM Networks
+  Temporal Modeling                    Continuous-time dynamics                           Discrete-time sequences
+  Physical Interpretation              ODE-based, physically meaningful                   Black-box recurrent states
+  Numerical Integration                Multiple solver options                            Fixed update rules
+  Stability                            Mathematically guaranteed                          Dependent on training
+  Computational Complexity             Configurable (solver-dependent)                    Fixed architecture
+
+3.3.3. Architectural Differences
+    The OilSpill framework is flexible and allows switching between LTC and LSTM models.
+
+3.3.4. Training Strategy and Loss Function
+    The training procedure implements a sophisticated loss function designed specifically for temporal oil spill pre-
+diction. The total loss function is defined as:
+
+                                         Ltotal = Lmse + α · Lsmoothness + β · Larea                               (17)
+
+where Lmse represents the standard mean squared error, Lsmoothness enforces temporal consistency through:
+
+                                          Lsmoothness = ∥ypred [t + 1] − ypred [t]∥2                               (18)
+
+and Larea provides additional weighting for area-related features, given their critical importance in spill response
+planning.
+    The smoothness regularization parameter α varies by solver type: 0.05 for RK4, 0.1 for explicit and 0.2 for Euler,
+reflecting the different stability characteristics of each integration method.
+    Training is performed using the AdamW optimizer with solver-specific learning rates: 0.0003 for RK4, 0.0005
+for explicit and 0.001 for Euler. Early stopping is applied with solver-adjusted patience values to accommodate the
+convergence behavior of each method. This adaptive training strategy ensures optimal performance across integration
+schemes while preventing overfitting to solver-specific temporal patterns.
+
+3.3.5. Data Normalization and Preprocessing
+    Feature normalization follows a robust z-score standardization approach computed from training data statistics:
+
+                                                  xnormalized = (x − µ)/σ                                          (19)
+
+The system implements outlier clipping at ±3σ to prevent extreme values from destabilizing the training while pre-
+serving the natural variability inherent in oil spill observations. Special handling addresses zero-variance features by
+substituting unit variance, ensuring numerical stability during normalization operations.
+    The construction of temporal sequences creates 16 timestep windows with overlapping segments to maximize
+data utilization while maintaining temporal coherence. For datasets with insufficient temporal resolution, the system
+implements intelligent padding through trend extrapolation, preserving realistic spill evolution patterns while meeting
+model input requirements.
+
+3.4. MOOS-IvP Integration Framework
+    The integration of liquid-time-constant networks with the mission-oriented operating suite-interval programming
+(MOOS-IvP) autonomous systems represents a critical advancement in real-time oil spill response coordination. This
+section details the architectural implementation and operational workflow that enables seamless communication be-
+tween neural network predictions and autonomous vehicle fleet coordination.
+
+
+
+                                                              9
+           Figure 2: MOOS-IvP integration architecture showing LTC predictions to autonomous vehicle deployment workflow.
+
+
+
+3.4.1. System Architecture
+    The integrated system architecture, illustrated in Figure 2, demonstrates a hierarchical communication structure
+that enables real-time coordination between predictive modeling and autonomous response deployment. The frame-
+work consists of several key components:
+
+Module:. The neural network processing unit executes the liquid time-constant network computations to predict
+the oil spill trajectory. This module processes environmental sensor data, historical spill information, and real-time
+observations to generate boundary predictions and trajectory forecasts. The MOOS framework communicates with the
+MOOS framework through socket-based connections, enabling low-latency data transmission, critical for emergency
+response applications.
+
+MOOS Database (MOOSDB):. The central communication hub manages all information sharing throughout the sys-
+tem between distributed components. MOOSDB maintains real-time databases of vehicle positions, environmental
+conditions, spill boundaries, and mission parameters. This centralized approach ensures data consistency across all
+system components while providing the flexibility needed for dynamic mission adaptation.
+
+Path Assignment Module (PathAssign):. This critical component translates LTC predictions into actionable way-
+point sequences for autonomous vehicle deployment. The PathAssign module optimizes vehicle trajectories based
+on predicted spill boundaries, environmental constraints, and operational objectives. The module employs advanced
+optimization algorithms to ensure efficient coverage while minimizing inter-vehicle conflicts and operational costs.
+
+Autonomous Vehicle Fleet:. The distributed fleet of autonomous vessels (Vessel 1 through Vessel N) executes as-
+signed missions based on LTC predictions and MOOS coordination. Each vehicle maintains bidirectional communi-
+cation with the central system through medium-based protocols, allowing real-time mission updates and status reports.
+
+3.4.2. Communication Protocols
+    The system employs a hybrid communication architecture that combines socket-based connections for high-
+frequency data exchange with medium-based protocols for vehicle coordination:
+
+
+
+                                                                10
+Socket Communications:. Direct socket connections between the OilSpill algorithm and MOOSDB enable real-time
+transmission of prediction updates with minimal latency. This connection supports the high-frequency data exchange
+required for dynamic spill boundary updates and rapid mission adaptation.
+
+Medium-Based Vehicle Communication:. Autonomous vehicles communicate with the central system through robust
+medium protocols designed for marine environments. These protocols account for communication limitations inherent
+in oceanic operations, including intermittent connectivity and bandwidth constraints.
+
+User Interface Integration:. The system provides comprehensive user interface capabilities that enable human opera-
+tors to monitor system performance, adjust mission parameters, and intervene when necessary. The interface displays
+spill predictions, vehicle positions, and mission progress in real time using intuitive visualization tools.
+
+3.4.3. Real-Time Operation Workflow
+    The operational workflow demonstrates the seamless integration of predictive modeling with autonomous vehicle
+coordination.
+
+   • Prediction Generation: The OilSpill algorithm continuously processes incoming environmental data and gen-
+     erates updated predictions of the spill trajectory based on current conditions.
+
+   • Data Transmission: Prediction results are transmitted to MOOSDB through socket connections, ensuring
+     immediate availability to all components of the system.
+   • Mission Planning: PathAssign receives updated predictions and optimizes vehicle deployment strategies, gen-
+     erating new waypoint sequences that account for the predicted spill evolution.
+   • Fleet Coordination: Updated mission parameters are distributed to autonomous vehicles through medium-
+     based communication protocols, enabling the deployment of coordinated response.
+   • Feedback Integration: Vehicles report real-time observations back to the system, providing ground-truth data
+     that improve the accuracy of the prediction and the effectiveness of the mission.
+
+3.4.4. Operational Advantages
+    The MOOS-IvP integration provides several critical advantages for oil spill response operations:
+
+   • Scalability: The distributed architecture supports fleet expansion from small coastal operations to large-scale
+     offshore response missions without fundamental system redesign.
+   • Adaptability: Real-time communication enables rapid mission adaptation based on changing spill conditions,
+     weather changes, or operational constraints.
+
+   • Reliability: The robust communication protocols and distributed decision-making capabilities ensure system
+     operation even under challenging maritime conditions.
+   • Operational Efficiency: Automated coordination reduces human workload while improving response coordi-
+     nation and resource utilization.
+
+3.4.5. Implementation Considerations
+    The successful deployment of this integrated system requires careful consideration of several technical and oper-
+ational factors.
+
+   • Communication Latency: The system design prioritizes low-latency communication between prediction gen-
+     eration and vehicle deployment to ensure the ability to respond quickly.
+   • Data Consistency: Centralized database management through MOOSDB ensures that all system components
+     operate with consistent information, preventing coordination conflicts.
+
+                                                         11
+   • Fault Tolerance: The system incorporates redundancy and error handling mechanisms to maintain operation
+     during communication failures or vehicle malfunctions.
+   • Human Oversight: While the system operates autonomously, human operators maintain oversight capability
+     and can intervene when conditions require manual intervention.
+
+    This MOOS-IvP integration framework represents a significant advancement in autonomous environmental re-
+sponse systems, providing a robust foundation for real-time oil spill response coordination that combines the predic-
+tive power of LTC networks with the operational capabilities of autonomous vehicle fleets.
+
+3.4.6. System Components
+    Oil Spill Boundary Algorithm (LTC): The external OilSpill algorithm computes oil spill containment areas and
+boundary predictions, communicating results to the shoreside system through TCP socket connections. This compo-
+nent operates independently of the MOOS system, allowing flexible algorithm development and testing. Shoreside
+Control Application: A centralized MOOS application (pPathAssign) responsible for vehicle coordination, path plan-
+ning, and mission management. This component receives boundary data from the OilSpill algorithm, coordinates
+vehicle positioning, and distributes mission parameters to individual vehicles. Autonomous Marine Vehicles: Indi-
+vidual MOOS-IvP enabled vessels to execute coordinated oil containment behaviors through a behavior-based archi-
+tecture. Each vehicle operates autonomously while maintaining communication with the shoreside control system for
+coordination and mission updates.
+
+3.4.7. Communication Architecture
+    The system employs a hybrid communication model that balances centralized coordination with distributed au-
+tonomy: External Interface: TCP socket connection enables high-bandwidth communication between the MOOS
+shoreside system and the LAN. This interface supports the real-time transmission of boundary coordinates and envi-
+ronmental data while maintaining the modularity of the system. Internal Interface: MOOS publish-subscribe messag-
+ing facilitates inter-vehicle and shoreside communication. The standardized MOOS message format ensures reliable
+communication and supports dynamic fleet reconfiguration. Vehicle-to-Shoreside Communication: Bridged com-
+munication through uFldNodeBroker enables position reporting, status updates, and command distribution between
+individual vehicles and the centralized control system. This architecture supports scalable operations with variable
+fleet sizes.
+
+3.4.8. Operational Workflow
+    The operational workflow consists of three sequential phases:
+
+Oil Boundary Reception and Initial Positioning. The operational cycle begins when oil spill boundary coordinates
+are updated by TCP to the pPathAssign application. Upon receiving new boundary data, the system activates
+station-keeping mode by broadcasting STATION KEEP ALL=true to all vehicles in the fleet. Each vehicle enters
+station-keeping mode using the BHV StationKeep behavior and reports its current coordinates (NAV X, NAV Y) to the
+shoreline system via the pCoordinates application. The centralized coordination system waits until all vehicles have
+reported their positions, ensuring complete situational awareness before proceeding to path planning.
+
+Path Planning and Starting Position Assignment. Once all vehicle positions are synchronized, the shoreside system
+calculates optimal starting positions on the oil spill perimeter for each vehicle. The path planning algorithm considers
+vehicle capabilities, current positions, and spill geometry to minimize transit time and maximize coverage efficiency.
+    Individual starting positions are distributed to each vehicle via STARTING POSITION UPDATES [VEHICLE ID ]
+messages. Vehicles transition to STARTING-POSITION mode and execute transit missions using BHV Waypoint be-
+haviors to reach their assigned positions. Each vehicle signals arrival by setting REACHED STARTING POSITION=true,
+enabling the system to confirm readiness for containment operations.
+
+
+
+
+                                                          12
+Oil Containment Operations. Upon confirmation that all vehicles have reached their starting positions, the sys-
+tem distributes detailed oil containment paths through OIL PATH UPDATES[VEHICLE ID] messages. Vehicles enter
+OIL-PATH mode and begin to execute systematic oil spill containment patterns using coordinated BHV Waypoint
+behaviors.
+    The containment patterns are designed to create an effective barrier around the oil spill perimeter while accounting
+for predicted spill movement. Vehicles execute containment routes in continuous loops until new boundary data arrive
+from the system, allowing adaptive response to changing spill conditions.
+
+3.4.9. Vehicle Behavior Architecture
+    The vehicle behavior system implements a hierarchical finite-state machine with four primary operational modes:
+
+   • STATION KEEPING Mode: Utilizes BHV StationKeep behavior to maintain position within a specified
+     radius during synchronization phases. This mode ensures vehicles remain stationary while the system processes
+     new boundary data and calculates optimal positioning.
+   • STARTING-POSITION Mode: Employs BHV Waypoint behavior to navigate to assigned starting positions
+     with completion flagging. This mode includes collision avoidance and path optimization to ensure safe and
+     efficient transit to containment positions.
+   • OIL-PATH Mode: Uses coordinated BHV Waypoint behaviors to execute oil containment routes with perpet-
+     ual looping capability. This mode implements the primary containment function while maintaining formation
+     integrity and communication with the control system.
+   • RETURNING Mode: Utilizes BHV Waypoint behavior for emergency return to base operations. This mode
+     provides fail-safe functionality for vehicle recovery in case of system failures or emergency conditions.
+
+3.5. OilSpill System Pseudocode
+    The following pseudocode outlines the high-level workflow of the OilSpill system, integrating the LTCN-based
+prediction engine with real-time multi-agent robotic coordination for oil spill tracking and response as detailed in
+Algorithm 1.
+    Steps 1–2 correspond to data collection, processing, and AI-based inference. Steps 3–4 describe transforming
+model outputs to actionable fleet coordination using the MOOS-IvP architecture. Steps 5–6 provide for continuous
+feedback and fault tolerance.
+
+
+
+
+                                                          13
+Algorithm 1 OilSpill Trajectory Forecasting - Initialization and Prediction
+Require: Environmental data stream (wind, currents, temperature, etc.)
+Require: Geospatial spill boundary data (from satellite/shapefiles)
+Require: Vessel status and positions
+Require: System parameters (prediction horizon, update frequency, fleet size)
+
+ 1: Initialize:
+ 2: Load LTCN prediction model with trained weights
+ 3: Connect to MOOS-IvP database (MOOSDB)
+ 4: Register all autonomous vessels in fleet
+
+ 5: while system is running do
+ 6:    Data Acquisition & Preprocessing
+ 7:        Collect latest environmental and spill boundary data
+ 8:        Preprocess features (normalize, encode, handle missing data)
+ 9:       Update vessel positions from fleet telemetry
+10:    Trajectory Prediction (LTCN Inference)
+11:       Feed preprocessed features into LTCN model
+12:       Predict future spill boundary for upcoming horizons
+13:           (e.g., 3, 7, 15 hours ahead)
+14:       Estimate prediction uncertainty bounds
+15:    Continue to Algorithm 2 for mission execution
+16: end while
+
+
+
+
+                                                         14
+Algorithm 2 OilSpill Autonomous Response - Mission Planning and Execution
+ 1: Continuing from Algorithm 1...
+
+
+ 2: while system is running do
+ 3:    Mission Planning & Path Assignment
+ 4:        Transmit predicted spill boundary to PathAssign
+ 5:            module via MOOSDB
+ 6:    for each vessel do
+ 7:        Calculate optimal path/waypoints along predicted boundary
+ 8:            (considering current position and coverage efficiency)
+ 9:        Update assigned mission parameters in the MOOSDB
+10:    end for
+11:    Fleet Coordination & Execution
+12:        Dispatch waypoints/missions to each vessel using
+13:            MOOS publish/subscribe
+14:    for each vessel do
+15:        Navigate to assigned waypoint using collision avoidance
+16:            and station-keeping
+17:        Maintain communication, report status and position
+18:            back to MOOSDB
+19:    end for
+20:    Feedback Integration & Adaptation
+21:        Collect real-time reports and observations from vessels
+22:        Evaluate tracking performance and compare actual
+23:            boundaries with predictions
+24:        Adjust model inputs and mission parameters as needed
+25:            for next iteration
+26:    Emergency Handling
+27:        If communication loss or fault detected then
+28:            Trigger fallback behavior (return to base, hold position,
+29:                or manual intervention)
+30: end while
+
+
+31: Terminate: On incident resolution or manual override
+
+
+
+4. Results and Discussion
+
+4.1. Experimental Setup
+    All experiments were performed in a controlled computational environment to ensure a fair comparison between
+the methods. The evaluation framework compares four distinct prediction approaches: Long-Short-Term Memory
+(LSTM) networks as a baseline, and three LTC variants employing different numerical solvers (Runge-Kutta 4th
+order, explicit adaptive, and Euler integration). Each model was trained on identical feature sets and evaluated using
+consistent metrics to enable direct performance comparison.
+
+4.2. Test Scenarios
+    Five different test scenarios were designed to evaluate model performance under varying conditions:
+      • Scenario 1 - Initial release: Early spill detection and rapid expansion prediction
+      • Scenario 2 - Steady Growth: Consistent expansion under stable environmental conditions
+      • Scenario 3 - Environmental Forcing: Spill evolution under strong wind/current influence
+                                                           15
+    • Scenario 4 - Complex Geometry: Multi-lobe spill configuration with irregular boundaries
+    • Scenario 5 - Dispersal phase: Late-stage spill behavior with natural weathering effects
+
+4.3. Evaluation Metrics
+    The assessment employs multiple complementary metrics to capture different aspects of prediction quality:
+
+    • Spatial accuracy: Mean absolute error (MAE) for predicted spill area and centroid coordinates
+    • Temporal Consistency: Smoothness coefficient measuring prediction stability across time steps
+    • Geometric Fidelity: Overlap ratio between predicted and observed spill boundaries
+    • Computational Efficiency: Prediction time and memory consumption
+
+    • Operational Relevance: Coverage accuracy for critical response zones
+
+4.4. Comparative Performance Analysis
+4.4.1. LTC Solver Variant Comparison
+    The three LTC solver variants demonstrated distinct performance characteristics aligned with their theoretical
+foundations.
+    The analysis period from April 26-28, 2010, reveals the temporal consistency and long-term stability characteris-
+tics of each LTC solver variant. Figure 3 shows the performance of the three methods during this later phase of the
+spill evolution.
+    The LTC-Explicit solver maintained its superior stability characteristics with area predictions showing minimal
+variance (CV = 2.4%) and consistent spatial patterns throughout the 48-hour forecast window. The adaptive time-
+stepping of the explicit method proved particularly effective in handling the evolving oceanographic conditions during
+this period.
+    The LTC-RK4 solver continued to demonstrate high spatial precision with mean area calculations of approxi-
+mately 2267 km² and maintained excellent numerical stability. The fourth-order accuracy of the RK4 method became
+increasingly apparent during longer forecast periods, showing superior trajectory prediction compared to lower-order
+methods.
+    The LTC-Euler solver, while showing increased variability during the extended forecast period (CV = 6.8%),
+maintained computational efficiency advantages and demonstrated acceptable performance for operational applica-
+tions requiring rapid response times. The simplicity of the method proved beneficial for real-time applications during
+extended monitoring periods.
+
+4.4.2. LTC vs LSTM Performance
+
+                                           Time Period 1                                                        Time Period 2
+ Model
+                Mean Area   Std Dev   Max Area Min Area    Area Range   Time Steps   Mean Area   Std Dev   Max Area Min Area    Area Range   Time Steps
+                  (km²)      (km²)     (km²)       (km²)     (km²)                     (km²)      (km²)     (km²)       (km²)     (km²)
+ LTC RK4          612.6       92.7     782.3       524.1      258.2         5         1121.9       79.9     1249.6     1051.9      197.7         5
+ LTC Euler        842.7       36.2     893.9       782.3      111.6         5         1040.3      143.8     1249.6      875.1      374.5         5
+ LTC Explicit     741.6       34.1     782.3       689.5       92.8         5         1155.5       55.5     1249.6     1107.8      141.9         5
+ LSTM             905.3       67.0     982.7       786.8      195.9         5         1226.1       85.7     1348.9     1099.3      249.6         5
+
+
+Table 2: Performance metrics comparison table for LTC Methods vs LSTM - Deepwater Horizon. Results summarizing quantitative metrics for
+two different time periods, including mean area, standard deviation, max/min area, area range, and time steps over the evaluation period.
+
+
+    The comparative analysis revealed significant advantages of LTC-based approaches over traditional LSTM net-
+works. As shown in Table 2, the LSTM predictions showed substantially different areas evolution patterns compared
+to the LTC variants, with mean area predictions of 1226.1 ± 85.7 km2 and a trend towards continuous area growth
+rather than the area reduction or stabilization predicted by LTC methods.
+    The multidimensional analysis in Figure 4 quantifies these performance differences in six critical metrics. LSTM
+demonstrates poor performance in spatial accuracy (0.74), temporal consistency (0.70), and overall performance
+
+                                                                          16
+             (a) LTC-RK4 April 25                           (b) LTC-Explicit April 25                        (c) LTC-Euler April 25
+
+
+
+
+             (d) LTC-RK4 April 26                           (e) LTC-Explicit April 26                        (f) LTC-Euler April 26
+
+
+
+
+             (g) Figure: rk4 apr27                          (h) LTC-Explicit April 27                        (i) LTC-Euler April 27
+
+Figure 3: LTC solver comparison for Deepwater Horizon predictions: (a-c) April 25, (d-f) April 26, (g-i) April 27, 2010 for RK4, Explicit, and
+Euler methods.
+
+
+                                                                      17
+                         Figure 4: Performance comparison of LTC methods vs LSTM across six key metrics.
+
+
+(0.72), while all variants of LTC maintain consistently higher scores in these dimensions. The radar chart visualization
+clearly illustrates the limitations of LSTM in maintaining physical realism and computational efficiency compared to
+the superior performance envelope achieved by LTC methods.
+    In particular, LSTM predictions showed irregular boundary evolution patterns and failed to maintain the physically
+consistent area conservation principles that characterize the real dynamics of oil spills. In contrast, LTC networks
+demonstrated superior temporal consistency and maintained more realistic spill geometry throughout the prediction
+horizon.
+    The attention mechanisms integrated into the OilSpill model provided additional benefits, enabling LTC networks
+to selectively focus on relevant historical patterns when making predictions. This capability proved especially valuable
+during complex spill evolution phases, where multiple environmental factors interact dynamically, as reflected in the
+enhanced temporal consistency scores shown in the radar analysis.
+
+4.5. Extended Temporal Analysis Performance
+4.5.1. OilSpill Model Performance: Spatial Trajectory and Area Evolution
+    The performance analysis of the OilSpill model presented in Figure 5 establishes the fundamental superiority of
+the LTC-based approaches over traditional LSTM methods during the critical period of April 24-25, 2010. The Oil-
+Spill model’s spatial evolution patterns consistently maintain physically realistic boundary geometries, representing a
+significant advancement over traditional LSTM approaches that exhibit geometric inconsistencies.
+    The performance of the OilSpill model on April 24 (Figure 5a) demonstrates the coordinated excellence of the
+three LTC variants originating from the location of the Deepwater Horizon platform. The OilSpill-RK4 variant
+achieves particularly smooth elliptical expansion patterns, while OilSpill-Explicit and OilSpill-Euler maintain con-
+sistent directional propagation with realistic aspect ratios. This represents a marked improvement over traditional
+LSTM predictions, which display irregular boundary segments and unrealistic sharp edges that violate fundamental
+principles of fluid dynamics.
+    The sustained excellence of the OilSpill model becomes evident in the April 25 predictions (Figure 5b). The
+OilSpill model’s LTC variants preserve temporal consistency in boundary evolution, maintaining smooth geometric
+transitions from previous predictions. This contrasts sharply with traditional LSTM methods, which demonstrate
+                                                               18
+              (a) April 24, 2010 - OilSpill model predictions                            (b) April 25, 2010 - OilSpill model predictions
+
+                   Figure 5: OilSpill trajectory predictions for April 24-25, 2010 showing LTC variants outperforming LSTM.
+
+
+
+
+                    (a) OilSpill model - Time Period 1                                         (b) OilSpill model - Time Period 2
+
+Figure 6: OilSpill model area evolution analysis demonstrating the superior predictive capabilities of LTC-based approaches over traditional LSTM
+methods. The plots highlight the OilSpill model’s realistic area dynamics: LTC-RK4 achieves accurate area reduction patterns, LTC-Explicit
+maintains exceptional stability, and LTC-Euler provides controlled variability, while traditional LSTM exhibits unrealistic continuous growth.
+Uncertainty bands validate the OilSpill model’s enhanced prediction confidence and physical consistency.
+
+
+
+
+                                                                      19
+increasing boundary distortion and geometric implausibility with discontinuous evolution patterns that compromise
+prediction reliability.
+    Figure 6 provides quantitative validation of the superior area evolution capabilities of the OilSpill model in multi-
+ple scenarios. The oil spill model’s temporal progression analysis demonstrates physically consistent area dynamics
+that represents a fundamental improvement over traditional LSTM approaches with their unrealistic continuous growth
+patterns.
+    The OilSpill-RK4 variant achieves superior area prediction accuracy with characteristic reduction patterns that
+align perfectly with expected weathering and natural attenuation processes. The OilSpill model demonstrates initial
+area values around 780 km² declining to approximately 570 km² over the 14-day forecast period, consistent with oil
+spill dissipation mechanisms including evaporation, biodegradation, and dispersion—a performance unmatched by
+traditional LSTM methods.
+    The OilSpill-Explicit variant maintains exceptional area stability with controlled variations, showing initial values
+around 780 km² and stabilizing near 700 km² with minimal fluctuation. This demonstrates the OilSpill model’s
+balanced approach between numerical accuracy and computational efficiency, providing reliable predictions ideal for
+operational forecasting applications—capabilities that traditional methods cannot match.
+    The OilSpill-Euler variant exhibits controlled area evolution patterns, with initial values around 780 km² showing
+gradual increase to approximately 890 km² by day 14. While showing more variability than other OilSpill variants,
+the predictions remain within physically plausible bounds and demonstrate consistent uncertainty quantification, es-
+tablishing clear superiority over traditional LSTM approaches.
+    Traditional LSTM predictions reveal fundamental inadequacies with continuous area growth from 800 km² to
+nearly 980 km² over the forecast period. This pattern contradicts expected oil spill physics, where natural weathering
+processes typically reduce spill area over time. The uncertainty bands for traditional LSTM predictions also show
+significantly higher variability, indicating reduced prediction confidence compared to the OilSpill model’s robust
+performance.
+
+
+
+
+                    (a) OilSpill model - Time Period 1                                          (b) OilSpill model - Time Period 2
+
+Figure 7: OilSpill model comprehensive performance dashboard establishing superiority over traditional LSTM methods across multiple eval-
+uation metrics. Each panel demonstrates the OilSpill model’s excellence: (top-left) realistic area evolution patterns, (top-right) consistent spill
+center movement trajectories, (bottom-left) superior area distribution statistics, and (bottom-right) accurate displacement analysis. The dashboard
+validates the OilSpill model’s consistent superior performance across all metrics, contrasting with traditional LSTM’s unrealistic continuous area
+growth and higher variability.
+
+
+    The comprehensive performance dashboard of the OilSpill model presents a multifaceted validation of its su-
+periority across spatial, temporal, and statistical dimensions. Figure 5 establishes the fundamental advantages of the
+OilSpill model in spatial prediction quality, while Figure 7 provides quantitative validation of its superior performance
+across multiple metrics.
+
+
+                                                                       20
+OilSpill Model Spatial Performance. The OilSpill model’s spatial trajectory capabilities reveal revolutionary im-
+provements in boundary evolution prediction. During April 24 (Figure 5a), the OilSpill model demonstrates a coordi-
+nated and physically consistent boundary evolution in all variants of LTC. OilSpill-RK4 maintains smooth elliptical
+geometries with realistic aspect ratios, while OilSpill-Explicit and OilSpill-Euler show consistent directional propa-
+gation patterns originating from the platform location.
+    The OilSpill model’s advanced LTC architecture eliminates the geometric inconsistencies characteristic of tradi-
+tional LSTM approaches, which exhibit irregular boundary segments and unrealistic sharp edges that violate funda-
+mental fluid mechanics principles. The predictions of April 25 (Figure 5b) further validate the sustained excellence of
+the OilSpill model, with LTC variants that preserve temporal consistency while the traditional LSTM shows increasing
+boundary distortion over time.
+
+OilSpill Model Scenario. Initial Release Phase Mastery: The OilSpill-RK4 variant demonstrated exceptional per-
+formance during the critical early hours, achieving superior spatial accuracy (0.96) that surpasses the traditional LSTM
+baselines. The oil spill model’s precise numerical integration enables accurate capture of rapid initial expansion dy-
+namics, providing reliable predictions essential for immediate response deployment, capabilities that establish clear
+superiority over traditional methods.
+
+   • Steady Growth Phase Leadership: All OilSpill model variants outperformed traditional LSTM in predicting
+     consistent expansion patterns. The OilSpill-Explicit variant showed particular excellence with superior area
+     stability (CV = 4.8%) and exceptional area conservation score (0.99), efficiently handling smooth dynamics
+     while maintaining ideal computational efficiency for continuous monitoring, performance levels unattainable
+     by traditional approaches.
+
+   • Environmental Forcing Superiority: The advanced handling of the external forcing terms of the OilSpill
+     model becomes evident under strong environmental conditions. The variants of the oil spill model maintained
+     consistent trajectory predictions even during high wind/current scenarios where the traditional LSTM showed
+     erratic boundary evolution patterns, as validated by drift velocity analysis.
+   • Complex Geometry Mastery: Multi-lobe spill configurations challenged traditional methods, but the OilSpill
+     model’s LTC networks demonstrated superior geometric fidelity. The OilSpill model’s continuous-time for-
+     mulation allows natural handling of irregular boundary evolution compared to traditional discrete-time LSTM
+     approaches, with the OilSpill model achieving superior shape regularity scores across all scenarios.
+   • Dispersal Phase Excellence: Late-stage spill behavior with natural weathering effects highlighted the advan-
+     tages of the oil spill model in temporal consistency. The predictions of the oil spill model maintained smooth
+     evolution patterns, while the traditional LSTM exhibited inconsistent area evolution trends that could compro-
+     mise response strategies, validating the operational superiority of the oil spill model.
+
+4.5.2. OilSpill Model Drift Pattern
+    The OilSpill model’s drift analysis (Figure 8) provides comprehensive validation of its spatial consistency advan-
+tages while establishing superiority in velocity pattern evaluation over traditional approaches.
+
+OilSpill Model Trajectory Stability:. The four-day drift analysis confirms the high spatial correlation of the OilSpill
+model across all variants of the LTC, with variants of the OilSpill model maintaining consistent trajectories in the
+northeast within superior accuracy limits that exceed the traditional LSTM performance from the April 24 evaluation.
+
+OilSpill Model Velocity Excellence:. The drift velocity analysis provides definitive evidence of the OilSpill model’s
+temporal consistency advantages, showing smooth, physically realistic velocity profiles that represent a significant
+advancement over traditional LSTM’s irregular patterns.
+    The OilSpill model establishes a new paradigm in oil spill prediction, with its LTC-based architecture deliver-
+ing consistent superior performance across all evaluation metrics while addressing the fundamental limitations of
+traditional LSTM approaches for physics-based environmental modeling applications.
+
+
+                                                          21
+                   Figure 8: Drift pattern analysis for April 26-29, 2010: (top) trajectory stability, (bottom) velocity profiles.
+
+
+
+4.6. Swarm Intelligence and Numerical Solver Performance
+    Comparative analysis of numerical integration methods demonstrates different patterns of swarm behavior that
+directly impact the effectiveness of autonomous missions. The following comprehensive evaluation examines how
+different solvers influence multi-agent coordination, formation stability, and collective intelligence emergence under
+varying operational conditions.
+
+    Explicit Solver Performance - Morning Simulation:
+
+
+
+
+          (a) t1                        (b) t2                          (c) t3                         (d) t4                        (e) t5
+
+Figure 9: Explicit solver performance during morning simulation - Temporal evolution showing vehicle swarm coordination and boundary tracking
+stability.
+
+
+
+
+                                                                        22
+    RK4 Solver Performance - Morning Simulation:
+
+
+
+
+          (a) t1                       (b) t2                        (c) t3                       (d) t4                       (e) t5
+
+Figure 10: RK4 solver performance during morning simulation- Demonstrates enhanced numerical stability and smoother trajectory evolution
+compared to explicit method.
+
+
+    Explicit Solver Performance - Afternoon Simulation
+
+
+
+
+          (a) t1                       (b) t2                        (c) t3                       (d) t4                       (e) t5
+
+Figure 11: Explicit solver performance during afternoon simulation- Shows consistent performance characteristics across different environmental
+conditions throughout the day.
+
+
+    RK4 Solver Performance - Afternoon Simulation:
+
+
+
+
+          (a) t1                       (b) t2                        (c) t3                       (d) t4                       (e) t5
+
+Figure 12: RK4 solver performance during afternoon simulation- Maintains superior numerical accuracy and stability under varying afternoon
+environmental conditions.
+
+
+    The comprehensive swarm performance analysis reveals distinct operational characteristics that directly impact
+autonomous mission effectiveness:
+
+4.6.1. Swarm Responsiveness vs. Stability Trade-offs
+    The explicit solver enables rapid swarm reconfiguration and high-frequency formation adjustments, optimal for
+dynamic environmental conditions requiring immediate autonomous response. In contrast, RK4 provides superior
+formation stability and reduced coordination drift, which is essential for long-duration surveillance missions.
+
+4.6.2. Multi-Agent Communication Efficiency
+    MOOS message passing varies significantly between solvers. Explicit integration supports higher communication
+frequencies due to reduced computational overhead, enabling more responsive distributed decision-making. RK4’s
+                                                                     23
+computational demands require optimized communication protocols, but provide more accurate trajectory sharing
+between agents.
+
+4.6.3. Emergent Collective Intelligence
+    The autonomous swarm exhibits different collective behavior patterns under each solver. Explicit methods pro-
+mote adaptive flocking behavior with rapid consensus formation, while RK4 enables more sophisticated coordination
+strategies through precise trajectory prediction and optimal path planning.
+
+4.6.4. Mission Scalability
+    The performance of the system scales differently with the number of agents. Explicit solvers maintain near-
+constant per-agent computational load, supporting larger swarms without degrading real-time performance. RK4
+requires careful load balancing for multi-agent deployments but provides superior coordination accuracy for smaller,
+precision-focused swarms.
+
+4.6.5. Environmental Robustness
+    Both solver approaches demonstrate autonomous adaptation to varying conditions between morning and afternoon
+operations. Explicit methods show superior immediate response to environmental perturbations, while RK4 provides
+better long-term stability under persistent disturbances.
+
+4.6.6. Multi-Agent System Architecture and MOOS Integration
+    The OilSpill model’s MOOS-IvP integration delivers comprehensive operational advantages:
+
+System Architecture Excellence.
+   • Dynamic Scalability: Variable fleet registration supports different incident scales through efficient publish-
+     subscribe architecture that scales linearly with vehicle count.
+
+   • Fault Tolerance: Distributed architecture ensures individual vehicle failures do not compromise overall system
+     operation, with dynamic reconfiguration maintaining coverage despite vehicle losses.
+   • Real-time Adaptability: Continuous boundary updates enable dynamic path recalculation, crucial for handling
+     evolving marine oil spills with sub-second communication delays across vehicle networks.
+
+   • Hybrid Coordination: Centralized planning combined with distributed execution balances efficiency with
+     robustness, ensuring optimal vehicle positioning while maintaining autonomous behavior capabilities.
+
+Autonomous Agent Intelligence. The OilSpill model’s MOOS-integrated system exhibits sophisticated autonomous
+behavior patterns:
+
+   • Distributed Sensing Network: Each autonomous agent operates as an independent sensing node while con-
+     tributing to collective situational awareness, maintaining persistent coverage through decentralized MOOS mes-
+     sage passing protocols.
+   • Emergent Formation Control: Vehicles demonstrate self-organizing behavior, automatically optimizing spa-
+     tial configuration for boundary detection coverage through local agent interactions without centralized control.
+
+   • Dynamic Task Allocation: Individual agents autonomously assume specialized roles (boundary tracking, en-
+     vironmental monitoring, communication relay) based on real-time conditions and mission requirements.
+   • Predictive Positioning: Each agent utilizes the OilSpill model’s LTC-based trajectory predictions to anticipate
+     optimal future positions, proactively maintaining effective boundary coverage as spills evolve.
+
+
+
+
+                                                        24
+MOOS Middleware Performance. The Mission Oriented Operating Suite provides critical infrastructure supporting
+the OilSpill model’s operations:
+
+   • Modular Integration: The OilSpill model integrates seamlessly with MOOS applications, enabling indepen-
+     dent algorithm development while maintaining system-wide coordination capabilities.
+   • Runtime Adaptability: MOOS facilitates reconfiguration of run-time mission parameters, enabling autonomous
+     adaptation based on evolving spill characteristics and environmental conditions.
+
+   • Distributed Processing: MOOS enables parallel execution of the OilSpill model across multiple autonomous
+     agents, with each vehicle running independent instances while maintaining global coordination.
+   • Real-time Constraint Management: The system maintains hard real-time constraints required for autonomous
+     vehicle coordination, and the choice of the solver directly affects achievable update rates and mission respon-
+     siveness.
+
+   The implementation details and interactive demonstrations are available online1 .
+
+4.7. Statistical Rigor and Significance Testing
+     To objectively support claims of “superior” model performance, rigorous statistical analysis was applied to com-
+parative metrics between the OilSpill LTC-based frameworks and traditional LSTM architectures across multiple
+experimental scenarios.
+     Confidence Intervals for Main Metrics: For each primary evaluation metric—spatial accuracy, area mean ab-
+solute error (MAE), temporal consistency, geometric fidelity, and drift accuracy—we computed 95% confidence in-
+tervals using the bootstrap resampling method on prediction errors across all validation timesteps and scenarios. For
+example, during Scenario 1 (Initial Release), the LTC-RK4 model achieved a spatial accuracy of 0.96 [0.94, 0.98],
+while the LSTM baseline recorded 0.74 [0.68, 0.80], indicating non-overlapping confidence intervals and thus a sta-
+tistically significant improvement.
+     Hypothesis Testing: We performed two-tailed paired t-tests to compare per-timestep errors between model pre-
+dictions for all metrics of interest, including area MAE and centroid displacement: For area MAE, the mean error
+of the LTC-RK4 model was significantly lower (mean = 12.4km², SD = 5.1) than that of the LSTM model (mean
+= 38.7km², SD = 10.8), with t(24) = -8.47, p ¡ 0.001. For centroid displacement error, the LTC-Explicit model
+outperformed the LSTM (mean = 0.74km, SD = 0.10 vs. mean = 1.98km, SD = 0.42), t(24) = -11.21, p ¡ 0.001.
+     All statistical tests were checked for normality (Shapiro-Wilk test, p ¿ 0.05 for all comparisons), and non-
+parametric Wilcoxon signed-rank tests yielded consistent conclusions where applicable.
+     Hypothesis Testing:Temporal Consistency and Geometric Fidelity: Temporal consistency scores (measured as
+variance of centroid velocities) for LTC models were significantly lower (indicating more stable predictions) than for
+LSTM: LTC-Explicit median = 0.032 [0.028, 0.037], LSTM median = 0.091 [0.084, 0.102], Mann-Whitney U = 27,
+p ¡ 0.001.
+     Geometric fidelity (boundary overlap ratio) 95% confidence intervals for LTC-Explicit were [0.90, 0.95], while
+LSTM achieved [0.63, 0.74], again showing a statistically robust difference.
+     Reporting of Uncertainty For each metric, main text figures and tables report the mean ± standard error and the
+95% confidence interval. Performance radar plots were augmented to include error bars reflecting confidence bounds
+over all test runs, as can be seen in Table 3.
+
+4.8. Environmental Adaptability and System Robustness
+4.8.1. Environmental Performance
+    The OilSpill model demonstrated robust performance in various environmental scenarios, including different
+weather conditions, sea states, and current patterns. The OilSpill model’s LTC networks adapt their time constants
+
+
+  1 https://hadascohen.github.io/OilSpill-TrajectorSystems/
+
+
+
+
+                                                         25
+  Metric                       LTC-RK4 (mean [95% CI])          LTC-Explicit (mean [95% CI])        LSTM (mean [95% CI])        p-value
+  Spatial Accuracy                 0.96 [0.94, 0.98]                  0.92 [0.89, 0.94]                0.74 [0.68, 0.80]        <0.001
+  Area MAE (km2 )                  12.4 [10.3, 15.8]                  14.9 [12.2, 18.0]                38.7 [34.2, 43.1]        <0.001
+  Centroid Disp. Error (km)        0.56 [0.42, 0.68]                  0.74 [0.61, 0.82]                1.98 [1.54, 2.30]        <0.001
+  Overlap Ratio (Fidelity)         0.93 [0.90, 0.95]                  0.89 [0.85, 0.93]                0.67 [0.62, 0.74]        <0.001
+
+Table 3: Key comparative metrics for OilSpill LTC variants versus LSTM baseline, with 95% confidence intervals and p-values from hypothesis
+testing.
+
+
+
+based on environmental conditions, proving particularly valuable for handling sudden changes in wind patterns or
+ocean currents during storm events.
+   The distributed sensing capability enables more comprehensive environmental data collection compared to fixed
+monitoring stations, contributing to more accurate initial conditions and better real-time adaptation to changing envi-
+ronmental parameters. This enhanced data collection validates the superior environmental adaptability of the OilSpill
+model compared to traditional approaches.
+
+4.8.2. System Limitations and Implementation Challenges
+    Despite the demonstrated advantages, several challenges require consideration for practical deployment.
+
+    • Computational Requirements: The OilSpill model’s continuous-time LTC computations introduce computa-
+      tional overhead, particularly for large-scale deployments requiring substantial processing power for real-time
+      emergency response applications.
+
+    • Data Dependencies: The effectiveness of the OilSpill model depends on quality training data, with oil spill
+      scenarios being relatively rare events that limit comprehensive model training opportunities and potentially
+      affecting performance in unprecedented scenarios.
+    • Environmental Uncertainty: Marine environments present high variability that can affect the accuracy of the
+      prediction, particularly during extreme weather events or in areas with limited monitoring infrastructure.
+
+    • System Integration: Integration with existing oil spill response systems presents technical and organizational
+      challenges requiring substantial investment in training, infrastructure, and operational procedures, along with
+      addressing interoperability with existing monitoring networks and response protocols.
+
+4.9. Edge Cases and Generalization Limitations
+    While the OilSpill framework demonstrates robust performance under a range of realistic conditions, certain edge
+cases and operational domains present unique challenges and open avenues for future enhancement:
+
+4.9.1. Uncommon or Irregular Oil Spill Geometries
+     The predictive accuracy of the framework has been validated primarily on major events such as Deepwater
+Horizon, which exhibited both simple and complex multi-lobe geometries. However, extremely irregular, frag-
+mented, or non-contiguous spill patterns—such as those arising from multiple small simultaneous leaks or interacting
+spills—may strain the current feature extraction and model’s generalization abilities. Handling highly non-standard
+shapes may require additional architectural innovations, such as integrating graph-based or topological feature analy-
+sis into the data pipeline and neural architecture.
+
+4.9.2. Scalability to Larger Autonomous Fleets
+    Although the modular multi-agent architecture and MOOS-IvP middleware enable considerable scalability, de-
+ploying and coordinating very large autonomous fleets (dozens to hundreds of vessels or drones) in real-world in-
+cident scenarios may introduce new challenges. These include inter-agent communication bottlenecks, increased
+mission planning complexity, and diminishing returns due to congestion effects. Future research should explore hier-
+archical control layers, adaptive fleet partitioning, and dynamic agent role allocation to ensure efficiency and robust
+coordination at scale.
+
+                                                                    26
+4.9.3. Highly Turbulent or Chaotic Environmental Conditions
+    The LTCN-based predictors are designed for adaptability, yet sudden, chaotic environmental shifts—such as
+abrupt storms, extreme currents, or rapidly changing wind fields—could cause model uncertainties to increase and
+degrade prediction reliability. Model retraining with diverse, high-frequency data from extreme events and deeper
+integration of real-time environmental sensors may improve resilience, but fundamental unpredictability in such con-
+ditions may pose an enduring limitation.
+
+4.9.4. Application Beyond Oil—General Marine Disaster Response
+    While the framework was developed for oil spill scenarios, its core strengths—real-time spatial-temporal predic-
+tion and distributed response—make it potentially adaptable to other marine disasters (e.g., chemical leaks, harmful
+algal blooms, plastic waste dispersion, or search and rescue operations). However, generalization to such cases would
+require careful reengineering of input feature representations, model retraining for new target signatures, and possibly
+the integration of additional sensor modalities.
+
+4.9.5. Rarity and Diversity of Real-World Events
+    Because large-scale marine spills and certain severe environmental conditions are rare, real-world data for training,
+validation, and stress-testing are limited. This scarcity inherently reduces the certainty that can be attached to out-
+of-distribution or truly novel events. Approaches such as synthetic data generation, transfer learning from related
+domains, and extended international data-sharing may help mitigate this gap but cannot guarantee complete coverage.
+
+5. Conclusion
+
+    This work presents a novel, integrated framework—OilSpill—that combines Liquid Time-Constant Neural Net-
+works (LTCNs) with multi-agent robotic systems to address the urgent challenge of real-time oil spill trajectory pre-
+diction and autonomous response coordination. By leveraging continuous-time neural modeling and swarm-based dis-
+tributed decision-making, this system advances the state-of-the-art in both environmental monitoring and autonomous
+marine robotics.
+    The proposed architecture was validated using the Deepwater Horizon case study, demonstrating robust predictive
+performance across multiple test scenarios and solver variants. The LTC-RK4 model achieved high spatial accu-
+racy (0.96), while the LTC-Explicit variant offered superior numerical stability with minimal computational overhead.
+Across all solvers, the OilSpill framework consistently outperformed traditional LSTM models in spatial fidelity, tem-
+poral smoothness, drift accuracy, and physical realism, underscoring the advantages of continuous-time formulations
+for environmental forecasting tasks.
+    Beyond predictive modeling, the integration with the MOOS-IvP platform enabled real-time coordination of an
+autonomous vehicle fleet, showcasing the feasibility of closed-loop prediction-to-action systems in complex marine
+environments. The system demonstrated adaptive swarm behavior, robust mission execution under environmental
+variability, and scalable coordination suitable for large-scale offshore incidents.
+    The OilSpill framework lays a foundational step toward autonomous, intelligent environmental protection systems.
+By uniting cutting-edge neural architectures with decentralized robotics, this work offers a viable path toward real-
+time, adaptive, and scalable solutions for maritime disaster mitigation—marking a significant advancement in the
+intersection of artificial intelligence and environmental systems engineering.
+
+5.1. Key Contributions
+    The key contributions of this research are multifaceted. First, the study introduces a continuous-time neural ar-
+chitecture based on Liquid Time-Constant Networks (LTCNs), specifically adapted for modeling the spatiotemporal
+evolution of marine oil spills. This model captures both short- and long-term dynamics through multi-horizon fore-
+casting, significantly outperforming traditional discrete-time approaches such as LSTM in terms of spatial accuracy
+and temporal consistency. Second, the paper provides a systematic comparison of three numerical solver implemen-
+tations within the LTC framework—Runge-Kutta (RK4), Explicit Adaptive, and Euler—highlighting their respective
+trade-offs in accuracy, stability, and computational efficiency for real-time deployment. Third, the proposed Oil-
+Spill framework integrates seamlessly with the MOOS-IvP platform, enabling neural predictions to drive autonomous
+
+                                                           27
+multi-agent coordination for spill containment in dynamic ocean environments. Finally, the system architecture is de-
+signed to be modular, scalable, and fault-tolerant, offering a robust bridge between advanced machine learning models
+and real-world autonomous marine robotics, with demonstrated applicability to complex disaster response scenarios.
+   • Novel OilSpill Model Framework: Development of a comprehensive framework combining LTC networks’
+     temporal modeling capabilities with multi-agent systems’ distributed intelligence, representing a significant
+     advancement in oil spill response technology that addresses fundamental limitations of existing approaches.
+   • Superior Performance Validation: Extensive experimental evaluation demonstrates the superior performance
+     of the OilSpill model compared to traditional LSTM methods in multiple metrics, with important implications
+     for the effectiveness of emergency response and environmental protection.
+   • Solver Optimization Strategy: The systematic comparison of the numerical solvers of the OilSpill model
+     provides valuable deployment guidance, with OilSpill-RK4 optimal for accuracy, OilSpill-Explicit for stability,
+     and OilSpill-Euler for computational efficiency.
+   • Real-time Multi-Agent Coordination: The OilSpill model’s demonstrated real-time adaptation to changing
+     environmental conditions through sophisticated multi-agent coordination represents significant improvement
+     over static modeling approaches.
+   • Scalable MOOS Integration: The OilSpill model’s MOOS-IvP integration provides inherent scalability ac-
+     commodating incidents from small coastal spills to major offshore disasters across different operational con-
+     texts.
+
+5.2. Future Research Directions
+    The success of the OilSpill model establishes several promising research avenues:
+
+5.2.1. Advanced System Integration
+    • Neural Architecture Enhancement: Exploring integration of Graph Neural Networks and Transformer models
+       with the OilSpill model framework to enhance complex spatial relationships and long-range temporal depen-
+       dencies.
+   • Real-time Data Fusion: Incorporating real-time satellite imagery and distributed environmental sensor net-
+     works to enhance the OilSpill model’s data collection capabilities through continuous model updates based on
+     live oceanographic conditions.
+   • Global Scaling: Developing OilSpill model variants that support larger autonomous vehicle fleets and broader
+     environmental monitoring missions, enabling comprehensive coverage of vast oceanic areas.
+
+5.2.2. Adaptive and Multi-Hazard Systems
+    • Climate Adaptation: Developing adaptive variants of the OilSpill model that maintain performance under
+       changing baseline conditions as climate change alters oceanographic patterns.
+   • Multi-Hazard Integration: Extending the OilSpill model framework to handle multiple concurrent marine
+     hazards, including chemical spills, ship collisions, and natural disasters.
+   • Autonomous Response Systems: Developing fully autonomous response systems that deploy containment and
+     recovery equipment based on OilSpill model trajectory predictions.
+
+5.2.3. Enhanced Processing Capabilities
+    • Real-time Processing: Developing sophisticated algorithms that handle massive data streams from integrated
+       satellite and sensor networks while maintaining computational efficiency.
+   • Global Deployment Studies: Conducting large-scale deployment studies in different geographic regions to
+     validate system performance under diverse environmental conditions and regulatory frameworks.
+                                                         28
+5.3. Operational Impact and Technology Integration
+    The successful integration of the MOOS model demonstrates practical viability for the deployment of advanced
+AI techniques in real-world environmental monitoring scenarios. The demonstrated superiority of the oil spill model
+variants provides clear operational guidance to organizations responsible for oil spill response, enabling informed
+deployment decisions based on specific operational requirements.
+    The scalability of the OilSpill model’s multi-agent architecture ensures the system can grow with organizational
+needs and technological capabilities, providing a future-proof foundation for marine environmental protection efforts.
+The integration of real-time satellite monitoring, distributed environmental sensing, and scalable autonomous fleet
+coordination represents the next frontier in marine environmental protection.
+
+5.4. Environmental Protection Significance
+     The OilSpill model represents a significant advance in oil spill response technology that addresses the environ-
+mental stakes of oil spill incidents through continued innovation in response technologies. This research demonstrates
+how the cutting-edge computational techniques of the OilSpill model can be applied effectively to protect marine
+ecosystems and coastal communities.
+     The MOOS-integrated framework provides a practical pathway for translating advanced neural network capabil-
+ities into operational environmental protection systems. The path forward requires continued collaboration between
+researchers, response organizations, and technology developers to translate these advances into operational capabili-
+ties that can make a real difference during environmental disasters.
+
+
+Data Availability
+
+    The datasets generated and analyzed during the current study, including the Deepwater Horizon shapefile data and
+model implementation code, are available from the corresponding author upon reasonable request. The NOAA/NESDIS
+satellite data used in this study are publicly available through the National Oceanic and Atmospheric Administration
+databases. Interactive demonstration materials are available online at:
+https://hadascohen.github.io/OilSpill-TrajectorSystems/
+
+
+
+References
+ [1] Ainsworth, C.H., Paris, C.B., Perlin, N., Dornberger, L.N., Chancellor, E., Murawski, S., Hollander, D., Wetzel, D., Kinner, N., McLaughlin,
+     E., Bejarano, A.C., 2020. Deepwater Horizon oil spill impacts on ecosystem services in the Gulf of Mexico. Sci. Total Environ. 745, 141383.
+     https://doi.org/10.1016/j.scitotenv.2020.141383.
+ [2] Aznar, F., Pujol, M., Rizo, R., Rizo, C., 2014. Multi-agent system for oil spill detection using low-cost UAVs. Appl. Soft Comput. 25,
+     132-144. https://doi.org/10.1016/j.asoc.2014.08.062.
+ [3] Badu, A., Ayesh, A., 2009. Swarm aquabots for oil spill detection. Int. J. Swarm Intell. Res. 1, 45-62. https://doi.org/10.4018/jsir.2009040104.
+ [4] Benjamin, M.R., Schmidt, H., Newman, P.M., Leonard, J.J., 2009. Nested autonomy for unmanned marine vehicles with MOOS-IvP. J. Field
+     Robot. 27, 834-875. https://doi.org/10.1002/rob.20320.
+ [5] Benjamin, M.R., Schmidt, H., Newman, P.M., Leonard, J.J., 2010. An overview of MOOS-IvP and a brief users guide to the IvP Helm
+     autonomy software. MIT Computer Science and Artificial Intelligence Laboratory Technical Report MIT-CSAIL-TR-2010-041.
+ [6] Chahine, K., Demiris, Y., Bharath, A.A., 2023. Robustness of liquid neural networks in out-of-distribution scenarios. Neural Netw. 158,
+     234-248. https://doi.org/10.1016/j.neunet.2022.11.016.
+ [7] Chamoso, P., Raveane, W., Parra, V., González, A., 2017. UAVs applied to the counting and monitoring of animals. In: Ambient Intelligence-
+     Software and Applications. Springer, pp. 165-174. https://doi.org/10.1007/978-3-319-61118-1 14.
+ [8] Corchado, J.M., Aiken, J., Rees, N., 2008. Artificial intelligence models for oceanographic forecasting. Plymouth Marine Laboratory Tech.
+     Rep. 15, 89-107.
+ [9] Crosetto, M., Tarantola, S., Saltelli, A., 2002. Sensitivity and uncertainty analysis in spatial modelling based on GIS. Agric. Ecosyst. Environ.
+     81, 71-79. https://doi.org/10.1016/S0167-8809(00)00169-9.
+[10] Fingas, M., Brown, C.E., 2018. A review of oil spill remote sensing. Sensors 18, 91. https://doi.org/10.3390/s18010091.
+[11] Hasani, R., Lechner, M., Amini, A., Rus, D., Grosu, R., 2020. Liquid time-constant networks. arXiv preprint arXiv:2006.04439.
+[12] Hasani, R., Lechner, M., Amini, A., Liebenwein, L., Ray, A., Tschaikowski, M., Teschl, G., Rus, D., 2021. Closed-form continuous-time
+     neural networks. Nat. Mach. Intell. 4, 992-1003. https://doi.org/10.1038/s42256-022-00556-7.
+[13] Jiang, Z., Coenen, F., Zito, M., 2010. A survey of frequent subgraph mining algorithms. Knowl. Eng. Rev. 28, 75-105.
+     https://doi.org/10.1017/S0269888912000331.
+
+
+                                                                         29
+[14] Judt, F., Chen, S.S., Curcic, M., 2016. Atmospheric forcing of the upper ocean transport in the Gulf of Mexico: From seasonal to diurnal
+     scales. J. Geophys. Res. Oceans 121, 4416-4433. https://doi.org/10.1002/2015JC011555.
+[15] Karim, S., Heinze, C., Dunn, S., 2004. Agent-based mission management for UAVs. In: Proceedings of the Third International Joint Confer-
+     ence on Autonomous Agents and Multiagent Systems, vol. 1, pp. 104-111. https://doi.org/10.1109/AAMAS.2004.10003.
+[16] Lechner, M., Hasani, R., Amini, A., Henzinger, T.A., Rus, D., Grosu, R., 2020. Neural circuit policies enabling auditable autonomy. Nat.
+     Mach. Intell. 2, 642-652. https://doi.org/10.1038/s42256-020-00237-3.
+[17] Marino, A., Nardi, S., Armando, A., 2024. Multi-UAV distributed trajectory generation for cooperative missions. Robot. Auton. Syst. 171,
+     104567. https://doi.org/10.1016/j.robot.2023.104567.
+[18] Mata, J., Vogel, R., Lopes, J.G., 2009. CROS: A multi-agent contingency response system for oil spills. Expert Syst. Appl. 36, 9393-9399.
+     https://doi.org/10.1016/j.eswa.2008.12.039.
+[19] McNutt, M.K., Camilli, R., Crone, T.J., Guthrie, G.D., Hsieh, P.A., Ryerson, T.B., Savas, O., Shaffer, F., 2012. Review of flow rate estimates
+     of the Deepwater Horizon oil spill. Proc. Natl. Acad. Sci. U.S.A. 109, 20260-20267. https://doi.org/10.1073/pnas.1112139108.
+[20] Pashna, M., 2014. Simulation-based optimization for marine oil spill response. Mar. Pollut. Bull. 89, 194-204.
+     https://doi.org/10.1016/j.marpolbul.2014.09.026.
+[21] Peshna, M., Kumar, A., Singh, R., 2015. Particle swarm optimization for dynamic decision-making in marine oil spill response. Ocean Eng.
+     108, 456-468. https://doi.org/10.1016/j.oceaneng.2015.08.021.
+[22] Alruzouq, R.I., Kabassi, K., Abuhamdah, A., 2020. The evolution of multi-agent systems for oil spill response: A comprehensive review.
+     Mar. Pollut. Bull. 156, 111234. https://doi.org/10.1016/j.marpolbul.2020.111234.
+[23] Robbe, N., Hengstermann, T., 2006. MEDUSA: A multi-sensor system for oil spill detection. In: Proceedings of the IEEE International
+     Geoscience and Remote Sensing Symposium, vol. 3, pp. 1456-1459. https://doi.org/10.1109/IGARSS.2006.434.
+[24] Snyder, E.M., Morash, J.P., Benjamin, M.R., 2016. Expanding MOOS-IvP autonomy software with ROS integration. In: OCEANS 2016
+     MTS/IEEE Monterey, pp. 1-8. https://doi.org/10.1109/OCEANS.2016.7761374.
+[25] Cohen, H., 2025. OilSpill Trajectory Systems: Interactive Demonstration Platform. https://hadascohen.github.io/OilSpill-TrajectorSystems/
+     (accessed 7 August 2025).
+
+
+
+
+                                                                       30
+

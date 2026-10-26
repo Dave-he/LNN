@@ -1,0 +1,701 @@
+                                               Recovering implicit physics model under real-world
+                                                                   constraints
+                                                                                    Ayan Banerjeea and Sandeep K.S. Gupta.b, *
+                                                                                       a,b IMPACT Lab, Arizona State University
+                                                   ORCID (Ayan Banerjee): https://orcid.org/0000-0001-6529-1644, ORCID (Sandeep K.S. Gupta.):
+                                                                             https://orcid.org/0000-0002-6108-5584
+
+
+                                        Abstract. Recovering a physics-driven model, i.e. a governing set         on data from real-world systems [31]. Some effort has been under-
+                                        of equations of the underlying dynamical systems, from the real-          going to improve performance of both categories of approaches on
+                                        world data has been of recent interest. Most existing methods ei-         systems with limited data and noise [12, 14], however, such problems
+                                        ther operate on simulation data with unrealistically high sampling        are only a small subset of issues observed in real-world deployments.
+                                        rates or require explicit measurements of all system variables, which        This paper focuses on the model recovery problem that arises in
+                                        is not amenable in real-world deployments. Moreover, they assume          real-world systems which may include interactions with the human
+arXiv:2412.02215v1 [cs.LG] 3 Dec 2024
+
+
+
+
+                                        the timestamps of external perturbations to the physical system are       users at runtime. As such we consider a control affine system whose
+                                        known a priori, without uncertainty, implicitly discounting any sen-      n dimensional state space X = {x1 . . . xn } ∈ Rn is given by:
+                                        sor time-synchronization or human reporting errors. In this paper, we
+                                        propose a novel liquid time constant neural network (LTC-NN) based                           Ẋ = f (X, Θ) + g(X, Θ)(U + Uex ),                      (1)
+                                        architecture to recover underlying model of physical dynamics from
+                                        real-world data. The automatic differentiation property of LTC-NN         where f (X, Θ) : Rn × Rp → Rn is a model of the natural un-
+                                        nodes overcomes problems associated with low sampling rates, the          perturbed dynamics of the physical system with human users in it
+                                        input dependent time constant in the forward pass of the hidden layer     that is perturbed by: a) a autonomous system U = K(X), where
+                                        of LTC-NN nodes creates a massive search space of implicit physical       K : Rn → Rm is a control function that generates the m dimen-
+                                        dynamics, the physics model solver based data reconstruction loss         sional actuation signals to the physical system and b) input from
+                                        guides the search for the correct set of implicit dynamics, and the use   the human user Uex ∈ Rm . We denote the total perturbation as
+                                        of the dropout regularization in the dense layer ensures extraction of    UT = U + Uex . g(X, Θ) : Rn × Rp → Rn × Rm , expresses
+                                        the sparsest model. Further, to account for the perturbation timing       the effect of the input perturbation. Θ is the set of model coefficients
+                                        error, we utilize dense layer nodes to search through input shifts that   of the dynamical system.
+                                        results in the lowest reconstruction loss. Experiments on four bench-        Real-world observations are limited by additional constraints (Ci).
+                                        mark dynamical systems, three with simulation data and one with the       C1: Low sampling rate - Storage and energy constraints in real-
+                                        real-world data show that the LTC-NN architecture is more accurate        world deployments often limit sensing frequency [4]. As per the
+                                        in recovering implicit physics model coefficients than the state-of-      Nyquist Shannon sampling theory [35], full information about the
+                                        the-art sparse model recovery approaches. We also introduce four          model coefficients Θ is available in observation X if it is sampled
+                                        additional case studies (total eight) on real-life medical examples in    at the Nyquist rate i.e.,the sensing frequency is twice the maximum
+                                        simulation and with real-world clinical data to show effectiveness of     frequency in the power spectrum of X obtained from Eqn.1. The
+                                        our approach in recovering underlying model in practice.                  control input U has the same sampling frequency as X. However, in
+                                                                                                                  practice, the sensor data is logged at a sub-Nyquist rate.
+                                        1    Introduction                                                         Difficulty in model recovery with C1: A low sampling frequency
+                                                                                                                  causes performance degradation of model recovery [10]. As samples
+                                        Model recovery problem concerns with deriving underlying physics          grow further apart in time, the set of nonlinear functions that accu-
+                                        driven governing equations of a system from data [32]. Different          rately fit the samples becomes larger making it increasingly difficult
+                                        from model learning, the model recovery has two goals: a) to accu-        to find the correct underlying model in the expanded search space.
+                                        rately reconstruct the data, and b) derive the fewest terms required to   C2: Perturbed system - Since in deployment the system operation
+                                        represent the underlying nonlinear dynamics. As such sparse iden-         cannot be disrupted, the traces X are always from a perturbed system
+                                        tification of nonlinear dynamics is needed [24, 22]. It is useful for     following Eqn1 and there is no trace obtained from the unperturbed
+                                        several applications such as learning digital twins [37], safety anal-    part of the system. Plus, there can be, q > 0, external human inputs
+                                        ysis [6], anomaly detection [28], explainable artificial intelligence     Uex at times t1 . . . tq , ti ∈ R≥0 , ∀i that are sparse in time and are
+                                                                                                                                                             1                 q
+                                        (AI) [21] and prediction [33]. Two broad categories of techniques ex-     described by a set of tuples Ex = {(Uex      , t1 ), . . . (Uex , tq )}, Model
+                                        ist (Table 1): a) using physics driven deep learning on large datasets,   recovery from perturbed systems with control inputs has been con-
+                                        and b) using transformations that linearize the nonlinear dynamics        sidered in the literature, however, to the best we know, sparse external
+                                        using the Koopman theory [25] and then performing linear regres-          human inputs have been ignored.
+                                        sion with sparsity constraints. It is generally acknowledged that both    Difficulty in model recovery with C2: While input perturbations due
+                                        categories of techniques suffer significant performance degradation       to the control logic are Lipschitz continuous, the external human
+                                                                                                                  inputs are discontinuous that introduce transients in the dynamical
+                                        ∗ Email: abanerj3@asu.edu, sandeep.gupta@asu.edu. Funded in part by       system. Approaches such as least square minimization based model
+                                        DARPA AMP-N6600120C4020, and FIRE - P000050426 and NSF FDT-               recovery [24] that ignores human inputs may erroneously introduce
+                                        BioTech 2436801                                                           higher order nonlinear terms in the model due to such transients.
+                                    𝑌 0 AND 𝑈 + 𝑈𝑒𝑥
+                                                                                                   bitrary temporal resolution. Hence, at low sampling rates, LTC-NN
+                                                                                                   can accurately represent system dynamics with arbitrary precision in
+MEASURED STATE     LIQUID                      INSIGHT
+                                                                                                   between samples while maintaining the structure.
+ VARIABLES 𝑌        TIME                MODEL COEFFICIENTS      DENSE               ODE
+                                                                                                   Intuition for addressing C2: The forward pass of LTC-NN has the
+  MEASURED       CONSTANT                 EXPRESSED AS AN       LAYER              SOLVER   𝑌𝑒𝑠𝑡   same form as the control affine dynamics in Eqn.1. Hence, each node
+PERTURBATIONS     NEURAL                OVERDETERMINED SET
+   𝑈 + 𝑈𝑒𝑥       NETWORKS               OF LINEAR EQUATIONS
+                                                                            MODEL
+                                                                                                   inherently decouples the perturbed and un-perturbed dynamics of the
+                           BILINEAR                                      COEFFICIENT               system and learns them separately.
+                       APPROXIMATIONS                                   ESTIMATES Θ𝑒𝑠𝑡
+                         OF IMPLICIT
+                                                                                                   Intuition for addressing C3 & C4: The forward pass of LTC-NN
+                                                               DENSE LAYER SEARCHES FOR A
+                          DYNAMICS                            CONSISTENT SUBSET OF IMPLICIT        can take the form of bi-linear approximations of the implicit dynam-
+Figure 1. Liquid Time Constant neural                  network based GUIDED
+                                                              DYNAMICS         BY ODE LOSSfor
+                                                                         architecture              ics in Eqn. 1 and hence it can search through the space of implicit
+C3:
+modelSparsity
+      recovery. structure in high dimensional nonlinear function                                   dynamics (Fig. 1). The measurements of Y , can be used to convert
+space - The model in Eqn.1 is a physics driven model, which is de-                                 the set of implicit dynamics to an over-determined system of equa-
+rived from first principles. As such the algebraic structure S of this                             tions that are linear in terms of the model coefficients. As such an
+model is sparse in the nonlinear function space. However, in real-life                             over-determined system of equation may have no solution unless ei-
+systems, the sparsity information is often unknown.                                                ther some equations are rejected or are expressed as linear superposi-
+Difficulty in model recovery with C3: Sparsity requirements add ad-                                tion of other equations. To search for a set of consistent equations to
+ditional constraints to the model coefficients Θ leading to a con-                                 estimate the model coefficients, a dense layer is utilized. The search
+strained optimization problem which may be more complex than                                       process of the dense layer is guided by a loss function (ODEloss)
+unconstrained versions [9]. Solutions such as physics-driven deep                                  that computes the mean square error between the reconstructed (esti-
+learning use original model coefficients in the loss function (see Ta-                             mated) Yest using an ODE solver SOLVE(Y (0), Θ, U + Uex ) and
+ble 1), which is not available in real-world deployments.                                          the ground truth measurements of Y . The sparsity in the model is
+C4: Implicit dynamics - Privacy requirements, cost of sensing, and                                 introduced by utilizing dropouts in the dense layer.
+resource constraints on storage results in measurements of only a                                  Intuition for addressing C5: From the dense layer we keep m nodes
+subset of the system variables X in real-world deployments. This                                   whose outputs are used to shift the input data Uex . Such dense layer
+constraint is expressed as a sensing matrix C, which is a diagonal                                 nodes can potentially search through a large set of input shifts due to
+matrix, where cii = 1 if a sensor senses xi and cii = 0 if there is no                             synchronization or reporting errors that best fits the data.
+sensor for xi . Hence, only sampled traces of Y = CX is available                                  Case study contribution: We compare LTC-NN-MR with state-of-
+as sensed data and some physics-driven dynamics model is implicit.                                 the-art nonlinear model recovery technique, SINDYc [24], and other
+All actuation inputs U and user inputs Uex are sensed.                                             baselines that use the same advanced architecture as LTC-NN-MR
+Difficulty in model recovery with C4: With the implicit dynamics,                                  but use CT-RNN or NODE as neural nodes. For benchmark case
+the problem formulations of existing model recovery approaches fall                                studies, we use three simulation and one real-world examples avail-
+apart. To solve this, existing techniques increase the state variable                              able in [24]. We introduce two new medical benchmarks with au-
+dimension by adding new variables that are differentials of the mea-                               tomated insulin delivery (AID) system and electro-encephalogram
+sured state variables. We refer to this as weakly implicit dynamics.                               (EEG) brain signal reconstruction using nonlinear oscillator mod-
+There are two problems with such approaches: a) in real-world de-                                  els [16]. For AID we create simulation benchmark using the Food
+ployment differential computation can be inaccurate especially with                                and Drug Administration (FDA) approved UVA/PADOVA Type 1
+low sampling rates, and b) to model the nonlinearity of unmeasured                                 Diabetes (T1D) simulator [36]. We also test LTC-NN-MR on real-
+state variables, higher order differentials need to be computed, which                             world clinical study using the publicly available LOIS-P dataset for
+not only increases the model recovery error but also significantly in-                             pregnant women with T1D [29]. For EEG reconstruction case study,
+creases the dimensionality of the model recovery problem.                                          we create a simulation benchmark and also test LTC-NN-MR on real-
+C5: Input uncertainty - Timestamps of the input perturbations are                                  world CHB-MIT Scalp EEG dataset [17]. In summary we evaluate
+uncertain in the real world due to several reasons: a) faulty report-                              our strategy on five simulation and three real-world case studies.
+ing by human users, and b) the inputs and the state variables are
+often measured by different sensors which may have uncertain dif-                                  2    Related Works
+ferences in clock times [29]. In other words, the measured human
+          s                u                       u
+inputs Uex    = Uex + ηex     has unknown error ηex   and the measured                             Table 1 summarizes the recent works for model recovery. In the lin-
+user input activation time tsex = tex + ηex t
+                                               has unknown error ηex t
+                                                                       .                           ear domain, system identification techniques such as Ho Kalman or
+Difficulty in model recovery with C5: Current approaches do not con-                               Eigen system realization algorithm (ERA) [30] attempt to fit a linear
+sider the noise in the timestamps and only focus on the noise in mag-                              model to data. Such techniques do not scale to nonlinear dynamics,
+nitude. Incorporating temporal uncertainties can intractably increase                              and do not preserve the sparsity structure (violate C3).
+the search space of the model recovery problem.                                                       The seminal work on extracting nonlinear model from data used
+   Given a set T of traces of Y, U, Uex over time, in this paper                                   stratified symbolic regression and genetic programming [34]. This
+we solve the model recovery problem to derive Θest such that                                       approach does not scale well with increasing dimensions, and re-
+||Θ − Θest ||2 < ϵ, for some ϵ > 0 error limit. However, note that                                 quires measurement of all the state variables (violates C4).
+the original Θ is unknown and cannot be used in the solution of the                                   Significant breakthrough was achieved through introduction of
+problem. Hence, the estimated model coefficients Θest has to be uti-                               sparse identification of nonlinear dynamics (SINDy) that iteratively
+lized to first derive an estimated trace Yest and then ||Yest − Y ||2 can                          selects dominant candidate from a library of high-dimensional non-
+be used as objective function.                                                                     linear functions [32]. The sparsity (constraint C3) was achieved
+                                                                                                   through a sequential threshold ridge regression (STRidge) algorithm
+1.1     Approach and contributions                                                                 that iteratively determines the sparse solution utilizing hard thresh-
+                                                                                                   olds (manual configuration parameter). The original technique as-
+Our main contribution is the extension of liquid time constant neu-                                sumes an unperturbed system (violates C2 & C5), and requires mea-
+ral network (LTC-NN) to advanced neural structure (LTC-NN-MR)                                      surements of all the state variables xi (violates C4). Subsequently
+for recovering physics model under real-world constraints (Fig. 1).                                SINDy has been extended to SINDYc to tackle constraint C2 for con-
+Intuition for addressing C1: The automatic differentiation property                                trol inputs [24], however, it still violates C5.
+of LTC-NN class of neural architectures [3], which also includes con-                                 Attempts have been made to incorporate extraction of implicit
+tinuous time recurrent neural networks (CT-RNN) or neural ordinary                                 models using the SINDy strategy [22], however, the unmeasured
+differential equations (NODE), can solve a system of ODEs with ar-                                 state variables are only limited to the differentials of the original state
+    Approach Table 1.     Related works
+                                     C1:inSam-
+                                           model recovery. High in
+                                                  C2: Control   C2:column
+                                                                     Human2 means
+                                                                              C3: greater
+                                                                                   Sparse thanC4:
+                                                                                               double  the Nyquist
+                                                                                                  Implicit  C5: rate,
+                                                                                                                   InputLowAssumptions
+                                                                                                                            means at Nyquist rate.
+                                     pled data    Perturbed       Perturbed         model        dynamics      uncertainty
+    Eigen system Realization [30]    Low          Yes             No                No           Yes           Magnitude     Linear system
+    Genetic Algorithm [34]           High         No              No                Yes          No            No            Low dimensional nonlinear systems
+    SINDy [32]                       High         No              No                Yes          No            No            Known sparsity threshold
+    SINDYc [24]                      High         Yes             No                Yes          Weak          Magnitude     same as above
+    E-SINDY [14]                     Low          Yes             No                Yes          Weak          Magnitude     same as above
+    NODE + structure [27]            High         No              No                Yes          No            No            Known metriplectic structure
+    PINNs + Sparse Regression [12]   Low          No              No                Yes          No            No            Physics loss for original coefficients
+    This paper                       Low          Yes             Yes               Yes          Yes           Yes           Black box ODE solver in the loss
+
+variables (weakly implicit). SINDy has been also extended to tackle                     where ρ is the time constant of the system and f−ρ (.) is the unper-
+uncertainty in the magnitude of the state variables [24], but extension                 turbed dynamics after removing the time constant component.
+to address timing uncertainties has not been explicitly explored.                          Assuming that the autonomous system is a dynamic causal system,
+   Physics informed Neural Networks (PINN) utilize the concept of                       the bi-linear approximation [15] of the control affine system in Eqn.
+automatic differentiation to perform accurate forward and inverse                       4 results in Eqn. 5.
+analysis of nonlinear physics models and has been used in many                                                                            X     j   j
+practical domains [12]. However, such models are black-box and                                 Ẋ ≈ −X/ρ + f−ρ (X) + BX + CUT +                uT D X + H,            (5)
+cannot provide Θest while maintaining the constraints C3 and C4.                                                                           j
+
+Recently, PINNs have been integrated with sparse regression to re-                                                                                      2
+cover model coefficients [12]. Such approaches are not applied for                      where B = ∂(g(X)U
+                                                                                                      ∂X
+                                                                                                         T)
+                                                                                                            , C = ∂(g(X)U
+                                                                                                                     ∂UT
+                                                                                                                         T)
+                                                                                                                            , and Dj = ∂ (g(X)U
+                                                                                                                                              j
+                                                                                                                                                T)
+                                                                                                                                                   ,
+                                                                                                                                                            ∂X∂uT
+perturbed systems (violates C2, consequently C5), and do not con-
+sider the implicit dynamics (C4). A major assumption in these ap-                       H is a constant. Rearranging Eqn. 5, we have the similar form as the
+proaches is the knowledge of physics loss for the original model                        LTC-NN forward pass in Eqn. 6.
+coefficients Θ. This is an impractical (potentially circular) assump-                                              ρ             
+                                                                                              Ẋ ≈ −X/                               + (f−ρ (X) + CUT + H).           (6)
+tion since the original model coefficients are unknown in real-world                                     1 + ρ(B +
+                                                                                                                   P     j  j
+                                                                                                                      j uT D )
+examples. Recently, NODE structure has been used for forecasting
+while maintaining metriplectic structures [27], i.e. algebraic struc-                   We observe that Eqn. 6 is the same form as Eqn. 3 if the input to the
+tures in models induced by laws of physics such as energy conserva-                     LTC-NN I(t) is a concatenation of Y and UT . The hidden layers of
+tion, first and second law of thermodynamics [27]. Such approaches                      the LTC-NN model an inflated set of implicit dynamics which may
+violate C1, with unrealistically high sampling rates, violates C2 (and                  include the unmeasured system variables of the physics model.
+C5) since it uses unperturbed system, and violates C4, no implicit
+dynamics.                                                                               Remark 2. The inflated set of implicit dynamics modeled by LTC-
+How is this paper different? We address the model recovery prob-                        NN induces an over-determined set of equations in the coefficients of
+lem in the real world satisfying constraints C1 through C5:                             the bi-linear approximation of control affine model.
+Given: i) A set of sampled traceST = {ti }, where ti =
+                                              1
+{(Y (0), U (0)) . . . (Y (kτ ), U (kτ ))} {(Uex                 q
+                                                , t1 ), . . . (Uex , tq )},             Supporting argument: The training process of LTC-NN fixes
+where k is the number of samples and τ is the Nyquist sampling rate.                    weights and instantiates the hidden layer outputs. The values of the
+ii) a “black box" ODE Solver Yest = SOLVE(Y (0), Θest , U +                             unmeasured variables in X is estimated by the hidden state in each
+Uex ), that takes any Θest as input and solves the ODE describing the                   training step utilizing the forward pass and learned LTC-NN weights
+physics model to provide an estimated / reconstructed Yest .                            ω. Hence each forward pass provides an over-determined set of linear
+Find: Θest such that ||Y − SOLVE(Θest )||2 ≤ ψ, for some ψ > 0                          equations in the coefficients B, C, and Dj .
+Under: C1 through C5 constraints.                                                          The original control affine model coefficients Θ are nonlinear
+                                                                                        functions of the coefficients B, C, and Dj s, The dense layer is best
+3      Theoretical foundations                                                          suited for exploring a large set of possible nonlinear combinations of
+                                                                                        B, C, and Dj that express Θ. An over-determined system of equa-
+The forward pass of LTC-NN node is given by [19]:                                       tions is inconsistent and may be unsolvable. The dense layer guided
+              ḣ(t) = −h(t)/ρ + fN N (h(t), I(t), t, ω)(A − h(t)),            (2)       by the ODE solver induced loss function (ODELoss) learns a con-
+                                                                                        sistent set of linear equations in B, C, and Dj and also learns their
+where h(t) is one hidden state of the LTC-NN, ρ is a time constant                      nonlinear combination to determine Θ.
+parameter, required to assist any autonomous system to reach equi-
+librium state. As such existence of the −h(t)/ρ is an important sta-                    3.1    Addressing C1: Sampled Data
+bility criteria as it ensures that the unperturbed physical system set-                 Architectures that enable automatic differentiation such as CT-
+tles in time. fN N is the computation function of each node and is a                    RNN [20] or NODE [11] or LTC-NN [19] are shown to be capa-
+function of the hidden states, I(t) is the input to the LTC-NN, ω and                   ble of simulating arbitrary sampling rates between two time samples
+A are architecture parameters.                                                          of the real data through usage of state-of-art ODE solvers. Hence,
+Remark 1. The forward pass of an LTC-NN architecture generates                          such architectures are at a relative advantage over sparse identifica-
+a set of implicit physical dynamics that are equivalent to a bi-linear                  tion mechanisms such as SINDy. In our examples we show that de-
+approximations of the control affine autonomous system in Eqn.1.                        creasing sampling rate up to the minimum required Nyquist rate [35]
+                                                                                        reduces accuracy of model recovery for SINDy class of approaches
+Supporting argument: Algebraic manipulation of the forward pass                         but has little to no effect on CT-RNN, NODE or LTC.
+of LTC-NN architecture gives the structure of Eqn.3 which allows an
+                                        ρ
+input dependent time constant 1+ρfN N (h(t),I(t),t,ω) .                                 3.2    Addressing C2: Perturbed system
+                                                                                        The LTC-NN forward pass has an input dependent time constant.
+                                ρ
+                                                                                        This helps in modeling the perturbed system as demonstrated by the
+                                                 
+ḣ(t) = −h(t)/                                     + fN N (h(t), I(t), t, ω)(A).
+                    1 + ρfN N (h(t), I(t), t, ω)
+                                                                              (3)       equivalence of Eqn. 3 and 6. This is not the case for other neural
+   The stability criteria for any autonomous system requires the con-                   architecture with automatic differentiation such as CT-RNN [20] or
+trol affine model to have a time constant term as shown in Eqn. 4                       NODE [11] (Eqn. 7). They do not have a direct mapping to the bi-
+                                                                                        linear approximation of the control affine system, as is evident by the
+                        Ẋ = −X/ρ + f−ρ (X) + g(X)UT ,                        (4)       following equations:
+                                       𝑌(0) and 𝑈                                                                     Uex . The Runge Kutta integration method is used in the ODE solver,
+                                                                                                                      which gives Yest . The backpropagation of the network is performed
+
+
+
+
+                                                 Activation Activation
+                         𝜉 -NN         Dense
+
+
+
+
+                                                              RELU
+     Input Data                                                          Estimat   Θ𝑒𝑠𝑡     Solve
+           𝑌             Cell 1        Layer                              e of Θ           Physics
+                                                                                                                      using the network loss appended with ODE loss, which is the mean
+    𝐼=                                                                                               Reconstruct
+        𝑈 + 𝑈𝑒𝑥                          V                                       Shifted   model     ed Data 𝑌𝑒𝑠𝑡     square error between the original trace Y and estimated trace Yest .
+
+
+
+
+                                                  Sigmoid
+ 𝑆𝐵 |𝐶𝑋| + 𝑚 𝑘                           ×                                Input inputs      with      |𝐶𝑋| × 𝑘
+                         𝜉 -NN
+                                      ( Θ + 𝑞)                           Shifts Δ 𝑈෪        Θ𝑒𝑠𝑡
+                         Cell V                                                     𝑒𝑥
+                                                                                                                      5     Evaluation
+    𝜉 is a neural architecture that           Backpropagation                  2
+Figure     2. Implementation
+  can be LTC-NN, CT-RNN, or NODE of neural architecture  based model
+                                                                 Loss =recovery
+                                                                         𝐼 − 𝐼𝑅 so-
+                                                                                                                      Experiments are performed in Nvidia Titan V GPU, CUDA 11.4 and
+lution with input uncertainty.
+                                                                                                                      TensorFlow 2.7.0 [1]. Code and data available in [2]. We show two
+                     CT RNN: ḣ(t) = − h(t)
+                                        ρ + fCT (h, I, t, ωCT ),                                                (7)
+                                                                                                                      types of examples:
+                              NODE: ḣ(t) = fCT (h, I, t, ωCT ).                                                      a) Five simulation benchmarks, three obtained from SINDYc [24]
+                                                                                                                      and the AID and EEG problems introduced in this paper. Simulation
+3.3        Addressing C3: Sparsity Preservation                                                                       is used to test the variation of model recovery performance under
+                                                                                                                      various severity levels of the constraints.
+Sparsity preservation is achieved through the training loss function                                                  b) Three real-world data available for the example of Lotka Volterra
+and dropouts in dense layer. PINNs [12] and NODE [11] achieve                                                         system in the original SINDYc paper [24], the LOIS-P data for AID
+sparsity by integrating a “physics loss". It uses the original model                                                  in pregnancy [29], and the EEG data for epilepsy [17]. This shows
+coefficients Θ in an ODE solver to determine the ground truth Y                                                       practical applicability of LTC-NN-MR in real-world data.
+to compute the RMSE of the estimated Yest . While this approach is
+appropriate in simulation settings, it is not practical since the original                                            5.1      Benchmark Examples
+model coefficient Θ is not available in the real world. The presented
+approach uses ODE loss which uses the estimated model coefficients                                                    Table 2 shows all examples (physical dynamics are in supplementary
+Θest and initial value of measured variables Y (0) to compute the                                                     document [2]). In the examples from [24] marked with (B) in Table
+k−1 samples of Yest at times {τ, 2τ . . . kτ }. For this purpose, it uses                                             2, there are no external human inputs Uex apart from control inputs
+a state-of-art ODE solver that implements the control affine structure                                                u. We arbitrarily varied the input timing to evaluate effect of input
+of the autonomous system. It computes RMSE with the real data Y                                                       uncertainty constraint C5. For the AID example in simulation, we
+as loss. Hence, we do not use Θ in the training of LTC-NN-MR.                                                         alter the meal timing. For the EEG example in simulation we chose
+                                                                                                                      a deterministic sinusoidal input and then a stochastic Wiener process
+3.4        Addressing C4: Implicit Dynamics                                                                           generated input to test for high levels of input uncertainties. In the
+                                                                                                                      real world EEG and AID example uncertainty is inherent in the data.
+Remark 1 shows that LTC-NN forward pass can provide an inflated
+set of implicit dynamics. This is also true for CT-RNN, and NODE.
+LTC-NN has the advantage over all other techniques in that it can                                                     5.1.1     Automated Insulin Delivery System
+model implicit dynamics in presence of external inputs.                                                               In the AID system, the glucose insulin dynamics is given by the
+                                                                                                                      Bergman Minimal Model (BMM) [8]:
+3.5        Addressing C5: Input uncertainty
+                                                                                                                                  i̇(t) = −ni(t) + p4 u1 (t), i̇s (t) = −p1 is (t) + p2 (i(t) − ib )    (8)
+Input uncertainty is of two types: a) magnitude, and b) temporal. The
+magnitude uncertainty is inherently handled in neural architectures                                                               Ġ(t) = −is (t)Gb − p3(G(t)) + u2(t)/V oI,                            (9)
+through the weight update process. To tackle timing uncertainty, a
+subset ∆ : |∆| = q of the dense layer outputs are transformed to the                                                   The input vector U (t) consists of the input insulin level u1 (t), which
+range [0, 1] using a Sigmoid activation function. Each di ∈ ∆ acts                                                    is derived using a self adaptive MPC controller like Tandem Control
+a shift operation for the input uiex ∈ Uex . Each input uiex is shifted                                               IQ [26]. Uex consists of the glucose appearance in the body u2 for
+by the amount di × k and is used in the input layer as well as the                                                    a meal. In the real world, users forget to report the exact timing of
+ODE Solver in the loss function for each forward pass of the neural                                                   the meal and also make mistake in estimating consumed carbohy-
+structure. The dense layer is used to search for the set of possibilities                                             drate amount [26]. We model this error as input uncertainty in time
+of input shifts due to temporal uncertainty.                                                                          and magnitude. The state vector X(t) comprises of the blood insulin
+                                                                                                                      level i, the interstitial insulin level is , and the BG level G. The mea-
+4        Implementation                                                                                               sured vector Y = G since CGM measures only glucose. p1 , p2 , ib ,
+                                                                                                                      p3 , p4 , n, and 1/Vo I are all patient specific coefficients.
+The advanced neural architectures for model recovery (ξ-MR, where
+ξ is either LTC-NN, CT-RNN, or NODE) (Fig. 2) is implemented                                                          5.1.2     EEG example
+by extending the base code available in [18]. For each example, we
+extract the training data consisting of temporal traces of Y , U and                                                  The EEG represents brain waves and can be modeled using coupled
+Ex. Y is sampled at least at the Nyquist rate for the application, and                                                system of Duffing—van der Pol oscillators [16] as in Eqn. 10.
+U has the same sampling rate as Y . Ex is a set of tuples denoting
+  i
+Uex  values at time tiex . Ex is transformed into a signal at the same                                                                                 2                 3
+                                                                                                                            ẍ1 + k1 x1 = k2 x2 − b1 x3 − b2 (x1 − x2 ) + ϵ1 ẋ1 (1 − x1 )
+                                                                                                                                                                                           2
+                                                                                                                                                                                                       (10)
+                                          i
+sampling frequency as Y by keeping Uex       at times tiex and appending                                                                                        3                2
+                                                                                                                            ẍ2 − k2 (x1 − x2 ) = b2 (x1 − x2 ) + ϵ2 ẋ2 (1 − x2 ) + µdW,
+0s at all other times. The resulting training data is then divided into
+batches of size SB forming a 3 D tensor of size SB × (|Y | + m) × k.                                                  where k1 , k2 , b1 ,b2 , ϵ1 and ϵ2 are patient specific parameters, x2
+   Each batch is passed through the ξ network with V nodes, result-                                                   is the EEG signal, x1 is an internal unmeasured state variable, µ is
+ing in V hidden states. A dense layer is then employed to transform                                                   the magnitude of activation, dW is a random variable following the
+this V hidden states into p = |Θ| model coefficient estimates and q                                                   Wiener process [16]. Here the input u = µdW is a stochastic process
+input shift values. The dense layer is a multi-layer perceptron with                                                  with significant temporal and magnitude uncertainty.
+ReLU activation function for the model coefficient estimate nodes
+and Sigmoid activation function for input shift values. The input shift                                               5.1.3     Real-World Data
+values are used to shift the external input vector. The shifted inputs,
+the model coefficient estimates, and the initial value Y (0) is passed                                                Three examples of real-world data are shown in this paper:
+through an ODE solver, that solves the control affine model in Eqn. 1                                                    A) Lotka Voltera system uses yearly lynx and hare pelts data col-
+with the coefficients Θest , initial conditions Y (0) and inputs U and                                                lected from Hudson Bay Company [24].
+ Example       Table 2. Benchmark Examples.   (B) denotes examples
+                                            Variables                available
+                                                                 Inputs         in [24],
+                                                                         Implicit        (N) denotes
+                                                                                     Uncertain timing novel case studies
+                                                                                                         Nyquist rate    introduced in rate
+                                                                                                                          Max sampling this paper.
+                                                                                                                                              No of coefficients
+ Real-World: Lotka Volterra (B)             x1 , x2              1       x1          No                  2.5 Hz           10 Hz               4
+ Simulation: Chaotic Lorenz System (B)      x1 , x2 , x3         1       x1 x2       No                  100Hz            1000 Hz             4
+ Simulation: F8 Crusader tracking (B)       x1 , x2 , x3         1       x2          No                  100 Hz           1000 Hz             20
+                                                                                                                  −4              −4
+ Simulation: Pathogenic attack (B)          x1 , x2 , x3 x4 , x5 1       x3 , x4     No                  2.8 × 10         5.6 × 10            13
+ Real-world: Automated Insulin Delivery (N) Is G I               2       Is , I      Yes                 0.0028 Hz        0.0033 Hz           9
+ Simulation: AID (N)                        Is G I               2       Is , I      Yes                 0.0028 Hz        10 Hz               9
+ Real -world: EEG (N)                       x1 ,x2 ,ẋ1 ,ẋ2     1       x1 , x˙1    Yes                 250 Hz           500 Hz              6
+
+   B) In the real-world AID example we used the LOIS-P                             and data. Effect of perturbation is the difference in performance of
+dataset [29], which is data from a clinical study on 25 patients with              ΦN and ΦN I .
+pre-existing T1D for at least a year. All patients were enrolled be-               Effect of implicit dynamics (C3) on (B) examples: From ΦN we cre-
+fore 17 weeks gestational age at three sites: Mayo Clinic, Rochester,              ated another configuration ΦN P where measurements of implicit dy-
+Mount Sinai in New York City, and Sansum Diabetes Research Insti-                  namics are withheld. This experiment compares neural architectures
+tute. On an average 24.7 weeks (± 5.2) of Dexcom G6 CGM glucose                    based on their capability in searching for implicit dynamics. We kept
+at 5 min interval and insulin and meal intake data.                                input perturbation. In this comparison, we do not include SINDYc
+   C) The EEG example is solely evaluated in the real world with the               since it is not designed to extract implicit dynamics.
+CHB-MIT Scalp EEG database [17]. It has 684 EEG signals from 22                    Effect of sparsity (C4): The techniques that we evaluate all maintain
+pediatric subjects with epilepsy with a sampling rate of 250 Hz.                   sparsity. Hence, C4 is evaluated in conjunction with C3.
+                                                                                   Effect of input uncertainty (C5) on (B) and (N) simulation examples:
+5.1.4    Simulation data                                                           For each case study, we vary the time stamp of input u from 3 sam-
+Benchmark simulations use data from of SINDYc available at [23].                   ples to 20 samples while keeping the reported time stamp the same.
+Simulation data for AID: We considered 14 traces of glucose in-                    Real-world experiments on AID (N) and EEG (N): We compare the
+sulin dynamics each of which were 200 samples (16 hrs). In each                    three neural architecture for their performance in modeling real data.
+trace meal ingestion time was varied from [t = 15 min to t = 400 min]              For this experiment, we do not know the ground truth model coeffi-
+with carbohydrate value randomly sampled from the range [0g, 28g]                  cients Θ and we compare the techniques using RM SEY .
+for each meal, and bolus insulin delivery was sampled from the set
+[0U, 40U ]. The traces were generated using the T1D simulator [36].                5.4     Training and Validation Method
+Two sampling frequencies are tested: i) 10Hz, and ii) real-world                   SINDYc: We utilize the same training method as used in SINDYc
+CGM sampling rate of every 5 min (Table 2).                                        and as reflected in the code accessed from [23]. In the experiments,
+                                                                                   with ϕN , we changed the dt variable in the “getTrainingData.m"
+5.2     Baseline Techniques                                                        from the minimum value corresponding to maximum frequency in
+We compare with the following baseline strategies:                                 each example (Table 2) to the Nyquist rate. The Nyquist rate is ob-
+SINDYc: This baseline [24] is used to show that reducing sampling                  tained by computing the power spectral density of the signals sam-
+rate to a minimum of Nyquist rate, causes significant degradation of               pled at the highest frequency. We then extract the frequency f90 at
+performance for SINDY class of approaches.                                         which the cumulative power density reaches 90% of the maximum
+NODE-MR: This baseline is the seminal work on neural architec-                     level. The Nyquist rate is two times f90 . We change the dt to obtain
+ture [27]. It is used to show that lack of a time constant factor in the           four frequency points up to the maximum dt for the Nyquist rate. For
+forward pass (Eqn. 7) reduces accuracy in recovering model.                        each example, the training and validation implemented in [23] used
+CT-RNN-MR: This baseline strategy has an input independent time                    to generate the RM SEY and RM SEΘ for SINDYc.
+constant factor (Eqn. 7). This is used to show that although time con-             Neural Architectures: For the neural architectures, we based our
+stant factor independent of input in the forward pass cannot accu-                 implementation on the codebase available at [18]. Here a generic
+rately recover model from a perturbed system.                                      framework for LTC-NN, CT-RNN, and NODE is implemented using
+                                                                                   TensorFlow 2.7.0. We wrote a custom loss function (code available in
+5.3     Evaluation experiments and metrics of success                              [2]) that implements the Runge Kutta solution of the physical dynam-
+                                                                                   ics given a vector of model coefficients. We use the general training
+For each evaluation experiment, we use two metrics:                                architecture presented in [18] with an ADAM optimizer. The frame-
+Root mean square error in model coefficients (RM SEΘ ): Given                      work can be instantiated with LTC-NN, CT-RNN and NODE core
+the estimated model coefficients Θest we compute:                                  architecture through an input parameter. Batch training was utilized
+                            s      X                                               for each example. For each example, we took the same simulation
+               RM SEΘ =      1/p ×   (Θjest − Θj )2 .                     (11)     data as SINDYc and divided the traces into 48 instance of training
+                                      j=1...p
+                                                                                   and 16 instance of test each of at least k = 200 samples. These train-
+                                                                                   ing instances were passed to the neural architectures with a batch size
+Root mean square error in signal (RM SEY ): Given the estima-
+                                                                                   SB = 32. The RM SEY and RM SEΘ are reported on the test data.
+tion of the measured variables Yest for any technique we compute:
+                        X s              X
+                                                    l (j) − Y l (j))2 .
+                                                                                   5.5     Results
+      RM SEY = 1/n         1/k ×                 (Yest                    (12)
+                      l=1...n          j=1...k                                     We first compare SINDYc and all neural architecture on the bench-
+                                                                                   mark examples in [24]. We evaluate C5 with the simulation AID ex-
+ All compared techniques identify sparsity preserving dynamics. We                 ample. Since SINDYc does not model implicit dynamics, we only
+start with a configuration Φ0 that has high sampling rates shown in                compare the neural architecture for real-world AID example.
+column 7 of Table 2, has no implicit dynamics, has input perturba-
+tion, only uncertainty in input magnitude (no temporal uncertainty).               5.5.1     Benchmark examples
+We conduct the following evaluation experiments:
+Effect of sampling rate (C1) on (B) examples: We vary the sampling                 Effect of sampling rate (C1): As seen from Fig. 3, at sampling rates
+rate of Φ0 from the rate used in the simulation data to the Nyquist                nearly four times Nyquist rate, all techniques give similar RM SEΘ
+rate (Table 2) and analyze the variation of RM SEΘ and RM SEY .                    and RM SEY . As sampling rates are increased every technique has
+The configuration with Nyquist sampling rate is denoted as ΦN .                    degradation in both the performance metrics. However, SINDYc is
+Effect of perturbation (C2) on (B) examples: From ΦN , we create                   most affected by the change in sampling frequency. All neural ar-
+configuration ΦN I by removing the input perturbation from model                   chitectures perform better than SINDYc with LTC-NN-MR showing
+                           Solid lines for 𝑅𝑀𝑆𝐸Θ and dashed lines for 𝑅𝑀𝑆𝐸𝑌                    Box – SINDYc, circle – NODE-MR, plus – CT-RNN-MR, star – LTC-NN-MR
+
+
+
+
+                                         SINDYc                                         SINDYc
+                                                                                                                      SINDYc
+                                                                                                                                                 SINDYc
+
+
+
+
+                                         LTC-NN-MR                                      LTC-NN-MR
+                                                                                                                      LTC-NN-MR
+
+                                                                                                                                                   LTC-NN-MR
+
+
+                                                             In pathogenic attack system, 𝑅𝑀𝑆𝐸 for SINDYc is out of the charts at or below 0.012 Hz.
+Figure 3. Comparison of SINDYc with neural architecture for configuration 𝑦ΦN by only varying sampling frequency to Nyquist rate, no implicit dynamics,
+with perturbation, and no input uncertainty.
+the best performance. The primary reason for such a result is the fact                                      CT-RNN-MR and LTC-NN-MR performance for no input perturba-
+that as data is sampled less frequently, the set of potential models                                        tion. SINDYc also had performance improvement when input pertur-
+that fit the data increases. While SINDYc imposes the constraint of                                         bation was removed.
+sparsity, the neural architectures impose further constraints on top of                                     Effect of implicit dynamics (C3 + C4): We updated the loss func-
+sparsity through their structure. The most restrictive constraint is the                                    tion of each architecture as follows:
+input dependent time constant of LTC-NN-MR and hence it performs                                                                     X s               X
+the best. CT-RNN-MR has the next most stringent constraint while                                                       Loss = 1/n               1/k             |xi (k) − xest   2
+                                                                                                                                                                           i (k)| ,             (13)
+NODE has the least restrictive constraint among the neural architec-                                                                i=1...n           j=1...k
+
+tures. In all examples except for the pathogenic attack, we see similar
+trends for RM SEΘ , where LTC-NN-MR outperforms all neural ar-                                              where xest
+                                                                                                                     i   ∈ Xest = SOLVE(X(0), Θest ). Table 3 shows that
+chitectures, which in turn outperforms SINDYc at Nyquist sampling                                           although there is some improvement in both the parameters, it was
+rate. For the pathogenic attack example, an interesting occurrence is                                       expected that RM SEΘ should significantly improve by providing
+observed, where at Nyquist rate, SINDYc has the best performance                                            measurements of implicit dynamics. However, we do not see such
+in both the metrics. However, at the next sampling frequency we see                                         improvements. A possible explanation for this is that since all the
+SINDYc has a very high RM SEy for a slight change in RM SEΘ .                                               baseline examples are observable systems, the implicit dynamics
+All neural architectures differed from this trend and both RM SEΘ                                           could be derived in terms of the measured system variables. The con-
+and RM SEY improved. The main reason for this is that SINDYc                                                jecture is that the neural architectures are capable of modeling the
+violates the sparsity constraint (C2). On closer look we found that                                         implicit dynamics in terms of the measured variables. This should be
+SINDYc found a totally different physical model of the system. A                                            further investigated in future works.
+hint of this behavior is also seen in the LOTKA-Volterra and F8
+                                                                                                            Table 3. Effect of providing the measurement of implicit dynamics to the
+Crusader example, where decreasing sampling frequency to Nyquist
+                                                                                                            neural architectures
+                                                                                                              Example     RMSE on benchmark
+                                                                                                                                    LTC-NN-MRexamples.
+                                                                                                                                                    CT-RNN-MR         NODE-MR
+rate reduced RM SEy but increased RM SEΘ . Similarly it was ob-                                                                      Implicit   Explicit   Implicit   Explicit   Implicit   Explicit
+served that SINDYc compensated for loss in RM SEΘ performance                                                 Lotka       RM SEΘ     0.054      0.048      0.06       0.054      0.065      0.064
+                                                                                                              Volterra    RM SEY     0.03       0.03       0.06       0.05       0.09       0.088
+by adding extra nonlinear terms to reduce RM SEy . From the re-                                               Chaotic     RM SEΘ     0.016      0.015      0.023      0.022      0.045      0.044
+sults, we do not see such behavior for the neural architectures. One                                          Lorenz      RM SEY     1.7        1.68       3.74       3.66       8.23       8.1
+                                                                                                              F8          RM SEΘ     7.81       6.8        10.9       10.5       21.9       19.9
+main reason can be because ODE Solver at the loss function guides                                             Crusader    RM SEY     1.6        1.57       3.52       3.46       7.75       7.22
+the exploration of the dynamics.                                                                              Pathogenics RM SEΘ     0.45       0.39       0.45       0.43       0.49       0.42
+                                                                                                              attack      RM SEY     28.9       28.3       29.1       28.8       29.9       29.5
+           With perturbation          Without perturbation     Results with sampling at Nyquist Rate
+                                                                                                            Effect of violating input uncertainty (C5): Each input in the bench-
+                                                                                                            mark examples were shifted by 2 to 20 samples. However, the model
+                                                                                                            recovery methods were not aware of this change and assumed that
+                                                                                                            the inputs occurred at the designated time. Table 4 shows the aver-
+                                                                                                            age degradation in RM SEy and RM SEθ when the input shifts are
+                                                                                                            disabled for LTC-NN-MR. The degradation is significantly reduced
+                                                                                                            when input shifts are re-introduced.
+                                                                                                            Table 4. Percentage degradation of RM SEθ , RM SEy , for C5 violation
+                                                                                                            and recovery with input shifts. SC: SINDY-c, LM: LTC-NN-MR, LV: Lotka
+                                                                                                            Volterra,
+                                                                                                              Case RM CL: SE
+                                                                                                                          Lorenz,
+                                                                                                                             y    F8:
+                                                                                                                                   RM Cruiser:
+                                                                                                                                       SEθ PA:    Pathogenics.
+                                                                                                                                                 RM SEy + shifts RM SEθ + shifts
+                                                                                                                    SC     LM      SC     LM       LM                       LM
+                                                                                                              LV    120%   56%     65%    53%      8%                       7%
+Figure 4. Comparison of SINDYc with neural architecture for configura-                                        CL    210%   121%    32%    27%      13%                      3%
+                                                                                                              F8    431%   212%    111%   89%      13%                      7%
+tion ΦN I by sampling at Nyquist rate, no implicit dynamics, with/ without                                    PA    78%    36%     24%    22%      11%                      6%
+Effect  of perturbation
+perturbation,              (C2): Fig. 4 shows that when input perturba-
+              and no input uncertainty.
+tion is removed, all techniques have improved performance in both                                           5.5.2    Automated Insulin Delivery Example
+metrics. Interestingly, we see that CT-RNN-MR without input per-
+turbation has similar performance to LTC-NN-MR architecture. This                                           Simulation Examples: In Table 5, SINDYc did not have any tem-
+agrees with the theory since, without input the forward pass of CT-                                         poral uncertainty for meal inputs. The neural architectures had tem-
+RNN-MR and LTC-NN-MR are similar. On the other hand, although                                               poral uncertainty at meal inputs and also used input shifts in the ar-
+NODE-MR had improvement in performance but it could not match                                               chitecture. However, for the last column, the input shift from neural
+architectures are removed and SINDYc is also evaluated for uncer-                                       RM SEy for EEGLTC-NN-MR
+                                                                                             Table 8. SINDYc           real-world example
+tainty at meal input. All techniques perform well for model recovery                                  1211.3 (± 489.1)     41.2 (± 27.9)
+from simulation data at 10 Hz sampling rate. SINDYc shows excel-
+lent RM SEY but poor RM SEΘ . The neural architectures perform                  for a given application. Usage of cloud computing may improve the
+similar to SINDYc at such high sampling frequency. However, when                speed for neural architectures and make them a viable candidate for
+the sampling rate is reduced to Nyquist rate, all methods have perfor-          real time accurate model recovery.
+mance degradation, with SINDYc suffering the most. LTC-NN-MR
+still performs better than the baseline techniques. When input shifts           6    Conclusions
+are removed, all techniques suffered significant performance drop.
+                                                                                This paper provided a liquid time constant neural network based so-
+Table 5. Comparison of baseline techniques for AID simulation example           lution to the problem of recovering coefficients of a physics model
+with no implicit dynamics. It also shows effect of input uncertainty (C5) in    from real-world data from a dynamical system. It identified five key
+last two rows. fs is sampling
+  Approach           fs = 10Hzfrequency
+                                      fs = 0.0033Hz      without input shifts   challenges in real-world deployments and provided solutions to mit-
+                  RM SEY RM SEΘ RM SEY RM SEΘ RM SEY RM SEΘ                     igate them effectively. The practical challenge of information loss
+ SINDYc           0.004  0.342  14.5   2.44   101.6  22.3                       due to low sampling rates (C1) was overcome utilizing the automatic
+ LTC-NN-MR        0.003  0.213  0.31   0.45   31.3   14.1
+ CT-RNN-MR        0.007  0.311  0.76   0.8    43.2   17.8                       differentiation property of LTC-NN, where each node can reproduce
+ NODE-MR          0.012  0.56   1.3    1.1    77.4   23.6                       samples with arbitrary precision in between sampling time stamps.
+                                                                                LTC-NN-MR handles transients introduced due to discontinuous in-
+Real-World Example Input Uncertainty (C5): Table 6 shows the                    puts (C2) by decoupling the input effects from the unperturbed dy-
+performance of the neural architectures on real data. Without explor-           namical system through its control affine forward pass dynamics.
+ing temporal uncertainty of inputs, the best RM SEY obtained for                To derive the sparsest solution (C3), LTC-NN-MR combines ODE
+LTC-NN-MR was 26.1. Note that the state of art CGM prediction                   solver based reconstruction loss with dense layer dropout and hence
+mechanism for 30 mins ahead prediction has an RMSE of 11.1 [13].                does not need specific knowledge about the underlying equations
+With input shift enabled in the architecture, we see significant im-            such as sparsity level as in SINDYc or ground truth model coeffi-
+provement in RM SEY for each neural architectures. For LTC-NN-                  cients as in PINNs. To the best of our knowledge, LTC-NN-MR is
+MR we see an RM SEY of 3.03 which is significantly better than                  the only technique to recover model coefficients in presence of im-
+state-of-art forecasting mechanisms.                                            plicit dynamics (C4) unlike the weak implicit notions in SINDYc
+                                                                                extensions. Further, LTC-NN-MR is the only technique to be able
+Table 6. RM SEY comparison for AID real-world example with sampled              to recover an accurate model in the presence of input timing uncer-
+data (C1), control + human perturbed system (C2), sparse dynamics (C3),         tainties making it amenable to be used in safety-critical real-world
+implicit dynamics (C4), and input uncertainty
+              Approach             not C5     (C5)C5
+                                                   .                            human-in-the-loop dynamical systems.
+              NODE-MR                 45.6            8.7                       Ethical Considerations: LTC-NN-MR solves an important problem
+              CT-RNN-MR               32.3            6.8
+              LTC-NN-MR               26.1            3.03                      of model recovery in human-in-the-loop and human-in-the-plant sys-
+                                                                                tems [5]. In this domain, one of the applications of LTC-NN-MR is
+                                                                                digital twins. An unethical usage is impersonation. Thus, careful eth-
+   Table 7.
+  Approach    RM SEΘ (R
+                  Sine   Θ ) and RM SE
+                       input               (RY ) for EEGWiener
+                                    Siney input          simulation
+                                                               input            ical evaluation is required when integrating such systems in safety-
+                        no implicit          x1 implicit                        critical applications e.g. medical practice [7].
+                  RY          RΘ        RY         RΘ        RY      RΘ
+  SINDYc          0.1         0.21      23.2       46.1      144.1   101.3
+  LTC-NN-MR       0.1         0.203     6.3        4.7       19.8    12.9
+                                                                                References
+                                                                                 [1] TensorFlow Releases.           https://github.com/tensorflow/tensorflow/
+                                                                                     releases, 2024. Accessed on December 4, 2024.
+5.5.3    EEG reconstruction example                                              [2] ASU ECAI supplementary. Supplementary document for “Recovering
+                                                                                     implicit physics model under real world constraints". Github, 2024.
+Simulation Example: In simulation, we use a sinusoidal input as                      https://github.com/ImpactLabASU/LTC-NN-MR.
+activation instead of the Wiener process in [16]. Table 7 shows that             [3] A. Banerjee and S. K. S. Gupta. Emily: Extracting sparse model from
+both SINDYc and LTC-NN-MR have comparable accuracy in ex-                            implicit dynamics. Machine Learning Meets Differential Equations:
+                                                                                     From Theory to Applications, ECAI, 2024.
+tracting the model coefficients when measurement of both x1 and                  [4] A. Banerjee, K. K. Venkatasubramanian, T. Mukherjee, and S. K. S.
+x2 are available. However, if x1 measurements are withheld, we see                   Gupta. Ensuring safety, security, and sustainability of mission-critical
+that SINDYc recovers an entirely wrong model with high RM SEΘ ,                      cyber–physical systems. Proceedings of the IEEE, 100(1):283–299,
+whereas LTC-NN-MR has much lower RM SEΘ than SINDYc. In-                             2012. doi: 10.1109/JPROC.2011.2165689.
+                                                                                 [5] A. Banerjee, P. Kamboj, A. Maity, R. Salian, and S. K. S. Gupta. High
+terestingly, if we use the Wiener process as input, then even if we                  fidelity fast simulation of human in the loop human in the plant (hil-
+make x1 available to SINDYc it still recovers a wrong model, which                   hip) systems. In Proceedings of the Int’l ACM Conference on Modeling
+is not the case for LTC-NN-MR.                                                       Analysis and Simulation of Wireless and Mobile Systems, MSWiM ’23,
+                                                                                     page 199–203, New York, NY, USA, 2023. Association for Computing
+Real-World Example: Table 8 shows that LTC-NN-MR can repli-                          Machinery. ISBN 9798400703669. doi: 10.1145/3616388.3617550.
+cate the EEG signal with much lower RM SEy than SINDYc from                          URL https://doi.org/10.1145/3616388.3617550.
+all patients in the CHB-MIT Scalp EEG dataset.                                   [6] A. Banerjee, A. Maity, S. K. S. Gupta, and I. Lamrani. Statistical confor-
+                                                                                     mance checking of aviation cyber-physical systems by mining physics
+5.5.4    Execution Time                                                              guided models. In 2023 IEEE Aerospace Conference, pages 1–8. IEEE,
+                                                                                     2023.
+For the LTC-NN-MR architecture, the computation complexity of                    [7] A. Banerjee, P. Kamboj, and S. K. S. Gupta. Framework for develop-
+                                                                                     ing and evaluating ethical collaboration between expert and machine.
+forward pass is O(V + V × (|Θ| + q)) + O(|X|N ), where N is the                      Implementing AI Ethics through a Behavioural Lens — ECAI, 2024.
+number of samples in the data, V ,q,Θ,X are described in Section 4.              [8] R. N. Bergman. Origins and history of the minimal model of glucose
+The complexity of backward pass is O(V ×PLT C ×N +V ×(|Θ|+                           regulation. Frontiers in endocrinology, 11:583016, 2021.
+                                                                                 [9] D. P. Bertsekas. Constrained optimization and Lagrange multiplier
+q) × Pdense × N ), where PLT C is the number of parameters in the                    methods. Academic press, 2014.
+LTC cell, and Pdense is the number of parameters in each neuron of              [10] K. P. Champion, S. L. Brunton, and J. N. Kutz. Discovery of nonlinear
+the dense layer. SINDYc ran on a single CPU thread and was 11.3 (±                   multiscale systems: Sampling strategies and embeddings. SIAM Journal
+2.1) times faster than the neural architecture on GPU. However, at in                on Applied Dynamical Systems, 18(1):312–333, 2019.
+                                                                                [11] R. T. Chen, Y. Rubanova, J. Bettencourt, and D. K. Duvenaud. Neural
+real-world data, SINDYc has much poorer performance than LTC-                        ordinary differential equations. Advances in neural information pro-
+NN-MR. This accuracy time trade-off has to be carefully explored                     cessing systems, 31, 2018.
+[12] Z. Chen, Y. Liu, and H. Sun. Physics-informed learning of governing         puters & Chemical Engineering, 177:108294, 2023. ISSN 0098-1354.
+     equations from scarce data. Nature communications, 12(1):6136, 2021.        doi: https://doi.org/10.1016/j.compchemeng.2023.108294. URL https:
+[13] Y. Deng, L. Lu, L. Aponte, A. M. Angelidi, V. Novak, G. E. Karni-           //www.sciencedirect.com/science/article/pii/S0098135423001643.
+     adakis, and C. S. Mantzoros. Deep transfer learning and data augmen-
+     tation improve glucose levels prediction in type 2 diabetes patients. NPJ
+     Digital Medicine, 4(1):109, 2021.
+[14] U. Fasel, J. N. Kutz, B. W. Brunton, and S. L. Brunton. Ensemble-sindy:
+     Robust sparse model discovery in the low-data, high-noise limit, with
+     active learning and control. Proceedings of the Royal Society A, 478
+     (2260):20210904, 2022.
+[15] K. Friston, L. Harrison, and W. Penny. Dynamic causal modelling. Neu-
+     roImage, 19(4):1273–1302, 2003. ISSN 1053-8119. doi: https://doi.
+     org/10.1016/S1053-8119(03)00202-7. URL https://www.sciencedirect.
+     com/science/article/pii/S1053811903002027.
+[16] P. Ghorbanian, S. Ramakrishnan, and H. Ashrafiuon. Stochastic non-
+     linear oscillator models of eeg: the alzheimer’s disease case. Frontiers
+     in Computational Neuroscience, 9:48, 2015.
+[17] J. Guttag. CHB-MIT Scalp EEG Database (version 1.0.0). PhysioNet,
+     2010. https://doi.org/10.13026/C2K01R.
+[18] R. Hasani. Liquid Time Constant Networks. https://github.com/
+     raminmh/liquid_time_constant_networks, 2024.
+[19] R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu. Liquid time-
+     constant networks. In Proceedings of the AAAI Conference on Artificial
+     Intelligence, volume 35, pages 7657–7666, 2021.
+[20] R. Hasani, M. Lechner, A. Amini, L. Liebenwein, A. Ray,
+     M. Tschaikowski, G. Teschl, and D. Rus. Closed-form continuous-time
+     neural networks. Nature Machine Intelligence, 4(11):992–1003, 2022.
+[21] H. Heaton and S. W. Fung. Explainable ai via learning to optimize.
+     Scientific Reports, 13(1):10103, 2023.
+[22] K. Kaheman, J. N. Kutz, and S. L. Brunton. Sindy-pi: a robust algo-
+     rithm for parallel implicit sparse identification of nonlinear dynamics.
+     Proceedings of the Royal Society A, 476(2242):20200279, 2020.
+[23] E. Kaiser. SINDY-MPC: Sparse Identification of Nonlinear Dynam-
+     ics with Model Predictive Control. https://github.com/eurika-kaiser/
+     SINDY-MPC, 2024.
+[24] E. Kaiser, J. N. Kutz, and S. L. Brunton. Sparse identification of non-
+     linear dynamics for model predictive control in the low-data limit. Pro-
+     ceedings of the Royal Society A, 474(2219):20180335, 2018.
+[25] P. Koopman. Ul 4600: What to include in an autonomous vehicle safety
+     case. Computer, 56(05):101–104, 2023.
+[26] I. Lamrani, A. Banerjee, and S. K. S. Gupta. Operational data-driven
+     feedback for safety evaluation of agent-based cyber–physical systems.
+     IEEE Transactions on Industrial Informatics, 17(5):3367–3378, 2021.
+     doi: 10.1109/TII.2020.3009985.
+[27] K. Lee, N. Trask, and P. Stinis.            Machine learning structure
+     preserving brackets for forecasting irreversible processes.            In
+     M. Ranzato, A. Beygelzimer, Y. Dauphin, P. Liang, and J. W.
+     Vaughan, editors, Advances in Neural Information Processing Sys-
+     tems, volume 34, pages 5696–5707. Curran Associates, Inc.,
+     2021. URL https://proceedings.neurips.cc/paper_files/paper/2021/file/
+     2d1bcedd27b586d2a9562a0f8e076b41-Paper.pdf.
+[28] A. Maity, A. Banerjee, and S. K. S. Gupta. Detection of unknown-
+     unknowns in cyber-physical systems using statistical conformance with
+     physics guided process models. Asilomar Conference on Signals, Sys-
+     tems, and Computers, 2023.
+[29] G. O’Malley, B. Ozaslan, C. J. Levy, K. Castorino, D. Desjardins,
+     C. Levister, S. McCrady-Spitzer, M. M. Church, R. J. Kaur, C. Reid,
+     et al. Longitudinal observation of insulin use and glucose sensor met-
+     rics in pregnant women with type 1 diabetes using continuous glucose
+     monitors and insulin pumps: the lois-p study. Diabetes technology &
+     therapeutics, 23(12):807–817, 2021.
+[30] S. Oymak and N. Ozay. Revisiting ho–kalman-based system identifi-
+     cation: Robustness and finite-sample analysis. IEEE Transactions on
+     Automatic Control, 67(4):1914–1928, 2021.
+[31] A. O’Brien, R. Weber, and E. Kim. Investigating sindy as a tool for
+     causal discovery in time series signals. In ICASSP 2023-2023 IEEE
+     International Conference on Acoustics, Speech and Signal Processing
+     (ICASSP), pages 1–5. IEEE, 2023.
+[32] M. Quade, M. Abel, J. Nathan Kutz, and S. L. Brunton. Sparse iden-
+     tification of nonlinear dynamics for rapid model recovery. Chaos: An
+     Interdisciplinary Journal of Nonlinear Science, 28(6), 2018.
+[33] X. Regis, J. J. Mathuram, and V. Padiyarajan. Data cataloging based
+     sindy approach for weather forecasting. In 2023 12th International
+     Conference on Advanced Computing (ICoAC), pages 1–5. IEEE, 2023.
+[34] M. Schmidt and H. Lipson. Distilling free-form natural laws from ex-
+     perimental data. science, 324(5923):81–85, 2009.
+[35] P. Vaidyanathan. Generalizations of the sampling theorem: Seven
+     decades after nyquist. IEEE Transactions on Circuits and Systems I:
+     Fundamental Theory and Applications, 48(9):1094–1109, 2001.
+[36] R. Visentin, E. Campos-Náñez, M. Schiavon, D. Lv, M. Vettoretti,
+     M. Breton, B. P. Kovatchev, C. Dalla Man, and C. Cobelli. The
+     uva/padova type 1 diabetes simulator goes from single meal to single
+     day. Journal of diabetes science and technology, 12(2):273–281, 2018.
+[37] J. Wang, J. Moreira, Y. Cao, and R. B. Gopaluni. Simultaneous dig-
+     ital twin identification and signal-noise decomposition through mod-
+     ified generalized sparse identification of nonlinear dynamics. Com-
+
