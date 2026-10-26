@@ -8,12 +8,14 @@ GitHub Actions, a Jetson device, or a clean research workstation.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
 import html
 import json
 import os
 import pathlib
 import re
+import socket
 import sys
 import textwrap
 import time
@@ -103,6 +105,13 @@ ARCHIVE_RSS_CATEGORIES = [
 # arXiv 重试退避 (秒). Varnish 的 406/read-timeout 窗口通常在 30~60s 内清掉.
 ARXIV_RETRY_BACKOFF = (8, 30, 60)
 
+# Hugging Face 重试退避 (秒). HF 边缘节点会偶发 "Connection reset by peer" ——
+# 2026-10-24 与 2026-10-26 04:38 两次整轮 5 条查询被拒, 而同一 URL 隔几分钟即成功,
+# 所以这是**窗口期抖动**而非持续故障。旧实现每条只试一次, 一次瞬时重置就让整轮
+# 候选池清零, 并被渲染成"本次未发现模型" —— 把**抓取失败伪装成领域事实**
+# (违反 AGENTS.md 约束 #7 的 (a)领域事实 / (b)覆盖盲区 二分)。
+HF_RETRY_BACKOFF = (5, 15, 40)
+
 # arXiv 查询组之间的间隔 (秒). 2026-10-20 实测 /api/query 处于 429 硬限流时,
 # 连续请求会把所有组一起推进限流窗口; 留 3s 让 Varnish 窗口有机会滑动.
 ARXIV_GROUP_PAUSE_S = 3
@@ -143,13 +152,75 @@ KEYWORD_RE = re.compile(
 )
 
 
+@contextlib.contextmanager
+def prefer_ipv4():
+    """强制走 IPv4 —— 本机到 huggingface.co 的 IPv6 路径握手即被 RST.
+
+    2026-10-26 实测根因: huggingface.co 同时给 A 与 AAAA 记录, 而本机 (Jetson
+    Orin Nano, 中国大陆出口) 的 IPv6 出口到 CDN 节点 **TCP 握手能过、TLS 握手被
+    RST**。因为 TCP 看起来连上了, socket.create_connection 不会回退到下一个
+    地址 (IPv4), 于是整条 HTTPS 请求死在 SSL 层, 表现为
+    `Connection reset by peer` —— 看起来像"HF 限流", 实际是**本地 IPv6 通路坏**。
+
+    为什么必须显式修: urllib 自己不会回退 (它认为已经连上了), 所以
+    10-24 与 10-26 04:38 两轮 digest 的 HF 候选池被清零, 且被渲染成
+    "本次未发现可记录的 Hugging Face 模型" —— **把本地网络故障伪装成领域事实**。
+    重试也救不了: 每次重试走的还是同一条坏掉的 IPv6 通路。
+
+    arxiv.org / export.arxiv.org / api.github.com 都没有 AAAA 记录, 一直是纯
+    IPv4, 所以这个 context 只包住 request_json (HF + GitHub) 就够了。
+    """
+    original = socket.getaddrinfo
+
+    def filtered(host, port, *args, **kwargs):
+        results = original(host, port, *args, **kwargs)
+        ipv4 = [item for item in results if item[0] == socket.AF_INET]
+        return ipv4 or results
+
+    socket.getaddrinfo = filtered
+    try:
+        yield
+    finally:
+        socket.getaddrinfo = original
+
+
 def request_json(url: str, headers: dict[str, str] | None = None) -> Any:
     request = urllib.request.Request(
         url, headers={"User-Agent": USER_AGENT, "Accept": "*/*", **(headers or {})}
     )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        payload = response.read().decode("utf-8")
+    with prefer_ipv4():
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = response.read().decode("utf-8")
     return json.loads(payload)
+
+
+def request_json_retry(
+    url: str,
+    headers: dict[str, str] | None = None,
+    backoff: tuple[int, ...] = HF_RETRY_BACKOFF,
+    label: str = "HTTP",
+) -> Any:
+    """带退避重试的 JSON 抓取 (Hugging Face 用).
+
+    arXiv 有 request_text_retry, 但 HF 一直没有 —— 单次 "Connection reset by peer"
+    就足以让整轮 5 条查询全灭, 候选池清零, 且失败只留在 errors 里被渲染成
+    "本次未发现模型"。窗口期抖动必须靠重试扛过去, 否则降级状态会长期留在
+    已发布的 archive 里 (2026-10-24 就是这样把 models=0 写进 origin 的)。
+    """
+    last: Exception | None = None
+    for attempt, delay in enumerate((0, *backoff)):
+        if delay:
+            print(
+                f"[warn] {label} 请求失败 ({last}); {delay}s 后重试 {attempt + 1}/{len(backoff)}",
+                file=sys.stderr,
+            )
+            time.sleep(delay)
+        try:
+            return request_json(url, headers)
+        except Exception as exc:
+            last = exc
+    assert last is not None
+    raise last
 
 
 def _rate_limit_wait(exc: Exception) -> int:
@@ -588,7 +659,10 @@ def _hf_model_is_empty(model_id: str) -> bool | None:
     也不误杀真模型)。
     """
     try:
-        detail = request_json(f"https://huggingface.co/api/models/{model_id}")
+        detail = request_json_retry(
+            f"https://huggingface.co/api/models/{model_id}",
+            label=f"HF detail query {model_id!r}",
+        )
     except Exception as exc:
         print(f"[warn] HF detail query failed for {model_id!r}: {exc}", file=sys.stderr)
         return None
@@ -604,7 +678,7 @@ def fetch_huggingface_models(per_query: int, errors: list[str] | None = None) ->
         params = urllib.parse.urlencode({"search": query, "limit": per_query, "sort": "lastModified", "direction": -1})
         url = f"https://huggingface.co/api/models?{params}"
         try:
-            payload = request_json(url)
+            payload = request_json_retry(url, label=f"Hugging Face query {query!r}")
         except Exception as exc:
             print(f"[warn] Hugging Face query failed for {query!r}: {exc}", file=sys.stderr)
             if errors is not None:
@@ -681,6 +755,53 @@ def truncate(value: str, limit: int = 280) -> str:
     return value[: limit - 1].rstrip() + "…"
 
 
+def sort_papers_by_date(papers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """按提交日期降序 —— **各查询组内部有序, 但拼接后不是全局有序**。
+
+    后面的组 (主线-CfC / 应用场景 等) 的最新论文会被压到队尾, 而 digest 只
+    渲染前 12 条, 于是"最近进展"被系统性藏进折叠线以下。2026-10-26 实测:
+    2610.31252 (2026-10-22, 全池第二新的论文) 排在第 48 位, 渲染表首行却是
+    10-08 的 ContiLNN —— 读者看到"领域没动静", 实际是表格只覆盖了第一个查询组
+    (与 AGENTS.md 约束 #9 的 GitHub 侧同类问题)。
+
+    排序放在 main() 里做, 而不是 fetch_arxiv 内部: "保留前次结果"的回退路径
+    绕过了 fetch_arxiv, 不在这里统一排一次, 降级当天照样是乱的。
+    """
+    return sorted(
+        papers,
+        key=lambda p: (p.get("published") or "", p.get("updated") or "", p.get("id") or ""),
+        reverse=True,
+    )
+
+
+def _count_source_failures(errors: list[str]) -> dict[str, int]:
+    """按数据源统计失败次数 —— 用于把"抓取失败"与"领域事实"在渲染层分开.
+
+    AGENTS.md 约束 #7 要求: 宣称"某主题没有新条目"之前, 必须区分
+    (a) 领域事实 与 (b) 覆盖盲区。渲染层就是这条约束的落地点 —— 摘要里的
+    "候选模型：0 个"如果对应的是一次网络失败, 它读起来就是 (a), 而实际是 (b)。
+    """
+    counts = {"arXiv": 0, "GitHub": 0, "Hugging Face": 0}
+    for error in errors:
+        lowered = error.lower()
+        if "hugging face" in lowered or lowered.startswith("hf "):
+            counts["Hugging Face"] += 1
+        elif "github" in lowered:
+            counts["GitHub"] += 1
+        elif "arxiv" in lowered:
+            counts["arXiv"] += 1
+    return counts
+
+
+def _source_note(failed: int, count: int) -> str:
+    """摘要行尾注: 把抓取失败显式标出来, 不让 0 条被读成"领域没有"."""
+    if not failed:
+        return ""
+    if count:
+        return f" ⚠️（{failed} 条查询失败，本次覆盖不全，计数偏少）"
+    return " ⚠️（**本次抓取失败**，空结果**不代表领域没有新条目**）"
+
+
 def render_daily_digest(
     run_date: str,
     papers: list[dict[str, Any]],
@@ -689,6 +810,7 @@ def render_daily_digest(
     downloaded: list[str],
     errors: list[str],
 ) -> str:
+    failures = _count_source_failures(errors)
     lines = [
         "---",
         f"title: LNN 每日研究追踪 - {run_date}",
@@ -701,14 +823,18 @@ def render_daily_digest(
         "> 自动生成：聚合 arXiv、GitHub 与 Hugging Face 的 LNN / LTC / CfC / NCP / LFM 相关更新，供人工筛选后进入深度研读。",
         "",
         "## 摘要",
-        f"- arXiv 候选论文：{len(papers)} 篇",
-        f"- GitHub 候选仓库：{len(repos)} 个",
-        f"- Hugging Face 候选模型：{len(models)} 个",
+        f"- arXiv 候选论文：{len(papers)} 篇{_source_note(failures['arXiv'], len(papers))}",
+        f"- GitHub 候选仓库：{len(repos)} 个{_source_note(failures['GitHub'], len(repos))}",
+        f"- Hugging Face 候选模型：{len(models)} 个{_source_note(failures['Hugging Face'], len(models))}",
         f"- 已下载 PDF：{len(downloaded)} 个",
         f"- 下表每类仅渲染前 {DIGEST_TABLE_LIMIT} 条；全量候选池见 `papers/daily/{run_date}_lnn_research.json`，研读选择器以该 JSON 为准。",
     ]
     if errors:
         lines.extend(["", "## 数据源状态"])
+        lines.append(
+            "- ⚠️ 以下是**抓取失败**记录。对应来源的候选池本次**不完整**，"
+            "其空结果或偏少的计数**不得读作「领域没有新条目」**（AGENTS.md 约束 #7）。"
+        )
         lines.extend(f"- `{error}`" for error in errors)
         lines.append("- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。")
 
@@ -730,7 +856,10 @@ def render_daily_digest(
                 )
             )
     else:
-        lines.append("- 本次未发现通过关键词过滤的新候选论文。")
+        if failures["arXiv"]:
+            lines.append("- ⚠️ **本次 arXiv 抓取失败**（见「数据源状态」），空结果**不代表领域没有新论文**。")
+        else:
+            lines.append("- 本次未发现通过关键词过滤的新候选论文。")
 
     lines.extend(["", "## GitHub 候选仓库"])
     if repos:
@@ -758,7 +887,10 @@ def render_daily_digest(
                 "`fork_variants` / `fork_of` 字段）"
             )
     else:
-        lines.append("- 本次未发现可记录的 GitHub 仓库。")
+        if failures["GitHub"]:
+            lines.append("- ⚠️ **本次 GitHub 抓取失败**（见「数据源状态」），空结果**不代表没有新仓库**。")
+        else:
+            lines.append("- 本次未发现可记录的 GitHub 仓库。")
 
     lines.extend(["", "## Hugging Face 候选模型"])
     if models:
@@ -775,7 +907,10 @@ def render_daily_digest(
                 )
             )
     else:
-        lines.append("- 本次未发现可记录的 Hugging Face 模型。")
+        if failures["Hugging Face"]:
+            lines.append("- ⚠️ **本次 Hugging Face 抓取失败**（见「数据源状态」），空结果**不代表领域没有新模型**。")
+        else:
+            lines.append("- 本次未发现可记录的 Hugging Face 模型。")
 
     if downloaded:
         lines.extend(["", "## PDF 归档"])
@@ -867,6 +1002,7 @@ def update_marked_section(path: pathlib.Path, marker: str, content: str) -> None
 
 
 DAY_ENTRY_RE = re.compile(r"- \*\*\d{4}-\d\d-\d\d")
+DATE_ENTRY_RE = re.compile(r"- \*\*(\d{4}-\d\d-\d\d)")
 
 
 def split_index_entries(block: str) -> list[list[str]]:
@@ -898,6 +1034,25 @@ def split_index_entries(block: str) -> list[list[str]]:
     return entries
 
 
+def sort_index_chunks(chunks: list[list[str]]) -> list[list[str]]:
+    """按日期降序排索引条目 (每个 chunk = 一个日期行 + 它的续行).
+
+    为什么要显式排: 日常运行总是把"今天"新条目放在最前, 索引恰好是倒序的。
+    但**补抓历史日期** (backfill_huggingface.py) 会把一条**旧日期**的条目
+    塞到最前 —— 2026-10-26 实测: 10-24 补抓后, 索引变成
+    10-26 / **10-24** / 10-25 / 10-23 ... , 时间线乱了。
+    与其依赖"谁最后跑谁在最前"的隐式约定, 不如显式按日期排。
+    """
+    def chunk_date(chunk: list[str]) -> str:
+        for row in chunk:
+            match = DATE_ENTRY_RE.match(row)
+            if match:
+                return match.group(1)
+        return ""
+
+    return sorted(chunks, key=chunk_date, reverse=True)
+
+
 def cap_index_entries(rows: list[str], max_days: int = INDEX_MAX_DAYS) -> list[str]:
     """按**天数**截断索引行 (子条目跟随所属日期条目, 不单独占容量).
 
@@ -926,18 +1081,22 @@ def update_indexes(run_date: str, digest_path: pathlib.Path, papers: list[dict[s
     line = f"- **{run_date}**：[[{rel_digest}|每日追踪]]，候选论文 {len(papers)} 篇，仓库 {len(repos)} 个，模型 {len(models)} 个。"
 
     def merge_existing(path: pathlib.Path, heading: str) -> str:
-        existing: list[str] = []
+        chunks: list[list[str]] = []
         if path.exists():
             text = path.read_text(encoding="utf-8")
             match = re.search(r"<!-- daily-lnn-index:start -->(.*?)<!-- daily-lnn-index:end -->", text, re.DOTALL)
             if match:
-                for chunk in split_index_entries(match.group(1)):
-                    if any(f"**{run_date}**" in row for row in chunk):
-                        continue  # 今日条目由本次运行重写
-                    existing.extend(chunk)
-                existing = cap_index_entries(existing)
-        items = [line, *existing]
-        return f"## {heading}\n\n" + "\n".join(items)
+                chunks = [
+                    chunk
+                    for chunk in split_index_entries(match.group(1))
+                    if not any(f"**{run_date}**" in row for row in chunk)
+                ]
+        chunks.append([line])
+        rows: list[str] = []
+        for chunk in sort_index_chunks(chunks):
+            rows.extend(chunk)
+        rows = cap_index_entries(rows)
+        return f"## {heading}\n\n" + "\n".join(rows)
 
     update_marked_section(summary_path, "daily-lnn-index", merge_existing(summary_path, "4. 自动化每日追踪索引"))
     update_marked_section(deep_path, "daily-lnn-index", merge_existing(deep_path, "4. 自动化追踪与待研读队列"))
@@ -1014,6 +1173,10 @@ def main() -> int:
     if previous_models and len(models) < len(previous_models):
         print("[warn] Keeping previous Hugging Face result set because the current run returned fewer items.", file=sys.stderr)
         models = previous_models
+
+    # 统一按日期排序 —— 必须放在回退合并**之后**: 走"保留前次结果"路径时
+    # 候选池来自旧文件, 那里存的是各查询组的拼接顺序 (见 sort_papers_by_date)。
+    papers = sort_papers_by_date(papers)
 
     daily_dir = ROOT / "papers" / "daily"
     downloaded: list[str] = []

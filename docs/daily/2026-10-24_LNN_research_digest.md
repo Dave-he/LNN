@@ -11,17 +11,9 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## 摘要
 - arXiv 候选论文：93 篇
 - GitHub 候选仓库：42 个
-- Hugging Face 候选模型：0 个
+- Hugging Face 候选模型：21 个
 - 已下载 PDF：0 个
 - 下表每类仅渲染前 12 条；全量候选池见 `papers/daily/2026-10-24_lnn_research.json`，研读选择器以该 JSON 为准。
-
-## 数据源状态
-- `Hugging Face query failed for 'LiquidAI': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'LFM2': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'LFM2.5': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'liquid neural': <urlopen error [Errno 104] Connection reset by peer>`
-- `Hugging Face query failed for 'closed-form continuous-time': <urlopen error [Errno 104] Connection reset by peer>`
-- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
@@ -56,7 +48,20 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 | 2026-10-13 | [AlanL182/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data](https://github.com/AlanL182/Closed-Form-Continuous-Time-Network-Test-On-DB2-sEMG-data) | 1 | 0 | C |  |
 
 ## Hugging Face 候选模型
-- 本次未发现可记录的 Hugging Face 模型。
+| 更新 | 模型 | 下载 | Likes | 任务 |
+|---|---|---:|---:|---|
+| 2026-10-26 | [IsValorum/LFM2.5-24B-A2B-APEX-I-MiniPlus-V2.1-GGUF](https://huggingface.co/IsValorum/LFM2.5-24B-A2B-APEX-I-MiniPlus-V2.1-GGUF) | 1538 | 8 | text-generation |
+| 2026-10-26 | [IsValorum/LFM2.5-24B-A2B-APEX-I-NanoPlus-GGUF](https://huggingface.co/IsValorum/LFM2.5-24B-A2B-APEX-I-NanoPlus-GGUF) | 777 | 4 | text-generation |
+| 2026-10-26 | [qiusizhan/persistbd-clean-lfm25-2p6b-s42](https://huggingface.co/qiusizhan/persistbd-clean-lfm25-2p6b-s42) | 0 | 0 | text-generation |
+| 2026-10-25 | [reaperdoesntknow/LFM2.5-2.6B-CyberSec](https://huggingface.co/reaperdoesntknow/LFM2.5-2.6B-CyberSec) | 2194 | 0 | text-generation |
+| 2026-10-25 | [reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil](https://huggingface.co/reaperdoesntknow/LFM2.5-8B-A1B-Opus-Distil) | 1686 | 11 | text-generation |
+| 2026-10-25 | [reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT](https://huggingface.co/reaperdoesntknow/LFM2.5-1.2B-Distilled-SFT) | 1528 | 0 | text-generation |
+| 2026-10-25 | [kingjones777/LFM2.5-1.2B-Instruct-ROCmFP4-GGUF](https://huggingface.co/kingjones777/LFM2.5-1.2B-Instruct-ROCmFP4-GGUF) | 30 | 0 | text-generation |
+| 2026-10-25 | [fraQtl/LFM2-1.2B-Hi-Fi-GGUF](https://huggingface.co/fraQtl/LFM2-1.2B-Hi-Fi-GGUF) | 3 | 0 |  |
+| 2026-10-25 | [hotocooo/lfm25-quant-research-checkpoints](https://huggingface.co/hotocooo/lfm25-quant-research-checkpoints) | 0 | 0 |  |
+| 2026-10-25 | [kingjones777/LFM2.5-24B-A2B-ROCmFP4-GGUF](https://huggingface.co/kingjones777/LFM2.5-24B-A2B-ROCmFP4-GGUF) | 0 | 0 | text-generation |
+| 2026-10-25 | [qiusizhan/swe-audit-lfm25-2p6b-01](https://huggingface.co/qiusizhan/swe-audit-lfm25-2p6b-01) | 0 | 0 | text-generation |
+| 2026-10-25 | [chimorris/LFM2.5-24B-A2B-exl3-3.25bpw](https://huggingface.co/chimorris/LFM2.5-24B-A2B-exl3-3.25bpw) | 0 | 0 | text-generation |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。
