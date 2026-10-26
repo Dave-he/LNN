@@ -4,11 +4,21 @@ FROM python:3.12-slim
 # 起不来正是因为 cu130 要求驱动 >= 13.0。
 #
 # 两个坑 (都实测踩过):
-#   1. download.pytorch.org 的 cu126 索引对 aarch64 **只有 dev 夜间版**
-#      (2.13.0.dev20260610+cu126), 稳定版一个都没有 —— 钉 2.10.0+cu126 会让 pip
-#      回退源码编译。而 `pip index versions` 仍会列出该版本, 不能用来判断有无 wheel。
+#   1. ❌ **旧注释"cu126 索引对 aarch64 只有 dev 夜间版, 稳定版一个都没有"是错的**
+#      (2026-10-26 晚更正)。cu126 索引上 aarch64 cp312 的**稳定版有 9 个**:
+#      2.6.0 / 2.9.0 / 2.9.1 / 2.10.0 / 2.11.0 / 2.12.0 / 2.12.1 / 2.13.0 / 2.14.1。
+#      **教训: `pip index versions` 会把没有 aarch64 wheel 的版本也列出来, 不能用来
+#      判断有无 wheel —— 必须去索引页解析 whl 文件名** (看 `*_aarch64.whl`)。
+#      下面仍然钉 dev 夜轮版, 是**历史原因** (本镜像首次构建时按上述错误结论选的),
+#      **不是因为稳定版不存在**。
 #   2. 该 dev 版依赖 triton==3.7.1+git5d6048aa, 这个 git 版本号只在 **nightly**
 #      索引里有, 所以必须把 nightly 也加成 extra-index-url。
+#
+# ⚠️ **这个镜像里的 torch 没有 sm_87 SASS** —— 2.13.0.dev20260610+cu126 只编了
+# sm_80/sm_90 并显式排除 8.7, 也没有 PTX 供 JIT 回退。Orin Nano 是 sm_87, 所以
+# 本镜像**只能当 CUDA 运行时库供体** (cu126 版 nvidia 库齐全), 不能直接跑 kernel。
+# 要能跑 kernel, 见 `Dockerfile.lnn-sm87` (它在本镜像之上把 torch 换成
+# 2.10.0+cu126, 该版 `get_arch_list() == ['sm_87']`)。
 RUN pip install --no-cache-dir \
       --index-url https://download.pytorch.org/whl/cu126 \
       --extra-index-url https://download.pytorch.org/whl/nightly/cu126 \

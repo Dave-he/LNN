@@ -24,33 +24,92 @@ FROM lnn-cuda126:local
 # **"CUDA 可见" 与 "CUDA 可用" 是两回事。** 验收必须真跑一个 kernel,
 # 只测 `is_available()` 会把一个完全跑不起来的镜像判成"可用"。
 #
-# 为什么是 torch 2.7.0
-# -------------------
-# PyPI 上的官方 aarch64 wheel 默认带 sm_87 SASS:
-#   2.7.0 → 默认 cu126 ← 与驱动 540.4.0 正好对齐
-#   2.6.0 / 2.5.1 → 默认 cu124, 靠 CUDA minor-version 兼容
-#   2.8.0+ → cu128, 超出驱动上限, ❌
+# 为什么是 torch 2.10.0+cu126 (2026-10-26 晚实测更正)
+# ---------------------------------------------------
+# 下面这段"为什么是 torch 2.7.0"的旧说法**是错的**, 保留在这里是为了不让它
+# 再次被抄进别的文件:
 #
-# 附带更正 1: 2026-10-19 记的 "cu126 索引对 aarch64 只有 dev 夜轮" **是错的** ——
-# 该索引其实有稳定版 `torch-2.10.0+cu126-cp312-cp312-manylinux_2_28_aarch64.whl`
-# (2026-01-21 上传)。当时的检查方法漏了它。
+#   ❌ "PyPI 上的官方 aarch64 wheel 默认带 sm_87 SASS, 2.7.0 → 默认 cu126"
+#      —— **错的**。PyPI 上 torch 2.7.0 的 aarch64 wheel 是 **CPU-only**:
+#         torch-2.7.0-cp312-cp312-manylinux_2_28_aarch64.whl  只有 **99.0 MB**,
+#         而同版本同 tag 的 x86_64 wheel 是 **865.0 MB** (CUDA 版把整套 nvidia
+#         库打包进去了, aarch64 版没有)。本机实测装完得到 `torch 2.7.0+cpu` →
+#         "AssertionError: Torch not compiled with CUDA enabled"。
+#      —— **教训: wheel 体积是判断 aarch64 wheel 是否含 CUDA 的最快信号**
+#         (~99 MB = CPU-only, 800+ MB = CUDA)。比读文档快。
+#         (更硬的办法: 拉 wheel 的 `.metadata` 段, 里面会列 nvidia-*-cu12 依赖;
+#          CUDA 版一定有, CPU 版一个都没有。)
 #
-# 附带更正 2 (2026-10-26 晚): 写这份 Dockerfile 时的前提
-# "PyPI 官方 aarch64 wheel 是**唯一**长期带 sm_87 SASS 的发行版" **不成立** ——
-# 宿主 `/usr/bin/python3.10` 已经装着 **torch 2.10.0+cu126**, 同样带 sm_87 SASS,
-# 实测能跑 kernel。**本镜像因此不是必需品**, 只剩"隔离环境"这一个价值;
-# 流水线走宿主路径即可 (见 scripts/run_daily_lnn_task.sh: bench_cuda_kernel_ok)。
-# 想复现本镜像: docker build -f analysis/jetson/Dockerfile.lnn-sm87 -t lnn-sm87:local .
+#   ❌ "cu126 索引对 aarch64 只有 dev 夜轮, 稳定版一个都没有"
+#      —— **也错的**。cu126 索引上 aarch64 cp312 的**稳定版有 9 个**:
+#         2.6.0 / 2.9.0 / 2.9.1 / 2.10.0 / 2.11.0 / 2.12.0 / 2.12.1 / 2.13.0 / 2.14.1
+#         (外加 1 个 dev 夜轮 2.13.0.dev20260610+cu126 —— 正是没有 sm_87 SASS 的那个)。
+#      —— **教训: `pip index versions` 会列出**没有 aarch64 wheel** 的版本,
+#         不能用来判断; 必须去索引页解析 **whl 文件名**。
+#
+#   ✅ 正确来源: https://download.pytorch.org/whl/cu126/
+#      → torch-2.10.0+cu126-cp312-cp312-manylinux_2_28_aarch64.whl
+#        (已核: 该 wheel 的 `.metadata` 段声明了全套 nvidia-*-cu12 依赖
+#         —— cublas 12.6.4.1 / cudnn 9.10.2.21 / nccl 2.27.5 / triton 3.6.0 …,
+#         **是货真价实的 CUDA 构建**, 与基础镜像里那套 cu126 库对得上)
+#      ⚠️ **但它有没有编 sm_87 的 SASS, 本轮没验证** —— 官方 aarch64 cu126 构建
+#         常只编 sm_80/sm_90, 那就会重演 dev 夜轮那个
+#         `no kernel image is available`。**所以装完必须跑 KERNEL_OK 预检**,
+#         预检不过就说明这条路也不通, 只能用宿主那份 (见下)。
+#
+# 本机唯一实测能跑 sm_87 kernel 的 torch (来源与上面那个**不是同一个**)
+# --------------------------------------------------------------------
+# 宿主 `~/.local/lib/python3.10/site-packages` 下的 torch **2.10.0**
+# (CUDA 12.6, `get_arch_list() == ['sm_87']`, 64x64 matmul 通过)。
+# 它的 wheel 标签是 `cp310-cp310-linux_aarch64` (不是 manylinux),
+# `direct_url.json` 指向 `file:///tmp/torch-2.10.0-cp310-cp310-linux_aarch64.whl`
+# —— 即**本地 wheel 文件**, 既不是 PyPI 的 manylinux wheel, 也不是
+# download.pytorch.org 的 `+cu126` wheel (那种会带 `+cu126` 本地版本号)。
+# 大概率来自 NVIDIA 自己的 pip 源 (pypi.nvidia.com 供 JetPack 用户空间用,
+# wheel 正是 `linux_aarch64` 标签 + 内置 CUDA + 原生含 sm_87)。
+# **别把它当成"cu126 索引版 torch"来推理** —— 版本号一样, 出身不一样。
+#
+# 附带更正 (2026-10-26 晚): 本镜像**不是必需品** —— 宿主 python3.10 的
+# torch 2.10.0 (NVIDIA `linux_aarch64` wheel, CUDA 12.6) 自带 sm_87 SASS,
+# 实测能跑 kernel (此前一直没被选中, 因为解释器选择只测 `import torch`,
+# 排序又把它排在 cu130 的 python3 之后)。
+# 流水线默认走宿主路径 (见 scripts/run_daily_lnn_task.sh: bench_cuda_kernel_ok);
+# 本镜像只剩"隔离环境"这一个价值。
+# ⚠️ 本机现存的 `lnn-sm87:local` 是**上一版 Dockerfile** (装 PyPI CPU-only wheel)
+#    建出来的, 里面的 torch 是 2.7.0+cpu —— **该镜像不可用**, 重跑下面的
+#    build 之前别用它。
+# 想复现本镜像:
+#   docker build -f analysis/jetson/Dockerfile.lnn-cuda126 -t lnn-cuda126:local .
+#   docker build -f analysis/jetson/Dockerfile.lnn-sm87    -t lnn-sm87:local    .
 #
 # 为什么用 --no-deps
 # -----------------
-# 基础镜像里的 nvidia 库与 torch 2.7.0 声明的依赖**逐个对得上**
-# (cublas 12.6.4.1 完全一致; 其余是同 soname 的更新补丁版本, 如 cudnn
-# 9.10.2.21 vs 想要的 9.7.1.26、nccl 2.29.3 vs 2.26.2 —— torch 通过 RPATH
+# 基础镜像里的 nvidia 库与 torch 声明的依赖**逐个对得上**
+# (cublas 12.6.4.1、cuda-runtime 12.6.77、nvrtc 12.6.85、cudnn 9.10.2.21、
+# nccl 2.29.3、cufft 11.3.0.4、curand 10.3.7.77、cusolver 11.7.1.2、
+# cusparse 12.5.4.2、cusparselt 0.7.1、nvtx 12.6.77 —— torch 通过 RPATH
 # 按 soname 加载, 补丁版本差异不影响)。让 pip 再解析一遍依赖只会重下 2.5GB,
-# 而 torch 本体只有 99MB。
-ARG TORCH_SPEC=2.7.0
-RUN pip install --no-cache-dir --no-deps "torch==${TORCH_SPEC}" \
+# 而 torch 本体只有 345MB。
+#
+# 验收 (换版本时照做, 别只信文档) —— 三样都要看:
+#   docker run --rm --runtime nvidia --gpus all lnn-sm87:local bash -lc \
+#     "python3 -c \"import torch; print(torch.__version__); \
+#       print(torch.cuda.get_arch_list()); \
+#       x=torch.randn(64,64,device='cuda'); torch.cuda.synchronize(); \
+#       print('KERNEL_OK',(x@x).sum().item())\""
+#   ①版本带 +cu126 ②get_arch_list() 里有 sm_87 ③真的跑出 KERNEL_OK。
+#   **只测 is_available() 会把一个完全跑不起来的镜像判成"可用"。**
+ARG TORCH_SPEC=2.10.0+cu126
+RUN pip install --no-cache-dir --no-deps \
+      --index-url https://download.pytorch.org/whl/cu126 \
+      "torch==${TORCH_SPEC}" \
  && pip install --no-cache-dir torchdiffeq numpy scikit-learn pandas
+
+# 构建期自检: 装完的 torch **必须带 CUDA**。
+# 上一版就是死在这里没查 —— 装成了 CPU-only 的 2.7.0+cpu, 镜像看着装好了 torch,
+# 一跑就 "Torch not compiled with CUDA enabled"。宁可构建失败, 也不要留一个
+# 会把 CPU 产物伪装成 GPU 产物的镜像。
+RUN python3 -c "import torch, sys; sys.exit(0) if torch.version.cuda else sys.exit(1)" \
+ || (echo '装上的 torch 没有 CUDA —— 这个镜像不可用'; exit 1)
 
 WORKDIR /workspace/LNN

@@ -346,10 +346,19 @@ class LiquidS4Network(nn.Module):
 class LRCCell(nn.Module):
     """
     Liquid Resistive-Capacitive (LRC) cell.
-    
+
     Introduces liquid capacitor to enhance biological plausibility
     and suppress oscillations.
-    
+
+    NOTE: **This is NOT the LRC of arXiv:2403.08791** ("Liquid Resistance Liquid
+    Capacitance Networks", Farsang et al.). That paper's whole point is to
+    *decouple* resistance and capacitance -- h_dot = I/C, with the resistance
+    factor sigma(f) acting only on the leak term. Here the input gain and the
+    time constant are both scaled by the same tau = R * C, i.e. this is the
+    *coupled* version that the paper sets out to correct. Do not cite the two
+    interchangeably. See docs/reports/RLC_Networks_Liquid_Resistance_Capacitance_
+    2403.08791_研读报告.md section 8.1 for the full comparison.
+
     Args:
         input_size: Input dimension
         hidden_size: Hidden state dimension

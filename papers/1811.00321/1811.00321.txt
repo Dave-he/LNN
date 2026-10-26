@@ -1,0 +1,364 @@
+                                          Liquid Time-constant Recurrent Neural Networks as Universal Approximators
+
+                                             Ramin M. Hasani1, Mathias Lechner2 , Alexander Amini3 , Daniela Rus,3 and Radu Grosu1
+                                                        1
+                                                      Cyber Physical Systems (CPS), Technische Universität Wien (TU Wien), 1040 Vienna, Austria
+                                                               2
+                                                                 Institute of Science and Technology (IST), 3400 Klosterneuburg, Austria
+                                        3
+                                          Computer Science and Artificial Intelligence Lab (CSAIL), Massachusetts Institute of Technology (MIT), Cambridge, USA
+arXiv:1811.00321v1 [cs.LG] 1 Nov 2018
+
+
+
+
+                                                                   Abstract                                (Hasani et al. 2017b) and robotic control in reinforcement
+                                                                                                           learning environments (Hasani et al. 2018).
+                                          In this paper, we introduce the notion of liquid time-constant
+                                                                                                              In this paper, we formalize networks built based on such
+                                          (LTC) recurrent neural networks (RNN)s, a subclass of
+                                          continuous-time RNNs, with varying neuronal time-constant        principles as liquid time-constant (LTC) RNNs (Sec. 2) and
+                                          realized by their nonlinear synaptic transmission model. This    theoretically prove their universal approximation capabili-
+                                          feature is inspired by the communication principles in the       ties (Sec. 3). We also find bounds over their varying time-
+                                          nervous system of small species. It enables the model to ap-     constant as well as their neuronal states (Sec. 4).
+                                          proximate continuous mapping with a small number of com-
+                                          putational units. We show that any finite trajectory of an n-             2    Liquid Time-constant RNNs
+                                          dimensional continuous dynamical system can be approxi-
+                                          mated by the internal state of the hidden units and n out-
+                                                                                                           Dynamics of a hidden or output neuron i, Vi (t), of
+                                          put units of an LTC network. Here, we also theoretically find    an LTC RNN are modeled as a membrane integrator
+                                          bounds on their neuronal states and varying time-constant.       with the following ordinary differential equation (ODE)
+                                                                                                           (Koch and Segev 1998):
+                                                                                                                                                X   n
+                                                             1 Introduction                                        dVi                                    (ij)
+                                                                                                              Cmi      = GLeaki VLeaki − Vi (t) +        Iin , (1)
+                                        Continuous-time spatiotemporal information process-                         dt                               j=1
+                                        ing can be performed by recurrent neural networks
+                                                                                                                                                                     (ij)
+                                        (RNN)s. In particular, a subset of RNNs whose hidden               with neuronal parameters: Cmi , GLeaki and VLeaki . Iin
+                                        and output units are determined by ordinary differential           represents the external currents to the cell. Hidden nodes are
+                                        equations (ODE), as in continuous-time recurrent neural            allowed to have recurrent connections while they synapse
+                                        networks (CTRNN)s (Funahashi and Nakamura 1993;                    into motor neurons in a feed-forward setting.
+                                        Mozer, Kazakov, and Lindsey 2017).         Typically,      in         Chemical synapses – Chemical synaptic transmission
+                                        CTRNNs, the time-constant of the neurons’ dynamics                 from neuron j to i, is modeled by a sigmoidal nonlin-
+                                        is a fixed constant value, and networks are wired by               earity (µij ,γij ), which is a function of the presynaptic
+                                        constant synaptic weights. We propose a new CTRNN                  membrane state, Vj (t), and has maximum weight of wi
+                                        model, inspired by the nervous system dynamics of                  (Koch and Segev 1998):
+                                        small species, such as Ascaris (Davis and Stretton 1989),
+                                        Leech (Lockery and Sejnowski 1992), and C. elegans                                          wij
+                                                                                                                     Isij =                       (Eij − Vi (t)).    (2)
+                                        (Wicks, Roehrig, and Rankin 1996;       Hasani et al. 2017a),                         1 + e ij (Vj +µij )
+                                                                                                                                   −γ
+
+                                        in which synapses are nonlinear sigmoidal functions                   The synaptic current, Isij is then linearly depends on the
+                                        that model the biophysics of synaptic interactions. As a           state of the neuron i. E, sets whether the synapse excites or
+                                        result, state of the postsynaptic neurons are defined by           inhibits the succeeding neuron’s state.
+                                        the incoming presynaptic nonlinearities to the cell. This             An electrical synapse (gap-junction), between node j and
+                                        attribute, originates varying time-constant for the cell and       i, was modeled as a bidirectional junction with weight, ω̂ij ,
+                                        strengthen its individual neurons’ expressivity in terms of        based on Ohm’s law:
+                                        output dynamics.                                                                                               
+                                           Dynamic network simulations based on such mod-                                    Iˆij = ω̂ij vj (t) − vi (t) .           (3)
+                                        els have been deployed in many application do-
+                                        mains such as simulations of animals’ locomotion                     Internal state dynamics of neuron i, Vi (t), of an LTC net-
+                                        (Wicks, Roehrig, and Rankin 1996),       large-scale     sim-      work, receiving one chemical synapse from neuron j, can be
+                                        ulations of nervous systems (Gleeson et al. 2018;                  formulated as:
+                                        Sarma et al. 2018), neuronal network’s reachability anal-          dVi     GLeaki                  wij
+                                                                                                               =            VLeaki −Vi (t) +      σi (Vj (t))(Eij −Vi ),
+                                        ysis (Islam et al. 2016), model of learning mechanisms              dt      Cmi                      Cmi
+                                                                                                                                                                    (4)
+where σi (Vj (t)) = 1/1 + e−γij (Vj +µij ) . If we set the time-        in which τ is a positive constant, and A and B are constants
+                                     C mi                               coefficients bound to a range [−α, β] for 0 < α < +∞, and
+constant of the neuron i as τi = GLeak      , we can reform this
+                                          i                             0 ≤ β < +∞, has a unique solution on [0, ∞).
+equation as follows:
+dVi         1 wij                   Vleaki wij                        Proof. Based on the assumptions, we can take a positive M ,
+      =− +             σi (Vj ) Vi +         +      σi (Vj )Eij .       such that
+ dt         τi Cmi                     τi      Cmi
+                                                                (5)                  0 ≤ Fi (x) ≤ M (∀i = 1, ..., n)            (8)
+Eq. 5 presents an ODE system with a nonlinearly varying                 by looking at the solutions of the following differential equa-
+                                                      1
+time-constant defined by τsystem = 1/τi +wij /C         mi σi (Vj )
+                                                                    ,   tion:
+which distinguishes the dynamics of the LTC cells compared                            ẏ = −(1/τ + M )y + A + BM,                   (9)
+to the CTRNN cells.
+    The overall network dynamics of the LTC RNNs with                   we can show that
+u(t) = [u1 (t), ..., un+N (t)]T representing the internal states          min{|xi (0)|,
+                                                                                          τ (A + BM )
+                                                                                                        } ≤ xi (t) ≤ max{|xi (0)|,
+                                                                                                                                     τ (A + BM )
+                                                                                                                                                   },    (10)
+of N interneurons (hidden units) and n motor neurons (out-                                 1 + τM                                     1 + τM
+
+put units) can be written in matrix format as follows:                  if we set the output of the max to Cmaxi and the output of
+  u̇(t) = −(1/τ + W σ(u(t)))u(t) + A + W σ(u(t))B, (6)                  the min to Cmini and also set C1 = min{Cmini } and C2 =
+in which σ(x) is C 1 -sigmoid functions and is applied                  max{Cmaxi }, then the solution x(t) satisfies
+                                                                                          √                √
+element-wise. τ n+N > 0 includes all neuronal time-                                         nC1 ≤ x(t) ≤ nC2 .               (11)
+constants, A is an n+N vector of resting states, B depicts an
+n + N vector of synaptic reversals, and W is a n + N vector             Based      on     Lemma       2 and Lemma     3   in
+produced by the matrix multiplication of a weight matrix of             (Funahashi and Nakamura 1993), a unique solution ex-
+shape (n+N )×(n+N ) and an n+N vector containing the                    ists on the interval [0, +∞).
+reversed value of all Cmi s. Both A and B entries are bound
+to a range [−α, β] for 0 < α < +∞, and 0 ≤ β < +∞. A                       Lemma 1 demonstrates that an LTC network defined by
+contains all Vleaki /Cmi and B presents all Eij s.                      Eq. 7, has a unique solution on [0, ∞), since the output func-
+                                                                        tion is bound and C 1 .
+ 3 Liquid time-constant RNNs are universal                              Proof of Theorem 1
+                approximators
+In this section, we prove that any given finite trajectory of           Proof. For proving Theorem 1, we adopt similar
+an n-dimensional dynamical system can be approximated                   steps to that of Funahashi and Nakamura on the
+by the internal and output states of an LTC RNN, with n                 approximation ability of continuous time RNNs
+outputs, N interneurons and a proper initial condition. Let             (Funahashi and Nakamura 1993), to approximate a dy-
+x = [x1 , ..., xn ]T be the n-dimensional Euclidean space on            namical system with a larger dynamical system given by an
+Rn .                                                                    LTC RNN.
+                                                                           Part 1. We choose an η which is in range (0, min{ǫ, λ}),
+Theorem 1. Let S be an open subset of Rn and F : S →
+Rn , be an autonomous ordinary differential equation, be a              for ǫ > 0, and λ the distance between D̃ and boundary δS
+C 1 -mapping, and ẋ = F (x) determine a dynamical system               of S. Dη is set:
+on S. Let D denote a compact subset of S and we consider a                          Dη = {x ∈ Rn ; ∃z ∈ D̃, |x − z| ≤ η}.                               (12)
+finite trajectory of the system as: I = [0, T ]. Then, for a pos-
+itive ǫ, there exist an integer N and a liquid time-constant re-        Dη stands for a compact subset of S, because D̃ is
+current neural network with N hidden units, n output units,             compact. Thus, F is Lipschitz on Dη by Lemma 1 in
+such that for any given trajectory {x(t); t ∈ I} of the system          (Funahashi and Nakamura 1993). Let LF be the Lipschitz
+with initial value x(0) ∈ D, and a proper initial condition             constant of F |Kη , then, we can choose an ǫl > 0, such that
+of the network, the statement below holds:
+                      max|x(t) − u(t)| < ǫ                                                                    ηLF
+                      t∈I                                                                       ǫl <                    .                               (13)
+                                                                                                         2(expLF T − 1)
+  We base our poof on the fundamental universal approx-
+imation theorem (Hornik, Stinchcombe, and White 1989)                      Based on the universal approximation theorem, there is an
+on feed-forward neural networks (Funahashi 1989;                        integer N , and an n × N matrix B, and an N × n matrix C
+Cybenko 1989;       Hornik, Stinchcombe, and White 1989),               and an N -dimensional vector µ such that
+recurrent neural networks (RNN) (Funahashi 1989;                                                                    ǫl
+Schäfer and Zimmermann 2006) and time-continuous                                     max|F (x) − Bσ(Cx + µ)| < .                (14)
+                                                                                                                    2
+RNNs (Funahashi and Nakamura 1993). We first define
+Lemma 1 to be used in the proof of Theorem 1.                             We define a C 1 -mapping F̃ : Rn → Rn as:
+                                  n
+Lemma 1. for an F : Rn → R+ which is a bounded C 1 -
+mapping, the differential equation                                       F̃ (x) = −(1/τ + Wl σ(Cx + µ))x + A + Wl Bσ(Cx + µ), (15)
+
+          ẋ = −(1/τ + F (x))x + A + BF (x),          (7)               with parameters matching that of Eq. 6 with Wl = W .
+  We set the system’s time constant, τsys to:                                   By using Lemma 2 in (Funahashi and Nakamura 1993),
+                                                                              we can show that solutions of the following dynamical sys-
+                                 1                                            tem:
+               τsys =                        .          (16)
+                        1/τ + Wl σ(Cx + µ)                                                z̃˙ = G̃(z̃), ỹ(0) = C x̃(0) + µ,       (31)
+We chose a large τsys , conditioned with the following:                       are equivalent to the solutions of the Eq. 25.
+                                                                                 Let’s define a new dynamical system G : Rn+N →
+                                                                                n+N
+                       x     ǫl                                               R       as follows:
+  (a) ∀x ∈ Dη ;            <                                           (17)
+                      τsys   2                                                                           1
+                                                                                             G(z) = −       z + W σ(z) + A,  (32)
+                                                                                                       τsys
+         µ          ηLG̃            1    L
+  (b)        <                 and      < G̃ ,                         (18)
+        τsys   2(expLG̃ T − 1)     τsys   2                                   where z = [x1 , ..., xn , y1 , ..., yn ]T . Then the dynamical sys-
+                                                                              tem below
+  where LG̃ /2 is a lipschitz constant for the mapping Wl σ :                                            1
+                                                                                              ż = −          z + W σ(z) + A,               (33)
+Rn+N → Rn+N which we will determine later. To satisfy                                                  τsys
+conditions (a) and (b), τ Wl << 1 should hold true.                           can be realized by an LTC RNN, if we set h(t) =
+  Then by Eq. 14 and 15, we can prove:                                        [h1 (t), ..., hN (t)]T as the hidden states, and u(t) =
+                    max F (x) − F̃ (x) < ǫl                            (19)   [U1 (t), ..., Un (t)]T as the output states of the system. Since
+                    x∈Dη                                                      G̃ and G are both C 1 -mapping and σ ′ (x) is bound, therefore,
+  Let’s set x(t) and x̃(t) with initial state x(0) = x̃(0) =                  the mapping z̃ → W σ(z̃) + A is Lipschitz on Rn+N , with
+x0 ∈ D, as the solutions of equations below:                                  a Lipschitz constant LG̃ /2. As LG̃ /2 is Lipschitz constant
+                                                                              for −z̃/τsys by condition (b) on τs ys, LG̃ is a Lipschitz con-
+                               ẋ = F (x),                             (20)
+                                                                              stant of G̃.
+                                                                                 From Eq. 28, Eq. 32, and condition (b) of τsys , we can
+                    x̃˙ = F̃ (x).               (21)                          derive the following:
+  Based on Lemma 5 in (Funahashi and Nakamura 1993),
+for any t ∈ I,                                                                                           µ          ηLG̃
+                                                                                    G̃(z) − G(z) =           <                 .           (34)
+                                                                                                        τsys   2(expLG̃ T − 1)
+                            ǫl
+             x(t) − x̃(t) ≤    (expLF t − 1)                           (22)   Accordingly, we can set z̃(t) and z(t), solutions of the dy-
+                           LF
+                            ǫl                                                namical systems:
+                        ≤      (expLF T − 1).                          (23)                            (
+                           LF
+                                                                                                         x̃(0) = x0 ∈ D
+  Thus, based on the conditions on ǫ,                                                     z̃˙ = G̃(z),                                (35)
+                                                                                                         ỹ(0) = Cx0 + µ
+                                        η
+                    max x(t) − x̃(t) <    .            (24)                                               (
+                     t∈I                2                                                                     u(0) = x0 ∈ D
+  Part 2. Let’s Considering the following dynamical system                                 ż = G(z),                                      (36)
+                                                                                                              h̃(0) = Cx0 + µ
+defined by F̃ in Part 1:
+                                                                              By Lemma 5 of (Funahashi and Nakamura 1993), we
+                     1                                                        achieve
+          x̃˙ = −       x̃ + A1 + Wl Bσ(C x̃ + µ).                     (25)                                      η
+                   τsys                                                                        max z̃(t) − z(t) < ,       (37)
+                                                                                                t∈I              2
+  Suppose we set ỹ = C x̃ + µ; then:
+                                                                              and therefore we have:
+                       1                       µ
+     ỹ˙ = C x̃˙ = −       ỹ + Eσ(ỹ) + A2 +      ,                   (26)                                      η
+                     τsys                     τsys                                             max x̃(t) − u(t) < ,       (38)
+                                                                                                t∈I              2
+where E = CWl B, an N × N matrix. We define
+                                                                                 Part3. Now by using Eq. 24 and Eq. 38, for a positive ǫ,
+                                                      T
+                z̃ = [x̃1 , ..., x̃n , ỹ1 , ..., ỹn ] ,              (27)   we can design an LTC network with internal dynamical state
+                                                                              z(t), with τsys and W . For x(t) satisfying ẋ = F (x), if we
+and we set a mapping G̃ : Rn+N → Rn+N as:                                     initialize the network by u(0) = x(0) and h(0) = Cx(0)+µ,
+                     1                       µ1                               we obtain:
+         G̃(z̃) = −      z̃ + W σ(z̃) + A +      ,                     (28)                                    η     η
+                    τsys                    τsys                                           max x(t) − u(t) < + = η < ǫ.                (39)
+                                                                                          t∈I                2 2
+             (n+N )×(n+N )                 0 B
+         W                         =                ,                  (29)
+                                           0 E
+                                                                             REMARKS. The LTC’s network architecture allows in-
+                           0                              A1
+         µn+N
+          1   =                    , An+N =                        .   (30)   terneurons (hidden layer) to have recurrent connections to
+                           µ                              A2                  each other, however it assumes a feed forward connection
+stream from hidden nodes to the motor neuron units (out-                           By replacing the lower-bound of S, in Eq. 42, the term
+                                                                                  PN
+put units). We assumed no inputs to the system and princi-
+                                                                                   j=1 wij (Eij − vi ) becomes zero, therefore:
+pally showed that the interneurons’ network together with
+motor neurons can approximate any finite trajectory of an
+                                                                                                              P                      P
+autonomous dynamical system. The proof subjected an LTC                                  dvi                 X                      X
+RNN with only chemical synapses. It is easy to extend                               Ci       = (gi Vleak +       ŵij vj ) − (gi +      ŵij ) vi .
+                                                                                         dt                  j=1                    j=1
+the proof for a network which includes gap junctions as                                        |          {z            } |        {z        }
+well, since their contribution to the network dynamics is by                                                 A                        B
+adding a linear term to the time-constant of the system (τsys ),                                                                         (48)
+and to the equilibrium state of a neuron, A in Eq 33.                                Thus, we can derive the upper-bound of the time constant,
+                                                                                  τimax :
+ 4 Bounds on τsys and state of an LTC RNN                                                                         Ci
+                                                                                                  τimax =         PP         .           (49)
+In this section, we prove that the time-constant and the state                                              gi +    j=1 ŵij
+of neuronal activities in an LTC RNN is bound to a finite
+range, as depicted in lemmas 2 and 3, respectively.
+Lemma 2. Let vi denote the state of a neuron i, receiving N                       Lemma 3. Let vi denote the state of a neuron i, receiving N
+synaptic connections of the form Eq. 2, and P gap junctions                       synaptic connections of form Eq. 2, from the other nodes of a
+of the form Eq. 3 from the other neurons of a LTC network                         network G, if dynamics of each neuron is determined by Eq.
+G, if dynamics of each neuron’s state is determined by Eq.                        1, then the hidden state of the neurons on a finite trajectory,
+1, then the time constant of the activity of the neuron, τi , is                  I = [0, T ](0 < T < +∞), is bound as follows:
+bound to a range:                                                                                 min                            max
+                                                                                    min(Vleaki , Eij  ) ≤ vi (t) ≤ max(Vleaki , Eij  ), (50)
+              N
+              X             P
+                            X                                     P
+                                                                  X                 t∈I                                 t∈I
+ Ci /(gi +          wij +         ŵij ) ≤ τi ≤ Ci /(gi +               ŵij ),                                          max
+                                                                                  Proof. Let us insert M = max{Vleaki , Eij  } as the mem-
+              j=1           j=1                                   j=1
+                                                                           (40)   brane potential vi (t) into Eq. 42:
+                                                                                                                   N
+Proof. The sigmoidal nonlinearity in Eq. 2, is a monotoni-                                dvi                     X
+cally increasing function, bound to a range 0 and 1:                                 Ci       = gi (Vleak − M ) +     wij σ(vj )(Eij − M ) .
+                                                                                          dt    |      {z    }
+                                                                                                                  j=1
+                                                                                                       ≤0
+                    0 < S(Yj , σij , µij , Eij ) < 1                       (41)                                   |          {z         }
+                                                                                                                                 ≤0
+By replacing the upper-bound of S, in Eq. 2 and then substi-                                                                                (51)
+tuting the synaptic current in Eq. 1, we will have:                                  Right hand side of Eq. 51, is negative based on the condi-
+                               N                   P                              tions on M, positive weights and conductances, and the fact
+     dvi                      X                   X
+                                                                                  that σ(vi ) is also positive in RN . Therefore, the left hand-
+Ci       = gi .(Vleak −vi ) +     wij (Eij −vi )+     ŵij (vj −vi ),
+     dt                       j=1                 j=1
+                                                                                  side must also be negative and if we conduct an approxima-
+                                                                           (42)   tion on the derivative term:
+                                                                                               dvi        dvi   v(t + δt) − v(t)
+                                  N                  P
+                                                                                          Ci       ≤ 0,       ≈                  ≤ 0,           (52)
+        dvi                       X                  X                                         dt         dt           δt
+     Ci     = (gi Vleak +     wij Eij ) +     ŵij vj                      (43)
+        dt                                                                          holds. by Substituting v(t) with M , we have the follow-
+                          j=1             j=1
+              |               {z                    }                             ing:
+                                        A                                                  v(t + δt) − M
+                                     N              P                                                      ≤ 0 → v(t + δt) ≤ M          (53)
+                                     X              X                                             δt
+                        − (gi +             wij +         ŵij ) vi ,      (44)     and therefore:
+                                     j=1            j=1
+                            |               {z                }                                                            max
+                                            B
+                                                                                                    vi (t) ≤ max(Vleaki , Eij  ).               (54)
+                                                                                                                 t∈I
+                        dvi                                                         Now if we substitute the membrane potential, V( i) with
+                         Ci = A − Bvi .               (45)
+                         dt                                                       m = min{Vleaki , Eij min
+                                                                                                           }, following the same methodology
+By assuming a fixed vj , Eq. 45 is an ordinary differential                       used for the proof of the upper bound, we can derive
+equation with solution of the form:
+                                     A                                                          v(t + δt) − m
+                                −Bt                                                                           ≤ 0 → v(t + δt) ≤ m,              (55)
+                  vi (t) = k1 e Ci + .                (46)                                            δt
+                                     B
+From this solution, one can derive the lower bound of the                           and therefore:
+system’s time constant, τimin :
+                                                                                                                            min
+                                                                                                     vi (t) ≥ min(Vleaki , Eij  ).              (56)
+              Ci                            Ci                                                                   t∈I
+      τimin =    =                PN                PP             .       (47)
+                B       gi +         j=1 wij +        j=1 ŵij
+                      5 Conclusions                                [Koch and Segev 1998] Koch, C., and Segev, K. 1998. Meth-
+ We proved the universal approximation capability of liquid         ods in Neuronal Modeling - From Ions to Networks. MIT
+ time-constant (LTC) RNNs, and showed how their varying             press, second edition.
+ dynamics are bound in a finite range. We believe that our         [Lockery and Sejnowski 1992] Lockery, S., and Sejnowski,
+ work builds up the preliminary theoretical bases for investi-      T. 1992. Distributed processing of sensory information in
+ gating the capabilities of LTC networks.                           the leech. iii. a dynamical neural network model of the local
+                                                                    bending reflex. Journal of Neuroscience 12(10):3877–3895.
+                    Acknowledgments                                [Mozer, Kazakov, and Lindsey 2017] Mozer, M. C.; Kaza-
+                                                                    kov, D.; and Lindsey, R. V. 2017. Discrete event, continuous
+ R.M.H. and R.G. are partially supported by Horizon-2020
+                                                                    time rnns. arXiv preprint arXiv:1710.04110.
+ ECSEL Project grant No. 783163 (iDev40), and the Austrian
+ Research Promotion Agency (FFG), Project No. 860424.              [Sarma et al. 2018] Sarma, G. P.; Lee, C. W.; Portegys, T.;
+ A.A. is supported by the National Science Foundation (NSF)         Ghayoomie, V.; Jacobs, T.; Alicea, B.; Cantarelli, M.; Cur-
+ Graduate Research Fellowship Program.                              rie, M.; Gerkin, R. C.; Gingell, S.; et al. 2018. Openworm:
+                                                                    overview and recent advances in integrative biological sim-
+                         References                                 ulation of caenorhabditis elegans. Phil. Trans. R. Soc. B
+                                                                    373(1758):20170382.
+[Cybenko 1989] Cybenko, G. 1989. Approximation by su-              [Schäfer and Zimmermann 2006] Schäfer, A. M., and Zim-
+  perpositions of a sigmoidal function. Mathematics of con-         mermann, H. G. 2006. Recurrent neural networks are univer-
+  trol, signals and systems 2(4):303–314.                           sal approximators. In International Conference on Artificial
+[Davis and Stretton 1989] Davis, R. E., and Stretton, A.            Neural Networks, 632–640. Springer.
+ 1989. Signaling properties of ascaris motorneurons: graded        [Wicks, Roehrig, and Rankin 1996] Wicks, S. R.; Roehrig,
+  active responses, graded synaptic transmission, and tonic         C. J.; and Rankin, C. H. 1996. A dynamic network sim-
+  transmitter release. Journal of Neuroscience 9(2):415–425.        ulation of the nematode tap withdrawal circuit: predictions
+[Funahashi and Nakamura 1993] Funahashi, K.-i., and Naka-           concerning synaptic function using behavioral criteria. Jour-
+  mura, Y. 1993. Approximation of dynamical systems by              nal of Neuroscience 16(12):4017–4031.
+  continuous time recurrent neural networks. Neural networks
+  6(6):801–806.
+[Funahashi 1989] Funahashi, K.-I. 1989. On the approxi-
+  mate realization of continuous mappings by neural networks.
+ Neural networks 2(3):183–192.
+[Gleeson et al. 2018] Gleeson, P.; Lung, D.; Grosu, R.;
+  Hasani, R.; and Larson, S. D. 2018. c302: a multiscale
+  framework for modelling the nervous system of caenorhab-
+  ditis elegans. Phil. Trans. R. Soc. B 373(1758):20170379.
+[Hasani et al. 2017a] Hasani, R. M.; Beneder, V.; Fuchs, M.;
+  Lung, D.; and Grosu, R. 2017a. Sim-ce: An advanced
+  simulink platform for studying the brain of caenorhabditis
+  elegans. arXiv preprint arXiv:1703.06270.
+[Hasani et al. 2017b] Hasani, R. M.; Fuchs, M.; Beneder, V.;
+  and Grosu, R. 2017b. Non-associative learning representa-
+  tion in the nervous system of the nematode caenorhabditis
+  elegans. arXiv preprint arXiv:1703.06264.
+[Hasani et al. 2018] Hasani, R. M.; Lechner, M.; Amini, A.;
+  Rus, D.; and Grosu, R. 2018. Re-purposing compact neu-
+  ronal circuit policies to govern reinforcement learning tasks.
+  arXiv preprint arXiv:1809.04423.
+[Hornik, Stinchcombe, and White 1989] Hornik, K.; Stinch-
+ combe, M.; and White, H. 1989. Multilayer feedforward
+ networks are universal approximators. Neural networks
+ 2(5):359–366.
+[Islam et al. 2016] Islam, M. A.; Wang, Q.; Hasani, R. M.;
+ Balún, O.; Clarke, E. M.; Grosu, R.; and Smolka, S. A. 2016.
+ Probabilistic reachability analysis of the tap withdrawal cir-
+ cuit in caenorhabditis elegans. In High Level Design Valida-
+ tion and Test Workshop (HLDVT), 2016 IEEE International,
+ 170–177. IEEE.
+

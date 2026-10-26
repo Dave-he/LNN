@@ -3,7 +3,7 @@
 > 本次排查起因：2026-10-26 04:38 的定时任务日志里 5 条 Hugging Face 查询
 > 全部 `Connection reset by peer`，候选模型数 **0**；而 2026-10-24 的 digest
 > 也带着同样的 `models=0` 进了 origin 且从未修正。
-> 逐层挖下来发现 **7 个独立缺陷**，其中 3 个会把"抓取失败/选错解释器"伪装成
+> 逐层挖下来发现 **8 个独立缺陷**，其中 4 个会把"抓取失败/选错解释器/装错 wheel"伪装成
 > "领域事实 / 本机没有 GPU"。
 
 ---
@@ -17,8 +17,9 @@
 | B3 | HF 查询**完全没有重试**（arXiv 侧有 `request_text_retry`） | 单次瞬时故障即可清空整轮候选池 | `request_json_retry` + 退避 (5/15/40s) |
 | B4 | 摘要的 arXiv 表首行是 10-08，**全池第二新的论文（10-22）排在第 48 位** | 候选池是**各查询组的拼接**，只有组内有序，拼接后无全局排序 | `sort_papers_by_date()`，且放在 `main()` 回退合并之后 |
 | B5 | PDF 下载器只拿到 **34** 个 arxiv id，而候选池有 93 篇 | `download_arxiv_pdfs.collect_arxiv_ids()` 只读 digest 的**渲染表**（前 12 行） | 改读 `papers/daily/*_lnn_research.json` **全量**候选池 → 122 个 id |
-| B6 | Jetson benchmark 永远是 `ok_cpu`；换镜像后 `torch.cuda.is_available()==True` 但**任何 kernel 都跑不起来** | ① 镜像名写死一个**本机从未 pull 过**的镜像 → 静默降级；② cu126 索引的 dev 夜轮 torch **只编 sm_80/sm_90 且显式排除 8.7**，Orin Nano 是 sm_87 | 镜像候选列表 + 本地存在性检查；新增 `Dockerfile.lnn-sm87`（PyPI 官方 aarch64 wheel，带 sm_87 SASS） |
-| B7 | 产物 16 天全是 `ok_cpu`，环境行写 `CUDA：False` —— 但**本机其实有一个能跑 sm_87 kernel 的 torch**（`/usr/bin/python3.10` 的 2.10.0+cu126） | `resolve_bench_python()` 的判据只测 `import torch`，而候选排序把 cu130 的 `python3` 排在前面 → 永远选不到那个 cu126 解释器 | 判据改成**真跑一个 kernel**（`bench_cuda_kernel_ok`），优先级改为"能跑 kernel > 能 import > 兜底"；当日首次拿到真实 GPU 数据 |
+| B6 | Jetson benchmark 永远是 `ok_cpu`；换镜像后 `torch.cuda.is_available()==True` 但**任何 kernel 都跑不起来** | ① 镜像名写死一个**本机从未 pull 过**的镜像 → 静默降级；② cu126 索引的 dev 夜轮 torch **只编 sm_80/sm_90 且显式排除 8.7**，Orin Nano 是 sm_87 | 镜像候选列表 + 本地存在性检查；新增 `Dockerfile.lnn-sm87` |
+| B7 | 产物 16 天全是 `ok_cpu`，环境行写 `CUDA：False` —— 但**本机其实有一个能跑 sm_87 kernel 的 torch**（`/usr/bin/python3.10` 的 2.10.0，CUDA 12.6） | `resolve_bench_python()` 的判据只测 `import torch`，而候选排序把 cu130 的 `python3` 排在前面 → 永远选不到那个 cu126 解释器 | 判据改成**真跑一个 kernel**（`bench_cuda_kernel_ok`），优先级改为"能跑 kernel > 能 import > 兜底"；当日首次拿到真实 GPU 数据 |
+| B8 | 本仓 `Dockerfile.lnn-sm87` 写"PyPI 官方 aarch64 wheel 带 sm_87 SASS"，据此建出的 `lnn-sm87:local` 镜像里却是 **torch 2.7.0+cpu** | **PyPI / TUNA 的 aarch64 torch wheel 本身就是 CPU 构建**（99.0 MB vs 同 tag x86_64 的 865.0 MB；METADATA 里零个 nvidia-* 依赖）—— 文档里的 claim 与产物互相矛盾 | 该 Dockerfile 的 claim 更正；**构建期加 CUDA 自检**（装完没有 CUDA 直接构建失败）；脚本的镜像预检**失败即跳过该镜像**（不再拿坏镜像继续跑），默认镜像列表里去掉 `lnn-sm87:local` |
 
 > B5 是 B4 的同型复发：**下游脚本只读渲染产物，必然继承渲染层的截断**。
 > 这是本项目第三次踩同一个坑（`select_papers_for_report` → 改读 JSON；
@@ -351,10 +352,62 @@ PyPI 上 torch 有 aarch64 官方 wheel（2.5.1~2.10.0），它们是 JetPack �
 ### 7.6 对镜像路线的影响
 
 `lnn-sm87:local`（`Dockerfile.lnn-sm87`）**不再是必需品** —— 宿主解释器已经能跑
-sm_87 kernel。镜像只剩"隔离环境"这一个价值，而它要下载 99MB wheel（本机网络
-约 80 KB/s，≈20 分钟）。因此本轮**放弃构建**，改为修解释器选择。
-`Dockerfile.lnn-sm87` 保留作为备选路线，其注释里"PyPI 官方 aarch64 wheel 是
-唯一长期带 sm_87 SASS 的发行版"这句话也一并更正（宿主 2.10.0+cu126 就是反例）。
+sm_87 kernel。镜像只剩"隔离环境"这一个价值，而它要下载 ~345MB wheel（本机网络
+约 80 KB/s，≈1 小时）。因此本轮**放弃重建**，改为修解释器选择。
+
+> ⚠️ 这里曾写过"宿主 2.10.0+cu126 就是'PyPI 官方 aarch64 wheel'的反例" ——
+> **这句也不准确**。宿主那份 torch 的 wheel 标签是 `cp310-cp310-linux_aarch64`
+> （**不是** manylinux），`direct_url.json` 指向
+> `file:///tmp/torch-2.10.0-cp310-cp310-linux_aarch64.whl`，即**本地 wheel 文件**；
+> 它的 `torch.__version__` 是 `2.10.0`（无 `+cu126` 本地版本号），所以也不是
+> download.pytorch.org 那个 `2.10.0+cu126`。**版本号一样，出身不一样**，
+> 别把两者混为一谈（详见 §7.7）。
+
+### 7.7 B8 — 本仓自己的 Dockerfile 写着与产物相反的 claim
+
+`Dockerfile.lnn-sm87` 上一版写着："**PyPI 上的官方 aarch64 wheel 默认带 sm_87
+SASS，2.7.0 → 默认 cu126**"。据此构建出的镜像实测是：
+
+```
+$ docker run --rm --runtime nvidia --gpus all lnn-sm87:local \
+    python3 -c "import torch; x=torch.randn(64,64,device='cuda')"
+AssertionError: Torch not compiled with CUDA enabled
+# torch.__version__ == "2.7.0+cpu"，get_arch_list() == []
+```
+
+**根因**：**PyPI（及 TUNA 镜像）上的 aarch64 torch wheel 本身就是 CPU 构建**。
+
+| torch 2.7.0 / cp312 | 体积 | 是否含 CUDA |
+|---|---:|---|
+| `torch-2.7.0-cp312-cp312-manylinux_2_28_aarch64.whl` | **99.0 MB** | ❌ CPU（METADATA 里零个 `nvidia-*` 依赖） |
+| `torch-2.7.0-cp312-cp312-manylinux_2_28_x86_64.whl` | **865.0 MB** | ✅ CUDA（nvidia 库打包在内） |
+
+> **教训 1：wheel 体积是判断 aarch64 wheel 是否含 CUDA 的最快信号**
+> （~99 MB = CPU-only，800+ MB = CUDA）。更硬的办法是拉 wheel 的 `.metadata`
+> 段：CUDA 版会列一串 `nvidia-*-cu12` 依赖，CPU 版一个都没有。
+> 这条正好推翻了本仓长期记忆里"正确路径 = PyPI 官方 aarch64 wheel"的说法。
+
+同时更正 2026-10-19 记的"cu126 索引对 aarch64 只有 dev 夜轮"——**也是错的**：
+实测该索引的 aarch64 稳定版有 2.6.0 / 2.9.0 / 2.9.1 / 2.10.0 / 2.11.0 /
+2.12.0 / 2.12.1 / 2.13.0 / 2.14.1 共 9 个（另加 1 个 dev 夜轮）。
+**教训 2：`pip index versions` 会把没有 aarch64 wheel 的版本也列出来**，
+判断有无 wheel 必须去索引页解析 `*_aarch64.whl` 文件名。
+
+**已做的三处修改**：
+
+1. `Dockerfile.lnn-sm87` 的注释更正为事实，并且**构建期加 CUDA 自检**
+   （装完的 torch 没有 CUDA 就直接构建失败）——宁可构建失败，也不要留一个
+   "看着装好 torch、实则是 CPU 版"的镜像；
+2. 脚本的镜像预检从"失败只报错、继续用该镜像"改成
+   **失败即跳过该镜像**（并继续试下一个候选，最后回退宿主）；
+3. 默认镜像候选列表里去掉 `lnn-sm87:local`（当前本机那份是 CPU-only 的坏镜像）。
+
+**仍然没验证的**：cu126 索引的 `torch-2.10.0+cu126-cp312-...-aarch64.whl`
+**确实是 CUDA 构建**（已核 `.metadata`：cublas 12.6.4.1 / cudnn 9.10.2.21 /
+nccl 2.27.5 / triton 3.6.0 …），但**它有没有编 sm_87 的 SASS 没验证** ——
+官方 aarch64 构建常只编 sm_80/sm_90，那就会重演 dev 夜轮那个
+`no kernel image is available`。所以 Dockerfile 的验收标准写成
+**必须跑出 `KERNEL_OK`**，而不是"装上了就算好"。
 
 ---
 

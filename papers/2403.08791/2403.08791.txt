@@ -1,0 +1,1579 @@
+                                             Liquid Resistance Liquid Capacitance Networks
+
+                                                   Mónika Farsang1 , Sophie A. Neubauer2 , and Radu Grosu1
+                                                     1
+                                                         Technische Universität Wien (TU Wien), Vienna, Austria
+                                                            {monika.farsang, radu.grosu}@tuwien.ac.at
+                                                               2
+                                                                 DatenVorsprung GmbH, Vienna, Austria
+                                                                     sophie@datenvorsprung.at
+arXiv:2403.08791v4 [cs.NE] 11 Aug 2025
+
+
+
+
+                                               Abstract. We introduce liquid-resistance liquid-capacitance neural net-
+                                               works (LRCs), a neural-ODE model which considerably improves the
+                                               generalization, accuracy, and biological plausibility of electrical equiva-
+                                               lent circuits (EECs), liquid time-constant networks (LTCs), and satu-
+                                               rated liquid time-constant networks (STCs), respectively. We also intro-
+                                               duce LRC units (LRCUs), as a very efficient and accurate gated RNN-
+                                               model, which results from solving LRCs with an explicit Euler scheme
+                                               using just one unfolding. We empirically show and formally prove that
+                                               the liquid capacitance of LRCs considerably dampens the oscillations of
+                                               LTCs and STCs, while at the same time dramatically increasing accuracy
+                                               even for cheap solvers. We experimentally demonstrate that LRCs are a
+                                               highly competitive alternative to popular neural ODEs and gated RNNs
+                                               in terms of accuracy, efficiency, and interpretability, on classic time-series
+                                               benchmarks and a complex autonomous-driving lane-keeping task.
+
+                                               Keywords: Machine Learning · Bio-inspired Neural Networks · Liquid
+                                               Capacitance.
+
+
+                                         1    Introduction
+                                         Electrical equivalent circuits (EECs) are the foremost mathematical model used
+                                         in neuroscience for capturing the dynamic behavior of biological neurons [17,
+                                         36]. EECs associate the membrane of a neuron with a capacitor, whose potential
+                                         varies according to the sum of the stimulus, leaking, and synaptic currents,
+                                         passing through the membrane. Consequently, EECs are formulated as a set of
+                                         capacitor ordinary differential equations (ODEs).
+                                             EECs, however, received little attention in the ML community due to their
+                                         ODE nature, except for continuous-time recurrent neural networks (CT-RNNs)
+                                         [13], which are arguably EECs with electrical synapses [12]. This changed with
+                                         the introduction of Neural ODEs [6] and later their latent [29] and augmented [11]
+                                         versions. EECs with chemical synapses are called liquid time-constant networks
+                                         (LTCs) [14], as their time constant depends on both the state and the input.
+                                             The main promise of LTCs and Neural ODEs is to better capture physical
+                                         reality and bridge the gap between natural sciences and ML. They are able to
+                                         recover missing data in irregularly-sampled time series, which was investigated
+                                         in LTCs [14], the GRU-ODE-Bayes method [5], Neural Controlled Differential
+2         M. Farsang et al.
+
+Equations [18] and the Neural Lad framework [26]. Furthermore, LTCs were
+shown to be more interpretable in an autonomous lane-keeping task both in
+real-world [25] and simulation environments [12]. An important obstacle in the
+use of Neural ODEs and especially LTCs, however, is their stiff oscillatory nature,
+which requires the use of expensive ODE solvers [3].
+    In this paper, we show that the stiff dynamic behavior of LTCs results from
+abstraction. For simplicity, EECs and LTCs first ignore the saturation aspects
+of membrane’s ionic channels [1], as discussed in [12]. To take such aspects into
+account, they introduce saturated LTCs (called STCs). Second, and more im-
+portantly, EECs, LTCs and STCs also assume that membranal capacitance is
+constant, which is disproved by recent results demonstrating a nonlinear depen-
+dence on the neural state and input [16, 30, 20].
+    Here, we show that adding a liquid membrane capacitance to STCs, consid-
+erably reduces their variation with respect to inputs, while also enhancing their
+accuracy. We call the resulting model a liquid-resistance liquid-capacitance neu-
+ral network (LRC), as the LRC’s liquid time-constant is now factored this way.
+Due to the gentle varying LRC behavior, an explicit Euler integration scheme
+with one unfolding, is often enough to obtain a very small error. We call LRCs
+solved with this scheme, LRC units (LRCUs). They closely resemble and im-
+prove on the performance of gated recurrent units, such as Long Short-Term
+Memory (LSTMs) [15], Gated Recurrent Units (GRUs) [8] and Minimal Gated
+Units (MGUs) [37]. For irregularly sampled time series, however, one can use
+more expensive solvers with LRCs, too.
+    We experimentally evaluate LRCs with respect to their accuracy and speed
+on the classic gated-RNN and Neural-ODE benchmarks, respectively, and with
+respect to their interpretability on a complex autonomous-driving lane-keeping
+task. Our results show that LRCs outperform LSTMs, GRUs, and MGUs on
+RNN benchmarks, are able to successfully solve Neural-ODE tasks, and at the
+same time, are much more interpretable than LSTMs, GRUs, and MGUs on the
+lane-keeping task.
+    In summary, the main results of our paper are as follows:
+    – We introduce Liquid-Resistance Liquid-Capacitance Networks (LRCs), which
+      considerably improve the generalization, accuracy, and biological plausibility
+      of EEC, LTC, and STC models, respectively.
+    – We introduce LRC Units (LRCUs), as a very efficient and accurate gated
+      RNN-model, which results from solving LRCs with an explicit Euler scheme
+      of order one and one unfolding, only.
+    – We prove that the liquid capacitance of LRCs, leads to a more gentle vary-
+      ing behavior than in LTCs and STCs, while at the same time dramatically
+      increasing their accuracy even for cheap solvers.
+    – We experimentally show that LRCs are competitive in accuracy, efficiency,
+      and interpretability to gated RNNs and Neural ODEs on classic benchmarks,
+      and on a complex Lane-Keeping Task.
+  The rest of this paper is organized as follows. In Section 2, we review EECs,
+LTCs, and STCs. Next, we introduce Liquid-Resistance Liquid-Capacitance Net-
+                             Liquid Resistance Liquid Capacitance Networks         3
+
+works (LRCs) and LRCUs and discuss and prove their properties. In Section 4
+we provide our very encouraging experimental results. Finally, in Section 5, we
+draw our conclusions and discuss future work.
+
+
+2     Background
+2.1   Liquid Time-Constant Networks (LTCs)
+Definition. EECs are a simplified electrical model, defining the dynamic be-
+havior of the membrane-potential (MP) of a post-synaptic neuron, as a function
+of the MP of its pre-synaptic neurons, for electrical or chemical synapses [17,
+36]. EECs with chemical synapses only, are also known in the ML community
+as LTCs [24, 14, 25]. An LTC with m neurons and n inputs is defined as follows:
+
+                             ḣi = −fi hi + ui eli
+                            Pm+n
+                        fi = j=1 gji σ(aji yj + bji ) + gli                      (1)
+                            Pm+n
+                        ui = j=1 kji σ(aji yj + bji ) + gli .
+
+    It states that the rate of change of the MP hi of neuron i, is the sum of its
+forget current −fi hi and its update current ui eli . The forget conductance fi is
+the liquid time-constant reciprocal of hi , which depends on y = [h, x], where h
+represents the MPs of presynaptic neurons and x is the external inputs. Here,
+gji is the maximum conductance of the synaptic channels, aji , bji are parameters
+controlling the sigmoidal probability of these channels to be open, and gli , eli
+are the membrane’s leaking (resting) conductance and potential, respectively. In
+the update conductance ui , parameters kji = gji eji /eli take the sign of eji /eli ,
+where eji is the synaptic channel’s reversal potential, that is, the MP at which
+there is no net ionic flow.
+
+2.2   Saturated Liquid Time-Constant Networks (STCs)
+Definition. For simplicity, LTCs ignore saturation in synaptic channels [1]. One
+can take this aspect into account, by constraining the forget and signed-update
+conductances fi and ui with a sigmoid and a hyperbolic tangent, to range within
+[0,1] and [-1,1], respectively. Letting fi and ui be as above, this leads to the
+definition of saturated LTCs (STCs) of [12]:
+
+                            ḣi = −σ(fi ) hi + τ (ui ) eli .                     (2)
+
+
+3     Liquid-Resistance Liquid-Capacitance Networks
+      (LRCs)
+3.1   Model Definition
+Definition. LTCs and STCs assume that the membrane capacitance is constant
+and equal to one. This is however not the case in biological neurons. They have a
+4          M. Farsang et al.
+
+                Asymmetric Capacitance Formula               Symmetric Capacitance Formula
+          1.0                                          1.0
+          0.8                                          0.8
+          0.6                                          0.6
+      C
+
+
+
+
+                                                   C
+          0.4                      o                   0.4
+          0.2                                          0.2
+          0.0                                          0.0
+                                                                          k
+                  4      2     0       2   4                   4      2    0     2     4
+                               y                                          y
+
+Fig. 1: The asymmetric and symmetric shape of the membrane’s elastance ϵ(wi )
+proposed for LRCs, using Formulas (4) and (5), respectively.
+
+nonlinear dependence on the MPs and the incoming inputs [16, 30, 20]. LRCs take
+this aspect into account, by adding a liquid elastance (reciprocal of capacitance)
+ϵ(wi ), in Equation (2), where the weights matrix o and the bias vector p play
+the same role as the ones in an artificial neuron:
+                               ḣi = ϵ(wi ) (−σ(fi ) hi + τ (ui ) eli )
+                                           Pm+n                                              (3)
+                                     wi = j=1 oji yj + pi .
+Thus, the time constant in LRCs factors into a liquid-resistance and a liquid-
+capacitance. The second, acts as an additional control of the time constant, by
+increasing it when the desired variation of the function is gentle, and leaving it
+unchanged when the desired behavior is stiff. For convenience, we provide the
+definition of both an asymmetric and a symmetric form of elastance in Equa-
+tions (4-5), respectively. Here, the parameters vector k of the symmetric version
+is non-negative in each of its components:
+                             (A) ϵ(wi ) = σ(wi ),                                            (4)
+                             (S) ϵ(wi ) = σ(wi + ki ) − σ(wi − ki ).                         (5)
+    The shape of the two elastances is shown in Figure 1. The first is asymmetric
+with respect to y, while the second is symmetric with respect to y. They both
+scale the elastance to range within [0,1], thus acting to possibly decrease the
+variation of h. The linear output layer of the LRC may compensate this, by
+possibly having values larger than one. The architecture of LRCs is given in
+Figure 2 (left).
+
+3.2   Model Properties
+In this section, we investigate important model properties of LRCs. For this
+purpose, we focus on the complex autonomous driving Lane-Keeping experiment,
+as it is a regression task where LTCs have been shown to perform well. We aim
+to determine if we can improve upon the properties of LTCs by incorporating the
+additional saturation aspect and liquid capacitance of LRCs. Specifically, we are
+interested in examining the Lipschitz constant, model accuracy, and efficiency.
+                                                                        Liquid Resistance Liquid Capacitance Networks                                                                                              5
+
+
+                                                                   h                           h                                                                                          ht-1
+                                                                                    ?                                                                                                            z-1
+                        h                          -1                                                                ht-1                                              -1
+                             f             ?                                                                                          ft                     ?
+
+       x                                                                            ?                         xt
+                                                                                                                                                                                                             ht
+                             w             ?                                                                                        wt                        ?
+
+
+                             u             ?                                                                                        ut                        ?
+
+                                                         el                                                                                                                   el
+
+
+
+
+Fig. 2: The architecture of LRCs (left) and of LRCUs (right, explicit 1st order
+Euler discretization of LRCs with one unfolding). Both LRCs and LRCUs have
+a sigmoidal forget gate σ(ft ), a hyperbolic-tangent update gate τ (ut ), and a
+sigmoidal symmetric or asymmetric smoothen gate ϵ(wt ).
+
+
+                 0.01
+                        LTC's prediction over time                                  0.01
+                                                                                           STC's prediction over time                                       0.01
+                                                                                                                                                                   LRC's prediction over time
+                 0.00                                                               0.00                                                                    0.00
+Road curvature
+
+
+
+
+                                                                   Road curvature
+
+
+
+
+                                                                                                                                           Road curvature
+                 0.01                                                               0.01                                                                    0.01
+                 0.02                                                               0.02       Ground truth                                                 0.02            Ground truth
+                 0.03       Ground truth                                            0.03       STC with Explicit solver 1 unfolding                         0.03            LRC with Explicit solver 1 unfolding
+                            LTC with Hybrid solver 1 unfolding                                 STC with Hybrid solver 1 unfolding                                           LRC with Hybrid solver 1 unfolding
+                 0.04       LTC with Hybrid solver 6 unfolding                      0.04       STC with Hybrid solver 6 unfolding                           0.04            LRC with Hybrid solver 6 unfolding
+                        0   10      20      30     40         50                           0   10      20      30      40      50                                  0        10      20     30      40      50
+                                         Time                                                               Time                                                                         Time
+
+
+
+Fig. 3: Dynamic behavior of the output of LTC, STC and LRC in the regression
+task of Lane-Keeping [23].
+
+
+Lipschitz constant. In the case of LTCs, shown on the left in Figure 3, the out-
+put has an oscillatory behavior, with a relatively large validation loss. Moreover,
+LTCs fail to converge with an explicit Euler integration scheme of order one
+and just one unfolding. In contrast, STCs convergence with an explicit Euler
+integration scheme of order one and just one unfolding presented in the middle
+figure. However, the output neuron still exhibits stiff oscillatory behavior. In
+LRCs, this neuron has a very gentle varying behavior, with a very small val-
+idation loss, even when using an explicit Euler scheme of order one and just
+one unfolding (no overhead). This highly advantageous, as it was demonstrated
+that a lower Lipschitz constant enhances robustness [9], generalization [32], and
+interpretability [33].
+    Due to its very gentle varying behavior of LRCs, an explicit Euler integration
+with one unfolding, is often sufficient for obtaining an acceptable validation loss.
+This dramatically speeds up computation, as the solver introduces no overhead.
+This is particularly useful for time series with regularly sampled data, lacking
+timing information. Here, a time step of one, leads to a network closely resem-
+bling gated recurrent neural networks [15, 8, 37]. Its architecture is shown in Fig-
+ure 2 (right). We call this network, an LRC unit (LRCU). For further details and
+discussion on this, see Appendix A.2. As we show in the experimental-results sec-
+6       M. Farsang et al.
+
+
+                                                LRC Dynamics
+                                                                      0.10
+
+
+
+          h of LRC with elastance (wi)
+                                         0.04                         0.05
+                                         0.02                         0.00
+
+
+
+
+                                                                           Hidden state h
+                                         0.00                           0.05
+                                         0.02                           0.10
+                                         0.04                           0.15
+                                         0.06                           0.20
+                                         0.08                           0.25
+                                                0.05    0.00   0.05
+                                                   h of STC
+Fig. 4: Experiment showing that the LRC’s elastance dampens the dynamic be-
+havior of STCs in an input and state-dependent way. It can fully reduce it to
+zero, or keep it as it is, indicated by the red and black dashed lines, respectively.
+
+tion in Section 4.1, LRCUs outperform gated RNNs on the RNN benchmarks,
+when used wih either a symmetrical elastance (LRCU-S) or an asymmetrical
+elastance (LRCU-A).
+
+Theorem 1 (LRC Lipschitz). Let the Lipschitz constant λs bound the sensi-
+tivity of an STC-model instance of Equation (2), with respect to its inputs and
+hidden states. Then, there exists an associated LRC-model instance of Equa-
+tion (3), with a Lipschitz constant λr , such that λr < λs .
+
+   The proof of Theorem 1 is given in the Appendix. Intuitively, for an LRC
+having the parameter values for its forget and update conductances fixed as in an
+STC, one can set the parameter values of its elastance, such that the Lipschitz
+constant of the LRC is smaller than the one of the STC. This leads to LRC
+being a function which does not change rapidly when the input changes.
+
+Accuracy and Generalization. The addition of a liquid elastance in LRCs does
+not only reduce oscillations, but it also dramatically improves accuracy. This is
+illustrated for the Lane-Keeping Task in Figure 5, where the validation loss of
+the LRC’s output neuron, is considerably smaller compared to the one of LTCs
+and STCs. While the above theorem proves a smaller Lipschitz constant, the
+following theorem proves generalization.
+
+Theorem 2 (LRC Generalization). Let hs be an STC-model instance of
+Equation (2) with hr being an associated LRC-model instance of Equation (3)
+                                                       Liquid Resistance Liquid Capacitance Networks                                                       7
+
+
+                 0.04
+                                    Training loss                                                               Validation loss
+                                 LTC with Hybrid solver 6 unfolds                              0.45            LTC with Hybrid solver 6 unfolds
+                                 STC with Explicit Euler solver 1 unfold                       0.40            STC with Explicit Euler solver 1 unfold
+
+
+
+
+                                                                             Validation loss
+ Training loss   0.03            STC with Hybrid solver 6 unfolds                                              STC with Hybrid solver 6 unfolds
+                                                                                               0.35
+                                 LRC-A with Explicit Euler solver 1 unfold                                     LRC-A with Explicit Euler solver 1 unfold
+                 0.02            LRC-S with Explicit Euler solver 1 unfold                     0.30            LRC-S with Explicit Euler solver 1 unfold
+                                                                                               0.25
+                 0.01                                                                          0.20
+                                                                                               0.15
+                 0.00
+                        0   20         40         60         80        100                            0   20         40         60         80        100
+                                         Epochs                                                                        Epochs
+
+
+Fig. 5: Training loss in the first and validation loss in the second figure of LTCs,
+STCs, and LRCs for the Lane-Keeping Task.
+
+
+with λr < λs (Theorem 1). Let oTt be training labels and ôT,r t  and ôT,s
+                                                                        t   be the pre-
+                           r      s
+dictions of the models h and h respectively. Let both models have a small train-
+ing loss ∥oTt −ôTt ∥2 < ϵT with small ϵT > 0. Let ytT and ytV be respectively training
+and validation input. Let the validation set be similar to the training set (drawn
+in-distribution) in a sense that for every time t it holds that ∥ytT − ytV ∥2 < ϵy
+and ∥oTt − oVt ∥2 < ϵo with small ϵy , ϵo > 0. Then it holds that the upper bound of
+the validation loss of the LRC-model is smaller than the one of the STC-model.
+
+    The proof of Theorem 2 is given in the Appendix. Intuitively, if the validation
+set is similar to the training set modulo some small perturbation, are drawn
+from the same distribution, one can use a Taylor series approximation of the
+validation loss o(y V ) ≈ o(y T ) + (y V − y T )T ∇y o(y V ) and get an upper bound on
+the validation loss by using Theorem 1. As the Lipschitz constant of the LRC is
+smaller than the one of STC, also the upper bound of the validation loss of the
+LRC-model is smaller than the one of the STC-model.
+
+Efficiency. Solving LTCs, STCs, and LRCs with popular ODE-integration tech-
+niques, is computationally expensive. A hybrid Euler method [25] for example,
+takes multiple unfolding rounds for a given input, to achieve a good approxi-
+mation of the solution. In Figure 5 we show the validation loss of LTCs, STCs,
+and LRCs, for the Lane-Keeping Task [23], where the state of the neurons is
+computed with a fixed integration step ∆. Diving this into 6 equidistant time
+steps ∆/6 within one update step, results in a considerably better model, but
+at a higher cost of 10min versus 4min per epoch. This results in a 2.5× longer
+computation time.
+    Table 1 presents that per epoch and curves, the training took around 10
+minutes for 6 unfoldings per step and 4 minutes for 1 unfolding per step, which
+is 2.5 times faster. As the curves of LTCs and STCs with the hybrid solver
+converge in around 50-70 epochs, and the LRC-S and LRC-A in around 20
+and 40, respectively, the total speedup until the best epoch of the latter with
+respect to the former is 3-7.8 times, while also being a much more accurate.
+8       M. Farsang et al.
+
+
+Table 1: Training details of LTC, STCs and LRCs on the Lane Keeping dataset.
+           Model      Time Per Epoch Best Epoch Lipschitz Constant
+           LTC H6            10.06 min      52 ± 06         90±23·10−4
+           STC E1            03.97 min      50 ± 22        101±25·10−4
+           STC H6            10.13 min      69 ± 10         89±23·10−4
+           LRC-A E1          04.05 min      43 ± 08         47±08·10−4
+           LRC-S E1          04.16 min      22 ± 03         43±11·10−4
+
+
+
+Note that solving STCs with Explicit Euler and one unfolding is computationally
+inexpensive, but its validation loss is not very satisfactory.
+    In Figure 5, we also compare the training and validation loss of the LR-
+CUs and LRCs, for the Lane-Keeping Task, where we compute the elastance
+term ϵ(wi ) in two different ways, by using Equations (4-5), and learning the
+parameters o, p, and k. Using these proposed liquid elastances leads to a consid-
+erably faster convergence of validation loss, to a much smaller loss. In particular,
+the symmetric elastance achieves the best results, by essentially converging in
+around 20 epochs, to a loss of about 0.15. The LTCs and STCs instead, converge
+in about 60 epochs, at a loss of 0.22.
+
+
+4     Further Experimental Results
+In the previous sections we defined LRCs as an extension of STCs, by arguing
+that using a constant capacitance, as is the case in LTCs and STCs, is not only
+biologically implausible, but it also leads to large oscillations in the trained net-
+works. We also showed that by considering a liquid (that is a state-and-input
+dependent) capacitance, dramatically reduces the validation loss of the result-
+ing network, by having better generalization. Due to the more gently varying
+behavior, solving LRCs with explicit, one-unfolding Euler, leads to very small
+validation loss, without any computational overhead. We called LRCs integrated
+this way, LRCUs, as they closely resemble gated RNNs when using a time-step
+of one.
+    In the following subsections, we present our further experimental results for
+LRCs, on three different topics of interest in the ML community. The first in-
+vestigates LRCUs in comparison with the one of LSTMs, GRUs, and MGUs
+on classic benchmarks used for RNNs. The second investigates LRCs in solving
+classic Neural-ODE tasks. Finally, the third investigates the interpretability of
+the learned LRCUs (and thus LRCs) for the Lane-Keeping Task.
+
+4.1   LRCUs on RNNs Benchmarks
+In this section we ask and positively answer, if LRCUs are competitive with re-
+spect to accuracy and convergence speed, compared to the popular gated RNNs.
+To this end, we conduct experiments on a wide range of time-series modeling
+                            Liquid Resistance Liquid Capacitance Networks        9
+
+
+         Table 2: Accuracy in the classification datasets in percentage.
+                Model     Localization    IMDB        psMNIST
+                LSTM   82.90 ± 0.31 86.56 ± 0.49 91.20 ± 0.10
+                GRU    82.76 ± 0.41 86.32 ± 0.51 90.20 ± 0.44
+                MGU    83.35 ± 0.30 85.18 ± 0.85 87.78 ± 0.82
+                LRCU-S 84.21 ± 0.26 85.73 ± 0.41 91.74 ± 0.41
+                LRCU-A 83.90 ± 0.34 87.00 ± 0.53 91.31 ± 0.33
+
+
+
+applications, including: Classification of activities based on irregularly sampled
+localization data; IMDB movie reviews; and Permuted sequential MNIST tasks.
+    To achieve a somewhat similar number of parameters, we use 64 cells for
+LRCUs, and 100 cells for the others as internal representation. The total number
+of parameters in a model also depends on the number of inputs and outputs
+of the tasks considered. Finally, we also conduct experiments in a relatively
+complex and high-dimensional image-based regression task, for lane keeping in
+autonomous vehicles. All experimental details, including the hyperparameters
+and the number of trainable parameters, are given in Appendix A.3. In Table 2
+we provide the accuracy of the various models compared in the classification
+tasks.
+
+Localization Data for Person Activity. The Localization Data for the Person
+Activity dataset given in [34], captures the recordings of five individuals, engag-
+ing in various activities. Each wore four sensors at the left and the right ankle,
+at the chest, and at the belt, while repeating the same activity five times. The
+associated task, is to classify their activity based on the irregularly sampled
+time-series. This task is a classification problem, adapted from [22].
+    In Table 2, we present the experimental results for the accuracy of the classi-
+fication for LSTMs, GRUs, MGUs, and LRCUs. The experiments for the LRCUs
+were done with both the asymmetric (LRCU-A) and the symmetric (LRCU-S)
+elastance, respectively. As one can see, both LRCUs considerably outperformed
+the traditional gated RNNs. In particular, the LRCU-S performed best, achiev-
+ing an accuracy of 84.99%, slightly better than the LRCU-A.
+
+IMDB Movie Sentiment Classification. The IMDB Movie-Review Sentiment
+Classification dataset, also known as the Large Movie Review Dataset [27], is
+designed for binary sentiment classification. This data set includes 25,000 movie
+reviews, for both training and testing. Each review was labeled with either a
+positive or a negative sentiment.
+   Table 2 presents our experimental results for this task, too. While the LRCU-
+S achieved a performance which was comparable to the one of the traditional
+RNNs, the LRCU-A had the best performance, by achieving an accuracy of 87%.
+
+Permuted Sequential MNIST. The Permuted Sequential MNIST dataset is a
+variant of the MNIST Digits Classification data set, designed to evaluate recur-
+10     M. Farsang et al.
+
+
+
+
+Fig. 6: Lane-Keeping task. The first two figures show summer and winter condi-
+tions, respectively. The red rectangle indicates the input and the blue line the
+predicted steering angle of the network.
+
+                     t
+                                                 CNN head
+
+                           input frames
+                                                        extracted
+                                                        features
+
+                                                   RNN
+
+                            prediction
+
+Fig. 7: Network architecture for the Lane-Keeping task. The CNN head extracts
+the input features of a video stream. They are passed to the recurrent policy,
+responsible for steering.
+
+rent neural networks, adapted from [21]. In this task, the 784 pixels (originally
+images of size 28×28) of digits are presented sequentially to the network. The
+main challenge lies in predicting the digit category, only after all pixels are ob-
+served. This task tests the network’s ability to handle long-range dependencies.
+To make the task even more complex, a fixed random permutation of the pixels
+is first applied.
+     Our experimental results are shown in Table 2. As before, both LRCUs sur-
+pass the accuracy of the other models. In particular, the LRCU-S achieves the
+best results.
+
+Lane-Keeping Task. In the Lane-Keeping Task, the control agent is provided
+with the front-camera input, consisting of RGB images of size 48×160 pixels. It
+is required to autonomously navigate and maintain its position within the road,
+by properly predicting its curvature. The predicted road curvature corresponds
+to the steering action necessary for lane-keeping, and holds the advantage of
+being vehicle-independent, as the actual steering angle depends on the type of
+car used.
+    The dataset for the Lane-Keeping Task task is obtained from human-driving
+recordings captured under various weather and illumination conditions [23], as
+shown in Figure 6. The network architecture illustrated in Figure 7 contains a
+                             Liquid Resistance Liquid Capacitance Networks   11
+
+
+Table 3: Mean squared loss results for the Lane-Keeping task, averaged over 3
+seeds.
+                   Model     Validation Loss W-Validation Loss
+                   LSTM   0.139 ± 0.008        0.013 ± 0.0010
+                   GRU     0.145 ± 0.006       0.013 ± 0.0010
+                   MGU    0.139 ± 0.007        0.012 ± 0.0010
+                   LRCU-A 0.154 ± 0.005       0.010 ± 0.0003
+                   LRCU-S 0.142 ± 0.004       0.011 ± 0.0010
+
+
+
+Table 4: Crash likelihood in closed-loop simulation with additional Gaussian
+noise in the Lane-Keeping task, averaged over 3 seeds. Values closer to zero
+indicate reliable, crash-free behavior.
+                     Model     Noise σ 2 = 0.1 Noise σ 2 = 0.2
+                     LSTM 0.000 ± 0.000 0.483 ± 0.254
+                     GRU     0.133 ± 0.189 0.767 ± 0.047
+                     MGU     0.267 ± 0.221 0.817 ± 0.037
+                     LRCU-A 0.000 ± 0.000 0.200 ± 0.231
+                     LRCU-S 0.000 ± 0.000 0.300 ± 0.216
+
+
+
+CNN-head for extracting the main features from the camera input. They are fed
+into the gated recurrent models, for the sequential-regression prediction. This
+setup is adapted from [12].
+    In Table 3, we report the experimental losses of the models considered on
+the Lane-Keeping task. As it was the case before, both LRCU-A and LRCU-S
+obtain comparable validation losses, with LRCU-A achieving the best weighted-
+validation loss (loss weighted by road curvature). This is arguably the more
+important loss.
+    We test the models in the closed-loop setting to evaluate their performance
+of robust lane keeping. By injecting extra Gaussian noise with variance 0.1 into
+the input images, we find that LRCUs can handle it without any crashes, and
+show better performance than other models in even higher Gaussian noise with
+variance 0.2 too, as reported in Table 4.
+
+4.2   LRCs on Neural ODEs Benchmarks
+
+LRCs are competitive in accuracy and convergence speed on popular Neural-
+ODE benchmarks. As examples, we consider a Periodic Sinusoidal, a Spiral
+towards the origin [7], the non-linear Duffing oscillator [28, 31, 10] and three
+versions of the Lotka-Volterra (LV) predator-prey model [2, 19] well-known from
+evolutionary biology and ecology.
+   In our experiments we use an LRC with 16 hidden states for internal repre-
+sentation. LRCs are highly suitable for such tasks as they are ODEs. We also
+use two extra layers for mapping. The former maps the state of these systems
+12     M. Farsang et al.
+
+to the dimensionality of the hidden state, allowing us to learn more expressive
+16-dimensional dynamics. The latter remaps these dynamics back to the original
+system state dimensionality.
+    We compare the performance of the LRCs with a 3-layer Neural-ODE, con-
+taining 32, 32, and 2 neurons, respectively. These three layers match the number
+of trainable parameters, with the ones of the LRCs. Neural-ODEs are solved by
+Runge-Kutta 4(5) of Dormand-Prince, and LRCs by explicit Euler of order 1.
+The results of our experiments averaged over 3 seeds, are shown in Table 5.
+
+
+Table 5: Test loss of various ODE tasks, with LRCs showing good performance.
+Results are averaged over 3 seeds.
+                   Task            Neural-ODE        LRC
+                   Sinusoid        0.140 ± 0.033 0.019 ± 0.005
+                   Spiral          0.012 ± 0.005 0.009 ± 0.004
+                   Duffing Oscill. 0.142 ± 0.117 0.003 ± 0.001
+                   Periodic LV     0.025 ± 0.006 0.005 ± 0.001
+                   Asymptotic LV 0.030 ± 0.0002 0.009 ± 0.001
+                   Non-linear LV 0.033 ± 0.010 0.008 ± 0.004
+
+
+
+4.3   Interpretability of LRCUs on the Autonomous-Driving
+      Lane-Keeping Task
+To show that LRCUs outperform LSTMs, GRUs, and MGUs in terms of in-
+terpretability, we conduct Lane-Keeping Task experiments, and compute the
+following interpretability metrics: the network attention and its robustness by
+the structural similarity index, the absolute correlation of neural activity with
+road trajectory, and the activity of neurons.
+    Understanding neural-network attention during decision-making is a crucial
+element in increasing trust in the network. By using the VisualBackprop [4]
+method, we visualize which pixels in the input image have the most impact at
+the given timestep. Even though the same structure of CNN heads is used in
+the training pipeline, the different recurrent parts of the decision-making policy,
+have a big influence on the learned features in the convolutional part through
+backpropagation. The attention in summer and winter season is given in the
+Appendix.
+    By injecting a zero mean Gaussian noise with a variance of 0.1 and 0.2 into the
+tests, respectively, we can measure how robust their attention is. Quantitatively,
+this is measured by the Structural Similarity Index, displayed in Figure 8. The
+LRCU models maintain the most similar focus of their attention in the presence
+of noise, indicated by the boxplots closer to 1. Lighter color refers to additional
+Gaussian noise of 0-mean and σ 2 = 0.1 variance, and darker to σ 2 = 0.2 variance.
+    As another interpretability metric, we assess how the neural activity within a
+Lane-Keeping RNN-policy changes during deployment in the closed-loop simula-
+tion. Specifically, we are interested in identifying neurons exhibiting an activity
+                                           Liquid Resistance Liquid Capacitance Networks                        13
+
+
+Table 6: Interpretability. Absolute correlation between the neural activity and
+the trajectory of the road. Values closer to 1 indicate stronger correlation. Av-
+eraged over 3 runs.
+                                                   Summer              Winter
+                                   LSTM    0.400 ± 0.299 0.450 ± 0.262
+                                   GRU     0.363 ± 0.256 0.389 ± 0.248
+                                   MGU     0.317 ± 0.227 0.308 ± 0.232
+                                   LRCU-A 0.500 ± 0.314 0.533 ± 0.292
+                                   LRCU-S 0.645 ± 0.321 0.766 ± 0.243
+
+
+                            SSIM in summer                                          SSIM in winter
+        1.00                                                   1.00
+
+        0.95                                                   0.95
+
+        0.90                                                   0.90
+
+        0.85                                                   0.85
+ SSIM
+
+
+
+
+                                                        SSIM
+        0.80                                                   0.80
+
+        0.75                                                   0.75
+                Noise σ 2                                              Noise σ 2
+        0.70                                                   0.70
+                      0.1                                                    0.1
+        0.65          0.2                                      0.65          0.2
+        0.60                                                   0.60
+                                         -A
+
+
+
+
+                                                                                                 -A
+                                                   -S
+
+
+
+
+                                                                                                           -S
+               TM
+
+
+
+                        RU
+
+
+
+                                U
+
+
+
+
+                                                                      TM
+
+
+
+                                                                               RU
+
+
+
+                                                                                        U
+                               G
+
+
+
+
+                                                                                       G
+                                               CU
+
+
+
+
+                                                                                                       CU
+                                      CU
+
+
+
+
+                                                                                             CU
+                      G
+
+
+
+
+                                                                             G
+          LS
+
+
+
+
+                                                                 LS
+                              M
+
+
+
+
+                                                                                      M
+                                              LR
+
+
+
+
+                                                                                                      LR
+                                    LR
+
+
+
+
+                                                                                            LR
+Fig. 8: Robustness of the attention, measured by the Structural Similarity Index
+(SSIM) [35] of the models, in summer (left) and in winter (right).
+
+
+matching the geometry of the trajectory. We conduct tests for a 1 km long drive,
+in both summer and winter. In Figure 9, we illustrate the activity of States h1 -
+h2 , corresponding to Cells 1-2 in the RNN policy, for summer, respectively. In
+the Appendix, we illustrate the activity of Cells 1-2 for winter. Our results reveal
+that the LSTM, GRU, MGU cells have scattered, hard-to-interpret activity, re-
+spectively. In contrast, LRCU-S cells demonstrate a very gentle varying activity,
+that aligns very well with the road’s trajectory. This is most likely due to their
+double-liquid resistance and capacitance time constant.
+    As shown in Table 6, we also compute the absolute-value cross-correlation
+metric, between the final prediction sequence of the policy (which aligns with
+the road’s trajectory), and the sequence of activities of individual neurons. By
+considering the absolute value of the cross-correlations, we ensure that equal
+importance is given to both positive (that is excitatory) and negative (that
+is inhibitory) behaviors. This method yields values within the range of [0, 1],
+where values close to zero indicate little to no correlation, and values close to
+one mean a very high correlation. The results presented in Table 6 reinforce the
+observations from Figure 9, which indicate that LRCU-based models, exhibit
+higher absolute-correlation values with the road’s trajectory compared to the
+other models.
+14         M. Farsang et al.
+
+          LSTM             GRU           MGU            LRCU-A          LRCU-S
+
+Cell 1
+Cell 2
+
+
+
+
+Fig. 9: Interpretability. The neural activity of two command cells in the learned
+policy for the Lane-Keeping Task, projected over time on the 1km road driven
+in summer.
+
+
+5        Discussion, Scope and Conclusion
+
+We introduced Liquid-Resistance Liquid-Capacitance networks (LRCs), a Neural
+ODE model which is more accurate, more efficient, and biologically more plau-
+sible, compared to neuroscience’s Electric Equivalent Circuits, and (saturated)
+Liquid Time-Constant networks (STCs and LTCs).
+    Due to their gentle varying behavior LRCs are easy to integrate and appli-
+cable to a wide range of scenarios, including continuous processes and datasets
+sampled regularly or irregularly. LRCs thus represent a promising advancement
+in the field of bio-inspired deep learning. LRCs integrated with explicit Euler of
+order 1, and a time-step of 1 (LRCUs), have a very similar structure to gated
+RNNs. They not only demonstrate comparable performance to LSTMs, GRUs,
+and MGUs on several benchmarks, but also exhibit significantly higher inter-
+pretability, demonstrated in the autonomous Lane-Keeping task.
+    Despite the limitation of the benchmarks used, which we acknowledge could
+be expanded in subsequent work, our focus on analyzing the properties of our
+advanced bio-inspired model and its performance across diverse scenarios demon-
+strates its potential and lays a solid foundation for future exploration. Our results
+suggest that incorporating additional concepts from neuroscience can advance
+machine learning models, offering opportunities for future research to explore
+and further enhance model performance.
+
+
+References
+
+  1. Alberts, B., Bray, D., Lewis, J., Raff, M., Roberts, K., Watson, J.: Molecular
+     Biology of the Cell. W. W. Norton & Company, 7th edn. (2008)
+  2. Bhattacharya, S., Martcheva, M.: Oscillations in a size-structured
+     prey-predator model. Mathematical Biosciences 228(1), 31–44 (2010).
+     https://doi.org/10.1016/j.mbs.2010.08.005
+                              Liquid Resistance Liquid Capacitance Networks          15
+
+ 3. Biloš, M., Sommer, J., Rangapuram, S.S., Januschowski, T., Günnemann, S.: Neu-
+    ral Flows: Efficient Alternative to Neural ODEs. In: Advances in Neural Informa-
+    tion Processing Systems. vol. 34, pp. 21325–21337. Curran Associates, Inc. (2021)
+ 4. Bojarski, M., Choromańska, A., Choromanski, K., Firner, B., Jackel, L.D., Muller,
+    U., Zieba, K.: VisualBackProp: visualizing CNNs for autonomous driving. ArXiv
+    abs/1611.05418 (2016), https://api.semanticscholar.org/CorpusID:16384108
+ 5. Brouwer, E.D., Simm, J., Arany, A., Moreau, Y.: GRU-ODE-Bayes: Continuous
+    modeling of sporadically-observed time series. In: Advances in Neural Information
+    Processing Systems. vol. 32, pp. 7379–7390. Curran Associates, Inc. (2019)
+ 6. Chen, R.T.Q., Rubanova, Y., Bettencourt, J., Duvenaud, D.K.: Neural Ordinary
+    Differential Equations. In: Bengio, S., Wallach, H., Larochelle, H., Grauman, K.,
+    Cesa-Bianchi, N., Garnett, R. (eds.) Advances in Neural Information Processing
+    Systems. vol. 31. Curran Associates, Inc. (2018)
+ 7. Chen, T.Q., Rubanova, Y., Bettencourt, J., Duvenaud, D.K.: Neural Ordi-
+    nary Differential Equations. In: Neural Information Processing Systems (2018),
+    https://api.semanticscholar.org/CorpusID:49310446
+ 8. Cho, K., Van Merriënboer, B., Gulcehre, C., Bahdanau, D., Bougares, F., Schwenk,
+    H., Bengio, Y.: Learning phrase representations using RNN encoder-decoder for
+    statistical machine translation. arXiv preprint arXiv:1406.1078 (2014)
+ 9. Cisse, M., Bojanowski, P., Grave, E., Dauphin, Y., Usunier, N.: Parseval networks:
+    Improving robustness to adversarial examples. In: International conference on ma-
+    chine learning. pp. 854–863. PMLR (2017)
+10. Constante-Amores, C.R., Linot, A.J., Graham, M.D.: Enhancing Predictive Capa-
+    bilities in Data-Driven Dynamical Modeling with Automatic Differentiation: Koop-
+    man and Neural ODE Approaches (2024), https://arxiv.org/abs/2310.06790
+11. Dupont, E., Doucet, A., Teh, Y.W.: Augmented Neural ODEs. In: Wallach, H.,
+    Larochelle, H., Beygelzimer, A., d'Alché-Buc, F., Fox, E., Garnett, R. (eds.) Ad-
+    vances in Neural Information Processing Systems. vol. 32. Curran Associates, Inc.
+    (2019)
+12. Farsang, M., Lechner, M., Lung, D., Hasani, R., Rus, D., Grosu, R.: Learning with
+    Chemical versus Electrical Synapses Does it Make a Difference? In: 2024 IEEE
+    International Conference on Robotics and Automation (ICRA). pp. 15106–15112
+    (2024). https://doi.org/10.1109/ICRA57147.2024.10611016
+13. Funahashi, K., Nakamura, Y.: Approximation of dynamical systems by continuous
+    time recurrent neural networks. Neural Networks 6(6), 801–806 (1993)
+14. Hasani, R.M., Lechner, M., Amini, A., Rus, D., Grosu, R.: Liquid Time-constant
+    Networks. In: AAAI Conference on Artificial Intelligence (2020)
+15. Hochreiter, S., Schmidhuber, J.: Long Short-Term Memory. Neural Comput. 9(8),
+    1735–1780 (nov 1997). https://doi.org/10.1162/neco.1997.9.8.1735
+16. Howell, B., Medina, L., Grill, W.: Effects of frequency-dependent membrane ca-
+    pacitance on neural excitability. Neural Engineering 12(5), 56015–56015 (October
+    2015)
+17. Kandel, E.R., Schwartz, J.H., Jessell, T.M., Siegelbaum, S., Hudspeth, A.J., Mack,
+    S., et al.: Principles of neural science, vol. 4. McGraw-hill New York (2000)
+18. Kidger, P., Morrill, J., Foster, J., Lyons, T.: Neural Controlled Differential Equa-
+    tions for Irregular Time Series. In: Advances in Neural Information Processing
+    Systems. vol. 33, pp. 6696–6707. Curran Associates, Inc. (2020)
+19. ten Klooster, L.: Approximating differential equations using neural odes. (July
+    2021), http://essay.utwente.nl/87568/
+16      M. Farsang et al.
+
+20. Kumar, J., Gupta, P.D., Ghosh, S.: Effects of nonlinear membrane capaci-
+    tance in the Hodgkin-Huxley model of action potential on the spike train
+    patterns of a single neuron. Europhysics Letters 142(6), 67002 (jun 2023).
+    https://doi.org/10.1209/0295-5075/acd80c
+21. Le, Q.V., Jaitly, N., Hinton, G.E.: A simple way to initialize recurrent networks of
+    rectified linear units. arXiv preprint arXiv:1504.00941 (2015)
+22. Lechner, M., Hasani, R.: Learning long-term dependencies in irregularly-sampled
+    time series. arXiv preprint arXiv:2006.04418 (2020)
+23. Lechner, M., Hasani, R., Amini, A., Wang, T.H., Henzinger, T.A., Rus, D.: Are
+    All Vision Models Created Equal? A Study of the Open-Loop to Closed-Loop
+    Causality Gap. arXiv preprint arXiv:2210.04303 (2022)
+24. Lechner, M., Hasani, R., Zimmer, M., Henzinger, T.A., Grosu, R.: Designing
+    Worm-inspired Neural Networks for Interpretable Robotic Control. In: 2019 In-
+    ternational Conference on Robotics and Automation (ICRA). pp. 87–94 (2019).
+    https://doi.org/10.1109/ICRA.2019.8793840
+25. Lechner, M., Hasani, R.M., Amini, A., Henzinger, T.A., Rus, D., Grosu, R.: Neural
+    circuit policies enabling auditable autonomy. Nature Machine Intelligence 2, 642–
+    652 (2020)
+26. li, t., Li, J., Zhu, Z.: Neural Lad: A Neural Latent Dynamics Framework for Times
+    Series Modeling. In: Advances in Neural Information Processing Systems. vol. 36,
+    pp. 17345–17356. Curran Associates, Inc. (2023)
+27. Maas, A.L., Daly, R.E., Pham, P.T., Huang, D., Ng, A.Y., Potts, C.: Learning word
+    vectors for sentiment analysis. In: Lin, D., Matsumoto, Y., Mihalcea, R. (eds.) Pro-
+    ceedings of the 49th Annual Meeting of the Association for Computational Linguis-
+    tics: Human Language Technologies. pp. 142–150. Association for Computational
+    Linguistics, Portland, Oregon, USA (Jun 2011), https://aclanthology.org/P11-1015
+28. Riyazia, Y., Ghanbaria, N., Bahramib, A.: Leveraging Koopman operator and Deep
+    Neural Networks for Parameter Estimation and Future Prediction of Duffing os-
+    cillators. ISAV (2023)
+29. Rubanova, Y., Chen, R.T.Q., Duvenaud, D.K.: Latent Ordinary Differential Equa-
+    tions for Irregularly-Sampled Time Series. In: Wallach, H., Larochelle, H., Beygelz-
+    imer, A., d'Alché-Buc, F., Fox, E., Garnett, R. (eds.) Advances in Neural Informa-
+    tion Processing Systems. vol. 32. Curran Associates, Inc. (2019)
+30. Severin, D., Shirley, S., Kirkwood, A., Golowasch, J.: Daily and cell type-
+    specific membrane capacitance changes in mouse cortical neurons. bioRxiv (2022).
+    https://doi.org/10.1101/2022.12.09.519806
+31. Sholokhov, A., Liu, Y., Mansour, H., Nabi, S.: Physics-informed neural ODE (PIN-
+    ODE): embedding physics into models using collocation points. Scientific Reports
+    13(1), 10166 (2023)
+32. Sokolić, J., Giryes, R., Sapiro, G., Rodrigues, M.R.: Robust large margin deep
+    neural networks. IEEE Transactions on Signal Processing 65(16), 4265–4280 (2017)
+33. Tsipras, D., Santurkar, S., Engstrom, L., Turner, A., Madry, A.: There is no free
+    lunch in adversarial robustness (but there are unexpected benefits). arXiv preprint
+    arXiv:1805.12152 2(3) (2018)
+34. Vidulin, V., Lustrek, M., Kaluza, B., Piltaver, R., Krivec, J.: Localization
+    Data for Person Activity. UCI Machine Learning Repository (2010), DOI:
+    https://doi.org/10.24432/C57G8X
+35. Wang, Z., Bovik, A., Sheikh, H., Simoncelli, E.: Image quality assessment: from
+    error visibility to structural similarity. IEEE Transactions on Image Processing
+    13(4), 600–612 (2004). https://doi.org/10.1109/TIP.2003.819861
+                            Liquid Resistance Liquid Capacitance Networks       17
+
+36. Wicks, S.R., Roehrig, C.J., Rankin, C.H.: A dynamic network simulation of the
+    nematode tap withdrawal circuit: predictions concerning synaptic function using
+    behavioral criteria. Journal of Neuroscience 16(12), 4017–4031 (1996)
+37. Zhou, G.B., Wu, J., Zhang, C.L., Zhou, Z.H.: Minimal gated unit for recurrent
+    neural networks. International Journal of Automation and Computing 13(3), 226–
+    234 (2016)
+18      M. Farsang et al.
+
+A     Appendix
+
+This appendix provides the proofs of the two theorems stated for LRCs, discusses
+the RNN form of LRCUs and their connection to GRUs and other gated recurrent
+units, and gives additional details for the experimental evaluation, demonstrating
+the accuracy, efficiency, and interpretability of LRCs.
+
+
+A.1    Proofs of the Theorems
+
+In this section we provide a detailed proof of the Theorems stated in this paper.
+The LRC Lipschitz Theorem first derives the local Lipschitz constant of LRCs
+and then shows that it is smaller than the one of STCs. The LRC Generalization
+Theorem, first computes the error of LRCs on the validation time series, and
+then shows that it is less than the one of the STCs, considering the validation
+set being drawn from in-distribution.
+
+
+Proof of the Lipschitz constant Theorem
+
+Theorem 1 (LRC Lipschitz). Let the Lipschitz constant λs bound the sensi-
+tivity of an STC-model instance of Equation (2), with respect to its inputs and
+hidden states. Then, there exists an associated LRC-model instance of Equa-
+tion (3), with a Lipschitz constant λr , such that λr < λs .
+
+
+Proof. Let T be the time horizon of the prediction, K be the dimension of
+the output, m the dimension of the states, n the dimension of the input and
+Q ∈ RK×m define the linear output layer. Let the output of the STC be defined
+by os = Q hs , with ḣs satisfying Equations (2), hidden states hs , inputs x, and
+linear output Qhs , and with trained synaptic parameters for Q and ḣs . Let an
+associated LRC be defined by or = Q hr , with ḣr satisfying Equations (3). If we
+keep in the LRC all the parameters as they were trained for the STC, and only
+adapt the elastance ϵ(w), then it holds that ḣr = ϵ(w) ⊙ ḣs .
+    The Lipschitz constant λ of the output o(y) computed by the LRC and STC
+networks, is defined such that ∥o(y1 ) − o(y2 )∥2 ≤ λ∥y1 − y2 ∥2 for all y1 , y2 in
+the input space of these networks. From the Mean Value Theorem it holds that
+for every y1 , y2 it exists a c such that ∥o(y1 ) − o(y2 )∥2 ≤ ∥∇y o(c)∥2 ∥y1 − y2 ∥2 .
+Thus, if a maximum exists, then maxc ∥∇y o(c)∥2 is a Lipschitz constant.
+    We now want to prove that there exists a choice of parameters for ϵ(w),
+such that the Lipschitz constant of the output or of the LRC with respect to its
+hidden states and input y = [h, x], is less than the one of os in the STC. So the
+goal is to state conditions on the parameters of ϵ(w) such that:
+
+            max ∥∇y os ∥2 ≤ λs ∧ max ∥∇y or ∥2 ≤ λr        ⇒     λr < λs .         (6)
+              y                       y
+                                 Liquid Resistance Liquid Capacitance Networks        19
+
+Let us use o, h when stating an equation which holds for STCs as well as LRCs:
+                                                       m
+                                                       X
+                            o = Qh,             ok =          qki hi ,                (7)
+                                                        i=1
+                                               m
+                                        ∂ok   X       ∂hi
+                                            =     qki     .                           (8)
+                                        ∂yj   i=1
+                                                      ∂yj
+
+
+With ∆t the time difference between two outputs, and by using Leibniz integral
+rule it holds that:
+                                              Z t
+                      ∂ht      ∂ht−∆t     ∂
+                            =         +             ḣdt                   (9)
+                      ∂yt,j     ∂yt,j    ∂yt,j t−∆t
+
+                                                      Z t
+                                        ∂ht−∆t               ∂ ḣ
+                                  =            +                  dt                 (10)
+                                         ∂yt,j         t−∆t ∂yt,j
+                                        | {z }
+                                          ≤1
+                                           Z t
+                                                             ∂ ḣ
+                                  ≤1+                 max         dt .               (11)
+                                               t−∆t    y    ∂yt,j
+
+As ḣ is time-independent, maxy ∂yj ḣ is the same for all t, thus:
+
+                            ∂ht                  ∂ ḣ
+                                  ≤ 1 + ∆t · max                                     (12)
+                            ∂yt,j             y ∂yt,j
+
+
+
+                                    m
+                                                                         !
+                      ∂ok
+                    (8)     X                       ∂ ḣi
+                    ⇒     ≤     |qki | 1 + ∆t · max                          = vkj   (13)
+                      ∂yj   i=1
+                                                 y  ∂y  j
+
+              max ∥∇y o∥2 ≤ ∥V ∥2 = λ.                                               (14)
+                y
+
+
+Here V ∈ RK×m contains the values vkj from Equation (13). When bounding
+V later on in the proof, we will need the following known upper bounds of
+derivatives:
+
+                                 σ ′ (x) ≤ 0.25,      τ ′ (x) ≤ 1.                   (15)
+
+   The derivative of the sigmoid function σ ′ (x) = σ(x)(1 − σ(x)) has a known
+upper bound of 0.25, which occurs when x = 0. The derivative of the hyperbolic
+tangent function, τ ′ (x) = sech2 (x), has a known upper bound of 1, which occurs
+when x = 0. Using these bounds, for the symmetric version of elastance in
+Equation (5) it holds that:
+
+                                 ϵ′ (wi ) = σ ′ (wi + ki ) − σ ′ (wi − ki )          (16)
+                    ≤ max σ (wi + ki ) − min σ ′ (wi − ki ) ≤ 0.25.
+                             ′
+                                                                                     (17)
+20      M. Farsang et al.
+
+Further, we will need later on, that for ϵ(wi ) ∈ (0, 1) it holds that:
+
+                                     ϵ′ (wi )
+                                              ≤ ϵ(wi ).                                    (18)
+                                   1 − ϵ(wi )
+
+For asymmetric ϵ this is straightforward as the derivative of a sigmoid is σ ′ (x) =
+σ(x) · (1 − σ(x)). For symmetric ϵ we need to reformulate the equations using
+that σ(wi + ki ) ≥ σ(wi − ki ) for ki ≥ 0:
+
+                     ϵ′ (wi )   σ(wi + ki )(1 − σ(wi + ki ))
+                              =                                                            (19)
+                   1 − ϵ(wi ) 1 − σ(wi + ki ) + σ(wi − ki )
+                                   σ(wi − ki )(1 − σ(wi − ki ))
+                                −                                                          (20)
+                                  1 − σ(wi + ki ) + σ(wi − ki )
+                                  σ(wi + ki )(1 − σ(wi + ki ))
+                                ≤                                                          (21)
+                                          1 − σ(wi + ki )
+                                  σ(wi − ki )(1 − σ(wi + ki ))
+                                −                                                          (22)
+                                          1 − σ(wi + ki )
+                                = ϵ(wi ).                                                  (23)
+
+Now we can derive an upper bound for the sensitivity of ḣsi to the input or
+hidden state yj :
+
+                  ∂ ḣsi   ∂σ(fi ) s         ∂hs  ∂τ (ui )
+                         ≤        hi + σ(fi ) i +          eli                             (24)
+                  ∂yj       ∂yj              ∂yj   ∂yj
+                                      | {z }
+                                                    ≤1
+                              ′          ′
+                        ≤ |σ (fi )gji σ (aji yj + bji )aji hsi |                           (25)
+                        + |τ ′ (ui )kji σ ′ (aji yj + bji )aji eli | + 1                   (26)
+                        ≤ 0.0625|gji aji hsi | + 0.25|kji aji eli | + 1                    (27)
+                                   ∂ ḣsi
+                        = max             .                                                (28)
+                             y     ∂yj
+
+For the sensitivity of the LRC it holds that:
+
+                             h˙ri = ϵ(wi ) · h˙si                                          (29)
+                      ∂ϵ(wi )
+                                = |ϵ′ (wi ) · oji |                                        (30)
+                       ∂yj
+                         ∂ h˙ri               ∂ ḣsi   ∂ϵ(wi ) s
+                                = ϵ(wi ) ·           +        · ḣi .                      (31)
+                         ∂yj                  ∂yj       ∂yj
+
+Here oji are the trainable parameters of wi . As ∂ϵ(w
+                                                  ∂yj
+                                                     i)
+                                                        = ϵ(wi )(1 − ϵ(wi ))oji ,
+for ϵ(wi ) ∈ {0, 1} it follows from Equation (31) that |∂y h˙r | = |∂y ḣs |. For
+                                                                           j   i   j   i
+                                       Liquid Resistance Liquid Capacitance Networks               21
+
+ϵ(wi ) ∈ (0, 1):
+
+                            ∂ ḣri            ∂ ḣsi   ∂ϵ(wi ) s
+                                   = ϵ(wi ) ·        +        · ḣi                               (32)
+                            ∂yj               ∂yj       ∂yj
+
+                                                    ∂ ḣsi
+                                    ≤ ϵ(wi ) ·             + ϵ′ (wi ) · |oji | · |ḣsi |.         (33)
+                                                    ∂yj
+Now let us choose the trainable parameters oji in such a way, that:
+                        |oji | ≤ min{0.0625|gji aji |, 0.25|kji aji |} = o∗ji .                   (34)
+Then for this choice, and using Equation (18) it holds that:
+                     ϵ′ (wi )
+                              |oji ||ḣsi |                                                       (35)
+                   1 − ϵ(wi )
+                                      (18)
+                                       ≤ ϵ(wi )|oji ||ḣsi |                                      (36)
+                                   (2),(15)
+                                     ≤ ϵ(wi )|oji |(|hsi | + |eli |)                              (37)
+                                        ≤|oji ||hsi | + |oji ||eli |                              (38)
+                                      (34)
+                                       ≤ 0.0625|gji aji hsi | + 0.25|kji aji eli | + 1            (39)
+                                      (28)           ∂ ḣsi
+                                       = max                  ,                                   (40)
+                                              y      ∂yj
+which is equivalent to:
+                                                                                       ∂ ḣsi
+                                ϵ′ (wi ) · |oji | · |ḣsi | ≤ (1 − ϵ(wi )) max                    (41)
+                                                                                 y     ∂yj
+                                                                               ⇔
+                                      ∂ ḣsi                                     ∂ ḣsi
+                    ϵ(wi ) · max             + ϵ′ (wi ) · |oji | · |ḣsi | ≤ max                  (42)
+                               y      ∂yj                                     y  ∂yj
+                                                                               (33)
+                                                                                ⇒
+                                                                    ∂ ḣri             ∂ ḣsi
+                                                              max            ≤ max            .   (43)
+                                                               y    ∂yj          y     ∂yj
+
+   If for all i, j Equation (34) holds, and if there exists at least one pair ī, j̄ such
+that |oj̄ ī | < o∗j̄ ī , then also Equation (43) holds with inequality for these indices
+(maxy ∂yj̄ ḣrī < maxy ∂yj̄ ḣsī ) and thus by using Equations (13)- (14) it follows
+that:
+                                    r     s
+                                   vkj ≤ vkj         ∀j = {1, . . . , m + n}                      (44)
+                                   vkr j̄ < vksj̄                                                 (45)
+                                      r       s
+                                ⇒λ <λ .                                                           (46)
+22       M. Farsang et al.
+
+This proves that the Lipschitz constant of LRCs is smaller than the Lipschitz
+constant of STCs.
+
+
+Proof of the Generalization Theorem
+
+Theorem 2 (LRC Generalization). Let hs be an STC-model instance of
+Equation (2) with hr being an associated LRC-model instance of Equation (3)
+with λr < λs (Theorem. 1). Let oTt be training labels and ôT,rt   and ôT,s
+                                                                         t   be the pre-
+dictions of the models hr and hs respectively. Let both models have a small train-
+ing loss ∥oTt −ôTt ∥2 < ϵT with small ϵT > 0. Let ytT and ytV be respectively training
+and validation input. Let the validation set be similar to the training set (drawn
+in-distribution) in a sense that for every time t it holds that ∥ytT − ytV ∥2 < ϵy
+and ∥oTt − oVt ∥2 < ϵo with small ϵy , ϵo > 0. Then it holds that the upper bound of
+the validation loss of the LRC-model is smaller than the one of the STC-model.
+
+
+Proof. Let oT1 , . . . , oTT be the labels of the training set, oV1 , . . . , oVT be the ones of
+the validation set and ôTt and ôVt be respectively the output of the models of the
+training and the validation set. The STC or LRC model will be denoted in the
+superscript as s or r. When not using one of these superscripts, the statement
+holds for both models. Let T be the time horizon of the prediction.
+    Let the loss function for the STC and LRC networks be defined as usual, as
+follows:
+
+                                                T
+                                             1X
+                                L(o, ô) =         ∥ot − ôt ∥2 .                          (47)
+                                             T t=1
+
+Then for the validation loss it holds that:
+
+                                     T
+                                  1X V
+                 L(oV , ôV ) =        ∥o − ôVt ∥2                                        (48)
+                                  T t=1 t
+                           T
+                        1X V
+                    =        ∥o − oTt + oTt − ôTt + ôTt − ôVt ∥2                        (49)
+                        T t=1 t
+                           T
+                      1X V
+                    ≤      ∥o − oTt ∥2 + ∥oTt − ôTt ∥2 + ∥ôTt − ôVt ∥2                  (50)
+                      T t=1 t
+                           T
+                        1X
+                    ≤         ϵo + ϵT + ∥ôTt − ôVt ∥2 .                                  (51)
+                        T t=1
+
+As ôVt is a function of the input ytV , we will switch to the notation: ôTt = ô(ytV ).
+Moreover, as we assumed that ∥ytT − ytV ∥2 < ϵy , we can use a Taylor-series
+                               Liquid Resistance Liquid Capacitance Networks      23
+
+approximation:
+
+                               ô(ytV ) ≈ ô(ytT ) + (ytV − ytT )T ∇y ô(ytV )   (52)
+                                      ⇔
+                    ô(ytV ) − ô(ytT ) ≈ (ytV − ytT )T ∇y ô(ytV )              (53)
+                                      ⇒
+                 ∥ô(ytV ) − ô(ytT )∥2 ≈ ∥(ytV − ytT )T ∇y ô(ytV )∥2           (54)
+                                        ≤ ∥(ytV − ytT )∥2 · ∥∇y ô(ytV )∥2       (55)
+                                      ≤ ϵy · λ.                                  (56)
+
+Here, λ is the Lipschitz constant of the model. Putting this upper bound into
+Equation (51), we can set the upper bound of the validation loss L̄(oV , ôV ) as
+follows:
+
+                     L(oV , ôV ) ≤ ϵo + ϵT + ϵy · λ = L̄(oV , ôV ).            (57)
+
+Finally, by using Theorem 1, it holds that
+
+                              L̄(oV , ôV,r ) = ϵo + ϵT + ϵy · λr                (58)
+                                                s        V    V,s
+                          < ϵo + ϵT + ϵy · λ = L̄(o , ô            ).           (59)
+
+This proves that the validation loss of LRCs is smaller than the validation loss
+of STCs.
+
+
+A.2   Liquid-Resistance Liquid-Capacitance Units (LRCU)
+
+In this section, we first introduce the RNN formulation of LRCUs, which as
+discussed in the paper, are a very accurate and efficient Euler integration of
+order one of LRCs, with a time step of one. Since LRCUs turn out to be a new
+form of gated recurrent units, we explore their relation to GRUs.
+
+
+LRCUs as an RNN Starting from the Neural-ODEs model of saturated bi-
+ological neurons with chemical synapses (the saturated EECs) of Equation (2),
+we have shown that first considering a liquid capacitance (elastance) as in Equa-
+tion (3) and then discretizing the ODEs leads to a very accurate and efficient
+gated RNN, which we called an LRCU. The formulation of this discrete unit is
+the following:
+
+               hi,t = (1 − ϵ(wi,t ) σ(fi,t )) hi,t−1 + ϵ(wi,t ) τ (ui,t ) eli
+                             Pm+n
+                       fi,t = j=1 gji σ(aji yj,t + bji ) + gli
+                              Pm+n                                               (60)
+                       ui,t = j=1 kji σ(aji yj,t + bji ) + gli
+                                     Pm+n
+                             wi,t = j=1 oji yj,t + pi .
+24      M. Farsang et al.
+
+Here, one can use either an asymmetric or a symmetric form of elastance ϵ in
+Equations (4-5), respectively. We will denote the first choice as LRCU-A, and
+the second choice as LRCU-S.
+    Next, we show how can one re-formulate GRUs and make connections to LR-
+CUs. MGUs and LSTMs could be related to LRCUs, with minor modifications,
+in a similar manner.
+
+LRCUs versus GRUs In this section we explore the connections between LR-
+CUs and GRUs. The general form of a gated recurrent units (GRU) is according
+to [8], an RNN of the following form:
+                     hi,t = (1 − σ(fi,t )) hi,t−1 + σ(fi,t ) τ (ui,t )
+                                   Pm+n
+                             fi,t = j=1 afji yj,t + bfj
+                                    Pm+n                                          (61)
+                                                  ′
+                             ui,t = j=1 auji yj,t    + buj
+                                   Pm+n
+                             ri,t = j=1 arji yj,t + brj .
+Here, vector yt occurring in functions fi,t and ri,t , is defined as before, as
+yt = [ht−1 , xt ]. However, vector yt′ occurring in ui,t is defined as yt′ = [σ(rt ) ⊙
+ht−1 , xt ]. Thus, previous state ht−1 is pointwise scaled in the update part τ (ui,t )
+of the GRU, with a nonlinear state-and-input dependent function σ(ri,t ), whose
+parameters are to be learned. This function is called in GRUs a Reset Gate (RG).
+Moreover, the state-and-input dependent function σ(fi,t ) is called in GRUs an
+Update Gate (UG).
+    The RG determines how previous state ht−1 is used in the update τ (ui,t ).
+The UG σ(fi,t ) controls the amount (1 − σ(fi,t )) of the previous state hi,t−1 , to
+be remembered in the next state. However, this UG also controls the amount of
+the update τ (ui,t ) to be considered in the next state, by using it to multiply the
+update. One can identify the GRU’s UG with the LRCU’s smoothen (elastance)
+gate.
+    Given the above discussion, GRUs can also be understood as the ordinary
+difference equations associated with the Neural ODEs below. From this, one
+can get back to the original form of Equations (61), using an explicit Euler
+integration scheme of order one with a unit time difference:
+                               ḣi = σ(fi )(−hi + τ (ui ))
+                                     Pm+n
+                                fi = j=1 afji yj + bfj
+                                     Pm+n                                         (62)
+                                ui = j=1 auji yj′ + buj
+                                     Pm+n
+                                ri = j=1 arji yj + brj .
+Here the vector y = [h, x] is defined as before, and vector y ′ = [σ(r) ⊙ h, x]. The
+RG occurring in y ′ determines how state h is used in the update part τ (ui ) of
+the ODE. The LRC’s time constant (TC) thus consists of a liquid-resistance
+liquid-capacitance, while the GRU’s TC consists of a liquid capacitance, only.
+As a consequence, GRUs have a less expressive TC but more expressive update.
+                             Liquid Resistance Liquid Capacitance Networks         25
+
+A.3    Experiments for LRCs and LRCUs
+In this section, we provide additional implementation details about our experi-
+mental evaluation of LRC in wide range of ODE modeling tasks and LRCUs on
+the popular time-series benchmarks for gated recurrent units. The benchmarks
+considered were the Localization Data for Person Activity, the IMDB Movie Sen-
+timent Classification, the Permuted Sequential MNIST, and a relatively complex
+autonoumous-driving in the Lane-Keeping Task.
+    In general, LRC(U)s have more trainable parameters per cell. Therefore,
+we are training the other models with more cells to ensure a fair comparison
+between them. For the experiments, we determined the learning rate using the
+logarithmic scale of {10−4 , 10−3 , 10−2 } by the validation loss. For the individual
+tests, see the more detailed setups below. They are run on Ubuntu 22.04 with
+Nvidia Tesla T4.
+
+Neural ODE Experiments For ODE modeling tasks, we used a 3-layer (units
+of 32, 32 and 2) Neural ODE and the LRC (units of 16) with additional input
+and output mapping, which hold 1k trainable parameters. The hyperparameters
+are presented in Table 7. We use sequences of 16 points during training and
+test the models on the whole sequences of 1000 data points giving them only
+the initial state information of (x0 , y0 ). As some ODE modeling tasks are more
+challenging, we allocated longer training iteration time for them. The training
+time is 0.4-0.5 seconds per iteration for both models.
+
+
+
+          Table 7: Hyperparameters of the Neural ODE experiments.
+                     Variable                  Value
+                     Learning rate            10−3
+                     Batch size               16
+                     Training sequence length 16
+                     Iterations               1000/2000/4000
+
+
+                                          p
+ – Periodic
+   p         Sinusoidal: dx/dt = x · (1 − x2 + y 2 ) − y, dy/dt = x + y · (1 −
+     x2 + y 2 ).
+ – Spiral: dx/dt = Ax, where A = [[−0.1, 3], [−3, −0.1].
+ – Duffing Oscillation: dx/dt = y, dy/dt = x − x3 .
+ – Periodic Lotka-Volterra: dx/dt = a · x − b · x · y, dy/dt = −c · y + d · x · y with
+   a = 1.5, b = 1, c = 3 and d = 1.
+ – Asymptotic Lotka-Volterra: dx/dt = x · (1 − x) − x · y, dy/dt = −y + d · x · y
+   with d = 2.
+ – Non-linear Lotka-Volterra: dx/dt = x·(1−x)−a·x·y, dy/dt = y ·(1−y)+x·y
+   with a = 0.33.
+   These examples originate from the TensorFlow implementation of [7], tfdiffeq.
+26     M. Farsang et al.
+
+Localization Data for Person Activity Considering that this is an irregu-
+larly sampled dataset, including separate extra timestep information per input,
+traditionally used gated units need further modification when dealing with this
+task.
+
+
+
+Table 8: Number of trainable parameters in the Localization Data for Person
+Activity dataset. To have at least the same number of trainable parameters, we
+employed 64 cells for LRCUs and 100 cells in the other models.
+                           LSTM GRU MGU LRCU-A LRCU-S
+                    Par. 40k      30k   20k    20k         20k
+
+
+
+
+Table 9: Hyperparameters of the Localization Data for Person Activity experi-
+ment.
+
+                           Variable                  Value
+                           Learning rate            10−3
+                           Batch size               128
+                           Training sequence length 32
+                           Epochs                   100
+
+
+
+    For LSTMs, GRUs, and MGUs we concatenate the time-step information
+(difference in time between to inputs) directly with the input features. This
+time step is used as the ∆t value in LRCUs. LSTM, GRU and MGU networks
+contain 100 units, while LRCUs have 64 units.
+    In Table 3 we provide the total number of trainable parameters used by each
+model. Moreover, in Table 4 we provide information about the hyperparameters
+used by all models to solve this task.
+
+IMDB Movie Sentiment Classification In the IMDB review dataset we keep
+the 20,000 most frequent words and truncate the sequences up to 256 characters.
+Token embeddings of size 64 are used. LSTM, GRU and MGU have 100 units,
+while LRCU variants have 64 cells in the networks.
+   In Table 10 we provide the total number of trainable parameters used by each
+model to solve this task. Moreover, in Table 11 we provide information about
+the hyperparameters used to solve this task.
+
+Permuted Sequential MNIST As in the other classification tasks, tradition-
+ally used gated networks, such as LSTMs, GRUs and MGUs, have 100 units, and
+                            Liquid Resistance Liquid Capacitance Networks      27
+
+
+Table 10: Total number of trainable parameters in the IMDB Movie Sentiment
+Classification task. We used 64 cells in the LRCUs and 100 cells in the other
+models.
+
+                         LSTM GRU MGU LRCU-A LRCU-S
+                    Par. 70k    50k   35k     40k        40k
+
+
+
+Table 11: Hyperparameters of the IMDB Movie Sentiment Classification task.
+
+                         Variable                   Value
+                         Learning rate            10−3
+                         Batch size               64
+                         Training sequence length 256
+                         Epochs                   30
+
+
+
+the proposed LRCUs contain 64 units. In Table 7 we provide details about the
+hyperparameters used in this task. Moreover, in Table 8, we provide the total
+number of trainable parameters for each model used.
+   During the training of this task, the computed loss values of MGUs became
+NaNs in 2 out of the 3 runs in the middle of the experiments.
+   In Table 12 we provide the total number of trainable parameters used by each
+model to solve this task. Moreover, in Table 13 we provide information about
+the hyperparameters used to solve this task.
+
+
+Lane-Keeping Task In this section we provide details about the Lane-Keeping-
+Task RNN-policy architecture. In Table 14 below we describe the convolutional
+head used by the policy.
+   For the Lane-Keeping task, the total number of parameters of the recurrent
+part is 8k, where the number of neurons used for LSTMs, GRUs, MGUs, LRCU-
+A, and LRCU-S are 23, 28, 38, 19, and 19 respectively. This choice ensures a
+similar number of trained parameters.
+   In Table 15 we provide a description of the hyperparameters used in the
+Lane-Keeping Experiment. They had the same value for all the RNN models
+compared.
+
+
+A.4   Interpretability Experiments for LRCUs
+
+In this section we provide additional details for the interpretability experiments
+for the Lane-Keeping Task.
+    Figure 10 shows our results in the summer season, where lighter-highlighted
+regions indicate the attention of the network. We found that the LSTM takes into
+account irrelevant parts of the image, during its decision-making. The rest of the
+28     M. Farsang et al.
+
+
+Table 12: Total number of parameters in the Permuted Sequential MNIST task.
+LRCUs use 64 neurons, whereas the other 100 neurons, each. All gated-RNN
+models were run for 3 seeds.
+
+                           LSTM GRU MGU LRCU-A LRCU-S
+                    Par. 40k      30k     20k      20k       20k
+
+
+
+ Table 13: Hyperparameters of the Permuted Sequential MNIST experiment.
+                           Variable                      Value
+                           Learning rate            10−3
+                           Batch size               64
+                           Training sequence length 784
+                           Epochs                   200
+
+
+
+Table 14: The shape and size of the layers in the convolutional head of the RNN-
+policy used to solve the Lane-Keeping Task. Settings are adapted from [12].
+
+                Layer Type     Settings
+                Input       Input shape: (48, 160, 3)
+                Image-Norm. Mean: 0, Variance: 1
+                Conv2D      Filters: 24, Kernel size: 5, Stride: 2
+                Conv2D      Filters: 36, Kernel size: 5, Stride: 1
+                MaxPool2D Pool size: 2, Stride: 2
+                Conv2D      Filters: 48, Kernel size: 3, Stride: 1
+                MaxPool2D Pool size: 2, Stride: 2
+                Conv2D      Filters: 64, Kernel size: 3, Stride: 1
+                MaxPool2D Pool size: 2, Stride: 2
+                Conv2D      Filters: 64, Kernel size: 3, Stride: 1
+                Flatten     -
+                Dense       Units: 64
+
+
+
+Table 15: Hyperparameters of the Lane-Keeping experiment, adapted from [12].
+                 Variable                       Value
+                 Learning rate            cosine decay, 5 · 10−4
+                 Optimizer                AdamW
+                 Weight decay             10−6
+                 Batch size               32
+                 Training sequence length 32
+                 Epochs                   100
+                             Liquid Resistance Liquid Capacitance Networks       29
+
+
+                       Table 16: Training time per epoch.
+                              Model     Time/epoch
+                              LSTM         2.57 min
+                              GRU          2.50 min
+                              MGU          3.08 min
+                              LTC         10.06 min
+                              STC         10.13 min
+                              LRCU-A       4.05 min
+                              LRCU-S       4.16 min
+
+
+                    LSTM          GRU         MGU         LRCU-A       LRCU-S
+  0.0
+  0.1
+  0.2
+
+
+
+
+Fig. 10: Interpretability. Attention in summer. Column 1 shows the input of the
+network: Row 1, without additional noise, Rows 2-3, with Gaussian noise of
+variance σ 2 = 0.1 and σ 2 = 0.2, respectively. Remaining columns correspond to
+the networks, showing their attention to the same input image. One can observe
+how much the focused areas get distorted in the presence of noise.
+
+
+
+
+models have most of the attention on the road, and LRCU networks especially,
+focus on the horizon. In Figure 11, we provide the attention maps for the winter
+season.
+    By injecting a zero mean Gaussian noise with a variance of 0.1 and 0.2 into
+the tests, respectively, we can measure how robust their attention is. The noisy
+attention maps are displayed in the second (variance 0.1) and third (variance
+0.2) rows of Figure 11. This noise was not present during training,
+    By measuring the change of attention, we also compute the Structural Simi-
+larity Index (SSIM) [35] of the images pairwise, between the noise-free and the
+noisy saliency map for each model, respectively. This technique assesses the sim-
+ilarity between two images, with a focus on image degradation. An SSIM value
+of one denotes full similarity, whereas one of zero, denotes zero similarity. In our
+particular case, where we are comparing attention-map images, values close to
+one mean that the extra noise leads to less distortion in the attention map, which
+is a very desirable aim in the development of robust controllers. The SSIM value
+for 1600−1600 pairs of images, used in the attention-map comparisons between
+noise-free and noisy, summer and winter images, respectively, are presented in
+Figure 8. All results in this table are averaged over three runs for each model. As
+30                          M. Farsang et al.
+
+                                        LSTM          GRU         MGU     LRCU-A     LRCU-S
+
+
+     0.2 0.1 0.0
+
+
+
+
+Fig. 11: Attention maps in the winter season. In general, the focus shifts from
+the road to the side of the road compared to summer. Unimportant regions on
+the off-road are attended by LSTM, GRU and MGU. A winter input image and
+its saliency maps of the analyzed models are displayed, with increasing noise of
+Gaussian noise of σ 2 = 0.1 and σ 2 = 0.2 variances, in the second and third rows.
+
+
+one can see, LRCUs demonstrate much more robust attention in the presence of
+Gaussian noise.
+    In Figure 12 we provide the neural activity of two cells of the lane-keeping
+policy for the winter season. As one can clearly see, the LRCU-S has a very gentle
+varying behavior closely matching the road geometry: Cell 1 is responsible for
+turning left, and Cell 2 is responsible for turning right.
+
+
+                              LSTM              GRU         MGU         LRCU-A     LRCU-S
+                   Cell 1
+                   Cell 2
+
+
+
+
+Fig. 12: Interpretability. The neural activity of two cells in the learned policy
+for the Lane-Keeping Task, projected over time on the 1km road driven in win-
+ter, for three popular gated recurrent units (LSTMs, GRUs, and MGUs) and
+for LRC units (LRCU-A, and LRCU-S). It is very hard to visually match the
+neural activity of LSTM, GRU, and MGU cells to the traversed road geometry,
+respectively. However, LRCU-S cells especially, display a very gentle varying and
+identifiable pattern during driving: Cell 1 is responsible for turning right, and
+Cell 2 for turning left.
+

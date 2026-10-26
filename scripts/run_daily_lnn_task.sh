@@ -27,17 +27,27 @@ JETSON_USE_DOCKER="${JETSON_USE_DOCKER:-auto}"
 #    骗)。所以**不能**把它当首选。
 #
 # ③ (2026-10-26 晚) **镜像根本不是必需的**: 宿主 `/usr/bin/python3.10` 的
-#    torch 2.10.0+cu126 自带 sm_87 SASS, 实测能跑 kernel (此前一直没被选中,
+#    torch 2.10.0 自带 sm_87 SASS, 实测能跑 kernel (此前一直没被选中,
 #    因为解释器选择只测 `import torch`, 排序又把它排在 cu130 的 python3 之后)。
 #    走宿主的产物是**真实 GPU 数据**, 不是降级。镜像只是"隔离环境"选项。
 #
-# 首选 lnn-sm87:local —— 由 analysis/jetson/Dockerfile.lnn-sm87 构建, 以
-# lnn-cuda126:local 为基底复用其 cu126 CUDA 库, 只把 torch 换成带 sm_87 SASS 的
-# PyPI 官方 aarch64 wheel (torch==2.7.0, 默认 cu126, 与驱动 540.4.0 对齐)。
+# ④ (2026-10-26 晚, 再更正) `lnn-sm87:local` **也是坏的, 而且坏得不一样**:
+#    实测该镜像里的 torch 是 **2.7.0+cpu** (`Torch not compiled with CUDA
+#    enabled`) —— 因为 **PyPI / TUNA 上的 aarch64 torch wheel 本身就是 CPU
+#    构建** (文件名 `torch-2.7.0-cp312-cp312-manylinux_2_28_aarch64.whl` 里
+#    没有 nvidia-* 依赖, 内嵌版本号带 `+cpu`)。
+#    → Dockerfile.lnn-sm87 里"PyPI 官方 aarch64 wheel 默认带 sm_87 SASS,
+#      2.7.0 → 默认 cu126"这句话是**错的**, 已在该文件里更正。
+#    → 本机唯一被实测证明能跑 sm_87 kernel 的 torch, 是宿主 `~/.local` 下
+#      那个 `linux_aarch64` 标签的 wheel (2.10.0, CUDA 12.6) —— 它**不是**
+#      PyPI 的 manylinux wheel。
+#    所以默认镜像列表里**不再列 lnn-sm87:local**; 想要隔离环境请自己按
+#    Dockerfile.lnn-sm87 的说明重建并**用 kernel 预检验收**。
+#
 # 现场构建 (两步, 第一步已在本机完成):
 #   docker build -f analysis/jetson/Dockerfile.lnn-cuda126 -t lnn-cuda126:local .
 #   docker build -f analysis/jetson/Dockerfile.lnn-sm87    -t lnn-sm87:local    .
-JETSON_DOCKER_IMAGES="${JETSON_DOCKER_IMAGES:-lnn-sm87:local ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin}"
+JETSON_DOCKER_IMAGES="${JETSON_DOCKER_IMAGES:-ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin}"
 # 兼容旧变量名 (单镜像)。
 JETSON_DOCKER_IMAGE="${JETSON_DOCKER_IMAGE:-}"
 JETSON_BENCHMARK_ARGS="${JETSON_BENCHMARK_ARGS:---samples 64 --seq-len 16 --hidden-size 8 --epochs 1 --batch-size 8 --inference-repeats 2}"
@@ -212,15 +222,35 @@ run_jetson_benchmark() {
       candidates=($JETSON_DOCKER_IMAGES)
     fi
     for candidate in "${candidates[@]}"; do
-      if docker image inspect "$candidate" >/dev/null 2>&1; then
+      if ! docker image inspect "$candidate" >/dev/null 2>&1; then
+        echo "[info] Jetson CUDA 镜像本地不存在, 跳过: $candidate" >&2
+        continue
+      fi
+      # **预检: 必须真跑一个 kernel。**
+      # `torch.cuda.is_available() == True` 只说明驱动 + runtime 起来了, 不代表
+      # 这个 torch build 编了你这张卡的 SASS —— 本机已有两个反例:
+      #   - lnn-cuda126:local: is_available() 为 True、设备名 "Orin", 但任何
+      #     kernel 都报 `no kernel image is available for execution on the device`
+      #     (dev 夜轮 torch 只编 sm_80/sm_90 且显式排除 8.7, Orin 是 sm_87);
+      #   - lnn-sm87:local: torch 是 **2.7.0+cpu**, 直接
+      #     `AssertionError: Torch not compiled with CUDA enabled`
+      #     (PyPI 的 aarch64 wheel 本身就是 CPU 构建)。
+      # 预检失败 = 这个镜像**不可用**, 必须**跳过并继续试下一个**, 绝不能
+      # 让它带着一份 CPU 产物混进"镜像路径"里 (那会把降级伪装成正常)。
+      local preflight_log="$LOG_DIR/${RUN_DATE}_kernel_preflight_$(echo "$candidate" | tr -c 'A-Za-z0-9' '_').err"
+      if docker run --rm --runtime nvidia --gpus all "$candidate" \
+           bash -lc "python3 -c \"import torch; x=torch.randn(64,64,device='cuda'); torch.cuda.synchronize(); (x@x).sum().item(); print('KERNEL_OK')\"" \
+           >/dev/null 2>"$preflight_log"; then
         bench_image="$candidate"
         break
       fi
-      echo "[info] Jetson CUDA 镜像本地不存在, 跳过: $candidate" >&2
+      echo "[warn] 镜像 $candidate 的 CUDA kernel 预检失败 —— 跳过该镜像 (它的 torch 跑不了本机 sm_87 的 SASS kernel)。" >&2
+      echo "[warn] 预检输出 (前 3 行):" >&2
+      head -3 "$preflight_log" >&2 || true
     done
     if [[ -z "$bench_image" ]]; then
       # 降级必须**留痕**: 否则读者只会看到产物里的 ok_cpu, 不知道为什么。
-      echo "[warn] 本机没有任何 Jetson CUDA 镜像 (已试: ${candidates[*]}), 回退到宿主 Python。" >&2
+      echo "[warn] 本机没有通过 kernel 预检的 Jetson CUDA 镜像 (已试: ${candidates[*]}), 回退到宿主 Python。" >&2
       echo "[info] 宿主上仍有能跑 sm_87 kernel 的解释器时, 产物仍然是真实 GPU 数据 —— 回退不等于降级。" >&2
       echo "[warn] 需要隔离环境的镜像 (可选, 两步):" >&2
       echo "[warn]   docker build -f analysis/jetson/Dockerfile.lnn-cuda126 -t lnn-cuda126:local ." >&2
@@ -229,23 +259,6 @@ run_jetson_benchmark() {
   fi
 
   if [[ -n "$bench_image" ]]; then
-    # **预检: 必须真跑一个 kernel。**
-    # `torch.cuda.is_available() == True` 只说明驱动 + runtime 起来了, 不代表
-    # 这个 torch build 编了你这张卡的 SASS —— lnn-cuda126:local 就是活例子:
-    # is_available() 为 True、设备名 "Orin", 但任何 kernel 都报
-    # `no kernel image is available for execution on the device`
-    # (那个 dev 夜轮 torch 只编 sm_80/sm_90 且显式排除 8.7, Orin 是 sm_87)。
-    # 所以这里用一次 64x64 matmul 当验收闸门, 失败就把原因说清楚, 而不是
-    # 让它混进"benchmark 失败"里。
-    if ! docker run --rm --runtime nvidia --gpus all "$bench_image" \
-         bash -lc "python3 -c \"import torch; x=torch.randn(64,64,device='cuda'); torch.cuda.synchronize(); (x@x).sum().item(); print('KERNEL_OK')\"" \
-         >/dev/null 2>"$LOG_DIR/${RUN_DATE}_kernel_preflight.err"; then
-      echo "[error] 镜像 $bench_image 的 CUDA kernel 预检失败 —— 该镜像的 torch 没有本机 GPU (sm_87) 的 SASS kernel。" >&2
-      echo "[error] 预检输出 (前 5 行):" >&2
-      head -5 "$LOG_DIR/${RUN_DATE}_kernel_preflight.err" >&2 || true
-      echo "[error] 换一个带 sm_87 的镜像 (见 analysis/jetson/Dockerfile.lnn-sm87) 或设 JETSON_DOCKER_IMAGES。" >&2
-    fi
-
     run_docker_benchmark() {
       local extra_args="${1:-}"
       docker run --rm --runtime nvidia --gpus all \
