@@ -3,7 +3,7 @@
 > 本次排查起因：2026-10-26 04:38 的定时任务日志里 5 条 Hugging Face 查询
 > 全部 `Connection reset by peer`，候选模型数 **0**；而 2026-10-24 的 digest
 > 也带着同样的 `models=0` 进了 origin 且从未修正。
-> 逐层挖下来发现 **8 个独立缺陷**，其中 4 个会把"抓取失败/选错解释器/装错 wheel"伪装成
+> 逐层挖下来发现 **9 个独立缺陷**，其中 5 个会把"抓取失败/选错解释器/装错 wheel"伪装成
 > "领域事实 / 本机没有 GPU"。
 
 ---
@@ -20,6 +20,7 @@
 | B6 | Jetson benchmark 永远是 `ok_cpu`；换镜像后 `torch.cuda.is_available()==True` 但**任何 kernel 都跑不起来** | ① 镜像名写死一个**本机从未 pull 过**的镜像 → 静默降级；② cu126 索引的 dev 夜轮 torch **只编 sm_80/sm_90 且显式排除 8.7**，Orin Nano 是 sm_87 | 镜像候选列表 + 本地存在性检查；新增 `Dockerfile.lnn-sm87` |
 | B7 | 产物 16 天全是 `ok_cpu`，环境行写 `CUDA：False` —— 但**本机其实有一个能跑 sm_87 kernel 的 torch**（`/usr/bin/python3.10` 的 2.10.0，CUDA 12.6） | `resolve_bench_python()` 的判据只测 `import torch`，而候选排序把 cu130 的 `python3` 排在前面 → 永远选不到那个 cu126 解释器 | 判据改成**真跑一个 kernel**（`bench_cuda_kernel_ok`），优先级改为"能跑 kernel > 能 import > 兜底"；当日首次拿到真实 GPU 数据 |
 | B8 | 本仓 `Dockerfile.lnn-sm87` 写"PyPI 官方 aarch64 wheel 带 sm_87 SASS"，据此建出的 `lnn-sm87:local` 镜像里却是 **torch 2.7.0+cpu** | **PyPI / TUNA 的 aarch64 torch wheel 本身就是 CPU 构建**（99.0 MB vs 同 tag x86_64 的 865.0 MB；METADATA 里零个 nvidia-* 依赖）—— 文档里的 claim 与产物互相矛盾 | 该 Dockerfile 的 claim 更正；**构建期加 CUDA 自检**（装完没有 CUDA 直接构建失败）；脚本的镜像预检**失败即跳过该镜像**（不再拿坏镜像继续跑），默认镜像列表里去掉 `lnn-sm87:local` |
+| B9 | B8 留下的悬案"cu126 的 manylinux aarch64 wheel 带不带 sm_87" —— **答案：torch 一个 GPU 架构都没编**（静态扫 `libtorch_cuda.so` 只有 `sm_80`/`sm_90`；**运行时 `get_arch_list()` 返回 `[]`**，说明那些串来自打包的 cuBLAS/cuDNN，不是 torch 自己的 kernel） | 官方通用 aarch64 构建没编任何 GPU kernel → 原默认 `ARG TORCH_SPEC=2.10.0+cu126`（解析到 manylinux）**本身就是错的**，会产出"装好了、CUDA 在、但任何 GPU 上都跑不了 kernel"的镜像 | 默认改成 **Jetson 构建 `linux_aarch64` 的 2.6.0+cu126 直链**（cu126 索引上该标签只有 2.6.0，覆盖 cp39~cp313t）；保留**构建期 `sm_87` 断言**；pip 加 `--timeout 3600 --retries 20` |
 
 > B5 是 B4 的同型复发：**下游脚本只读渲染产物，必然继承渲染层的截断**。
 > 这是本项目第三次踩同一个坑（`select_papers_for_report` → 改读 JSON；
@@ -402,12 +403,88 @@ AssertionError: Torch not compiled with CUDA enabled
    **失败即跳过该镜像**（并继续试下一个候选，最后回退宿主）；
 3. 默认镜像候选列表里去掉 `lnn-sm87:local`（当前本机那份是 CPU-only 的坏镜像）。
 
-**仍然没验证的**：cu126 索引的 `torch-2.10.0+cu126-cp312-...-aarch64.whl`
-**确实是 CUDA 构建**（已核 `.metadata`：cublas 12.6.4.1 / cudnn 9.10.2.21 /
-nccl 2.27.5 / triton 3.6.0 …），但**它有没有编 sm_87 的 SASS 没验证** ——
-官方 aarch64 构建常只编 sm_80/sm_90，那就会重演 dev 夜轮那个
-`no kernel image is available`。所以 Dockerfile 的验收标准写成
-**必须跑出 `KERNEL_OK`**，而不是"装上了就算好"。
+### 7.8 B9 — cu126 的 **manylinux aarch64 wheel 里 torch 一个 GPU 架构都没编**（已实测）
+
+上面 B8 留下的"**cu126 的 manylinux aarch64 wheel 有没有编 sm_87？**"这一悬案，
+2026-10-26 晚用**两条互相独立的证据**给出了答案（不必等镜像构建完）：
+
+把 `torch-2.10.0+cu126-cp312-cp312-manylinux_2_28_aarch64.whl`
+（323,822,206 B）解开，取 `torch/lib/libtorch_cuda.so`（380,232,769 B）：
+
+| 证据 | 方法 | 结果 |
+|---|---|---|
+| (a) 静态串 | 正则扫架构串 | `sm_80`/`sm_90` + PTX `compute_80`/`compute_90` —— **没有 sm_87** |
+| (b) 运行时（决定性） | 装进镜像后 `torch.cuda.get_arch_list()` | **`[]`** |
+
+> **(b) 比 (a) 强得多**：`[]` 意味着 **torch 自己一个 GPU kernel 都没编** ——
+> 不是"没编 sm_87"，而是"任何 GPU 上都跑不了"。
+> (a) 里那些 `sm_80`/`sm_90` 串**来自 wheel 里打包的 cuBLAS/cuDNN 等第三方二进制**，
+> 不是 torch 自己编的 kernel → **静态串不足以说明 torch 编了什么**，
+> 运行时 `get_arch_list()` 才是判据。
+> **所以也没有"PTX JIT 到 sm_87"这条退路**（JIT 的是 PTX，而 torch 压根没编出 kernel）。
+>
+> **横向对照**（同一环境，不带 GPU 跑 `get_arch_list()`）：
+>
+> | 来源 | torch | `version.cuda` | `get_arch_list()` | 判定 |
+> |---|---|---|---|---|
+> | cu126 manylinux aarch64 2.10.0 | 2.10.0+cu126 | 12.6 | **`[]`** | ❌ 无任何 GPU kernel |
+> | cu126 dev 夜轮 aarch64 2.13.0 | 2.13.0.dev+cu126 | 12.6 | `['sm_80','sm_90']` | ❌ 无 sm_87 |
+> | PyPI aarch64 2.7.0 | 2.7.0+cpu | None | `[]` | ❌ CPU-only |
+> | **宿主 `/usr/bin/python3.10`** | **2.10.0** | 12.6 | **`['sm_87']`** | ✅ **能跑 kernel** |
+
+→ 原先 `Dockerfile.lnn-sm87` 的默认 `ARG TORCH_SPEC=2.10.0+cu126`（解析到 manylinux）
+**是错的** —— 它正是 B8 里"装好了但跑不了 kernel"那条路的第二次。
+
+**同轮从 cu126 索引页拿到的地面真相**（解析 `*_aarch64.whl` 文件名，共 354 个 whl /
+109 个 aarch64）：
+
+- **`linux_aarch64`（Jetson 构建）只有 2.6.0+cu126 一个版本**，
+  覆盖 cp39 / cp310 / cp311 / cp312 / cp313 / cp313t 共 6 个变体；
+- **manylinux aarch64** 另有 15 个版本族（1.11.0 … 2.14.1 + 1 个 dev 夜轮），
+  2.9.0 及以上多数带 6~8 个 cp。
+  → 宿主那份**能跑 kernel** 的 torch 2.10.0 用的正是 `linux_aarch64` 标签
+  （`arch_list == ['sm_87']`）→ **同族构建**，不是 manylinux。
+
+> ⚠️ **顺带更正本仓自己写过的一个假判据**：Dockerfile 原先把
+> "**自包含 vs 瘦包**"当成 sm_87 的原因（"Jetson 构建自包含 → 带 sm_87"）。
+> 实测**宿主那份 Jetson 构建同样有独立的 `site-packages/nvidia/` 目录
+> （628.6 MB，含 nvidia_cudss_cu12 / nvidia_nccl_cu12）**，并不是纯自包含。
+> **体积/自包含都不是判据，`get_arch_list()` 才是。**
+
+**据此改了 `analysis/jetson/Dockerfile.lnn-sm87`**：默认改成 **Jetson 构建的
+2.6.0+cu126 直链**（`linux_aarch64`），并保留**构建期 `sm_87` 断言**作为最后一道闸
+（断言不过 → 构建直接失败，绝不产出"装好了但跑不了 kernel"的镜像）。
+同时补 `--timeout 3600 --retries 20`（pip 默认 15s 读超时实测掐断过 3 次构建）。
+**2.6.0 那个 2.46 GB wheel 本轮没下载完 → 它带不带 sm_87 仍待断言回答。**
+
+### 7.9 第四层失败：**系统 CMA 被占满**（症状像 CUDA 挂了，结论相反）
+
+本轮做运行时 kernel 验证时撞到：
+
+```
+NvMapMemAllocInternalTagged: 1075072515 error 12
+torch.AcceleratorError: CUDA error: out of memory
+```
+
+**第一反应会以为是 CUDA/wheel 的问题 —— 但不是**：
+
+| 指标 | 值 | 含义 |
+|---|---:|---|
+| `MemAvailable` | 2.8 GB | 系统内存**看着够** |
+| `CmaTotal` | 262,144 kB | 连续内存池 256 MB |
+| `CmaFree` | **1,908 kB** | **几乎为零** → nvmap 拿不到连续物理内存 |
+
+**对照组**：同一时刻，**宿主**那份已验证可用的 torch 2.10.0（`arch_list == ['sm_87']`）
+**也报一模一样的 error 12** → 证明是**机器级状态**，不是 wheel、不是镜像、不是解释器。
+（与 [[lnn-2026-09-29-automation-audit]] 记的"RAM 耗尽"是同一类，本轮是 CMA 而非 MemAvailable。）
+
+> **判据：任何"CUDA OOM / error 12"，先看 `/proc/meminfo` 的 `CmaFree`，
+> 再看"换一份已验证可用的 torch 是否也报同样的错"。**
+> 两者都能失败 → 是机器内存状态；只有新的失败 → 才回头查 wheel/镜像。
+> **四层失败要分清**（症状像、结论相反）：
+> ① import 失败 → 没装上 ② `is_available()==False` → 驱动/runtime 版本对不上
+> ③ `no kernel image is available` → wheel 没编本机 SASS
+> ④ `NvMapMemAllocInternalTagged: error 12` → **系统 CMA 耗尽，与 CUDA 无关**。
 
 ---
 

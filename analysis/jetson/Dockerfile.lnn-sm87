@@ -51,44 +51,71 @@ FROM lnn-cuda126:local
 #
 #         平台标签                      | 体积(cp312)   | 编译目标             | 带 sm_87 吗
 #         -----------------------------|--------------|----------------------|-----------
-#         manylinux_2_28_aarch64       | 324 MB(2.10) | 通用 aarch64 (Grace) | ❌ 大概率没有
-#         linux_aarch64 (Jetson 构建)  | 2.46 GB(2.6) | **Orin / sm_87**     | ✅ 有
+#         manylinux_2_28_aarch64       | 324 MB(2.10) | 通用 aarch64 (Grace) | ❌ **实测没有** (见 ❺)
+#         linux_aarch64 (Jetson 构建)  | 2.46 GB(2.6) | **Orin / sm_87**     | ✅ (宿主同族构建实测有)
 #
-#       体积差 7.6 倍不是巧合: **Jetson 构建是自包含的** (CUDA runtime 全打进
-#       torch/lib, 所以 2.46 GB), 通用 manylinux 构建是瘦包 (依赖外部 nvidia-*
-#       包, 只需 324 MB)。**只有自包含的 Jetson 构建才带 sm_87 SASS。**
-#       → 这也是本仓**宿主**上那个可用 torch 的特征:
-#         `torch-2.10.0-cp310-cp310-linux_aarch64.whl` (linux_aarch64 标签, 430 MB
-#         的 torch/lib, 无独立 nvidia/ 包目录) —— 它是 Jetson 构建, 不是 PyPI 包。
-#         它的 `direct_url.json` 指向 `file:///tmp/...whl`, 显然是本地 wheel 文件;
-#         大概率来自 NVIDIA 自家源 (pypi.nvidia.com 供 JetPack 用户空间用:
-#         wheel 正是 `linux_aarch64` 标签 + 内置 CUDA + 原生含 sm_87)。
+#       体积差 7.6 倍**不是判据** —— ⚠️ 这条我方自己写错过一次, 现在更正:
+#       早期版本把"自包含"当成 sm_87 的原因, 但 2026-10-26 实测**宿主**那份
+#       `linux_aarch64` torch 其实**也**带着一个独立的 `nvidia/` 目录
+#       (site-packages/nvidia/ 628.6 MB, 含 nvidia_cudss_cu12 / nvidia_nccl_cu12),
+#       并不是纯自包含。**真正的判据只有一个: `torch.cuda.get_arch_list()`。**
+#         linux_aarch64 (Jetson 系)    → `['sm_87']`   ✅ 能跑 kernel
+#         manylinux_2_28_aarch64 (通用) → `[]`         ❌ 一个 GPU 架构都没编
+#       → 本仓**宿主**上那个可用 torch 正是 Jetson 系:
+#         `torch-2.10.0-cp310-cp310-linux_aarch64.whl` (linux_aarch64 标签,
+#         torch/ 723 MB, torch/lib 450 MB), 它的 `direct_url.json` 指向
+#         `file:///tmp/...whl` —— 本地 wheel 文件, 大概率来自 NVIDIA 自家源
+#         (pypi.nvidia.com 供 JetPack 用户空间用)。
 #       **别把它当成"cu126 索引版 torch"来推理** —— 版本号一样, 出身不一样。
+#       (另注: 索引上 `linux_aarch64` 标签**只有 2.6.0** 提供, 覆盖 cp39/cp310/
+#        cp311/cp312/cp313/cp313t 共 6 个变体 —— 2026-10-26 解析索引页实测。)
 #
 # ❹ ❌ "直链装就万事大吉" —— 直链能锁住**平台标签**, 但锁不住**架构列表**。
 #       manylinux 那条路 (2.10.0+cu126) 即便装的是货真价实的 CUDA 构建,
 #       官方通用 aarch64 构建常只编 sm_80/sm_90, 就会重演 dev 夜轮那个
 #       `no kernel image is available`。**所以下面必须加构建期架构断言。**
 #
+# ❺ ✅ **已实测 (2026-10-26 晚): cu126 的 manylinux aarch64 wheel 里 torch 一个
+#       GPU 架构都没编 —— 不只是"没有 sm_87"。**
+#       两条互相独立的证据:
+#
+#       (a) 静态扫描: 把 `torch-2.10.0+cu126-cp312-cp312-manylinux_2_28_aarch64.whl`
+#           (323,822,206 B) 解开, 取 `torch/lib/libtorch_cuda.so` (380,232,769 B)
+#           正则扫架构串 → 只有 `sm_80`/`sm_90` 与 PTX `compute_80`/`compute_90`。
+#           **但这些串来自 wheel 里打包的 cuBLAS/cuDNN 等第三方二进制, 不是 torch
+#           自己编译的 kernel** —— 所以静态串**不足以**说明 torch 本身编了什么。
+#       (b) 运行时 (决定性): 把这个 wheel 装进镜像后,
+#           `torch.cuda.get_arch_list()` 返回 **`[]`** → **torch 自己的 kernel
+#           一个架构都没编** → 在**任何** GPU 上都会 `no kernel image is available`
+#           (不只是"Orin 不支持")。对照: 宿主的 `linux_aarch64` 构建返回
+#           `['sm_87']`; cu126 dev 夜轮返回 `['sm_80','sm_90']`。
+#       → 所以**没有 PTX JIT 这条退路** (JIT 的是 PTX, 而 torch 压根没编出 kernel);
+#         也不必去纠结 `compute_80` 能不能 JIT 到 sm_87。
+#       → 结论: **manylinux aarch64 不能作为本机 (sm_87) 的 torch 来源**, 原来的
+#         默认 `ARG TORCH_SPEC=2.10.0+cu126` 是**错的**, 已被下面改成 Jetson 构建。
+#       → 同时也证明: 下面那条**构建期架构断言是这套配方里最关键的一行** ——
+#         少了它, 这条 manylinux 路会产出一个"装好了、`is_available()` 是 True、
+#         但跑不了任何 kernel"的镜像, 而本仓已经吃过一次这种亏(dev 夜轮)。
+#
 # ─────────────────────────────────────────────────────────────────────
-# 本镜像用哪条路 (2026-10-26 晚定案)
+# 本镜像用哪条路 (2026-10-26 晚定案 —— 已按 ❺ 的实测结果改过)
 # ─────────────────────────────────────────────────────────────────────
-# 默认仍走 `manylinux_2_28_aarch64` 的 2.10.0+cu126 —— 因为:
-#   - 它与基础镜像里那套 cu126 库**逐个对得上**
-#     (cublas 12.6.4.1 / cudnn 9.10.2.21 / nccl 2.27.5 / triton 3.6.0 …);
-#   - 体积小 (324 MB vs 2.46 GB), 本机网络慢时差别是几十分钟 vs 几小时;
-#   - **但** sm_87 有没有编进去, 本轮**没验证**。
-# → 正因如此, 下面的**构建期断言**是这套配方里最关键的一行:
-#   装完立刻检查 `get_arch_list()` 里有没有 'sm_87'。
-#   - 断言不过 → **构建直接失败**, 不会产出一个"装好了但跑不了 kernel"的镜像;
+# **改走 `linux_aarch64` (Jetson 构建) 的 2.6.0+cu126 直链**, 因为:
+#   - ❺ 实测: manylinux aarch64 **没有 sm_87**, 这条路已被证伪;
+#   - cu126 索引上 **`linux_aarch64` 只有 2.6.0 提供** (2026-10-26 实测索引页),
+#     覆盖 cp39/cp310/cp311/cp312/cp313/cp313t 共 6 个变体;
+#   - 宿主机那份能跑 kernel 的 torch 2.10.0 用的**也是 `linux_aarch64` 标签**
+#     (arch_list == ['sm_87'], 实测) → 同一族构建;
+#   - 代价: **2.46 GB 自包含**(CUDA runtime 全打进 torch/lib), 比 manylinux 的
+#     324 MB 大 7.6 倍, 下载在本机(实测 80 KB/s ~ 5 MB/s 波动)要几十分钟到数小时。
+#     → 所以下面给了**本地 wheel 复用**的入口, 别每次重下。
+# → **用直链装**是为了绕开 pip 的标签优先级: manylinux 优先级高于 linux,
+#   上游哪天补上 manylinux 的 2.6.0, pip 就会改选那个不带 sm_87 的通用构建。
+# → 下面的**构建期断言**仍然是最后一道闸:
+#   - 断言不过 → **构建直接失败**, 不会产出"装好了但跑不了 kernel"的镜像;
 #   - 断言过了 → 说明这个 wheel 确实编了 sm_87, 配方闭环。
-# → 若要换成**确定带 sm_87** 的 Jetson 构建, 把 ARG 换成下面这个 (2.46 GB 自包含):
-#     ARG TORCH_WHL_URL=https://download.pytorch.org/whl/cu126/torch-2.6.0%2Bcu126-cp312-cp312-linux_aarch64.whl
-#   并把下面的 pip 换成 `pip install --no-cache-dir --no-deps "${TORCH_WHL_URL}"`。
-#   (cu126 索引上只有 2.6.0 提供 `linux_aarch64` (Jetson) 构建, 覆盖
-#    cp39/cp310/cp311/cp312/cp313/cp313t; 用**直链**装是为了绕开 pip 的标签优先级 ——
-#    manylinux 优先级高于 linux, 上游哪天补上 manylinux 的 2.6.0, pip 就会改选
-#    那个不带 sm_87 的通用构建。)
+#   (本轮**未跑完 2.46 GB 下载**, 所以 2.6.0 Jetson 构建带不带 sm_87
+#    **仍未验证** —— 断言就是用来在构建时替我们回答这个问题的。)
 #
 # 附带更正 (2026-10-26 晚): 本镜像**不是必需品** —— 宿主 python3.10 的
 # torch 2.10.0 (NVIDIA `linux_aarch64` wheel, CUDA 12.6) 自带 sm_87 SASS,
@@ -109,30 +136,56 @@ FROM lnn-cuda126:local
 # (cublas 12.6.4.1、cuda-runtime 12.6.77、nvrtc 12.6.85、cudnn 9.10.2.21、
 # nccl 2.29.3、cufft 11.3.0.4、curand 10.3.7.77、cusolver 11.7.1.2、
 # cusparse 12.5.4.2、cusparselt 0.7.1、nvtx 12.6.77 —— torch 通过 RPATH
-# 按 soname 加载, 补丁版本差异不影响)。让 pip 再解析一遍依赖只会重下 2.5GB,
-# 而 torch 本体只有 324MB。
+# 按 soname 加载, 补丁版本差异不影响)。
+# ⚠️ 这条理由对 **Jetson 构建不成立**: `linux_aarch64` 的 wheel **把 CUDA runtime
+#   打包进去了** (所以 wheel 有 2.46 GB 而不是 324 MB), 它**自带**运行库。
+#   用 --no-deps 只是省掉 pip 再解析一遍依赖 (宿主上它照样多装了一份
+#   site-packages/nvidia/ 628.6 MB, 属冗余), **不会缺库**。
+#   (而 manylinux 瘦包 324 MB 才是"必须靠外部 nvidia-* 包"的那种。)
+# 另: pip 默认 15s 读超时会掐断大文件下载, --timeout/--retries 不是可选项。
 #
-# 验收 (换版本时照做, 别只信文档) —— 四样都要看:
+# 验收 (换版本时照做, 别只信文档) —— 五样都要看:
 #   docker run --rm --runtime nvidia --gpus all lnn-sm87:local bash -lc \
 #     "python3 -c \"import torch; print(torch.__version__); \
 #       print(torch.cuda.get_arch_list()); \
 #       x=torch.randn(64,64,device='cuda'); torch.cuda.synchronize(); \
 #       print('KERNEL_OK',(x@x).sum().item())\""
 #   ①版本带 +cu126 ②get_arch_list() 里有 sm_87 ③真的跑出 KERNEL_OK
-#   ④体积 (自包含 Jetson 构建是 GB 级; 瘦的通用 manylinux 构建是几百 MB)
+#   ④**`get_arch_list()` 是唯一判据** —— 别用"体积大/自包含"去推 (那是假判据, 见 ❸)
+#   ⑤**失败时先分清是哪一层** (见下"第四层") —— 别把所有失败都当成"镜像坏了"。
 #   **只测 is_available() 会把一个完全跑不起来的镜像判成"可用"。**
-ARG TORCH_SPEC=2.10.0+cu126
-RUN pip install --no-cache-dir --no-deps \
-      --index-url https://download.pytorch.org/whl/cu126 \
-      "torch==${TORCH_SPEC}" \
- && pip install --no-cache-dir torchdiffeq numpy scikit-learn pandas
+#
+# ── 四层失败要分清 (症状像, 结论相反) ──────────────────────────────────
+#   第 1 层  import 失败            → wheel 根本没装上
+#   第 2 层  is_available() == False → 驱动/runtime 版本对不上 (cu130 vs 驱动 12.6)
+#   第 3 层  no kernel image is available → wheel 没编本机 sm_87 的 SASS
+#   第 4 层  NvMapMemAllocInternalTagged: error 12 + CUDA out of memory
+#            → **不是 CUDA 的问题, 是系统内存/CMA 被占满**。
+#            实测 (2026-10-26 晚): MemAvailable 2.8 GB 看着够, 但
+#            `CmaTotal 262144 kB / CmaFree 1908 kB` → nvmap 拿不到**连续**物理内存。
+#            **此时连宿主那份已验证的 torch 也会同样报错** → 先看 /proc/meminfo 的
+#            CmaFree, 别急着怀疑 wheel。
+#
+# ── 装哪条路 ───────────────────────────────────────────────────────────
+# 默认: **Jetson 构建** (`linux_aarch64`) 的 2.6.0+cu126 直链 —— 理由见上面 ❺。
+#   ⚠️ 本机网络实测 80 KB/s ~ 5 MB/s 大幅波动, 2.46 GB 可能要几十分钟到数小时;
+#      pip 默认 15s 读超时会把下载掐断 (实测 2026-10-26 连续 3 次构建都死在这),
+#      所以**必须**加 --timeout/--retries。
+#   离线复用 (别每次重下 2.46 GB): 把 wheel 放进构建上下文后改这两行 ——
+#       COPY wheels/torch-2.6.0+cu126-cp312-cp312-linux_aarch64.whl /tmp/t.whl
+#       RUN pip install --no-cache-dir --no-deps /tmp/t.whl && rm -f /tmp/t.whl
+#     (pip 认 wheel 文件名里的平台/版本标签, 所以 COPY 时**别改名**。)
+ARG TORCH_WHL_URL=https://download.pytorch.org/whl/cu126/torch-2.6.0%2Bcu126-cp312-cp312-linux_aarch64.whl
+RUN set -eux; \
+    pip install --no-cache-dir --no-deps --timeout 3600 --retries 20 "${TORCH_WHL_URL}"; \
+    pip install --no-cache-dir --timeout 3600 --retries 20 torchdiffeq numpy scikit-learn pandas
 
 # 构建期自检 —— **本文件最关键的一行**。
 # docker build 阶段拿不到 GPU, 但 `get_arch_list()` 读的是**编译期写进二进制的
 # 架构信息, 不需要 GPU**, 所以构建期就能断言"这个 wheel 真带 sm_87 SASS"。
 # 断言不过 → **构建直接失败**, 不会留下一个"装好了但跑不了 kernel"的镜像。
 # 注意: 只断言 `torch.version.cuda` 是不够的 —— manylinux 的通用 aarch64 CUDA 构建
-# 也满足它, 却恰恰没有 sm_87 (那才是本轮差点上线的版本)。
+# 也满足它, 却恰恰没有 sm_87 (❺ 实测: 连 `get_arch_list()` 都是空的)。
 RUN python3 -c "import torch,sys; a=torch.cuda.get_arch_list(); print('arch_list',a); \
  sys.exit(0) if 'sm_87' in a else sys.exit('FATAL: this wheel has no sm_87 SASS (arch_list=%s)'%a)"
 
