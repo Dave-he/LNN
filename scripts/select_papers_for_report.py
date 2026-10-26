@@ -110,10 +110,24 @@ def parse_json_pool(date: str) -> list[dict[str, str]]:
 
 
 def already_reported(arxiv_id: str) -> bool:
+    """该 arxiv id 是否已经有研读报告。
+
+    2026-10-26 修复: 原来直接拿**带版本号**的 id (`2512.14112v1`) 去正文里做
+    子串匹配, 但本仓报告的 `arxiv_id` 字段**带版本与不带版本两种写法混用**
+    (例如 Vending_Machine_Test_LLM_Supply_Chain_2512.14112_研读报告.md 里写的是
+    裸 id `2512.14112`) —— 于是这些论文被**判成"没研读过"**, 会重复进候选池。
+
+    修法: 匹配前把查询 id 的版本号剥掉。arXiv id 是固定格式 `\\d{4}\\.\\d{4,6}`,
+    裸 id 既是完整 token 又是带版本写法的子串, 所以按裸 id 匹配两种写法都命中,
+    也不会误配到别的 id 上。
+    """
     if not REPORTS_DIR.exists():
         return False
+    bare = re.sub(r"v\d+$", "", arxiv_id or "")
+    if not bare:
+        return False
     for md in REPORTS_DIR.glob("*.md"):
-        if arxiv_id in md.read_text(encoding="utf-8", errors="ignore"):
+        if bare in md.read_text(encoding="utf-8", errors="ignore"):
             return True
     return False
 
