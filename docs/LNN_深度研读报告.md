@@ -205,6 +205,72 @@ positioning_updated: 2026-09-14
 - **对本仓的可落地价值**：(1) **"FiLM 前置 + CfC"** 是一个成本极低、且有同骨干消融支撑的变体 —— 但注意结论是"FiLM 单独无效、必须与 CfC 耦合", 单独加 FiLM 而不动时序模块预期无收益; (2) 本仓多数 bench 是单次回归, **没有"生成多个候选再选"这一层**, 可新增 **Oracle vs Top-1 差距**作为评测指标 (本文证明这个差距可以很大); (3) 新增消融轴 **"连续时间 vs 离散递推"**, 但必须按本文教训补上**参数量与训练预算匹配声明**。
 - **Verdict**：**"CfC 优于 GRU" → TARGET-DEPENDENT-WITH-NUANCE** (支持性较强但非决定性, 可作引用性证据不可作结论性证据); **"FiLM 条件化顺序" → TARGET-POSITIVE (限于该用法)** (同骨干同配置消融, 可信度较高); **作为本仓边缘部署参考 → TARGET-NEGATIVE-WITH-NUANCE** (推理成本与本仓场景不匹配, 勿据此主张"LNN 可做长音频定位"); **作为"主题饱和"的反证 → 支持"未饱和"**。
 
+### [2026-10-26] Recovering Implicit Physics Model under Real-World Constraints — LTC-NN-MR 反推物理模型系数 (arXiv:2412.02215)
+- **独立报告**：[[docs/reports/LTC_NN_Implicit_Physics_Model_Recovery_2412.02215_研读报告.md]]
+- **为何是它**：它开的是**本仓此前没有覆盖的任务方向** —— 不是预测/表征，而是**系数反推 / 模型恢复**（数字孪生的参数辨识），且与本仓 `lnn/core/ltc.py` 的时间常数参数化**同族**，可做数值对照。更重要的是它是**复算型研读的正面样本**：核心代数链条经独立推导后并不成立。
+- **核心问题**：在五个真实世界约束下反推隐式物理模型的系数 —— C1 采样率受限、C2 噪声/扰动、C3 隐式动力学、C4 系数稀疏性、C5 输入时序不确定。已有路线（SINDYc / SINDY / ERA / GA / NODE+structure / PINN+sparse）要么需要事先给稀疏阈值，要么要求已知激励结构。
+- **方法论**：**LTC-NN 前向 + ODE 求解器进 loss**。① 用 LTC 单元把状态演化成"物理量"（Eqn 2），再经 Friston 双线性近似做系数读出（Eqn 4→5→6）；② **dropout 隐式稀疏**代替 SINDy 的硬阈值，稀疏性随训练自动出现；③ **Sigmoid 输入移位节点**处理"事件时刻不可靠"（C5）；④ 联合损失 = 数据拟合 + ODE 残差 + 稀疏正则；⑤ 输出**可解释的物理系数 Θ**而不是预测值。案例含 Bergman 最小模型（AID）与 Duffing–van der Pol（EEG）。
+- **关键公式**：Eqn 1 控制仿射系统 → Eqn 2 LTC 动力学（衰减 1/ρ+f、有效时间常数 ρ/(1+ρf)、f(A−h)）→ Eqn 3 归一化形式 → Eqn 4–6 双线性近似（Eqn 8–9 Bergman；Eqn 10 Duffing–vdP）。
+- **关键成果 (作者自报)**：5 个案例上系数恢复精度优于 6 个基线；**作者自陈 Table 3 "没有看到改善"**（隐式动力学并未被建模出来）；SINDYc 单 CPU 线程快 **11.3×**；Table 6 声称"significantly better than state-of-art forecasting mechanisms"。
+- **⚠️ 本仓视角的折扣**：(a) **代数论证链经复算不成立** —— Eqn 2→Eqn 3 **不是恒等变换**（f 必须满足一个二次方程）；"the equivalence of Eqn. 3 and 6" **仅在 ρ=1 且 S≡f 时成立**；(b) **C4（稀疏性）这一核心主张在论文自己的 Table 3 里未被证实** —— 24/24 格中 "Explicit" 列**全部不差于** "Implicit" 列；(c) Table 6 的 "significantly better" 是**跨任务、跨人群、跨指标**口径，不可比；(d) Table 2 只列 7 个案例而摘要/正文称 8 个（**EEG 仿真行缺失**）；(e) 全文 ≥3 处小节编号错位（§5.3 / §5.5.1 与 §1 定义冲突）；(f) 代码未公开 → 按约束 3 标注**未复现**。
+- **对本仓的可落地价值**：**① 口径对齐（最实用的一条）** —— 本仓 `lnn/core/ltc.py:8-43` 的 `LTCODEFunc` 是 τ_eff = |τ₀|+f+0.01（**加性**），**站在 Eqn 3 那一族，不在 Eqn 2 那一族（乘性 Möbius）**；论文在 ρ=1 归一化下 τ_eff = 1+f，与本仓只差一个 0.01 下限 → 将来做"本仓实现 vs 论文公式"的数值对照，**必须先锁死 τ_eff 约定**，否则会引入 (1+ρf)/ρ 的系统因子偏差。另注：本仓用 Sigmoid/Tanh **两个独立分支**，论文用**同一个 f** 同时决定衰减与偏置 —— 这是论文未讨论的设计差异，引用时需标注。**② 求解器进 loss** 是可直接复用的白盒正则范式，正好补上本仓 `lnn/core/physics.py`（PINN 式物理残差，**需要真值 Θ**）缺的那一块 —— 真实场景恰恰拿不到真值。**③ dropout 隐式稀疏**绕开 SINDy 硬阈值；**④ Sigmoid 时刻移位节点**可移植到任何"外部事件时刻不可靠"的场景。
+- **Verdict**：**方法论启发 / 新任务方向 → TARGET-POSITIVE**（"LNN 可以做白盒系数反推"是本仓此前没有的新用法，工程范式可搬）；**"LNN 在物理建模上已证 SOTA" → TARGET-NEGATIVE-WITH-NUANCE**（核心 C4 主张在自己的 Table 3 里未被证实、代数链条复算不成立、跨口径比较不可比）；**与本仓主线（预测/表征）的关系 → TARGET-DEPENDENT-WITH-NUANCE**（任务不同，基线集几乎不重叠，论文的 Titan V 时延数字对边缘口径无意义）。
+
+### [2026-10-26] Autonomous Oil Spill Response Through Liquid Neural Trajectory Modeling (arXiv:2508.12456)
+- **独立报告**：[[docs/reports/Oil_Spill_Response_LNN_Trajectory_Modeling_2508.12456_研读报告.md]]
+- **为何是它**：它是"LNN 用于长尾工业/机器人任务"的一个具体案例，与本仓 §0 的"长尾任务上稳定可选"观察同向；更值得留档的是它**表格算术多处不自洽**，是"研读时必须复算表格"的活教材。
+- **核心问题**：油污扩散的连续时间轨迹建模 + 群体海洋机器人协同响应（USV 集群），要在传感/通信/计算受限的条件下给出亚秒级响应。
+- **方法论**：**连续时间 LNN 轨迹预测（Eq. 1–2）+ 三档求解器（显式 / Euler / RK4）+ 自适应步长（Eq. 4）+ 群体自主层**，整体嵌进既有机器人中间件 MOOS-IvP。关键技巧：**有效时间常数稳定化 τ_sys = τ/(1+τf)**，使 τ_eff 有上界 1/f，驱动剧烈变化时数值不易爆炸。
+- **关键公式**：Eq. 1–2 连续时间动力学（稳定化时间常数）→ Eq. 4 自适应步长。
+- **关键成果 (作者自报)**：Table 3 主结果（评估期 12 h、步长 1 h）Spatial Accuracy 0.96；Table 4 消融给出 RK4 > Euler > 显式；另有群体规模扩展实验。
+- **⚠️ 本仓视角的折扣**：(a) **CV 不匹配** —— 论文写 Explicit 2.4% / Euler 6.8%，独立复算得 **4.60% / 4.80%**；(b) **Table 2 与 Table 3 的 MAE 无法调和** —— RK4 的 mean 1121.9 恰等于 ground truth（MAE 0.0），而论文报 12.4；(c) "explicit" 标签与其公式对不上；(d) 矩阵 A 未定义；(e) 平滑度指标与 Temporal Consistency 循环定义；(f) 25 维输入 → 28 维输出的映射从未解释；(g) **纯仿真**（MOOS-IvP）、代码不公开、"亚秒级通信"从未实测 → 不得当作已验证的工程能力，按约束 3 标注**未复现**。
+- **对本仓的可落地价值**：**τ_sys = τ/(1+τf) 这一稳定化构造值得直接进本仓 LTC 变体的候选对照**（`scripts/jetson_lnn_benchmark.py` 里的 LTC 风格模型可加这一项）；隐式 Euler 在长 horizon 连续时间任务里的稳定性是真实工程性质（但**必须像本文一样把标签和公式对齐**）；"把 ODE 预测器嵌进既有机器人中间件"的接缝设计是 LNN 落长尾任务的架构范式。**但不得把本文的 0.96 与本仓任何真实基准（r301–r307、MT-LNN）并列** —— 评测对象、任务、数据口径完全不同。
+- **Verdict**：**作为"LNN 在长尾工业任务上被稳定选用"的一个案例 → TARGET-DEPENDENT-WITH-NUANCE**（**不是证据升级** —— 纯仿真、无代码、表格不自洽）；**作为边缘性能证据 → TARGET-NEGATIVE**（延迟未实测）；**作为研读纪律的正面样本 → 有价值**（论文自述数字不自洽属**阅读层面算术核验**，与台账"我方复现失败"性质不同，**本篇不新增台账条目**）。
+
+### [2026-10-26] Optimizing Multi-Tier Supply Chain Ordering with a Hybrid LNN and XGBoost Model (arXiv:2507.21383)
+- **独立报告**：[[docs/reports/Supply_Chain_Ordering_LNN_XGBoost_2507.21383_研读报告.md]]
+- **为何是它**：selector 当日候选（score 12）。它是"LNN + XGBoost"这种**混合式应用论文**的样本，而本仓此前研读里没有"液态头 + 表格头"这一类接缝；同时它是**研读流程的正面教材**：一份自相矛盾、且缺关键基线的应用型论文。
+- **核心问题**：多级供应链下单优化，抑制牛鞭效应（bullwhip effect），提高累计利润。
+- **方法论**：**"局部动态编码 + 全局树优化"的混合** —— LNN 负责从需求序列里抽动态特征，XGBoost 负责全局寻优并映射到下单量；目标是"局部适应 + 全局最优"的协同。数据为**合成多级供应链仿真**。
+- **关键公式**：作者的"液态神经元"写作 $(1-\alpha)s_{t-1}+\alpha a_t+\frac{dt}{\tau}(-s_{t-1}+a_t)$。**本报告复算发现**：当 dt/τ = 1，该式退化为 $s_t=-\alpha s_{t-1}+(1+\alpha)a_t$（**符号翻转 + 输入增益 1.5× + 稳定窗缩到 α<1**），而不是标准泄漏积分器 —— **它既不是 LTC 也不是 CfC**，不能当实现参考。
+- **关键成果 (作者自报)**：相对第二名 1.22% 优势；累计利润 2,200,000 / 2,500,000；"减少牛鞭效应"；综合评分 0.6297。
+- **⚠️ 本仓视角的折扣**：(a) **"减少牛鞭效应"全文无量化指标**；(b) **"1.22% 相对优势"不显著** —— 论文自己的 Tukey HSD 判其与 XGBoost/Transformer **无显著差异**；(c) **Table 5 的利润数字不可核验** —— 15 个数值全为 10 万整数倍且数据不公开；(d) **两表排序相反**（§5.3）；(e) **根本没跑经典基线** → "LNN 优于经典模型"在本文里是空的命题；(f) 0.6297 是**跨模型相对排序量**且权重和只有 0.7，不是"达到 63% 最优水平"；(g) 10 次运行只换噪声种子、纯合成数据、无代码 → 按约束 3 标注**未复现**。
+- **对本仓的可落地价值**：① "液态头 + 树头"的接缝范式可借鉴（把连续时间状态当**特征**交给树模型/线性头吸收非平滑交互）；② **§4.1 的口径警告值得本仓记住** —— 写 $(1-\alpha)s_{t-1}+\alpha a_t+\frac{dt}{\tau}(-s_{t-1}+a_t)$ 这种混合式时**必须检查 dt/τ 的取值**，否则引入系统性偏置（与 2412.02215 报告的"Eqn 2→3 并非恒等变换"同源）；③ **§5.6 的通用纪律** —— 本仓若写 hybrid 对比（液态头 + 树头 vs 纯树），必须报参数量/时延并做**只换一头的消融**，否则结论不成立；④ §3.8 的"卖点必须有测量"清单（时延/FLOPs/参数量/方差比）可直接作研读自检项。
+- **Verdict**：**作为长尾 OR/工业任务上的应用型留档 → TARGET-NEGATIVE-WITH-NUANCE**（无真实数据、无代码、牛鞭主张零量化、与第二名差异不显著、经典基线缺失 → 连"稳定"都谈不上，**不构成对 NR-06 "长尾任务上稳定可选"的支持性证据**）；**对 NR-06 / NR-09 既不支持也不反驳**（**不得反向升级为"LNN 无用"**）；**作为研读流程的正面教材 → 有价值**。
+
+### [2026-10-26] Liquid Time-constant RNNs as Universal Approximators — LTC 这个名字的原始出处 (arXiv:1811.00321)
+- **独立报告**：[[docs/reports/LTC_Universal_Approximators_1811.00321_研读报告.md]]
+- **为何是它**：这是 **2018 年的奠基论文**（Hasani / Lechner / Amini），是"LTC"这个名字与"时间常数随状态变化"这一核心机制的**唯一原始凭据**。它此前不在本仓研读覆盖里，而本仓 12–26 天的日报里反复出现"门控语义 / 有效时间常数口径"的问题 —— 回到原始定义是对齐口径的前提。
+- **核心问题**：CTRNN 的老问题是**时间常数是死的**（每个神经元同一固定松弛速率，动力学只有"形状"可变、"速度剖面"不可变）。本文问三件事：① 能否构造 CTRNN 子类，使时间常数**由突触非线性决定、随状态变化**，同时保持膜积分器的可解释性；② 这样得到的 LTC RNN 是否仍具通用逼近能力（逼近什么、误差多大）；③ 这个"变化的时间常数"会不会失控、取值区间是什么。
+- **方法论**：从**膜积分器**（Eq. 1）出发，引入刚/化学突触并把突触传递本身建模为**预突触状态的 sigmoidal 函数**，由此得到状态相关的时间常数（Eq. 4/5）。随后是三段纯理论：通用逼近定理 1（自治 $C^1$ 连续动力系统的任意有限轨迹可在 $[0,T]$ 上被 LTC RNN 以任意小误差逼近）+ 有界性引理 2/3（变化的时间常数与神经元状态都被限制在有限区间）。**零实验**。
+- **关键公式**：Eq. 1 膜积分器 → Eq. 4/5 LTC 动力学（时间常数由突触非线性实现、随状态变化）→ 定理 1 的误差预算链 → 引理 2/3 的界。
+- **关键成果 (作者自报)**：① 给出 LTC 的明确定义；② 证明通用逼近（存在性）；③ 给出"液态"不会数值失控的有界性保证。
+- **⚠️ 本仓视角的折扣**：(a) **零实验** —— 全文无表格、无基线、无数据集，**"通用逼近"与"更好用"是两件事，本文只证了前者**，且是在最弱的意义上（逐条轨迹、sup 范数、**无输入**）；(b) 摘要的 "**small number of computational units**" **全文没有对应上界** —— 定理只说"存在某个 N"，没给 N 关于 ε/T/F 的复杂度界，"小"是宣称不是结论；(c) 定理是**存在性而非可构造性**，且**证明链上有一处未交代的关键条件**（复核 D）；(d) 摘要说"由 hidden 单元状态与 n 个 output 单元逼近"，而**定理的误差陈述只约束输出单元**，隐藏单元状态无约束 —— 摘要措辞比定理强；(e) 假设**无外部输入**、隐藏→输出前馈、只证纯化学突触（gap junction 推广未给完整推导）。
+- **对本仓的可落地价值**：**① 最有价值的一条不是结论而是参数化对照** —— 论文是"**对率加性、门大→快**"，本仓 `lnn/core/ltc.py` 的 `LTCODEFunc` 是 τ_eff = |τ₀| + f + 0.01（"**对 τ 加性、门大→慢**"），而本仓 `lnn/core/cfc.py` 的 `decay = sigmoid(-f·time_scale·dt)` **才与论文 Eq. 5 同族**。这解释了本仓"LTC 与 CfC 不可直接互比"（此前只是经验判断，现在有理论根据）——**任何 "LTC vs CfC" 数值对比都自带系统性偏置**；同理，本仓基于 gate 值分布做的任何解读（门控强度 ↔ 记忆时长）**在忠实版实现下语义会反转**，需重新推导。**② 一条可执行的工程建议**：本仓 `|τ₀|` 是无约束可学习参数，训练可把它推大导致时间尺度整体漂移（这在论文框架里对应静态 τ 而非"液态"部分）—— 若要把"液态"与"静态时间尺度"分离，**|τ₀| 应被约束或单独归一化**。**③ 免费正确性基线**：Eq. 4→5 的等价性（复核到 3.6e-15）与引理 2 的界可作"论文忠实版"实现的单元测试。**④ 定理不能用来给本仓 LTC 背书"通用逼近"**（本仓实现带输入、有加性驱动、参数化族不同，三条都不在定理覆盖内）。
+- **Verdict**：**作为 LTC 的理论地基 / 口径对齐依据 → TARGET-POSITIVE**（引用价值高，但必须连 §3.6 假设表一起引）；**作为"LTC 已被证明更优 / 更省单元" → TARGET-NEGATIVE**（零实验、无上界、无比较）；**作为"LNN 通向通用智能"的路径 → 不支持**（与 NR-03 / NR-04 方向相反，勿升级）。
+
+### [2026-10-26] Liquid Resistance Liquid Capacitance Networks (LRC / LRCU) (arXiv:2403.08791)
+- **独立报告**：[[docs/reports/RLC_Networks_Liquid_Resistance_Capacitance_2403.08791_研读报告.md]]
+- **为何是它**：selector 当日 **score 14（最高）**。它给出一个**本仓可直接复现的变体候选**，而且——**本仓 `lnn/core/variants.py:346` 已经有一个叫 `LRCCell` 的模块，命名直接来自这篇论文，实现却是论文要修正的对象**。这是当日最具体的一次"现成改造机会"。
+- **核心问题**：LTC/STC 的**振荡问题**与**求解器成本**。LTC 的时间常数由一个"泄漏门"隐式承担，导致 (a) 便宜的显式 Euler 一步展开会振荡，(b) 昂贵的自适应求解器又抵消了连续时间的收益。LRC 的想法：把时间常数拆成**电阻 σ(f)（管漏电）**与**电容 ϵ(w)（管弹性）**两个正交因子，于是最便宜的求解器也够用。
+- **方法论**：**电阻/电容解耦** —— $\dot h = \epsilon(w)\bigl(-\sigma(f)h + \tau(u)e_l\bigr)$：σ(f) 独立作用在漏电项上，ε(w) 缩放输入与弹性，从而**抑制 LTC/STC 的振荡**、并让**显式 Euler 一步展开（式 60，闭式无求解器）**成为可用方案（LRCU）。论文同时给出：LRC 相对 STC 的**Lipschitz 常数**下降（43e-4 vs 101e-4，同为 E1 求解器）、以及 LRCU 作为高效门控 RNN 与自动驾驶车道保持任务的结果。
+- **关键公式**：式 3 LRC 动力学 → 式 18/21 的值域与方向性（复算发现 5/5 反例）→ 式 60 LRCU 闭式展开（复算 ≡ 显式 Euler，max err 4.44e-16）→ 定理 1（常数弹性平凡见证）、定理 2（Taylor/中值定理缺口）。
+- **关键成果 (作者自报)**：LRC-S 相对 STC 精度与稳定性的提升；LRCU 相对 6 折 hybrid 求解器 3.00–7.64× 加速、相对 E1 1.14–2.17×；自动驾驶车道保持任务上的竞争性结果。
+- **⚠️ 本仓视角的折扣**：(a) **n=3，21 个统计对比中仅 5 个在 α=0.05 显著**；(b) **"3–7.8×"是相对 6 折 hybrid 求解器**，相对 LSTM **反而慢 1.6×**（参数只有 LSTM 的一半，真正同预算的对手只有 MGU）；(c) 摘要的 "outperform" 未被逐个检验支持；(d) 定理 2 的末句**越界**（上界序 ≠ 取值序）；(e) 12 处内部不一致（式 21 方向、式 18 不成立等）；(f) **无 transformer 基线** → 按约束 3 标注**未复现**。
+- **对本仓的可落地价值**：**① 直接命中且必须点破** —— 本仓 `LRCCell`（`variants.py:358-395`）是 $\dot h=(-h+\tanh(\cdot))/(R\cdot C)$，**输入增益与时间常数被同一个 τ=R·C 绑定（耦合版）**，而论文整篇的动机恰恰是**解耦**（ḣ=I/C，电阻只管漏电）；本仓这个模块**是本文要修正的对象，不是本文模型的实现** —— 不核对源码直接按名字引用，会把"耦合 LC"当成"解耦 LC"。**② 三个低成本动作（纯仿真 / in-house 模型，不涉任何真实硬件）**：新增 `lnn/core/lrc_cfc.py` 把式 60 实现为闭式单元（与 `cfc.py` 并列而非替换）；**修正或重命名** `LRCCell`（至少在 docstring 写明「本仓 LRC ≠ arXiv:2403.08791 的 LRC」，不改会构成命名误导源）；用本仓既有的 `lnn/core/smoothness_metrics.py`（total_variation / l2_derivative / max_gradient）**直接测本文的核心主张"更平缓"**。**③ 门控可达域对照**（复算：CfC 型 199 个可达点全部落在 LRCU 域边界，LRCU 另有 9637 个 CfC 达不到的点；但 CfC 多一个非线性状态分支 h_out(x,h)）→ **两者互不支配，不能声称"LRCU 优于 CfC"**。**④ 若复现不出"更平缓"，应按台账纪律登记为负结果**，而不是调参调到出为止。
+- **Verdict**：**作为 CfC 家族的一个门控变体候选 → TARGET-DEPENDENT-WITH-NUANCE**（证据强度只够支撑"值得一试的变体"：无 CfC/LTC 对照、n=3 多数不显著、口径不一）；**作为"LNN 优于 transformer / 优于经典模型" → 不支持**（**无 transformer 基线，不得引为 NR-06 的支持或否证**，引用时必须写明这一点）；**作为本仓命名与实现纪律的整改线索 → TARGET-POSITIVE**（§8.1 的 `LRCCell` 命名撞车是本日最可落地的一条）。
+
+### [2026-10-26] Liquid Structural State-Space Models (Liquid-S4) — 把"输入依赖"从 ODE 求解器搬进 SSM 核空间 (arXiv:2209.12951)
+- **独立报告**：[[docs/reports/Liquid_S4_Liquid_Structural_State_Space_Models_2209.12951_研读报告.md]]
+- **为何是它**：2022 年 MIT CSAIL 的原始出处（Hasani / Lechner 等），是"**LNN 的输入依赖机制如何被搬进结构性 SSM 核空间**"的唯一一手来源；本轮它还是**复算型研读的第三种层级** —— 不只复算论文自己的数字，还在第三方公开实现（`raminmh/liquid-s4`，`main@06031dc`）上做了**代码层核验**。
+- **核心问题**：S4 家族是线性时不变连续系统 $\dot x=Ax+Bu$，**$A$ 是学出来的常数** → 对每条输入序列都一样，"记住什么"的机制不随输入变。LTC 的卖点是状态转移随输入变（$A+Bu$）。本文问：能否在保住 S4 长序列 $\tilde O(N+L)$ 能力的前提下，把"输入依赖"塞进核空间？
+- **方法论**：把线性化 LTC $\dot x=(A+Bu)x+Bu$ 的卷积核用 S4/HiPPO 的结构化谱分解表达，两种模式 —— **KB**（保留 $A$，用 $B$ 的幂构造核）与 **PB**（$A\to I$，核退化为常核，输入依赖全部落到 $u$ 的高阶乘积相关项上）。复杂度 $\tilde O(N+L+p_{\max}\tilde L)$，$p$ 典型取 3、$\tilde L$ 比序列长度小两个数量级。
+- **关键公式**：Eq. 9（离散化，论文称"梯形法"）→ Eq. 10/11（核的自相关定义）→ Eq. 13（PB 核）→ Eq. 16（PB 的乘积特征形式）。
+- **关键成果 (作者自报)**：LRA 六任务平均 **87.32**（S4-LegS 86.09 / S4D-Inv 85.50 / S5 82.46）；BIDMC HR/RR/SpO2 RMSE 0.303 / 0.158 / 0.066；RAW Speech Command 全量 35 类 **96.78%**、参数量 **224K**（vs S4-LegS 307K）。
+- **⚠️ 本仓视角的折扣**：(a) **Eq. 9 不是梯形法**（无 $\Delta$、无 $\Delta/2$、无 $(I-\Delta A/2)^{-1}$，实为前向欧拉型一步）；(b) **自相关定义三处口径不一**（Eq. 10 / Eq. 11 / 正文组合数互不相同）；(c) **正文与表格三处对不上**（CIFAR 增益 0.65%、Path-X 正文 96.54 vs 表内 96.66、参数量降幅 30%）；(d) Table 1 的 Avg 列 **9/26 行与表内数字对不上**（Liquid-S4 行与 6 个相关基线自洽 → "SOTA"比较可用，"全表可信"不可用）；(e) **公开实现与论文公式有 6 处可核验偏离，其中"非因果"是硬伤**（把核侧反序矩阵搬到特征侧 → 预测时刻看到了未来输入），且**默认配置根本不是 Liquid-S4**（`liquid_kernel: null`，须命令行覆盖才能启用）；(f) **PB 模式下液体核是常核** → 所谓"液态"退化为"给 S4 额外接一条输入高阶乘积特征的可学习通道"，而论文**没做这个消融** → 87.32 **无法归因给"液态"**；(g) 8kHz 零样本（90.00）反而不如 S4D-Inv（91.80）；(h) **本仓无任何本地 grounding**（本仓 LRA Pathfinder 复现仍在 48.75% 随机水平）→ 按约束 3 标注**未复现**。
+- **对本仓的可落地价值**：**① 一条必须写进口径表的辨析** —— 本文是**线性化 LTC**（无非线性、无可学习时间常数、无门控），与本仓 `lnn/core/ltc.py` 的完整 LTC **不是同一个东西**，不得用本文的 87.32 为本仓 LTC 背书；**② "输入依赖 ≠ 液态机制"这个反例值得长期记住** —— 同一个数学效果可以由完全不同的机制产生（时间常数变化 vs 输入高阶乘积通道），**比较模型时必须问"依赖从哪来"，而不能只问"有没有依赖"**；**③ "公开实现的默认配置 ≠ 论文配置"是复现陷阱的典型样本**（直接跑仓库默认拿到的是普通 S4），与本仓 10-12 那次"选错解释器"同源；**④ 非因果实现会污染长程任务的对比** —— 复现 SSM 类工作时必须先核因果性。
+- **Verdict**：**作为"输入依赖搬进核空间"的工程范式留档 → TARGET-DEPENDENT-WITH-NUANCE**；**作为"LNN 在 LRA 上 SOTA" → 不可用**（自报未复现 + 未消融 + 实现非因果 + 表格不自洽，**既不支持也不反驳 NR-06**）；**作为本仓 LTC 口径的辨析材料 → 有价值**（提醒"线性化 LTC ≠ 液态网络"）。
+
 ### [2024] Exploring Liquid Neural Networks on Loihi-2
 - **独立报告**：[[docs/reports/Exploring_Liquid_Neural_Networks_on_Loihi-2_研读报告.md]]
 - **核心问题**：将基于连续常微分方程（ODE）的 LNN 算法高效部署在运行离散时间步、资源极其受限的神经拟态芯片（Loihi-2）上面临的软硬件协同适配难题。
@@ -1263,7 +1329,7 @@ positioning_updated: 2026-09-14
   2. `2606.12240v1` Multi-Rate MoE for Accelerating LNN Training (score=10) — 已有 [[docs/reports/Multi-Rate_MoE_Accelerating_LNN_Training_2606.12240_研读报告.md]]
   3. `2607.01986v1` Liquid Latent State Dynamics for Turbofan (score=10) — 已有 [[docs/reports/Liquid_Latent_State_Dynamics_Turbofan_2607.01986_研读报告.md]]
   4. `2606.07670v1` Liquid NN as Drop-in Continuous-Time Deformation Field (score=8) — 已有 [[docs/reports/Liquid_Neural_Networks_3DGS_Deformation_Field_2606.07670_研读报告.md]]
-  5. `2606.15807v1` Memory-Augmented Graph LTC for Cross-Domain Traffic (score=5) — 已有 [[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross-Domain_Traffic_2606.15807_研读报告.md]]
+  5. `2606.15807v1` Memory-Augmented Graph LTC for Cross-Domain Traffic (score=5) — 已有 [[docs/reports/MA-GLTC_Graph_Liquid_Time_Constant_Cross_Domain_Traffic_2606.15807_研读报告.md]]
   6. `2606.26849v1` LFNet: Liquid Fusion for SOD (score=4) — 已有 [[docs/reports/LFNet_Liquid_Fusion_Heterogeneous_Representations_SOD_2606.26849_研读报告.md]]
   7. `2605.24047v1` EMMA Multimodal (score=2) — 已有 [[docs/reports/EMMA_Multimodal_Dynamical_Parameter_Extraction_2605.24047_研读报告.md]]
   8. `2606.20491v1` GazeLNN (score=2) — 已有 [[docs/reports/GazeLNN_2606.20491_研读报告.md]]
@@ -1451,6 +1517,10 @@ positioning_updated: 2026-09-14
 ## 4. 自动化追踪与待研读队列
 
 - **2026-10-26**：[[docs/daily/2026-10-26_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 21 个。
+  - **研读 6 篇**（**当日人工选出的 6 篇全部覆盖**；注意：这**不等于** `select_papers_for_report.py` 的 pending 归零 —— 该脚本对 93 篇全池按弱关键词打分，仍有 33 个 `score>0` 的候选未研读，其中除头部 3 篇外多为 `'control'` / `'forecasting'` 等泛词的**误命中**，与 LNN 弱相关；**"pending 归零"是一个不成立的表述，勿再沿用**）：[[docs/reports/LTC_NN_Implicit_Physics_Model_Recovery_2412.02215_研读报告.md|LTC-NN 隐式物理模型反推 (2412.02215)]]、[[docs/reports/Oil_Spill_Response_LNN_Trajectory_Modeling_2508.12456_研读报告.md|油污扩散 LNN 轨迹建模 (2508.12456)]]、[[docs/reports/Supply_Chain_Ordering_LNN_XGBoost_2507.21383_研读报告.md|LNN+XGBoost 供应链下单 (2507.21383)]]、[[docs/reports/LTC_Universal_Approximators_1811.00321_研读报告.md|LTC 通用逼近原始出处 (1811.00321)]]、[[docs/reports/RLC_Networks_Liquid_Resistance_Capacitance_2403.08791_研读报告.md|LRC / LRCU 电阻电容网络 (2403.08791)]]、[[docs/reports/Liquid_S4_Liquid_Structural_State_Space_Models_2209.12951_研读报告.md|Liquid-S4 (2209.12951)]]。**本轮全部为"复算型"研读** —— 每篇都独立重算了论文自己的公式或表格，其中 **4 篇**发现**论文内部不自洽**（2412 的 Eqn 2→3 并非恒等变换且 C4 主张在自己的 Table 3 里未被证实；2508 的 CV 与跨表 MAE 无法调和；2507 的两表排序相反且无经典基线；2209.12951 的 Table 1 Avg 列 9/26 行与表内数字对不上、正文 3 处与表格对不上、且 Eq. 9 自称"梯形法"实为前向欧拉型一步）。
+  - **三条对本仓实现层面的可执行整改**（此前没人写下来过）：① 本仓 `lnn/core/ltc.py` 是"**对 τ 加性、门大→慢**"，`lnn/core/cfc.py` 才与论文 Eq. 5 **同族**（"对率加性、门大→快"）→ **LTC vs CfC 的任何数值对比都自带系统性偏置**；② 本仓 `lnn/core/variants.py:346` 的 `LRCCell` **命名来自 arXiv:2403.08791，实现却是该文要修正的"耦合 LC"**（该文整篇的动机是解耦）→ 不核对源码按名字引用会把耦合版当成解耦版；③ 本仓 `|τ₀|` 是**无约束**可学习参数，训练可把它推大造成时间尺度整体漂移 → 若要分离"液态"与"静态时间尺度"，`|τ₀|` 应被约束或单独归一化。
+  - **流水线修复 8 个缺陷**（B1–B8），详见 [[analysis/pipeline_notes/2026-10-26_hf_ipv6_and_pool_sort_fix]]：B1 HF"限流"真因是**本机 IPv6 通路 TLS 被 RST**（退避救不了，需强制 IPv4）；B4 候选池**从未全局排序**（全池第二新的论文排第 48 位）；B5 **下游只读渲染表 = 截断盲区**（本项目已第 3 次复发：选择器 / 索引 / PDF 下载器）；B7 **解释器选择只测 `import torch`**，把 cu130 的 python3 排在 cu126 的前面 → 16 天产物全是 `ok_cpu`，而本机其实有能跑 sm_87 kernel 的 torch；B8 **仓库自己的 Dockerfile 写着与产物相反的 claim**（"PyPI aarch64 wheel 带 sm_87 SASS"）—— 实际 PyPI aarch64 wheel 是 **CPU-only**（99 MB vs x86_64 865 MB），建出来的镜像是 `torch 2.7.0+cpu` → 已加**构建期 CUDA 自检**（不通过即构建失败）+ 镜像**预检失败即跳过**，并把该镜像移出默认候选列表。
+  - **Jetson benchmark 首次产出真实 GPU 数据**：`status=ok` / `device=cuda`（此前 16 天全是 CPU 数据），含 tegrastats 功耗与温度（VDD_IN mean 7046 mW、GPU 峰值 53.4 °C），推理步/秒 PDNAPulse 12276 / CfCStyle 11065 / LTC 2378 / GRU 204976。**注意这是 smoke benchmark（合成数据、单种子），不是论文级复现。**
 - **2026-10-25**：[[docs/daily/2026-10-25_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 18 个。
 - **2026-10-24**：[[docs/daily/2026-10-24_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 21 个。
 - **2026-10-23**：[[docs/daily/2026-10-23_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 17 个。
