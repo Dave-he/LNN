@@ -14,18 +14,22 @@ DOWNLOAD_PDFS="${DOWNLOAD_PDFS:-0}"
 JETSON_USE_DOCKER="${JETSON_USE_DOCKER:-auto}"
 # Jetson CUDA benchmark 的**候选镜像列表** (按顺序取第一个本地存在的)。
 #
-# 2026-10-26 修复 (两层):
+# 2026-10-26 修复 (三层):
 #
 # ① 原来这里写死单个 ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin, 而本机
 #    **从来没 pull 过**它 —— `docker image inspect` 失败, 于是每天静默走
-#    host Python 分支, 而宿主 torch 是 cu130 (驱动 540.4.0 最高只支持
-#    CUDA 12.6), 起不来 CUDA → 产物永远是 ok_cpu。**降级是静默的。**
+#    host Python 分支。**降级是静默的。**
 #
 # ② lnn-cuda126:local 装上了但**跑不了任何 kernel**: 它的 torch 是 cu126 索引
 #    的 dev 夜轮版 2.13.0.dev20260610+cu126, 只编 sm_80/sm_90 且**显式排除
 #    8.7**; Orin Nano 是 sm_87 → `no kernel image is available for execution
 #    on the device` (而 `torch.cuda.is_available()` 仍然是 True, 所以只看它会被
 #    骗)。所以**不能**把它当首选。
+#
+# ③ (2026-10-26 晚) **镜像根本不是必需的**: 宿主 `/usr/bin/python3.10` 的
+#    torch 2.10.0+cu126 自带 sm_87 SASS, 实测能跑 kernel (此前一直没被选中,
+#    因为解释器选择只测 `import torch`, 排序又把它排在 cu130 的 python3 之后)。
+#    走宿主的产物是**真实 GPU 数据**, 不是降级。镜像只是"隔离环境"选项。
 #
 # 首选 lnn-sm87:local —— 由 analysis/jetson/Dockerfile.lnn-sm87 构建, 以
 # lnn-cuda126:local 为基底复用其 cu126 CUDA 库, 只把 torch 换成带 sm_87 SASS 的
@@ -140,25 +144,59 @@ if [[ "$DOWNLOAD_PDFS" == "1" ]]; then
   research_args+=(--download-pdfs)
 fi
 
+# 候选解释器 (按优先级)。注意: **不能只看 `import torch` 成功**。
+bench_python_candidates() {
+  printf '%s\n' "$PYTHON_BIN" python3 /usr/bin/python3.10 \
+                  /home/hyx/.pyenv/versions/3.14.4/bin/python3 python3.12 python3.11
+}
+
+# 判断某个解释器能否**真跑一个 CUDA kernel**。
+#
+# 2026-10-26 修正: 原来只测 `import torch`, 于是永远选中 python3 (torch
+# 2.11.0+cu130)。而本机驱动 540.4.0 最高只支持 CUDA 12.6 → `cuda.is_available()`
+# 为 False → 产物天天是 ok_cpu。**"CUDA 可见" 与 "CUDA 可用" 是两回事**:
+# import 成功只说明 wheel 装上了, 不说明这个 wheel 编了本机 sm_87 的 SASS。
+# 判据必须是真跑一个 kernel。
+bench_cuda_kernel_ok() {
+  local interp="$1"
+  "$interp" -c "import torch
+if not torch.cuda.is_available():
+    raise SystemExit(1)
+x = torch.randn(64, 64, device='cuda')
+torch.cuda.synchronize()
+(x @ x).sum().item()" >/dev/null 2>&1
+}
+
 resolve_bench_python() {
   # The digest only needs stdlib, but the benchmark needs a torch that actually
   # imports. On this Jetson (R36) the /usr/bin/python3.10 cu130 wheel fails with
   # "libcudss.so.0: cannot open shared object file" every time, which is why
-  # 2026-10-09..12 produced no benchmark artifact. Pick the first interpreter
-  # whose torch imports; fall back to PYTHON_BIN so the report still records the
-  # failure instead of the run dying silently.
-  if [[ -n "${PYTHON_BENCH_BIN:-}" ]] && "$PYTHON_BENCH_BIN" -c "import torch" >/dev/null 2>&1; then
+  # 2026-10-09..12 produced no benchmark artifact.
+  #
+  # 优先级: (1) 能跑 CUDA kernel 的解释器 → (2) 能 import torch 的 → (3) 兜底。
+  # 本机 /usr/bin/python3.10 的 torch 2.10.0+cu126 带 sm_87 SASS, **能跑 kernel**,
+  # 之前一直没被选中, 因为排序把它排在 python3 (cu130) 后面而判据又太松。
+  if [[ -n "${PYTHON_BENCH_BIN:-}" ]] && bench_cuda_kernel_ok "$PYTHON_BENCH_BIN"; then
     echo "$PYTHON_BENCH_BIN"
     return 0
   fi
   local candidate
-  for candidate in "$PYTHON_BIN" python3 /usr/bin/python3.10 \
-                   /home/hyx/.pyenv/versions/3.14.4/bin/python3 python3.12 python3.11; do
-    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c "import torch" >/dev/null 2>&1; then
+  while read -r candidate; do
+    [[ -n "$candidate" ]] || continue
+    command -v "$candidate" >/dev/null 2>&1 || continue
+    if bench_cuda_kernel_ok "$candidate"; then
       echo "$candidate"
       return 0
     fi
-  done
+  done < <(bench_python_candidates)
+  while read -r candidate; do
+    [[ -n "$candidate" ]] || continue
+    command -v "$candidate" >/dev/null 2>&1 || continue
+    if "$candidate" -c "import torch" >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done < <(bench_python_candidates)
   echo "$PYTHON_BIN"
 }
 
@@ -183,8 +221,8 @@ run_jetson_benchmark() {
     if [[ -z "$bench_image" ]]; then
       # 降级必须**留痕**: 否则读者只会看到产物里的 ok_cpu, 不知道为什么。
       echo "[warn] 本机没有任何 Jetson CUDA 镜像 (已试: ${candidates[*]}), 回退到宿主 Python。" >&2
-      echo "[warn] 宿主 torch 是 cu130 而驱动 540.4.0 最高只支持 CUDA 12.6, 因此本次只能是 CPU 数据。" >&2
-      echo "[warn] 需要真实 CUDA 数字请构建 (两步):" >&2
+      echo "[info] 宿主上仍有能跑 sm_87 kernel 的解释器时, 产物仍然是真实 GPU 数据 —— 回退不等于降级。" >&2
+      echo "[warn] 需要隔离环境的镜像 (可选, 两步):" >&2
       echo "[warn]   docker build -f analysis/jetson/Dockerfile.lnn-cuda126 -t lnn-cuda126:local ." >&2
       echo "[warn]   docker build -f analysis/jetson/Dockerfile.lnn-sm87    -t lnn-sm87:local    ." >&2
     fi
@@ -236,13 +274,21 @@ run_jetson_benchmark() {
     local bench_python
     bench_python="$(resolve_bench_python)"
     echo "[info] benchmark interpreter: $bench_python" >&2
-    # 说清楚"为什么是 CPU": 探一下该解释器的 torch 到底能不能用 CUDA,
+    # 说清楚"为什么是 CPU": 探一下该解释器的 torch 到底能不能**跑 kernel**,
     # 否则日志里只有一句 "CUDA was unavailable", 读者无法区分"本机没 CUDA"
     # 与"选错了解释器 / 装了 cu130 wheel"。
-    if ! "$bench_python" -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)" >/dev/null 2>&1; then
-      echo "[info] 该解释器的 torch 报告 CUDA 不可用 → 本次产物是 CPU 数据, **不是边缘性能证据**" >&2
+    if bench_cuda_kernel_ok "$bench_python"; then
+      echo "[info] 该解释器的 torch 能跑 CUDA kernel → 走 CUDA 路径" >&2
+      # **不传 --no-cpu-fallback**: CUDA 在运行时才失败 (最常见是 NvMap 分配失败
+      # —— 系统内存压力下 GPU 拿不到连续物理页) 时, 让脚本自己回退到 CPU 并把
+      # **失败原因**写进产物; 强行 --no-cpu-fallback 只会让整条流水线崩掉, 当天
+      # 连 CPU 数据都没有, 更糟。
+      "$bench_python" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" $JETSON_BENCHMARK_ARGS
+    else
+      echo "[warn] 本机没有能跑 CUDA kernel 的解释器 → 本次产物是 CPU 数据, **不是边缘性能证据**" >&2
+      echo "[warn] 宿主 torch 是 cu130 而驱动 540.4.0 最高只支持 CUDA 12.6" >&2
+      "$bench_python" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" --quick
     fi
-    "$bench_python" scripts/jetson_lnn_benchmark.py --date "$RUN_DATE" --quick
   fi
 }
 

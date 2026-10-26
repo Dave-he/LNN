@@ -3,7 +3,8 @@
 > 本次排查起因：2026-10-26 04:38 的定时任务日志里 5 条 Hugging Face 查询
 > 全部 `Connection reset by peer`，候选模型数 **0**；而 2026-10-24 的 digest
 > 也带着同样的 `models=0` 进了 origin 且从未修正。
-> 逐层挖下来发现 **4 个独立缺陷**，其中 2 个会把"抓取失败"伪装成"领域事实"。
+> 逐层挖下来发现 **7 个独立缺陷**，其中 3 个会把"抓取失败/选错解释器"伪装成
+> "领域事实 / 本机没有 GPU"。
 
 ---
 
@@ -17,6 +18,7 @@
 | B4 | 摘要的 arXiv 表首行是 10-08，**全池第二新的论文（10-22）排在第 48 位** | 候选池是**各查询组的拼接**，只有组内有序，拼接后无全局排序 | `sort_papers_by_date()`，且放在 `main()` 回退合并之后 |
 | B5 | PDF 下载器只拿到 **34** 个 arxiv id，而候选池有 93 篇 | `download_arxiv_pdfs.collect_arxiv_ids()` 只读 digest 的**渲染表**（前 12 行） | 改读 `papers/daily/*_lnn_research.json` **全量**候选池 → 122 个 id |
 | B6 | Jetson benchmark 永远是 `ok_cpu`；换镜像后 `torch.cuda.is_available()==True` 但**任何 kernel 都跑不起来** | ① 镜像名写死一个**本机从未 pull 过**的镜像 → 静默降级；② cu126 索引的 dev 夜轮 torch **只编 sm_80/sm_90 且显式排除 8.7**，Orin Nano 是 sm_87 | 镜像候选列表 + 本地存在性检查；新增 `Dockerfile.lnn-sm87`（PyPI 官方 aarch64 wheel，带 sm_87 SASS） |
+| B7 | 产物 16 天全是 `ok_cpu`，环境行写 `CUDA：False` —— 但**本机其实有一个能跑 sm_87 kernel 的 torch**（`/usr/bin/python3.10` 的 2.10.0+cu126） | `resolve_bench_python()` 的判据只测 `import torch`，而候选排序把 cu130 的 `python3` 排在前面 → 永远选不到那个 cu126 解释器 | 判据改成**真跑一个 kernel**（`bench_cuda_kernel_ok`），优先级改为"能跑 kernel > 能 import > 兜底"；当日首次拿到真实 GPU 数据 |
 
 > B5 是 B4 的同型复发：**下游脚本只读渲染产物，必然继承渲染层的截断**。
 > 这是本项目第三次踩同一个坑（`select_papers_for_report` → 改读 JSON；
@@ -264,6 +266,12 @@ PyPI 上 torch 有 aarch64 官方 wheel（2.5.1~2.10.0），它们是 JetPack �
 
 新增 `analysis/jetson/Dockerfile.lnn-sm87`（`ARG TORCH_SPEC=2.7.0`，走 PyPI 默认索引）。
 
+> **2026-10-26 晚更正**：镜像路线**不是必需的** —— 宿主 `/usr/bin/python3.10` 的
+> torch 2.10.0+cu126 本身就带 sm_87 SASS 且能跑 kernel，详见 §7。于是"PyPI 官方
+> aarch64 wheel 是唯一长期带 sm_87 SASS 的发行版"这句话并不成立（宿主 2.10.0+cu126
+> 就是反例）。本轮放弃构建镜像（下载 99MB wheel 在本机 ≈20 分钟），
+> 改去修解释器选择。Dockerfile 保留作隔离环境备选。
+
 ### 6.4 另一个独立问题：系统 RAM 耗尽导致 nvmap 分配失败
 
 第一次跑容器时连 **64×64（16KB）** 的分配都报
@@ -279,7 +287,105 @@ PyPI 上 torch 有 aarch64 官方 wheel（2.5.1~2.10.0），它们是 JetPack �
 
 ---
 
-## 7. 验证
+## 7. B7 — 解释器选择只看 `import torch`，于是**永远选不到能跑 CUDA 的那个**
+
+### 7.1 症状与根因
+
+10-12 ~ 10-26 每一天的产物都是 `status=ok_cpu`，环境行写着
+`PyTorch：2.11.0+cu130` / `CUDA：False (13.0)`。本仓的长期记忆里因此记着
+"**本机无任何可用 CUDA**"。
+
+真因在 `scripts/run_daily_lnn_task.sh:resolve_bench_python()`：候选解释器按
+`python3 → /usr/bin/python3.10 → …` 排序，**判据只测 `import torch` 能不能成功**。
+本机两个解释器都能 import：
+
+| 解释器 | torch | wheel 的 CUDA | 驱动 540.4.0 (上限 12.6) | 实际 |
+|---|---|---|---|---|
+| `python3` (pyenv 3.14) | 2.11.0+**cu130** | 13.0 | 超出上限 | `is_available()` = **False** → CPU |
+| `/usr/bin/python3.10` | 2.10.0+**cu126** | 12.6 | 正好 | 能跑 sm_87 kernel → **GPU** |
+
+判据太松 → 排序里靠前的 cu130 永远胜出 → 每天静默产出一份 CPU 数据。
+**这不是"本机没 CUDA"，是"本机有一个我们从没选过的解释器有 CUDA"。**
+
+### 7.2 修正：判据从"能 import"改成"能跑一个 kernel"
+
+新增 `bench_cuda_kernel_ok()`：真跑一次 64×64 matmul 并 `cuda.synchronize()`。
+`resolve_bench_python()` 的优先级随之改为
+**(1) 能跑 kernel → (2) 能 import torch → (3) 兜底**。
+
+> 判据必须跟着"要证明什么"走：要证明"这个解释器能用 CUDA 跑训练/推理"，
+> 就得真跑一个 kernel。`import torch` 只证明 wheel 装上了；
+> `torch.cuda.is_available()` 只证明驱动 + runtime 起来了；
+> **两者都不证明这个 wheel 编了本机 sm_87 的 SASS。**
+
+### 7.3 当日产物：首次拿到真实 GPU 数据
+
+2026-10-26 用 `/usr/bin/python3.10` 跑出 `status=ok` / `device=cuda`：
+64 samples / seq 16 / hidden 8 / 1 epoch，**含 tegrastats 功耗与温度**
+（VDD_IN mean 7046 mW / peak 7615 mW，GPU 峰值 53.4 °C，GPU 利用率 mean 8% / peak 27%）。
+推理步/秒：PDNAPulse 12276 / CfCStyle 11065 / LTC 2378 / GRU 204976。
+这是本仓第一次拿到**真实边缘 GPU 性能数据**（此前 16 天全是 CPU 数据）。
+
+### 7.4 仍然存在的一层：内存压力下的 NvMap 分配失败
+
+同一天下午先失败过一次：64×64（16KB）都报
+`NvMapMemAllocInternalTagged: 1075072515 error 12` + `CUDA error: out of memory`；
+`mem_get_info` 却报 free 2165 MB。**几分钟后同一条命令就成功了。**
+这与 §6.4 是同一件事：nvmap 要**连续物理内存**，系统被 codex/Hoper 批任务压满时
+就分配不出来。所以：
+
+- **"CUDA 可见" / "CUDA 可用" / "CUDA 现在分配得到内存" 是三件事**；
+- 失败与否**随系统内存压力波动**，不是稳定的能力边界；
+- 修法不是"绕开 CUDA"，而是**让失败可解释**：宿主路径不再传
+  `--no-cpu-fallback`，让脚本自己回退并把失败原因写进产物。
+
+### 7.5 附带修掉的"结论方向相反"缺陷
+
+`write_report()` 原来只在 `status ∈ {ok, ok_cpu, ok_cpu_fallback}` 时渲染正文，
+而 `cuda_fallback_reason` **只写进 JSON**。只读 md 的人看到
+"CUDA was unavailable" 会得出"这台机器没有 GPU"，而真实情况是
+"CUDA 在，分配失败" —— **两个相反的结论**。已让失败原因同时出现在 md 横幅里，
+并给成功的 GPU 运行补上 status_note（原来 GPU 成功时横幅写
+"（本次运行未记录 status_note）"）。
+
+### 7.6 对镜像路线的影响
+
+`lnn-sm87:local`（`Dockerfile.lnn-sm87`）**不再是必需品** —— 宿主解释器已经能跑
+sm_87 kernel。镜像只剩"隔离环境"这一个价值，而它要下载 99MB wheel（本机网络
+约 80 KB/s，≈20 分钟）。因此本轮**放弃构建**，改为修解释器选择。
+`Dockerfile.lnn-sm87` 保留作为备选路线，其注释里"PyPI 官方 aarch64 wheel 是
+唯一长期带 sm_87 SASS 的发行版"这句话也一并更正（宿主 2.10.0+cu126 就是反例）。
+
+---
+
+## 8. 附带发现：`.git/rebase-merge` 残留了两个月，2026-08-27 的中断 rebase
+
+排查过程中 `git commit` 突然报
+`You are currently editing a commit while rebasing branch 'master' on '2d9a23a'`，
+而 reflog 里**没有任何 rebase 记录**。查 `.git/rebase-merge/` 的 mtime：
+**2026-08-27 04:35** —— 两个月前的一次 rebase 中途夭折（机器重启或 `reset --hard`
+打断了），状态目录留在 `.git/` 里没人清理。
+
+它引用的 `orig-head = eefd3e6`（"chore(daily): update LNN research digest 2026-08-27"）
+**已经不在 master 历史里**。先确认没丢东西：该 commit 改的 5 个文件
+（`docs/daily/2026-08-27_*.md`、`papers/daily/2026-08-27_*.json`、watchlist、
+两个索引）**全部还在 master 树里** —— 那次 rebase 被中断后，**同样的内容被
+用另一个 commit 重新提交过**。所以是纯垃圾状态，不是内容丢失。
+
+危险在于：留着它，任何人执行 `git rebase --continue` 都会去重放一个**已经不
+在历史上**的提交；而 `git commit` / `git status` 又会一直打出 "rebasing" 的
+误导性状态。已用 `git rebase --quit` 清除（quit 只删状态文件，**不动 HEAD 与
+工作区**）。
+
+> **判据**：看到 git 报 "rebasing" 但 reflog 里没有对应 rebase 记录时，
+> 先看 `.git/rebase-merge/` 的 mtime —— 那是**陈旧状态**而不是进行中的操作。
+> 处理前必须先确认内容没丢（`git merge-base --is-ancestor <orig-head> master`
+> + 核对受影响文件是否仍在树里），再 `git rebase --quit`，
+> **绝不要 `--continue`**。
+
+---
+
+## 9. 验证
 
 ```bash
 python3 scripts/check_negative_results.py        # [OK] 9 条条目, grounding 全部存在

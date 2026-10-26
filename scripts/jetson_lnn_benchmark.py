@@ -261,13 +261,23 @@ def write_report(run_date: str, payload: dict[str, Any]) -> tuple[pathlib.Path, 
         # 会让只读报告的人把 CPU 步/秒当成边缘性能证据 (2026-10-14 之前就是这个状态).
         f"> ⚠️ **运行状态：`{payload.get('status', 'unknown')}`**",
         f"> {payload.get('status_note') or '（本次运行未记录 status_note）'}",
-        "",
-        "## 环境",
-        f"- 平台：{env.get('platform')}",
-        f"- 设备树型号：{env.get('device_tree_model') or 'unknown'}",
-        f"- PyTorch：{env.get('torch_version') or 'not installed'}",
-        f"- CUDA：{env.get('cuda_available')} ({env.get('cuda_version')})",
     ]
+    # CUDA 失败原因必须**同时出现在 md 里**。
+    # 2026-10-26: 本机有能跑 sm_87 kernel 的 torch, 但系统内存压力导致 NvMap 分配
+    # 失败 —— 这时 status 是 ok_cpu_fallback, 而 cuda_fallback_reason 原来只写进
+    # JSON。只读 md 的人会以为"本机压根没有 CUDA", 结论完全相反。
+    if payload.get("cuda_fallback_reason"):
+        lines.append(f"> CUDA 失败原因：`{payload.get('cuda_fallback_reason')}`")
+    lines.extend(
+        [
+            "",
+            "## 环境",
+            f"- 平台：{env.get('platform')}",
+            f"- 设备树型号：{env.get('device_tree_model') or 'unknown'}",
+            f"- PyTorch：{env.get('torch_version') or 'not installed'}",
+            f"- CUDA：{env.get('cuda_available')} ({env.get('cuda_version')})",
+        ]
+    )
     mem = env.get("system_memory") or {}
     if mem.get("total_mb"):
         lines.append(
@@ -945,12 +955,19 @@ def mark_cpu_only_run(payload: dict[str, Any]) -> dict[str, Any]:
     reads as GPU/edge performance. Only an exact "ok" is renamed; an existing
     "ok_cpu_fallback" already means CPU and keeps its cuda_fallback_reason.
     """
-    if payload.get("status") == "ok" and payload.get("device") == "cpu":
-        payload["status"] = "ok_cpu"
-        payload["status_note"] = (
-            "CUDA was unavailable, so these are CPU timings measured on the Jetson host. "
-            "They are not GPU/edge performance evidence."
-        )
+    if payload.get("status") == "ok":
+        if payload.get("device") == "cpu":
+            payload["status"] = "ok_cpu"
+            payload["status_note"] = (
+                "CUDA was unavailable, so these are CPU timings measured on the Jetson host. "
+                "They are not GPU/edge performance evidence."
+            )
+        else:
+            payload["status_note"] = (
+                "Real GPU measurement: the model ran on CUDA on the Jetson, so the steps/sec below "
+                "are edge/GPU performance evidence. Still a smoke benchmark (synthetic data, one "
+                "seed) — not a paper-level reproduction."
+            )
     return payload
 
 
@@ -1026,6 +1043,11 @@ def main() -> int:
         payload = run_pareto_benchmark(args) if args.pareto else run_benchmark(args)
         payload["status"] = "ok_cpu_fallback"
         payload["cuda_fallback_reason"] = reason
+        payload["status_note"] = (
+            "CUDA was visible but the run failed at runtime, so these are CPU timings measured on the "
+            "Jetson host. They are not GPU/edge performance evidence. This is NOT the same as "
+            "'this machine has no CUDA' — see the failure reason below."
+        )
 
     payload = mark_cpu_only_run(payload)
 

@@ -26,14 +26,21 @@ FROM lnn-cuda126:local
 #
 # 为什么是 torch 2.7.0
 # -------------------
-# PyPI 上的官方 aarch64 wheel 是唯一长期带 sm_87 SASS 的发行版:
+# PyPI 上的官方 aarch64 wheel 默认带 sm_87 SASS:
 #   2.7.0 → 默认 cu126 ← 与驱动 540.4.0 正好对齐
 #   2.6.0 / 2.5.1 → 默认 cu124, 靠 CUDA minor-version 兼容
 #   2.8.0+ → cu128, 超出驱动上限, ❌
 #
-# 附带更正: 2026-10-19 记的 "cu126 索引对 aarch64 只有 dev 夜轮" **是错的** ——
+# 附带更正 1: 2026-10-19 记的 "cu126 索引对 aarch64 只有 dev 夜轮" **是错的** ——
 # 该索引其实有稳定版 `torch-2.10.0+cu126-cp312-cp312-manylinux_2_28_aarch64.whl`
 # (2026-01-21 上传)。当时的检查方法漏了它。
+#
+# 附带更正 2 (2026-10-26 晚): 写这份 Dockerfile 时的前提
+# "PyPI 官方 aarch64 wheel 是**唯一**长期带 sm_87 SASS 的发行版" **不成立** ——
+# 宿主 `/usr/bin/python3.10` 已经装着 **torch 2.10.0+cu126**, 同样带 sm_87 SASS,
+# 实测能跑 kernel。**本镜像因此不是必需品**, 只剩"隔离环境"这一个价值;
+# 流水线走宿主路径即可 (见 scripts/run_daily_lnn_task.sh: bench_cuda_kernel_ok)。
+# 想复现本镜像: docker build -f analysis/jetson/Dockerfile.lnn-sm87 -t lnn-sm87:local .
 #
 # 为什么用 --no-deps
 # -----------------
