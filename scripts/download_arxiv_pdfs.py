@@ -7,7 +7,7 @@ that already exist.
 """
 
 from __future__ import annotations
-import pathlib, sys, time, urllib.request, urllib.error, re
+import json, pathlib, sys, time, urllib.request, urllib.error, re
 
 ROOT = pathlib.Path("/mnt/ssd/codespace/research/LNN")
 REPORTS = ROOT / "docs" / "reports"
@@ -38,6 +38,25 @@ def collect_arxiv_ids() -> list[str]:
             text = f.read_text(encoding="utf-8", errors="ignore")
             for m in re.finditer(r"arxiv\.org/abs/(\d{4}\.\d{4,6})", text):
                 ids.add(m.group(1))
+    # From the JSON candidate pool — **the authoritative source**.
+    #
+    # 2026-10-26: 上面那段只读 digest 的**渲染表**, 而表只渲染前 12 行,
+    # 于是候选池里第 13 名之后的论文 (2026-10-26 全池 93 篇) 永远拿不到 PDF
+    # —— 同一类"下游只读渲染产物"的截断盲区 (与 select_papers_for_report
+    # 改读 JSON 前是同一个毛病)。JSON 里存的是**全量**候选, 字段 `id`
+    # 形如 "2610.31252v1"。
+    pool_dir = ROOT / "papers" / "daily"
+    if pool_dir.exists():
+        for f in sorted(pool_dir.glob("*_lnn_research.json")):
+            try:
+                payload = json.loads(f.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                continue
+            for paper in payload.get("papers") or []:
+                raw = str(paper.get("id") or "")
+                m = re.match(r"(\d{4}\.\d{4,6})", raw)
+                if m:
+                    ids.add(m.group(1))
     # Filter out fake/duplicate ids
     bogus_ids = {
         "2603.14989",  # MDN-CfC tracker placeholder

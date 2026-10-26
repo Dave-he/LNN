@@ -15,6 +15,14 @@
 | B2 | HF 抓取失败后 digest 仍写"本次未发现可记录的 Hugging Face 模型" | 渲染层不区分"领域事实"与"覆盖盲区" | 摘要行/空结果行显式打 ⚠️ 标记 |
 | B3 | HF 查询**完全没有重试**（arXiv 侧有 `request_text_retry`） | 单次瞬时故障即可清空整轮候选池 | `request_json_retry` + 退避 (5/15/40s) |
 | B4 | 摘要的 arXiv 表首行是 10-08，**全池第二新的论文（10-22）排在第 48 位** | 候选池是**各查询组的拼接**，只有组内有序，拼接后无全局排序 | `sort_papers_by_date()`，且放在 `main()` 回退合并之后 |
+| B5 | PDF 下载器只拿到 **34** 个 arxiv id，而候选池有 93 篇 | `download_arxiv_pdfs.collect_arxiv_ids()` 只读 digest 的**渲染表**（前 12 行） | 改读 `papers/daily/*_lnn_research.json` **全量**候选池 → 122 个 id |
+| B6 | Jetson benchmark 永远是 `ok_cpu`；换镜像后 `torch.cuda.is_available()==True` 但**任何 kernel 都跑不起来** | ① 镜像名写死一个**本机从未 pull 过**的镜像 → 静默降级；② cu126 索引的 dev 夜轮 torch **只编 sm_80/sm_90 且显式排除 8.7**，Orin Nano 是 sm_87 | 镜像候选列表 + 本地存在性检查；新增 `Dockerfile.lnn-sm87`（PyPI 官方 aarch64 wheel，带 sm_87 SASS） |
+
+> B5 是 B4 的同型复发：**下游脚本只读渲染产物，必然继承渲染层的截断**。
+> 这是本项目第三次踩同一个坑（`select_papers_for_report` → 改读 JSON；
+> 索引按行截断 → 改按天；现在是 PDF 下载器）。**判据：任何读 digest markdown
+> 的自动化都要问一句"它需要的是渲染结果还是全量池"。**
+
 
 ---
 
@@ -184,7 +192,94 @@ GitHub 侧"排序不按研究价值"是同一类问题。
 
 ---
 
-## 5. 验证
+## 5. B5 — PDF 下载器也是截断盲区（第三次同型复发）
+
+`scripts/download_arxiv_pdfs.py` 的 `collect_arxiv_ids()` 从三个地方收 id：
+研读报告、`papers/daily/*.md`、以及 `docs/daily/*.md`（digest）。
+**最后一个是渲染表** —— 只渲染前 12 行。
+
+实测：修复前只收得到 **34** 个 id，候选池里第 13 名之后的论文**永远拿不到 PDF**。
+修复后从 `papers/daily/*_lnn_research.json`（**全量**候选池，字段 `papers[].id`
+形如 `2610.31252v1`）取 id → **122** 个（+88）。
+
+---
+
+## 6. B6 — Jetson benchmark 的两道静默降级
+
+### 6.1 降级一：镜像名指向一个本机没有的镜像
+
+`run_daily_lnn_task.sh` 原来写死 `JETSON_DOCKER_IMAGE=ghcr.io/nvidia-ai-iot/vllm:latest-jetson-orin`，
+而**本机从来没 pull 过它** → `docker image inspect` 失败 → 每天静默走 host Python
+分支 → 宿主 torch 是 cu130（驱动 540.4.0 最高只支持 12.6）→ 起不来 CUDA →
+产物永远是 `ok_cpu`。**两级降级都只写一行"CUDA 不可用"，不留痕。**
+
+修复：改成 `JETSON_DOCKER_IMAGES` 候选列表，取**第一个本地存在**的镜像；
+一个都没有时**显式打印**"本机没有 Jetson CUDA 镜像 + 宿主是 cu130 所以本次只能是
+CPU 数据 + 怎么现场构建"。
+
+### 6.2 降级二：cu126 夜轮 torch 在 sm_87 上无 kernel
+
+按上面的提示构建了 `analysis/jetson/Dockerfile.lnn-cuda126`
+（`torch==2.13.0.dev20260610+cu126`，来自 download.pytorch.org 的 cu126 索引
+——该索引对 aarch64 **只有 dev 夜轮版**）。镜像构建成功，容器内：
+
+```
+torch 2.13.0.dev20260610+cu126
+cuda_avail True
+cuda_ver 12.6
+dev Orin
+```
+
+**看起来完全正常**，但真跑 kernel 就炸：
+
+```
+UserWarning: Found GPU0 Orin which is of compute capability (CC) 8.7.
+The following list shows the CCs this version of PyTorch was built for:
+- 8.0 which supports hardware CC >=8.0,<9.0 except {8.7}
+- 9.0 which supports hardware CC >=9.0,<10.0
+No published PyTorch CUDA builds for release 2.13.0.dev20260610+cu126 support this GPU.
+
+torch.AcceleratorError: CUDA error: no kernel image is available for execution on the device
+```
+
+**该夜轮版只编了 sm_80 与 sm_90，并显式排除 8.7，也没有编 PTX 供 JIT 回退。**
+Orin Nano 是 sm_87 → 一条 kernel 都没有。
+
+> **教训**：`torch.cuda.is_available() == True` **不等于** CUDA 可用。
+> 它只说明驱动和 runtime 起来了，不代表这个 torch build 有你 GPU 的 SASS。
+> 验收必须真跑一个 kernel（`torch.randn(n,n,device='cuda'); x@x`），
+> 只看 `is_available()` 会把一个完全跑不起来的镜像判成"可用"。
+> 这条已修正本项目 memory 里"lnn-cuda126:local 可用"的旧结论。
+
+### 6.3 正确路线：PyPI 官方 aarch64 wheel
+
+PyPI 上 torch 有 aarch64 官方 wheel（2.5.1~2.10.0），它们是 JetPack 上唯一
+长期带 **sm_87 SASS** 的发行版：
+
+| torch | 默认 CUDA | 与驱动 540.4.0 (≤12.6) |
+|---|---|---|
+| 2.7.0 / 2.7.1 | cu126 | ✅ 版本正好对齐 |
+| 2.6.0 / 2.5.1 | cu124 | ✅ 靠 CUDA minor-version 兼容 |
+| 2.8.0+ | cu128 | ❌ 超出驱动上限 |
+
+新增 `analysis/jetson/Dockerfile.lnn-sm87`（`ARG TORCH_SPEC=2.7.0`，走 PyPI 默认索引）。
+
+### 6.4 另一个独立问题：系统 RAM 耗尽导致 nvmap 分配失败
+
+第一次跑容器时连 **64×64（16KB）** 的分配都报
+`NvMapMemAllocInternalTagged: error 12` + `CUDA error: out of memory`。
+`tegrastats` 显示 `RAM 6177/7620MB, SWAP 10214/20194MB, lfb 1x256kB` ——
+**最大连续空闲块只有 256kB**，nvmap 要连续物理内存，分配不出 carve-out。
+等系统内存回落到 `RAM 4569/7620MB, lfb 2x2MB` 后，同一条分配立刻成功，
+随后才暴露出真正的 sm_87 kernel 缺口。
+
+> 与 2026-09-29 记录的现象同源（RAM 耗尽 → 静默 CPU 回退）。
+> 本次是**两件事叠在一起**：先是 RAM 压力伪装成"CUDA 不可用"，
+> 内存回落后才看到真正的 kernel 缺口。**排查要分层，别把第一层症状当结论。**
+
+---
+
+## 7. 验证
 
 ```bash
 python3 scripts/check_negative_results.py        # [OK] 9 条条目, grounding 全部存在

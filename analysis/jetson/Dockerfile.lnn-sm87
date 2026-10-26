@@ -1,0 +1,31 @@
+FROM python:3.12-slim
+
+# 宿主: Jetson Orin Nano, JetPack R36, 驱动 540.4.0 (最高 CUDA 12.6), GPU 架构 **sm_87**。
+#
+# 为什么要这个镜像 (2026-10-26 实测踩坑记录)
+# ------------------------------------------------
+# 第一版用的是 Dockerfile.lnn-cuda126: 走 download.pytorch.org/whl/cu126 索引,
+# 钉 torch==2.13.0.dev20260610+cu126 (该索引对 aarch64 只有 dev 夜轮版)。
+# 结果是:
+#   - torch.cuda.is_available() == True, 能拿到设备名 "Orin"  ✅ 看起来没问题
+#   - 但**任何 kernel 都跑不起来**:
+#       CUDA error: no kernel image is available for execution on the device
+#     伴随警告: "Found GPU0 Orin which is of compute capability (CC) 8.7 ...
+#     No published PyTorch CUDA builds for release 2.13.0.dev20260610+cu126
+#     support this GPU"
+#   原因: 该夜轮版只编了 sm_80 与 sm_90, **且显式排除 8.7**, 也没有编 PTX
+#   供 JIT 回退 —— 所以"CUDA 可见"与"CUDA 可用"是两回事。
+#
+# 结论: 驱动支持 CUDA 12.6 不等于有 cu126 的 wheel 能跑 sm_87。
+# 正确路线是 **PyPI 上的 aarch64 官方 wheel** (它们是 JetPack 上唯一
+# 长期带 sm_87 SASS 的发行版):
+#   torch 2.7.0 (默认 cu126)  ← 首选, 与驱动 540.4.0 的 CUDA 12.6 匹配
+#   torch 2.6.0 / 2.5.1 (默认 cu124) ← 备选, 靠 CUDA minor-version 兼容跑
+#
+# 不要用 `pip index versions` 判断有没有 wheel —— 它会把无 wheel 的版本也列出来
+# (踩过: 钉 2.10.0+cu126 会被 pip 拉去源码编译)。
+ARG TORCH_SPEC=2.7.0
+RUN pip install --no-cache-dir "torch==${TORCH_SPEC}" \
+ && pip install --no-cache-dir torchdiffeq numpy scikit-learn pandas
+
+WORKDIR /workspace/LNN
