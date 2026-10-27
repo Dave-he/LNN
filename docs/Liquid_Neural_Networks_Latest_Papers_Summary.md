@@ -116,6 +116,7 @@ date: 2026-05-25
 <!-- daily-lnn-index:start -->
 ## 4. 自动化每日追踪索引
 
+- **2026-10-28**：[[docs/daily/2026-10-28_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 17 个。
 - **2026-10-27**：[[docs/daily/2026-10-27_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 20 个。
 - **2026-10-26**：[[docs/daily/2026-10-26_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 21 个。
   - 当日**人工选出的 6 篇高分候选全部完成复算型研读**（**注意：这不等于 selector 的 pending 归零** —— 93 篇全池按弱关键词打分后仍有 33 个 `score>0` 的候选未研读，其中除头部 3 篇外多为 `'control'`/`'forecasting'` 等泛词误命中）：[[docs/reports/LTC_NN_Implicit_Physics_Model_Recovery_2412.02215_研读报告.md|2412.02215 LTC-NN 隐式物理模型反推]]、[[docs/reports/Oil_Spill_Response_LNN_Trajectory_Modeling_2508.12456_研读报告.md|2508.12456 油污扩散 LNN 轨迹建模]]、[[docs/reports/Supply_Chain_Ordering_LNN_XGBoost_2507.21383_研读报告.md|2507.21383 LNN+XGBoost 供应链下单]]、[[docs/reports/LTC_Universal_Approximators_1811.00321_研读报告.md|1811.00321 LTC 通用逼近原始出处]]、[[docs/reports/RLC_Networks_Liquid_Resistance_Capacitance_2403.08791_研读报告.md|2403.08791 LRC/LRCU 电阻电容网络]]、[[docs/reports/Liquid_S4_Liquid_Structural_State_Space_Models_2209.12951_研读报告.md|2209.12951 Liquid-S4]]。**四篇复算出论文内部不自洽**（代数恒等式、CV/跨表 MAE、两表排序相反且缺经典基线、Liquid-S4 的 Table 1 Avg 列 9/26 行与正文 3 处不自洽），故均按"阅读层算术核验"处理，**不新增台账条目**（台账门槛是"我方复现失败"）。
@@ -148,6 +149,5 @@ date: 2026-05-25
 - **2026-10-01**：[[docs/daily/2026-10-01_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
 - **2026-09-30**：[[docs/daily/2026-09-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 14 个。
 - **2026-09-29**：[[docs/daily/2026-09-29_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
-- **2026-09-28**：[[docs/daily/2026-09-28_LNN_research_digest.md|每日追踪]]，候选论文 0 篇，仓库 41 个，模型 18 个。
 <!-- daily-lnn-index:end -->
 截至 2026 年，液态神经网络（LNN）正逐步成为边缘计算（Edge AI）、自动驾驶、医疗实时监控（如心电图异常检测）及高频金融交易等时间敏感型领域的新标准。特别是 Liquid AI 推出的液态基础模型（LFM）系列，标志着 LNN 从学术研究走向大规模产业化应用的重要里程碑。虽然大规模 Transformer 继续在云端主导静态大语言模型任务，但极其紧凑且高效的液态神经网络正在成为各类物联网及机器人等边缘设备的“数字神经系统”。
