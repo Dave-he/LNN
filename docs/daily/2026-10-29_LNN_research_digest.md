@@ -50,17 +50,17 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-10-28 | [LiquidAI/LFM3-Omni-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF) | 6263 | 52 | any-to-any |
-| 2026-10-28 | [LiquidAI/LFM3-VL-2B](https://huggingface.co/LiquidAI/LFM3-VL-2B) | 1596 | 129 | image-text-to-text |
+| 2026-10-28 | [LiquidAI/LFM3-1.7B-GGUF](https://huggingface.co/LiquidAI/LFM3-1.7B-GGUF) | 18165 | 97 | text-generation |
+| 2026-10-28 | [LiquidAI/LFM3-VL-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-VL-2B-GGUF) | 6663 | 37 | image-text-to-text |
+| 2026-10-28 | [LiquidAI/LFM3-Omni-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF) | 6263 | 54 | any-to-any |
+| 2026-10-28 | [LiquidAI/LFM3-VL-2B](https://huggingface.co/LiquidAI/LFM3-VL-2B) | 1596 | 132 | image-text-to-text |
 | 2026-10-28 | [mradermacher/LFM2.5-2.6B-UNCENSORED-ABLITERATED-PHILADELPHIA-CLASS-i1-GGUF](https://huggingface.co/mradermacher/LFM2.5-2.6B-UNCENSORED-ABLITERATED-PHILADELPHIA-CLASS-i1-GGUF) | 1356 | 0 | text-generation |
 | 2026-10-28 | [saidutta69/LFM2.5-230M-heretic](https://huggingface.co/saidutta69/LFM2.5-230M-heretic) | 1001 | 0 | text-generation |
 | 2026-10-28 | [saidutta69/LFM2.5-VL-3B-heretic](https://huggingface.co/saidutta69/LFM2.5-VL-3B-heretic) | 742 | 0 | image-text-to-text |
 | 2026-10-28 | [saidutta69/LFM2.5-VL-450M-heretic](https://huggingface.co/saidutta69/LFM2.5-VL-450M-heretic) | 731 | 0 | image-text-to-text |
 | 2026-10-28 | [LiquidAI/LFM3-1.7B-NVFP4](https://huggingface.co/LiquidAI/LFM3-1.7B-NVFP4) | 339 | 15 | text-generation |
-| 2026-10-28 | [LiquidAI/LFM3-VL-2B-MLX-4bit](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-4bit) | 322 | 10 | image-text-to-text |
-| 2026-10-28 | [LiquidAI/LFM3-VL-2B-MLX-5bit](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-5bit) | 151 | 8 | image-text-to-text |
 | 2026-10-28 | [LiquidAI/LFM3-VL-2B-FP8](https://huggingface.co/LiquidAI/LFM3-VL-2B-FP8) | 56 | 10 | image-text-to-text |
-| 2026-10-28 | [LiquidAI/LFM3-VL-2B-NVFP4](https://huggingface.co/LiquidAI/LFM3-VL-2B-NVFP4) | 33 | 8 | image-text-to-text |
+| 2026-10-28 | [LiquidAI/LFM3-VL-2B-NVFP4](https://huggingface.co/LiquidAI/LFM3-VL-2B-NVFP4) | 33 | 9 | image-text-to-text |
 | 2026-10-28 | [Synaptics/LiquidAI-LFM2.5-350M-QAD-Q4_0-torq](https://huggingface.co/Synaptics/LiquidAI-LFM2.5-350M-QAD-Q4_0-torq) | 10 | 0 | text-generation |
 
 ## 建议动作

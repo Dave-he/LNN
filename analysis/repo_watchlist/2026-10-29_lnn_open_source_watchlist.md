@@ -148,15 +148,27 @@ tags: [LNN, repo-watchlist, automation]
 - 说明：Liquid Lab: live demo for our AI flipped classroom on Liquid Neural Networks
 
 ## Hugging Face 模型
+### [LiquidAI/LFM3-1.7B-GGUF](https://huggingface.co/LiquidAI/LFM3-1.7B-GGUF)
+- 更新：2026-10-28
+- 下载 / Likes：18165 / 97
+- 任务：text-generation
+- Tags：gguf, liquid, lfm3, llama.cpp, text-generation, en, ar, zh
+
+### [LiquidAI/LFM3-VL-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-VL-2B-GGUF)
+- 更新：2026-10-28
+- 下载 / Likes：6663 / 37
+- 任务：image-text-to-text
+- Tags：gguf, liquid, lfm3, llama.cpp, image-text-to-text, en, ar, zh
+
 ### [LiquidAI/LFM3-Omni-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF)
 - 更新：2026-10-28
-- 下载 / Likes：6263 / 52
+- 下载 / Likes：6263 / 54
 - 任务：any-to-any
 - Tags：gguf, liquid, lfm3, lfm3-omni, omni, audio, vision, llama.cpp
 
 ### [LiquidAI/LFM3-VL-2B](https://huggingface.co/LiquidAI/LFM3-VL-2B)
 - 更新：2026-10-28
-- 下载 / Likes：1596 / 129
+- 下载 / Likes：1596 / 132
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm3_vl, image-text-to-text, liquid, lfm3, edge, conversational
 
@@ -190,18 +202,6 @@ tags: [LNN, repo-watchlist, automation]
 - 任务：text-generation
 - Tags：transformers, safetensors, lfm3, text-generation, liquid, nvfp4, modelopt, conversational
 
-### [LiquidAI/LFM3-VL-2B-MLX-4bit](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-4bit)
-- 更新：2026-10-28
-- 下载 / Likes：322 / 10
-- 任务：image-text-to-text
-- Tags：mlx, safetensors, lfm3_vl, liquid, lfm3, image-text-to-text, conversational, custom_code
-
-### [LiquidAI/LFM3-VL-2B-MLX-5bit](https://huggingface.co/LiquidAI/LFM3-VL-2B-MLX-5bit)
-- 更新：2026-10-28
-- 下载 / Likes：151 / 8
-- 任务：image-text-to-text
-- Tags：mlx, safetensors, lfm3_vl, liquid, lfm3, image-text-to-text, conversational, custom_code
-
 ### [LiquidAI/LFM3-VL-2B-FP8](https://huggingface.co/LiquidAI/LFM3-VL-2B-FP8)
 - 更新：2026-10-28
 - 下载 / Likes：56 / 10
@@ -210,7 +210,7 @@ tags: [LNN, repo-watchlist, automation]
 
 ### [LiquidAI/LFM3-VL-2B-NVFP4](https://huggingface.co/LiquidAI/LFM3-VL-2B-NVFP4)
 - 更新：2026-10-28
-- 下载 / Likes：33 / 8
+- 下载 / Likes：33 / 9
 - 任务：image-text-to-text
 - Tags：transformers, safetensors, lfm3_vl, image-text-to-text, liquid, lfm3, nvfp4, modelopt
 
