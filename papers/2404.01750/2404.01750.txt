@@ -1,0 +1,823 @@
+Exploring Latent Pathways: Enhancing the Interpretability of
+Autonomous Driving with a Variational Autoencoder
+Anass Bairouk 1, Mirjana Maras 1, Simon Herlin 1, Alexander Amini 2, Marc Blanchon 1,
+Ramin Hasani 2, Patrick Chareyre 1, Daniela Rus 2
+Abstract— Autonomous driving presents a complex
+challenge, which is usually addressed with artificial
+intelligence models that are end-to-end or modular in
+nature. Within the landscape of modular approaches,
+a bio-inspired neural circuit policy model has emerged
+as an innovative control module, offering a compact
+and inherently interpretable system to infer a steering
+wheel command from abstract visual features. Here,
+we take a leap forward by integrating a variational
+autoencoder with the neural circuit policy controller,
+forming a solution that directly generates steering
+commands from input camera images. By substituting
+the traditional convolutional neural network approach
+to feature extraction with a variational autoencoder,
+we enhance the system’s interpretability, enabling
+a more transparent and understandable decision-
+making process.
+In addition to the architectural shift toward a vari-
+ational autoencoder, this study introduces the auto-
+matic latent perturbation tool, a novel contribution
+designed to probe and elucidate the latent features
+within the variational autoencoder. The automatic la-
+tent perturbation tool automates the interpretability
+process, offering granular insights into how specific
+latent variables influence the overall model’s behav-
+ior. Through a series of numerical experiments, we
+demonstrate the interpretative power of the varia-
+tional autoencoder-neural circuit policy model and
+the utility of the automatic latent perturbation tool
+in making the inner workings of autonomous driving
+systems more transparent.
+I. INTRODUCTION
+The progressive wide-spread adoption of artificial in-
+telligence models in the domain of safety critical sys-
+tems, such as autonomous driving, necessitates the de-
+velopment of modeling approaches with increasing levels
+of interpretability. Classical approaches to autonomous
+driving employ modular solutions, in which different
+functions such as perception, localization, planning and
+control are each modeled by a dedicated subsystem,
+which with the exception of perception classically rely
+on rule-based models [4]. The rule-based approaches offer
+interpretability, but suffer from low generalizability to
+diverse conditions under which the system must operate
+safely. On the other hand, end-to-end learning based
+This work was supported by Capgemini Engineering.
+1Hybrid Intelligence part of Capgemini Engineering
+{first name.last name}@capgemini.com
+2Computer Science and Artificial Intelligence Lab, Mas-
+sachusetts Institute of Technology {amini,hasani,rus}@mit.edu
+Fig. 1: A framework where a variational autoencoder
+and neural circuit policies work together, enhancing
+interpretability in autonomous driving from input to
+interpretable steering and visual outputs.
+approaches offer high performance under diverse condi-
+tions, but are difficult to interpret due to the large model
+parameter space, complex parameter interactions, and
+lack of modularity.
+In order to bridge the gap between performance and
+interpretability, modular learning based approaches have
+been developed for autonomous driving. The separate
+optimization of each task-specific module allows for more
+flexibility when explaining and probing the behavior of
+the whole system. When the individual machine learning
+based modules are in turn made more interpretable, the
+overall system becomes more interpretable as a whole.
+In the evolving landscape of modular learning based
+approaches, control modules implemented as a Neural
+Circuit Policy (NCP) within the liquid networks class of
+models have emerged as a significant breakthrough [9].
+This bio-inspired compact neural network receives ab-
+stract visual features from a Convolutional Neural Net-
+work (CNN) perception module, and outputs accurate
+arXiv:2404.01750v1  [cs.CV]  2 Apr 2024
+and interpretable real-time steering commands. While as
+the outputs of a CNN can be approximately explained
+with posthoc explainable AI techniques, we posit that
+the whole system can be rendered more intrinsically
+explainable by replacing the CNN perception module
+with an inherently more explainable model.
+This paper proposes a novel approach to address
+the need for more interpretable modular learning based
+autonomous systems. Instead of relying on the conven-
+tional use of CNNs for feature extraction, here, the
+visual scene understanding is achieved through the lens
+of a Variational Autoencoder (VAE), with computed
+visual features then passed onto the NCP-based control
+module. The substitution of CNNs with VAEs aims
+to leverage the modular nature of VAEs, optimizing
+both intermediate and final outputs to significantly im-
+prove the system’s interpretability. This enhancement
+enables a more transparent and understandable decision-
+making process, crucial for the safety and reliability of
+autonomous driving systems.
+Drawing on the insights from the work of Tampuu
+et al. [18], where they underscored the importance of
+modular approaches in increasing interpretability within
+autonomous driving systems, we propose using a VAE as
+a theoretical optimal compressor to feed the NCP mod-
+ular decision model for the inference of robust steering
+wheel commands. [18] highlights the challenges posed by
+the lack of intermediate outputs in traditional models,
+which complicates the task of diagnosing why a model
+might misbehave. By adopting a modular architecture
+that optimizes both the intermediate representations
+through VAEs and the final decision-making output via
+NCPs, this paper offers a solution that enhances both
+interpretability and reliability.
+This paper contributes:
+• VAE-NCP autonomous steering solution: This so-
+lution combines a VAE perception module with an
+NCP control module to create a compact, robust ar-
+chitecture capable of generating steering commands
+from images. It emphasizes the optimization of both
+data reconstruction and decision-making processes,
+using a combined loss function to fine-tune model
+training. The architecture benefits from sparsely
+connected liquid time constant cells for efficient
+modeling and interpretable decision-making.
+• Automatic Latent Perturbation (ALP) assistant: A
+novel method for VAE latent interpretability, the
+ALP assistant automates latent perturbation anal-
+ysis. It facilitates the understanding of how each
+latent dimension influences the model’s decisions,
+enhancing the interpretability of high-dimensional
+latent spaces and addressing limitations of tradi-
+tional perturbation methods. This contribution is
+particularly significant for identifying and interpret-
+ing the semantic information encoded by latent
+variables in complex models.
+We argue that the VAE-NCP autonomous steering
+system and the use of the ALP assistant for increased
+latent interpretability, offer an overall more interpretable
+autonomous driving solution, compared to a CNN-NCP
+approach. While as visual saliency approaches are fre-
+quently used to explain CNN outputs, the faithfulness
+of these explanations to the CNN model they explain
+has been brought into question for multiple popular tech-
+niques [1]. Carefully designed experiments revealed that
+some visual saliency techniques compute input salient
+regions that informed model outputs, not based on the
+model’s operational logic but in fact on dataset char-
+acteristics that are independent of the model’s reasoning
+processes. This insight further motivates the shift toward
+using VAEs within the NCP framework, aiming to estab-
+lish a more direct and reliable pathway to interpret the
+model’s decisions.
+II. Related Works
+This section will discuss previous works related to the
+two main components of this contribution.
+Vision-based autonomous driving. Although rooted
+in the foundations of automation and robotization, au-
+tonomous driving, specifically based on perception and
+vision, is a recent and innovative field. Early in the
+research, it was necessary to delimit the boundaries and
+thus define the entanglements between these fields of
+decision-making and those of AI and perception-based
+cognition [16]. Much more recently, in this same field
+and still with a strong AI and Deep learning connota-
+tion thanks to technological advances, numerous con-
+tributions have made it possible each time to define
+new approaches using innovative methods enabling us
+to push back the limits of vision-based autonomous
+driving. Focusing on the importance of perception and
+with a broad focus on the interconnections between
+perception and understanding of the environment, Liu
+et al. [10] presented a study emphasizing the importance
+of vision in such a task. Muhammad et al. [12], with a
+specific focus on semantic segmentation, have linked the
+plurality of semantic segmentation approaches based on
+recent CNN approaches to the autonomous driving task,
+demonstrating the real connection between cognition
+and understanding of the vehicle environment and the
+control task. Thus, these last two contributions assert
+that the perception, understanding and description of
+the environment are critical to the success of the fi-
+nal task of autonomous driving. One can then assert,
+a vehicle’s ability to accurately perceive and interpret
+its surroundings is fundamental to its autonomy and
+effective navigation. However, while robust perception
+and task completion are theoretically sufficient, we also
+need to be able to explain and predict the behavior
+of such critical systems, to ensure their viability under
+real-life conditions. With this in mind, Zablocki et al.
+[22] proposed a benchmark and highlighted the crucial
+importance of explaining and predicting the behavior of
+critical systems. In their comprehensive review, Zablocki
+et al. delve into the methodologies and approaches for
+enhancing the explainability of deep learning systems
+in autonomous driving, emphasizing the need for these
+systems to not only perform tasks reliably but also
+to allow for interpretability and transparency in their
+decision-making processes, thereby ensuring safety and
+trustworthiness in real-world applications. Ultimately,
+certain research tracks seem to converge in agreeing that
+vision-based systems are a plausible solution to robust
+autonomous driving. The recent contributions of Wang
+et al. [19], Jiang et al. [6], and Wang et al. [20], each
+show, through a benchmark or an innovative method,
+how vision can be a strong lever for driving performance
+and trajectory planning. As a result, the community
+has largely focused on proven vision-centric methods
+to promote robust, resilient and usable systems with
+the goal of developing the cars of tomorrow based on
+interpretable and safe vision methods.
+Interpretability applied through traceable meth-
+ods. While the vision and intrinsic performance of al-
+gorithms and methods are key to the acceptance and
+validation of an innovative model in the field of automatic
+decision making applied to vehicles, it is important to
+underline an increasingly crucial factor in categorizing
+the viability of these approaches: interpretability. Zabloki
+et al. [22] follow exactly this logic, proposing to bring
+notions such as interpretability, tractability, explicability
+or understandability to the center of contributions, mak-
+ing them compete with the usual evaluation of methods
+based on raw performance alone. The authors survey
+multiple methods applicable to the ADAS domain like
+Omeiza et al. [14] and propose new methods with the
+goal of bringing interpretability to the domain. Jing et
+al. [7] and Paleja et al. [15] propose several concepts to
+anchor interpretability and explicability by conceptualiz-
+ing interconnections with the ADAS domain. The trend
+in autonomous driving research highlights a crucial shift
+toward valuing interpretability as much as traditional
+performance metrics. This focus is pivotal for gaining
+trust, ensuring acceptance, and meeting regulatory stan-
+dards in autonomous driving technologies.
+VAEs are widely used structures that combine computer
+vision methods with traceability and/or interpretabil-
+ity. In the realm of computer vision and autonomous
+driving, variational autoencoders have emerged as a
+critical tool for blending algorithmic complexity with
+interpretability. Their utility extends to making complex
+vision-based models more accessible and understand-
+able, particularly in scenarios requiring nuanced decision-
+making. The instance-based interpretability of VAEs, as
+explored by Kong and Chaudhuri [8], aids in deepening
+our understanding of how these models function and
+make decisions. Similarly, the work of Ainsworth et
+al. [2] contributes to interpretable machine learning by
+disentangling complex relationships in data using VAEs.
+Further, Nguyen and Mart´ ınez [13] demonstrate how
+supervised VAEs can be leveraged to learn interpretable
+models, and Schockaert et al. [17] introduce VAE-LIME,
+showcasing VAEs’ applicability in industrial contexts for
+local, data-driven model interpretability. Ultimately, Liu
+et al. [11] propose a vision-based method to provide a
+visual understanding of VAEs and all their intricacies,
+representing a significant step in validating the need for
+comprehensible methods that make sense in terms of
+human understandability. This method’s focus on visual
+understanding helps bridge the gap between the technical
+intricacies of the VAE model and human comprehen-
+sion. Driven by the same objective, our work aims to
+offer greater interpretability and comprehensibility of
+the VAE algorithm and decision-making method, by
+providing not only a qualitative interpretation but also
+a quantitative one.
+III. Methods
+Fig. 2: VAE-NCP architecture: from image to steering
+command and reconstruction.
+In this section, the VAE, the VAE-NCP architecture
+and the ALP assistant are described.
+A. Variational autoencoder
+VAEs are valuable for creating solutions that are
+easy to understand. VAEs are also highly effective in
+compressing data, particularly useful for extracting im-
+portant features in a way that makes sense to us. They
+blend the domains of generative models, centered around
+Bayesian inference for estimating data distribution, with
+autoencoders, focused on encoding signals into and then
+decoding them from a latent space. This process is based
+on the assumption that the intrinsic information of a sig-
+nal is contained within a manifold of lower dimensionality
+than the space of its representation. Without constraints
+on the autoencoder, interpreting the latent space can
+be challenging. However, VAEs hypothesize that data
+generation stems from a lower-dimensional probabilistic
+vector, with each data point drawn from its posterior dis-
+tribution relative to the latent space. For computational
+efficiency, the latent variable is typically modeled as an
+independent multivariate Gaussian distribution.
+The architecture of the VAE consists of an input
+x∈Rh×w×c passing through an encoder E, where h,
+w, and c represent the height, width, and number of
+channels of the input image, respectively, which encodes
+it into a latent vector z := E(x) ↪→N(µ,Iσ 2). The
+latent vector is then decoded by a decoder D, yielding
+a reconstruction ˆx :=D(z). The VAE employs the loss
+functionL =β·Lrecon(x,ˆx)+γ·LKL(µ,σ), whereLrecon
+is the reconstruction error and LKL is the Kullback-
+Leibler divergence, comparing the similarity between the
+posterior p(z|x) and its prior p(z). This loss function
+serves as a regularized reconstruction loss and promotes
+smooth latent representations, facilitating interpretabil-
+ity and robustness.
+B. VAE-NCP autonomous steering
+The first contribution of this work is the VAE-NCP
+autonomous steering solution, as illustrated in Figure
+2. The NCP was selected for its compact neural ar-
+chitecture, which employs a small number of neural
+ordinary differential equation cells known as liquid time
+constants. This sparse architecture yields a robust, in-
+terpretable, and powerful framework for modeling the
+steering command, as demonstrated in [9] where PCA
+analysis revealed that individual neurons within the NCP
+specialize in sub-tasks of the steering process, such as
+driving straight or turning.
+The joint training of the VAE-NCP architecture, al-
+lows for the simultaneous optimization of both the re-
+construction capability, serving dually as an optimal
+compressor and a feature extractor, and the decision-
+making aptitude of the NCP. The combined loss function
+L for this architecture is given by:
+L =β·Lrecon(x,ˆx) +γ·LKL(µ,σ) +α·Lpred(y,ˆy). (1)
+The coefficients β, γ, and αallow for the model fine-
+tuning and give the flexibility in choosing which loss term
+should be prioritized during training.
+The reconstruction loss Lrecon is quantified using the
+mean squared error between the input x and the recon-
+structed image ˆx, summed over the spatial dimensions:
+Lrecon = 1
+N
+N∑
+i=1
+∑
+h,w
+(
+x(i)
+h,w−ˆx(i)
+h,w
+)2
+. (2)
+The KL divergence loss LKL acts as a regulariza-
+tion term, particularly in the context of latent space
+distributions. By encouraging the model’s latent space
+to align with a predefined prior distribution, it ensures
+a more structured and interpretable latent space. We
+often choose a multivariate Gaussian as the prior for
+its mathematical tractability, and in this case, the KL
+divergence loss has a specific closed-form expression:
+LKL =−1
+2
+M∑
+j=1
+(
+1−µ2
+j−σ2
+j + log
+(
+σ2
+j
+))
+, (3)
+where M is the dimensionality of the latent vector z.
+The prediction loss Lpred reflects the accuracy of the
+steering command prediction, weighted by an exponen-
+tial function of the true steering command’s magnitude:
+Lpred =
+∑N
+i=1wi·
+(
+ˆy(i)−y(i)
+)2
+∑N
+i=1wi
+. (4)
+In this equation,wi = exp
+(
+λ·|y(i)|
+)
+, withλrepresent-
+ing the factor that modulates the influence of the steering
+command’s magnitude on the loss.
+This integrative approach to training ensures that the
+VAE-NCP system not only accurately compresses and
+reconstructs input data but also effectively generates
+steering commands, with the latent space tailored to
+support both objectives.
+C. Automatic Latent Perturbation assistant
+The second contribution of this work is the develop-
+ment of a new VAE latent interpretability method, which
+estimates the semantic information that is represented by
+each latent variable.
+One way to interpret the information encoded in each
+latent dimension of a VAE is to perform a latent pertur-
+bation analysis [3]. For a given input image, its latent en-
+coding is perturbed along a single latent variable, which
+is then decoded to reveal the information that the latent
+variable accounts for. This particular approach reveals
+useful information about the characteristic information
+of each latent variable, but does not readily scale to
+higher dimensional latent spaces or VAEs suffering from
+mode collapse [21]. A large number of latent variables
+cannot be efficiently analyzed with the existing pertur-
+bation approach, and non-informative latent variables
+cannot be readily detected.
+To remedy this problem, an automatic latent perturba-
+tion assistant was developed to automate the latent per-
+turbation analysis and to render it directly applicable to
+the case of high-dimensional latent space interpretation.
+Given an input image x, the tool considers each com-
+ponent of the corresponding latent variable z = (zj)M
+j=1,
+and generates two new reconstructions, ˆxj,+ and ˆxj,−,
+defined as:
+ˆxj,+ =D(z+ 2·(σ⊙ej)), (5)
+ˆxj,− =D (z−2·(σ⊙ej)), (6)
+where σis the standard deviation vector, ⊙denotes
+element-wise multiplication, and ej is a unit vector
+with the j-th element set to 1 and all other elements
+set to 0. The ALP assistant computes the difference,
+ˆxj,+−ˆxj,−, to approximate the input-space information
+that is encoded by the latent variable zj. The char-
+acteristic information is computed by identifying the
+pixels in the difference image with values above a certain
+threshold, and automatically assigning a class label to
+each one of these pixels with the DeepLabV3+ semantic
+segmentation model [5]. The classes with the majority
+of thresholded pixels in the difference image are then
+reported as the semantic information that is represented
+by the latent variable (see Figure 3). The algorithm,
+as referenced in Algorithm 1, encapsulates the complete
+functionality of the ALP tool.
+Algorithm 1 Auto Latent Perturbation Analysis
+Require: Input image x, Encoder E, Decoder D
+1: z, µ, σ←E(x), Encode the image to get latent space
+z and standard deviation σ
+2: for j = 1 to N do
+3: ˆxj,+ = D (z + 2·(σ⊙ej)), perturbed reconstruc-
+tion with +2σj
+4: ˆxj,− = D (z−2·(σ⊙ej)), perturbed reconstruc-
+tion with−2σj
+5: ∆ ˆxj←ˆxj,+−ˆxj,−, compute the difference be-
+tween the two perturbations
+6: ∆ ˆxj←∆ ˆxj/max(∆ ˆxj)
+7: Bj←∆ ˆxj> quantile(∆ ˆxj,0.9), binarize difference
+image using the 90th percentile as the cutoff
+8: Rj←label(Bj), label connected components inBj
+to get labeled regions
+9: Cj←array of zeros, initialize counter array for
+classes
+10: for each labeled region l in Rj do
+11: sscount←count of segmentation classes in l
+12: argclass←index of max value in sscount
+13: Cj[argclass]←c[argclass] + 1, increment class
+counter
+14: end for
+15: end for
+16: return ∆ ˆx, C
+In order to quantitatively measure and interpret the
+impact of each latent dimension on the model’s decision-
+making process, particularly in the context of steering
+commands in autonomous driving, we further propose
+an extension to the automatic latent perturbation anal-
+ysis. This extension involves passing the perturbations
+through the second head of the model, the NCP, to
+obtain steering error predictions. This step is crucial
+for understanding how variations in latent dimensions
+translate into changes in the model’s steering decisions,
+providing a direct link between latent space interpretabil-
+ity and driving behavior.
+The steering error predictions for perturbations along
+a given latent dimension j are computed as follows:
+ˆyj,+ =NCP (z+ 2·(σ⊙ej)), (7)
+ˆyj,− =NCP (z−2·(σ⊙ej)), (8)
+ˆyj,0 =NCP (z), (9)
+where ˆyj,+ and ˆyj,− are the steering predictions for
+the perturbed latent vectors increased and decreased by
+2σalong thej-th dimension, respectively, and ˆyj,0 is the
+steering prediction for the unperturbed latent vector.
+The difference in predictions, which reflects the sensi-
+tivity of the steering command to perturbations in the
+j-th latent dimension, is calculated as:
+∆ ˆyj,− =
+⏐⏐ˆyj,−−ˆyj,0⏐⏐, (10)
+∆ ˆyj,+ =
+⏐⏐ˆyj,+−ˆyj,0⏐⏐, (11)
+∆ ˆyper =
+⏐⏐ˆyj,+−ˆyj,−⏐⏐. (12)
+To quantify the overall impact of perturbations in each
+latent dimension on steering decisions, we introduce the
+concept of an ”impact score” for each dimension, denoted
+as I j. This score aggregates the differences in steering
+predictions resulting from perturbations in both direc-
+tions and the direct difference between these perturbed
+predictions, providing a comprehensive measure of the
+latent dimension’s influence:
+Ij = ∆ ˆyj,− + ∆ ˆyj,+ + ∆ ˆyper
+3 . (13)
+The impact score I j serves as a quantitative metric
+to assess the significance of each latent dimension in the
+model’s decision-making process, particularly in steering
+control for autonomous driving. By evaluating I j across
+all latent dimensions, we can identify which dimensions
+have the most pronounced effect on the model’s behavior,
+thereby highlighting the key factors that the model
+considers when making steering decisions. This analysis
+not only enhances our understanding of the model’s
+interpretability but also guides further improvements in
+model design and training for better performance and
+reliability in autonomous driving applications.
+IV. Results & Implementation
+A. Implementation
+The implementation of the VAE-NCP model was in-
+spired by the works presented in [9] and [3]. The resulting
+latent vector has a dimension of 32. The decoder mirrors
+the encoder architecture but utilizes transposed convo-
+lutional layers to reconstruct the input image from the
+latent representation. For the NCP, a recurrent neural
+network structure with 19 liquid time constant neurons
+connected with a sparsity factor of 0 .6 is used to model
+the temporal dynamics of the steering command. The
+model receives 78 ×200 RGB images as inputs which
+is a dataset proposed in [9], comprising 5 hours of pre-
+processed RGB recordings, along with the corresponding
+driver’s steering commands.
+During training, the Adam optimizer is employed with
+a learning rate of 5e−4, a batch size of 20 and a sequence
+length of 16. The loss function weighting factorsβ,γ, and
+αare respectively 0.1, 0.001, and 0.066.
+During inference, the encoder and NCP components
+of the model work in concert to predict the steering
+command based on the compressed latent representation,
+showcasing the capability of the VAE-NCP to perform
+real-time decision-making tasks.
+Fig. 3: ALP analyses across various images and latent dimensions. Each row showcases a different image-dimension
+combination, the differential image accentuates all the changes, the heatmap overlay on the original image points
+out the affected areas due to latent perturbations.
+Model T raining error T est error
+CNN 1 .41±0.30 4 .28±4.63
+CNN-RNN 0 .14±0.05 3 .39±4.39
+CNN-CT-GRU 0 .19±0.05 3 .63±4.61
+CNN-CT-RNN (19 units) 0 .44±0.14 3 .62±4.35
+CNN-CT-RNN (64 units) 0 .23±0.09 3 .43±4.55
+CNN-Sparse CT-RNN (19 units) 0 .77±0.35 4 .03±4.80
+CNN-Sparse CT-RNN (64 units) 0 .40±0.43 3 .72±4.71
+CNN-GRU 1 .25±1.02 5 .06±6.64
+CNN-LSTM(64 units) 0.19±0.05 3.17±3.85
+CNN-LSTM (19 units) 0 .16±0.06 3 .38±4.48
+CNN-Sparse LSTM (19 units) 1 .05±0.57 3 .68±5.21
+CNN-Sparse LSTM (64 units) 0 .29±0.14 3 .25±3.93
+CNN-NCP (19 units)† 0.43±0.26 3.22±3.92
+CNN-NCP (randomly wired) 2 .12±2.93 5 .19±5.43
+CNN-NCP (fully connected) 2.41±3.44 5.18±4.19
+VAE-LSTM (64 units) - Created Baseline0.54±0.26 4.70±4.80
+VAE-LSTM (19 units) - Created Baseline0.60±0.30 6.75±8.33
+V AE-NCP(19 units) - Ours∗ 0.73±0.22 4.67±3.74
+TABLE I: Comparative evaluation of passive lane-
+keeping performance using tenfold cross-validation. Re-
+sults for CNN-based models are sourced from [9].
+We compare our model, VAE-NCP, to models with
+results indicated by boldface numbers, while pay-
+ing special attention to three important categories:
+top-performing model, top model with interpretable
+steering (†), best end-to-end interpretable method (∗).
+B. Offline evaluation
+Offline evaluations compare the behavior of an auto-
+mated solution to that of a pre-recorded human driver,
+primarily focusing on how closely the solution mimics the
+driver’s actions. This is particularly evident in the align-
+ment of the solution’s trajectory with the driver’s. Such
+comparisons are made at individual time steps, which is a
+critical component of these evaluations. Notably, offline
+evaluations do not allow for the accumulation of error
+over time. Instead, each new time step begins with the
+simulation resetting to the ground-truth steering data,
+rather than the predicted position of the ego car by the
+model at that time step. This methodology ensures a
+clear and direct comparison of the solution’s performance
+at each distinct moment, free from the cumulative impact
+of previous errors.
+Additionally, to bolster the robustness of our evalu-
+ation methodology, we partitioned the dataset into ten
+non-intersecting segments of equal size for the purpose
+of tenfold cross-validation testing. This strategy, adapted
+from Lechner et al. [9], entails training the model on nine
+of these segments collectively and subsequently evaluat-
+ing its efficacy on the remaining segregated test segment.
+This process is repeated 10 times, with a different hold-
+out test segment in each turn.
+The results from the passive lane-keeping tenfold cross-
+validation evaluation (see Table I) reveal interesting
+insights into the performance of various models, with a
+special focus on the VAE-NCP model. The VAE-NCP
+was employed to enhance interpretability while balancing
+the trade-off between accuracy and interpretability. This
+choice was motivated by the inherent capability of VAEs
+to learn rich, latent representations and NCP’s efficiency
+in parameter usage, which is significantly lower compared
+to traditional RNNs.
+As shown in Table I, VAE-NCP is better than CNN-
+NCP model for the fully and randomly connected NCP,
+but higher compared to the best-performing models like
+the CNN-NCP or CNN-LSTM (64 units) with regards to
+the test error. This discrepancy underscores the inherent
+trade-off between achieving high accuracy and enhancing
+model interpretability. The VAE-NCP’s relatively higher
+test error can be attributed to its focus on generating
+interpretable models rather than purely optimizing for
+lower error rates.
+Furthermore, the use of NCP with the VAE frame-
+work illustrates a strategic move towards simplifying the
+model’s complexity. NCPs are known for their efficiency,
+requiring far fewer parameters than traditional RNNs,
+such as GRUs and LSTMs. This efficiency does not only
+contribute to a leaner model that is easier to interpret
+but also facilitates a quicker understanding of how deci-
+sions are made within the model. Despite the increased
+test error, the VAE-NCP model offers a compelling
+advantage in applications where interpretability is key,
+and the decision-making process needs to be transparent,
+such as in autonomous driving.
+C. Latent Interpretability
+Fig. 4: Analysis of steering error variability across differ-
+ent perturbed dimensions on a sample of 1000 images.
+Top (a): the comparison of MSE at perturbations with
+two different standard deviations (-2σand +2σ) is shown
+for each dimension, highlighting the range of variability
+in the errors. Bottom (a): Standard deviation of the
+steering errors for each dimension. Plot (b): box plot of
+steering error for the whole dataset.
+In the realm of autonomous driving, interpretability is
+not just a luxury but a necessity for safety and reliability.
+The ALP tool serves as a bridge between the complexity
+of a VAE latent space and our understanding of its
+influence on model decision-making. Figure 3 offer a qual-
+itative window into this world, where the ALP tool high-
+lights how perturbations in specific latent dimensions
+affect the image reconstructions. In Figure 3, analyzing
+across multiple images and latent dimensions, we gain
+insights into the broader interpretability of the model.
+Different latent dimensions are shown to be sensitive
+to various aspects of the input images, such as road
+edges or vehicle silhouettes, underscoring the dimensions’
+semantic relevance to the model’s function.
+The steering error depicted in the figure 4 provides an
+initial assessment of the model’s prediction variability
+across different latent dimensions. The top part of the
+figure (a) illustrates the MSE for perturbations at two
+standard deviations (-2 σand +2σ), revealing a broad
+range of steering error variability for each dimension.
+This variability is crucial for identifying which dimen-
+sions introduce the most uncertainty into the steering
+predictions. The bottom part of the figure (a) portrays
+the standard deviation of steering errors for each dimen-
+sion, reinforcing the understanding of where the model’s
+predictions fluctuate the most. Nevertheless, it’s the
+box plot (b) that summarizes the overall distribution
+of steering errors, providing a macro view of the error
+distribution for the entire dataset. While this offers a
+general indication of model performance, it lacks the
+granularity needed to pinpoint the influence of individual
+latent dimensions on the model’s steering decisions.
+Analyzing the box plots in Figure 5 generated from the
+impact score, the data presents an intriguing dichotomy
+between the highest and lowest 10 percentiles of pre-
+diction errors. For the highest 10 percent of prediction
+errors, the impact scores range broadly from 0.1 to 2.5,
+indicating a substantial influence of certain latent dimen-
+sions on the steering predictions. Particularly, dimension
+2 exhibits a pronounced variability, suggesting that per-
+turbations along this dimension can lead to significant
+deviations in steering behavior. This variability can be
+indicative of critical features within the autonomous
+driving context, such as unexpected environmental vari-
+ables or dynamic obstacles, that require the model to
+adapt its decision-making process substantially.
+In stark contrast, the impact scores for the lowest 10
+percent of prediction errors are tightly clustered between
+0 and 0.5, reflecting a much more consistent and reliable
+prediction landscape. This suggests that when the model
+predictions are at their most accurate, the perturbations
+in latent dimensions do not dramatically influence the
+steering output, which could be attributed to more pre-
+dictable and stable driving scenarios. The lower vari-
+ability for dimension 2 in this percentile range further
+supports this, as it implies a certain robustness and
+reliability in scenarios where the model’s performance is
+optimal.
+These insights help us understand the model’s
+decision-making by identifying key latent dimensions
+that affect prediction errors, pinpointing improvement
+areas. This is crucial for spotting failure modes and
+Out-Of-Distribution (OOD) cases, situations the model
+hasn’t seen during training. By concentrating on latent
+dimensions with significant impact, especially those with
+high variability, we can enhance data collection and refine
+the model, boosting its performance and reliability in
+real-world autonomous driving applications.
+V. Conclusions
+The conclusion of our study underscores the nuanced
+balance between interpretability and accuracy within
+autonomous driving models, exemplified by our VAE-
+NCP framework. Our offline evaluation showcases the
+Fig. 5: Comparison of the impact score across different
+latent dimensions for high and low steering prediction
+error percentiles. The right plot illustrates the impact
+scores for the highest 10% of prediction errors, indicating
+dimensions with the most significant influence on steering
+errors. The left plot displays the impact scores for the
+lowest 10% of prediction errors.
+VAE-NCP model’s distinct approach, prioritizing inter-
+pretability through a modular and transparent archi-
+tecture, despite a comparative increase in test error.
+This decision reflects our commitment to enhancing
+safety and reliability in autonomous driving by enabling
+a deeper understanding of model decision-making pro-
+cesses. Furthermore, the application of the automated
+latent perturbation tool reveals critical insights into
+how specific latent dimensions influence steering predic-
+tions, highlighting areas for targeted improvement and
+model robustness against OOD scenarios. Ultimately, our
+findings advocate for a more interpretable and reliable
+framework in autonomous systems, where understanding
+and trust in the technology are as crucial as performance
+metrics. From the insights gleaned through our research,
+it is clear that the ALP tool not only enhances our
+understanding of model behavior in autonomous driving
+applications but also opens avenues for future innova-
+tions. The application of the ALP tool in active learning
+is particularly promising. By utilizing the impact score
+to identify and select challenging examples for further
+labeling and retraining, we can significantly improve
+model performance.
+References
+[1] J. Adebayo, J. Gilmer, M. Muelly, I. Goodfellow, M. Hardt,
+and B. Kim, “Sanity checks for saliency maps,” Advances in
+neural information processing systems , vol. 31, 2018.
+[2] S. Ainsworth, N. Foti, A. K. Lee, and E. Fox, “Interpretable
+vaes for nonlinear group factor analysis,” arXiv preprint
+arXiv:1802.06765, 2018.
+[3] A. Amini, W. Schwarting, G. Rosman, B. Araki, S. Karaman,
+and D. Rus, “Variational Autoencoder for End-to-End
+Control of Autonomous Driving with Novelty Detection
+and Training De-biasing,” in 2018 IEEE/RSJ International
+Conference on Intelligent Robots and Systems (IROS) .
+Madrid: IEEE, Oct. 2018, pp. 568–575. [Online]. Available:
+https://ieeexplore.ieee.org/document/8594386/
+[4] L. Chen, P. Wu, K. Chitta, B. Jaeger, A. Geiger, and H. Li,
+“End-to-end autonomous driving: Challenges and frontiers,”
+arXiv preprint arXiv:2306.16927 , 2023.
+[5] L.-C. Chen, Y. Zhu, G. Papandreou, F. Schroff, and H. Adam,
+“Encoder-decoder with atrous separable convolution for se-
+mantic image segmentation,” in Proceedings of the European
+conference on computer vision (ECCV) , 2018, pp. 801–818.
+[6] B. Jiang, S. Chen, Q. Xu, B. Liao, J. Chen, H. Zhou, Q. Zhang,
+W. Liu, C. Huang, and X. Wang, “Vad: Vectorized scene repre-
+sentation for efficient autonomous driving,” in Proceedings of
+the IEEE/CVF International Conference on Computer Vision
+(ICCV), October 2023, pp. 8340–8350.
+[7] T. Jing, H. Xia, R. Tian, H. Ding, X. Luo, J. Domeyer,
+R. Sherony, and Z. Ding, “Inaction: Interpretable action deci-
+sion making for autonomous driving,” inEuropean Conference
+on Computer Vision . Springer, 2022, pp. 370–387.
+[8] Z. Kong and K. Chaudhuri, “Understanding instance-based
+interpretability of variational auto-encoders,” Advances in
+Neural Information Processing Systems , vol. 34, pp. 2400–
+2412, 2021.
+[9] M. Lechner, R. Hasani, A. Amini, T. A. Henzinger, D. Rus,
+and R. Grosu, “Neural circuit policies enabling auditable
+autonomy,” Nature Machine Intelligence , vol. 2, no. 10, pp.
+642–652, 2020.
+[10] F. Liu, Z. Lu, and X. Lin, “Vision-based environmental per-
+ception for autonomous driving,” Proceedings of the Institu-
+tion of Mechanical Engineers, Part D: Journal of Automobile
+Engineering, p. 09544070231203059, 2022.
+[11] W. Liu, R. Li, M. Zheng, S. Karanam, Z. Wu, B. Bhanu,
+R. J. Radke, and O. Camps, “Towards visually explaining
+variational autoencoders,” in Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition ,
+2020, pp. 8642–8651.
+[12] K. Muhammad, T. Hussain, H. Ullah, J. Del Ser, M. Rezaei,
+N. Kumar, M. Hijji, P. Bellavista, and V. H. C. de Albu-
+querque, “Vision-based semantic segmentation in scene un-
+derstanding for autonomous driving: Recent achievements,
+challenges, and outlooks,” IEEE Transactions on Intelligent
+Transportation Systems, 2022.
+[13] A.-p. Nguyen and M. R. Mart´ ınez, “Learning invariances
+for interpretability using supervised vae,” arXiv preprint
+arXiv:2007.07591, 2020.
+[14] D. Omeiza, H. Webb, M. Jirotka, and L. Kunze, “Explanations
+in autonomous driving: A survey,” IEEE Transactions on
+Intelligent Transportation Systems , vol. 23, no. 8, pp. 10 142–
+10 162, 2021.
+[15] R. Paleja, Y. Niu, A. Silva, C. Ritchie, S. Choi, and M. Gom-
+bolay, “Learning interpretable, high-performing policies for
+autonomous driving,” arXiv preprint arXiv:2202.02352, 2022.
+[16] D. A. Pomerleau, “Progress in neural network-based vision for
+autonomous robot driving,” in Proceedings of the Intelligent
+Vehicles92 Symposium. IEEE, 1992, pp. 391–396.
+[17] C. Schockaert, V. Macher, and A. Schmitz, “Vae-lime: deep
+generative model based approach for local data-driven model
+interpretability applied to the ironmaking industry,” arXiv
+preprint arXiv:2007.10256, 2020.
+[18] A. Tampuu, T. Matiisen, M. Semikin, D. Fishman,
+and N. Muhammad, “A survey of end-to-end driving:
+Architectures and training methods,” IEEE Transactions
+on Neural Networks and Learning Systems , 2020. [Online].
+Available: https://arxiv.org/abs/2003.06404
+[19] N. Wang, Y. Luo, T. Sato, K. Xu, and Q. A. Chen, “Does
+physical adversarial example really matter to autonomous
+driving? towards system-level effect of adversarial object eva-
+sion attack,” in Proceedings of the IEEE/CVF International
+Conference on Computer Vision (ICCV) , October 2023, pp.
+4412–4423.
+[20] X. Wang, Z. Zhu, Y. Zhang, G. Huang, Y. Ye, W. Xu,
+Z. Chen, and X. Wang, “Are we ready for vision-centric driving
+streaming perception? the asap benchmark,” in Proceedings of
+the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR), June 2023, pp. 9600–9610.
+[21] Y. Wang, D. Blei, and J. P. Cunningham, “Posterior collapse
+and latent variable non-identifiability,” Advances in Neural
+Information Processing Systems, vol. 34, pp. 5443–5455, 2021.
+[22] ´E. Zablocki, H. Ben-Younes, P. P´ erez, and M. Cord, “Ex-
+plainability of deep vision-based autonomous driving systems:
+Review and challenges,” International Journal of Computer
+Vision, vol. 130, no. 10, pp. 2425–2452, 2022.
