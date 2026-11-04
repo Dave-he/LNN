@@ -1548,6 +1548,13 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-05**：[[docs/daily/2026-11-05_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 43 个，模型 17 个。
+- **2026-11-04**：[[docs/daily/2026-11-04_LNN_research_digest.md|每日追踪]]，候选论文 94 篇，仓库 43 个，模型 19 个。
+- **2026-11-03**：[[docs/daily/2026-11-03_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 43 个，模型 16 个。
+- **2026-11-02**：[[docs/daily/2026-11-02_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 17 个。
+- **2026-11-01**：[[docs/daily/2026-11-01_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 17 个。
+- **2026-10-31**：[[docs/daily/2026-10-31_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 17 个。
+- **2026-10-30**：[[docs/daily/2026-10-30_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 17 个。
 - **2026-10-29**：[[docs/daily/2026-10-29_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 17 个。
   - **研读 3 篇**（当日 selector top-3 中 1 篇为已知误命中已排除，见下）：[[docs/reports/Low_Rank_Sparse_Recurrent_Connectivity_CfC_2310.03915_研读报告.md|低秩+稀疏循环连接与 CfC 闭环鲁棒性 (2310.03915)]]、[[docs/reports/LTC_Dynamic_Causality_Soft_Sensor_Observer_Design_2509.11336_研读报告.md|LTC 动态因果软测量与传感器剪枝 (2509.11336)]]、[[docs/reports/VAE_NCP_Latent_Pathways_Interpretability_2404.01750_研读报告.md|VAE-NCP 与自动潜变量扰动工具 (2404.01750)]]。
   - **selector 输出的 3 个 top 候选**：`2404.01750` (score 11, NCP) / `2607.15232` (score 10, **LFM2 tokenizer 扩展 —— 已知误命中**) / `2412.17006` (score 9, LTC 气候韧性)。**手动排除 `2607.15232`** —— 该篇此前已在索引 1401 行被判定为"关键词 false positive（substring 命中），与 LNN 无关"（它只是论文里用了 LFM2-8B 做实验）；**改选 `2310.03915` 与 `2509.11336`** —— 前者是 MIT CSAIL 对 CfC 的**结构性机理研究**（本仓至今无此类），后者是本仓未覆盖的**"LTC 做观测器 + 传感器剪枝"任务方向**。`2412.17006`（LTC 气候韧性代理建模）证据价值较低（eess.SY、机制简单、纯仿真），故未选。
@@ -1603,11 +1610,4 @@ positioning_updated: 2026-09-14
 - **`GIT_SSH_COMMAND` 显式注入 `id_github_dave-he`**：脚本检测 SSH_KEY 候选链（`id_github_dave-he` 优先级最高）成功，SSH key 路径写入 log（`logs/pipeline/2026-10-06_pipeline.log`）。
 - **复现阶段（pending）**：step 5 / 6 待执行（`replicate_paper_dispatch.py --date 2026-10-06`），预期行为与 9-22/9-30 一致——"digest 命中复现规则的论文 → 调对应 reproduce 脚本"。
 - **结论**：今日完成 (1) digest 抓取（24 篇）+ commit + push（`70ae0b5..8a3f232`）(2) 0 候选复核 (3) 研读报告生成跳过（LNN 主题连续饱和）。**关键工程发现**：GH Action cron 可能已迁移到早于本地 04:30 的时间槽，导致 origin 领先本地，必须靠 `git pull --rebase` 兜底；建议下次会话核查 `.github/workflows/daily-lnn-research.yml` 的 schedule cron 与 commit 历史匹配性。
-- **2026-10-06**：[[docs/daily/2026-10-06_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 17 个。研读报告生成 0 篇（LNN 主题饱和）；`select_papers_for_report.py` 输出 `{candidates: [], n_total_arxiv: 12, n_skipped_reported: 12}`，12 篇全部命中 `already_reported`；SSH fetch 抖动 5/5 → pull --rebase 兜底成功；push 第一次 connection closed、第二次 RST、第三次成功（`70ae0b5..8a3f232`）。详见 [[docs/LNN_深度研读报告#2026-10-06-lnn-主题饱和无新增候选ssh-fetch-抖动-5-5--pull---rebase-兜底|§2 复盘条目]]。
-- **2026-10-05**：[[docs/daily/2026-10-05_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 18 个。
-- **2026-10-04**：[[docs/daily/2026-10-04_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 17 个。
-- **2026-10-03**：[[docs/daily/2026-10-03_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 33 个，模型 13 个。
-- **2026-10-02**：[[docs/daily/2026-10-02_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 18 个。
-- **2026-10-01**：[[docs/daily/2026-10-01_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 18 个。
-- **2026-09-30**：[[docs/daily/2026-09-30_LNN_research_digest.md|每日追踪]]，候选论文 25 篇，仓库 41 个，模型 14 个；研读报告生成 **1 篇** [[docs/reports/MTLiquid_Multi_Task_LNN_Healthcare_Monitoring_2609.33232_研读报告.md|MTLiquid]] (CfC × multi-task, 9 月下半月首个 score>0 新候选; arXiv 抓取稳定 ✅ Accept 修复生效; SSH push 5 次均失败 → HTTPS 兜底推送).
 <!-- daily-lnn-index:end -->
