@@ -1548,6 +1548,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-06**：[[docs/daily/2026-11-06_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 44 个，模型 17 个。
 - **2026-11-05**：[[docs/daily/2026-11-05_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 43 个，模型 17 个。
 - **2026-11-04**：[[docs/daily/2026-11-04_LNN_research_digest.md|每日追踪]]，候选论文 94 篇，仓库 43 个，模型 19 个。
 - **2026-11-03**：[[docs/daily/2026-11-03_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 43 个，模型 16 个。
@@ -1597,17 +1598,4 @@ positioning_updated: 2026-09-14
 - **2026-10-10**：[[docs/daily/2026-10-10_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 24 个，模型 24 个。
 - **2026-10-09**：[[docs/daily/2026-10-09_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 19 个。
 - **2026-10-08**：[[docs/daily/2026-10-08_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 17 个。
-- **2026-10-07**：[[docs/daily/2026-10-07_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 20 个。
-- **digest 入口**：[[docs/daily/2026-10-06_LNN_research_digest.md|每日追踪]]（24 篇 / 41 仓库 / 17 模型，`papers/repos/models: 24/41/17`）。
-- **arXiv 抓取稳定 ✅**：9-26 `Accept: application/atom+xml` 永久修复仍生效，无 406 复发；digest 24 篇（与 10-01~10-05 持平）。
-- **`select_papers_for_report.py` 输出**：`{candidates: [], n_total_arxiv: 12, n_skipped_reported: 12}`——12 篇 arXiv 候选 **100% 已被既有 `docs/reports/` 覆盖**：
-- **`paper-analyzer` 技能状态**：cron 提示仍标"not found"（与 9-22 起多轮一致）。今日无候选，无需触发该兜底路径。
-- **生成 0 篇独立研读报告**：连续第 1+ 月（10-01 起）LNN / CfC / LTC / NCP / closed-form continuous-time 主题饱和，无新 arXiv 投稿覆盖。**注**：本次 digest 仍列出 24 篇候选（远超 selector 表的 12 篇，因为 selector 对 raw JSON 用 max score 排序仅保留 top-12），覆盖本仍为 24/24。
-- **同步阻塞点（异常告警 ⚠️ → 已 workaround ✅）**：
-- **SSH fetch 5/5 全部失败**（与 9-30 类似但更彻底）：`git fetch --no-tags origin` 重试 5 次均 `Connection to github.com closed by remote host / flush packet error`（与 8-29 / 8-31 / 9-30 三次 GitHub RST 抖动同根因：出口 IP / 路由级 RST，与 SSH auth 无关，单独 `ssh -T` 仍 OK）。
-- **workaround**：脚本 fallback 切到 `git pull --ff-only → 失败 → git pull --rebase origin HEAD` 成功（fast-forward `b88883d..70ae0b5`，**这是 8 月底以来首次靠 rebase 兜底的实例**，之前都是 fast-forward）。这意味着 **origin 已先于本地推送（GH Actions 04:30 cron 抢跑）**，与 9-29 自动化健康度排查中"本地 04:30 与 GH Action 06:30 错峰无 race"的假设相左——Action 的 06:30 实际可能已迁移到 04:30 或更早，建议下次会话核查 `.github/workflows/daily-lnn-research.yml` 的 cron schedule 是否调整。
-- **SSH push 第 3 次成功**：`git push origin HEAD` 第 1 次 `connection closed`、第 2 次 `无法读取远程仓库`、第 3 次 `70ae0b5..8a3f232  HEAD -> master`（commit `8a3f232 chore(daily): LNN digest + 研读报告 2026-10-06`）。本次脚本同时推送 docs 与 papers——按 cron prompt 这应该是 step 4 的"commit docs papers"，与 step 1 合并跑通。
-- **`GIT_SSH_COMMAND` 显式注入 `id_github_dave-he`**：脚本检测 SSH_KEY 候选链（`id_github_dave-he` 优先级最高）成功，SSH key 路径写入 log（`logs/pipeline/2026-10-06_pipeline.log`）。
-- **复现阶段（pending）**：step 5 / 6 待执行（`replicate_paper_dispatch.py --date 2026-10-06`），预期行为与 9-22/9-30 一致——"digest 命中复现规则的论文 → 调对应 reproduce 脚本"。
-- **结论**：今日完成 (1) digest 抓取（24 篇）+ commit + push（`70ae0b5..8a3f232`）(2) 0 候选复核 (3) 研读报告生成跳过（LNN 主题连续饱和）。**关键工程发现**：GH Action cron 可能已迁移到早于本地 04:30 的时间槽，导致 origin 领先本地，必须靠 `git pull --rebase` 兜底；建议下次会话核查 `.github/workflows/daily-lnn-research.yml` 的 schedule cron 与 commit 历史匹配性。
 <!-- daily-lnn-index:end -->
