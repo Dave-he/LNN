@@ -994,7 +994,12 @@ def update_marked_section(path: pathlib.Path, marker: str, content: str) -> None
 
     if start in original and end in original:
         pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.DOTALL)
-        updated = pattern.sub(block, original)
+        # 用 lambda 做替换, 不能直接传字符串: 索引区块里有 LaTeX 转义 (如
+        # $F\\equiv[1,\\dots,1]$), 字符串替换会把 `\\e` / `\\d` 当成正则替换模板的
+        # 转义序列, 直接抛 `re.PatternError: bad escape \\e` (2026-11-04 实测:
+        # 10-29 写进索引的 MIT CSAIL CfC 摘要含 `\\equiv`, 让 digest 脚本在
+        # update_indexes 阶段整段崩掉)。lambda 返回的字面量不做转义解释。
+        updated = pattern.sub(lambda _m: block, original)
     else:
         suffix = "\n\n" if original and not original.endswith("\n\n") else ""
         updated = f"{original}{suffix}{block}\n"
