@@ -1,0 +1,306 @@
+Physics-Informed Calibration of Aeromagnetic
+Compensation in Magnetic Navigation Systems using
+Liquid Time-Constant Networks
+Favour Nerrise∗
+Department of Electrical Engineering
+Stanford University, CA, USA
+fnerrise@stanford.edu
+Andrew (Sosa) Sosanya
+SandboxAQ
+Palo Alto, CA, USA
+andrew.sosanya@sandboxaq.com
+Patrick Neary
+SandboxAQ
+Palo Alto, CA, USA
+patrick.neary@sandboxaq.com
+Abstract
+Magnetic navigation (MagNav) is a rising alternative to the Global Positioning
+System (GPS) and has proven useful for aircraft navigation. Traditional aircraft
+navigation systems, while effective, face limitations in precision and reliability in
+certain environments and against attacks. Airborne MagNav leverages the Earth’s
+magnetic field to provide accurate positional information. However, external mag-
+netic fields induced by aircraft electronics and Earth’s large-scale magnetic fields
+disrupt the weaker signal of interest. We introduce a physics-informed approach
+using Tolles-Lawson coefficients for compensation and Liquid Time-Constant
+Networks (LTCs) to remove complex, noisy signals derived from the aircraft’s
+magnetic sources. Using real flight data with magnetometer measurements and
+aircraft measurements, we observe up to a 64% reduction in aeromagnetic com-
+pensation error (RMSE nT), outperforming conventional models. This significant
+improvement underscores the potential of a physics-informed, machine learning
+approach for extracting clean, reliable, and accurate magnetic signals for MagNav
+positional estimation.
+1 Introduction
+In recent years, magnetic anomaly navigation (MagNav) has proven to be a viable fallback to the
+Global Positioning System (GPS) for aircraft navigation due to its reliability against jamming2 or
+spoofing 3 attacks, independence from atmospheric weather conditions, and unsupervised position
+estimation [3]. Airborne MagNav estimates positioning by correlating aircraft magnetometer readings
+to anomaly maps of the Earth’s crustal magnetic field [3]. Successful airborne MagNav studies have
+shown high accuracies in navigation estimation, with up to 10m distance root-mean-squared errors at
+low altitudes and tens of meters to kilometers at varying altitudes above ground level [ 4–6]. This
+is only slightly inferior to GPS estimation for aircraft navigation, which is accurate down to seven
+∗F.N. is also an AI Ph.D. Resident at SandboxAQ, alternative email: favour.nerrise@sandboxaq.com.
+2GPS jamming disrupts a GPS receiver by transmitting powerful signals that block or interfere with the
+original GPS signal[1].
+3GPS spoofing manipulates existing GPS signals to mislead a receiver about its position, velocity, and
+timing[2].
+37th Conference on Neural Information Processing Systems (NeurIPS 2023).
+arXiv:2401.09631v1  [cs.LG]  17 Jan 2024
+
+Figure 1: The architecture for the Liquid Time-Constant Network comprises the input, perception
+layer, a liquid layer (i.e., a time-continuous gating mechanism), and an output layer. Here, I(t) is the
+real input signal, and y(t) is the predicted, filtered signal.
+meters (∼ 23 feet), 95% of the time, anywhere on or near the Earth’s surface [7]. However, GPS
+signals are increasingly unreliable due to their dependence on a network of vulnerable satellites.
+Additionally, GPS signals are prone to initialization delays and dropouts. MagNav signals, in contrast,
+constantly emit from the invisible Earth’s geomagnetic field, are well-defined, and are mappable.
+However, there are differences in MagNav estimation accuracies, which can be attributed to the
+altitude flown, map quality, and calibration of the platform’s magnetic field. Additionally, magnetic
+measurements derived from scalar and vector magnetometers (magnetic sensors affixed to the aircraft)
+depend on a nonlinear combination of the Earth’s magnetic field and the aircraft’s magnetic field,
+which can cause a navigation estimate that drifts over time due to corrupted magnetic fields (namely,
+the permanent field, the induced field, and the eddy-current field, as defined by Tolles and Lawson [8]).
+Furthermore, time-varying magnetic fields from sources like electronic equipment, communication
+systems, and temperature-dependent magnetic properties of sensors cause deterministic and stochastic
+effects that violate static assumptions of the classical Tolles–Lawson (T-L) error sources used for
+predicting aircraft magnetic interference [ 9]. For a real-time application, a model continuously
+estimates and eliminates the unknown T-L coefficients of the corrupted magnetic fields.
+In this work, we aim to reduce contamination fields and improve calibration accuracy through
+aeromagnetic compensation, i.e., eliminating interference related to the aircraft’s magnetic field from
+the total magnetometer output signal to improve magnetometer measurement harmonization to a
+magnetic anomaly map. Traditional state space estimation models, like Kalman filters, have previously
+been applied to resolve this but are limited in handling the nonlinear nature of the underlying
+dynamical system and are highly sensitive to perturbations [3, 10–12]. Neural networks have also
+been used to improve the calibration of aeromagnetic compensation [ 13–17], but are typically
+traditional models that fail to leverage inherent physical laws of the system, are computationally
+expensive, and are not robust to high-dimensional, time-series data. We propose a two-step machine
+learning framework that: (1) uses a physics-informed neural network, a Liquid Time-Constant
+network, to capture complex, nonlinear dynamics of airborne MagNav and to detect the weak
+magnetic anomaly signal from a noisy environment; (2) derives the coefficients of known magnetic
+effects from the airplane that can be used to update a T-L model and improve calibration accuracy.
+2 Methodology
+2.1 Liquid Time-Constant Networks
+Liquid Time-Constant (LTC) networks are a promising variant of recurrent neural networks (RNNs)
+designed to capture nonlinear patterns of high-dimensional, sequential tasks [18]. While standard,
+discrete RNNs approximate continuous dynamics step-by-step via dependencies on the history of
+2
+
+their hidden states, LTCs approximate continuous dynamics using ordinary differential equations
+(ODEs) [19] with more elaborate temporal steps. Additionally, their timing behavior is adaptive to
+the input (how fast or slow they respond to some stimulus can depend on the specific input). These
+ODE-based neural networks, however, are slower in training and inference due to using advanced
+solvers. This lag intensifies with increasing data complexity, especially for tasks like autonomous
+driving, financial time series, and physics simulations. In this work, we leverage an LTC model
+enhanced by a closed-form continuous-depth solution (CfC) [20] that combines the rich modeling
+capabilities of ODE-based models without needing a solver, resulting in significantly faster training
+and inference speeds. This model has been applied to various sequence modeling problems like robot
+and drone navigation [21, 22], vision-based autonomous driving [20, 21], and forecasting sea ice
+concentration [23] and cardiac abnormality detection [ 24]. Given a 1-D, time-series input signal
+with m-features, I(t)m×1, at time-step t, a hidden state vector with D hidden units, x(D×1)(t), and
+a time-constant parameter vector, w(D)
+τ , the hidden state of an LTC network is determined by the
+solution to the following problem (see Fig. 1):
+dx
+dt = wτ + f (x, I, θ)x(t) + Af (x, I, θ) (1)
+where A is a bias vector, and f is a neural network parametrized by θ.
+2.2 Neural Circuit Policies (NCPs)
+A Neural Circuit Policy network [ 25] is a sparse recurrent neural network modeled after nervous
+system of the C. elegans nematode [26]. It has four recurrent connection types: sensory, inter-neurons,
+command, and motor neurons. Sensory neurons receive environmental observations (input, x), which
+are forwarded to inter-neurons. Command neurons, linked to inter-neurons, handle decision-making.
+Motor neurons, connected to command neurons, manage actuation (output, y). Synapses can be
+excitatory or inhibitory and affect neuron activation. Unlike traditional neural networks, each neuron’s
+dynamics are governed by an ODE, which allows for complex dynamics. We train these networks
+using NCP wirings and the Proximal Policy Optimization (PPO) method [27].
+2.3 Closed-form Continuous-time (CfC) Neural Networks
+A CfC network is a recurrent neural network that resolves a bottleneck requiring a numerical ODE
+solver by approximating the closed-form solution of the differential equation. Accordingly, CfCs
+deliver higher efficiency and achieve adaptive, causal, and continuous-time attributes with faster
+training and inference time. The hidden state of the CfC model can be explicitly written as:
+x(t) = σ(−f (x, I; θf )t)| {z }
+time-continuous gating
+⊙g(x, I; θg)+
+[1 − σ(−[f (x, I; θf )]t)]| {z }
+time-continuous gating
+⊙h(x, I; θh) (2)
+where f, g, and h are NCP network heads and ⊙ is the Hadamard (element-wise) product. For
+time-variant datasets, t is set based on its timestamp or order, while for sequential applications where
+sample timing is irrelevant, t is sampled uniformly between two hyperparameters.
+2.4 Dataset & Pre-processing
+We use the United States Air Force (USAF)-MIT Signal Enhancement for Magnetic Navigation
+Challenge dataset [ 28], which aims to identify optimal aeromagnetic compensation for airborne
+MagNav. This dataset includes time series from six flights and captures magnetic field data from five
+scalar and three vector magnetometers positioned differently within the aircraft (see Fig. 2b). Each
+flight has 65 features, with some segments having INS, avionics, electrical, and radar readings. Post
+T-L calibration, the scalar magnetometer at the aircraft’s tail stinger, Mag 1, serves as our ground
+truth target signal, ˆy. Signals are sampled at 10 Hz. We apply T-L compensation to magnetometer
+data, subtract the International Geomagnetic Reference Field to degrade variations caused by the
+Earth’s core field, and correct for diurnal effects.
+3
+
+Figure 2: a) Flight trajectory on the magnetic anomaly of Renfrew, Canada, and Ontario, Canada, at
+300m above the WGS84 ellipsoid (flight 1007). b) Locations of magnetometers positioned around
+the MagNav Challenge aircraft.
+2.5 Feature Selection
+We standardize all features usingz-score normalization to have zero mean and unit standard deviation.
+To gather more information from magnetometer measurements, we residualize magnetometers within
+the aircraft against the magnetometer outside the aircraft (Mag 1). To reduce overfitting and enhance
+the interpretability of salient features towards model performance, we apply three feature selection
+techniques: Spearman correlation [ 29], LASSO regularization [ 30], and XGBoost [ 31], to sub-
+select the most important features from the dataset. Accordingly, we select the following features:
+magnetometer 4 & 5 measurements, aircraft positioning and orientation, INS velocities, altitude,
+and several electrical measurements (V_BAT1, V_BAT2, CUR_ACLo, CUR_FLAP, CUR_TANK,
+CUR_IHTR).
+2.6 Experiment Setup
+We treat each flight as a sample to prevent overfitting due to looping flight segments within the same
+flight. We apply K-fold cross-validation [32] for resampling. We train all models on an NVIDIA
+Tesla T4 GPU using Python 3.10. We use PyTorch [ 33] to build the LTC module and conduct
+hyperparameter search, architecture search, and tuning using Optuna [34]. We use an LTC and CfC
+cell with NCP wirings (AutoNCP), 64 inter and command neurons, and one output neuron for each
+trial. We optimize the model using Adam ( lr = 1 e − 3), mean squared error (MSE) loss, and a
+dropout of 50%. We train for 300 epochs with a batch size of 64 samples. We use the Root Mean
+Square Error (RMSE) to measure model performance:
+RMSE =
+vuut 1
+N
+NX
+i=1
+(yi − ˆyi)2 (3)
+where yi and ˆyi are the truth and predicted signals, respectively.
+3 Results
+We conducted experiments on the Liquid Time-Constant (LTC) and Liquid Time-Constant-Closed-
+form Continuous model (LTC-CfC). We compared LTC models against three baseline models:
+Multi Perceptron (MLP), Convolutional Neural Network (CNN), and Long Short-Term Memory
+(LSTM) Network. We also compared the performance of our proposed approach against the T-L state
+estimation method for classical aerocompensation calibration.
+As shown in Table 1, the LTC models show a significant increase in performance compared to
+standard non-ODE-based neural networks. The standard LTC demonstrates up to 58% deduction in
+compensation error [RMSE], and the LTC-CfC similarly shows a 64% reduction in compensation
+error compared to the T-L model, averaged across both test flights. Our method successfully detects
+weak anomaly fields with a significant accuracy threshold (see Fig. 3).
+4
+
+Model Flt1003 [nT] Flt1007 [nT]
+T-L 58.85 45.13
+LSTM 41.79 42.18
+MLP 30.47 26.23
+CNN 26.05 30.56
+LTC 20.31 22.89
+LTC-CfC 18.20 19.14
+Table 1: Model comparison of aerocompensation
+calibration error (RMSE nT) for flights 1003 and
+1007.
+Figure 3: Truth signal (IGRF-corrected Mag 1)
+vs. predicted signal [nT] for a portion of flight
+1007.
+4 Conclusion
+This paper presents a novel, physics-informed model that leverages nonlinear dynamics in airborne
+MagNav systems to enhance the calibration of aeromagnetic compensation. The pipeline consists of
+magnetic effects corrections, Liquid Time-Constant Networks enabled with ODE-solvers or closed-
+form solvers, and learned coefficients for updating state estimation models for real-time use. By
+incorporating physics-informed learning, our approach effectively separates weak magnetic anomaly
+fields from disruptive aircraft magnetic noise, enabling accurate navigation for airborne MagNav.
+Our experimental results outperform traditional state estimation techniques. We plan on leveraging
+additional physics-based features learned during training and conducting external validation on new
+datasets. We hope to see this work applied to real-time aircraft navigation systems in the future.
+Acknowledgments and Disclosure of Funding
+This work was completed at SandboxAQ 4 as a part of the Residency Program. F.N. expresses
+her profound gratitude to her SandboxAQ team members and peers for their dedicated expertise,
+mentorship, and support in completing this work. F.N. is also thankful to her research advisors
+at Stanford University, founding research scientists at Liquid AI, and open-source MagNav-AI
+collaborators and partners for their scientific and technical contributions that inspired this work.
+References
+[1] Tegg Westbrook. The global positioning system and military jamming. Journal of Strategic
+Security, 12(2):1–16, 2019.
+[2] Mark L Psiaki and Todd E Humphreys. Gnss spoofing and detection. Proceedings of the IEEE,
+104(6):1258–1270, 2016.
+[3] Aaron J. Canciani. Magnetic navigation on an f-16 aircraft using online calibration. IEEE
+Transactions on Aerospace and Electronic Systems, 58(1):420–434, 2022. doi: 10.1109/TAES.
+2021.3101567.
+[4] Aaron Canciani and John Raquet. Airborne magnetic anomaly navigation. IEEE Transactions
+on aerospace and electronic systems, 53(1):67–80, 2017.
+[5] John M Wilson, Robert J Kline-Schoder, Marc A Kenton, Paul H Sorensen, and Odile H Clavier.
+Passive navigation using local magnetic field variations. In Proceedings of the 2006 National
+Technical Meeting of the Institute of Navigation, pages 770–779, 2006.
+[6] Taylor N Lee and Aaron J Canciani. Magslam: Aerial simultaneous localization and mapping
+using earth’s magnetic anomaly field.Navigation, 67(1):95–107, 2020.
+4Solving global challenges with AI + Quantum for positive impact. More at sandboxaq.com.
+5
+
+[7] Federal Aviation Administration. How gps works, n.d. URL https://www.faa.gov/about/
+office_org/headquarters_offices/ato/service_units/techops/navservices/
+gnss/gps/howitworks. Accessed: November 28, 2023.
+[8] Walter E Tolles and JD Lawson. Magnetic compensation of mad equipped aircraft. Airborne
+Instruments Lab. Inc., Mineola, NY, Rept, pages 201–1, 1950.
+[9] Paul Leliak. Identification and evaluation of magnetic-field sources of magnetic airborne
+detector equipped aircraft. IRE Transactions on Aerospace and Navigational Electronics ,
+ANE-8(3):95–105, 1961.
+[10] Tadej Beravs, Samo Beguš, Janez Podobnik, and Marko Munih. Magnetometer calibration
+using kalman filter covariance matrix for online estimation of magnetic field orientation. IEEE
+transactions on instrumentation and measurement, 63(8):2013–2020, 2014.
+[11] Benjamin Siebler, Stephan Sand, and Uwe D Hanebeck. Localization with magnetic field
+distortions and simultaneous magnetometer calibration. IEEE Sensors Journal, 21(3):3388–
+3397, 2020.
+[12] G Noriega. Recent advances in aeromagnetic compensation. Proc. 10th Int. Congr. Prospectors
+Explorers, pages 1–4, 2017.
+[13] Albert Gnadt. Machine learning-enhanced magnetic calibration for airborne magnetic anomaly
+navigation. In AIAA SciTech 2022 Forum, page 1760, 2022.
+[14] Nathan Laoué, Arnaud Lepers, Laure Deletraz, and Charly Faure. Neural network calibration
+of airborne magnetometers. In 2023 IEEE 10th International Workshop on Metrology for
+AeroSpace (MetroAeroSpace), pages 37–42. IEEE, 2023.
+[15] Xin Xu, Ling Huang, Xiaojun Liu, and Guangyou Fang. Deepmad: Deep learning for magnetic
+anomaly detection and denoising. IEEE Access, 8:121257–121266, 2020.
+[16] Ming Ma, Defu Cheng, Stephan Chalup, and Zhijian Zhou. Uncertainty estimation in the neural
+model for aeromagnetic compensation. IEEE Geoscience and Remote Sensing Letters, 15(12):
+1942–1946, 2018.
+[17] Mitchell C Hezel. Improving aeromagnetic calibration using artificial neural networks. Air
+Force Institute of Technology (AFIT), 2020.
+[18] Ramin Hasani, Mathias Lechner, Alexander Amini, Daniela Rus, and Radu Grosu. Liquid
+time-constant networks. In Proceedings of the AAAI Conference on Artificial Intelligence ,
+volume 35, pages 7657–7666, 2021.
+[19] Ricky TQ Chen, Yulia Rubanova, Jesse Bettencourt, and David K Duvenaud. Neural ordinary
+differential equations. Advances in neural information processing systems, 31, 2018.
+[20] Ramin Hasani, Mathias Lechner, Alexander Amini, Lucas Liebenwein, Aaron Ray, Max
+Tschaikowski, Gerald Teschl, and Daniela Rus. Closed-form continuous-time neural networks.
+Nature Machine Intelligence, 4(11):992–1003, 2022.
+[21] Wei Xiao, Tsun-Hsuan Wang, Ramin Hasani, Makram Chahine, Alexander Amini, Xiao Li,
+and Daniela Rus. Barriernet: Differentiable control barrier functions for learning of safe robot
+control. IEEE Transactions on Robotics, 2023.
+[22] Makram Chahine, Ramin Hasani, Patrick Kao, Aaron Ray, Ryan Shubert, Mathias Lechner,
+Alexander Amini, and Daniela Rus. Robust flight navigation out of distribution with liquid
+neural networks. Science Robotics, 8(77):eadc8892, 2023.
+[23] Matthew Beveridge and Lucas Pereira. Interpretable spatiotemporal forecasting of arctic sea ice
+concentration at seasonal lead times. In NeurIPS 2022 Workshop on Tackling Climate Change
+with Machine Learning, 2022.
+[24] Zhaojing Huang, Luis Fernando Herbozo Contreras, Wing Hang Leung, Leping Yu, Nhan Duy
+Truong, Armin Nikpour, and Omid Kavehei. Efficient edge-ai models for robust ecg abnormality
+detection on resource-constrained hardware. medRxiv, pages 2023–08, 2023.
+6
+
+[25] Mathias Lechner, Ramin Hasani, Alexander Amini, Thomas A Henzinger, Daniela Rus, and
+Radu Grosu. Neural circuit policies enabling auditable autonomy. Nature Machine Intelligence,
+2(10):642–652, 2020.
+[26] Ann K Corsi, Bruce Wightman, and Martin Chalfie. A transparent window into biology: a
+primer on caenorhabditis elegans. Genetics, 200(2):387–407, 2015.
+[27] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. Proximal
+policy optimization algorithms. arXiv preprint arXiv:1707.06347, 2017.
+[28] Albert R Gnadt, Joseph Belarge, Aaron Canciani, Glenn Carl, Lauren Conger, Joseph Curro,
+Alan Edelman, Peter Morales, Aaron P Nielsen, Michael F O’Keeffe, et al. Signal enhancement
+for magnetic navigation challenge problem. arXiv preprint arXiv:2007.12158, 2020.
+[29] C Spearman. The proof and measurement of association between two things. The American
+Journal of Psychology, 15(1):72–101, 1904.
+[30] Robert Tibshirani. Regression shrinkage and selection via the lasso. Journal of the Royal
+Statistical Society Series B: Statistical Methodology, 58(1):267–288, 1996.
+[31] Tianqi Chen and Carlos Guestrin. Xgboost: A scalable tree boosting system. In Proceedings of
+the 22nd acm sigkdd international conference on knowledge discovery and data mining, pages
+785–794, 2016.
+[32] Frederick Mosteller and John W Tukey. Data analysis, including statistics. Handbook of social
+psychology, 2:80–203, 1968.
+[33] Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory Chanan,
+Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, et al. Pytorch: An imperative
+style, high-performance deep learning library. Advances in neural information processing
+systems, 32, 2019.
+[34] Takuya Akiba, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama. Optuna:
+A next-generation hyperparameter optimization framework. In Proceedings of the 25th ACM
+SIGKDD international conference on knowledge discovery & data mining, pages 2623–2631,
+2019.
+7

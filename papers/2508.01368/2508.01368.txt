@@ -1,0 +1,808 @@
+Relation-Aware LNN–Transformer for Intersection-Centric Next-Step Prediction
+Zhehong Ren * , Tianluo Zhang*, Yiheng Lu*, Yushen Liang*, Promethee Spathis
+New York University Shanghai
+{zr2245,tz2668,yl12003,yl11949,ps147}@nyu.edu
+Abstract
+Next-step location prediction plays a pivotal role in model-
+ing human mobility, underpinning applications from person-
+alized navigation to strategic urban planning. However, ap-
+proaches that assume a closed world—restricting choices to
+a predefined set of points of interest (POIs)—often fail to
+capture exploratory or target-agnostic behavior and the topo-
+logical constraints of urban road networks. Hence, we intro-
+duce a road-node-centric framework that represents road-user
+trajectories on the city’s road-intersection graph, thereby re-
+laxing the closed-world constraint and supporting next-step
+forecasting beyond fixed POI sets. To encode environmen-
+tal context, we introduce a sector-wise directional POI ag-
+gregation that produces compact features capturing distance,
+bearing, density, and presence cues. By combining these
+cues with structural graph embeddings, we obtain semanti-
+cally grounded node representations. For sequence model-
+ing, we integrate a Relation-Aware LNN–Transformer—a hy-
+brid of a Continuous-time Forgetting Cell (CfC-LNN) and a
+bearing-biased self-attention module—to capture both fine-
+grained temporal dynamics and long-range spatial dependen-
+cies. Evaluated on city-scale road-user trajectories, our model
+outperforms six state-of-the-art baselines by up to 17 percent-
+age points in Acc@1 and 10 percentage points in MRR, and
+maintains high resilience under noise—losing only 2.4 per-
+centage points Acc@1 at 50 m GPS perturbation and 8.9 per-
+centage points Acc@1 at 25% POI noise.
+Introduction
+Predicting the next intersection for a road user—across
+walking, cycling, and driving—is a cornerstone of human
+mobility modeling, driving applications in personalized nav-
+igation, traffic forecasting, and urban planning. A large body
+of next-POI work frames prediction as sequence model-
+ing over a limited POI vocabulary, often overlooking (i)
+the topological constraints of the road graph and (ii) the
+directional distribution of nearby semantics. For instance,
+Transformer-based approaches typically treat trajectories as
+flat token streams without encoding intersections as decision
+points or road connectivity, which can induce candidate bias
+and a coarse treatment of street structure (e.g. (Xu, Huang,
+and Zou 2023)). Even graph-enhanced POI recommenders
+*Equal contribution
+Copyright © 2026, Association for the Advancement of Artificial
+Intelligence (www.aaai.org). All rights reserved.
+such as GETNext (Yang, Liu, and Zhao 2023) still operate
+on POI tokens rather than directly on the road-intersection
+state space.
+Nevertheless, empirical road-user movement exhibits
+substantial exploration: using a high-precision, longitudinal
+dataset of 400+ users, Cuttone et al. report that 20–25% of
+transitions lead to previously unseen places and that roughly
+70% of locations are visited only once (Cuttone, Lehmann,
+and Gonz ´alez 2016). Such exploratory behavior directly
+challenges fixed-vocabulary next-POI predictors and moti-
+vates modeling unbounded by a predefined POI token set.
+We address such gaps with a Road-Node–Centric Next-
+Step Prediction framework that represents trajectories on the
+city’s intersection graph and combines static semantic con-
+text, topology, and geography information. The three main
+contributions of our paper are the following:
+• Sector-wise, direction-aware node representation.
+We partition each intersection’s neighborhood into
+equal-angle sectors and, within each sector, summa-
+rize multi-category POI cues (distance, bearing, density,
+presence) to form a compact, inductive node descriptor.
+This sectorization integrates directionality at the feature
+level—capturing the anisotropy of urban space and align-
+ing with outgoing road bearings—so that one-hop candi-
+dates that are topologically similar but differ by direction
+become distinguishable.
+• Relation-Aware LNN–Transformer for spatiotempo-
+ral encoding. We build a unified architecture by first en-
+coding trajectory dynamics with a Continuous-time For-
+getting Cell (CfC-LNN) and then applying a Relation-
+Aware Transformer that adds a bearing-based bias to its
+self-attention logits. The Rel-Aware LNN–Transformer
+captures fine-grained temporal changes, and the bearing-
+biased attention captures long-range directional depen-
+dencies on the road graph—all within a compact 2.34M-
+parameter model.
+• Empirical and robustness gains. On city-scale road-
+user trajectories (1–10 km), our model surpasses six com-
+petitive baselines in Accuracy@1 and MRR, and de-
+grades gracefully under realistic GPS perturbations and
+POI-feature noise. We attribute the robustness partly
+to the stable continuous-time recurrence in CfC-LNN
+(closed-form state updates) coupled with topology-aware
+arXiv:2508.01368v1  [cs.AI]  2 Aug 2025
+
+attention; training remains gradient-based, but the for-
+ward dynamics improve conditioning and sample effi-
+ciency.
+Related Work
+Liquid Neural Networks (LNNs)
+Liquid neural networks model sequence dynamics in con-
+tinuous time with input-modulated state equations, offer-
+ing compact models and strong stability/robustness prop-
+erties relative to ODE/RNN baselines. Early “Liquid
+Time-constant” (LTC) models define linear first-order dy-
+namics with gates and are trained by backpropagation
+through time (BPTT) (Hasani et al. 2020). Closed-form
+continuous-time (CfC) variants further avoid heavy numer-
+ical solvers by deriving analytic updates, improving effi-
+ciency while preserving expressivity (Hasani et al. 2022).
+LNNs have demonstrated resilience to distribution shifts in
+control and navigation, e.g., robust out-of-distribution flight
+with vision inputs (Hasani, Lechner, and Grosu 2023). These
+properties motivate our use of a CfC-LNN encoder for irreg-
+ular dwell times and non-uniform sampling in trajectories.
+Next POI/Location Prediction
+Sequence-only models. RNN variants inject temporal and
+spatial intervals into gates or transitions but treat POIs as vo-
+cabulary tokens without explicit road topology: ST-LSTM
+with time/distance gates (Zhao et al. 2018), STRNN with
+time/distance-specific transition matrices ( ?), DeepMove
+with historical attention (Feng and et al. 2018), and ARNN
+with attentional sequence modeling (Guo and et al. 2020).
+Transformer-based models. Recent Transformers cap-
+ture long-range dependencies yet typically operate on flat
+token sequences; examples include GETNext, which aug-
+ments a Transformer with a global trajectory flow map for
+next-POI recommendation (Yang, Liu, and Zhao 2023), and
+STTF-Recommender for mining non-contiguous visit re-
+lations (Xu, Huang, and Zou 2023). Although GETNext
+and STTFRecommender both advance the next POI predic-
+tion, neither incorporates explicit road-graph connectivity or
+direction-aware POI semantics, which our intersection-level
+sector-wise aggregation is designed to remedy.
+Input Embeddings and Information Aggregation
+Structural priors. Node2Vec learns transductive struc-
+tural embeddings via biased random walks that mix ho-
+mophily and structural equivalence (Grover and Leskovec
+2016). GraphSAGE learns inductive neighborhood aggrega-
+tors that generalize to unseen nodes (Hamilton, Ying, and
+Leskovec 2017).
+Implication for road networks. Human movement on
+streets is directional and constrained by intersection ge-
+ometry; we therefore combine strong structural priors
+(Node2Vec) with an orientation-aware, sectorized pooling
+that injects distance/bearing/density semantics into descrip-
+tors, complementing GraphSAGE-style local aggregation.
+168dimensionsPOIembedding5dimensionsGeographical
+………………
+…………………
+………………
+………………………
+Takedifference
+ObservationsCandidatesCFCGatingInput embedding+PositionEncoding3x
+ProbabilityTransformerTransformerRel-aware attention
+node2vec embedding
+Figure 1: Overview of our Relation-Aware
+LNN–Transformer. A road-user trajectory is projected
+onto the intersection graph and encoded via sector-wise POI
+and geometric features fused with Node2Vec embeddings.
+The differenced features go through a CfC-LNN and L −1
+standard Transformer layers, followed by a relation-aware
+attention block that biases self-attention with inter-node
+bearings, and finally a softmax over one-hop candidates.
+Methodology
+As Figure 1 illustrates our pipeline, every trajectory is first
+snapped to intersections and enriched with POI and geomet-
+ric features. Then, these features are differenced and pro-
+cessed by our Relation-Aware LNN–Transformer architec-
+ture. Finally, a softmax head over one-hop neighbors pro-
+duces the next-node prediction.
+Problem Definition
+Let G = ( V, E) be an undirected road graph whose nodes
+V are intersections and edges E are road segments. Each
+node v has a structural embedding hstruct
+v ∈ Rds and a POI
+descriptor hPOI
+v ∈ Rdp. Let pv ∈ R2 denote its planar coor-
+dinates (fixed coordinate reference system).
+Given a trajectory τ = (v1, . . . , vT ), we predict the next
+node vT +1 from the one-hop candidate set C(vT ) = N (vT ).
+We pass τ through our encoder (Secs. -) to obtain a repre-
+
+sentation zu for each u ∈ C(vT ), and score
+sθ(u | τ) = w⊤zu + b,
+pθ(u | τ) = softmax
+ 
+sθ(u | τ)
+
+for u ∈ N (vT ) .
+(1)
+We define LCE, the classification loss as follows:
+LCE = − 1
+N
+NX
+i=1
+log pθ
+ 
+v(i)
+T +1 | τ (i)
+. (2)
+We also regress the unit direction vector from vT to the
+ground-truth next node, dT →T +1 = pT +1−pT
+∥pT +1−pT ∥, using a
+cosine loss
+Ldir = 1
+N
+NX
+i=1
+
+1 − ˆd(i)
+T →T +1 ·d(i)
+T →T +1
+
+. (3)
+The overall objective is L = LCE + γ Ldir, with γ > 0.
+Sector-Wise Directional POI Aggregation
+Let C be the set of POI categories ( |C| = 12). Around each
+node v, we consider a circular neighborhood of radius R =
+150 m1 and partition it into S = 8 equal angular sectors.2
+For each category c ∈ C , we compute a 14-dimensional
+summary f (c)
+v consisting of:
+(i) Category-wise circular statistics (5). Given POIs
+{(di, θi)}i within R, we compute
+µd = 1
+n
+X
+i
+di, σ 2
+d = 1
+n
+X
+i
+(di − µd)2,
+mc = 1
+n
+X
+i
+cos θi, m s = 1
+n
+X
+i
+sin θi,
+r =
+p
+m2c + m2s .
+(4)
+(ii) Angular sector densities (8). For sector k ∈
+{1, . . . , S}, hk = 1
+AS
+{θi ∈ bink}
+, where AS = πR2/S.
+(iii) Presence indicator (1). A binary flag for “existence
+of at least one POI of category c within R”.
+Concatenating over categories gives xv = [ f (c)
+v ]c∈C ∈
+R168. We include a per-feature binary mask for empty cate-
+gories/sectors and apply z-score normalization fitted on the
+training set; features are precomputed offline and cached.
+CfC–LNN Temporal Encoder
+To expose instantaneous dynamics, we feed first-order
+differences of POI and geometric features into a
+Continuous-time Forgetting Cell (CfC): ∆pt = pt − pt−1,
+∆gt = gt − gt−1 (zeros at t=1). Let ht ∈ Rdh be the latent
+state. We use a closed-form decay with a constant time step
+1Radius selection was based on ablation over R ∈
+{50, 75, 100, 125, 150, 175, 200, 225, 250} m: R = 150 m
+achieves a favorable trade-off—coverage ≈ 0.63, duplication ≈
+0.52, and marginal gain ≈ 0.62—and yields the highest Test@1
+(0.9094) and MRR (0.9506) in our experiments.
+2Varying sectors S ∈ { 2, 4, 8, 16} yields optimal performance
+at S = 8 : Test@1=0.9094, MRR=0.9506 (vs. 0.8734/0.9237 at
+S = 2 and 0.8704/0.9232 at S = 16).
+(our data do not require explicit ∆t modeling),
+α = exp
+ 
+− softplus(τ)
+
+,
+[at; bt] = W
+
+∆pt; ∆gt; ht−1
+
++ b,
+ct = tanh(bt),
+ht = α ⊙ ht−1 + (1 − α) ⊙ ct.
+(5)
+We then combine ht with the static structural prior via a
+gated mixer
+gt = σ
+ 
+Wg[ht∥hstruct
+vt ] + bg
+
+,
+˜ht = gt ⊙ hstruct
+vt + (1 − gt) ⊙ ht.
+(6)
+and project to the model dimension d. After encoding the
+observed steps 1:T , we append one candidate-specific state
+per uj ∈ N (vT ) by a final CfC update initialized at hT and
+conditioned on the geometry from vT to uj, yielding
+Z =
+˜h1, . . . ,˜hT , ˜h(1)
+T +1, . . . ,˜h(C)
+T +1
+
+∈ R(T +C)×d. (7)
+Since LNNs favor input-modulated continuous dynamics,
+turning static POI context into incremental signals matches
+this inductive bias. Empirically, removing differencing re-
+duces performance from Test@1 = 0 .9094, MRR =
+0.9506 to 0.8752, 0.9259 (8 sectors; 3 standard layers + 1
+relation-aware layer).
+Relation-Aware Transformer
+We process Z with a Transformer encoder augmented by
+directional and type biases.
+Bearing-aware additive bias. For tokens p, q correspond-
+ing to nodes ip, iq, let θp→q be the bearing from pip to piq.
+For each head h, we form a head-specific additive bias
+B(h)
+pq = λh [cos θp→q, sin θp→q] wh, (8)
+and compute
+Attn(h)(Q, K, V ) = softmax
+
+QK ⊤
+√dh
++ B(h)
+
+V, (9)
+where dh = d/H, λh is learned and row-centered for nu-
+merical stability. This captures directional alignment while
+letting heads specialize.
+Type embeddings and masking. We add learned
+type embeddings to distinguish observed vs. candi-
+date tokens and apply an attention mask that blocks
+candidate↔candidate attention (candidates attend to his-
+tory only). All other components (residual, pre-norm,
+feed-forward) follow the standard encoder.
+Experiment
+Dataset & Pre-processing
+Our experiments use two sources: (i) a static road–POI graph
+extracted from OpenStreetMap (OSM) 3 and (ii) road-user
+GPS trajectories from GeoLife (Zheng et al. 2009, 2008;
+Zheng, Xie, and Ma 2010). GeoLife trajectories are col-
+lected by phones and dedicated GPS loggers with diverse
+3https://www.openstreetmap.org
+
+sampling rates; notably, ∼91.5% are densely sampled (ev-
+ery 1 −5s or 5 −10m per point), while the constructed in-
+tersection graph is relatively sparse (mean inter-intersection
+spacing ≈487 m). This density/sparsity contrast motivates a
+topology-respecting projection that does not impute unob-
+served paths with global shortest routes.
+Static Road–POI Graph. We obtain the urban road net-
+work with Overpass Turbo (Overpass Turbo 2025), treat-
+ing intersections as nodes V and road segments as edges
+E. Each POI is assigned to its nearest node, and we ap-
+ply our Sector-Wise Directional POI Aggregation (eight an-
+gular sectors) to form a compact 168-dimensional descrip-
+tor per node (Sec. ); features are z-score normalized on the
+training set and cached. This yields two per-node vectors:
+hstruct
+v ∈ Rds and hPOI
+v ∈ Rdp.
+GPS-to-Graph Projection (Topology-respecting, no path
+imputation). GeoLife provides time-stamped (lat, lon, t)
+samples for road users (walking, cycling, driving). We con-
+vert raw GPS streams to node sequences on G via four
+steps that preserve observed geometry and avoid shortest-
+path completion:
+1. Edge snapping. Each GPS point is snapped to its near-
+est road edge (within a search radius), yielding a continu-
+ous position along a specific segment; ties are broken by
+heading consistency.
+2. Intersection hit detection. We detect an intersection
+visit when the snapped position enters a fixed buffer
+around node v (or crosses its V oronoi cell boundary).
+A small hysteresis window prevents rapid oscillation be-
+tween adjacent nodes.
+3. Twig pruning (jitter removal).We remove short detours
+caused by GPS jitter: any subsequence that leaves a main
+path and returns to the same node within two hops is
+pruned.
+4. Repeat preservation (no de-dup). We do not collapse
+consecutive occurrences of the same node. Repeated vis-
+its (low speed or dwell near an intersection) are retained
+in the observed context, providing implicit temporal/d-
+well cues even without explicit time encoding. Note that
+labels vT +1 are always different fromvT by construction
+(prediction is over one-hop neighbors).
+Segmentation and Candidate Construction. We seg-
+ment each snapped stream into maximal contiguous se-
+quences that remain within the mapped city graph and pass
+basic quality filters (e.g., plausible speed bounds; removal
+of isolated outliers). For each step T , the candidate set is the
+one-hop neighborhood C(vT ) = N (vT ); the ground-truth
+next node vT +1 is guaranteed to lie in C(vT ). We compute
+evaluation metrics on this neighbor-ranking task.
+Trajectory Segmentation We partition each projected
+trajectory into non-overlapping segments by sliding a fixed
+node-count window chosen to approximate four spatial
+scales: short-range (≈1 km), mid-range (≈3 km), long-range
+(≈5 km), and extended ( ≥7 km). Table 1 summarizes the
+number of segments at each scale, their exact mean lengths,
+and the corresponding node-count ranges.
+Range Category Segments Mean Length (m) Node-Count Range
+Short-range (≈1 km) 63,813 1,028 7–20
+Mid-range (≈3 km) 29,941 2,983 20–40
+Long-range (≈5 km) 16,662 5,047 40–100
+Extended (≥7 km) 3,453 7,215 100–256
+Full trajectories 16,624 9,842 2–769
+Table 1: Counts and statistics for trajectory segments by spa-
+tial range category.
+Evaluation Metrics
+In our setting, the next node is selected from a discrete can-
+didate set C(vT ). Practical systems act on only the top few
+options, so we emphasize actionable precision via Acc@k.
+When top-1 is wrong, we still require the correct node to re-
+ceive higher relative confidence (i.e., appear near the top),
+which MRR captures. Finally, because class balance varies
+across neighborhoods and thresholds are arbitrary, we report
+mean ROC–AUC as a threshold-free measure of separability
+in one-vs-rest scoring.
+1. Accuracy@k (k = 1 , 3, 5). Given scores {su}u∈C(vT ),
+let rank(vT +1) be the position of the correct node in de-
+scending order. Then
+Acc@k = 1
+|D|
+X
+(v1,...,vT +1)∈D
+1
+ 
+rank(vT +1) ≤ k
+
+.
+2. Mean Reciprocal Rank (MRR).
+MRR = 1
+|D|
+X
+(v1,...,vT +1)∈D
+1
+rank(vT +1) .
+3. Mean ROC–AUC. Average area under the ROC curve
+across one-vs-rest tasks (each candidate vs. all others),
+giving threshold-free discrimination under class imbal-
+ance.
+Baseline Models We compare against six classical and
+recent methods that, like ours, operate on discrete node
+sequences over an abstract graph (LSTM) to cover dif-
+ferent paradigms of graph-based trajectory modeling:
+LSTM (vanilla recurrent sequence encoder) (Hochreiter
+and Schmidhuber 1997); HST-LSTM (hierarchical spatio-
+temporal LSTM) (Kong and Wu 2018); STGN (spatio-
+temporal gated network) (Zhao et al. 2019); ARNN (atten-
+tional RNN) (Guo and et al. 2020); MobGT (Xu et al. 2023);
+and GETNext (transformer augmented with a trajectory-
+flow map) (Yang, Liu, and Zhao 2023). All models use the
+same 8:1:1 train/val/test split and training protocol (batch
+size 16, 10 epochs, learning rate 1×10−4). Table 2 summa-
+rizes model configurations and inputs.
+Comparisons with Models
+Table 3 reports our model’s performance against six base-
+lines across different path lengths and we can get the four
+following conclusions.
+Fair Capacity and Global Gains. With only 2.34M pa-
+rameters, our model consistently surpasses the best base-
+line across all lengths and metrics. All Acc@1 improve-
+
+Model Layers Heads Hidden/Dim FFN/GCN Specifc Features POI Node2Vec Geo Params (M)
+LSTM (1997) 2 – 512 – Bahdanau attention over final states ✓ ✓ ✓ 2.46
+HST-LSTM (2018) GRU+LSTM – 224/224 – neighbor aggregation k=8 ✓ ✓ ✗ 2.43
+ARNN (2020) 1 (GRU) – 384 – attention over k=8Node2Vec neighbors ✓ ✓ ✗ 2.15
+MobGT (2023) 3 4 192 192 graph Transformer ✓ ✓ ✓ 2.45
+STGN (2019) 2 blocks – 512 (GRU) 384 →512 spatio-temporal GRU+graph conv (edge attrs)✓ ✓ ✓ 2.59
+GETNext (2023) 6 4 256 192 Transformer + trajectory flow map ✓ ✓ ✓ 2.58
+Our Model (LNN+RelT)4 4 256 256 CfC–LNN encoder + bearing-biased attention; γ=0.1 ✓ ✓ ✓ 2.34
+Table 2: Baseline configurations. “–” denotes not applicable. All methods share the same training protocol; inputs indicate
+whether POI histograms, Node2Vec, and geometric features are used.
+Model Mean AUC 1 km 3 km 5 km 7 km Full (10 km)
+Acc@1 Acc@3 Acc@5 MRRAcc@1 Acc@3 Acc@5 MRRAcc@1 Acc@3 Acc@5 MRRAcc@1 Acc@3 Acc@5 MRRAcc@1 Acc@3 Acc@5 MRR
+LSTM (1997) 0.9194 0.7735 0.9279 0.9817 0.85710.6631 0.8735 0.9643 0.78150.7642 0.9118 0.9748 0.84650.7197 0.8671 0.9566 0.81070.7318 0.9050 0.9741 0.8274
+STGN (2019) 0.8837 0.5839 0.8655 0.9624 0.74000.5586 0.8244 0.9533 0.71400.6071 0.8596 0.9586 0.75850.5867 0.8006 0.9364 0.71290.6037 0.8521 0.9543 0.7530
+MobGT (2023) 0.7962 0.4615 0.8343 0.9581 0.66240.4417 0.7943 0.9249 0.63440.4457 0.7439 0.9118 0.62420.4277 0.7312 0.8584 0.60680.3277 0.6777 0.8978 0.5438
+HST-LSTM (2018) 0.8876 0.6221 0.8655 0.9631 0.75590.5342 0.7810 0.9446 0.68400.6653 0.8794 0.9604 0.78320.6936 0.8382 0.9451 0.78900.6500 0.8683 0.9549 0.7713
+ARNN (2020) 0.9199 0.8058 0.9567 0.9901 0.88380.6674 0.8775 0.9706 0.78570.7516 0.9202 0.9778 0.84260.7341 0.8844 0.9653 0.82380.7288 0.9050 0.9765 0.8259
+GETNext (2023) 0.9471 0.7849 0.95990.99320.87300.77060.94020.98860.86000.82660.94480.98740.89080.77750.90170.97400.85480.79190.93270.98440.8687
+Our Model (LNN+RelT) 0.9302 0.9104 1.0000 1.0000 0.95170.9008 0.9952 1.0000 0.94430.9011 1.0000 1.0000 0.95110.8844 0.9877 1.0000 0.93500.9094 1.0000 1.0000 0.9506
+Rel. Improv. (%) 12.98 4.18 0.69 7.68 16.90 5.85 1.15 9.80 9.01 5.84 1.28 6.77 13.75 9.54 2.67 9.39 14.83 7.21 1.59 9.42
+Table 3: Performance comparison of next–node prediction across varying average path lengths. We report Acc@1/3/5 and
+MRR. The last row shows the relative improvement of our model noted LNN+RelT over the best baseline (%).
+ments are statistically significant at the 95% confidence level
+(p < 0.05; paired bootstrap over test sessions). Relative
+Acc@1 gains range from 9.0% (5 km) to 17.0% (3 km), av-
+eraging 12.2% across cohorts.
+AUC under Class Imbalance. While our top-k ranking is
+strongest overall, the mean ROC–AUC column shows that
+GETNext achieves the highest threshold-free discrimina-
+tion (0.9471) and our model ranks a close second (0.9302).
+This gap indicates that, under severe class imbalance and
+across varying thresholds, GETNext maintains a slightly
+better global TPR–FPR trade-off. Nevertheless, our method
+converts probability mass more decisively to the top of the
+candidate list (higher Acc@1/3/5 and MRR), which is cru-
+cial for next-node selection where only the top few sugges-
+tions are actionable.
+Robust Mid-Range Performance. The largest relative
+uplifts occur at 3 km (Acc@1 ↑ 17.0%, MRR ↑ 9.9%) and
+7 km (Acc@1 ↑ 13.7%, Acc@3 ↑ 9.5%), highlighting the
+benefit of our Relation-Aware LNN–Transformer: CfC cap-
+tures local, rate-like changes, while bearing-biased attention
+aligns long-range directional dependencies on the graph.
+Unmatched Top-k Recall. Beyond 1 km, our model re-
+tains perfect Acc@5 (1.000) for all lengths, whereas the best
+baselines dip below 0.99. For navigation or dispatch-style
+applications, such zero miss rate in the top shortlist trans-
+lates to more reliable candidate generation before down-
+stream reranking or planning.
+Transformer Depth & Head Sensitivity
+Search Grid Design. We sweep Transformer depth L ∈
+{1, 2, 4, 6, 8} and heads H ∈ {2, 4, 8, 16} on the validation
+split for both our model and the strongest baseline, GET-
+Next. These values follow a power-of-two progression (with
+an intermediate depth of 6) to cover under-parameterized,
+mid-range, and over-parameterized regimes in a tractable
+grid, allowing us to assess minimal viable complexity, satu-
+ration behavior, and computational trade-offs.
+We select GETNext as our comparison baseline for this
+part because (i) it achieves the highest mean ROC–AUC and
+competitive Acc/MRR in Table 3, and (ii) like our model, it
+is Transformer-based with independently tunable depth ( L)
+and head count ( H), enabling a directly comparable sensi-
+tivity study. Figure 2 visualizes Acc@1 across the grid.
+Key observations.
+• Early saturation. Our LNN+RelT model surpasses
+87% Acc@1 with only L=2, H=4 (0.8714), and is al-
+ready near-peak at L=4, H=4 (0.8731); the best point
+in the grid is 0.8741 at L=6, H=16. Beyond L≥2, all
+changes are within ≤0.5 percentage points, indicating
+low sensitivity to over-parameterization.
+• Monotonic gains. GETNext improves steadily with
+depth: from 0.7050 at L=2, H=4 to 0.8122 at L=8,
+H=4, with the largest gains between L=2→6 (e.g.,
+0.8169→0.8798 at H=4). This suggests GETNext relies
+more on deeper self-attention stacks to realize long-range
+dependencies learned from trajectory flows.
+• Accuracy–efficiency trade-off. Achieving ≈0.873
+Acc@1 at L=4, H=4 (LNN+RelT) versus GETNext
+requiring L=8 to exceed 0.81 implies fewer attention
+blocks and heads for comparable (or better) accuracy.
+Since attention cost scales roughly with L × H, our
+near-peak setting halves compute relative to deeper
+GETNext settings, supporting faster inference without
+sacrificing top-k ranking quality.
+
+(a) LNN+RelT Sensitivity
+ (b) GETNext Sensitivity
+Figure 2: Validation Acc@1 as a function of Transformer layers (L) and heads (H).
+0 10 20 30 40 50
+Perturbation (m)
+80
+85
+90
+95
+100Metric (\%)
+Coordinate Perturbation
+0 5 10 15 20 25
+Noise Level (\%)
+75
+80
+85
+90
+95
+100Metric (\%)
+POI Feature Noise
+Acc@1 Acc@3 MRR
+Figure 3: Robustness under coordinate perturbation and
+POI-feature noise.
+Perturbation Sensitivity
+We evaluate robustness under two perturbations and visual-
+ize the outcomes in Fig. 3. For each noise level we run 10
+trials and report mean±std for Acc@1/3/5 and MRR.
+Protocol. (i) Coordinate noise: Add i.i.d. zero-mean
+Gaussian displacements to each GPS sample before projec-
+tion, with standard deviation σ ∈ { 0, 10, 20, 30, 40, 50} m;
+paths are then re-projected. (ii) POI-feature noise: Apply
+multiplicative Gaussian perturbations independently to each
+of the 8-sector POI bin counts: ˜hk = hk (1 + εk) with
+εk ∼ N (0, σ2) and σ ∈ { 0, 0.05, 0.10, 0.15, 0.20, 0.25};
+we clip negatives to zero and renormalize within a node to
+preserve total mass.
+Perturbation Sensitivity Results
+• Spatial stability.Acc@1 decreases from0.8481±0.0013
+(σ=0) to 0.8237 ± 0.0038 (σ=50 m), a total drop of
+2.44 pp ( ≈ 0.49 pp per 10 m). Acc@3 remains essen-
+tially flat ( 0.9704 → 0.9702; ≤ 0.05 pp per 10 m),
+and MRR changes by only 0.27 pp (0.8977 → 0.8950).
+Acc@5 stays at 1.0000 across all σ. These trends indi-
+cate that graph-structural cues and bearing-aware atten-
+tion buffer realistic coordinate jitter.
+• Semantic sensitivity (early-drop, then plateau). Un-
+der POI-feature noise, the largest degradation occurs
+at the first step: Acc@1 from 0.8488 ± 0.0009 (σ=0)
+to 0.7809 ± 0.0162 (σ=0.05), i.e., −6.79 pp; Acc@3
+from 0.9757 to 0.9523 (−2.34 pp); MRR from 0.9095
+to 0.8687 (−4.08 pp). Beyond σ=0.10, the curves flatten
+(e.g., Acc@1 0.7661→0.7599 from 10% to 25%), sug-
+gesting the model retains a stable ranking signal once
+sector histograms are moderately corrupted.
+• Complementary resilience. Contrasting the two stres-
+sors shows that spatial perturbations barely affect top-
+k recall, whereas semantic corruption primarily im-
+pacts Acc@1/MRR. This aligns with our architecture:
+Node2Vec structural priors and road-graph bearings an-
+chor the candidate set, while sector-wise POI descriptors
+act as high-gain semantic cues.
+Overall, the integration of structural embeddings, directional
+POI aggregation, and CfC dynamics ensure model’s high
+tolerance to positional jitter and semantic noise—desirable
+properties for noisy, real-world navigation deployments.
+Ablation Study
+We conduct four ablations to quantify each component’s im-
+pact: (1) feature-branch removal, (2) layer composition, (3)
+POI aggregation granularity and (4) Radius Analysis
+Feature-Branch Removal As shown in Table 4, remov-
+ing all POI inputs causes the largest drop (Acc@1 –32.8
+pp, MRR –19.3 pp), indicating that raw POI counts are the
+primary semantic signal. Without POI-diff ( ✓*), the model
+loses a further 3.4 pp in Acc@1, showing fine-grained ∆-
+features provide a modest but consistent boost. Omitting ge-
+ometric deltas shrinks Acc@1 by 8.9 pp (MRR –6.2 pp), and
+dropping structural (Node2Vec) embeddings costs 19.3 pp in
+Acc@1, confirming that spatial context and global topology
+are both critical to robust next-node prediction. Altogether,
+each branch contributes meaningfully, with POI counts as
+the most essential component.
+
+POI Geo Node2Vec Acc@1 Acc@3 Acc@5 MRR
+✓ ✓ ✓ 0.9094 1.0000 1.0000 0.9506
+✗ ✓ ✓ 0.5819 1.0000 1.0000 0.7573
+✓ ✗ ✓ 0.8200 0.9328 0.9820 0.8844
+✓ ✓ ✗ 0.7121 1.0000 1.0000 0.8354
+✓* ✓ ✓ 0.8752 0.9802 1.0000 0.9259
+Table 4: Feature-branch ablation on the full test set. ( ✓* in-
+dicates removal of differential POI features).
+Std Rel-Aware Acc@1 Acc@3 Acc@5 MRR
+4 0 0.8986 1.0000 1.0000 0.9449
+3 1 0.9094 1.0000 1.0000 0.9506
+2 2 0.7558 1.0000 1.0000 0.8667
+1 3 0.6191 1.0000 1.0000 0.7958
+0 4 0.6941 1.0000 1.0000 0.8357
+Table 5: Ablation over Standard vs. Rel-Aware Layers (total
+= 4).
+Layer Composition Table 5 shows that (i) 4 standard lay-
+ers (0 Rel) achieve only 0.8986 Acc@1, indicating limited
+directional modeling; (ii) 3 standard + 1 Rel-Aware layers
+reach the best Acc@1 (0.9094) and MRR (0.9506), demon-
+strating that a single bearing-biased attention layer effec-
+tively complements temporal encoding; and (iii) allocating
+all 4 layers to Rel-Aware blocks drops Acc@1 to 0.6941,
+confirming that relational bias without temporal context
+harms performance. Thus, one Rel-Aware layer atop stan-
+dard layers provides the optimal balance.
+POI Aggregation Granularity As shown in Table 6,S =
+8 offers the best trade-off because it balances (i) directional
+aliasing and quantization error—too few sectors (e.g., S ∈
+{2, 4}) merge bearings that correspond to distinct move-
+ment intentions, diluting the mutual information between
+sector histograms and next-node choice; (ii)estimation vari-
+ance—with R = 150 m , increasing S amplifies normal-
+ization noise, which our ∆-features further accentuate, so
+overly fine bins (e.g., S = 16) become data-sparse and brit-
+tle. In short, S = 8 matches the bias–variance profile of the
+data and the capacity of our 3+1 layer stack, yielding the
+most reliable signal to the downstream Transformer.
+Radius Analysis Table 7 summarizes coverage metrics for
+radius R ∈ [50, 250] m. Coverage and avg. POIs grow with
+R, but marginal gain peaks atR = 125 m (0.77) and then de-
+clines; at R = 150 m we achieve high coverage (0.63) with
+moderate duplication (0.52) and still strong marginal gain
+(0.62). Thus, R = 150 m offers the best trade-off between
+context richness and feature compactness.
+Overall, these ablations comprehensively validate the ne-
+cessity and effectiveness of our semantic, geometric, and re-
+lational components, as well as our chosen aggregation pa-
+rameters.
+Sector Count Acc@1 Acc@3 Acc@5 MRR
+2 0.8734 0.9766 1.0000 0.9237
+4 0.8818 0.9896 1.0000 0.9350
+8 0.9094 1.0000 1.0000 0.9506
+16 0.8704 0.9820 1.0000 0.9232
+Table 6: Sector-count Ablation (3 standard + 1 Rel-Aware
+layers).
+R (m) coverage (%) duplicate (%) avg nodes marginal gain
+50 0.2897 0.3665 1.5785 0.0000
+75 0.3788 0.4222 1.7307 0.5855
+100 0.4566 0.4562 1.8389 0.7189
+125 0.5411 0.4867 1.9481 0.7739
+150 0.6314 0.5226 2.0949 0.6150
+175 0.7099 0.5633 2.2901 0.4022
+200 0.7721 0.6060 2.5378 0.2510
+225 0.8206 0.6474 2.8360 0.1628
+250 0.8665 0.6818 3.1422 0.1498
+Table 7: Overall coverage metrics as a function of sector ra-
+dius R.
+Conclusion
+We have presented a novel intersection-centric next-step
+prediction model that lifts the closed-world POI restric-
+tion by modeling trajectories on the full road-intersection
+graph and enriching each node with sector-wise POI-region
+projections. Our Rel-Aware LNN-Transformer merges dy-
+namic temporal encoding and global directional bias within
+a compact, parameter-efficient architecture, yielding sub-
+stantial gains over state-of-the-art baselines across diverse
+path lengths. Extensive tests confirm that the model main-
+tains performance under realistic GPS jitter and semantic
+noise, validating its robustness in real-world conditions.
+We restrict prediction to one-hop neighbors—the small-
+est topologically reachable set—enabling real-time infer-
+ence and reflecting immediate decision points; extending our
+framework to k-hop candidate sets is a promising avenue for
+capturing longer-range planning behavior.
+Furthermore, the lightweight design and efficient infer-
+ence make our approach suitable for real-time deployment in
+navigation and traffic management systems, while the com-
+bined semantic and topological embeddings provide valu-
+able insights for urban planners and mobility analysts.
+• Multi-city generalization: Evaluating transferability
+across diverse urban layouts in different cities and coun-
+tries.
+• Real-time sensory fusion: Integrating live visual or en-
+vironmental signals (e.g., camera feeds, weather data) for
+richer context.
+• Crowd interaction modeling: Extending from sin-
+gle trajectories to group-level dynamics, capturing how
+pedestrian interactions shape route choices.
+
+References
+Cuttone, A.; Lehmann, S.; and Gonz ´alez, M. C. 2016. Un-
+derstanding Predictability and Exploration in Human Mo-
+bility. arXiv preprint arXiv:1608.01939. Version v1, 5 Aug
+2016.
+Feng, J.; and et al. 2018. DeepMove: Predicting Human
+Mobility with Attentional Recurrent Networks. In WWW.
+Grover, A.; and Leskovec, J. 2016. Node2Vec: Scalable
+Feature Learning for Networks. In Proceedings of the
+22nd ACM SIGKDD International Conference on Knowl-
+edge Discovery and Data Mining, 855–864.
+Guo, J.; and et al. 2020. ARNN: An Attentional Recur-
+rent Neural Network for Personalized Next Location Rec-
+ommendation. In AAAI.
+Hamilton, W. L.; Ying, R.; and Leskovec, J. 2017. Graph-
+SAGE: Inductive Representation Learning on Large Graphs.
+In Advances in Neural Information Processing Systems, vol-
+ume 30, 1024–1034.
+Hasani, R.; Amini, A.; Rus, D.; and Grosu, R. 2022. Closed-
+form Continuous-time Neural Networks with Forgetting.
+Nature Machine Intelligence, 4(11): 1025–1036.
+Hasani, R.; Lechner, M.; Amini, A.; Rus, D.; and Grosu,
+R. 2020. Liquid Time-Constant Networks. In Proceedings
+of the Thirty-Fourth AAAI Conference on Artificial Intelli-
+gence, 3319–3327.
+Hasani, R.; Lechner, M.; and Grosu, R. 2023. Robust
+Vision-based Flight with Liquid Neural Networks. Science
+Robotics, 8(75).
+Hochreiter, S.; and Schmidhuber, J. 1997. Long Short-Term
+Memory. Neural Computation, 9(8): 1735–1780.
+Kong, D.; and Wu, F. 2018. HST-LSTM: A Hierarchi-
+cal Spatial-Temporal Long-Short Term Memory Network
+for Location Prediction. In Proceedings of the Twenty-
+Seventh International Joint Conference on Artificial Intel-
+ligence (IJCAI-18), 2341–2347.
+Overpass Turbo. 2025. Overpass API Web Interface. https:
+//overpass-turbo.eu/.
+Xu, S.; Huang, Q.; and Zou, Z. 2023. Spatio-Temporal
+Transformer Recommender: Next Location Recommenda-
+tion with Attention Mechanism by Mining the Spatio-
+Temporal Relationship between Visited Locations. ISPRS
+International Journal of Geo-Information, 12(2): 79.
+Xu, X.; Suzumura, T.; Yong, J.; Hanai, M.; Yang, C.;
+Kanezashi, H.; Jiang, R.; and Fukushima, S. 2023. Revis-
+iting Mobility Modeling with Graph: A Graph Transformer
+Model for Next Point-of-Interest Recommendation. In Pro-
+ceedings of the 31st ACM SIGSPATIAL International Con-
+ference on Advances in Geographic Information Systems
+(SIGSPATIAL ’23), 94:1–94:10.
+Yang, S.; Liu, J.; and Zhao, K. 2023. GETNext: Trajectory
+Flow Map Enhanced Transformer for Next POI Recommen-
+dation. arXiv preprint arXiv:2303.04741.
+Zhao, J.; Zhang, W.; Liu, C.; Yu, H.; and Yang, K. 2018.
+Spatio-Temporal LSTM with Trust Gates for 3D Human Ac-
+tion Recognition. In European Conference on Computer Vi-
+sion, 816–833.
+Zhao, P.; Zhu, H.; Liu, Y .; Xu, J.; Li, Z.; Zhuang, F.; Sheng,
+V . S.; and Zhou, X. 2019. Where to Go Next: A Spatio-
+Temporal Gated Network for Next POI Recommendation.
+In Proceedings of the Thirty-Third AAAI Conference on Ar-
+tificial Intelligence (AAAI-19), 5877–5884.
+Zheng, Y .; Li, Q.; Chen, Y .; Xie, X.; and Ma, W. 2008. Un-
+derstanding Mobility Based on GPS Data. InProceedings of
+the 10th International Conference on Ubiquitous Computing
+(UbiComp), 312–321. ACM.
+Zheng, Y .; Xie, X.; and Ma, W. 2010. GeoLife: A Collabo-
+rative Social Networking Service among User, Location and
+Trajectory. IEEE Data Engineering Bulletin, 33(2): 32–40.
+Zheng, Y .; Zhang, L.; Xie, X.; and Ma, W. 2009. Mining
+Interesting Locations and Travel Sequences from GPS Tra-
+jectories. In Proceedings of the 18th International World
+Wide Web Conference (WWW), 791–800. ACM.

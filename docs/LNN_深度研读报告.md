@@ -1529,6 +1529,39 @@ positioning_updated: 2026-09-14
   - **GitHub 推送第一次 lock 拒绝** → retry 后 "Everything up-to-date"，commit `0ed2716` 实际落库。**HTTPS remote 而非 SSH**（与 cron prompt 描述不符但脚本仍跑通，因为 git 已认证）。
 - **结论**：今日完成 digest 抓取（含 arXiv 失败标记）+ commit + push + 2 篇回顾版研读。LNN 主题覆盖率保持 100% 饱和（既有研读 100% 覆盖今日候选），新增内容定位为"对既有报告的视角增量"而非新覆盖。**下一轮若 arXiv 仍 406，需在汇报里高亮"连续 3 天失败"**。
 
+### [2026-11-06] Relation-Aware LNN–Transformer — CfC 连续时间编码 + 方位偏置注意力，在路网路口图上做下一步排序 (arXiv:2508.01368)
+- **独立报告**：[[docs/reports/Relation_Aware_LNN_Transformer_Intersection_Next_Step_2508.01368_研读报告.md]]
+- **为何是它**：selector top-3 全部为已知误命中（`2607.15232` LFM2 tokenizer / `2412.17006` LTC 气候韧性代理 / `2309.13499` 闭环控制器的 "closed-form continuous-time" 字面命中），**手动改选**本篇 —— 强关键词命中（CfC + LNN）、本仓**零覆盖的"路口中心下一节点预测"任务方向**、且方法含可移植的 CfC 候选状态推演范式。
+- **核心问题**：next-POI 方法建立在**闭世界 POI 词表**假设上，而真实数据中 20–25% 的转移到达从未访问过的地点、约 70% 位置只访问一次；同时 Transformer 路线把路口当普通 token，丢失了"只能走到一跳邻居"这一天然拓扑约束；主流 POI 聚合方式与方向无关，无法区分朝向不同的候选。
+- **方法论**：**扇区化方向 POI 聚合**（每节点 168 维：距离/方位圆统计 + 8 扇区密度 + 存在性）→ **拓扑保真 GPS→图投影**（吸附/交点命中/twig 剪枝/保留重复，**不做最短路补全**）→ **一阶差分 + CfC 编码**（$\alpha=e^{-\mathrm{softplus}(\tau)}$ 闭式门控）→ **结构先验门控混合** → **为每个一跳候选各生成一个候选特定状态** → 3 层标准 Transformer + **1 层头特定方位偏置注意力**（候选↔候选注意力被 mask）。
+- **关键公式**：Eq. 1–3（打分 / CE loss / 方向余弦 loss，$\L=\L_{CE}+\gamma\L_{dir}$）→ Eq. 4（类别级圆统计量）→ **Eq. 5（CfC 闭式状态更新）** → Eq. 6（结构先验门控混合）→ **Eq. 7（候选特定状态序列 $Z$）** → Eq. 8（方位偏置 $B^{(h)}_{pq}=\lambda_h[\cos\theta,\sin\theta]w_h$）→ Eq. 9（带偏置注意力）。
+- **关键成果（作者自报）**：**2.34M 参数**（低于全部 6 个 baseline）即取得 Acc@1 **0.9094** / Acc@3、Acc@5 **1.0000** / MRR **0.9506**；Acc@1 相对最优 baseline 提升 **+9.0%（5km）~+17.0%（3km）**，跨 cohort 平均 **+12.2%**，95% 置信显著（配对 bootstrap）；$L\ge2$ 后对深度/头数不敏感（≤0.5 pp），算力约为深层 GETNext 的一半；坐标噪声 50 m 仅掉 **2.44 pp** Acc@1、Acc@5 全程 1.0000，POI 噪声 σ=0.05 一步掉 6.79 pp 后趋平。**⚠️ 负向指标**：**Mean ROC–AUC 0.9302 低于 GETNext 0.9471** —— 作者主动披露并论证"概率质量集中度 vs 全局判别性"的场景差异，本仓引用须并列标注。
+- **⚠️ 本仓视角的折扣**：(a) **CfC 的连续时间优势在本篇并未被检验** —— Eq.5 明确用**常步长**闭式衰减且作者注明"数据不需要显式 $\Delta t$ 建模"，故本文的 CfC 实质退化为带可学习衰减率的门控 RNN，**不得据此引用"CfC 更适合不规则采样"**；(b) **Acc@1 增益主要来自 POI 结构化特征与方位偏置**（去 POI 分支 −32.8 pp、去 Node2Vec −19.3 pp、几何差分 −8.9 pp），**而非 CfC 本身** —— 移植时必须把语义/结构分支与连续时间编码器**分开消融**，否则会重演 NR-02/NR-08 类误判；(c) 论文未说明 GeoLife 是否**按用户**划分 8:1:1，若是按轨迹随机切分则存在同用户跨集泄漏、泛化数字可能高估 —— **复现首要核查点**；(d) 任务定义把"转向"等同"走一跳邻居"，真实用户下一步未必转向，实用性被候选集设计掩盖；(e) arXiv v1 (2025-08)，自评为 AAAI 2026，会议版细节可能不同。
+- **对本仓的可落地价值**：`lnn/core/variants.py` 可新增 **"候选状态推演"变体**（CfC 编码 + 每候选一步演化 + 注意力排序）—— 这是 CfC 在本仓语境下**首次出现的"排序/生成候选"而非"序列分类"用法**；可嫁接 `experiment_timeseries.py`（候选排序范式）与 `experiment_graph_lnn.py`（方位偏置注意力 + 结构先验）；**新增消融轴**：显式 $\Delta t$ vs 常步长、候选推演 vs 直接分类、偏置注入位置（logits vs 特征拼接）、扇区数 $S$ × 半径 $R$ 联合扫描。
+- **Verdict**：**方法论蓝本（结构先验 + 语义特征 + 连续时间三者在开放图排序任务上的组合）→ TARGET-POSITIVE**；**"CfC/LNN 在时序预测上更优" → TARGET-NEGATIVE-WITH-NUANCE**（增益归因于特征分支而非连续时间机制，且 ROC–AUC 落后于 baseline）；**作为边缘部署参考 → TARGET-DEPENDENT-WITH-NUANCE**（2.34M 参数有参考价值，但任务是城市级轨迹排序，非本仓边缘时序场景）。
+
+### [2026-11-06] BHP2NRMLSur — 用 CfC + NCP 把黑洞微扰理论波形标定到数值相对论波形 (arXiv:2503.04534)
+- **独立报告**：[[docs/reports/BHP2NRMLSur_CfC_Black_Hole_Waveform_Mapping_2503.04534_研读报告.md]]
+- **为何是它**：本仓**首个引力波/计算物理方向**的 CfC 研读，且其"用便宜模型做标定器去逼近昂贵模型"范式与本仓 `experiment_physics_lnn.py` 定位高度契合。
+- **核心问题**：NR 波形最准但在 $q\in[1,10]$ 高维参数空间不可承受，纯 NR 建模板库不现实；现有代理模型只在训练覆盖区内有效、难外推；解析近似（ppBHPT）可任意扩展但精度不够。问题被重述为：**能否用机器学习做"标定器"，同时拿到 NR 级精度与解析级参数空间可扩展性？**
+- **方法论**：幅相分解（$h_{lm}=A(t)e^{-i\varphi(t)}$）→ **CfC + NCP 多神经元稀疏线路**（sensory/inter/command/motor 四层，前馈 50% dropout，LeCun tanh 激活）→ **两级模型**：非自旋模型是 **4 个 CfC 的链式求和** $\big(1+\sum_n f(\alpha/q^n)\big)\alpha$，对齐自旋模型在其输出上叠加 $(\chi_1,\chi_2)$ 两个标量以**降低输入维度**。
+- **关键公式**：Eq. 10（LTC 闭式解）→ **Eq. 11（CfC 闭式单元，$\delta$ 取代指数衰减，$1-\delta$ 承担门控）** → Eq. 13–15（幅相分解与映射器视角）→ **Eq. 16（非自旋 CfC 链式求和）** → Eq. 17–18（最佳匹配 $O$ 与噪声加权内积）→ Eq. 19（推广形式，未实现）→ Eq. 20（对齐自旋模型）。
+- **关键成果（作者自报）**：非自旋模型与 NRHybSur3dq8_CCE 的 $O_{IMR}$：$(2,1)$ 0.9948 / $(3,3)$ 0.9979 / $(3,2)$ 0.9921 / $(4,4)$ 0.9966，$q>5$ 时 $(3,2),(4,4)$ 仍 $>0.99$；与 **SXS/RIT 真实 NR 波形匹配 ≳0.995**（mismatch <0.01）；对齐自旋模型 NRHybSur3dq8_CCE-based 匹配 **>0.996**、SEOBNRv5HM-based **>0.97**；生成耗时 **~50 s vs 代理模型 ~2×10³ s（约 40 倍加速，摘要按 10 万条计为 ~50 倍）**；总参数仅 3.4×10³（非自旋）/ 1.62×10⁴（对齐自旋）。
+- **⚠️ 本仓视角的折扣**：(a) **Eq.16 的 $q\to\infty$ 退化为恒等映射是本文最漂亮的设计** —— 用代数结构而非训练数据覆盖换外推鲁棒性，值得直接借鉴；(b) 但 **CfC 的连续时间优势在本文同样未被检验** —— Eq.11 中的 $t$ 是采样步序号（$dt=1M$）而非物理时间，$\delta[\cdot]$ 实为平滑衰减门控，论文无 $\Delta t$ 变异性消融，**不得引用"CfC 因连续时间建模而更适合物理信号"**；(c) **高 match ≠ 波形保真** —— Eq.17 的 match 允许对时间/相位平移取最大值，未验证振幅包络一致性（下游波形分析相关）；(d) 幅相分解在低信噪比/过零处相位病态，未讨论；(e) 速度对比基准是 **NR 代理而非 NR 本身**，摘要 50 倍与正文 40 倍口径不一，引用须按正文并注明"相对代理模型"；(f) **无 CfC-vs-LTC-vs-GRU 的对照消融**，也未分离 NCP 稀疏性的贡献，**不能据此声称"CfC 比 GRU 更适合物理信号"**；(g) 训练目标为 NR 代理波形，代理偏差被继承，外部核对仅 30 条波形。
+- **对本仓的可落地价值**：`lnn/core/variants.py` 可新增 **多尺度 CfC 变体** $\big(1+\sum_n f(\alpha/q^n)\big)\alpha$，其"小参数高精度、大参数退化为恒等"的分级行为天然提供"**链长 $n_{\max}$ × 缩放阶 $n$**"新消融轴；可嫁接 `experiment_timeseries.py`（幅相分解 + 复数序列映射）、`experiment_autoncp.py`（NCP 稀疏线路）、`experiment_physics_lnn.py`（物理量标定）；**新增消融轴**：CfC 闭式 vs 数值 ODE 求解器（**高频强振荡信号**上的精度/速度权衡，本文完全未测）、$\delta$ 门控 vs 指数衰减、链长与外推边界、幅相分解 vs 直接复数映射、NCP 稀疏度。
+- **Verdict**：**"CfC 可用于物理计算密集型科学计算任务" → TARGET-POSITIVE（跨领域证据）**；**"Eq.16 用结构换外推鲁棒性" → TARGET-POSITIVE（可迁移范式）**；**"CfC 机制本身带来精度提升" → TARGET-NEGATIVE-WITH-NUANCE**（无对照消融，且连续时间未被检验）；**复现可行性 → TARGET-DEPENDENT**：真实复现需 SXS 代理波形数据（外部依赖），本仓侧可行路径是用 `experiment_physics_lnn.py` 的 ODE 仿真数据构造**类比标定任务**以验证 Eq.16 结构本身。
+
+### [2026-11-06] 物理信息 LTC 航空磁补偿标定 — 从强磁场噪声里剥出微弱磁异常信号 (arXiv:2401.09631)
+- **独立报告**：[[docs/reports/Physics_Informed_LTC_Aeromagnetic_Compensation_2401.09631_研读报告.md]]
+- **为何是它**：本仓**首个航空磁导航/MagNav 方向**的 LTC 研读；其"LTC + AutoNCP + 物理标定模型耦合"的配方与本仓既有 `experiment_physics_lnn.py` / `experiment_autoncp.py` **高度重合**，具备低成本复现条件。
+- **核心问题**：机载磁力计读数被自身永磁/感应/涡电流场 + 电子设备 + 温度相关磁性污染，**干扰场远强于**真正有导航价值的微弱点磁异常；经典 Tolles–Lawson (T-L) 标定的误差源假设是**静态的**，而现实中磁源时变，直接违反该假设；纯 NN 标定（DeepMAD 等）则不利用物理定律、算力高、对高频时序不鲁棒；Kalman 滤波因系统非线性且对扰动敏感而受限。
+- **方法论**：**两段式** —— (1) z-score 标准化 + 机内磁力计对机外 Mag1 **残差化** + 三重特征选择（Spearman/LASSO/XGBoost）→ LTC 或 **LTC-CfC + AutoNCP**（64 inter + 64 command 神经元、50% dropout、PPO 训练）把混杂读数解混为纯磁异常信号；(2) **由网络输出的残差反推并更新 T-L 模型的系数**，让经典物理模型获得时变/非线性纠偏能力 —— 这才是 "physics-informed" 的实际落点。
+- **关键公式**：**Eq. 1（LTC 连续时间状态方程 $\frac{dx}{dt}=\frac{w}{\tau}+f(x,I,\theta)x+Af(x,I,\theta)$）** → **Eq. 2（CfC 闭式更新，双 sigmoid 时间连续门控，无 ODE 求解器）** → Eq. 3（RMSE 度量）。
+- **关键成果（作者自报）**：航磁补偿标定误差 RMSE（nT）—— T-L 58.85 / 45.13 → LSTM 41.79 / 42.18 → MLP 30.47 / 26.23 → CNN 26.05 / 30.56 → **LTC 20.31 / 22.89** → **LTC-CfC 18.20 / 19.14**；即 LTC 相对 T-L 最多降 **58%**、LTC-CfC 降 **64%**（两条飞行平均），最好的纯 NN 基线（CNN）仍高 30–37%。数据为 USAF–MIT MagNav Challenge 真实飞行数据（6 飞行、10 Hz、每飞行 65 特征），**每条飞行作一样本 + K 折 CV** 以防同飞行回环过拟合。
+- **⚠️ 本仓视角的折扣**：(a) **"physics-informed" 实为 physics-guided** —— 物理性体现在"用网络输出更新 T-L 系数"这一**间接路径**上，网络本身仍是纯数据驱动黑盒，未把物理先验嵌入架构/损失；摘要措辞偏强；(b) **无置信区间、无重复实验、无方差报告** → **无法判断 LTC-CfC vs LTC（18.20 vs 20.31，~10%）是否超出 run-to-run 噪声** —— 这正是本仓 NR-08（"+0.09 dB 落在 σ≈0.05 dB 内"判为持平）的同类风险，**引用其"64% 降幅"须标注为单数据集、两条测试飞行上的点估计**；(c) **未做与 GRU 等容量相当序列模型的机制级对照**，"提升"中有相当部分来自"用更复杂模型替代线性 T-L"，**不能断言"连续时间"是收益来源**；(d) **外部验证尚未进行**（作者自陈计划中）；(e) **未报告推理延迟/参数量/内存占用**，"实时可用"仅停留在展望；(f) AutoNCP 的 NCP 线路与 ODE 动力学共同参与结果，**CfC 闭式解的独立贡献未被分离**。
+- **对本仓的可落地价值**：`lnn/core/variants.py` 可新增 **LTC / LTC-CfC 并列双变体**（Eq.1 ODE 形式 vs Eq.2 闭式形式）作为"求解器代价 vs 精度"标准对照轴，补上本仓 CfC 变体缺失的**物理量回归**证据；可嫁接 `experiment_physics_lnn.py`（物理标定器范式）、`experiment_autoncp.py`（AutoNCP 稀疏线路）、`experiment_all_variants.py`（LTC vs CfC vs LSTM 统一对照）；**新增消融轴**：(a) **LTC-CfC vs LTC 差距是否超出 run-to-run 方差**（直接对应 NR-08 教训）；(b) AutoNCP dropout 比例 vs 精度；(c) **ODE 求解器 vs 闭式解在训练/推理时间上的真实差距**（本文只报精度，本仓可补此维）；(d) **物理模型耦合层作为独立模块的贡献**（把"可学系数的物理模块"与"纯 NN 滤波"拆开，直接回答机制归因问题）。
+- **Verdict**：**"物理标定 + 连续时间网络在真实飞行数据上可行且量级显著（误差降 ~60%）" → TARGET-POSITIVE**；**"连续时间机制本身带来该提升" → TARGET-DEPENDENT-WITH-NUANCE**（缺机制级对照，且实为 physics-guided）；**"64% 降幅"这一数字 → TARGET-DEPENDENT-WITH-NUANCE**（单数据集、两条测试飞行、无方差报告、外部验证未做，引用须带全部限定）。
+
 ### [2026-09-26] arXiv 406 根因 = `Accept: */*` 而非 TLS 指纹；永久修复已落仓；候选仍空（LNN 主题饱和）
 - **digest 入口**：[[docs/daily/2026-09-26_LNN_research_digest.md|每日追踪]]（25 篇 / 41 仓库 / 20 模型，`papers/repos/models: 25/41/20`）。
 - **arXiv 抓取修复（异常告警 ⚠️ → 已修复 ✅）**：
@@ -1550,6 +1583,7 @@ positioning_updated: 2026-09-14
 
 - **2026-11-07**：[[docs/daily/2026-11-07_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 43 个，模型 16 个。
 - **2026-11-06**：[[docs/daily/2026-11-06_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 44 个，模型 17 个。
+  - **研读 3 篇**（selector top-3 全部为已知误命中，已手动改选）：[[docs/reports/Relation_Aware_LNN_Transformer_Intersection_Next_Step_2508.01368_研读报告.md|Relation-Aware LNN–Transformer：CfC + 方位偏置注意力做路口中心下一步预测 (2508.01368)]]、[[docs/reports/BHP2NRMLSur_CfC_Black_Hole_Waveform_Mapping_2503.04534_研读报告.md|BHP2NRMLSur：CfC + NCP 把黑洞微扰理论波形标定到数值相对论波形 (2503.04534)]]、[[docs/reports/Physics_Informed_LTC_Aeromagnetic_Compensation_2401.09631_研读报告.md|物理信息 LTC 航空磁补偿标定：从强磁场噪声里剥出微弱磁异常信号 (2401.09631)]]。
 - **2026-11-05**：[[docs/daily/2026-11-05_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 43 个，模型 17 个。
 - **2026-11-04**：[[docs/daily/2026-11-04_LNN_research_digest.md|每日追踪]]，候选论文 94 篇，仓库 43 个，模型 19 个。
 - **2026-11-03**：[[docs/daily/2026-11-03_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 43 个，模型 16 个。

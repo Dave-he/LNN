@@ -1,0 +1,408 @@
+LINDA: Low Resource Foot Ulcer Segmentation
+using Local Similarity and Iterative Neural
+Dynamics
+Trishaani Acharjee1,2⋆, Sudip Chakrabarty1,2⋆, Rajdeep Chatterjee1,2⋆(B), and
+Tathagata Bandyopadhyay3
+1 School of Computer Engineering, Kalinga Institute of Industrial Technology,
+Bhubaneswar, India
+cse.rajdeep@gmail.com
+2 AmygdalaAI-India Lab, Bhubaneswar, India
+3 Department of Informatics, Technical University of Munich, Munich, Germany
+Abstract.Foot ulcers are a leading cause of lower limb amputation,
+and the highest burden often falls on low and middle income regions
+where specialists and computing hardware are both scarce. Wound mon-
+itoring tools are most useful there when they are accurate yet small
+enough to run on ordinary devices, but accuracy usually comes from
+heavy networks. We present LINDA, a compact model that grounds seg-
+mentation in an explicit structural prior instead of raw intensity. A Local
+Self-Similarity (LSS) map, computed directly from the image and stable
+under local lighting changes, is fused into a ResNet-34 encoder, and a
+small Liquid Time-Constant module refines the boundary over four iter-
+ative steps. With every model trained under one protocol on the FUSeg
+2021 dataset, LINDA obtains the best Dice (86.68%), IoU (79.67%), and
+boundary accuracy (HD95 6.37 pixels) in our comparison while using
+only25.70Mparameters,fewerthantheU-Netandtransformerbaselines.
+As the LSS map is a fixed function of the input, it exposes the structural
+cues the model follows in a readable form. Together this makes LINDA
+an accurate, inspectable, and lightweight option for wound assessment
+in resource-constrained care.
+Keywords:Foot Ulcer Segmentation·Lightweight Segmentation·Lo-
+cal Self-Similarity·Resource-Constrained Settings, Liquid Neural Net-
+works
+1 Introduction
+Foot ulcers are a primary cause of non-traumatic lower-limb amputation [1],
+and precise delineation of the wound bed is needed to track healing and plan
+treatment [2]. Manual planimetry, the clinical gold standard, is subjective, slow,
+and varies between observers, so automated segmentation has become a priority.
+⋆ Equal contribution.
+arXiv:2611.04233v1  [cs.CV]  3 Nov 2026
+
+2 T. Acharjee et al.
+In many settings, and especially in low and middle income regions, this must
+run with limited specialist time and limited computing hardware, which favors
+models that are accurate yet small enough for modest devices.
+Despite recent advances [3], automated foot ulcer segmentation remains a
+hard problem. Ulcers vary widely in scale, lighting, and texture. The transition
+zones between necrotic tissue, granulation tissue, and healthy skin are often am-
+biguous, with low contrast and diffuse gradients [4]. Widely used architectures
+such as U-Net variants [5] and Vision Transformers (ViTs) [6] perform well on
+many medical segmentation tasks, yet wound boundaries can remain imprecise
+when ulcer shapes are irregular and contrast with healthy skin is low. Convo-
+lutional encoders have a limited receptive field, while the patch tokenization in
+ViTs can blur fine boundary detail and lead to oversmoothed masks [7]. Most
+of these models also predict the mask in a single forward pass, unlike the way a
+human reader traces a boundary, revisiting and adjusting it as local and global
+cues are weighed.
+To address these limitations, we proposeLINDA, a boundary aware archi-
+tecture for foot ulcer segmentation. First, a Local Self-Similarity (LSS) map is
+computed directly from the input image and fused into a pretrained ResNet-
+34 backbone, giving the early layers explicit local texture awareness. Second, a
+Liquid Time-Constant (LTC) network [8] at the bottleneck acts as an iterative
+refinement loop that resolves boundary ambiguities. Finally, the structural prior
+stays visible: because the LSS map is computed before encoding and used as the
+target of the boundary loss, it offers a concrete, readable view of the cues the
+network follows, in the spirit of explainable AI in clinical imaging [9–11].
+Our contributions are as follows. (1) An additive LSS fusion module injects
+local patch-correlation statistics into the early encoder features, anchoring the
+network to tissue boundaries without disturbing the pretrained weights. (2) An
+LTC-driven refinement loop at the bottleneck uses iterative dynamics to refine
+a global spatial token that conditions the decoder. (3) A Boundary Alignment
+Loss ties the prediction to the LSS map, giving the lowest boundary error in
+our comparison together with strong overlap accuracy at a low parameter count.
+Overall, these components form a compact, interpretable foot ulcer segmenta-
+tion model that matches the strongest baselines on region overlap and clearly
+improves boundary precision, while using far fewer parameters, a good fit for
+resource-constrained clinical settings.
+2 Previous Work
+Automated wound segmentation is built mostly on the U-Net family [5] and,
+more recently, on transformer encoders [6,7]. Several methods target wounds
+directly. Wang et al. [12] trained fully convolutional networks for wound re-
+gion extraction, and WSNet [13] added a wound-oriented pipeline with dedi-
+cated pre-processing. On the FUSeg 2021 benchmark, FUSegNet [14] reported
+the strongest published result and remains the reference point for this dataset.
+State-space (Mamba) models have also entered the field, from lightweight ulcer
+
+LINDA 3
+Fig. 1.The proposed LINDA, illustrating the integration of the ResNet-34 encoder,
+Additive LSS Fusion, LTC Refinement Loop, and Deep Supervision Decoder.
+designs like DFU-MambaLiteUNet [15] to general backbones such as MambaV-
+ision [16] and MedMamba [17], which we include as baselines. A recent bench-
+mark, WoundAmbit [18], finds that general-purpose segmentation models can
+match or beat task-specific designs once training and evaluation are standard-
+ized, and it argues for attention to out-of-distribution generalization, efficiency,
+and interpretability. This work takes that view as its starting point: rather than
+competing on overlap alone, it targets tight boundaries, a small parameter bud-
+get, and a structural prior a reader can check. Evaluation on further collections
+such as Medetec [19] is left for future work.
+Local self-similarity was introduced by Shechtman and Irani [20] to match
+patterns across images and videos through internal patch correlations rather
+than raw intensity. We reuse this idea as a deterministic prior and fold it into
+the encoder. For interpretability, post-hoc attribution such as Grad-CAM and
+SHAP is widely used in medical imaging [11,21], but these maps are produced
+after training and can be unstable. Our LSS maps are fixed functions of the input
+and serve as the target of the boundary loss, so they give a stable, readable view
+of the structural evidence the model is trained to follow.
+3 Methodology
+LINDA is an end-to-end, boundary-aware segmentation network for clinical
+wound images; Figure 1 gives an overview. It has four modules: a ResNet-34
+encoder, an additive LSS fusion block, a Liquid Time-Constant (LTC) refine-
+ment loop, and a deep-supervision decoder. Different modules are discussed in
+the following subsections.
+3.1 Local Self-Similarity (LSS) Fusion
+To add an explicit structural prior, the LSS Extractor operates on the input im-
+ageIbefore any deep encoding. Densely overlapping local patchespi ∈R K×K×3
+
+4 T. Acharjee et al.
+are extracted, and to stay robust to the uneven illumination common in wound
+photography, each is zero-centered and normalized (Eq. 1):
+ˆpi = pi −µ(p i)
+∥pi −µ(p i)∥2 +ϵ (1)
+whereµ(p i)is the patch mean andϵis a small stability constant. Since the
+patches are unit-normalized, the dot product between a central patchˆpc and
+each of itsNneighbors within radiusR(Eq. 2) equals their cosine similarity,
+which compares patch structure independently of local brightness and contrast:
+S( ˆpc, ˆpn) = ˆpc · ˆpn (2)
+This reuses the local self-similarity descriptor of Shechtman and Irani [20] as
+a dense, deterministic prior. Aggregating the scores at each location gives a 3-
+channel LSS mapMLSS ∈R 3×512×512, holding the mean (µ), maximum (max),
+and standard deviation (σ) of the local correlations. A3×3convolution with
+bilinear interpolation projects it toF LSS ∈R 64×256×256, which is added to
+the first ResNet feature mapC1to form the boundary-conditioned mapF1=
+C1⊕F LSS that guides the remaining encoder layers.
+3.2 Latent Refinement (LTC)
+To capture global dependencies, the bottleneck LTC loop ingests the high-level
+feature mapF5∈R 512×16×16 together with a dual-mask input, the initial
+coarse mask and the evolving current mask. Features and masks are globally
+average-pooled (GAP) and concatenated into a 514-D vectorx= [GAP(F5);
+GAP(Ymasks)]. The hidden statehthen evolves by the ODE of Eq. 3:
+dh
+dt = [−h+σ rel(Whh+W inx+b)]⊙ 1
+τ(x) (3)
+whereσ rel is ReLU andτ(x) =softplus(W τ x) +ϵis an input-dependent time
+constant that modulates the cell’s memory. The system is solved by Euler dis-
+cretization (ht+1 =h t +∆t dh
+dt) overT= 4steps, and the final state is projected
+into a Refinement Token, a single global vector that conditions the decoder and
+steers the predicted boundary.
+3.3 Optimization and Deep Supervision
+The network is trained with multi-scale deep supervision. As shown in Fig. 1, it
+produces the final mask ˆYand two auxiliary predictions,Aux 1 ∈R 32×32 and
+Aux2 ∈R 64×64. The total objective combines Binary Cross-Entropy (BCE),
+Dice, and a geometric Boundary Alignment Loss (BAL):
+Ltotal =
+X
+k∈{m,a1,a2}
+λk
+
+L(k)
+BCE +L (k)
+Dice
+
++λ bLBAL (4)
+
+LINDA 5
+with weightsλ m = 1.0, λ a1 = 0.4, λ a2 = 0.2, andλ b = 0.5. The BAL grounds
+the prediction in tissue structure by matching the Sobel gradients∇(·)of the
+predictedprobabilitymaptothoseofthedeterministicLSSMeanchannelM µ
+LSS:
+LBAL =MSE(∇(σ( ˆY)),∇(M µ
+LSS ))(5)
+so it acts as a structural regularizer that penalizes predictions departing from
+the local tissue transitions the LSS extractor marks.
+3.4 Interpretable Structural Priors
+Because the LSS extractor is deterministic, its three channels carry a fixed, read-
+able meaning rather than the shifting saliency of post-hoc attribution [21].LSS
+Mean (µ)measures local homogeneity and highlights uniform regions such as
+granulation tissue in the wound bed.LSS Maxkeeps the strongest local correla-
+tion in each neighborhood, helping thin structures survive downsampling.LSS
+Std (σ)responds to high local variance and marks the sharp transition between
+wound and healthy skin. These maps are not a claim about what individual
+network weights compute. They are deterministic inputs to the encoder, and the
+Mean channel is also the target of the boundary loss (Eq. 5), so this part of the
+pipeline can be inspected directly.
+3.5 Compute, Data and Inference Time
+For both training and evaluation, we have used single NVIDIA A100 GPU with
+40 GB VRAM. We have performed all the experiments on MICCAI Foot Ulcer
+Segmentation (FUSeg) Challenge dataset [22], details of which are described in
+sec 4.1. Our model takes roughly5hours to train and∼45ms per image, on
+average, for inference.
+4 Results
+4.1 Dataset and Implementation Details
+We use the MICCAI Foot Ulcer Segmentation (FUSeg) Challenge dataset [22],
+which has 1,210 images (810 train, 200 validation, 200 test) from 889 patients
+under varied lighting and backgrounds. The test labels are held private by the
+organizers,soallmetricsarereportedontheofficialvalidationset.Sampleimages
+are shown in Figure 2. Images and masks are processed at512×512, the grid
+also used for prediction. LINDA is implemented in PyTorch 2.5.1 and trained
+on an NVIDIA A100. For a fair comparison, every model uses the same setup:
+100 epochs, batch size 2, the Adam optimizer, and the checkpoint with the best
+validation Dice.
+The ResNet-34 encoder uses ImageNet-pretrained weights, while the LSS Ex-
+tractor and LTC loop are trained from scratch. The task is binary, wound against
+background; the necrotic and granulation regions noted earlier describe the vi-
+sual difficulty inside the wound, not separate classes. We report Dice (DSC),
+IoU, and the 95th-percentile Hausdorff Distance (HD95), all on the wound class.
+
+6 T. Acharjee et al.
+Fig. 2.Sample images and ground-truth masks from the FUSeg 2021 challenge dataset.
+T able 1.Quantitative comparison of LINDA against representative segmentation
+methods under a unified training protocol.
+Method Params
+(M)
+FLOPs
+(G)
+Dice (%)
+(↑)
+IoU (%)
+(↑) HD95(↓)
+VGG16-UNet [23] 69.31 42.19 84.88 77.29 14.72
+TransUNet [6] 130.22 102.00 80.16 71.32 15.32
+UNet [5] 31.78 374.34 84.04 76.23 13.31
+Mask R-CNN [24] 90.44 67.13 83.97 76.42 12.89
+ResNet101-UNet [25] 267.62 112.79 84.92 77.73 13.03
+U2Seg [26] 86.47 88.46 75.85 70.13 16.07
+SegNet [27] 69.21 42.19 85.32 78.11 12.71
+FUSegNet [14] 67.22 25.82 86.43 79.41 16.06
+MambaVision-UNet [16] 35.22 21.90 85.25 77.91 13.19
+MedMamba-UNet [17] 18.3643.30 84.16 76.30 15.74
+LSS-Mamba 35.39 46.85 85.96 78.68 16.15
+LINDA (Ours) 25.70 82.45 86.68 79.67 6.37
+4.2 Comparison with State-of-the-art Methods
+Table 1 compares LINDA with segmentation models re-trained under one pro-
+tocol, which keeps the comparison fair. Under this setting LINDA gives the best
+Dice (86.68%), IoU (79.67%), and boundary accuracy (HD95 6.37 pixels) in the
+table. The boundary margin is the clearest: at 6.37 pixels the HD95 is roughly
+half that of the next-best model, which points to tighter agreement along the
+wound rim. LINDA reaches these numbers with 25.70M parameters, far fewer
+than heavy encoders such as ResNet101-UNet [25], TransUNet [6], and Mask
+R-CNN [24], which supports its use where computing is limited. FUSegNet [14],
+the FUSeg 2021 challenge winner, is included as a domain-specific reference; un-
+
+LINDA 7
+der the same 100-epoch schedule it trails LINDA on all three metrics, while its
+originally published Dice, obtained with heavier training, is higher.
+T able 2.Ablation study progressively adding LSS, LTC, and BAL to the baseline.
+Model V ariation LSS L TC BAL Dice
+(%)(↑)
+IoU
+(%)(↑)
+Params
+(M)
+Baseline (ResNet-34 + U-Net) 85.22 77.5624.87
+Baseline + LSS ✓ 83.51 75.5125.12
+Baseline + LTC ✓ 83.29 75.2225.45
+Baseline + LSS + BAL ✓ ✓ 86.41 79.2625.12
+LSS + Decoder only + BAL ✓ ✓ 46.09 34.613.01
+LINDA (w/o BAL) ✓ ✓ 76.18 69.7425.70
+LINDA (Proposed) ✓ ✓ ✓ 86.68 79.67 25.70
+4.3 Ablation Studies
+Model Components:Table 2 reports the ablation on different components of
+the proposed model. Adding LSS and LTC to the ResNet-34 baseline without the
+Boundary Alignment Loss (BAL) drops Dice from 85.22% to 76.18%: pixel-wise
+losses alone do not bring the structural prior and the refinement together. BAL
+fixes this. With LSS and BAL the model reaches 86.41% Dice, and the LTC loop
+takes the full model to 86.68% Dice and 79.67% IoU. Two further rows isolate
+the rest: keeping only LSS with the decoder, without the pretrained encoder, col-
+lapses to 46.09% Dice, so the encoder is essential, while the gap from LSS+BAL
+to the full model is the LTC contribution. The full model adds only 0.83M pa-
+rameters over the baseline, and this pattern reinforces the interpretability point:
+the LSS prior is used well only once the boundary loss ties the prediction to it.
+Number of refinement steps:Table 3 varies the number of LTC steps
+T. Performance is stable forT=1toT=8, andT=4gives the best balance of
+overlap (86.68% Dice, 79.67% IoU) and boundary accuracy (HD95 6.37) at a low
+step count. BeyondT=8it collapses, with Dice below 73% and HD95 above 22
+pixels, consistent with the Euler-discretized ODE becoming unstable over too
+many steps. We therefore useT=4.
+4.4 A Closer Look at the LSS Maps
+Figure 3 shows the three LSS channels for several wounds. The Std channel
+behaves like a local edge map: it stays quiet over uniform background and re-
+sponds along the wound rim, which is exactly where boundary errors are most
+costly. These maps feed the encoder, and the Mean channel is the target of the
+boundary loss (Eq. 5), so they give a direct, image-level account of the structural
+
+8 T. Acharjee et al.
+T able 3.Effect of the number of LTC refinement stepsTon the FUSeg validation set.
+Dice/IoU in %, HD95 in pixels;T=4(shaded) is used.
+T Dice(↑)IoU(↑)HD95(↓) T Dice(↑)IoU(↑)HD95(↓)
+1 86.28 79.33 6.93 8 86.26 79.33 6.64
+2 85.27 78.10 11.36 9 69.21 57.54 30.91
+3 84.66 77.12 9.71 10 67.22 55.67 31.02
+4 86.68 79.67 6.37 11 72.47 62.35 22.92
+5 85.55 78.31 9.34 16 69.79 58.55 27.23
+6 86.65 79.57 6.59 20 48.72 41.26 48.35
+7 86.21 79.11 6.33 32 68.57 57.62 30.63
+information the model is pushed to respect. We therefore treat them as a way
+to inspect the model’s inputs and training signal, not as a measurement of how
+the deeper layers reach their final decision.
+Fig. 3.The three LSS channels (Mean, Max, and Std) for sample wounds. The Std
+channel highlights the wound rim, while Mean and Max capture local homogeneity and
+strong local structure.
+5 Discussion
+We presentedLINDA, a foot ulcer segmentation model that fuses a determinis-
+tic Local Self-Similarity prior into a ResNet-34 encoder and refines the prediction
+with a small Liquid Time-Constant module and a boundary alignment loss. It
+produces accurate masks with the tightest boundaries in our comparison at only
+25.70M parameters, and since the LSS maps are computed before encoding,
+they also give a readable view of the cues the model follows, with no separate
+explanation step, thus making it a faithful and explainable segmentation model.
+
+LINDA 9
+6 Impact in RCS
+In resource constrained setting, it is crucial to balance performance, model size
+and inference speed. Our proposed approach, achieves the best tradeoff between
+model size (25.70M parameters), training time (∼5hrs) and per-image inference
+time(∼45ms).LINDAachievesstate-of-the-artscoresinDiceandHD95metrics
+with a reasonably low number of parameters and GFLOPS, as compared to its
+closest competitors, thus making it an excellent choice for a wound segmentation
+model in a resource constrained setting.
+Acknowledgments.No acknowledgments or competing interests.
+Disclosure of Interests.The authors have no competing interests to declare that
+are relevant to the content of this article.
+References
+1. David G Armstrong, Andrew JM Boulton, and Sicco A Bus. Diabetic foot ulcers
+and their recurrence.New England Journal of Medicine, 376(24):2367–2375, 2017.
+2. Bill Cassidy, Neil D Reeves, Joseph M Pappachan, David Gillespie, Claire O’Shea,
+Sanjeev Rajbhandari, Arun G Maiya, Eibe Frank, Andrew JM Boulton, and
+Moi Hoon Yap. The dfuc 2020 dataset: Analysis towards diabetic foot ulcer detec-
+tion.IEEE Journal of Biomedical and Health Informatics, 26(1):346–356, 2021.
+3. Suhaylah Alkhalefah, Isra AlTuraiki, and Najwa Altwaijry. Advancing diabetic
+foot ulcer care: Ai and generative ai approaches for classification, prediction, seg-
+mentation, and detection. InHealthcare, volume 13, page 648. MDPI, 2025.
+4. Manu Goyal, Neil D Reeves, Andrew K Davison, Sanjeev Rajbhandari, John
+Sprague, and Moi Hoon Yap. Recognition of ischemia and infection in diabetic foot
+ulcers: Dataset and techniques.Computers in Biology and Medicine, 117:103616,
+2020.
+5. Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: Convolutional net-
+works for biomedical image segmentation. InMedical Image Computing and
+Computer-Assisted Intervention–MICCAI 2015, pages 234–241. Springer, 2015.
+6. JienengChen,YongyiLu,QihangYu,XiangdeLuo,EhsanAdeli,YanWang,LeLu,
+Alan L Yuille, and Yuyin Zhou. Transunet: Transformers make strong encoders
+for medical image segmentation.arXiv preprint arXiv:2102.04306, 2021.
+7. Ali Hatamizadeh, Yucheng Tang, Vishwesh Nath, Dong Tseng, Juan Idrees, Anwar
+Li, Holger Roth, and Daguang Xu. Unetr: Transformers for 3d medical image
+segmentation.Proceedings of the IEEE/CVF Winter Conference on Applications
+of Computer Vision, pages 574–584, 2022.
+8. Ramin Hasani, Mathias Lechner, Alexander Amini, Daniela Rus, and Radu Grosu.
+Liquid time-constant networks. InProceedings of the AAAI Conference on Artifi-
+cial Intelligence, volume 35, pages 7657–7666, 2021.
+9. Sudip Chakrabarty, Pappu Bishwas, Mainak Bandyopadhyay, and Jérémie Sub-
+lime. Can we trust ai with our ears? a cross-domain comparative analysis of ex-
+plainability in audio intelligence.IEEE Access, 13:179733–179758, 2025.
+10. Alican Akman and Björn W Schuller. Audio explainable artificial intelligence: A
+review.Intelligent Computing, 3:0074, 2024.
+
+10 T. Acharjee et al.
+11. BasHMVanderVelden,HugoJKuijf,KennethGAGilhuijs,andMaxAViergever.
+Explainable artificial intelligence (xai) in deep learning-based medical image anal-
+ysis.Medical image analysis, 79:102470, 2022.
+12. Chuanbo Wang, D. M. Anisuzzaman, Victor Williamson, Mrinal Kanti Dhar,
+Behrouz Rostami, Jeffrey Niezgoda, Sandeep Gopalakrishnan, and Zeyun Yu. Fully
+automatic wound segmentation with deep convolutional neural networks.Scientific
+Reports, 10(1):21897, 2020.
+13. Subba Reddy Oota, Vijay Rowtula, Shahid Mohammed, Minghu Liu, and Manish
+Gupta. WSNet: Towards an effective method for wound image segmentation. In
+Proceedings of the IEEE/CVF Winter Conference on Applications of Computer
+Vision (WACV), pages 3234–3243, 2023.
+14. Mrinal Kanti Dhar, Taiyu Zhang, Yash Patel, Sandeep Gopalakrishnan, and Zeyun
+Yu. FUSegNet: A deep convolutional neural network for foot ulcer segmentation.
+Biomedical Signal Processing and Control, 92:106057, 2024.
+15. YessicaNataliani,HindriyantoDwiPurnomo,IvannaKristiantiTimotius,andPur-
+wono Purwono. DFU-MambaLiteUNet: A lightweight and efficient model for dia-
+betic foot ulcer segmentation.Expert Systems with Applications, 293:128689, 2025.
+16. Ali Hatamizadeh and Jan Kautz. MambaVision: A hybrid mamba-transformer
+vision backbone. InProceedings of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition (CVPR), 2025.
+17. Yubiao Yue and Zhenzhang Li. MedMamba: Vision mamba for medical image
+classification.arXiv preprint arXiv:2403.03849, 2024.
+18. Vanessa Borst, Timo Dittus, Tassilo Dege, Astrid Schmieder, and Samuel Kounev.
+WoundAmbit: Bridging state-of-the-art semantic segmentation and real-world
+wound care. InMachine Learning and Knowledge Discovery in Databases. Ap-
+plied Data Science Track (ECML PKDD). Springer, 2025.
+19. Stephen Thomas. Medetec wound database, 2017. http://www.medetec.co.uk.
+20. Eli Shechtman and Michal Irani. Matching local self-similarities across images
+and videos. InIEEE Conference on Computer Vision and Pattern Recognition
+(CVPR), pages 1–8. IEEE, 2007.
+21. Usha Bhalla, Suraj Srinivas, and Himabindu Lakkaraju. Discriminative feature at-
+tributions: Bridging post hoc explainability and inherent interpretability.Advances
+in neural information processing systems, 36:44105–44122, 2023.
+22. Chuanbo Wang, Amirreza Mahbod, Isabella Ellinger, Adrian Galdran, Sandeep
+Gopalakrishnan, Jeffrey Niezgoda, and Zeyun Yu. Fuseg: The foot ulcer segmen-
+tation challenge.Information, 15(3):140, 2024.
+23. Karen Simonyan and Andrew Zisserman. Very deep convolutional networks for
+large-scale image recognition. InInternational Conference on Learning Represen-
+tations (ICLR), 2015.
+24. Kaiming He, Georgia Gkioxari, Piotr Dollár, and Ross Girshick. Mask R-CNN. In
+Proceedings of the IEEE International Conference on Computer Vision (ICCV),
+pages 2961–2969, 2017.
+25. Foivos I Diakogiannis, François Waldner, Peter Caccetta, and Chen Wu. Resunet-
+a: A deep learning framework for semantic segmentation of remote sensing data.
+volume 162, pages 94–114, 2020.
+26. Dantong Niu, Xudong Wang, Xinyang Han, Long Lian, Roei Herzig, and Trevor
+Darrell. Unsupervised universal image segmentation. InProceedings of the
+IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR),
+2024.
+
+LINDA 11
+27. Vijay Badrinarayanan, Alex Kendall, and Roberto Cipolla. Segnet: A deep con-
+volutional encoder-decoder architecture for image segmentation.IEEE TPAMI,
+39(12):2481–2495, 2017.

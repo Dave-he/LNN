@@ -1,0 +1,1219 @@
+Mapping inspiral-merger-ringdown waveforms of binary black holes from black hole
+perturbation waveforms by machine learning
+Xing-Yu Zhong,1 Wen-Biao Han,2, 1, 3, 4,∗and Ling Sun5
+1Hangzhou Institute for Advanced Study, University of Chinese Academy of Sciences, Hangzhou 310124, China
+2Shanghai Astronomical Observatory, Chinese Academy of Sciences, Shanghai 200030, China
+3Taiji Laboratory for Gravitational Wave Universe (Beijing/Hangzhou),
+University of Chinese Academy of Sciences, Beijing 100049, China
+4School of Astronomy and Space Science, University of Chinese Academy of Sciences, Beijing 100049, China
+5OzGrav-ANU, Centre for Gravitational Astrophysics,
+Research Schools of Physics, and of Astronomy and Astrophysics,
+The Australian National University, Canberra ACT 2601, Australia
+(Dated: March 7, 2025)
+Identifying weak gravitational wave signals in noise and estimating the source properties require
+high-precision waveform templates. Numerical relativity (NR) simulations can provide the most
+accurate waveforms. However, it is challenging to compute waveform templates in high-dimensional
+parameter space using NR simulations due to high computational costs. In this work, we implement
+a novel waveform mapping method, which is an alternative approach to the existing analytical
+approximations, based on closed-form continuous-time neural networks. This machine-learning-
+based method greatly improves the efficiency of calculating waveform templates for arbitrary source
+parameters, such as the binary mass ratio and the spins of component black holes. Based on this
+method, we presentBHP2NRMLSur, a class of models (including nonspinning and spin-aligned ones)
+that maps point-particle black hole perturbation theory waveforms into NR and surrogate waveforms.
+The nonspinning model provides highly accurate waveforms that match the NR waveforms to the
+level of ≳ 0.995. The spin-aligned model reduces the required input parameters and hence improves
+the efficiency of the waveform generation—it takes a factor of∼ 50 less time than existing NR
+surrogate models to generate100,000 waveforms, with a mismatch of< 0.01 compared to the NR
+waveforms from the Simulating eXtreme Spacetimes collaboration.
+I. INTRODUCTION
+The detection of 90 gravitational-wave (GW) signals
+from compact binary coalescence by the LIGO-Virgo-
+KAGRA (LVK) [1–3] collaboration up to the third ob-
+serving run (O3) [4–6] has opened a new era of GW
+astronomy and significantly expanded our understanding
+of these compact objects. The increased sensitivity of
+the detectors in the ongoing fourth observing run (O4)
+leads to an almost doubled detection rate compared to O3,
+further increasing the number of observed GW events [7].
+The majority of the observed signals to date are from
+binary black hole (BBH) mergers.
+Generating highly accurate waveform templates is cru-
+cial for identifying weak GW signals and estimating their
+astrophysical properties. Waveforms simulated by nu-
+merical relativity (NR) are the most accurate but com-
+putationally expensive. Thus, it is impractical to build
+the full template bank for the whole parameter space
+of these BBH signals purely relying on NR waveforms.
+Thousands of NR waveforms with mass ratiosq =m1/m2
+(m1 and m2 are the masses of the two-component black
+holes; m1 ⩾m2) between 1–10 have been computed and
+published by the Simulating eXtreme Spacetimes (SXS)
+collaboration [8]. Based on these NR waveforms [9, 10],
+∗ corresponding author: wbhan@shao.ac.cn
+several surrogate waveform models are developed to gener-
+ate waveforms efficiently by reconstructing the underlying
+phenomenology using a data-driven approach based on
+NRwaveforms[ 10–15]. Thesesurrogatemodelsareproven
+to be nearly as accurate as the NR waveforms which they
+are built upon but allow a much faster generation of wave-
+form templates, and hence become particularly useful in
+building the template banks for BBH signals.
+The next-generation ground-based detectors, such as
+the Einstein Telescope [16] and Cosmic Explorer [17, 18],
+are expected to reach redshifts beyond10 and have sig-
+nificantly improved low-frequency sensitivity, thereby in-
+creasing the detection rate of unequal-mass BBH events.
+In addition, the low-frequency space-based GW detec-
+tors Laser Interferometer Space Antenna (LISA) [19],
+Taiji [20], and Tianqin [21] for massive objects are under
+construction. Intermediate mass ratio inspirals (IMRIs)
+[22] and extreme mass ratio inspirals (EMRIs) [23] are
+important detection targets for these space-based detec-
+tors. Therefore, accurate and efficient modeling of the
+inspiral-merger-ringdown (IMR) waveforms covering a
+wide range of mass-ratio systems is essential.
+Previous works [24, 25] have proposed surrogate models
+to calibrate point-particle black hole perturbation theory
+(ppBHPT) waveforms against NR waveforms at different
+mass ratios by rescaling the amplitude and phase,
+hNR
+lm (t,q )≃αhppBHPT
+lm (tβ,q), (1)
+where αand βare obtained by fitting NR waveforms to
+arXiv:2503.04534v1  [gr-qc]  6 Mar 2025
+
+2
+polynomials in 1/q:
+α(q) = 1 + Al
+α
+q + Bl
+α
+q2 + Cl
+α
+q3 + Dl
+α
+q4 , (2a)
+β(q) = 1 +
+Al
+β
+q +
+Bl
+β
+q2 +
+Cl
+β
+q3 +
+Dl
+β
+q4 , (2b)
+where Al
+α/β, Bl
+α/β, Cl
+α/β, andDl
+α/βare fitting parame-
+ters. Recently, the above-mentioned rescaling procedure
+has been further extended to spinning binaries [26]. In
+this paper, we implement a novel machine-learning-based
+waveform mapping method to calibrate ppBHPT wave-
+forms against NR waveforms, which is highly efficient and
+accurate and, more importantly, the flexibility to incorpo-
+rate additional parameters. Using this method, we map
+the ppBHPT waveforms to NR waveforms with mass-ratio
+q, aligned individual spinsχ1 andχ2, and include angular
+modes of (2, 2), (2, 1), (3, 3), (3, 2) and (4, 4). Note that
+since there are not sufficient NR waveforms available for
+training purposes, we use SEOBNRv5HM [27, 28] and
+NRHybSur3dq8_CCE [11, 15] waveform data for training
+instead.
+The structure of the paper is organized as follows. In
+Sec. II, we introduce the machine-learning networks used
+in this work. In Sec. III, we describe the waveforms,
+network structure, and the implementation of the training.
+In Sec. IV, we demonstrate the models generated as the
+training results and the model accuracy by comparing our
+model-generated waveforms to the surrogate waveforms
+and NR waveforms from SXS and RIT [29]. Finally, we
+outline future directions and conclude in Sec. V.
+II. METHODOLOGY
+In this work, we rely on the closed-form continuous-time
+neural network (CfC) [30]. Before introducing CfC, it is
+necessary to review recurrent neural networks (RNNs).
+The output predictions and computations of RNNs are
+not only a function of the input at a particular time step
+but also the past hidden cell state denoted byu. Discrete
+RNNs have the following form:
+u(n) = f1[u(n−1),I (n),θ1], (3)
+ˆy(n) = f2[u(n),θ2], (4)
+where u(n) is the hidden cell state at the current step,
+f1/2 is a neural network parametrized byθ1/2 (the same
+functions and set of parameters are used at every time
+step in each iteration),I(n) is the input,u(n−1) is the
+state at last step, andˆy(n) is the output. Figure 1 shows
+the schematic diagram of the RNN in Eqs. (3)–(4). Note
+that the input data [I(1),I (2),...,I(n)], hidden states
+[u(1),u (2),...,u(n)], and output data[ˆy(1), ˆy(2),...,ˆy(n)]
+are all vectors (or tensors).
+Figure 1: Schematic diagram of an RNN. The inputI(n)
+and the previous stateu(n−1) go into functionf1 to
+generate the current stateu(n), and the outputˆy(n) is
+obtained through functionf2 acting onu(n). Each step
+of getting the current stateu(n) to output ˆy(n) from the
+inputI(n) and the previous hidden stateu(n−1) is called
+a cell.
+There are two types of RNNs: the discrete-time ones
+described above and the ones with a continuous-time form.
+The continuous-time RNNs (CT-RNNs) were proven to
+approximate any finite time trajectory of a dynamical
+system [31]. For example, anm-dimensional dynamical
+system can be approximated by a CT-RNN withm units
+per cell, such that the input at each time step is am-tuple
+vectorI(t) = [I1(t),I 2(t),...Im(t)]. Assuming thatf1 has
+the following simple form [31], the CT-RNN will be:
+˙ui(t) =−ui(t)/τi +
+m∑
+j=1
+wijσ[uj(t)] +Ii(t), (5)
+where the dot symbol denotes differentiation with respect
+to timet, i = (1,...m), ui(t) is the hidden state of the
+ith unit,τi is the time constant of theith unit,wij is the
+connection weights,Ii(t) is the input to theith unit, and
+σ[ui(t)] is the output ofith unit. Here,σas the activation
+function is a nonconstant, bounded, and monotonically
+increasing C 1-sigmoid function:σ(x) = 1/(1 +e−x). The
+vector expression of Eq. (5) is
+˙u(t) =−u(t)/τ+Wσ[u(t)] +I(t), (6)
+whereu = [u1(t),....um(t)],W = (wij) is anm×mweight
+matrix. Returning to the general cases, the dimension of
+the hidden state may not be equal to the dimension of the
+input, and hence the weight matrix in Eq. (6) may not be
+square. In addition, there are many activation functions.
+So we rewrite Eq. (6) as
+˙u(t) =−u(t)/τ+f1[u(t),I(t),θ1]. (7)
+In this work, the input is a k-tuple vector I(t) =
+[hinput(t),q,χ1,χ2,...] att,hinput(t) is the ppBHPT wave-
+form and the outputˆy(t) = houtput(t) = f2[u(t),θ2] is the
+NR approximation waveform at the same time step. At
+each time, the GWh∈R andu = [u1,u 2,...,um]∈D⊂
+Rm, so we havef1 : Rm×Rk→Rm and f2 : Rm→R.
+Figure (2) shows a schematic diagram of the input, out-
+put, and hidden state of the current time step of the
+neural network cell, from which we can see thatk is equal
+
+3
+to the number of waveform parameters plus one (the
+input waveform data). Note that all waveform parame-
+ters remain constant over all different time steps of input
+I(t). Figure (2) shows a single time step in Figure (1),
+demonstrating the neural network-based approximation
+of a single waveform. We illustrate the structural details
+of the network we use in Sec. IIIB.
+Figure 2: Schematic diagram of a cell of the CT-RNN.
+Such a cell hasm units, [u1,u 2,...,um]. The input at
+each time step is ak-tuple vector composed of the input
+waveform and the waveform parameters.
+Reference [31] provides proof of the theoretical ability
+of CT-RNNs to approximate any time series. Further,
+an efficient network training method based on numerical
+ordinary differential equation (ODE) solvers can be real-
+ized using the method described in Reference [32]. They
+provide a deep neural network model of neural ODEs.
+Such a model parametrizes the hidden state’s derivative
+using a neural network. One can then compute the states
+using a numerical ODE solver and train the network by
+performing reverse-mode automatic differentiation or by
+gradient descent through the solver. Then, by concate-
+nating the time-stamp information to the inputs of an
+RNN, the RNN with neural ODEs can be considered an
+effective algorithm for modeling the time series data [32].
+Hasani et al. [33] provide an alternative formulation
+to extend the capabilities of CT-RNNs, the liquid time-
+constant RNNs (LTCs) with varying time-constants cou-
+pled to the hidden state:
+τsys = τ
+1 +τf [u(t),I(t),t,θ]. (8)
+The LTC can be implemented by an arbitrarily cho-
+sen numerical ODE solver, trained in time by back-
+propagation and gradient-based gradient optimization
+algorithm, which is the same as for neural ODEs. In
+addition, LTCs are proven to have stable and bounded
+behavior [33, 34]:
+˙u(t) =−{1/τ+f [u(t),I(t),t,θ]}u(t)+
+f [u(t),I(t),t,θ]A
+=−u(t)/τsys +f (u(t),I(t),t,θ)A,
+(9)
+whereA is a bias vector. The approximate expression of
+LTCs’ closed-form solution is
+u(t)≈[u(0)−A]e−[1/τsys+f (u,I,θ)]tf (−u,−I,θ) +A.
+(10)
+CfCs are efficiently closed forms of LTCs that can relax
+the need for complex numerical solvers with well-behaved
+gradient properties and approximation capabilities. The
+explicit formation of CfCs is [30]:
+u(t) =δ[−f (u,I,θf )t]g(u,I,θg)+
+{1−δ[−f (u,−I,θf )t]}a(u,−I,θa), (11)
+where δreplaces the exponential term in Eq. (10). The
+δfunction is approximately1 at t = 0 and approaches
+0 when t→∞, much smoother than the exponential
+decay. The 1−δ(·) term plays the gating role in avoiding
+problems with a disappearing gradient. Here, we replace
+A with another neural networka and add an independent
+networkg to improve the model’s flexibility. Since CfCs
+are the better-performed variant of RNNs, we use them
+to find the mapping relation between ppBHPT and NR
+waveforms.
+III. IMPLEMENTATION
+A. Waveform data
+In the ppBHPT approximation, the small object in the
+binary is modeled as a point particle without internal
+structure and with a mass ofm2, moving in the back-
+ground spacetime of the massive black hole with a mass
+of m1. As the small object perturbs the background
+spacetime, GWs are excited.
+The ppBHPT waveforms can be computed by solving
+theTeukolskyequation[ 35–37]withtheparticletrajectory
+determined source term. The solution of the equation is
+directly related to the4th Weyl curvature component,ψ4,
+which can be written as
+ψ4 = 1
+2
+(∂2h+
+∂t2 −i∂2h×
+∂t2
+)
+, (12)
+where h+ and h×are the two GW polarization states.
+We compute the training ppBHPT waveforms based
+on interpolation data provided by Reference [25]. The
+dataset is generated by interpolating 41 nonspinning
+ppBHPT waveforms with the logarithmic scale ofq∈
+[2.5, 10000]. Since a large number of target NR wave-
+forms required in the training are still lacking, we
+generate the target data using NR surrogate models,
+NRHybSur3dq8_CCE [11, 15] and SEOBNRv5HM [27,
+28]. For this reason, two target data-based models
+(NRHybSur3dq8_CCE based and SEOBNRv5HM based)
+are trained based on whetherNRHybSur3dq8_CCE or
+SEOBNRv5HM generates the target waveform data. All
+waveforms are aligned, and their peaks occur simultane-
+ously att = 0. In addition, we set the phaseϕ= 0 at the
+start of the waveforms.
+
+4
+1400
+ 1200
+ 1000
+ 800
+ 600
+ 400
+ 200
+ 0
+0.1
+0.0
+0.1
+(2, 2) mode
+ppBHPT
+NRHybSur3dq8_CCE
+SEOBNRv5HM
+200
+ 150
+ 100
+ 50
+ 0 50 100
+t/M
+q = 8.000, 1 = 0.000, 2 = 0.000
+Figure 3: The (2, 2) modes of the ppBHPT (solid blue),NRHybSur3dq8_CCE (dashed orange) and SEOBNRv5HM
+(dashed green) waveforms for a system with mass ratio ofq = 8 and spins of two BHs,χ1 =χ2 = 0. The right panel is
+a zoomed-in view around the merger time.
+The surrogate model NRHybSur3dq8_CCE is a hy-
+brid waveform model, trained on 102 waveforms built
+from Cauchy-characteristic evolution (CCE) waveforms
+and post-Newtonian (PN) and effective-one-body (EOB)
+waveforms [27, 28]. SEOBNRv5HM [27, 28] is an IMR
+gravitational waveform model for quasicircular, spinning,
+nonprecessing binary black holes within the EOB formal-
+ism. It is calibrated to larger mass ratios and spins using
+442 NR simulations and13 BHP waveforms.
+There are significant phase and amplitude differences
+between ppBHPT waveform and NR or NR surrogate
+waveforms, especially when the mass-ratioq is small. To
+demonstrate the ability of the calibration capability of our
+model BHP2NRMLSur, Figure 3 shows the(2, 2)modes of
+the ppBHPT,NRHybSur3dq8_CCE and SEOBNRv5HM
+waveforms for comparison with later BHP2NRMLSur
+results.
+B. Network structure
+To improve the model’s expressiveness in mapping wave-
+forms, we use a CfC network with a multineuron neural
+circuit strategy (NCP) [ 34]. The total Ntot neurons
+(Ntot = 16 or 64 in our model) of NCP are divided into
+four layers with Ns sensory neurons, Ni interneurons,
+Nc command neurons, andNm motor neurons, respec-
+tively. NCP has a nonlinear and sparse transmission
+mechanism shown in Figs. 4 and 5. The50% dropout
+of feedforward connections between neurons and highly
+recurrent connections among command neurons achieve
+sparsity and nonlinearity and reduce the trainable param-
+eter space. The activation function we use is LeCun’s
+Tanh,f (x) = 1.7519 tanh( 2
+3x). It adjusts the slope of the
+tanh function to produce a larger gradient near the origin
+and helps the neural network to speed up the learning
+process.
+Before training, we need to preprocess the waveform
+data. The GWs propagating in direction(θ, ϕ) can be
+…
+… …
+…
+? train × ? ? × ? input ? train × ? ? × ? output? s ? i ? c ? m
+Figure 4: The NCPs haveNs sensory neurons,Ni inter
+neurons, Nc command neurons, andNm motor neurons.
+On the input and output ends,ntrain is the number of
+the input training waveforms,Ninput and Noutput are the
+dimensions of the inputI(t) and the outputˆy(t),
+respectively, andnt is the number of time steps. In the
+process, we haveNs =Ninput, Nm =Noutput, and
+Nc = 40%(Ni +Nc).
+decomposed into spin-weighted spherical harmonic modes
+h+−ih×(t,θ,ϕ) =
+∞∑
+l=2
+l∑
+m=−l
+hlm(t)−2Ylm(θ,ϕ), (13)
+where hlm(t) is the strain of thelm harmonic mode, and
+−2Ylm(θ,ϕ) is the spin-weighted spherical harmonics. For
+the training, it is useful to decompose the waveforms into
+amplitude and phase components:
+hlm(t) = A(t)e−iϕ(t), (14)
+where the amplitude can be written asA =|hlm|, and
+phase is ϕ= arctan[−Im(hlm)/Re(hlm)]. Our models
+transform the amplitude (Ap) and phase (ϕp) of the
+ppBHPT into the prediction amplitude and phase,AP
+and ϕP, respectively. We can also consider the model as
+a function acting on the input data in the following form:
+αP = CfClm(αp) (15)
+
+5
+Figure 5: The process from input through neurons to
+output at each time step. Circles of different colors
+correspond to neurons with the same color in Fig 4. The
+“′” and “′′” mean hidden state of different layers and the
+“CfC Cell” indicate the layer-to-layer transfer
+relationship in Eq. (11).
+where α=A, ϕ.
+For model optimization during training, we use the
+mean squared error as the loss function, which measures
+the mean squaredℓ2-norm between each element in the
+prediction (A/ϕ)P and target (A/ϕ)NR. We chose the
+Adam optimiser [38] to optimize the network trainable
+parameters at each step of the training process.
+IV. MACHINE-LEARNING BASED MODELS
+We useBHP2NRMLSur to generate IMR waveforms,
+mapping from the ppBHPT waveforms. In this section,
+we describe the details of the nonspinning and aligned-
+spinning models ofBHP2NRMLSur. We also present the
+model accuracy and the efficiency of waveform generation.
+The quantity of training waveforms and model parame-
+ters is crucial for model construction. Table I presents
+the total number of training waveforms, neurons, and
+parameters for each type of model. The number of model
+parameters depends on the number of neurons and wave-
+form parameters. For the nonspinning model, there are a
+total of4.2×103 parameters, including3.4×103 trainable
+parameters and 784 non-trainable parameters. For the
+aligned-spinning models, there are1.62×104 parameters
+in total, consisting of1.3×104 trainable parameters and
+3.2×103 non-trainable parameters.
+Table I: Total number of training waveforms, model
+neurons, and parameters inBHP2NRMLSur. Aligned-
+spinning-A and B represent NRHybSur3dq8_CCE-based
+and the SEOBNRv5HM-based model, respectively.
+Training waveformsNeurons Params
+nonspinning 1000 16 × 4 3.4 × 103
+Aligned-spinning-A 30 × 30 × 30 64 1.62 × 104
+Aligned-spinning-B 50 × 50 × 50 64 1.62 × 104
+A. Nonspinning model
+The nonspinning model has the following form:
+CfClm
+α[α(q)] =
+(
+1 +
+nmax∑
+n=1
+CfClmn
+α
+qn
+)
+α(q), (16)
+where nmax = 4 is chosen here, which means that the
+nonspinning model consists of four CfC networks, and
+each CfC network has16 neurons (Ntot = 16). It is worth
+notingthatwhen q→∞, themappingfunctionofEq.(16)
+will approximate the identity mapping and guarantee the
+accuracy of the mapping waveform in extreme mass ratio
+case.
+For the training, we generate1000 ppBHPT waveforms
+with uniformly sampled mass-ratioq∈[3, 8] as the in-
+put data α(q) (i.e., the amplitude and phase of wave-
+forms), and the corresponding target data are generated
+by NRHybSur3dq8_CCE. Here, the waveforms include
+(2, 2), (2, 1), (3, 3) (3, 2) and (4, 4) harmonic modes. The
+duration of each waveform ist∈[−2000M, 110M ] and
+time step isdt = 1M.
+To evaluate the accuracy of theBHP2NRMLSur wave-
+forms, we quantify the discrepancy (mismatch) between a
+large set of waveforms generated byBHP2NRMLSur and
+NR surrogate (NRHybSur3dq8_CCE, SEOBNRv5HM)
+or NR (SXS, RIT) waveforms. The match is defined as
+O = max
+[
+⟨h1|h2⟩√
+⟨h1|h1⟩⟨h2|h2⟩
+]
+, (17)
+where the “max” stands for the maximum overlap given
+by optimizing over time and phase shifts, and the⟨h1|h2⟩
+defined as
+⟨h1|h2⟩= 2Re
+∫ ∞
+0
+˜h∗
+1(f )˜h2 + ˜h1(f )˜h∗
+2(f )
+Sn(f ) df, (18)
+where the tilde symbol denotes the Fourier transform of
+the strainh, the “∗”denotes the complex conjugate, and
+Sn(f ) is the one-sided noise power spectral density (PSD)
+of the GW detector.OIMR andOI denote the matches of
+the IMR waveforms and the waveforms before merging,
+respectively.
+Figure 6 shows the BHP2NRMLSur generated
+harmonic modes and the corresponding modes of
+
+6
+NRHybSur3dq8_CCE. Then, we use Eq. (17) to calculate
+the matches, and the results are shown in Figure 7, where
+each mode is evaluated with 100 waveforms with the mass-
+ratio q randomly sampled from a uniform distribution
+in the intervalq∈[3, 8]. For the harmonic modes(2, 2),
+(2, 1) and (3, 3), the matches between our model-generated
+waveforms and the waveforms ofNRHybSur3dq8_CCE
+are pretty high, at the level of≳ 0.99, which demonstrates
+that BHP2NRMLSur can obtain highly accurate mapping
+waveforms from ppBHPT waveforms.
+2000
+ 1750
+ 1500
+ 1250
+ 1000
+ 750
+ 500
+ 250
+ 0
+0.1
+0.0
+0.1
+(2, 1) mode IMR = 0.9948, I = 0.9979
+NRHybSur3dq8_CCE
+BHP2NRMLSur
+ppBHPT
+200
+ 150
+ 100
+ 50
+ 0 50
+t/M
+q = 3.101, 1 = 0.000, 2 = 0.000
+2000
+ 1750
+ 1500
+ 1250
+ 1000
+ 750
+ 500
+ 250
+ 0
+0.10
+0.05
+0.00
+0.05
+0.10
+(3, 3) mode IMR = 0.9979, I = 0.9988
+NRHybSur3dq8_CCE
+BHP2NRMLSur
+ppBHPT
+200
+ 150
+ 100
+ 50
+ 0 50 100
+t/M
+q = 4.942, 1 = 0.000, 2 = 0.000
+2000
+ 1750
+ 1500
+ 1250
+ 1000
+ 750
+ 500
+ 250
+ 0
+0.02
+0.00
+0.02
+0.04
+(3, 2) mode IMR = 0.9921, I = 0.9971
+NRHybSur3dq8_CCE
+BHP2NRMLSur
+ppBHPT
+200
+ 150
+ 100
+ 50
+ 0 50
+t/M
+q = 5.778, 1 = 0.000, 2 = 0.000
+2000
+ 1750
+ 1500
+ 1250
+ 1000
+ 750
+ 500
+ 250
+ 0
+0.04
+0.02
+0.00
+0.02
+(4, 4) mode
+IMR = 0.9966, I = 0.9978
+NRHybSur3dq8_CCE
+BHP2NRMLSur
+ppBHPT
+200
+ 150
+ 100
+ 50
+ 0 50
+t/M
+q = 7.293, 1 = 0.000, 2 = 0.000
+Figure 6: Harmonic modes (orange dashed curves)
+generated by the non - spinningBHP2NRMLSur model
+and the correspondingNRHybSur3dq8_CCE waveforms
+(blue solid curves) and the uncalibrated ppBHPT
+waveforms are represented by light black dashed lines.
+From top to bottom are(2, 1), (3, 3), (3, 2) and (4, 4)
+modes.
+We compare theBHP2NRMLSur waveforms and RIT
+NR simulations [29] for the high mass-ratio casesq =
+{15, 32}. Figure 8 shows the comparison against RIT NR
+data. The matches are0.9973 and 0.9938 corresponding
+to q = 15 and q = 32 . Since the mass ratio of the
+training data is sampled in the range q ∈[3, 8], the
+results show that the nonspinningBHP2NRMLSur model
+can be generalized to out-of-distribution mass ratios and
+remains valid for larger mass-ratio cases.
+In this work, the ppBHPT waveforms we use as part
+of the input training data are for nonspinning systems.
+3 4 5 6 7 8
+q
+0.900
+0.970
+0.990
+0.997
+0.999IMR
+ (2, 2)
+(2, 1)
+(3, 3)
+(3, 2)
+(4, 4)
+Figure 7: The matchesOIMR of the harmonic modes of
+BHP2NRMLSur and the corresponding modes of
+NRHybSur3dq8_CCE.
+1000
+ 800
+ 600
+ 400
+ 200
+ 0
+0.10
+0.05
+0.00
+0.05
+0.10
+(2, 2) mode
+IMR : 0.6528 0.9971, I : 0.6755 0.9959
+RIT-BBH-0942
+BHP2NRMLSur
+ppBHPT
+200
+ 150
+ 100
+ 50
+ 0 50 100
+t/M
+q = 15.000, 1 = 0.000, 2 = 0.000
+1400
+ 1200
+ 1000
+ 800
+ 600
+ 400
+ 200
+ 0
+0.04
+0.02
+0.00
+0.02
+0.04
+(2, 2) mode
+IMR : 0.7755 0.9938, I : 0.7892 0.9918
+RIT-BBH-0942
+BHP2NRMLSur
+ppBHPT
+200
+ 150
+ 100
+ 50
+ 0 50 100
+t/M
+q = 32.000, 1 = 0.000, 2 = 0.000
+Figure 8: Waveforms generate byBHP2NRMLSur
+(orange line) and NR simulations (blue line) from the
+RIT group (simulation ID RIT: BBH:0942 forq = 15
+and RIT: BBH:0792 forq = 32). The uncalibrated
+ppBHPT waveforms are shown in light black dashed
+lines. The matches of the waveforms before and after
+mapping and NR simulations are marked in the text box.
+In the future, we will consider using ppBHPT waveforms
+with more parameters, such as spin and eccentricitye to
+generate a more general mapping model as
+CfClm
+α[α(q, χ, e, ...)] =
+(
+1 +
+nmax∑
+n=1
+CfClmn
+α
+qn
+)
+α(q, χ, e, ...).
+(19)
+B. Aligned-spinning model
+The aligned-spinningBHP2NRMLSur model maps non-
+spinning ppBHPT into aligned-spinning waveforms via
+α(q,χ1,χ2) = CfClm
+α[α(q), χ1, χ2], (20)
+where the CfC network has64 neurons (Ntot = 64). Note
+that unlike Eq. (19),α(.) in Eq. (20) has only one pa-
+rameter, mass-ratioq. This means that the inputs to the
+BHP2NRMLSur are the nonspinning waveforms and the
+two spin parametersχ1 and χ2, and the outputs of the
+model obtained are the aligned-spinning waveforms.
+
+7
+Here, we generate the NRHybSur3dq8_CCE-based
+model and the SEOBNRv5HM-based model depend-
+ing on whether the target data in training are from
+NRHybSur3dq8_CCE or SEOBNRv5HM, respectively.
+For the NRHybSur3dq8_CCE-based model, the input
+ppBHPT data α(q) is the amplitude and phase of 30
+waveforms with uniformly sampled mass-ratioq∈[3, 8].
+The input parameters are30×30 uniformly distributed
+spins ofχ1∈[−0.8, 0.8] and χ2∈[−0.8, 0.8]. The dimen-
+sion of the target data for the corresponding parameters
+is 30×30×30. Since we have chosen the SEOBNRv5HM
+target data with a larger parameters (mainly the mass-
+ratio) interval, we increase the dimension of the training
+data moderately. In the training of the SEOBNRv5HM-
+based mode, the dimension of target data is50×50×50,
+with 50 logarithmically sampled mass-ratioq∈[1, 200],
+and 50×50 uniformly sampled spins ofχ1∈[−0.9, 0.9]
+and χ2∈[−0.9, 0.9]. In addition, we test the case when
+the dimension is 30×30×30 and find that the model
+cannot provide good accuracy,50 mass-ratio sampling is
+necessary.
+Similar to the nonspinning case, we generate wave-
+forms using our BHP2NRMLSur models and calculate
+the matches to quantify the model accuracy using Eq. (17).
+Figs. 9 and 10 show the examples of waveforms gener-
+ated byBHP2NRMLSur using the NRHybSur3dq8_CCE-
+based and SEOBNRv5HM-based models, respectively.
+The match results are shown in Figure 11, where the re-
+sults for each model are computed from1000 waveforms.
+For the NRHybSur3dq8_CCE-based model, a total num-
+ber of 10×10×10 data points are randomly drawn from
+a uniform distribution, withq∈[3, 8], χ1∈[0, 0.7], and
+χ2∈[0, 0.7]. As for the SEOBNRv5HM-based model,10
+mass-ratio values are randomly drawn from a uniform dis-
+tribution over the rangeq∈[3, 50], while the10×10 spin
+values are randomly drawn from a uniform distribution
+withχ1∈[0, 0.7] andχ2∈[−0.7, 0.7]. The matches of the
+waveforms generated by the NRHybSur3dq8_CCE-based
+and SEOBNRv5HM-based models are above0.996 and
+0.97, respectively.
+We also compare the waveforms generated by the
+BHP2NRMLSur model to NR simulation. Here, we select
+30 waveforms with the aligned-spinningχ1∈[0, 0.85] and
+χ2∈[0, 0.85] and eccentricitye≤0.01 from the SXS
+GW database. Figure 12 shows the matches between the
+BHP2NRMLSur and SXS waveforms. The matches are
+above 0.99 and 0.97 for the waveforms generated by the
+NRHybSur3dq8_CCE-based model and SEOBNRv5HM-
+based model, respectively.
+C. Generation efficiency
+Since the input ppBHPT waveforms have only one
+parameter q, the BHP2NRMLSur model uses the non-
+spinning waveforms as the basis to obtain aligned-spinning
+waveforms withχ1 and χ2. This model reduces the di-
+mension of the input to achieve improved computational
+2000
+ 1750
+ 1500
+ 1250
+ 1000
+ 750
+ 500
+ 250
+ 0
+0.4
+0.2
+0.0
+0.2
+0.4
+(2, 2) mode
+IMR = 0.9972, I = 0.9973
+NRHybSur3dq8_CCE
+BHP2NRMLSur
+200
+ 150
+ 100
+ 50
+ 0 50 100
+t/M
+q = 1.200, 1 = 0.320, 2 = 0.620
+2000
+ 1750
+ 1500
+ 1250
+ 1000
+ 750
+ 500
+ 250
+ 0
+0.15
+0.10
+0.05
+0.00
+0.05
+0.10
+0.15
+(2, 2) mode
+IMR = 0.9982, I = 0.9984
+NRHybSur3dq8_CCE
+BHP2NRMLSur
+200
+ 150
+ 100
+ 50
+ 0 50 100
+t/M
+q = 7.800, 1 = 0.570, 2 = 0.530
+Figure 9: Waveforms generate byBHP2NRMLSur
+NRHybSur3dq8_CCE-based model and
+NRHybSur3dq8_CCE, where theBHP2NRMLSur
+waveforms are represented by orange dashed lines and
+the corresponding NRHybSur3dq8_CCE waveforms are
+represented by solid blue lines.
+1400
+ 1200
+ 1000
+ 800
+ 600
+ 400
+ 200
+ 0
+0.2
+0.0
+0.2
+(2, 2) mode
+IMR = 0.9915, I = 0.9953
+SEOBNRv5HM
+BHP2NRMLSur
+200
+ 150
+ 100
+ 50
+ 0 50 100
+t/M
+q = 2.100, 1 = 0.560, 2 = 0.530
+1400
+ 1200
+ 1000
+ 800
+ 600
+ 400
+ 200
+ 0
+0.03
+0.02
+0.01
+0.00
+0.01
+0.02
+0.03
+(2, 2) mode
+IMR = 0.9945, I = 0.9954
+SEOBNRv5HM
+BHP2NRMLSur
+200
+ 150
+ 100
+ 50
+ 0 50 100
+t/M
+q = 52.300, 1 = 0.560, 2 = -0.680
+Figure 10: Waveforms generate byBHP2NRMLSur
+SEOBNRv5HM-based model and SEOBNRv5HM, where
+the BHP2NRMLSur waveforms are represented by
+orange dashed lines and the corresponding
+SEOBNRv5HM waveforms are represented by blue solid
+lines.
+efficiency, tens of times faster than the surrogate models
+NRHybSur3dq8_CCE and SEOBNRv5HM by using the
+GPU RTX A2000 12GB.
+In Figure 13, we show the computing time for gener-
+ating 100-thousand waveforms byNRHybSur3dq8_CCE,
+SEOBNRv5HM, and ourBHP2NRMLSur model. The
+results demonstrate the advantage of theBHP2NRMLSur
+model. The computing time of our model is about50 sec-
+onds,∼40 times faster than usingNRHybSur3dq8_CCE
+or SEOBNRv5HM, which takes∼2×103 seconds.
+
+8
+3 5 6 7
+q
+0.992
+0.993
+0.994
+0.995
+0.996
+0.997
+0.998IMR
+BHP2NRMLSur -- NRHybSur3dq8_CCE
+3 10 20 30 40 50
+q
+0.980
+0.985
+0.990
+0.995IMR
+BHP2NRMLSur -- SEOBNRv5HM
+Figure 11: The matchesOIMR of BHP2NRMLSur
+waveforms andNRHybSur3dq8_CCE(top)/
+SEOBNRv5HM (bottom). Both panels have1000
+waveform matches, and each column of100 points
+corresponds to matches of the same mass-ratioq and
+different spins.
+3 4 5 6 7 8
+q
+0.975
+0.980
+0.985
+0.990
+0.995
+NRHybSur3dq8_CCE-based -- SXS
+SEOBNRv5HM-based -- SXS
+Figure 12: The matchesOIMR of BHP2NRMLSur
+waveforms and SXS simulation. The blue points indicate
+the matches of the NRHybSur3dq8_CCE-based model
+case, and the orange points correspond to the
+SEOBNRv5HM-based model case.
+BHP2NRMLSur     NRHySur      SEOBNR
+101
+102
+103
+104
+time [s]
+Figure 13: Computation time for generating100000
+waveforms by different waveform models, where the blue,
+orange, and green points representBHP2NRMLSur,
+NRHybSur3dq8_CCE and SEOBNRv5HM respectively.
+D. Scaling parameters extraction and comparison
+Similar with Refs. [24–26], we can also extract the
+parameters in Eq. (2) from our machine-learning model
+and compare them with the phenomenological formulae
+used in the above works. Here, we take the nonspinning
+case as an example. The definition of the scaling form is
+as follows
+hα′
+lβ′
+lm (t, q) = α′
+lA(t)e−iϕ(t,q )/β′
+, (21)
+wherehα′
+lβ′
+lm (t, q)isthewaveformafterthecalibrationwith
+scaling parameters. Althoughβ′scales the phase, different
+from βin Reference [25] which scales the time, they are
+essentially equivalent since one operation is multiplication
+and the other is division.
+Now, we fit the coefficients(A, B, C, D) of α′
+l and β′
+by using the least-squares method. The values of these
+coefficients are presented in Table II and III. The coeffi-
+cients obtained here are similar in terms of the trend with
+the ones in [25], with slight differences. Moreover, the rel-
+ative differences between (αl,β) and (α′
+l,β′) just from 1%
+to 10% for varied mass-ratio. The scaling formulae based
+on (α′
+l, β′) can effectively rescale the machine-learning
+waveforms, especially for the(2, 2) mode, however for
+higher modes, the accuracy may be not enough.
+Based on the above analysis, it is better to use the
+machine-learning waveform directly. We now compare
+the accuracy between ourBHP2NRMLSur and the BH-
+PTNRSur1dq1e4 model from Reference [25]. For the
+(2, 2), (3, 3), and (4, 4) waveform modes, we compute the
+matchesOIMR for both BHP2NRMLSur and BHPTNR-
+Sur1dq1e4 against NRHybSur3dq8_CCE. As shown in
+Figure 14, BHP2NRMLSur demonstrates better accuracy
+across all three modes. Furthermore, BHP2NRMLSur
+exhibits strong parametric scalability, enhancing its po-
+tential for further development and application.
+Table II: Fitting coefficients forα′
+l parameters as defined
+in Eq. (2a).
+l Al
+α Bl
+α Cl
+α Dl
+α
+2 −1.488 ± 0.006 2.341 ± 0.075 −4.911 ± 0.327 6.302 ± 0.459
+3 −3.243 ± 0.006 8.138 ± 0.078 −27.651 ± 0.338 44.888 ± 0.476
+4 −3.724 ± 0.013 5.615 ± 0.176 −1.306 ± 0.768 −8.789 ± 1.080
+Table III: Fitting coefficients forβ′parameters as defined
+in Eq. (2b).
+Aβ Bβ Cβ Dβ
+−0.944 ± 0.0003 1.618 ± 0.004 −2.277 ± 0.018 1.457 ± 0.027
+
+9
+3 4 5 6 7 8
+q
+0.900
+0.970
+0.990
+0.997
+0.999IMR
+(2, 2) BHP2NRMLSur
+(2, 2) BHPTNRSur1dq1e4
+(3, 3) BHP2NRMLSur
+(3, 3) BHPTNRSur1dq1e4
+(4, 4) BHP2NRMLSur
+(4, 4) BHPTNRSur1dq1e4
+Figure 14: Matches (OIMR) by comparing
+NRHybSur3dq8_CCE waveforms toBHP2NRMLSur
+and BHPTNRSur1dq1e4 waveforms.
+V. DISCUSSION
+In this work, we present a new machine-learning wave-
+form mapping strategy that can calibrate the ppBHPT
+waveforms to NR surrogate waveforms. We obtain the
+BHP2NRMLSur based on the CfC networks in Eq. (11)
+with the multiple-neuron structure NCP, and training
+with the ppBHPT and NR surrogate (SEOBNRv5HM
+and NRHybSur3dq8_CCE) waveform data. This method
+converts nonspinning ppBHPT waveforms to NR surro-
+gate waveforms with the advantages of high accuracy,
+high speed, and parameter scalability. The main contri-
+bution of our work is the first use of a machine-learning
+approach to handle waveform mapping from the ppBHPT
+to NR surrogate with theoretically arbitrary parameter
+scalability.
+Based on the proposed method, we train to obtain
+BHP2NRMLSur with two mapping models: nonspin-
+ning and aligned-spinning models. The nonspinning
+model can generalize the waveforms to out-of-distribution
+mass ratios. The waveforms generated by the trained
+BHP2NRMLSur model are highly accurate compared to
+the NR surrogate waveforms. In particular, for the first
+three main modes(2, 2), (2, 1) and (3, 3), the matches
+OIMR of waveforms generated byBHP2NRMLSur and
+NRHybSur3dq8_CCE are above 0.99. For mass ratio
+q > 5, matchesOIMR > 0.99 are also achieved in the
+(3, 2) and (4, 4) modes. For the aligned-spinning model,
+by mapping nonspinning ppBHPT waveforms to NR sur-
+rogate waveforms with aligned-spinningχ1 and χ2, we
+take advantage of parameter space reduction and gener-
+ate waveforms tens of times faster than current surrogate
+models, SEOBNRv5HM and NRHybSur3dq8_CCE. In
+future work, we will train the aligned-spinning ppBHPT
+waveform data using the model of Eq. (19), which will
+make the out-of-distribution mass ratios of the aligned-
+spinning model possible.
+Our machine-learning framework for calibrating
+ppBHPT waveforms to NR surrogate waveforms is gener-
+alized and expected to apply to a variety of scenarios not
+demonstrated in this work, including a variety of other
+time-series calibrations such as other waveform calibra-
+tion and the calibration of orbital parameters evolution,
+etc. Compared with existing polynomial-fitting modula-
+tion methods, theBHP2NRMLSur model exhibits high-
+parameter precision and strong scalability. Furthermore,
+with more NR simulation data in the future, the model
+can be extended to more general cases, such as eccentric
+and precessing systems.
+VI. ACKNOWLEDGEMENTS
+This work is supported by the National Key R&D Pro-
+gram of China (Grant No. 2021YFC2203002), and the
+National Natural Science Foundation of China (Grants No.
+12173071, 12473075). Xing-Yu Zhong was supported by
+the UCAS to participate in a Joint PhD Training Program.
+This work made use of the High-Performance Comput-
+ing Resource in the Core Facility for Advanced Research
+Computing at Shanghai Astronomical Observatory. L.S.
+acknowledges the Australian Research Council Centre of
+Excellence for Gravitational Wave Discovery (OzGrav),
+Projects No. CE170100004 and No. CE230100016. L.S.
+is also supported by the Australian Research Council Dis-
+covery Early Career Researcher Award, Project Number
+DE240100206.
+[1] J. Aasi et al., Classical and Quantum Gravity32, 074001
+(2015).
+[2] F. Acernese et al., Classical and Quantum Gravity32,
+024001 (2014).
+[3] T.Akutsu et al.,ProgressofTheoreticalandExperimental
+Physics 2021, 05A101 (2021).
+[4] B. P. Abbott, et al., LIGO Scientific Collaboration, and
+Virgo Collaboration, Physical Review X9, 031040 (2019),
+arXiv:1811.12907 [astro-ph.HE].
+[5] R. Abbott, et al., LIGO Scientific Collaboration, and
+VirgoCollaboration,PhysicalReviewX 11,021053(2021),
+arXiv:2010.14527 [gr-qc].
+[6] The LIGO Scientific Collaboration, the Virgo Collabora-
+tion, theKAGRACollaboration, R.Abbott, T.D.Abbott,
+F. Acernese, K. Ackley, C. Adams, N. Adhikari, R. X.
+Adhikari, and et al., arXiv e-prints , arXiv:2111.03606
+
+10
+(2021), arXiv:2111.03606 [gr-qc].
+[7] LVK Collaboration, “LIGO-Virgo-KAGRA Cumulative
+Detection plot - O1-O4b,” (2024).
+[8] “Simulating extreme spacetimes,” .
+[9] A. H. Mroué, M. A. Scheel, B. Szilágyi, H. P. Pfeiffer,
+M. Boyle, D. A. Hemberger, L. E. Kidder, G. Lovelace,
+S. Ossokine, N. W. Taylor, A. i. e. i. f. Zenginoğlu, L. T.
+Buchman, T. Chu, E. Foley, M. Giesler, R. Owen, and
+S. A. Teukolsky, Phys. Rev. Lett.111, 241104 (2013).
+[10] M. Boyle, D. Hemberger, D. A. B. Iozzo, G. Lovelace,
+S. Ossokine, H. P. Pfeiffer, M. A. Scheel, L. C. Stein,
+C. J. Woodford, A. B. Zimmerman, N. Afshari, K. Bar-
+kett, J. Blackman, K. Chatziioannou, T. Chu, N. Demos,
+N. Deppe, S. E. Field, N. L. Fischer, E. Foley, H. Fong,
+A. Garcia, M. Giesler, F. Hebert, I. Hinder, R. Katebi,
+H. Khan, L. E. Kidder, P. Kumar, K. Kuper, H. Lim,
+M. Okounkova, T. Ramirez, S. Rodriguez, H. R. Rüter,
+P. Schmidt, B. Szilagyi, S. A. Teukolsky, V. Varma, and
+M. Walker, Classical and Quantum Gravity36, 195006
+(2019), arXiv:1904.04831 [gr-qc].
+[11] V. Varma, S. E. Field, M. A. Scheel, J. Blackman, L. E.
+Kidder, and H. P. Pfeiffer, Phys. Rev. D 99, 064045
+(2019), arXiv:1812.07865 [gr-qc].
+[12] V. Varma, S. E. Field, M. A. Scheel, J. Blackman,
+D. Gerosa, L. C. Stein, L. E. Kidder, and H. P.
+Pfeiffer, Physical Review Research 1, 033015 (2019),
+arXiv:1905.09300 [gr-qc].
+[13] J. Yoo, V. Varma, M. Giesler, M. A. Scheel, C.-J. Haster,
+H. P. Pfeiffer, L. E. Kidder, and M. Boyle, Phys. Rev. D
+106, 044001 (2022), arXiv:2203.10109 [gr-qc].
+[14] J. Yoo, K. Mitman, V. Varma, M. Boyle, S. E. Field,
+N. Deppe, F. Hébert, L. E. Kidder, J. Moxon, H. P.
+Pfeiffer, M. A. Scheel, L. C. Stein, S. A. Teukolsky,
+W. Throwe, and N. L. Vu, Phys. Rev. D108, 064027
+(2023), arXiv:2306.03148 [gr-qc].
+[15] J. Yoo et al. , Phys. Rev. D 108, 064027 (2023),
+arXiv:2306.03148 [gr-qc].
+[16] M. Maggiore, C. Van Den Broeck, N. Bartolo, E. Bel-
+gacem, D. Bertacca, M. A. Bizouard, M. Branchesi,
+S. Clesse, S. Foffa, J. García-Bellido, S. Grimm, J. Harms,
+T. Hinderer, S. Matarrese, C. Palomba, M. Peloso, A. Ric-
+ciardone, and M. Sakellariadou, jcap2020, 050 (2020),
+arXiv:1912.02622 [astro-ph.CO].
+[17] D. Reitze, R. X. Adhikari, S. Ballmer, B. Barish, L. Bar-
+sotti, G. Billingsley, D. A. Brown, Y. Chen, D. Coyne,
+R. Eisenstein, M. Evans, P. Fritschel, E. D. Hall, A. Laz-
+zarini, G. Lovelace, J. Read, B. S. Sathyaprakash, D. Shoe-
+maker, J. Smith, C. Torrie, S. Vitale, R. Weiss, C. Wipf,
+and M. Zucker, inBulletin of the American Astronomical
+Society, Vol. 51 (2019) p. 35, arXiv:1907.04833 [astro-
+ph.IM].
+[18] M. Evans, R. X. Adhikari, C. Afle, S. W. Ballmer, S. Bis-
+coveanu, S. Borhanian, D. A. Brown, Y. Chen, R. Eisen-
+stein, A. Gruson, A. Gupta, E. D. Hall, R. Huxford,
+B. Kamai, R. Kashyap, J. S. Kissel, K. Kuns, P. Landry,
+A. Lenon, G. Lovelace, L. McCuller, K. K. Y. Ng, A. H.
+Nitz, J. Read, B. S. Sathyaprakash, D. H. Shoemaker,
+B. J. J. Slagmolen, J. R. Smith, V. Srivastava, L. Sun,
+S. Vitale, and R. Weiss, (2021), arXiv:2109.09882 [astro-
+ph.IM].
+[19] P. Amaro-Seoaneet al., “Laser interferometer space an-
+tenna,” (2017), arXiv:1702.00786 [astro-ph.IM].
+[20] W.-R. Hu and Y.-L. Wu, National Science Review
+4, 685 (2017), https://academic.oup.com/nsr/article-
+pdf/4/5/685/31566708/nwx116.pdf.
+[21] J. Luo, L.-S. Chen, H.-Z. Duan, Y.-G. Gong, S. Hu, J. Ji,
+Q. Liu, J. Mei, V. Milyukov, M. Sazhin, C.-G. Shao, V. T.
+Toth, H.-B. Tu, Y. Wang, Y. Wang, H.-C. Yeh, M.-S.
+Zhan, Y. Zhang, V. Zharov, and Z.-B. Zhou, Classical and
+Quantum Gravity33, 035010 (2016), arXiv:1512.02076
+[astro-ph.IM].
+[22] P. Amaro-Seoane, J. R. Gair, M. Freitag, M. Cole-
+man Miller, I. Mandel, C. J. Cutler, and S. Babak, Class.
+Quant. Grav.24, R113 (2007), arXiv:astro-ph/0703495.
+[23] P. Amaro-Seoane, Living Reviews in Relativity21 (2018),
+10.1007/s41114-018-0013-8.
+[24] N. E. M. Rifat, S. E. Field, G. Khanna, and V. Varma,
+Phys. Rev. D101, 081502 (2020), arXiv:1910.10473 [gr-
+qc].
+[25] T. Islam, S. E. Field, S. A. Hughes, G. Khanna, V. Varma,
+M. Giesler, M. A. Scheel, L. E. Kidder, and H. P. Pfeiffer,
+arXiv preprint arXiv:2204.01972 (2022).
+[26] K. Rink, R. Bachhar, T. Islam, N. E. M. Rifat,
+K. González-Quesada, S. E. Field, G. Khanna, S. A.
+Hughes, and V. Varma, Phys. Rev. D110, 124069 (2024).
+[27] L. Pompili, A. Buonanno, H. Estellés, M. Khalil, M. van
+de Meent, D. P. Mihaylov, S. Ossokine, M. Pürrer,
+A. Ramos-Buades, A. K. Mehta, R. Cotesta, S. Marsat,
+M. Boyle, L. E. Kidder, H. P. Pfeiffer, M. A. Scheel, H. R.
+Rüter, N. Vu, R. Dudi, S. Ma, K. Mitman, D. Melchor,
+S. Thomas, and J. Sanchez, Phys. Rev. D108, 124035
+(2023), arXiv:2303.18039 [gr-qc].
+[28] M. van de Meent, A. Buonanno, D. P. Mihaylov, S. Os-
+sokine, L. Pompili, N. Warburton, A. Pound, B. Wardell,
+L. Durkan, and J. Miller, Phys. Rev. D 108, 124038
+(2023), arXiv:2303.18026 [gr-qc].
+[29] J. Healy and C. O. Lousto, Phys. Rev. D102, 104018
+(2020).
+[30] R. M. Hasani, M. Lechner, A. Amini, L. Liebenwein,
+A. Ray, M. Tschaikowski, G. Teschl, and D. Rus, Nature
+Machine Intelligence4, 992 (2021).
+[31] K. ichi Funahashi and Y. Nakamura, Neural Networks6,
+801 (1993).
+[32] R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and D. K.
+Duvenaud, in Advances in Neural Information Process-
+ing Systems , Vol. 31, edited by S. Bengio, H. Wallach,
+H. Larochelle, K. Grauman, N. Cesa-Bianchi, and R. Gar-
+nett (Curran Associates, Inc., 2018).
+[33] R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu,
+Proceedings of the AAAI Conference on Artificial Intelli-
+gence 35, 7657 (2021).
+[34] M. Lechner, R. M. Hasani, A. Amini, T. A. Henzinger,
+D. Rus, and R. Grosu, Nature Machine Intelligence2,
+642 (2020).
+[35] S. A. Teukolsky, Astrophys. J.185, 635 (1973).
+[36] P. A. Sundararajan, G. Khanna, and S. A. Hughes, Phys.
+Rev. D76, 104005 (2007), arXiv:gr-qc/0703028 [gr-qc].
+[37] A. i. e. i. f. Zenginoğlu and G. Khanna, Phys. Rev. X1,
+021017 (2011).
+[38] D. P. Kingma and J. Ba, CoRRabs/1412.6980 (2014).

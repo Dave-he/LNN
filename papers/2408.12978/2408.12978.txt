@@ -1,0 +1,666 @@
+Energy-Efficient Spiking Recurrent Neural Network
+for Gesture Recognition on Embedded GPUs
+Marzieh Hassanshahi Varposhti
+Donders Institute for Brain,
+Cognition and Behaviour
+Radboud University
+Nijmegen, The Netherlands
+marzieh.hassanshahi@donders.ru.nl
+Mahyar Shahsavari
+Donders Institute for Brain,
+Cognition and Behaviour
+Radboud University
+Nijmegen, The Netherlands
+mahyar.shahsavari@donders.ru.nl
+Marcel van Gerven
+Donders Institute for Brain,
+Cognition and Behaviour
+Radboud University
+Nijmegen, The Netherlands
+marcel.vangerven@donders.ru.nl
+Abstract—Implementing AI algorithms on event-based embed-
+ded devices enables real-time processing of data, minimizes latency,
+and enhances power efficiency in edge computing. This research
+explores the deployment of a spiking recurrent neural network
+(SRNN) with liquid time constant neurons for gesture recognition.
+We focus on the energy efficiency and computational efficacy of
+NVIDIA Jetson Nano embedded GPU platforms. The embedded
+GPU showcases a 14-fold increase in power efficiency relative to
+a conventional GPU, making a compelling argument for its use in
+energy-constrained applications. The study’s empirical findings
+also highlight that batch processing significantly boosts frame
+rates across various batch sizes while maintaining accuracy levels
+well above the baseline. These insights validate the SRNN with
+liquid time constant neurons as a robust model for interpreting
+temporal-spatial data in gesture recognition, striking a critical
+balance between processing speed and power frugality.
+Index Terms—Spiking Neural Network, Gesture Recognition,
+Embedded GPU
+I. I NTRODUCTION
+The advent of spiking neural networks (SNNs) implemented
+on edge devices and embedded systems has heralded a new
+era in the field of artificial intelligence and neuromorphic
+computing, offering a more biologically plausible model of
+neural processing compared to traditional artificial neural
+networks (ANNs) [ 1]. Among various architectures, spiking
+recurrent neural networks (SRNNs) stand out for their capacity
+to process temporal sequences, making them particularly suited
+for dynamic tasks such as gesture recognition [2].
+Gesture recognition is pivotal for human-computer interac-
+tion (HCI) [ 3], necessitating both high accuracy and real-time
+processing. Traditional methods, relying on machine learning
+and deep learning, offer effective solutions, though at the cost of
+substantial computational resources. This poses a challenge for
+implementation on energy-constrained platforms like embedded
+systems.
+The integration of dynamic vision sensor (DVS) [ 4]
+cameras is a promising avenue to address these challenges.
+Unlike conventional cameras, DVS cameras only capture
+changes in brightness, significantly reducing data processing
+requirements. This feature makes them particularly suited for
+real-time, power-efficient gesture recognition tasks, enabling
+more effective deployment on devices where energy efficiency
+is crucial. By leveraging DVS cameras, gesture recognition
+systems can achieve faster processing times and reduced
+energy consumption, facilitating advanced HCI technologies on
+portable and wearable devices without compromising battery
+life [5].
+This paper elucidates the deployment of SRNNs employing
+liquid time constant (LTC) neurons [ 6] on embedded GPUs
+for gesture recognition, leveraging the PyTorch framework [ 7].
+The LTC neurons, known for their adaptive temporal response,
+significantly enhance the network’s capability to process varied
+temporal dynamics, crucial for accurate gesture interpretation.
+Our approach leverages a pre-trained SRNN, trained with the
+forward propagation through time (FPTT) algorithm [8]. It is
+important to note that our focus is on the deployment aspect,
+particularly on embedded GPUs using PyTorch, rather than on
+novel neural network architectures or learning algorithms. That
+is, this work highlights the practical application and computa-
+tional efficiency of SRNNs in real-time gesture recognition on
+resource-constrained embedded systems.
+Our research is motivated by the need to develop energy-
+efficient, high-performance models for gesture recognition that
+can be deployed on embedded systems, such as the NVIDIA
+Jetson Nano. The use of embedded GPUs presents a unique
+set of challenges and opportunities in balancing computational
+speed with power consumption. By harnessing the inherent
+efficiencies of SRNNs and the dynamic capabilities of LTC
+neurons, our objective is to tackle these challenges, thereby
+expanding the frontiers of what can be achieved with embedded
+AI.
+The contributions of this paper are twofold. First, we present
+a detailed analysis of the performance of an SRNN with
+LTC neurons for gesture recognition, trained using the FPTT
+algorithm. Second, we compare the energy efficiency and
+computational throughput of this network when deployed on
+an NVIDIA Jetson Nano versus an RTX 3000 Ada GPU. Our
+findings offer valuable insights into the trade-offs between
+power efficiency and processing speed, providing a benchmark
+for future research in neuromorphic computing and embedded
+AI.
+arXiv:2408.12978v1  [cs.LG]  23 Aug 2024
+
+II. SNN ON EMBEDDED GPU
+In exploring the domain of real-time gesture recognition
+using SNNs on embedded platforms, particularly the NVIDIA
+Jetson Nano, it becomes evident that this area remains largely
+untapped, offering a fertile ground for pioneering research. The
+inherent energy efficiency and bio-inspired computation model
+of SNNs aligns well with the low-power, high-performance
+computing capabilities of the Jetson Nano, making it an ideal
+platform for deploying neuromorphic computing applications.
+However, challenges such as balancing model complexity
+with the computational constraints of embedded systems,
+achieving real-time processing speeds, and optimizing SNNs
+for deployment on non-native hardware frameworks such as
+CUDA must be addressed. This gap in the literature highlights
+a significant opportunity for innovation in real-time, energy-
+efficient gesture recognition systems. Developing solutions
+that tackle these challenges not only advances the field of
+neuromorphic computing but also opens new possibilities for
+real-time HCI in portable and wearable technology, thus setting
+the stage for future work at this promising intersection of
+neuromorphic engineering and embedded AI.
+While the exploration of SRNNs and convolutional SNNs
+(ConvSNNs) on embedded platforms is still emerging, with
+specific implementations and comparisons in their early stages,
+the field of neuromorphic computing on such platforms has seen
+notable implementations using other spiking neuron models.
+For instance, the Izhikevich model, known for its ability
+to reproduce the rich dynamics of biological neurons with
+computational efficiency, has previously been implemented on
+the Jetson Nano [ 9] and FPGA [ 10] showcasing the potential
+of SNNs in edge computing devices. These implementations
+serve as valuable references for the neuromorphic computing
+community, demonstrating the feasibility of executing complex
+neural models on energy-efficient, low-power hardware. The
+success of models like the Izhikevich neuron on the Jetson
+Nano not only underscores the platform’s capability to support
+neuromorphic computing but also highlights the broader
+potential for future research and development in deploying more
+complex SNN architectures, such as SRNNs and ConvSNNs,
+for real-world applications. This evolving landscape of SNN
+implementations on embedded systems opens up exciting
+avenues for leveraging the inherent advantages of SNNs—such
+as low power consumption, sparse and efficient processing of
+temporal and spatial data—in portable, real-time computing
+applications.
+III. B ASELINE NETWORK
+For our gesture recognition tasks, we implemented a baseline
+model which was trained using the FPTT algorithm [ 8].
+The core of our baseline model is a SRNN featuring LTC
+neurons, which has shown exceptional proficiency in managing
+long temporal sequences and facilitating online learning,
+bypassing the limitations typically encountered when using
+backpropagation through time (BPTT) for training.
+In SRNNs, network dynamics and learning performance are
+largely determined by the employed neuron model (see Fig. 1).
+(a) Leaky Integrate and Fire
+ (b) Adaptive LIF
+(c) Liquid Time Constant
+Fig. 1: Three common types of spiking neuron models.
+We start by describing the dynamics of conventional leaky
+integrate-and-fire (LIF) neurons, which are often employed
+to implement SNNs. The LIF neuron’s membrane potential u
+evolves in discrete time according to
+ut = ut−1
+ 
+1 − τ −1
+m
+
++ τ −1
+m RmIt . (1)
+Here, the membrane potential u of the neuron decays expo-
+nentially over time with a time constant τm, influenced by the
+membrane resistance Rm and the incoming signal
+It =
+X
+ti
+wiδ(ti) + Iext
+t , (2)
+where wi represents the synaptic weight of the spike at times ti,
+δ(ti) denotes the Dirac delta function, signifying spike events
+at times ti and Iext
+t represents externally injected current.
+The neuron fires a spike st when its membrane potential
+ut surpasses a threshold θ. This process is modeled by the
+function
+st = fs(ut, θ) , (3)
+which outputs 1 when a spike occurs and 0 otherwise. When
+a neuron exceeds the spike threshold, the membrane potential
+is reset according to
+ut = ut(1 − st) + urst . (4)
+The reset potential ur is considered to be zero in this model.
+The performance of the LIF model can be enhanced by
+incorporating a more sophisticated, adaptive LIF (ALIF) neuron
+model [11]. The model is determined by a coupled system of
+difference equations
+ut = αut−1 + (1 − α)RmIt − θtst−1
+ηt = ρηt−1 + (1 − ρ)st−1
+where α = exp( −∆t/τm) and ρ = exp( −∆t/τadp) govern
+the temporal dynamics of the membrane potential and the
+
+threshold dynamics using time constants τm and τadp. The
+threshold is dynamically adjusted using
+θt = b0 + βηt (5)
+with base level b0 and an adaptive component proportional to
+ηt. The degree of threshold adaptation is determined by β. We
+use defaults of b0 = 0.1 and β = 1.8 for the adaptive neurons.
+In this work, we employ the liquid time constant (LTC)
+neuron model [ 12], which generalizes the ALIF model and
+has been shown to enable the use of forward propagation
+through time (FPTT) in spiking neural networks (SNNs) [ 8].
+The LTC neuron model equips SNNs with time-constants that
+are functions of the inputs and hidden states of the network.
+Also see [13] for an analysis of the functional benefits of using
+adaptive time-constants.
+As illustrated in Fig. 1c, the LTC model extends the ALIF
+model by assuming that the membrane and adaptation time
+constants are determined by a sigmoid function σ(z) of the
+input z. In case of the membrane time constant τm, the input
+is given by the output of a (dense or convolutional) neural
+network layer consisting of weights Wx and Wτ acting on
+[xt, ut−1] with xt the neural network input at time t. Similarly,
+in case of the adaptation time constant τadp, the input is given
+by the output of a (dense or convolutional) neural network layer
+acting on [xt, ηt−1] (more details can be found in Appendix A).
+The incorporation of LTC neurons into our SRNN model
+allows it to capture the complex spatio-temporal patterns
+essential for accurate gesture recognition from DVS data. By
+adapting the time constants in response to incoming stimuli,
+this SRNN can model the temporal dependencies with greater
+accuracy, which is particularly advantageous for real-time
+processing on energy-constrained edge devices.
+In assessing the efficiency of the spiking neural network
+(SNN) methodology, an alternative approach involves transform-
+ing the SNN into a comparable recurrent neural network (RNN)
+by utilizing the ReLU activation function. This conversion is
+achieved by conveying the membrane potential to neighboring
+neurons at each time-step instead of the intermittent spike
+events, substituting equation (4) with:
+st = ReLU(ut − θt). (6)
+This adaptation allows for a direct comparison between the
+SNN and RNN models, facilitating a clearer understanding of
+the SNN’s performance and applicability within our framework.
+To substantiate model’s efficacy, we include visual repre-
+sentations of its performance metrics, such as accuracy and
+power consumption graphs, which effectively communicate the
+advantages of our baseline network over conventional methods.
+These visual aids will offer a clear, quantifiable comparison
+between the energy efficiency and computational throughput
+of the embedded and high-end GPU systems.
+A. Advantage of LTC-based SRNNs
+Our choice to employ an LTC-based SRNN (LTC-SRNN)
+is grounded in the need for a system that pairs the nuanced
+adaptability of biological neural processing with the pragmatic
+demands of embedded hardware efficiency. By adopting LTC-
+SRNNs, inspired by the liquid time constant concept [ 12],
+our model gains the ability to dynamically adjust its internal
+time constants in response to incoming signals, mirroring the
+functionality of LSTM gating but with enhanced temporal
+fidelity crucial for gesture recognition.
+This architectural choice directly addresses the prevalent
+challenge in deploying high-accuracy models within the power
+and processing constraints of embedded systems, such as
+NVIDIA’s Jetson Nano. FPTT training of LTC-SRNNs emerges
+as a solution, significantly minimizing memory overhead while
+facilitating real-time, online learning capabilities. This allows
+our model to operate within the stringent energy budgets of
+embedded devices without sacrificing performance by having
+a shallow network while having the same performance. The
+demonstrated superiority of FPTT-trained LTC-SRNNs over
+traditional SNNs, particularly in handling long sequences across
+various benchmarks, underscores their potential, ensuring high
+model accuracy and responsiveness to temporal dynamics.
+By integrating LTC-SRNNs trained via FPTT on embedded
+devices, our study not only addresses the limitations posed
+by embedded hardware but also also demonstrates how so-
+phisticated tasks such as object detection can be achieved
+with unparalleled efficiency and low latency, offering a robust
+framework for enhancing real-time HCI applications with
+gesture recognition.
+IV. I NFERENCE ON AI EDGE DEVICE
+In this section, we explore the practical application of
+LTC-SRNNs for gesture recognition. The data used for this
+study originates from a DVS camera, which captures visual
+information in the form of events rather than conventional
+frames [ 5]. Unlike standard cameras that record redundant
+information at fixed intervals, the DVS camera provides an
+event-driven representation, capturing changes in intensity
+for each pixel asynchronously. This results in data that is
+inherently sparse, temporally precise, and offers high dynamic
+range, making it particularly suitable for capturing the nuanced
+movements involved in gestures (see Fig. 2).
+To utilize this event-based data for inference with our
+SRNN model, the events are accumulated over fixed-time
+intervals to create frames. This conversion process translates the
+asynchronous events into a format compatible with traditional
+temporal neural network architectures, while preserving the
+temporal resolution crucial for accurate gesture recognition.
+Different numbers of accumulated frames were tested during
+the model’s inference phase to optimize for both speed and
+accuracy, allowing us to identify the optimal frame number
+that achieves the best balance between real-time processing
+requirements and the high accuracy necessary for reliable
+gesture interpretation.
+The diagram provided in Fig. 3 succinctly captures the
+workflow of the experiment. Training the LTC-SRNN model is
+executed in PyTorch, a deep learning framework known for its
+flexibility and efficiency, which allows for rapid prototyping and
+supports CUDA for accelerated computation on GPUs [7]. Once
+
+Fig. 2: Inference procedure. a) preprocessing the raw data. b) Inference network including four spiking recurrent neural layers.
+trained, the model’s parameters—including the weights, biases,
+and the dynamic time constants τm and τadp are preserved.
+This enables the trained LTC-SRNN to serve as a baseline for
+subsequent inference tasks.
+The saved parameters form the foundation for the inference
+script, also implemented in PyTorch leveraging its CUDA
+integration. This script is designed to run the model efficiently
+on GPU architectures, exploiting the parallel processing ca-
+pabilities GPUs provide. We then execute this script on two
+distinct hardware platforms: a local GPU, represented by a
+high-end workstation, and an embedded GPU, exemplified by
+the Jetson Nano which the software and hardware utilization
+are described in Table I. The workstation GPU is expected
+to deliver higher frame rates due to its superior processing
+power, while the Jetson Nano is optimized for energy efficiency,
+crucial for edge computing applications.
+A. Inference process
+To realize inference on AI edge devices, our approach is
+structured into three stages:
+1) Initialization of trained network parameters: The first
+step involves loading the trained parameters that define
+the architecture and operational specifics of our SRNN
+model. This stage sets the foundation by reinstating the
+network’s learned dynamics, ensuring it is primed for
+efficient inference.
+2) Baseline model integration: Subsequently, we incorpo-
+rate the baseline model, as detailed in the preceding
+sections of this paper. This integration ensures that
+the inference process leverages the foundational SRNN
+model equipped with LTC neurons, characterized by its
+exceptional ability to handle temporal sequences with
+high precision and energy efficiency.
+3) Execution of inference script: The final step entails
+running the inference script, as illustrated in Fig 3. This
+script is meticulously designed to process input data
+through a series of computational steps, tailored to the
+unique requirements of our SRNN model.
+Fig. 3: Experimental workflow.
+The inference script operates through a three-step process,
+detailed as follows:
+• Event frame accumulation : Given the SRNN model’s
+inability to process raw event data directly, a crucial pre-
+processing step is employed. Here, raw events captured by
+the DVS camera are accumulated into T number of frames
+within fixed time intervals. This accumulation converts the
+asynchronous event data into a synchronous frame-based
+
+TABLE I: Features of the selected hardware for inference.
+Feature Workstation Embedded GPU
+Reference system Dell precision 5480
+workstation Jetson Nano
+CPU
+13th Gen
+Intel(R) Core(TM) i7-13800H
+2.5 GHz
+Quad-Core Arm®
+Cortex®-A57
+MPCore 1.43 GHz
+Operating system Windows 11 Ubuntu 20.04
+PyTorch version 2.2.0 1.13.0
+CUDA version 12.1 10.2
+GPU Device name
+NVIDIA
+RTX 3000 Ada
+Generation Laptop GPU
+NVIDIA Maxwell™
+Architecture
+Number of CUDA cores 4,608 128
+GPU max frequency 1695 MHz 921 MHz
+GPU Memory8 GB 128-bit GDDR6 16GB/s4GB 64-bit LPDDR425.6GB/s
+representation, preserving the temporal accuracy essential
+for gesture recognition [14].
+• Downsampling for optimization : Processing frames at
+full (128 × 128 pixels) resolution is computationally
+demanding and may not be optimal for real-time inference
+on edge devices. To address this, frames are downscaled to
+a 32×32 pixel resolution. This downsampling significantly
+reduces the input size, making the inference process more
+efficient without substantially compromising the quality
+of gesture recognition.
+• Gesture classification via the baseline network : The
+final step involves feeding the downsampled frames into
+the baseline SRNN model. The network then classifies the
+input gesture based on the spatiotemporal patterns encoded
+in the frames. This classification marks the culmination
+of the inference process, yielding the identified gesture
+as the output.
+Our model training was fine-tuned to ensure peak accuracy
+by selecting the best-performing frame number. However,
+during inference, the flexibility of our approach allows for
+experimentation with various frame numbers to adapt to the
+specific requirements of the application and the constraints
+of the deployment environment. This dual-phase approach–
+optimal training followed by adaptable inference – ensures that
+the model can be finely adjusted to maintain a high standard of
+accuracy, even when real-time constraints necessitate a trade-off
+with frame rate.
+In conclusion, our approach encapsulates the full cycle of
+developing and deploying a sophisticated neural network model
+for gesture recognition, from data capture using cutting-edge
+sensor technology to model training and adaptation for real-
+time inference on edge devices. The LTC-SRNN model’s
+compatibility with both powerful workstations and energy-
+conscious embedded systems demonstrates its versatility and
+readiness for real-world applications, making it a prime example
+of the advances and adaptability in the domain of neuromorphic
+computing.
+V. E XPERIMENTAL RESULTS
+The evaluation of spiking neural network (SNN) performance
+across various batch sizes and number of frames for every
+sequence ( T ) was conducted on two distinct hardware plat-
+forms: a standard GPU and an NVIDIA Jetson Nano embedded
+GPU. The primary metrics for assessment included frame rate
+(inferences per second) and normalized accuracy regarding the
+baseline model (percentage of correct inferences).
+To ensure optimal performance measurement of the GPUs,
+a warm-up procedure was employed prior to the execution of
+batch processing experiments. This step is crucial as GPUs
+may not operate at their maximum clock speeds when not
+previously engaged in heavy tasks. By warming up the GPU,
+we guaranteed that the device was running at its full capability
+during our performance assessments, ensuring the accuracy of
+our comparative analysis.
+A. Inference on standard GPU
+The frame rate results for the standard GPU configuration in
+Fig. 4a demonstrate a clear correlation between batch size and
+processing speed, with larger batch sizes yielding significantly
+higher frame rates. For T = 20, the frame rate steadily increases
+from 380 frames/sec for a batch size of 16 to 5150 frames/sec
+for a batch size of 1024. The trend is consistent across other
+T values, while keeping the performance (accuracy) around
+the baseline model.
+It is notable that for higher T values (T = 35 and T = 50),
+the accuracy metric will remain around the baseline, suggesting
+that the network’s temporal processing capabilities do not
+hinder its inferential accuracy. A marginal decrease in accuracy
+is observed at T = 20 and T = 100 indicating a potential
+trade-off.
+B. Inference on Jetson Nano
+Figure 4b shows the results for the same experiment on the
+edge device (Jetson Nano). The data reveals that as the batch
+size increases, there is a significant increase in the frame rate
+for smaller T values (20 and 35), whereas the frame rates
+for T values of 50 and 100 remain relatively stable across
+all batch sizes. The largest batch size of 64, in particular,
+shows a remarkable spike in the frame rate for T = 20 and
+T = 35. This suggests that the Jetson Nano can process smaller
+accumulations of frames more efficiently, even with larger batch
+sizes.
+Accuracy trends indicate that higher T values yield more
+consistent accuracy results, albeit at a cost to frame rate. For
+T = 20 and T = 35, there is a visible drop in accuracy with
+increasing batch sizes, which is not as pronounced with T = 50
+and T = 100. The baseline accuracy is maintained at 91%, and
+none of the configurations exceed this threshold. This pattern
+suggests that while smaller T values can benefit frame rate,
+yet they sacrifice the accuracy.
+These findings underscore the importance of configuring
+the frame accumulation parameter appropriately to balance the
+real-time processing requirements with the accuracy demands
+
+/uni00000014/uni00000019/uni00000016/uni00000015/uni00000019/uni00000017/uni00000014/uni00000015/uni0000001b/uni00000015/uni00000018/uni00000019/uni00000018/uni00000014/uni00000015/uni00000014/uni00000013/uni00000015/uni00000017
+/uni00000025/uni00000044/uni00000057/uni00000046/uni0000004b/uni00000003/uni00000036/uni0000004c/uni0000005d/uni00000048
+/uni00000013
+/uni00000014/uni00000013/uni00000013/uni00000013
+/uni00000015/uni00000013/uni00000013/uni00000013
+/uni00000016/uni00000013/uni00000013/uni00000013
+/uni00000017/uni00000013/uni00000013/uni00000013
+/uni00000018/uni00000013/uni00000013/uni00000013/uni00000029/uni00000055/uni00000044/uni00000050/uni00000048/uni00000003/uni00000035/uni00000044/uni00000057/uni00000048
+/uni00000013
+/uni00000015/uni00000013
+/uni00000017/uni00000013
+/uni00000019/uni00000013
+/uni0000001b/uni00000013
+/uni00000014/uni00000013/uni00000013
+/uni00000024/uni00000046/uni00000046/uni00000058/uni00000055/uni00000044/uni00000046/uni0000005c/uni00000003/uni0000000b/uni00000008/uni0000000c
+(a) Local GPU
+/uni00000014/uni00000019 /uni00000016/uni00000015 /uni00000019/uni00000017
+/uni00000025/uni00000044/uni00000057/uni00000046/uni0000004b/uni00000003/uni00000036/uni0000004c/uni0000005d/uni00000048
+/uni00000013
+/uni00000015/uni00000018
+/uni00000018/uni00000013
+/uni0000001a/uni00000018
+/uni00000014/uni00000013/uni00000013
+/uni00000014/uni00000015/uni00000018
+/uni00000014/uni00000018/uni00000013
+/uni00000014/uni0000001a/uni00000018
+/uni00000015/uni00000013/uni00000013/uni00000029/uni00000055/uni00000044/uni00000050/uni00000048/uni00000003/uni00000035/uni00000044/uni00000057/uni00000048
+/uni00000013
+/uni00000015/uni00000013
+/uni00000017/uni00000013
+/uni00000019/uni00000013
+/uni0000001b/uni00000013
+/uni00000014/uni00000013/uni00000013
+/uni00000024/uni00000046/uni00000046/uni00000058/uni00000055/uni00000044/uni00000046/uni0000005c/uni00000003/uni0000000b/uni00000008/uni0000000c
+/uni00000037/uni00000020/uni00000015/uni00000013
+/uni00000037/uni00000020/uni00000016/uni00000018
+/uni00000037/uni00000020/uni00000018/uni00000013
+/uni00000037/uni00000020/uni00000014/uni00000013/uni00000013
+/uni00000037/uni00000020/uni00000015/uni00000013/uni00000003/uni00000024/uni00000046/uni00000046/uni00000058/uni00000055/uni00000044/uni00000046/uni0000005c
+/uni00000037/uni00000020/uni00000016/uni00000018/uni00000003/uni00000024/uni00000046/uni00000046/uni00000058/uni00000055/uni00000044/uni00000046/uni0000005c
+/uni00000037/uni00000020/uni00000018/uni00000013/uni00000003/uni00000024/uni00000046/uni00000046/uni00000058/uni00000055/uni00000044/uni00000046/uni0000005c
+/uni00000037/uni00000020/uni00000014/uni00000013/uni00000013/uni00000003/uni00000024/uni00000046/uni00000046/uni00000058/uni00000055/uni00000044/uni00000046/uni0000005c
+/uni00000025/uni00000044/uni00000056/uni00000048/uni0000004f/uni0000004c/uni00000051/uni00000048/uni00000003/uni00000024/uni00000046/uni00000046/uni00000058/uni00000055/uni00000044/uni00000046/uni0000005c/uni00000003/uni0000000b/uni0000001c/uni00000014/uni00000008/uni0000000c (b) Jetson Nano
+Fig. 4: Batch processing experimental results. Panels compare frame rate and accuracy for different batch sizes and T values
+when using (a) the local GPU or (b) the embedded GPU.
+/uni00000015/uni00000018/uni00000018/uni00000013/uni0000001a/uni00000018/uni00000014/uni00000013/uni00000013/uni00000014/uni00000015/uni00000018/uni00000014/uni00000018/uni00000013/uni00000014/uni0000001a/uni00000018/uni00000015/uni00000013/uni00000013
+/uni00000029/uni00000055/uni00000044/uni00000050/uni00000048/uni00000003/uni00000035/uni00000044/uni00000057/uni00000048
+/uni00000014/uni00000015/uni00000013/uni00000013
+/uni00000014/uni00000016/uni00000013/uni00000013
+/uni00000014/uni00000017/uni00000013/uni00000013
+/uni00000014/uni00000018/uni00000013/uni00000013
+/uni00000014/uni00000019/uni00000013/uni00000013/uni00000037/uni00000052/uni00000057/uni00000044/uni0000004f/uni00000003/uni00000033/uni00000052/uni0000005a/uni00000048/uni00000055/uni00000003/uni0000000b/uni00000050/uni0000003a/uni0000000c/uni00000037/uni00000003/uni00000020/uni00000003/uni00000015/uni00000013
+/uni00000037/uni00000003/uni00000020/uni00000003/uni00000016/uni00000018
+/uni00000037/uni00000003/uni00000020/uni00000003/uni00000018/uni00000013
+/uni00000037/uni00000003/uni00000020/uni00000003/uni00000014/uni00000013/uni00000013
+Fig. 5: Power consumption of the Jetson Nano. Batch size
+indicated by node width.
+of applications running on edge devices such as the Jetson
+Nano.
+Figures 4a and 4b depict the results of our batch processing
+experiments, illustrating the relationship between batch size
+and both frame rate and accuracy. These figures highlight the
+GPU’s ability to efficiently process larger batches, capitalizing
+on CUDA’s parallel processing capabilities. Furthermore, the
+results demonstrate that despite the inherent constraints of
+the Jetson Nano, our SNN model achieves commendable
+performance, balancing computational speed with energy
+consumption, a testament to the viability of deploying advanced
+neural network models on edge devices.
+In aiming for precise quantification of power consumption,
+all non-essential tasks, including display outputs for monitors,
+were disabled on the Jetson Nano. Power consumption during
+the inference process was measured using a specific method
+involving the execution of the tegrastats command through
+a Python subprocess. This method allowed for real-time
+monitoring of the device’s power usage, providing valuable
+insights into the energy efficiency of our SNN implementation
+under varying computational loads. This detailed approach to
+measuring power consumption reinforces the importance of
+TABLE II: Comparison of the best performance for each
+hardware platform with respect to the power consumed.
+Device Type Maximum frame/s
+(accuracy) Average power consumption (W)
+Embedded GPU
+(Jetson Nano)
+155
+80% 1.5
+Local GPU
+(RTX 3000 Ada)
+5127
+80% 21
+energy efficiency in edge computing scenarios, particularly
+when deploying advanced neural network models like SNNs.
+Power consumption results for the Jetson Nano are shown in
+Fig. 5 considering different batch sizes in the format of the
+size of each node and T numbers showing the comprehensive
+trade-off between the frame rate and the batch size for target
+power consumption. Table II shows that the Jetson Nano can
+achieve its optimal performance at an order of magnitude less
+power compared to the local GPU setup.
+VI. C ONCLUSION
+Our investigation into deploying energy-efficient recurrent
+spiking neural networks with liquid time constant neurons for
+gesture recognition on edge devices, particularly the NVIDIA
+Jetson Nano, has shown promise for edge-based AI, reducing
+the energy need of current AI systems. We demonstrated the
+feasibility of conducting inference with high accuracy and
+efficiency on such devices. The adoption of the FPTT algorithm
+to effectively train SRNNs played a pivotal role here. This
+capability opens up new possibilities for the deployment of
+adaptive spiking neural networks in real-time applications,
+marking a significant advancement in edge computing.
+VII. ACKNOWLEDGEMENTS
+This publication is part of the project ROBUST: Trustworthy
+AI-based Systems for Sustainable Growth with project number
+KICH3.L TP.20.006, which is (partly) financed by the Dutch
+Research Council (NWO), ASMPT, and the Dutch Ministry of
+Economic Affairs and Climate Policy (EZK) under the program
+LTP KIC 2020-2023. All content represents the opinion of the
+authors, which is not necessarily shared or endorsed by their
+
+respective employers and/or sponsors. We thank Bojian Yin
+for his useful comments and kindly making the FPTT code
+available to support this work.
+REFERENCES
+[1] M. Shahsavari, D. Thomas, M. van Gerven, A. Brown, and W. Luk,
+“Advancements in spiking neural network communication and synchroniza-
+tion techniques for event-driven neuromorphic systems,” Array, vol. 20,
+p. 100323, 2023.
+[2] B. Yin, F. Corradi, and S. M. Boht ´e, “Effective and efficient compu-
+tation with multiple-timescale spiking recurrent neural networks,” in
+International Conference on Neuromorphic Systems 2020 , 2020, pp. 1–8.
+[3] V . Chang, R. O. Eniola, L. Golightly, and Q. A. Xu, “An exploration
+into human–computer interaction: Hand gesture recognition management
+in a challenging environment,” SN Computer Science , vol. 4, no. 5, p.
+441, 2023.
+[4] E. Mueggler, C. Forster, N. Baumli, G. Gallego, and D. Scaramuzza,
+“Lifetime estimation of events from dynamic vision sensors,” in 2015
+IEEE International Conference on Robotics and Automation (ICRA) .
+IEEE, 2015, pp. 4874–4881.
+[5] A. Amir, B. Taba, D. Berg, T. Melano, J. McKinstry, C. Di Nolfo,
+T. Nayak, A. Andreopoulos, G. Garreau, M. Mendoza et al. , “A low
+power, fully event-based gesture recognition system,” in Proceedings
+of the IEEE Conference on Computer Vision and Pattern Recognition ,
+2017, pp. 7243–7252.
+[6] B. Yin, F. Corradi, and S. M. Boht ´e, “Accurate and efficient time-domain
+classification with adaptive spiking recurrent neural networks,” Nature
+Machine Intelligence, vol. 3, no. 10, pp. 905–913, 2021.
+[7] A. Paszke, S. Gross, F. Massa, A. Lerer, J. Bradbury, G. Chanan,
+T. Killeen, Z. Lin, N. Gimelshein, L. Antiga et al. , “Pytorch: An
+imperative style, high-performance deep learning library,” Advances
+in Neural Information Processing Systems , vol. 32, 2019.
+[8] B. Yin, F. Corradi, and S. M. Boht ´e, “Accurate online training of
+dynamical spiking neural networks through forward propagation through
+time,” Nature Machine Intelligence , vol. 5, no. 5, pp. 518–527, 2023.
+[9] J. F. G ´omez Hurtado, S. Isaza Ram ´ırez, and R. A. Vel´asquez V ´elez, “On
+the efficiency of embedded gpus for spiking neural networks,” in World
+Multi-Conference on Systemics, Cybernetics and Informatics 2022 , 2022.
+[10] M. Shahsavari, D. Thomas, A. Brown, and W. Luk, “Neuromorphic design
+using reward-based STDP learning on event-based reconfigurable cluster
+architecture,” in International Conference on Neuromorphic Systems 2021,
+ser. ICONS 2021. New York, NY , USA: Association for Computing
+Machinery, 2021.
+[11] G. Bellec, D. Salaj, A. Subramoney, R. Legenstein, and W. Maass, “Long
+short-term memory and learning-to-learn in networks of spiking neurons,”
+Advances in Neural Information Processing Systems , vol. 31, 2018.
+[12] R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu, “Liquid time-
+constant networks,” in Proceedings of the AAAI Conference on Artificial
+Intelligence, vol. 35, no. 9, 2021, pp. 7657–7666.
+[13] S. Quax, M. D’Asaro, and M. van Gerven, “Adaptive time scales in
+recurrent neural networks,” Scientific Reports, vol. 10, p. 11360, 12 2019.
+[14] W. Fang, Z. Yu, Y . Chen, T. Masquelier, T. Huang, and Y . Tian,
+“Incorporating learnable membrane time constant to enhance learning of
+spiking neural networks,” in Proceedings of the IEEE/CVF International
+Conference on Computer Vision , 2021, pp. 2661–2671.
+APPENDIX
+The following equations delineate the update dynamics of a
+liquid spiking neuron:
+ρ = τ −1
+adp = σ([xt, bt−1] ∥ Wτadp)
+τ −1
+m = σ([xt, ut−1] ∥ Wτm)
+bt = ρbt−1 + (1 − ρ)st−1
+θt = 0.1 + 1.8bt
+∆u = (−ut−1 + xt)/τm
+ut = ut−1 + ∆u
+st = fs(ut, θ)
+ut = ut(1 − st) + urestst
+where urest denotes the neuron’s resting potential and θt is the
+adaptive threshold modeled after adaptive spiking neurons [ 6],
+with τm and τadp representing the dynamically computed liquid
+time-constants.
