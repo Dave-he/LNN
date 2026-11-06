@@ -10,10 +10,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 
 ## 摘要
 - arXiv 候选论文：94 篇
-- GitHub 候选仓库：43 个
-- Hugging Face 候选模型：19 个
+- GitHub 候选仓库：28 个 ⚠️（4 条查询失败，本次覆盖不全，计数偏少）
+- Hugging Face 候选模型：17 个
 - 已下载 PDF：0 个
 - 下表每类仅渲染前 12 条；全量候选池见 `papers/daily/2026-11-04_lnn_research.json`，研读选择器以该 JSON 为准。
+
+## 数据源状态
+- ⚠️ 以下是**抓取失败**记录。对应来源的候选池本次**不完整**，其空结果或偏少的计数**不得读作「领域没有新条目」**（AGENTS.md 约束 #7）。
+- `GitHub query failed for '"liquid time-constant"': IncompleteRead(0 bytes read)`
+- `GitHub query failed for '"closed-form continuous-time"': <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1082)>`
+- `GitHub query failed for 'LTC CfC neural network': IncompleteRead(0 bytes read)`
+- `GitHub query failed for 'LiquidAI LFM2': IncompleteRead(0 bytes read)`
+- 若当天已有历史结果，脚本会保留上一轮成功获取的数据，避免 transient API 错误清空候选池。
 
 ## arXiv 候选论文
 | 日期 | 论文 | 作者 | 摘要 |
@@ -50,18 +58,18 @@ tags: [LNN, daily, automation, arxiv, github, huggingface]
 ## Hugging Face 候选模型
 | 更新 | 模型 | 下载 | Likes | 任务 |
 |---|---|---:|---:|---|
-| 2026-11-04 | [aiprimebuilds/LFM2.5-24B-A2B-GPTQ](https://huggingface.co/aiprimebuilds/LFM2.5-24B-A2B-GPTQ) | 157 | 3 | text-generation |
+| 2026-11-04 | [litert-community/LFM2.5-2.6B](https://huggingface.co/litert-community/LFM2.5-2.6B) | 995 | 5 | text-generation |
+| 2026-11-04 | [litert-community/LFM2-700M](https://huggingface.co/litert-community/LFM2-700M) | 404 | 2 | text-generation |
+| 2026-11-04 | [electroglyph/LFM2.5-24B-A2B-uncensored-fiction-nblora-merged](https://huggingface.co/electroglyph/LFM2.5-24B-A2B-uncensored-fiction-nblora-merged) | 0 | 0 |  |
+| 2026-11-04 | [electroglyph/LFM2.5-24B-A2B-uncensored-fiction-nblora-adapter](https://huggingface.co/electroglyph/LFM2.5-24B-A2B-uncensored-fiction-nblora-adapter) | 0 | 0 |  |
+| 2026-11-04 | [lugman/LFM2.5-350M-SmolDataEnv-Matched2.8K-Dagger1.7K](https://huggingface.co/lugman/LFM2.5-350M-SmolDataEnv-Matched2.8K-Dagger1.7K) | 0 | 0 | text-generation |
+| 2026-11-04 | [lugman/LFM2.5-350M-SmolDataEnv-Matched2.8K-Dagger1.7K-adapter](https://huggingface.co/lugman/LFM2.5-350M-SmolDataEnv-Matched2.8K-Dagger1.7K-adapter) | 0 | 0 |  |
+| 2026-11-04 | [yasserrmd/LFM2.5-350M-JSON-NoFence](https://huggingface.co/yasserrmd/LFM2.5-350M-JSON-NoFence) | 0 | 0 | text-generation |
 | 2026-11-04 | [lugman/LFM2.5-350M-SmolDataEnv-Matched2.8K-Merged](https://huggingface.co/lugman/LFM2.5-350M-SmolDataEnv-Matched2.8K-Merged) | 0 | 0 | text-generation |
-| 2026-11-04 | [lugman/LFM2.5-350M-SmolDataEnv-Matched2.8K-Merged-adapter](https://huggingface.co/lugman/LFM2.5-350M-SmolDataEnv-Matched2.8K-Merged-adapter) | 0 | 0 |  |
-| 2026-11-04 | [themohal/lfm2.5-audio-saraiki](https://huggingface.co/themohal/lfm2.5-audio-saraiki) | 0 | 0 |  |
-| 2026-11-04 | [blaj/LFM2.5-24B-A2B-Uncensored-int4-ov](https://huggingface.co/blaj/LFM2.5-24B-A2B-Uncensored-int4-ov) | 0 | 0 | text-generation |
-| 2026-11-04 | [keithics/LFM2-2.6B-Transcript-4bit](https://huggingface.co/keithics/LFM2-2.6B-Transcript-4bit) | 0 | 0 | text-generation |
-| 2026-11-04 | [nauq-hna/LFM2-L8-LeRobot](https://huggingface.co/nauq-hna/LFM2-L8-LeRobot) | 0 | 0 |  |
-| 2026-11-04 | [Alovestocode/LFM2.5-2.6B-Lorefold-LiteRT](https://huggingface.co/Alovestocode/LFM2.5-2.6B-Lorefold-LiteRT) | 0 | 0 | text-generation |
-| 2026-11-03 | [LiquidAI/LFM3-1.7B-GGUF](https://huggingface.co/LiquidAI/LFM3-1.7B-GGUF) | 194039 | 209 | text-generation |
-| 2026-11-03 | [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) | 122702 | 684 | text-generation |
-| 2026-11-03 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 113952 | 441 | text-generation |
-| 2026-11-03 | [LiquidAI/LFM3-VL-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-VL-2B-GGUF) | 71123 | 63 | image-text-to-text |
+| 2026-11-03 | [LiquidAI/LFM3-1.7B-GGUF](https://huggingface.co/LiquidAI/LFM3-1.7B-GGUF) | 213189 | 227 | text-generation |
+| 2026-11-03 | [LiquidAI/LFM2.5-350M](https://huggingface.co/LiquidAI/LFM2.5-350M) | 136123 | 441 | text-generation |
+| 2026-11-03 | [LiquidAI/LFM2.5-1.2B-Instruct](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct) | 120003 | 684 | text-generation |
+| 2026-11-03 | [LiquidAI/LFM3-VL-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-VL-2B-GGUF) | 79598 | 65 | image-text-to-text |
 
 ## 建议动作
 - 对标题和摘要同时命中 LNN/LTC/CfC/NCP 的论文，优先用 `skills/paper-analyzer` 生成独立研读报告。

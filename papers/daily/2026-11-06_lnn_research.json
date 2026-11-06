@@ -1,7 +1,13 @@
 {
   "date": "2026-11-06",
-  "generated_at": "2026-11-05T20:37:18.829820+00:00",
-  "errors": [],
+  "generated_at": "2026-11-06T11:33:42.171093+00:00",
+  "errors": [
+    "GitHub query failed for '\"liquid neural network\"': Remote end closed connection without response",
+    "GitHub query failed for '\"liquid time constant\"': <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1082)>",
+    "GitHub query failed for '\"neural circuit policy\"': <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1082)>",
+    "GitHub query failed for 'LTC CfC neural network': IncompleteRead(0 bytes read)",
+    "GitHub query failed for 'LiquidAI LFM2': Remote end closed connection without response"
+  ],
   "papers": [
     {
       "id": "2611.04233v1",
@@ -22,30 +28,6 @@
       "pdf_url": "https://arxiv.org/pdf/2611.04233v1",
       "keyword_score": 1,
       "arxiv_group": "all:\"liquid time-constant\" OR all:\"liquid time constant\""
-    },
-    {
-      "id": "2610.41576v1",
-      "title": "Saidzoda-Tajik-LFM-2.6B: Adapting a 2.6B Hybrid Model to Tajik Tool Calling, and What Continued Pretraining Takes Away",
-      "authors": [
-        "Tohir Saidzoda",
-        "Nekruz Maxudov",
-        "Bedil Karimov",
-        "Abubakr Abdullozoda",
-        "Amin Jalilov",
-        "Jonibek Kishvarov",
-        "Rahmonali Sharipov",
-        "Mariyamkhon Shodyeva"
-      ],
-      "published": "2026-10-30",
-      "updated": "2026-10-30",
-      "summary": "We release Saidzoda-Tajik-LFM-2.6B, a Tajik adaptation of the 2.6B-parameter hybrid model LFM2.5-2.6B-Base, built for tool calling in Tajik on modest hardware. The recipe has two stages: LoRA continued pretraining (CPT) on 1,485,319 cleaned Tajik web documents for 3 epochs, then one epoch of supervised fine-tuning (SFT) on a mix of machine-translated Tajik tool calls, English tool calls kept as replay, and Tajik instructions. On a 174-item tool-calling test set built from BFCL v3 and machine-translated to Tajik, strict full-call accuracy on Tajik prompts rises from 20.69 for the base model to 64.14 (paired difference +43.45 points, 95% interval +35.2 to +51.7); a lenient parser that also accepts the base model's own call formats puts the base at 31.72. English shows no detectable change (76.55 and 77.24). Every CPT checkpoint scores zero: CPT removes the native tool-call format and, as the lenient re-scoring shows, part of the skill itself. Outside tool calling, accuracy on a Tajik knowledge benchmark rises from 28.0 to 35.0, Belebele Tajik shows no significant change, and English MMLU falls from 60.8 to 52.5. The model is not a general Tajik assistant. It almost never declines when no tool fits (6.9% correct on Tajik, against 31.0% for the base under the lenient parser), it is weak at multi-turn calls, and its calls should be checked before they are executed. We describe the data, the training settings and every evaluation in enough detail to repeat them.",
-      "categories": [
-        "cs.CL"
-      ],
-      "abs_url": "https://arxiv.org/abs/2610.41576v1",
-      "pdf_url": "https://arxiv.org/pdf/2610.41576v1",
-      "keyword_score": 1,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
     },
     {
       "id": "2610.31252v1",
@@ -209,7 +191,7 @@
       "abs_url": "https://arxiv.org/abs/2607.15232v1",
       "pdf_url": "https://arxiv.org/pdf/2607.15232v1",
       "keyword_score": 2,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
+      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2"
     },
     {
       "id": "2607.12909v1",
@@ -460,29 +442,6 @@
       "arxiv_group": "all:\"liquid neural network\" OR all:\"liquid neural networks\""
     },
     {
-      "id": "2606.13705v2",
-      "title": "When Can One Neuron Fix Repetition Loops in LLMs?",
-      "authors": [
-        "Aristotelis Lazaridis",
-        "Aman Sharma",
-        "Dylan Bates",
-        "Brian King",
-        "Vincent Lu",
-        "Jack FitzGerald"
-      ],
-      "published": "2026-06-09",
-      "updated": "2026-08-24",
-      "summary": "The Gemma 4 instruction-tuned models share a reproducible failure: on long factual enumeration prompts, such as TV episodes, the 88 IAU constellations, or the 151 original Pokemon, they collapse into repetition, either a tight verbatim loop or a list whose entries decay onto one answer. These loops reach 87.5% (7/8 generations) and survive prompt rewording and most sampling adjustments. In this paper, we explore whether edits to a few internal model components can directly reduce this failure, without relying on repetition penalties, which can distort valid repetition and degrade task performance. To locate such targets, we combine per-layer ablation with per-neuron or routed-expert attribution, then evaluate weight edits over complete generations. We find that these edits substantially reduce detected loops on the prompts and seeds used to select them; in Gemma 4 E2B, for example, one sign-inverted neuron suffices. Across all four Gemma models, detected loops fall from 46/384 to 12/384 on frozen held-out prompts and seeds, driven mainly by E4B and 31B, while general-purpose benchmarks show no statistically detectable regressions. Our attribution methodology identifies useful candidates, but rankings vary across examples. At longer generation budgets, edits remain effective for E2B and E4B, whereas remaining failures in 26B and 31B shift toward doom looping: non-convergent self-correction over facts the model cannot recall. In exploratory experiments on Qwen3.5 and LFM2.5, sparse edits also reduce repetition, providing preliminary cross-family evidence, although effect strength and selectivity vary. Overall, our results show the promise and limits of targeted, small-scale weight editing: it can suppress specific repetition failures and provide a training-free causal intervention, but does not reveal a universal loop circuit, guarantee clean termination, or supply missing knowledge.",
-      "categories": [
-        "cs.LG",
-        "cs.AI"
-      ],
-      "abs_url": "https://arxiv.org/abs/2606.13705v2",
-      "pdf_url": "https://arxiv.org/pdf/2606.13705v2",
-      "keyword_score": 1,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
-    },
-    {
       "id": "2606.07670v1",
       "title": "Liquid Neural Networks as a Drop-in Continuous-Time Deformation Field for Dynamic 3D Gaussian Splatting",
       "authors": [
@@ -543,24 +502,6 @@
       "arxiv_group": "all:\"liquid time-constant\" OR all:\"liquid time constant\""
     },
     {
-      "id": "2607.16204v2",
-      "title": "Masked Diffusion Language Models are Strong and Steerable Text-Based World Models for Agentic RL",
-      "authors": [
-        "Darshan Deshpande"
-      ],
-      "published": "2026-05-07",
-      "updated": "2026-10-07",
-      "summary": "Recent growth in reinforcement learning (RL) has surfaced a need for diverse, specialized training environments. Hand-curated environments with fixed task and reward difficulties become ineffective signals as model performance improves, and sparse rewards over long horizons induce mode collapse on specific workflows or tool structures. World models that simulate environment states have matched pure rollout performance, making them promising for scaling diversity on-demand. However, autoregressive (AR) world models suffer from a left-to-right bias preventing conditioning on globally interdependent state anchors such as tool schemas, prior turns, and expected outcomes. We (i) formalize text-based world modeling as a steerable transition-dynamics problem decomposed into initial state, task context, tool schemas, domain rules, and steering directives, and (ii) curate 239,403 grounded state-action trajectories spanning nine open-source environments and twelve frontier model families. We compare AR LMs and masked diffusion language models (MDLMs), showing MDLMs, via bidirectional anchor-aware denoising, achieve better coherence, groundedness, and empirically validated rollout diversity than LLMs over 4x their parameter size, at comparable inference latency. We introduce a plug-and-play GRPO training framework with deterministic state checks, and perform zero-shot transfer ablations on three OOD environments (ScienceWorld, ALFWorld, AppWorld) across three 1.2B-7B agent backbones (LFM2.5, Qwen3, Mistral), achieving up to 47% absolute gains over baselines without environment-specific fine-tuning. We further conduct behavioral analysis of failure modes under adversarial scenarios and human evaluation on realism, outcome correctness, and training utility. We open-source our work to encourage research in this direction.",
-      "categories": [
-        "cs.AI",
-        "cs.LG"
-      ],
-      "abs_url": "https://arxiv.org/abs/2607.16204v2",
-      "pdf_url": "https://arxiv.org/pdf/2607.16204v2",
-      "keyword_score": 1,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
-    },
-    {
       "id": "2605.08176v1",
       "title": "Physics-Modeled Neural Networks",
       "authors": [
@@ -598,7 +539,7 @@
       "abs_url": "https://arxiv.org/abs/2604.24346v1",
       "pdf_url": "https://arxiv.org/pdf/2604.24346v1",
       "keyword_score": 1,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
+      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2"
     },
     {
       "id": "2604.24788v1",
@@ -706,7 +647,7 @@
       "abs_url": "https://arxiv.org/abs/2604.04579v2",
       "pdf_url": "https://arxiv.org/pdf/2604.04579v2",
       "keyword_score": 1,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
+      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2"
     },
     {
       "id": "2604.03955v1",
@@ -838,7 +779,7 @@
       "abs_url": "https://arxiv.org/abs/2603.03517v2",
       "pdf_url": "https://arxiv.org/pdf/2603.03517v2",
       "keyword_score": 2,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
+      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2"
     },
     {
       "id": "2603.00459v1",
@@ -877,7 +818,7 @@
       "abs_url": "https://arxiv.org/abs/2603.02250v1",
       "pdf_url": "https://arxiv.org/pdf/2603.02250v1",
       "keyword_score": 1,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
+      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2"
     },
     {
       "id": "2603.00153v1",
@@ -1154,7 +1095,7 @@
       "abs_url": "https://arxiv.org/abs/2511.23404v1",
       "pdf_url": "https://arxiv.org/pdf/2511.23404v1",
       "keyword_score": 14,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
+      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2"
     },
     {
       "id": "2511.18014v1",
@@ -1215,7 +1156,7 @@
       "abs_url": "https://arxiv.org/abs/2511.09748v1",
       "pdf_url": "https://arxiv.org/pdf/2511.09748v1",
       "keyword_score": 1,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
+      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2"
     },
     {
       "id": "2510.25020v1",
@@ -1324,7 +1265,7 @@
       "abs_url": "https://arxiv.org/abs/2509.14008v1",
       "pdf_url": "https://arxiv.org/pdf/2509.14008v1",
       "keyword_score": 1,
-      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2 OR all:LFM2.5"
+      "arxiv_group": "all:\"liquid foundation model\" OR all:LFM2"
     },
     {
       "id": "2509.11336v1",
@@ -2101,103 +2042,7 @@
         "liquid-neural-networks",
         "pytorch"
       ],
-      "query": "\"liquid time constant\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "zhangshuibai/molten",
-      "description": "Run a coding model at 300+ tok/s on your Mac. Native Rust + Metal inference engine for LiquidAI LFM2.5-24B-A2B (MLX 4-bit) on Apple Silicon.",
-      "html_url": "https://github.com/zhangshuibai/molten",
-      "stars": 23,
-      "forks": 2,
-      "is_fork": false,
-      "language": "Metal",
-      "updated_at": "2026-10-31",
-      "pushed_at": "2026-10-29",
-      "topics": [
-        "apple-silicon",
-        "gpu-kernels",
-        "inference-engine",
-        "inference-optimization",
-        "lfm2",
-        "liquid-ai",
-        "llama-cpp",
-        "llm",
-        "llm-inference",
-        "llm-runtime",
-        "local-llm",
-        "macos",
-        "metal",
-        "mixture-of-experts",
-        "mlx",
-        "quantization",
-        "recursive-self-improvement",
-        "rsi",
-        "rust",
-        "self-improving-ai"
-      ],
-      "query": "LiquidAI LFM2",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "paragontasx/ferro",
-      "description": "Native OpenCL inference engine for Intel N100-class SoCs: EmbeddingGemma-2, LiquidAI d1-omni and LFM2.5 chat in one C++ binary, on the iGPU. Measured ~2x llama.cpp's own Vulkan backend on the same N100 (2.1-2.3x); OpenAI-compatible server, CPU fallback, bit-exact batch invariance.",
-      "html_url": "https://github.com/paragontasx/ferro",
-      "stars": 9,
-      "forks": 0,
-      "is_fork": false,
-      "language": "C++",
-      "updated_at": "2026-10-28",
-      "pushed_at": "2026-10-30",
-      "topics": [
-        "c-plus-plus",
-        "decision-models",
-        "embeddings",
-        "gguf",
-        "inference",
-        "intel-n100",
-        "llama-cpp",
-        "llm",
-        "opencl",
-        "self-hosted"
-      ],
-      "query": "LiquidAI LFM2",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "daivarsi/TyphoonLLM",
-      "description": "Fully local LLM inference on PlayStation Vita using LiquidAI LFM2.5-230M.",
-      "html_url": "https://github.com/daivarsi/TyphoonLLM",
-      "stars": 7,
-      "forks": 1,
-      "is_fork": false,
-      "language": "C++",
-      "updated_at": "2026-11-03",
-      "pushed_at": "2026-11-03",
-      "topics": [],
-      "query": "LiquidAI LFM2",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "RESMP-DEV/lfm25-embedding-trainer",
-      "description": "Fine-tune LiquidAI LFM2.5 Embedding models for dense retrieval using your own data",
-      "html_url": "https://github.com/RESMP-DEV/lfm25-embedding-trainer",
-      "stars": 7,
-      "forks": 1,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-10-21",
-      "pushed_at": "2026-10-20",
-      "topics": [
-        "contrastive-learning",
-        "dense-retrieval",
-        "embedding-models",
-        "lfm2",
-        "optuna",
-        "pytorch",
-        "wandb"
-      ],
-      "query": "LiquidAI LFM2",
+      "query": "\"liquid time-constant\"",
       "fork_variants": 0
     },
     {
@@ -2226,21 +2071,7 @@
         "recurrent-neural-networks",
         "text-generation"
       ],
-      "query": "\"liquid neural network\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "siddharthk27/Neural-Circuit-Policies",
-      "description": "This contains my experiments with Liquid Time Constant Networks (LTCs) and Closed Form Continuous Network (CFCs) architectures.",
-      "html_url": "https://github.com/siddharthk27/Neural-Circuit-Policies",
-      "stars": 4,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Jupyter Notebook",
-      "updated_at": "2025-11-04",
-      "pushed_at": "2024-04-13",
-      "topics": [],
-      "query": "LTC CfC neural network",
+      "query": "\"liquid neural networks\"",
       "fork_variants": 0
     },
     {
@@ -2269,7 +2100,7 @@
         "on-device-ai",
         "recurrent-neural-network"
       ],
-      "query": "\"liquid neural network\"",
+      "query": "\"liquid neural networks\"",
       "fork_variants": 0
     },
     {
@@ -2283,28 +2114,7 @@
       "updated_at": "2026-10-21",
       "pushed_at": "2026-10-19",
       "topics": [],
-      "query": "LTC CfC neural network",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "middesurya/daily-webapp-2026-05-04-liquidlab",
-      "description": "LiquidLab — Interactive Liquid Neural Networks & Continuous-Time Models Laboratory. 6 modules: LTC dynamics, Neural ODE, C. elegans connectome, CfC networks, adaptive inference, efficiency arena. Zero dependencies.",
-      "html_url": "https://github.com/middesurya/daily-webapp-2026-05-04-liquidlab",
-      "stars": 2,
-      "forks": 0,
-      "is_fork": false,
-      "language": "HTML",
-      "updated_at": "2026-07-31",
-      "pushed_at": "2026-05-04",
-      "topics": [
-        "ai-built",
-        "claude-code",
-        "daily-webapp",
-        "liquid-neural-networks",
-        "mit-csail",
-        "neural-ode"
-      ],
-      "query": "LTC CfC neural network",
+      "query": "\"liquid neural networks\"",
       "fork_variants": 0
     },
     {
@@ -2327,7 +2137,7 @@
         "llm",
         "on-device"
       ],
-      "query": "\"liquid neural network\"",
+      "query": "\"liquid neural networks\"",
       "fork_variants": 0
     },
     {
@@ -2341,7 +2151,7 @@
       "updated_at": "2026-10-22",
       "pushed_at": "2026-10-22",
       "topics": [],
-      "query": "\"liquid neural network\"",
+      "query": "\"liquid neural networks\"",
       "fork_variants": 0
     },
     {
@@ -2359,20 +2169,6 @@
       "fork_variants": 0
     },
     {
-      "full_name": "pinion05/decision-lfm2.5-1.2b",
-      "description": "Non-generative decision model built from LiquidAI LFM2.5-1.2B — LM head replaced with a scalar decision head, LoRA fine-tuned on Open-Jev-v1.1 (test brier 0.369 / acc 68.0%)",
-      "html_url": "https://github.com/pinion05/decision-lfm2.5-1.2b",
-      "stars": 1,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-10-13",
-      "pushed_at": "2026-10-13",
-      "topics": [],
-      "query": "LiquidAI LFM2",
-      "fork_variants": 0
-    },
-    {
       "full_name": "kds1123001/liquid-time-constant",
       "description": "Mojo-native Liquid Time-Constant neural network for edge robotics. Hand-built SIMD RK4 adaptive ODE solver, cache-tiled Struct-of-Arrays state, and lock-free parallel timestep execution via double buffering. No PyTorch/TensorFlow — pure Mojo, built for real-time inference on constrained hardware.",
       "html_url": "https://github.com/kds1123001/liquid-time-constant",
@@ -2383,54 +2179,7 @@
       "updated_at": "2026-10-10",
       "pushed_at": "2026-09-25",
       "topics": [],
-      "query": "\"liquid time constant\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "R-Liebert/LOKI-G",
-      "description": "LOKI-G is a machine learning project designed for physical machines, enabling edge AI capabilities. It adapts the LOKI algorithm for training via imitation and reinforcement learning using Closed-form Continuous-Time Neural Networks and Neural Circuit Policies.",
-      "html_url": "https://github.com/R-Liebert/LOKI-G",
-      "stars": 1,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-05-21",
-      "pushed_at": "2026-05-21",
-      "topics": [
-        "il",
-        "ncps",
-        "rl",
-        "robotics"
-      ],
-      "query": "\"neural circuit policy\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "KMZED/Swarm-based-IDPS",
-      "description": "Safe Intrusion Prevention for Drone Swarms using Zero-Trust Kalman Gating and Liquid Neural networks",
-      "html_url": "https://github.com/KMZED/Swarm-based-IDPS",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-11-05",
-      "pushed_at": "2026-11-05",
-      "topics": [],
-      "query": "\"liquid neural network\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "3gediana/liquid-world-model-cfc-dreamer",
-      "description": "CfC/LTC world-model dynamics for DreamerV3-Torch — replacing MLP transition predictor with continuous-time neural networks for sample-efficient imagination-based RL",
-      "html_url": "https://github.com/3gediana/liquid-world-model-cfc-dreamer",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-11-02",
-      "pushed_at": "2026-11-01",
-      "topics": [],
-      "query": "LTC CfC neural network",
+      "query": "\"liquid time-constant\"",
       "fork_variants": 0
     },
     {
@@ -2444,35 +2193,7 @@
       "updated_at": "2026-10-29",
       "pushed_at": "2026-10-29",
       "topics": [],
-      "query": "\"liquid neural network\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "jainilbavishi24/LFM2.5-VL-Optimization",
-      "description": "Optimizing the inference speed, energy efficiency, and kernel performance of LiquidAI LFM2.5-VL-1.6B on NVIDIA Blackwell GPUs using profiling, CUDA kernels, CUDA graphs, and low-precision execution.",
-      "html_url": "https://github.com/jainilbavishi24/LFM2.5-VL-Optimization",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-10-29",
-      "pushed_at": "2026-10-29",
-      "topics": [],
-      "query": "LiquidAI LFM2",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "kritinrautela/neuron-playground",
-      "description": "Poke individual neurons in LiquidAI LFM2.5-2.6B: 3D neuron explorer, live firing view, steering chat",
-      "html_url": "https://github.com/kritinrautela/neuron-playground",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-10-28",
-      "pushed_at": "2026-10-28",
-      "topics": [],
-      "query": "LiquidAI LFM2",
+      "query": "\"liquid neural networks\"",
       "fork_variants": 0
     },
     {
@@ -2486,7 +2207,7 @@
       "updated_at": "2026-10-25",
       "pushed_at": "2026-10-25",
       "topics": [],
-      "query": "\"liquid neural network\"",
+      "query": "\"liquid neural networks\"",
       "fork_variants": 0
     },
     {
@@ -2500,7 +2221,7 @@
       "updated_at": "2026-10-24",
       "pushed_at": "2026-10-24",
       "topics": [],
-      "query": "\"liquid neural network\"",
+      "query": "\"liquid neural networks\"",
       "fork_variants": 0
     },
     {
@@ -2524,7 +2245,7 @@
         "urban-drainage",
         "water-resources"
       ],
-      "query": "\"liquid time constant\"",
+      "query": "\"liquid time-constant\"",
       "fork_variants": 0
     },
     {
@@ -2538,21 +2259,7 @@
       "updated_at": "2026-10-16",
       "pushed_at": "2026-10-16",
       "topics": [],
-      "query": "\"liquid time constant\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "NoeFlandre/filter-osm-datasets-llms-landuse",
-      "description": "Resumable multi-site Grid'5000 pipeline labelling OSM polygon sentences for land-use relevance with LiquidAI LFM2.5-2.6B + DSpark (SGLang)",
-      "html_url": "https://github.com/NoeFlandre/filter-osm-datasets-llms-landuse",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-10-12",
-      "pushed_at": "2026-11-04",
-      "topics": [],
-      "query": "LiquidAI LFM2",
+      "query": "\"liquid time-constant\"",
       "fork_variants": 0
     },
     {
@@ -2566,7 +2273,7 @@
       "updated_at": "2026-10-11",
       "pushed_at": "2026-10-11",
       "topics": [],
-      "query": "\"liquid time constant\"",
+      "query": "\"liquid time-constant\"",
       "fork_variants": 0
     },
     {
@@ -2580,7 +2287,7 @@
       "updated_at": "2026-10-03",
       "pushed_at": "2026-10-03",
       "topics": [],
-      "query": "\"liquid time constant\"",
+      "query": "\"liquid time-constant\"",
       "fork_variants": 0
     },
     {
@@ -2594,7 +2301,7 @@
       "updated_at": "2026-09-27",
       "pushed_at": "2026-09-27",
       "topics": [],
-      "query": "\"liquid time constant\"",
+      "query": "\"liquid time-constant\"",
       "fork_variants": 0
     },
     {
@@ -2608,7 +2315,7 @@
       "updated_at": "2026-09-07",
       "pushed_at": "2026-09-07",
       "topics": [],
-      "query": "\"liquid time constant\"",
+      "query": "\"liquid time-constant\"",
       "fork_variants": 0
     },
     {
@@ -2708,112 +2415,149 @@
       "topics": [],
       "query": "\"closed-form continuous-time\"",
       "fork_variants": 0
-    },
-    {
-      "full_name": "Crispy26/Neural-Circuit-Policy-Based-Intrusion-Detection-System-for-Industrial-Control-Systems",
-      "description": "",
-      "html_url": "https://github.com/Crispy26/Neural-Circuit-Policy-Based-Intrusion-Detection-System-for-Industrial-Control-Systems",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-03-19",
-      "pushed_at": "2026-03-19",
-      "topics": [],
-      "query": "\"neural circuit policy\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "feracero/liquid-neural-nets-locomotion",
-      "description": "Liquid Neural Networks and Neural Circuit Policies for Robot Locomotion",
-      "html_url": "https://github.com/feracero/liquid-neural-nets-locomotion",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Jupyter Notebook",
-      "updated_at": "2026-02-08",
-      "pushed_at": "2024-02-24",
-      "topics": [],
-      "query": "\"neural circuit policy\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "namitharayasam/liquid-time-constant-neural-circuit-policy",
-      "description": "",
-      "html_url": "https://github.com/namitharayasam/liquid-time-constant-neural-circuit-policy",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2026-01-27",
-      "pushed_at": "2026-01-27",
-      "topics": [],
-      "query": "\"neural circuit policy\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "dimarkov/ncpax",
-      "description": "Neural Circuit Policies for Equinox and Jax",
-      "html_url": "https://github.com/dimarkov/ncpax",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Jupyter Notebook",
-      "updated_at": "2025-04-04",
-      "pushed_at": "2025-04-04",
-      "topics": [],
-      "query": "\"neural circuit policy\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "Alec-Norton/NCP_Testing",
-      "description": "STAR Program Result Testing, Comparing Neural Circuit Policy Algorithms with other Deep Learning",
-      "html_url": "https://github.com/Alec-Norton/NCP_Testing",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Python",
-      "updated_at": "2024-07-23",
-      "pushed_at": "2024-07-23",
-      "topics": [],
-      "query": "\"neural circuit policy\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "logkn/FluxNCPs.jl",
-      "description": "FluxNCPs implements Neural Circuit Policies (NCPs), adapting the Python implementation of Python NCPs.",
-      "html_url": "https://github.com/logkn/FluxNCPs.jl",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Julia",
-      "updated_at": "2023-06-07",
-      "pushed_at": "2023-06-25",
-      "topics": [],
-      "query": "\"neural circuit policy\"",
-      "fork_variants": 0
-    },
-    {
-      "full_name": "0xkihato/Keras-Neural-circuit-policy",
-      "description": "This repository contains notebook scripts demonstrating the use of neural circuit policies with the aid of `keras-ncp` library",
-      "html_url": "https://github.com/0xkihato/Keras-Neural-circuit-policy",
-      "stars": 0,
-      "forks": 0,
-      "is_fork": false,
-      "language": "Jupyter Notebook",
-      "updated_at": "2022-07-03",
-      "pushed_at": "2022-07-03",
-      "topics": [],
-      "query": "\"neural circuit policy\"",
-      "fork_variants": 0
     }
   ],
   "huggingface_models": [
     {
+      "model_id": "LiquidAI/LFM2.5-24B-A2B-GGUF",
+      "author": null,
+      "last_modified": "2026-11-06",
+      "downloads": 256903,
+      "likes": 249,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "gguf",
+        "liquid",
+        "lfm2.5",
+        "llama.cpp",
+        "text-generation",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko",
+        "es",
+        "pt",
+        "it",
+        "base_model:LiquidAI/LFM2.5-24B-A2B"
+      ],
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF",
+      "query": "LiquidAI"
+    },
+    {
+      "model_id": "wasnaga/UniverseNet-LFM2.5-24B-Pocket-GGUF",
+      "author": null,
+      "last_modified": "2026-11-06",
+      "downloads": 1249,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "gguf",
+        "lfm2",
+        "lfm2moe",
+        "liquid-ai",
+        "moe",
+        "llama-cpp",
+        "ios",
+        "mobile",
+        "on-device",
+        "tool-calling",
+        "agent",
+        "universe-network",
+        "text-generation",
+        "base_model:LiquidAI/LFM2.5-24B-A2B",
+        "base_model:quantized:LiquidAI/LFM2.5-24B-A2B",
+        "license:other"
+      ],
+      "url": "https://huggingface.co/wasnaga/UniverseNet-LFM2.5-24B-Pocket-GGUF",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "blaj/LFM2.5-24B-A2B-Uncensored-int8-ov",
+      "author": null,
+      "last_modified": "2026-11-06",
+      "downloads": 10,
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "tags": [
+        "openvino",
+        "lfm2_moe",
+        "int8",
+        "intel",
+        "arc",
+        "lfm2.5",
+        "moe",
+        "uncensored",
+        "abliterated",
+        "text-generation",
+        "conversational",
+        "base_model:LiquidAI/LFM2.5-24B-A2B",
+        "base_model:finetune:LiquidAI/LFM2.5-24B-A2B",
+        "license:other",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/blaj/LFM2.5-24B-A2B-Uncensored-int8-ov",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "vvsotnikov/LFM2.5-2.6B-junie-harbor-rl-v0.2",
+      "author": null,
+      "last_modified": "2026-11-06",
+      "downloads": 0,
+      "likes": 0,
+      "pipeline_tag": "reinforcement-learning",
+      "tags": [
+        "peft",
+        "safetensors",
+        "lfm2",
+        "reinforcement-learning",
+        "grpo",
+        "trl",
+        "coding-agent",
+        "tool-use",
+        "base_model:LiquidAI/LFM2.5-2.6B",
+        "base_model:merge:LiquidAI/LFM2.5-2.6B",
+        "license:other",
+        "region:us"
+      ],
+      "url": "https://huggingface.co/vvsotnikov/LFM2.5-2.6B-junie-harbor-rl-v0.2",
+      "query": "LFM2"
+    },
+    {
+      "model_id": "mradermacher/LFM2.5-24B-A2B-Uncensored-BF16-i1-GGUF",
+      "author": null,
+      "last_modified": "2026-11-05",
+      "downloads": 5080,
+      "likes": 1,
+      "pipeline_tag": null,
+      "tags": [
+        "transformers",
+        "gguf",
+        "liquid",
+        "lfm2.5",
+        "moe",
+        "uncensored",
+        "abliterated",
+        "refusal-direction",
+        "agentic",
+        "tool-calling",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja"
+      ],
+      "url": "https://huggingface.co/mradermacher/LFM2.5-24B-A2B-Uncensored-BF16-i1-GGUF",
+      "query": "LFM2"
+    },
+    {
       "model_id": "LiquidAI/LFM3-1.7B-NVFP4",
       "author": null,
       "last_modified": "2026-11-05",
-      "downloads": 3530,
+      "downloads": 3633,
       "likes": 17,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -2840,7 +2584,7 @@
       "model_id": "hermitdave/LFM2.5-24B-A2B-MLX-DWQ-3bit",
       "author": null,
       "last_modified": "2026-11-05",
-      "downloads": 2250,
+      "downloads": 2371,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -2868,7 +2612,7 @@
       "model_id": "LiquidAI/LFM3-1.7B-FP8",
       "author": null,
       "last_modified": "2026-11-05",
-      "downloads": 2187,
+      "downloads": 2265,
       "likes": 12,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -2891,38 +2635,10 @@
       "query": "LiquidAI"
     },
     {
-      "model_id": "LiquidAI/d1-2B-ONNX",
-      "author": null,
-      "last_modified": "2026-11-05",
-      "downloads": 949,
-      "likes": 11,
-      "pipeline_tag": "image-text-to-text",
-      "tags": [
-        "onnxruntime",
-        "onnx",
-        "lfm3_vl",
-        "liquid",
-        "lfm3",
-        "image-text-to-text",
-        "conversational",
-        "custom_code",
-        "en",
-        "ar",
-        "zh",
-        "fr",
-        "de",
-        "it",
-        "ja",
-        "ko"
-      ],
-      "url": "https://huggingface.co/LiquidAI/d1-2B-ONNX",
-      "query": "LiquidAI"
-    },
-    {
       "model_id": "LiquidAI/LFM3-VL-2B-FP8",
       "author": null,
       "last_modified": "2026-11-05",
-      "downloads": 890,
+      "downloads": 965,
       "likes": 10,
       "pipeline_tag": "image-text-to-text",
       "tags": [
@@ -2947,38 +2663,10 @@
       "query": "LiquidAI"
     },
     {
-      "model_id": "LiquidAI/LFM3-VL-2B-NVFP4",
-      "author": null,
-      "last_modified": "2026-11-05",
-      "downloads": 763,
-      "likes": 14,
-      "pipeline_tag": "image-text-to-text",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm3_vl",
-        "image-text-to-text",
-        "liquid",
-        "lfm3",
-        "nvfp4",
-        "modelopt",
-        "conversational",
-        "custom_code",
-        "en",
-        "ar",
-        "zh",
-        "fr",
-        "de",
-        "it"
-      ],
-      "url": "https://huggingface.co/LiquidAI/LFM3-VL-2B-NVFP4",
-      "query": "LiquidAI"
-    },
-    {
       "model_id": "LiquidAI/d1-Omni-2B-MLX-8bit",
       "author": null,
       "last_modified": "2026-11-05",
-      "downloads": 759,
+      "downloads": 861,
       "likes": 10,
       "pipeline_tag": "audio-text-to-text",
       "tags": [
@@ -3003,10 +2691,38 @@
       "query": "LiquidAI"
     },
     {
+      "model_id": "LiquidAI/LFM3-VL-2B-NVFP4",
+      "author": null,
+      "last_modified": "2026-11-05",
+      "downloads": 851,
+      "likes": 15,
+      "pipeline_tag": "image-text-to-text",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "lfm3_vl",
+        "image-text-to-text",
+        "liquid",
+        "lfm3",
+        "nvfp4",
+        "modelopt",
+        "conversational",
+        "custom_code",
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "it"
+      ],
+      "url": "https://huggingface.co/LiquidAI/LFM3-VL-2B-NVFP4",
+      "query": "LiquidAI"
+    },
+    {
       "model_id": "LiquidAI/d1-Omni-2B-MLX-fp16",
       "author": null,
       "last_modified": "2026-11-05",
-      "downloads": 685,
+      "downloads": 763,
       "likes": 9,
       "pipeline_tag": "audio-text-to-text",
       "tags": [
@@ -3031,66 +2747,10 @@
       "query": "LiquidAI"
     },
     {
-      "model_id": "mradermacher/LFM2.5-24B-A2B-Uncensored-BF16-GGUF",
-      "author": null,
-      "last_modified": "2026-11-05",
-      "downloads": 545,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "transformers",
-        "gguf",
-        "liquid",
-        "lfm2.5",
-        "moe",
-        "uncensored",
-        "abliterated",
-        "refusal-direction",
-        "agentic",
-        "tool-calling",
-        "en",
-        "ar",
-        "zh",
-        "fr",
-        "de",
-        "ja"
-      ],
-      "url": "https://huggingface.co/mradermacher/LFM2.5-24B-A2B-Uncensored-BF16-GGUF",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "hermitdave/LFM2.5-24B-A2B-MLX-DWQ-3bit-v2",
-      "author": null,
-      "last_modified": "2026-11-05",
-      "downloads": 440,
-      "likes": 0,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "mlx",
-        "safetensors",
-        "lfm2_moe",
-        "mlx-lm",
-        "quantization",
-        "dwq",
-        "moe",
-        "lfm2.5",
-        "apple-silicon",
-        "3-bit",
-        "text-generation",
-        "conversational",
-        "en",
-        "ar",
-        "zh",
-        "fr"
-      ],
-      "url": "https://huggingface.co/hermitdave/LFM2.5-24B-A2B-MLX-DWQ-3bit-v2",
-      "query": "LFM2"
-    },
-    {
       "model_id": "LiquidAI/d1-Omni-2B-ONNX",
       "author": null,
       "last_modified": "2026-11-05",
-      "downloads": 437,
+      "downloads": 478,
       "likes": 9,
       "pipeline_tag": "audio-text-to-text",
       "tags": [
@@ -3118,7 +2778,7 @@
       "model_id": "hermitdave/LFM2.5-24B-A2B-MLX-DWQ-4bit",
       "author": null,
       "last_modified": "2026-11-05",
-      "downloads": 200,
+      "downloads": 228,
       "likes": 0,
       "pipeline_tag": "text-generation",
       "tags": [
@@ -3146,7 +2806,7 @@
       "model_id": "aibohphobia1/ScanAtlas-LFM2.5-350M-Planner-GGUF",
       "author": null,
       "last_modified": "2026-11-05",
-      "downloads": 57,
+      "downloads": 105,
       "likes": 0,
       "pipeline_tag": null,
       "tags": [
@@ -3161,82 +2821,6 @@
         "conversational"
       ],
       "url": "https://huggingface.co/aibohphobia1/ScanAtlas-LFM2.5-350M-Planner-GGUF",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "mradermacher/LFM2.5-24B-A2B-Uncensored-BF16-i1-GGUF",
-      "author": null,
-      "last_modified": "2026-11-05",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": null,
-      "tags": [
-        "transformers",
-        "gguf",
-        "liquid",
-        "lfm2.5",
-        "moe",
-        "uncensored",
-        "abliterated",
-        "refusal-direction",
-        "agentic",
-        "tool-calling",
-        "en",
-        "ar",
-        "zh",
-        "fr",
-        "de",
-        "ja"
-      ],
-      "url": "https://huggingface.co/mradermacher/LFM2.5-24B-A2B-Uncensored-BF16-i1-GGUF",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "vvsotnikov/LFM2.5-2.6B-junie-harbor-rl-v0.1",
-      "author": null,
-      "last_modified": "2026-11-05",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": "reinforcement-learning",
-      "tags": [
-        "peft",
-        "safetensors",
-        "lfm2",
-        "reinforcement-learning",
-        "grpo",
-        "trl",
-        "coding-agent",
-        "tool-use",
-        "base_model:LiquidAI/LFM2.5-2.6B",
-        "base_model:merge:LiquidAI/LFM2.5-2.6B",
-        "license:other",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/vvsotnikov/LFM2.5-2.6B-junie-harbor-rl-v0.1",
-      "query": "LFM2"
-    },
-    {
-      "model_id": "electroglyph/LFM2.5-24B-A2B-uncensored-fiction-nblora-merged2",
-      "author": null,
-      "last_modified": "2026-11-05",
-      "downloads": 0,
-      "likes": 0,
-      "pipeline_tag": "text-generation",
-      "tags": [
-        "transformers",
-        "safetensors",
-        "lfm2_moe",
-        "text-generation",
-        "generated_from_trainer",
-        "trl",
-        "nblora",
-        "conversational",
-        "base_model:electroglyph/LFM2.5-24B-A2B-uncensored",
-        "base_model:finetune:electroglyph/LFM2.5-24B-A2B-uncensored",
-        "endpoints_compatible",
-        "region:us"
-      ],
-      "url": "https://huggingface.co/electroglyph/LFM2.5-24B-A2B-uncensored-fiction-nblora-merged2",
       "query": "LFM2"
     },
     {
