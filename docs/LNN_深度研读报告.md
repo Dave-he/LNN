@@ -1581,6 +1581,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-08**：[[docs/daily/2026-11-08_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 45 个，模型 19 个。
 - **2026-11-07**：[[docs/daily/2026-11-07_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 43 个，模型 16 个。
 - **2026-11-06**：[[docs/daily/2026-11-06_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 44 个，模型 17 个。
   - **研读 3 篇**（selector top-3 全部为已知误命中，已手动改选）：[[docs/reports/Relation_Aware_LNN_Transformer_Intersection_Next_Step_2508.01368_研读报告.md|Relation-Aware LNN–Transformer：CfC + 方位偏置注意力做路口中心下一步预测 (2508.01368)]]、[[docs/reports/BHP2NRMLSur_CfC_Black_Hole_Waveform_Mapping_2503.04534_研读报告.md|BHP2NRMLSur：CfC + NCP 把黑洞微扰理论波形标定到数值相对论波形 (2503.04534)]]、[[docs/reports/Physics_Informed_LTC_Aeromagnetic_Compensation_2401.09631_研读报告.md|物理信息 LTC 航空磁补偿标定：从强磁场噪声里剥出微弱磁异常信号 (2401.09631)]]。
@@ -1631,5 +1632,4 @@ positioning_updated: 2026-09-14
 - **2026-10-12**：[[docs/daily/2026-10-12_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 18 个；研读报告生成 0 篇（LNN 主题连续饱和，第 2 段+ 月）。**异常告警 ⚠️**：(1) `experiment_imitation_lnn.py` 复现脚本 **连续 ≥3 天 exit 1**（10-10/11/12），`ModuleNotFoundError: No module named 'torch'`；根因 `PYTHON_BIN=python3` 默认走 `/Users/hyx/miniconda3/bin/python3`（无 torch），真环境在 `/Users/hyx/miniconda3/envs/lnn/bin/python`。修复路径：cron 启动前 `conda activate lnn` 或 `export PYTHON_BIN=/Users/hyx/miniconda3/envs/lnn/bin/python`。(2) step [3/4] commit 脚本仅 `git add docs papers` → 当日新增的 `analysis/repo_watchlist/2026-10-12_lnn_open_source_watchlist.md` 未被自动提交，已手工 `chore(daily): repo watchlist 2026-10-12` (commit `7a923b1`) + 第 5 次重试 push 成功（`ddf9b27..7a923b1`）；建议下次会话改 `git add docs papers analysis` 或在 cron prompt 提示补一步手工 push。(3) SSH fetch/push 抖动持续，第 1-4 次均 `Connection closed by remote host`，第 5 次成功（与 9-30/10-06/10-11 同根因）。`paper-analyzer` 仍标"not found"（与 9-22 起一致），今日无候选无影响。
 - **2026-10-11**：[[docs/daily/2026-10-11_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 20 个。
 - **2026-10-10**：[[docs/daily/2026-10-10_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 24 个，模型 24 个。
-- **2026-10-09**：[[docs/daily/2026-10-09_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 41 个，模型 19 个。
 <!-- daily-lnn-index:end -->
