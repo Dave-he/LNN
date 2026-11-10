@@ -1,0 +1,483 @@
+StayLTC: A Cost-Effective Multimodal Framework for Hospital
+Length of Stay Forecasting
+Sudeshna Jana
+TCS Research
+Kolkata, West Bengal, India
+sudeshna.jana@tcs.com
+Manjira Sinha
+TCS Research
+Kolkata, West Bengal, India
+sinha.manjira@tcs.com
+Tirthankar Dasgupta
+TCS Research
+Kolkata, West Bengal, India
+dasgupta.tirthankar@tcs.com
+ABSTRACT
+Accurate prediction of Length of Stay (LOS) in hospitals is crucial
+for improving healthcare services, resource management, and cost
+efficiency. This paper presents StayLTC, a multimodal deep learning
+framework developed to forecast real-time hospital LOS using Liq-
+uid Time-Constant Networks (LTCs). LTCs, with their continuous-
+time recurrent dynamics, are evaluated against traditional models
+using structured data from Electronic Health Records (EHRs) and
+clinical notes. Our evaluation, conducted on the MIMIC-III dataset,
+demonstrated that LTCs significantly outperform most of the other
+time series models, offering enhanced accuracy, robustness, and
+efficiency in resource utilization. Additionally, LTCs demonstrate a
+comparable performance in LOS prediction compared to time series
+large language models, while requiring significantly less computa-
+tional power and memory, underscoring their potential to advance
+Natural Language Processing (NLP) tasks in healthcare.
+CCS CONCEPTS
+• Information systems → Information retrieval; Retrieval
+tasks and goals; Information extraction.
+KEYWORDS
+Hospital Length of Stay, Liquid Neural Networks Memory Efficiency,
+MIMIC Dataset, Clinical Notes
+ACM Reference Format:
+Sudeshna Jana, Manjira Sinha, and Tirthankar Dasgupta. 2025. StayLTC: A
+Cost-Effective Multimodal Framework for Hospital Length of Stay Forecast-
+ing. In Proceedings of ACM Conference (Conference’17). ACM, New York, NY,
+USA, 5 pages. https://doi.org/10.1145/nnnnnnn.nnnnnnn
+1 INTRODUCTION
+The growing demand for healthcare services, driven by aging pop-
+ulations, has made healthcare expenditure a major part of GDP
+[15]. As a result, cost containment is a key challenge for healthcare
+management today.[22] Hospital Length of Stay (LOS), the days
+a patient spends in a facility per admission, is a crucial measure
+of resource use. Accurate LOS predictions help optimize bed man-
+agement, staffing, and critical equipment usage, reducing costs and
+Permission to make digital or hard copies of all or part of this work for personal or
+classroom use is granted without fee provided that copies are not made or distributed
+for profit or commercial advantage and that copies bear this notice and the full citation
+on the first page. Copyrights for components of this work owned by others than ACM
+must be honored. Abstracting with credit is permitted. To copy otherwise, or republish,
+to post on servers or to redistribute to lists, requires prior specific permission and/or a
+fee. Request permissions from permissions@acm.org.
+Conference’17, July 2017, Washington, DC, USA
+© 2025 Association for Computing Machinery.
+ACM ISBN 978-x-xxxx-xxxx-x/YY/MM. . . $15.00
+https://doi.org/10.1145/nnnnnnn.nnnnnnn
+improving discharge planning. [6, 17] This also aids policymakers in
+budgeting and aligning financial goals with patient outcomes.[20]
+Electronic Health Records (EHRs) are essential for developing
+predictive models for hospital LOS, using both structured data
+(e.g., demographics, lab results) and unstructured data (e.g., clinical
+notes). Researchers have applied various machine learning mod-
+els to predict LOS. For instance, [3] used a Bayesian Network for
+real-time LOS predictions, and [5] improved predictions by incor-
+porating clinical notes. Recent studies, like [24], compared machine
+learning models, focusing on patients’ demographics and clinical
+information to predict LOS more accurately. While classification
+techniques are commonly used to predict LOS, [ 1, 25] employed
+various machine learning regression models to forecast the actual
+number of LOS days.
+Most prior studies have focused on structured EHR data, like
+demographics, vital signs, and lab results. However, clinical notes
+in EHRs offer valuable insights into patient conditions, treatments,
+diagnoses and adverse effects. Advances in Natural Language Pro-
+cessing (NLP) and Large Language Models (LLMs) now enable
+better analysis of these unstructured notes. As a result, researchers
+are increasingly integrating unstructured data into predictive mod-
+els. Predicting exact LOS is rare; instead, predictions are usually
+grouped into short, medium, or long stays.
+In this paper, we propose a novel multimodal time series predic-
+tion framework, StayLTC, to forecast the remaining hospital length
+of stay for patients at the beginning of each day post-admission.
+The model leverages Liquid Time-Constant Networks (LTCs), [7]
+known for their continuous-time recurrent dynamics, and inte-
+grates time-stamped clinical notes with structured vital parameters.
+Moreover, unlike transformer-based models and large language
+models, LTCs require significantly fewer parameters, making them
+much more lightweight, domain-agnostic and resource-efficient.
+Tested on the MIMIC-III database,[10] LTCs offer efficient parame-
+ter training, requiring far fewer resources than transformer models
+and LLMs. This is the first study to apply LTCs to LOS prediction,
+highlighting their efficiency compared to other time series models.
+2 PROPOSED STAYLTC FRAMEWORK
+This section outlines our multimodal framework (Figure 1) for
+predicting the remaining length of stay (LOS) in the hospital at
+the start of each day, based on the patient’s health progression
+or deterioration. The framework integrates daily clinical reports
+(e.g., nursing, radiology, ECG) along with vital signs and laboratory
+measurements.
+arXiv:2504.05691v1  [cs.AI]  8 Apr 2025
+Conference’17, July 2017, Washington, DC, USA Sudeshna Jana, Manjira Sinha, and Tirthankar Dasgupta
+Figure 1: Schematic overview of the StayLTC framework for predicting LOS.
+2.1 Processing of Unstructured Clinical Notes
+Clinical notes exhibit considerable variability in both style and
+content. Some notes solely document symptoms, while others also
+include mentions of the absence of symptoms, adverse reactions,
+psychological states, and changes in appetite, often using non-
+standard terminology and abbreviations. To address this variability,
+we implemented a processing layer that leverages biomedical dic-
+tionaries to create a structured representation of the clinical details.
+This includes extracting clinical entities such as diseases or symp-
+toms, injuries or poisoning , abnormalities, lifestyle, mental health
+conditions, and previous health histories, using two BioNER tools:
+ScispaCy specifically, en_ner_bc5cdr_md model [18] and Metamap
+[2]. In addition to identifying entities, we employed the Negex
+algorithm [14] to detect absence indicators commonly found in
+clinical notes, such as “absence of pain" or “no history of hyperten-
+sion". Moreover, clinical data often contains diverse non-standard
+terminology, abbreviations, various formats, and coding systems
+to represent similar clinical concepts. For example, “Pulmonary
+Edema" and “fluid in lungs" refer to the same condition. To stan-
+dardize these entities, we utilized the UMLS Metathesaurus [ 19]
+API, which assigns a unique "Concept Unique Identifier (CUI)" to
+each concept.
+Once entities are extracted and represented with CUIs, each
+day’s clinical details for a patient are consolidated using the CUIs
+observed on that day. Given a patient 𝑝, the clinical details at day
+𝑡 is defined by a vector 𝐻𝑝 (𝑡) =< 𝑓 (𝑑𝑖 ) > , 𝑖 = 1, 2, ..., |𝑉 | , where
+𝑑𝑖 ∈ 𝑉 and the value of 𝑓 (𝑑𝑖 ) is set to 1 if 𝑑𝑖 present, -1 if it is
+mentioned negatively, and 0 if 𝑑𝑖 is not mentioned in day 𝑡.
+Additionally, the high number of unique diseases and symp-
+toms, along with the variability in individual manifestations, leads
+to high-dimensional and sparse vectors. To address this, we em-
+ployed a standard autoencoder (AE) framework [ 23] to obtain a
+dense, lower-dimensional representation. The AE is an unsuper-
+vised model where the “encoder” network compresses the input
+data by capturing its key features, and the “decoder” network re-
+constructs the original data from this compressed form, aiming to
+preserve the essential information.
+Let 𝑋 ∈ R𝑚×𝑛 represent the input data, where 𝑛 represents the
+number of samples and𝑚 represents the number of features of each
+sample. The AE optimizes the following loss function to minimize
+the reconstruction error:
+L (X, ˆX) = 1
+𝑁
+𝑁∑︁
+𝑖=1
+[𝑋𝑖 − 𝑔(𝑓 (𝑋𝑖 ))]2
+In our experiment, the encoder used a multi-layer neural net-
+work to map the input data to a low-dimensional latent space, while
+the decoder employed the inverse structure of the encoder. The
+mean squared error (MSE) was used as the loss function, and the
+Adam optimizer with a learning rate of 0.001 was applied to en-
+sure model convergence. The compressed representations 𝑓 (𝑋𝑖 )
+provide a more efficient and informative vector representation of
+the patient’s health conditions for subsequent tasks.
+2.2 Compute Severity of Illness (SOI) Scores
+In our model, we also integrated structured health parameters like
+vital signs and lab measurements, represented by the Severity of
+Illness (SOI) score, a key metric for assessing patient severity. We
+used four SOI scores namely, Acute Physiology and Chronic Health
+Evaluation (APACHE-II) [11], Simplified Acute Physiology (SAPS-
+II)[12], Sepsis-related Organ Failure Assessment (SOFA) [16], and Ox-
+ford Acute Severity of Illness Score (OASIS) [4]. These scores indicate
+disease severity, complexity, and organ system impairment, offer-
+ing valuable insights into a patient’s clinical status. All scores are
+generated using publicly available tools.
+2.3 LTC network for real time LOS prediction
+Afterward, we have used the Liquid Time-Continuous (LTC) net-
+work for time-series prediction of hospital LOS for individual pa-
+tients. Each patient’s daily health condition is represented as an
+StayLTC: A Cost-Effective Multimodal Framework for Hospital Length of Stay Forecasting Conference’17, July 2017, Washington, DC, USA
+autoencoded embedding vector of clinical notes say, 𝐸𝐻𝑡 . This em-
+bedding is concatenated with the SOI scores say < 𝑠1
+𝑡 , 𝑠2
+𝑡 , 𝑠3
+𝑡 , 𝑠4
+𝑡 >
+from the patient’s clinical measurements, forming the input vector
+for the LTC network at time 𝑡.
+Recently, in 2021, Hasani et al. [7] introduced a new class of recur-
+rent neural networks with continuous-time hidden states defined
+by ordinary differential equations (ODEs), making them particu-
+larly effective for time series data. The hidden state of this network,
+𝑥 (𝑡), is determined by the solution to a system of linear ODEs of
+the following form:
+𝑑𝑥 (𝑡 )
+𝑑𝑡 = −
+ 1
+𝜏 + 𝑓 (𝑥 (𝑡), 𝐼 (𝑡), 𝑡, 𝜃)
+
+𝑥 (𝑡)
++𝑓 (𝑥 (𝑡), 𝐼 (𝑡), 𝑡, 𝜃)𝐴
+where, 𝑡 represents time,𝐼 (𝑡) is input at time𝑡, 𝜏 is the time-constant
+and the neural network 𝑓 is parametrized by 𝜃 and 𝐴. This LTC
+network offers several features and benefits: In the above equation,
+the neural network 𝑓 , dynamically influences both the evolution of
+the hidden state and serves as an input-dependent varying time-
+constant 𝜏𝑠𝑦𝑠 , for the learning system.
+𝜏𝑠𝑦𝑠 = 𝜏
+1 + 𝜏 𝑓 (𝑥 (𝑡), 𝐼 (𝑡), 𝑡, 𝜃) (1)
+This property allows each element of the hidden state to capture
+different temporal patterns from specific input features at each time
+step, making LTCs effective for processing complex, time-varying
+data. Additionally, the authors demonstrated that the time constant
+and state of LTC neurons are bounded to a finite range. This state
+stability ensures that the outputs of LTCs do not explode, even
+when their inputs tend toward infinity. Furthermore, they demon-
+strated that Liquid Time-Constant (LTC) networks are universal
+approximators,[8] meaning they can approximate any autonomous
+ODE with a finite number of neurons to any desired precision. By
+evaluating expressivity in terms of trajectory length, they showed
+that LTC networks outperform existing time series models.
+To build our Liquid Neural Network, we use the Neural Circuit
+Policies (NCP) wiring with the AutoNCP configuration [13]. The
+network consists of 28 sensory neurons and 1 motor neuron as
+the output. In the AutoNCP framework, the remaining neurons are
+automatically parameterized. The Liquid Layer output is processed
+through a fully connected layer with a linear activation function. We
+train the model using the Mean Squared Error (MSE) loss function
+and the Adam optimizer with a learning rate of 0.001 to ensure
+effective learning and convergence.
+3 RESULTS AND DISCUSSIONS
+3.1 Dataset
+The study involved 5,000 patients from the MIMIC-III v1.4 database
+[10], which is IRB-approved and accessible after completing the
+CITI “Data or Specimens Only Research” course. We excluded pa-
+tients under 18 years of age and those with hospital stays shorter
+than two days, or with incomplete records, as sufficient contextual
+knowledge is essential for LOS prediction. We only included pa-
+tients with a length of stay under one month to eliminate outliers.
+Among the cohort, 45% had pneumonia, 31% had sepsis, and 24%
+had cardiovascular diseases. The average hospital stay was 10 days.
+Table 1: Performance metrics of baseline models for LOS
+predictions.
+Model Input 𝑅2 MAE RMSE
+LSTM HealthVector(𝐻𝑝 (𝑡 )) 0.53 0.45 0.47
+LSTM Healthvector(𝐻𝑝 (𝑡 ))+SOI 0.55 0.44 0.47
+LSTM AutoencodedHealthVector 0.55 0.41 0.43
+LSTM AutoencodedHealthVector+SOI 0.56 0.41 0.41
+ClinicalBERT+LSTM Notes 0.53 0.52 0.58
+ClinicalBERT+LSTM Notes+SOI 0.54 0.50 0.57
+BlueBERT+LSTM Notes 0.53 0.51 0.57
+BlueBERT+LSTM Notes + SOI 0.55 0.46 0.53
+Informer HealthVector(𝐻𝑝 (𝑡 )) 0.68 0.28 0.32
+Informer HealthVector(𝐻𝑝 (𝑡 ))+SOI 0.68 0.27 0.30
+Informer AutoencodedHealthVector 0.70 0.25 0.30
+Informer AutoencodedHealthVector+SOI 0.71 0.25 0.28
+TIME-LLM Notes 0.85 0.19 0.25
+TIME-LLM Notes+SOI 0.87 0.17 0.21
+LTC HealthVector(𝐻𝑝 (𝑡 )) 0.67 0.25 0.29
+LTC HealthVector(𝐻𝑝 (𝑡 ))+SOI 0.69 0.25 0.26
+LTC AutoencodedHealthVector 0.74 0.23 0.25
+LTC AutoencodedHealthVector+SOI 0.78 0.20 0.24
+3.2 Baseline Models
+We experimented and compared the performance of various time
+series models to predict the remaining hospital length of stay for
+patients at the start of each day following admission. We assessed
+the StayLTC model’s performance based on two criteria: (a) its
+efficiency in terms of space and time complexity compared to base-
+line models and (b) the prediction accuracy of the architecture. For
+LOS prediction, we explored several input modalities, including
+clinical notes, extracted health conditions, autoencoded health vec-
+tors, and combinations of these with severity of illness (SOI) scores.
+Additionally, we compared transformer-based embeddings from
+ClinicalBERT and BlueBERT with our own representations.
+We evaluated the Informer model [26], a transformer-based time-
+series model known for its efficiency in handling long-range depen-
+dencies and large-scale data, outperforming traditional recurrent
+neural networks (RNNs). Its key innovation is the ProbSparse self-
+attention mechanism, which sparsifies attention by focusing only
+on a subset of relevant tokens, reducing both time and space com-
+plexity. The encoder processes the input through multiple layers
+of ProbSparse self-attention and feed-forward networks to capture
+temporal patterns, while the decoder uses cross-attention and a
+fully connected layer to generate future predictions. For training,
+we adapted Mean Squared Error (MSE) loss function, the Adam
+optimizer, and a learning rate of 0.001.
+Additionally, we explored TIME-LLM [9], a reprogramming frame-
+work designed to adapt existing LLMs for time series forecasting,
+with the backbone LLMs frozen. TIME-LLM begins by tokenizing
+the input time series using a customized patch embedding layer.
+These patches are then passed through a reprogramming layer,
+which transforms the forecasting task into a language task. To
+activate the LLM’s capabilities, authors proposed to use Prompt-as-
+Prefix (PaP) strategy to complement patch reprogramming. Finally,
+the transformed time series patches from the LLM are projected to
+obtain the forecasts. For this experiment, we implemented TIME-
+LLM in the NeuralForecast library and used Llama2-7B [21] as the
+backbone model.
+Conference’17, July 2017, Washington, DC, USA Sudeshna Jana, Manjira Sinha, and Tirthankar Dasgupta
+3.3 Results
+From the selected cohort of 5,000 patients, we extracted 45,312
+time-stamped clinical notes, including nursing, ECG, and radiology
+reports. After preprocessing, we compiled a list of 8,700 unique dis-
+eases and symptoms and generated 500-dimensional auto-encoded
+health vectors for each day. These vectors, along with SOI scores,
+were integrated into the predictive time series models.
+Table 1 summarizes the overall performance of our experiments
+for the LOS prediction task. The baseline model incorporating clin-
+ical notes with SOI scores outperformed the notes-only baseline,
+highlighting the added predictive value of severity information.
+The proposed StayLTC model outperformed all baseline models,
+except TIME-LLM showing a statistically significant improvement.
+Additionally, the health vectors generated from our preprocessing
+methods significantly enhanced performance compared to embed-
+dings from ClinicalBERT and BlueBERT. While ClinicalBERT and
+BlueBERT embeddings capture linguistic nuances like “severe pain”
+vs “mild pain”, they do not consistently reflect the similarities or
+differences in medical terminology used in the notes.
+Figure 2: Predictions for a patient’s real-time LOS using au-
+toencoded health vectors and SOI scores: LTC vs. TIME-LLM
+Figure 2 illustrates the comparison of the two most effective
+time series prediction framework LTC and TIME-LLM for times-
+tamped LOS prediction, specifically from day 2 for a patient who
+was discharged on the 25th day after admission. A careful analysis
+of the erroneous predictions, as shown in Figure 3, revealed that
+mispredictions occurred for certain patients, particularly those who
+experienced significant complications or expired. Our model pre-
+dicted these cases as admissions requiring a long stay, which aligns
+with the health features present in the data. This underscores the ef-
+fectiveness of nursing notes in reflecting a patient’s true condition,
+suggesting that such information should be integrated separately
+into the prediction model.
+An important observation is that LTC networks are highly resource-
+efficient, making them well-suited for CPU usage, unlike transform-
+ers and large language models (LLMs) that demand significant GPU
+resources—typically around 20 GB of GPU memory. In contrast,
+LTC models require less than 1.2 MB of memory while achieving
+comparable performance, highlighting their minimal memory foot-
+print. As shown in Table 2, compared to TIME-LLM, Liquid Neural
+Figure 3: Predictions of real-time LOS for a Deceased patient
+using autoencoded health vectors and SOI scores: LTC vs.
+TIME-LLM
+Table 2: Comparison of the number of parameters, memory
+usage, and training time across different models for LOS
+prediction task.
+Model No. of pa-
+rameters
+Memory
+usage
+Time
+LSTM 648K 34.7 MB
+CPU
+≈ 18 min (training 100
+epochs, batch size 16)
+ClinicalBERT+LSTM 111M 11.8 GB
+GPU
+≈ 1.5 hr (finetuning 20
+epochs, batch size 16)
+BlueBERT+LSTM 111M 12.9 GB
+GPU
+≈ 2 hr (finetuning 20
+epochs, batch size 16)
+Informer 1.05M 1.2 GB
+GPU
+≈ 1.5 hr (training 20
+epochs, batch size 16)
+TIME-LLM 7B 28 GB
+GPU
+≈ 3 hr (training 10 epochs,
+batch size 16)
+LTC 100K 1.2 MB
+CPU
+≈ 1 hr (training 100
+epochs, batch size 16)
+Networks offer notable resource efficiency, utilizing only 100K pa-
+rameters and 28 neurons in the AutoNCP wiring. While training
+LLMs is resource- and time-intensive, the LTC model can complete
+training for 100 epochs in just one hour on the proposed datasets.
+4 CONCLUSION
+In conclusion, this research introduced Liquid Time-Constant Net-
+works for predicting real-time hospital Length of Stay, effectively
+capturing complex temporal dynamics in sequential data. The
+StayLTC model outperformed traditional time series and trans-
+former models, and in some cases, even surpassed large language
+models in resource-constrained settings. Moving forward, we aim
+to explore the model’s explainability, enabling the identification
+of key features driving predictions to foster trust among clinical
+practitioners. However, the framework’s performance is contingent
+on the quality and completeness of unstructured clinical notes, and
+extracting data from Electronic Health Records requires substan-
+tial time for cleaning and interpretation to ensure accurate LOS
+predictions.
+StayLTC: A Cost-Effective Multimodal Framework for Hospital Length of Stay Forecasting Conference’17, July 2017, Washington, DC, USA
+REFERENCES
+[1] Belal Alsinglawi, Fady Alnajjar, Omar Mubin, Mauricio Novoa, Mohammed
+Alorjani, Ola Karajeh, and Omar Darwish. 2020. Predicting length of stay for
+cardiovascular hospitalizations in the intensive care unit: Machine learning
+approach. In 2020 42nd annual international conference of the IEEE engineering in
+medicine & biology society (EMBC) . IEEE, 5442–5445.
+[2] Alan R Aronson. 2001. Effective mapping of biomedical text to the UMLS Metathe-
+saurus: the MetaMap program.. InProceedings of the AMIA Symposium. American
+Medical Informatics Association, 17.
+[3] Xiongcai Cai, Oscar Perez-Concha, Enrico Coiera, Fernando Martin-Sanchez,
+Richard Day, David Roffe, and Blanca Gallego. 2016. Real-time prediction of
+mortality, readmission, and length of stay using electronic health record data.
+Journal of the American Medical Informatics Association 23, 3 (2016), 553–561.
+[4] QG Chen, RJ Xie, YZ Chen, and M Zeng. 2018. Clinical value of Oxford acute
+severity of illness score in identifying quick sequential organ failure assessment-
+negative patients with sepsis. Zhonghua jie he he hu xi za zhi= Zhonghua jiehe he
+huxi zazhi= Chinese journal of tuberculosis and respiratory diseases 41, 9 (2018),
+701–708.
+[5] Jan Chrusciel, François Girardon, Lucien Roquette, David Laplanche, Antoine
+Duclos, and Stéphane Sanchez. 2021. The prediction of hospital length of stay
+using unstructured data. BMC medical informatics and decision making 21, 1
+(2021), 351.
+[6] Waqaar Diwan, Paul A Nakonezny, and Joel Wells. 2020. The effect of length of
+hospital stay and patient factors on patient satisfaction in an academic hospital.
+Orthopedics 43, 6 (2020), 373–379.
+[7] Ramin Hasani, Mathias Lechner, Alexander Amini, Daniela Rus, and Radu Grosu.
+2021. Liquid time-constant networks. In Proceedings of the AAAI Conference on
+Artificial Intelligence, Vol. 35. 7657–7666.
+[8] Ramin M Hasani, Mathias Lechner, Alexander Amini, Daniela Rus, and Radu
+Grosu. 2018. Liquid time-constant recurrent neural networks as universal ap-
+proximators. arXiv preprint arXiv:1811.00321 (2018).
+[9] Ming Jin, Shiyu Wang, Lintao Ma, Zhixuan Chu, James Y Zhang, Xiaoming Shi,
+Pin-Yu Chen, Yuxuan Liang, Yuan-Fang Li, Shirui Pan, et al . 2023. Time-llm:
+Time series forecasting by reprogramming large language models. arXiv preprint
+arXiv:2310.01728 (2023).
+[10] Alistair EW Johnson, Tom J Pollard, Lu Shen, Li-wei H Lehman, Mengling Feng,
+Mohammad Ghassemi, Benjamin Moody, Peter Szolovits, Leo Anthony Celi, and
+Roger G Mark. 2016. MIMIC-III, a freely accessible critical care database.Scientific
+data 3, 1 (2016), 1–9.
+[11] William A Knaus, Elizabeth A Draper, Douglas P Wagner, and Jack E Zimmerman.
+1985. APACHE II: a severity of disease classification system.Critical care medicine
+13, 10 (1985), 818–829.
+[12] Jean-Roger Le Gall, Stanley Lemeshow, and Fabienne Saulnier. 1993. A new
+simplified acute physiology score (SAPS II) based on a European/North American
+multicenter study. Jama 270, 24 (1993), 2957–2963.
+[13] Mathias Lechner, Ramin Hasani, Alexander Amini, Thomas A Henzinger, Daniela
+Rus, and Radu Grosu. 2020. Neural circuit policies enabling auditable autonomy.
+Nature Machine Intelligence 2, 10 (2020), 642–652.
+[14] Saeed Mehrabi, Anand Krishnan, Sunghwan Sohn, Alexandra M Roch, Heidi
+Schmidt, Joe Kesterson, Chris Beesley, Paul Dexter, C Max Schmidt, Hongfang Liu,
+et al. 2015. DEEPEN: A negation detection system for clinical text incorporating
+dependency relation into NegEx. Journal of biomedical informatics 54 (2015),
+213–219.
+[15] Geetilaxmi Mohapatra, Rahul Arora, and Arun Kumar Giri. 2024. Establishing
+the relationship between population aging and health care expenditure in India.
+Journal of Economic and Administrative Sciences 40, 3 (2024), 684–701.
+[16] Raúl Moreno, J-L Vincent, R Matos, A Mendonca, Francis Cantraine, L Thijs,
+Jukka Takala, Charles Sprung, Massimo Antonelli, Hajo Bruining, et al. 1999. The
+use of maximum SOFA score to quantify organ dysfunction/failure in intensive
+care. Results of a prospective, multicentre study.Intensive care medicine 25 (1999),
+686–696.
+[17] Richard E Nelson, David Hyun, Amanda Jezek, and Matthew H Samore. 2022.
+Mortality, length of stay, and healthcare costs associated with multidrug-resistant
+bacterial infections among elderly hospitalized patients in the United States.
+Clinical Infectious Diseases 74, 6 (2022), 1070–1080.
+[18] Mark Neumann, Daniel King, Iz Beltagy, and Waleed Ammar. 2019. ScispaCy:
+fast and robust models for biomedical natural language processing.arXiv preprint
+arXiv:1902.07669 (2019).
+[19] Peri L Schuyler, William T Hole, Mark S Tuttle, and David D Sherertz. 1993.
+The UMLS Metathesaurus: representing different views of biomedical concepts.
+Bulletin of the Medical Library Association 81, 2 (1993), 217.
+[20] Syed Amin Tabish. 2024. Healthcare Finance. In Health Care Management:
+Principles and Practice. Springer, 99–120.
+[21] Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, Amjad Almahairi, Yas-
+mine Babaei, Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhos-
+ale, et al. 2023. Llama 2: Open foundation and fine-tuned chat models. arXiv
+preprint arXiv:2307.09288 (2023).
+[22] A Veena and S Gowrishankar. 2023. Applications, opportunities, and current
+challenges in the healthcare industry. In IoT in Healthcare Systems. CRC Press,
+121–147.
+[23] Yasi Wang, Hongxun Yao, and Sicheng Zhao. 2016. Auto-encoder based dimen-
+sionality reduction. Neurocomputing 184 (2016), 232–242.
+[24] Addisu Jember Zeleke, Pierpaolo Palumbo, Paolo Tubertini, Rossella Miglio, and
+Lorenzo Chiari. 2023. Machine learning-based prediction of hospital prolonged
+length of stay admission at emergency department: a Gradient Boosting algorithm
+analysis. Frontiers in Artificial Intelligence 6 (2023), 1179226.
+[25] Addisu Jember Zeleke, Pierpaolo Palumbo, Paolo Tubertini, Rossella Miglio, and
+Lorenzo Chiari. 2024. Comparison of nine machine learning regression models
+in predicting hospital length of stay for patients admitted to a general medicine
+department. Informatics in Medicine Unlocked 47 (2024), 101499.
+[26] Haoyi Zhou, Shanghang Zhang, Jieqi Peng, Shuai Zhang, Jianxin Li, Hui Xiong,
+and Wancai Zhang. 2021. Informer: Beyond efficient transformer for long se-
+quence time-series forecasting. In Proceedings of the AAAI conference on artificial
+intelligence, Vol. 35. 11106–11115.
