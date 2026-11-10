@@ -1,0 +1,822 @@
+Optical Flow Matters: an Empirical Comparative Study
+on Fusing Monocular Extracted Modalities for Better Steering
+Fouad Makiyeh1, Mark Bastourous1, Anass Bairouk1, Wei Xiao2, Mirjana Maras1, Tsun-Hsuan Wangb2,
+Marc Blanchon1, Ramin Hasani2, Patrick Chareyre1 and Daniela Rus2
+1Hybrid Intelligence part of Capgemini Engineering
+2Computer Science and Artificial Intelligence Lab, Massachusetts Institute of Technology
+Abstract
+Autonomous vehicle navigation is a key challenge in ar-
+tificial intelligence, requiring robust and accurate decision-
+making processes. This research introduces a new end-
+to-end method that exploits multimodal information from
+a single monocular camera to improve the steering pre-
+dictions for self-driving cars. Unlike conventional models
+that require several sensors which can be costly and com-
+plex or rely exclusively on RGB images that may not be
+robust enough under different conditions, our model sig-
+nificantly improves vehicle steering prediction performance
+from a single visual sensor. By focusing on the fusion of
+RGB imagery with depth completion information or opti-
+cal flow data, we propose a comprehensive framework that
+integrates these modalities through both early and hybrid
+fusion techniques.
+We use three distinct neural network models to imple-
+ment our approach: Convolution Neural Network - Neu-
+tral Circuit Policy (CNN-NCP) , Variational Auto Encoder
+- Long Short-Term Memory (VAE-LSTM) , and Neural Cir-
+cuit Policy architecture VAE-NCP . By incorporating optical
+flow into the decision-making process, our method signifi-
+cantly advances autonomous navigation. Empirical results
+from our comparative study using Boston driving data show
+that our model, which integrates image and motion infor-
+mation, is robust and reliable. It outperforms state-of-the-
+art approaches that do not use optical flow, reducing the
+steering estimation error by 31%. This demonstrates the
+potential of optical flow data, combined with advanced neu-
+ral network architectures (a CNN-based structure for fusing
+data and a Recurrence-based network for inferring a com-
+mand from latent space), to enhance the performance of au-
+tonomous vehicles steering estimation.
+1. Introduction
+Self-driving cars play a critical role in improving trans-
+portation by enhancing accessibility, efficiency and safety.
+Figure 1. Block diagram of the overall approach. An example
+of different modalities extracted from an RGB image, such as the
+depth map and optical flow. Two of these modalities are fused
+in a convolutional feature extractor followed by a recurrent neural
+network for vehicle steering estimation.
+These cars have intricate systems that enable them to per-
+ceive their environment and produce precise control move-
+ments, but they can sometimes take unsafe routes through
+conflict areas [24]. Reaching full autonomy requires ex-
+pertise in multiple areas: perception, localization, planning,
+and control [25]. In this work, we focus on the steering es-
+timation, a vital aspect of control that keeps vehicles within
+road bounds so that they can safely move around. Chal-
+lenge arises with varying road conditions such as different
+road colors, textures, lighting and lane markings [8, 26].
+Traditional methods of steering estimation use modular
+systems that deal with perception decision-making and con-
+trol separately. However, these methods tend to be effective
+but have complex systems which need exact calibration as
+well as integration of different components possibly lead-
+ing to mistakes as well as inefficiencies [6]. Recently end-
+to-end deep learning has emerged, where neural networks
+arXiv:2409.12716v1  [cs.CV]  18 Sep 2024
+can be employed to learn vehicle steering directly from raw
+input data, such as images gathered by on-board cameras,
+offering a streamlined approach without needing a full ve-
+hicle model [3, 14, 15, 29]. Due to the effectiveness of such
+strategies in steering estimation, we use them in our work.
+Nonetheless, interpretability of such models has been one of
+the obstacles for the successful deployment in self-driving
+cars. An investigation into the interpretability and robust-
+ness of our method will be done using a new technique in-
+troduced in [3].
+Moreover, conventional supervised end-to-end lateral
+control approaches have typically relied on RGB images
+as primary data sources, as presented in [7, 20, 21]. While
+these frame-based approaches have typically solely relied
+on RGB images, the incorporation of multiple modalities,
+denoted as multimodal fusion, has emerged for address-
+ing limitations of individual sensors [16]. Despite exten-
+sive investigation into multimodal fusion, the predominant
+emphasis has been on integrating data from diverse sensors
+(RGB camera, Radar, Lidar) [16], thereby neglecting the
+exploration of methods leveraging the abundance of visual
+data obtained from a single camera. Moreover, this process
+of integration from multiple sensors is computationally in-
+tensive and requires significant processing capability to help
+interpret data from many sensors in real time. This leads
+to higher power consumption which is a major concern for
+electric vehicles. Furthermore, sensor fusion systems must
+also address issues related to data synchronization, calibra-
+tion, and the potential for conflicting information from dif-
+ferent sensors, which can complicate the decision-making
+process [17].
+This study aims to explore the potential of deriving mul-
+tiple modalities from a single camera and leveraging deep
+neural network techniques to fuse these modalities for en-
+hanced prediction of vehicle steering angles. The novelty of
+our work lies in enhancing steering estimation using modal-
+ities extracted from a single visual sensor and advanced net-
+works like Neural Control Policy (NCP) network, which has
+demonstrated its efficiency in such applications [15]. Un-
+like NCP-based approaches that use solely RGB images,
+our approach employs this network with multiple modal-
+ities. The primary contributions of our research are then
+summarized as follows:
+• We investigate various modalities extractable from
+RGB images, with a particular emphasis on depth
+maps and optical flow images. Subsequently, we as-
+sess the effectiveness of different fusion techniques
+within the context of vehicle steering estimation.
+• Our study demonstrates substantial improvements in
+three different end-to-end vehicle steering estimation
+architectures - CNN-NCP, V AE-LSTM and V AE-NCP
+- through the integration of optical flow. Our experi-
+ments indicate a notable decrease in the mean squared
+error (MSE) of steering estimation, reducing from
+3.17, as achieved solely with RGB images using state-
+of-the-art (SOTA) approaches, to 1.64 with our pro-
+posed method.
+• We illustrate the augmented generalization and robust-
+ness of our model, highlighting the significant advan-
+tages resulting from the inclusion of optical flow infor-
+mation within the predictive framework.
+2. Related works
+Artunedo et al. [2] presented a comprehensive compari-
+son between model-based and model-free approaches to as-
+sess the effectiveness of different lateral control algorithms
+used in autonomous driving systems. Model-based control
+strategies use a mathematical model of the vehicle dynam-
+ics, while model-free strategies use data-driven methods,
+both to generate appropriate control actions. Because of
+the dynamic problem and complicated nature, we will focus
+on and employ a model-free approach, utilizing deep learn-
+ing techniques explicitly to benefit from their data-driven
+learning abilities and flexibility when dealing with diverse
+situations without the requirement of set models.
+Bojarski et al. [4] developed a vision-based end-to-end
+driving system based on deep CNNs that directly mapped
+raw pixel values from a single front camera to steering com-
+mands. In this way, they trained their model on lots of driv-
+ing footage data sets which in turn made it possible for the
+model to accommodate variety of traffic conditions. Nev-
+ertheless, as far as more complex driving behaviors such
+as lane changes their scope was limited. Instead of using
+RGB images as input, Lindaet al. [5] exploited optical flow,
+the motion of objects between frames, to dynamically per-
+ceive the environment and generate a visual potential field
+whereby the direction and magnitude of flow vectors affects
+navigation decisions of the vehicle. By including optical
+flow in decision making, the system capability to navigate
+complicated driving scenarios was enhanced.
+Other approaches focused on including time series in-
+stead of conventional CNNs. For instance, Eraqi et al. [9]
+aimed at improving the steering angle control in a car
+through using Long Short Term Memory (LSTM). The
+method was instrumental in enabling the system to have an
+enhanced knowledge of time context in driving conditions,
+making steering predictions to be more precise and stable
+over time. Similarly, Xu et al . [29] created a model for
+driving by using fully convolutional network with LSTM
+for predicting steering angle. The authors included seman-
+tic segmentation as an auxiliary task to improve the model
+perception of the road conditions and consequently better
+predict steering angles. Additionally, Lechner et al . [15]
+introduced Neural Circuit Policies (NCPs), a brain-inspired
+neural computation method that provides interpretable and
+accurate decision-making maps from high-dimensional in-
+puts. LSTM and NCP provide robust steering estimation
+results, particularly under varying road illumination condi-
+tions, making them strong candidates for consideration in
+our work.
+To further enhance perception and decision-making ca-
+pabilities, integrating multiple sensor modalities has been
+explored. Fusing RGB images with Lidar data, radar im-
+ages and depth maps improved several perception tasks
+such as object recognition, tracking and semantic segmen-
+tation [11, 23, 28]. Motivated by this, we present differ-
+ent studies that examine multimodality in end-to-end net-
+works for steering estimation. There are several fusion
+methods, such as early fusion (concatenating raw data from
+different modalities into multiple input channels), late fu-
+sion (concatenating multimodal feature maps at the decision
+level), and hybrid fusion (fusing features at intermediate
+layers) [10]. High image calibration and synchronization
+are needed for early fusion, late fusion learns unimodal fea-
+tures independently but may lack cross-modal correlation,
+while hybrid fusion combines the strengths of both. Mu-
+nir et al. [19] addressed the challenge of predicting steering
+angles by integrating data from event-based cameras and
+frame-based RGB cameras. The hybrid fusion of frame-
+based RGB data and event camera data was done through
+the use of self-attention layers between the convolutional
+encoders for each modality. This self-attention mechanism
+helps in learning long term relationships therefore, allow-
+ing the model to combine features from both sources before
+being passed to the decoder which predicts steering angle.
+Additionally, they showed that integrating event cameras
+leads to enhanced steering angle prediction. Maanp ¨a¨a et
+al. [18] used RGB images and Lidar range and reflectance
+data to forecast steering angles in challenging weather con-
+ditions. They adopted two fusion methodologies: the mid-
+dle fusion dual model and the channel gated dual model.
+In the middle fusion strategy, features are fused after the
+convolutional phase of the network, whereas the channel
+gated dual model consists of two parallel architectures that
+integrate features through gated channels. Abou-Hussein et
+al. [1] conducted a series of experiments to evaluate the effi-
+cacy of spatial, spatiotemporal, and multimodal approaches
+in predicting automotive steering. Various strategies were
+tested, including a standard CNN, a 3D-CNN stacking three
+sequential grayscale images, spatial + difference method in-
+corporating a difference frame between current and previ-
+ous frames, and spatial with optical flow technique involv-
+ing normalization of optical flow between current and previ-
+ous frames. Upon comparison with adopting of a Recurrent
+Neural Network (RNN), it was concluded that spatial + op-
+tical flow and spatial + difference variations outperformed
+simply stacking images in the 3D-CNN, emphasizing the
+advantage of explicitly incorporating temporal information
+into the model. Yi et al. [28] explored combining RGB im-
+ages and depth data. They evaluated early, mid, and late fu-
+sion methods for integrating multimodal data. They showed
+that early fusion of multimodal data significantly enhances
+driving policy performance in diverse conditions. Shuai et
+al. [27] presented an end-to-end network for training driv-
+ing policies which employs optical flow from images and
+point flow from LiDAR data. They showed that the dense
+motion information provided by optical flow combined with
+accurate spatial measurements from laser enables the net
+to navigate complex and dynamic environments skillfully.
+They compared their approach with traditional approaches
+that are either purely visual or LIDAR-based; hence demon-
+strating how a multmodal perception system benefits us.
+3. Methodology
+Overview of the Method . Our method introduces a novel
+approach to end-to-end steering estimation for autonomous
+vehicles by leveraging multimodal information from a sin-
+gle monocular camera. Unlike previous methods that rely
+solely on RGB data or require multiple sensors, our ap-
+proach fuses RGB imagery with optical flow data extracted
+from the same source. This method captures both spatial
+and temporal dynamics of the driving scene, providing a
+richer representation for steering estimation. Figure 1 il-
+lustrates our approach. The method consists of four main
+components:
+1. Modality Extraction: From the input RGB image se-
+quence, we extract two key modalities Depth and Op-
+tical flow, but only consider Optical Flow, as we will
+discuss later.
+2. Fusion Strategy: We employ an early fusion approach,
+concatenating RGB and optical flow data before feed-
+ing it into the neural network.
+3. Feature Extraction: A CNN or V AE processes the
+fused input to extract relevant features.
+4. Temporal Modeling: We integrate advanced recurrent
+architectures, including the innovative NCP and tra-
+ditional LSTM networks, to process global temporal
+dynamics.
+A key innovation in our approach is the multi-scale tem-
+poral feature extraction. By using optical flow between
+two consecutive images, we capture local temporal features
+that represent short-term motion dynamics. Complement-
+ing this, our recurrent neural network architectures (NCP
+or LSTM) capture global temporal features across the en-
+tire sequence of inputs. This dual temporal modeling al-
+lows our system to understand both immediate frame-to-
+frame changes and longer-term driving patterns, a crucial
+advancement for robust steering estimation. This novel ap-
+proach enables us to extract and utilize rich spatiotempo-
+ral information from a single camera source, a significant
+advancement over existing methods. By fusing RGB and
+optical flow data, we capture static scene geometry, local
+motion cues, and global temporal patterns, potentially im-
+proving the accuracy and robustness of steering estimation
+compared to unimodal approaches.
+In the following subsections, we detail each component
+of our method, elucidating the innovations in our design
+choices and how they contribute to improved steering es-
+timation performance in autonomous driving scenarios.
+3.1. Modality Extraction
+We explore the process of extracting multiple modalities
+from a single monocular camera to enhance steering
+estimation. We focus on depth maps, and optical flow, each
+providing unique information about the driving scene.
+Depth Map Generation. Although not used in the final
+model, we explored depth map generation as a potential ad-
+ditional modality. Two pretrained models were tested di-
+rectly on our dataset and provided satisfactory depth extrac-
+tion quality, eliminating the need for retraining them. These
+models are:
+• Monodepth2 [12] : This method uses a pre-trained
+ResNet as an encoder to extract high-dimensional fea-
+tures, enabling depth inference by considering scene
+context.
+• MiDaS [22]: This approach focuses on zero-shot
+cross-dataset transfer, aiming for robust depth estima-
+tion across varied environments without fine-tuning.
+By incorporating dataset mixing during training, this
+model learns to adapt to diverse scenes, lighting con-
+ditions, and other variations present across different
+datasets.
+Optical Flow Computation. Optical flow captures dy-
+namic motion cues between consecutive frames, potentially
+enhancing steering estimation precision. We employ the
+Farneback algorithm for its accuracy and reliability in com-
+puting dense optical flow. This extraction process results in
+a multimodal representation of the driving scene, capturing
+both spatial structure and local motion dynamics.
+3.2. Fusion Strategies
+We explore different strategies to effectively combine
+information from multiple modalities, specifically RGB
+images with either depth maps or optical flow data. We
+investigate two main fusion approaches: Early Fusion (EF)
+and Hybrid Fusion (HF).
+Early Fusion. Early fusion involves concatenating raw
+data from different modalities into multiple channels before
+feeding them into the neural network. In our case, we con-
+catenate the RGB image (3 channels) with either the depth
+map (1 channel) or optical flow (2 channels), resulting in a
+4-channel or 5-channel input, respectively. This combined
+input is then processed end-to-end by a single network.
+The early fusion input can be represented as:
+xEF = [M1, M2], (1)
+where M1 represents the RGB image and M2 represents
+the additional modality (depth or optical flow).
+Hybrid Fusion. Hybrid fusion represents a compromise
+between early and late fusion techniques. In this approach,
+we use separate encoders for different modalities and fuse
+the features at intermediate layers. This method allows the
+network to learn cross-modal features with distinct repre-
+sentations at varying depths. We adopt an approach simi-
+lar to that proposed in [13], utilizing an Attention Comple-
+mentary Module (ACM). The output of the feature extractor
+model can be described as:
+zHF = Layer4 + ACM (G5( ˜M1)) + ACM (G5( ˜M2)),
+(2)
+where:
+˜M1 = G4(G3(G2(G1(M1)))), (3)
+G1, ..., G5 represent the layers of the encoder, and ACM
+is the Attention Complementary Module as shown in Fig-
+ure 1. The hybrid fusion approach allows for more flexibil-
+ity in learning cross-modal relationships while maintaining
+the ability to extract modality-specific features.
+Our experiments compare the effectiveness of these
+fusion strategies in the context of vehicle steering estima-
+tion. The results, presented in later sections, demonstrate
+the impact of different fusion approaches on the overall
+performance of the steering estimation model.
+3.3. Steering Estimation Architectures
+Our steering estimation approach utilizes a two-stage
+architecture: a convolutional feature extractor followed
+by a recurrent neural network for temporal modeling (see
+Figure 1). We explore different combinations of these
+components to determine the most effective architecture for
+our task.
+Convolutional Feature Extractors. We investigate two
+types of convolutional feature extractors, motivated by the
+work presented in [3, 15], for demonstrating their efficien-
+cies in steering estimation:
+• Convolutional Neural Network (CNN):We employ the
+CNN architecture as described in [15]. This network is
+designed to efficiently extract spatial features from the
+input images.
+• Variational Autoencoder (VAE): We also explore the
+use of a V AE encoder, as detailed in [3]. The V AE ap-
+proach allows for capturing underlying data distribu-
+tions, potentially enhancing the model ability to gen-
+eralize.
+Both feature extractors output a low-dimensional feature
+vector of size 32, as specified in [3].
+Recurrent Neural Networks. For temporal modeling, we
+consider the following two recurrent architectures based on
+their successful application in optimizing vehicle steering
+estimation as shown in [3, 15] and illustrated in Table. 1:
+• Neural Circuit Policy (NCP): We use the NCP with
+19 units, as described in [3, 15]. The NCP is inspired
+by biological neural circuits and has shown promising
+results in previous steering estimation tasks.
+• Long Short-Term Memory (LSTM):We also employ an
+LSTM network with 19 units. LSTMs are well-known
+for their ability to capture long-term dependencies in
+sequential data.
+End-to-End Model. Given the ground truth steering of the
+vehicle, ˆyyy, the end-to-end steering estimation loss, L(x, ˆy),
+is given as follows:
+L(x, ˆy) = βLV AE + Lprediction, (4)
+where:
+LV AE = λ1Lrecon(x, ˜x) + λ2LKL(µ, σ), (5)
+Lprediction =
+P
+i w(yi)( ˆyi − yi)2
+P
+i w(yi) ; y = RN N(z). (6)
+Here, xxx representing the inputs to the model, β distin-
+guishes between using a CNN ( β = 0) and a V AE (β = 1)
+for feature extraction. λ1 = 0 .15 and λ2 = λ1e−2 are
+regularization parameters. ˜x denotes the reconstruction of
+x, while µ and σ are the parameters used to sample la-
+tent variables in the V AE. The function w(y) gives more
+attention to samples containing road turns and is defined as
+w(y) = exp(|y|α).
+This architecture allows us to capture both spatial fea-
+tures through the convolutional extractors and temporal dy-
+namics through the recurrent networks, providing a com-
+prehensive approach to steering estimation. The combina-
+tion of these components enables our model to process the
+fused multimodal input effectively, potentially leading to
+improved steering predictions.
+4. Experimental Setup
+4.1. Dataset Description and Preparation
+Our experiments utilize the dataset described in [15],
+which comprises RGB images captured from a vehicle-
+mounted camera. The dataset consists of sequences of RGB
+images along with corresponding steering angle labels, cap-
+turing a wide variety of road types, weather conditions, and
+traffic scenarios, making it particularly suitable for our task.
+To focus on the most relevant parts of the scene for steer-
+ing estimation, we apply preprocessing steps to each im-
+age. Following the procedure outlined in [15], each image
+is cropped to dimensions of 78 × 200 pixels, excluding pix-
+els corresponding to the sky and the front view of the car,
+and concentrating on the road and immediate surroundings.
+Pixel values are then normalized to ensure consistent input
+scaling across different lighting conditions. We employ a
+10-fold cross-validation approach to ensure robust evalua-
+tion of our models. The dataset is divided into 10 folds,
+denoted as [F.1, F.2, ..., F.10]. In each experimental run,
+one fold serves as the test dataset, while the remaining nine
+folds are used for training and validation. Within each train-
+ing set, 10% of the images are reserved for validation, with
+the remaining 90% used for actual training. For example,
+when evaluating on fold F.1, 90% of [F.2, F.3, ..., F.10] is
+used for training, 10% for validation, and F.1 serves as the
+test set. For each preprocessed RGB image, we extract ad-
+ditional modalities as described in the Modality Extraction
+section. Depth maps are generated using both MiDaS [22]
+and Monodepth2 [12] algorithms, while optical flow is com-
+puted between consecutive frames using the Farneback al-
+gorithm. These extracted modalities are aligned with their
+corresponding RGB images to create the multimodal input
+for our models. This comprehensive dataset preparation
+process ensures that our models are trained and evaluated
+on a diverse and representative set of driving scenarios, al-
+lowing for a thorough assessment of our multimodal fusion
+approach to steering estimation. The use of multiple modal-
+ities derived from a single camera source enables us to ex-
+plore the potential benefits of integrating spatial and tempo-
+ral information for improved steering prediction accuracy.
+4.2. Implementation Details
+Our implementation focuses on efficiently processing
+multimodal data for steering estimation. Key details in-
+clude:
+• Hardware and Software: All experiments were con-
+ducted on NVIDIA GeForce RTX 3090 GPUs. We
+used Tensorflow as our deep learning framework,
+along with NumPy and OpenCV for data processing
+and optical flow computation.
+• Training Procedure:We train the models for 100 steps
+and employ the Adam optimizer for optimization. The
+batch size is fixed at 20, and we use a sequence length
+of 16 for the recurrent networks.
+• Loss Function Components: For V AE models, we use
+λ1 = 0.15 and λ2 = λ1e−2 as regularization parame-
+ters for the reconstruction loss and KL divergence, re-
+spectively.
+• Evaluation Metrics: We use Mean Squared Error
+(MSE) and Mean Absolute Error (MAE) to evaluate
+Figure 2. Variation of MSE for training and validation across 100
+steps when using either RGB and RGB-OF for V AE-NCP (black
+and green lines) and CNN-NCP models (red and blue lines), cor-
+responding to F.1 in Table 1 (I & II).
+the performance of our models. Additionally, we em-
+ploy the Automatic Latent Perturbation (ALP) tool [3]
+for robustness analysis.
+This implementation setup ensures reproducibility and
+comparability with existing state-of-the-art methods while
+allowing us to thoroughly explore the effectiveness of our
+multimodal fusion approach for steering estimation.
+5. Results & Discussion
+5.1. Results
+Table 1 presents a comprehensive comparison of our
+proposed methods against different approaches and various
+modality combinations.
+By analyzing category (I) from Table 1, which corre-
+sponds to the results obtained from the CNN-NCP model,
+and comparing the steering estimation using the RGB im-
+ages and the depth extracted with the MiDas approach
+(RGBD1) with either EF or HF, we notice that HF yielded
+lower Mean Squared Error (MSE) and lower standard de-
+viation (4.13; 5.68) compared to EF (5.12; 7.97). This ob-
+servation could be attributed to potential inaccuracies and
+misalignments between depth data and RGB images, which
+might confuse or distort the model predictions. Therefore,
+we consider the HF when using Monodepth2 (RGB D2),
+and we obtain similar results to RGB D1. Interestingly,
+our experiments with depth modality (RGBD) did not yield
+improvements over RGB-only models. Therefore, we do
+not consider depth as an additional modality for the other
+models. However, early fusing optical flow with RGB
+(RGB-OF) enhances the model performance by incorporat-
+ing motion-related data into the RGB color information, po-
+tentially offering valuable insights for vehicle steering esti-
+mation. This improvement is evident when comparing the
+fifth line to the other lines in category (I), where the aver-
+age MSE and MAE are reduced by 31%. Moreover, this
+enhancement is consistent across each fold, indicating con-
+sistent improvement. The difference between the results
+obtained from adding depth and optical flow to the RGB
+images is likely due to the high correlation between RGB
+and depth information when extracted from a single cam-
+era source, as evidenced by the Structural Similarity Index
+(SSIM) values presented in Table 2. The SSIM between
+RGB and depth maps (0.3 ± 0.12 for MiDaS and 0.26 ±
+0.44 for Monodepth2) is significantly higher than that be-
+tween RGB and optical flow (0.11 ± 0.036), indicating that
+optical flow provides more complementary information to
+RGB.
+Encouraged by these results, we seek to further inves-
+tigate this approach by applying it to two other models,
+V AE-NCP and V AE-LSTM. The results presented in Ta-
+ble 1 (II and III) show the significant decrease in MSE
+and MAE. Specifically, MSE is reduced by 68%, and MAE
+by more than 40% compared to using solely RGB images.
+This enhancement extends beyond steering estimation. As
+highlighted in [3], V AE-NCP offers superior interpretability
+compared to CNN-NCP, albeit at the cost of decreased ac-
+curacy in terms of MSE (3.68; 5.68) when using only RGB
+images. However, with our proposed approach, both CNN-
+NCP and V AE-NCP methods achieve nearly identical im-
+proved MSE (1.64; 1.82), indicating that we have attained a
+model with enhanced interpretability while maintaining the
+accuracy level of improved CNN-NCP.
+The superiority of the RGB-OF approach is further il-
+lustrated in Figure 2, which shows the variation of MSE
+for training and validation across 100 steps. The RGB-
+OF models (green and blue lines) demonstrate consistently
+lower error rates compared to their RGB-only counterparts
+(black and red lines), particularly on the validation set. This
+suggests that the inclusion of optical flow not only improves
+overall performance but also enhances the model ability to
+generalize to unseen data.
+In summary, these results strongly support our hypoth-
+esis that optical flow provides valuable complementary in-
+formation to RGB data for steering estimation. The signif-
+icant and consistent performance improvements across var-
+ious architectures and evaluation metrics demonstrate the
+potential of our approach to enhance the accuracy and ro-
+bustness of autonomous driving systems.
+5.2. Robustness Analysis using ALP
+To further analyze the robustness of the proposed ap-
+proach, we employed the Automatic Latent Perturbation
+(ALP) tool proposed in [3]. This tool enhances the anal-
+ysis of model robustness and interpretation of latent di-
+mensions in V AEs, particularly useful in high-dimensional
+spaces. Traditional methods, which manually perturb latent
+variables to analyze changes in outputs, suffer from scala-
+bility issues and limited effectiveness in complex models.
+ALP automates this by perturbing each latent dimension
+and generating both positive and negative reconstructions,
+allowing for an assessment of the specific information each
+dimension encodes.
+Moreover, the ALP has been extended to evaluate the
+MSE (per fold) MSE MAE
+Model F.1 F.2 F.3 F.4 F.5 F.6 F.7 F.8 F.9 F.10 ∆ ± δ ∆ ± δ
+Results from [15]
+CNN - - - - - - - - - - 4.28±4.63 -
+CNN-RNN - - - - - - - - - - 3.39±4.39 -
+CNN-LSTM (64 units) - - - - - - - - - - 3.17 ±3.85 -
+CNN-LSTM (19 units) - - - - - - - - - - 3.38±4.48
+CNN-Sparse LSTM (19 units) - - - - - - - - - - 3.68±5.21 -
+CNN-Sparse LSTM (64 units) - - - - - - - - - - 3.25±3.93 -
+CNN-NCP (19 units) - - - - - - - - - - 3.22±3.92 -
+CNN-NCP (randomly wired) - - - - - - - - - - 5.19±5.43 -
+CNN-NCP (fully connected) - - - - - - - - - - 5.18±4.19
+V AE-NCP (19 units) - - - - - - - - - - 4.67±3.74 -
+V AE-LSTM (64 units) - - - - - - - - - - 4.70±4.80 -
+V AE-LSTM (19 units) - - - - - - - - - - 6.75±8.33 -
+I
+CNN-NCP using RGB 0.64 0.80 2.14 17.12 0.97 1.17 4.72 1.24 5.81 2.21 3.68 ± 5.03 0.81 ± 0.33
+CNN-NCP using RGBD1 with EF 0.55 0.73 2.54 26.92 1.14 1.35 7.56 2.17 5.53 2.68 5.12 ± 7.97 0.91 ± 0.41
+CNN-NCP using RGBD1 with HF 0.63 0.79 1.71 19.14 0.95 1.35 6.39 1.6 6.16 2.65 4.13 ± 5.68 0.87 ± 0.38
+CNN-NCP using RGBD2 with HF 0.67 0.89 1.96 17.47 1.17 1.53 4.51 2.49 6.99 3.11 4.08 ± 5.08 0.89 ± 0.33
+CNN-NCP using RGB-OF (Ours) 0.32 0.41 0.67 9.66 0.37 0.64 1.560 0.56 0.94 1.27 1.64 ± 2.84 0.56 ± 0.21
+II V AE-NCP using RGB 0.74 1.48 3.03 23.98 2.41 3.00 7.29 3.17 7.76 3.97 5.68 ± 6.81 1.13 ± 0.40
+V AE-NCP using RGB-OF(Ours) 0.41 0.60 0.78 9.23 0.52 0.94 1.49 0.85 2.15 1.27 1.82 ± 2.65 0.65 ± 0.22
+III V AE-LSTM using RGB 0.98 1.42 2.39 21.43 1.09 2.6 11.02 2.08 8.46 3.9 5.54 ± 6.51 1.13 ± 0.45
+V AE-LSTM using RGB-OF(Ours) 0.24 0.70 0.71 8.67 0.43 0.71 1.28 0.67 3.30 1.07 1.77 ± 2.57 0.59 ± 0.19
+Table 1. Comparative evaluation of vehicle steering estimation error using different models with various feature fusion.D1 corresponds to
+the depth extracted using MiDas approach, while D2 corresponds to the one extracted using Monodepth2. EF and HF correspond to early
+and late fusion respectively.
+Figure 3. Steering Error Response to Latent Dimension Perturbations: the left plot depicts the MSE variability under perturbation of each
+latent dimension in a model using RGB and optical flow, while the right plot displays the variability in MSE when each latent dimension
+is perturbed in a model using only RGB images. The perturbation value was set to σ = 0.3.
+Features SSIM (∆ ± δ)
+RGB-Depth (MiDas) 0.3 ± 0.12
+RGB-Depth (Monodepth2) 0.26 ± 0.44
+RGB-Optical Flow 0.11 ± 0.036
+Table 2. Average of SSI comparison between RGB and Depth, and
+RGB and Optical Flow.
+effects of latent dimension perturbations on operational
+outputs like steering commands in autonomous vehicles.
+This involves generating steering predictions by perturb-
+ing the latent vectors and passing them through a secondary
+model component, like the NCP in our case. By comparing
+the steering results from different perturbations, an impact
+score is computed, quantifying the influence of each latent
+dimension on steering behavior. The impact score formula
+is as follows:
+Ij = |ˆyj,+ − ˆyj,0| + |ˆyj,− − ˆyj,0| + |ˆyj,+ − ˆyj,−|
+3 (7)
+where I is the impact score, ˆyj,+ and ˆyj,− are the steering
+predictions for the perturbed latent vectors increased and
+decreased by a perturbation value of σ = 0.3 along the j-th
+dimension, respectively, for both RGB and RGB-OF setups,
+Figure 4. Impact Score Distribution for the Top 10% of Predictions with Highest Error: The left plot corresponds to the RGB-OF model,
+illustrating a consistent impact score across perturbed dimensions, while the right plot corresponds to the RGB-only model, displaying a
+more varied impact score.
+and ˆyj,0 is the steering prediction for the unperturbed latent
+vector.
+We conduct experiments on fold F.2, utilizing the com-
+plete fold to ensure a comprehensive analysis. Figure 3 de-
+picts how the incorporation of optical flow with RGB im-
+ages affects the model MSE under both perturbed and un-
+perturbed conditions. This figure provides insights into the
+variability and stability of the model predictions across dif-
+ferent perturbed dimensions. Figure 3 confirms, as previ-
+ously mentioned, that integrating optical flow with RGB
+images enhances model predictions for steering control in
+unperturbed conditions, compared to using only RGB im-
+ages. Furthermore, when analyzing the latent space pertur-
+bations, it is evident from Figure 3 that the model using both
+RGB and optical flow manifests significantly less variation
+in MSE across perturbed dimensions compared to the RGB-
+only model. This reduced variation in response to perturba-
+tions within the latent space highlights the model robust-
+ness; it shows more resilience to internal variability, which
+is crucial for dependable decision-making in dynamic envi-
+ronments. On the other hand, the higher variability across
+dimensions in the model based only on RGB images (see
+right plot in Figure 3) indicates less stable and reliable pre-
+dictive behavior when the latent space is disturbed.
+Furthermore, Figure 4 presents the distribution of impact
+scores for the top 10% of steering predictions that exhibit
+the highest error, providing a direct measure of the model
+sensitivity to deviations in input data. We note a consis-
+tently higher impact score across the 32 perturbed dimen-
+sions for RGB-OF (left plot) in comparison to utilizing only
+RGB (right plot). This indicates that the RGB-OF model is
+potentially more adept at identifying when inputs or situa-
+tions deviate from the norm, which could lead to better han-
+dling of Out-Of-Distribution (OOD) scenarios. The RGB
+model, with lower impact scores, might be less sensitive
+to these perturbations, potentially making it less effective
+at OOD detection. Consequently, the RGB-OF model can
+be considered more robust in this specific aspect of uncer-
+tainty identification and OOD situation handling. This in-
+creased sensitivity can be an asset in applications like au-
+tonomous driving systems, where recognizing OOD situa-
+tions that differ from the training data is crucial for safety
+and performance.
+6. Conclusion
+This study introduces a novel approach to enhance
+end-to-end steering estimation for autonomous vehicles by
+leveraging multimodal information extracted from a single
+monocular camera. Our primary contribution lies in demon-
+strating the significant impact of incorporating optical flow
+information alongside RGB imagery. The fusion of RGB
+and optical flow data consistently outperforms state-of-the-
+art methods and other modality combinations, achieving a
+remarkable 31% reduction in steering estimation error. This
+improvement is consistent across various neural network
+architectures, including CNN-NCP, V AE-NCP, and V AE-
+LSTM, highlighting the robustness and versatility of our
+approach. Moreover, the integration of optical flow en-
+hances the model’s ability to generalize to unseen data, as
+evidenced by lower error rates on validation sets.
+These findings have important implications for the de-
+velopment of autonomous driving systems. By demonstrat-
+ing that rich, multimodal information can be extracted and
+effectively utilized from a single camera source, our ap-
+proach offers a cost-effective and computationally efficient
+solution for improving steering estimation accuracy. Fu-
+ture work could explore the integration of our approach
+with other sensor modalities and its application to other
+autonomous driving tasks. In conclusion, our research un-
+derscores the importance of leveraging complementary in-
+formation sources in autonomous driving systems, poten-
+tially enhancing the safety and reliability of self-driving ve-
+hicles.
+References
+[1] Mohamed Abou-Hussein, Stefan H M ¨uller, and Joschka
+Boedecker. Multimodal spatio-temporal information in end-
+to-end networks for automotive steering prediction. In
+2019 International Conference on Robotics and Automation
+(ICRA), pages 8641–8647. IEEE, 2019. 3
+[2] Antonio Artu ˜nedo, Marcos Moreno-Gonzalez, and Jorge
+Villagra. Lateral control for autonomous vehicles: A com-
+parative evaluation. Annual Reviews in Control, 57:100910,
+2024. 2
+[3] Anass Bairouk, Mirjana Maras, Simon Herlin, Alexander
+Amini, Marc Blanchon, Ramin Hasani, Patrick Chareyre,
+and Daniela Rus. Exploring latent pathways: Enhancing the
+interpretability of autonomous driving with a variational au-
+toencoder, 2024. 2, 4, 5, 6
+[4] Author et al. Bojarski. Title of bojarski et al. 2016 paper.
+Journal Name, 30(4):567–589, 2016. 2
+[5] Linda Capito, Umit Ozguner, and Keith Redmill. Optical
+flow based visual potential field for autonomous driving. In
+2020 IEEE Intelligent Vehicles Symposium (IV), pages 885–
+891. IEEE, 2020. 2
+[6] Chenyi Chen, Ari Seff, Alain Kornhauser, and Jianxiong
+Xiao. Deepdriving: Learning affordance for direct percep-
+tion in autonomous driving. In 2015 IEEE International
+Conference on Computer Vision (ICCV), pages 2722–2730,
+2015. 1
+[7] Felipe Codevilla, Eder Santana, Antonio M L ´opez, and
+Adrien Gaidon. Exploring the limitations of behavior
+cloning for autonomous driving. In Proceedings of the
+IEEE/CVF international conference on computer vision ,
+pages 9329–9338, 2019. 2
+[8] Xingshuai Dong and Massimiliano L. Cappuccio. Appli-
+cations of computer vision in autonomous vehicles: Meth-
+ods, challenges and future directions. arXiv preprint
+arXiv:2311.09093, 2023. 1
+[9] Hesham M Eraqi, Mohamed N Moustafa, and Jens Honer.
+End-to-end deep learning for steering autonomous vehi-
+cles considering temporal dependencies. arXiv preprint
+arXiv:1710.03804, 2017. 2
+[10] Di Feng, Christian Haase-Sch ¨utz, Lars Rosenbaum, Heinz
+Hertlein, Claudius Glaeser, Fabian Timm, Werner Wies-
+beck, and Klaus Dietmayer. Deep multi-modal object de-
+tection and semantic segmentation for autonomous driving:
+Datasets, methods, and challenges. IEEE Transactions on
+Intelligent Transportation Systems, 22(3):1341–1360, 2020.
+3
+[11] Fahimeh Fooladgar and Shohreh Kasaei. Multi-modal
+attention-based fusion model for semantic segmentation of
+rgb-depth images. ArXiv, abs/1912.11691, 2019. 3
+[12] Cl ´ement Godard, Oisin Mac Aodha, Michael Firman, and
+Gabriel J Brostow. Digging into self-supervised monocular
+depth estimation. In Proceedings of the IEEE/CVF inter-
+national conference on computer vision , pages 3828–3838,
+2019. 4, 5
+[13] Xinxin Hu, Kailun Yang, Lei Fei, and Kaiwei Wang. Acnet:
+Attention based network to exploit complementary features
+for rgbd semantic segmentation. In 2019 IEEE International
+Conference on Image Processing (ICIP), pages 1440–1444.
+IEEE, 2019. 4
+[14] Jinkyu Kim and John Canny. Interpretable learning for self-
+driving cars by visualizing causal attention. In Proceedings
+of the IEEE international conference on computer vision ,
+pages 2942–2950, 2017. 2
+[15] Mathias Lechner, Ramin Hasani, Alexander Amini,
+Thomas A. Henzinger, Daniela Rus, and Radu Grosu. Neu-
+ral circuit policies enabling auditable autonomy. Nature Ma-
+chine Intelligence, 2(10):642–652, 2020. 2, 4, 5, 7
+[16] You Li, Julien Moreau, and Javier Ibanez-Guzman. Emer-
+gent visual sensors for autonomous vehicles. arXiv preprint
+arXiv:2205.09383, 2022. 2
+[17] Liangkai Liu, Sidi Lu, Ren Zhong, Baofu Wu, Yongtao Yao,
+Qingyang Zhang, and Weisong Shi. Computing systems for
+autonomous driving: State of the art and challenges. IEEE
+Internet of Things Journal, 8(8):6469–6486, 2020. 2
+[18] Jyri Maanp ¨a¨a, Josef Taher, Petri Manninen, Leo Pakola,
+Iaroslav Melekhov, and Juha Hyypp ¨a. Multimodal end-to-
+end learning for autonomous steering in adverse road and
+weather conditions. In 2020 25th International Conference
+on Pattern Recognition (ICPR), pages 699–706. IEEE, 2021.
+3
+[19] Farzeen Munir, Shoaib Azam, Byung-Geun Lee, and
+Moongu Jeon. Multi-modal fusion for sensorimotor coor-
+dination in steering angle prediction, 2022. 3
+[20] Eshed Ohn-Bar, Aditya Prakash, Aseem Behl, Kashyap
+Chitta, and Andreas Geiger. Learning situational driving.
+In Proceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition, pages 11296–11305, 2020.
+2
+[21] Aditya Prakash, Aseem Behl, Eshed Ohn-Bar, Kashyap
+Chitta, and Andreas Geiger. Exploring data aggregation in
+policy learning for vision-based urban autonomous driving.
+In Proceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition, pages 11763–11773, 2020.
+2
+[22] Ren ´e Ranftl, Katrin Lasinger, David Hafner, Konrad
+Schindler, and Vladlen Koltun. Towards robust monocular
+depth estimation: Mixing datasets for zero-shot cross-dataset
+transfer. IEEE transactions on pattern analysis and machine
+intelligence, 44(3):1623–1637, 2020. 4, 5
+[23] Lukas Schneider, Manuel Jasch, Bj ¨orn Fr ¨ohlich, Thomas
+Weber, Uwe Franke, Marc Pollefeys, and Matthias R ¨atsch.
+Multimodal neural networks: Rgb-d for semantic segmenta-
+tion and object detection. In Image Analysis: 20th Scandina-
+vian Conference, SCIA 2017, Tromsø, Norway, June 12–14,
+2017, Proceedings, Part I 20, pages 98–109. Springer, 2017.
+3
+[24] Wilko Schwarting, Javier Alonso-Mora, and Daniela Rus.
+Planning and decision-making for autonomous vehicles. An-
+nual Review of Control, Robotics, and Autonomous Systems,
+1(1):187–210, 2018. 1
+[25] Apoorv Singh. End-to-end autonomous driving using
+deep learning: A systematic review. arXiv preprint
+arXiv:2311.18636, 2023. 1
+[26] Ardi Tampuu, Tambet Matiisen, Maksym Semikin, Dmytro
+Fishman, and Naveed Muhammad. A survey of end-to-end
+driving: Architectures and training methods. IEEE Transac-
+tions on Neural Networks and Learning Systems, 2020. 1
+[27] Shuai Wang, Jiahu Qin, Menglin Li, and Yaonan Wang.
+Flowdrivenet: An end-to-end network for learning driving
+policies from image optical flow and lidar point flow. In2021
+IEEE International Conference on Robotics and Automation
+(ICRA), pages 1861–1867. IEEE, 2021. 3
+[28] Yi Xiao, Felipe Codevilla, Akhil Gurram, Onay Urfalioglu,
+and Antonio M L ´opez. Multimodal end-to-end autonomous
+driving. IEEE Transactions on Intelligent Transportation
+Systems, 23(1):537–547, 2020. 3
+[29] Huazhe Xu, Yang Gao, Fisher Yu, and Trevor Darrell. End-
+to-end learning of driving models from large-scale video
+datasets. In Proceedings of the IEEE conference on computer
+vision and pattern recognition, pages 2174–2182, 2017. 2
