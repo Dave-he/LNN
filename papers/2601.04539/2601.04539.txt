@@ -1,0 +1,1216 @@
+Paradoxical noise preference in RNNs
+Noah Eckstein eckstein.81@osu.edu
+Department of Mechanical and Aerospace Engineering
+The Ohio State University
+Manoj Srinivasan srinivasan.88@osu.edu
+Department of Mechanical and Aerospace Engineering
+The Ohio State University
+Abstract
+In recurrent neural networks (RNNs) used to model biologica l neural networks, noise is typ-
+ically introduced during training to emulate biological va riability and regularize learning.
+The expectation is that removing the noise at test time shoul d preserve or improve perfor-
+mance. Contrary to this intuition, we ﬁnd that continuous-t ime recurrent neural networks
+(CTRNNs) often perform best at a nonzero noise level, often a pproximately the same level
+used during training. This noise preference typically aris es when noise is injected inside
+the neural activation function; networks trained with nois e injected outside the activation
+function perform best with zero noise. The phenomenon arise s robustly in diverse tasks for
+large enough training noise including function approximat ion, maze navigation, 2D path in-
+tegration, and a multi-task suite from cognitive neuroscie nce; we also show the phenomenon
+arising in feedforward neural networks, not just in RNNs. Th rough analyses of simple
+function-approximation and single-neuron regulator task s, we show that the phenomenon
+stems from noise-induced shifts of ﬁxed points (stationary distributions) in the underlying
+stochastic dynamics of the RNNs, thereby providing some mec hanistic interpretability of the
+phenomenon. These ﬁxed point shifts are noise-level depend ent and bias the network out-
+puts when the noise is removed, degrading performance. Anal ytical and numerical results
+show that the bias arises when neural states operate near act ivation-function nonlinearities,
+where noise is asymmetrically attenuated, and that perform ance optimization incentivizes
+operation near these nonlinearities; such performance inc entives exist for networks with
+noise inside the activation function, but not for networks w ith noise outside the activation
+function, explaining why only noise-in networks show prefe rence. Thus, networks can overﬁt
+to the stochastic training environment itself rather than j ust to the input–output data. The
+phenomenon is distinct from stochastic resonance, wherein nonzero noise enhances signal
+processing. Our ﬁndings reveal that training noise can beco me an integral part of the compu-
+tation learned by recurrent networks, with implications fo r understanding neural population
+dynamics and for the design of robust artiﬁcial RNNs.
+1 Introduction
+Recurrent neural networks (RNNs) are central in computatio nal neuroscience as models of population-level
+computation (Güçlü & Van Gerven, 2017; Yang & Molano-Mazón, 2021; Barak, 2017; Driscoll et al., 2024;
+Yang et al., 2019; Wang et al., 2021). Noise is commonly intro duced during the training of these RNNs (e.g.,
+Yang et al. (2019); Driscoll et al. (2024)). One major reason for this is to model the noisy environment in
+which biological neurons must operate (Faisal et al., 2008) , as multiple notable neural phenomena have been
+shown to result from mechanisms that only emerge to reject or otherwise address noise (e.g., Burak & Fiete
+(2012); Krishna et al. (2024)). Similarly, noise is essenti al for modeling the generative behavior of biolog-
+ical neural networks (Bredenberg et al., 2026). Another maj or reason to add noise during training is for
+regularization (Lim et al., 2021). Such noise promotes stab le training and reduces sensitivity to individ-
+ual neural activities or weights, discouraging sharp minim a and eﬀectively acting as a complexity penalty
+1
+arXiv:2601.04539v2  [cs.NE]  1 Jun 2026
+(Bishop, 1995; You et al., 2019; Noh et al., 2017; Lim et al., 2 021). If noise served only as regularization,
+removing it at test time should maintain or improve performa nce. Contrary to this expectation, we ﬁnd
+that continuous-time recurrent neural networks (CTRNNs; Y ang et al. (2019); Driscoll et al. (2024), Figure
+1) perform best at a nonzero noise level, typically matching the training noise. Thus, the networks develop
+a preference for a particular noise level. We analyze the dyn amical basis of this noise preference, showing it
+arises from how noise shifts the stationary distributions o f the underlying stochastic dynamics, suggesting a
+mechanistic basis of the phenomenon. We examine diﬀerent no ise injection schemes to identify conditions
+under which a preference naturally develops. Though remini scent of stochastic resonance-like phenomena
+in which noise enhances signal processing (Katada & Nishimu ra, 2009; Metzner et al., 2024; Krauss et al.,
+2019), our noise preference phenomenon is mechanistically distinct, implying that noise-facilitated behavior
+may have a broader computational role in neural systems.
+Win 
+output z(t) 
+input u(t) 
+noise 
+Wout , Bout
+h(t) neural 
+state 
+Recurrent neural network with input and output 
+recurrent 
+connections  W ij 
+Figure 1: A continuous-time recurrent neural network with i nput and output at each time. Variants of this
+network are used in computational neuroscience (Yang et al. , 2019; Driscoll et al., 2024), and the eﬀect of
+synaptic noise on such networks is studied here.
+2 Methods
+2.1 CTRNN architecture
+CTRNNs (Figure 1) implement ordinary diﬀerential equation s that coarsely model synaptic interactions
+among a population of biological neurons (Barak, 2017; Yang et al., 2019; Driscoll et al., 2024). Their
+internal dynamics are usually described by the equation:
+τ dh
+dt = − h + f (Wrech + Winu + Bin + σ inη ), (1)
+where h ∈ Rn is a vector denoting the neural state (i.e., the state of the n etwork), usually modeling neuronal
+ﬁring rates in biological networks (Yang et al., 2019), n is the number of neurons, τ ∈ R is the neural time
+constant, Wrec ∈ Rn× n is the recurrent weight matrix, u ∈ Rm is the vector containing various inputs (e.g.,
+sensory feedback, task identity), Win ∈ Rn× m is the input weight matrix, Bin ∈ Rn is the neural bias vector,
+σ inη ∈ Rn is a Gaussian white noise process with variance σ 2
+in along all dimensions, and f (·) is a scalar
+nonlinear activation function, applied element-wise over vector arguments. The networks produce outputs
+z ∈ Rp via an aﬃne transform z = Wouth + Bout, where Wout ∈ Rp× n and Bout ∈ Rp are the output weight
+matrix and bias vector, respectively.
+To simulate these networks, we integrate Equation 1 by Euler ’s method (as in Yang et al. (2019) and others),
+giving the discrete time equation:
+ht+1 = (1 − γ )ht + γf (Wrecht + Winut + Bin + N (0, σ 2
+in)), (2)
+where γ = ∆ t/τ is a non-dimensional ratio of ∆ t, the discrete timestep, and τ , the neural time constant,
+and σ in is the standard deviation of the injected noise, which is sam pled independently for each neuron in
+each timestep. Unless otherwise stated, we used τ = 0. 1 and ∆ t = 0. 02, resulting in γ = 0. 2. For f (·), most
+of our experiments use rectifying activation functions, ei ther ReLU or its smooth approximation, SoftPlus
+(see Section 2.2.5 for one exception).
+2
+As presented thus far, the noise is injected inside the activ ation function, as is common in the computational
+neuroscience literature (e.g., Yang et al. (2019); Driscol l et al. (2024)). This placement ensures positivity
+of the neural state h, facilitating their interpretation as ﬁring rates. Howeve r, some important modeling
+work in computational neuroscience uses noise injected out side the activation function (Burak & Fiete, 2012;
+Bredenberg et al., 2026; Krishna et al., 2024), as such formu lations may still permit rate-based interpretation
+as long as neural activations are large in comparison to the n oise. Thus, we also consider a variant of Equation
+2 with the noise added outside the activation function:
+ht+1 = (1 − γ )ht + γ (f (Wrecht + Winut + Bin) + N (0, σ 2
+out)). (3)
+We refer to networks trained with noise injected inside and o utside their activation functions as noise-in
+and noise-out networks, respectively, and we refer to their noise as either pre-activation noise (for noise-in
+networks) or post-activation noise (for noise-out network s).
+2.2 Tasks for illustrating the eﬀect of noise
+To study the eﬀect of noise in CTRNNs (Figure 1), we trained bo th noise-in and noise-out variants on
+simple tasks and evaluated their performance, focusing on w hether or not there is a nonzero noise level for
+optimal performance at test time. We mainly focus on a simple function approximation task to illustrate the
+phenomenon, but we also include a single-neuron regulator t ask to build intuition and three more complex
+tasks/task families used in cognitive neuroscience to test whether the results we see in these simpler tasks are
+general enough to apply in more neuroscientiﬁcally relevan t contexts. All these tasks are supervised learning
+tasks, trained by minimizing a mean squared error loss funct ion; see Appendix A for further training details.
+We provide the essential elements of the tasks in the remaind er of this section; see Appendix B for detailed
+equations and implementation information.
+2.2.1 Function computation tasks
+In the function computation tasks, we require the neural net works to compute univariate functions ( g(x), x ∈
+R, g (x) ∈ R) over some compact interval. The networks receive a constan t one-dimensional input x for the
+argument of the function being approximated, and the networ k output at the end of a “computation” period
+must match the corresponding value of the function g(x). We tested with two slightly diﬀerent readout
+procedures: one with a ﬁxed readout time and another where th e readout time was uniformly random within
+a ﬁnal interval, forcing the network to maintain the correct output g(x) across multiple steps. We considered
+two diﬀerent target functions: g(x) = sin( x) for x ∈ [0, 2π ] and g(x) = tanh( x) for x ∈ [− 4, 4].
+2.2.2 Maze navigation task
+Maze navigation tasks have a long history in behavioral and s ystems neuroscience (Olton, 1979; Ainge et al.,
+2007). In our maze navigation task, the recurrent neural net work acts as an instantaneous velocity controller
+for a particle in a ﬁxed maze environment (Figure 3a). The obj ective is to navigate the particle from one
+maze vertex (the blue X’s in Figure 3a), to another, pausing a t the vertices along the way. The particle is
+perturbed by random velocity ﬂuctuations that the network m ust reject as it navigates. In each trial, the
+starting and destination particle positions are sampled un iformly at random from the list of maze vertices.
+The networks receive constant inputs communicating the coo rdinates of their destination vertex, the current
+position of the particle, and an indication of whether the ne twork should be paused at a vertex or traveling
+from one vertex to the next.
+2.2.3 Multi-cognitive task suite
+RNNs trained to perform many diﬀerent tasks in diﬀerent cont exts have been of interest to the computational
+neuroscience community as a kind of "model organism" for stu dying mechanisms for ﬂexible cognitive control
+(Yang et al., 2019; Driscoll et al., 2024; Khona et al., 2023) . In this work, we trained RNNs on a subset of
+the 20 tasks popularized by Yang et al. (2019), all of which re quire networks to manipulate 2D directional
+stimuli and/or responses in imitation of canonical animal c ognitive tasks with saccadic eye movements as
+the trained response modality. Of the original set of 20 task s, we chose the following 6 (here, we use the task
+3
+names from Driscoll et al. (2024)). ReactPro/ReactAnti: In the pro version, networks must produce an
+output that matches the directional stimulus as soon as the s timulus appears. In the anti version, the network
+output must be opposite the presented stimulus. MemoryPro/MemoryAnti: These are similar to the
+React tasks, but the outputs must be produced after a "memory period" of variable length, during which the
+stimulus is removed, and the network must wait for a cue befor e releasing its output; DelayPro/DelayAnti:
+These are similar to the Memory tasks, but the stimulus remai ns on, and the network must release its output
+with a ﬁxed delay after stimulus onset and without any cueing . We follow the training procedure and task
+implementation of Driscoll et al. (2024), with some slight d eviations in the training procedure and task
+design as described in Appendices A and B.
+2.2.4 Path integration task
+Path integration tasks, that is, tasks in which organisms mu st maintain an accurate estimate of their spatial
+position and/or orientation by integrating self-motion cu es, have been an inﬂuential source of evidence in the
+study of spatial cognition and its neural substrates, both i n experimental and computational neuroscience
+(Samsonovich & McNaughton, 1997; McNaughton et al., 2006; C ueva & Wei, 2018; Sorscher et al., 2023).
+In this work, we trained RNNs on a version of the path integrat ion task studied in Cueva & Wei (2018). The
+network observes a particle that is randomly traversing a tw o-dimensional square room, receiving sensory
+inputs for speed and heading at every timestep, and it must ou tput estimates of the current position of the
+particle within the room by integrating this sensory inform ation. See Appendices A and B for training and
+task details.
+2.2.5 Single-neuron regulator task
+To illustrate the eﬀect of noise in a simpler task with fewer p arameters so we could more easily isolate
+mechanisms, we consider a simple regulator task (Anderson & Moore, 2007), so simple that a network with
+only one neuron recurrently connected to itself, no inputs, and direct neural output (that is, the output
+is just the neural state ht) can do it. In this single-neuron regulator task, the neural state must match
+a constant setpoint r in the presence of noise, which, with some added complexitie s, is also the essential
+objective of the function computation, maze navigation, an d multi-cognitive tasks. For our experiments with
+the single-neuron regulator task, we injected both pre- and post-activation noise, subsuming Equations 2 and
+3 as special cases; we varied the proportion of these noise le vels to observe how the loss function landscape
+varies as the noise goes from primarily pre-activation to pr imarily post-activation. As we will show, the
+noise type (e.g., pre- or post-activation) is a key independ ent variable in determining the ﬁnal role of the
+noise in the trained networks. With only one neuron and no inp uts or explicitly computed outputs, the only
+trainable parameters are the scalar recurrent weight and th e scalar neural bias. The task itself is eﬀectively
+parameterized by only two dimensionless parameters: the ra tio of the pre-activation noise standard deviation
+to the post-activation noise standard deviation ( σ in/σ out) and the ratio of the setpoint value to the post-
+activation noise standard deviation ( r/σ out). For these experiments, we tried both ReLU and tanh activat ion
+functions to assess the role of rectiﬁcation.
+3 Results
+3.1 Function computation networks trained with noise insid e, not outside, their activation functions
+require noise for best performance.
+We trained both noise-in and noise-out networks (Equations 2 and 3) on the function computation tasks and
+tested them under a range of noise levels, including zero noi se at the low end. For noise-in networks trained
+with suﬃciently high training noise (Figure 2b), root mean s quared error (RMSE) was minimized when
+the test noise roughly matched the training noise (Figure 2a ). This shows that the noise does more than
+act as a regularizer: it becomes integral to the computation . This noise-preference phenomenon emerges
+repeatably, for instance, networks trained independently with diﬀerent initializations have similar noise-
+preference curves (Appendix Figure A1). In contrast, noise -out networks performed best with zero noise
+(Figure 2d and Appendix Figure A2), consistent with the nois e serving a purely regularizing role. In noise-in
+4
+a) Noise-in function computation networks prefer the training noise level 
+c) Trajectory schematic: noise-in networks have 
+      higher total error for high or low noise 
+d) Noise-out function computation networks prefer zero noise 
+0 0.1 
+noise standard deviation 
+0
+0.05 
+0.1 
+0.15 
+0.2 
+0.25 
+sin(x), ﬁxed readout time 
+0
+0.1
+0.2
+sin(x), random readout time 
+0 0.1 0 0.1
+0 0.1 0 0.1
+0
+0.07
+tanh(x), random readout tanh(x), ﬁxed readout 
+tanh(x), random readout tanh(x), ﬁxed readout 
+root mean squared error 
+mean error 
+error standard deviation 
+training noise level 
+0 0.1 
+noise standard deviation 
+0
+0.02 
+0.04 
+0.06 sin(x), ﬁxed readout time 
+0
+0.08
+sin, random readout time 
+0
+0.025
+0
+0.03
+total RMSE 
+and mean error 
+have a noise 
+preference 
+the training 
+noise is 
+prefered 
+root mean squared error 
+mean error 
+error standard deviation 
+training noise level 
+the mean error 
+is unaﬀected by 
+changing noise 
+the training noise 
+is not special 
+random error 
+always grows with 
+the noise 
+total RMSE 
+has zero noise 
+preference 
+error and error components error and error components 
+Optimum: Network with training noise 
+has lowest total error (bias + variance) 
+Network with larger input 
+noise has higher bias & variance 
+Zero input noise has 
+large bias error 
+time t 00
+Output z(t) 
+Target 
+value 
+b) Noise-in function computation networks only 
+     develop a nonzero noise preference if 
+     training noise is suﬃciently high 
+10/zero.numerator
+10/hyphen.numerator/one.numerator 
+10/hyphen.numerator/two.numerator 
+10/hyphen.numerator/three.numerator 
+10/hyphen.numerator/three.numerator 10/hyphen.numerator/two.numerator 10/hyphen.numerator/one.numerator 10/zero.numerator
+noise standard deviation 
+error and error components 
+network with 
+low training noise 
+prefers zero noise 
+Higher training 
+noise sharpens
+preference for 
+training noise 
+0.06 
+0 0.1
+0
+0 0.1
+Figure 2: Simple function computation: Noise-in networks prefer the training noise level, but
+noise-out networks prefer zero noise. a) Root mean squared error, mean error, and error standard
+deviations for noise-in function computation networks. Th e best performance occurs when testing at or
+near the training noise level, and this preference is driven by a non-monotonic dependence between the
+noise level and the mean error (i.e., the systematic error). This indicates that passing the noise through
+the activation function somehow induces a noise-level-dep endent systematic bias in the network outputs. b)
+Noise-preference results (same color meanings as in previo us panel) for ﬁxed readout time sine computation
+networks trained with various training noise levels. Noise preference becomes more pronounced for greater
+training noise, with very low training noise resulting in ze ro noise preference. Overall performance at the
+preferred noise gets worse as training noise increases. Not e the logarithmic axes. c) Schematic illustrating
+that the network output distribution has the lowest total sq uared error at the training noise despite a larger
+error variance than the zero noise case. The mean trajectory is depicted by a thick line and individual
+realizations by thin lines. d) Root mean squared error, mean error, and error standard deviations for noise-
+out function computation networks. Unlike the noise-in net works, the noise-out networks perform best when
+tested with zero noise, and the systematic error appears una ﬀected by changes in the noise.
+5
+networks (Figure 2a-b), the increase in performance deﬁcit s away from the training noise levels were largely
+driven by bias rather than variance. While error variance gr ew roughly linearly with the variance of the
+injected noise, systematic error (bias) changed non-monot onically, being high for both zero noise and for
+noise much higher than training noise. The non-monotonicit y in the bias error is qualitatively similar to the
+non-monotonicity in the total error, except that the bias er ror is minimized at a slightly higher noise level
+than the total error. This suggests that noise-dependent ou tput biases, linked to the activation function,
+cause the observed preference.
+3.2 Noise preference also emerges in more complex, neurosci entiﬁcally relevant networks and simple
+feedforward networks.
+The maze navigation task, multi-cognitive task suite, and p ath integration task conﬁrmed that this eﬀect
+generalizes beyond simple function approximation. Noise- in networks trained on these three task families
+also achieved their best performance when tested at a nonzer o noise level close to the training noise level
+(Figure 3b-d), although, in detail, the optimal performanc e for the multi-cognitive task suite and the path
+integration was further away from and generally smaller tha n the training noise level. Just as for the function
+computation RNNs, signiﬁcant deviations from the training noise produced performance deﬁcits, and this
+non-monotonicity of total error is largely driven by error b ias, not error variance. Speciﬁcally, in these RNN
+experiments, we ﬁnd that the error bias is optimal at nearly t he training noise level and the error standard
+deviation is monotonic increasing: these two observations imply that the total error will have a minimum
+to the left of the training noise level as seen in these experi ments. These more complex tasks show that the
+noise preference mechanism persists in more realistic, neu roscientiﬁcally rich settings. We also trained simple
+noise-in feedforward multilayer perceptrons (MLPs) on a fu nction computation task (only the sine function,
+see Appendix A for network and training details) to see if the phenomenon is speciﬁc to recurrent networks
+or if it might emerge in a network with no explicit temporal dy namics; we found that a noise preference,
+again driven by error bias, emerges here as well (Figure 3d). Unlike in the RNNs, for these feedforward
+networks, the error bias was minimized at slightly higher th an the training noise level. Taken together, these
+results suggest the noise preference phenomenon could be of interest for multiple areas within the broader
+landscape of neural network research.
+3.3 Fixed points of stochastic RNNs can be shifted by noise
+Prior work has shown that CTRNNs solve tasks through low-dim ensional dynamical features such as ﬁxed
+points (Driscoll et al., 2024; Yang et al., 2019; Vyas et al., 2020). For a deterministic dynamical system with
+constant inputs, ﬁxed points are invariant points in state s pace with ˙h = 0; that is, a network starting at a
+ﬁxed point remains there forever in the absence of perturbat ions (e.g., point attractors are asymptotically
+stable ﬁxed points). Both our function computation and maze tasks require maintaining static outputs over
+time, making asymptotically stable ﬁxed points natural com putational primitives. While there are no true
+ﬁxed points for the stochastic neural networks (Equations 1 -3), for these systems, we use “ﬁxed point” to
+refer to the mean of the stationary distribution near point a ttractors.
+In the following subsections, we ﬁrst demonstrate how both p re- and post-activation noise can induce shifts in
+the eﬀective ﬁxed point locations of a noisy CTRNN. Then, in S ection 3.4, we demonstrate that these shifts
+quantitatively predict noise preference behavior, thus pr oviding a dynamical mechanism for the phenomenon.
+3.3.1 Noise can shift ﬁxed points in noise-in networks
+In noise-in networks, the activation function f (·) is applied after the noise samples are added to the summed
+and biased synaptic inputs, namely, Wrecht + Winut + Bin (Equation 2). Therefore, for a single neuron in a
+noise-in network that has settled into a stationary state di stribution, the argument to the activation function
+will be a sum of samples from two distributions, one correspo nding to the summed and biased synaptic input,
+which generally will come from a distribution with nonzero m ean µ s, and one corresponding to the injected
+noise, which by design will come from a distribution with zer o mean N (0, σ 2
+in). Ignoring the synaptic
+input variability, the excitatory term in the discrete upda te rule for this neuron is then proportional to
+f (µ s+N (0, σ 2
+in)). (If we do not ignore variability in the synaptic input ter m, we can just lump that variability
+6
+x
+x
+x
+x
+x
+x
+a) Maze environment schematic 
+b) Noise-in maze navigation networks develop a noise preference 
+Non-zero noise preference in networks of broader interest 
+0 0.04 0.08 0.12 
+noise standard deviation /g86in 
+error and error components 0
+0.01
+0.02
+0.03 root mean squared error 
+total error minimized 
+near training noise 
+mean error 
+error standard deviation 
+Particle starts on 
+the starting vertex 
+Starting and destination 
+vertices selected at 
+random for each trial 
+Network 
+inputs signal 
+what the 
+destination is 
+Particle must stop 
+to wait for a signal 
+at vertices along the 
+route 
+training noise level 
+c) Noise-in cognitive multitask networks develop a noise preference 
+noise standard deviation /g86in 
+error and error components 
+root mean squared error 
+total error minimized 
+at non-zero noise 
+mean error 
+error standard deviation 
+training noise level 
+0 0.04 0.08 0.12 0.160
+0.02
+0.04
+0.06
+error bias minimized 
+at training noise 
+e) Noise-in function computation with feedforward MLPs 
+ develop a noise preference 
+noise standard deviation /g86in 
+error and error components 
+root mean squared error 
+total error minimized 
+near training noise 
+mean error 
+error standard deviation 
+training noise level 
+0 0.04 0.08 0.12 0.16 0
+0.03 
+0.06 
+0.09 
+0 0.04 0.08 0.12 0.16 0
+0.05 
+0.15 
+0.25 
+noise standard deviation /g86in 
+error and error components 
+root mean squared error 
+mean error 
+error standard deviation 
+training noise level 
+total error minimized 
+near training noise 
+d) Noise-in path integration networks develop a noise preference 
+Figure 3: Maze navigation task schematic and noise preference result s for assorted cases of
+broader interest. a) Schematic of the maze environment. The blue x’s show the lo cations of maze vertices
+where the network has to stop and wait as it navigates from the start vertex to the destination vertex. The
+red arrows between vertices denote the multiple short jaunt s that make up one of the routes through the
+maze. b) Root mean squared error, mean error, and error stand ard deviation for a noise-in maze navigation
+network when tested at a variety of diﬀerent noise levels. As with the function computation networks, the
+network performs best near the training noise level, and the performance deﬁcits at other noise levels are
+driven by error bias, not variance. c) Just as in the previous networks, noise-in networks trained on the multi-
+cognitive task suite develop a noise preference. Here, the o ptimal performance occurs at a noise level more
+distant from the training noise, but this diﬀerence is due to greater error variance at higher noise levels; the
+error bias still clearly favors a noise level close to the tra ining noise. d) Noise-in path integration networks
+also develop a noise preference, demonstrating that the phe nomenon occurs in networks that use higher-
+dimensional attractors, not just point attractors. e) Even feedforward multilayer perceptrons trained on
+the function computation task exhibit a noise preference, d emonstrating that this phenomenon is relevant
+outside the context of time-evolving networks. Error stati stics are from an ensemble of simulations with
+diﬀerent noise realizations; in particular, the error stan dard deviation indicates this trial-to-trial variance.
+7
+with the injected noise term to reach the same qualitative co nclusions.) If µ s is large in comparison to σ in
+and negative, the noise will only very rarely push the argume nt of the activation function high enough to
+excite the neuron, eﬀectively making it such that the noise d oes not aﬀect this neuron. Similarly, if µ s is
+large and positive, the noise will only very rarely push the a rgument of the activation function low enough
+to signiﬁcantly involve the saturation of the activation fu nction; this makes the noise act as excitation and
+inhibition in equal proportion, resulting in zero net eﬀect on the expected state of the neuron. If |µ s| is on
+the order of σ in, however, the argument regularly ﬂuctuates in and out of the saturated region, resulting in
+the selective attenuation of inhibitory noise samples. In t his situation, the noise has a net excitatory eﬀect
+on the expected activation level of the neuron, and this eﬀec t is σ in-dependent (Figure 4a), because a larger
+σ in results in more frequent, larger magnitude crossings into a nd out of the saturated region.
+Expanding this reasoning to all the neurons in the network, w e see that the locations of ﬁxed points situated
+near boundaries between linear regions of the dynamics (whe re some neurons receive a net excitatory drive
+from the noise) are noise-level dependent. If the network ha s been fully optimized for some task that depends
+on the location of such a ﬁxed point, we might expect noise lev el changes at test time to worsen performance.
+3.3.2 Noise can shift ﬁxed points in noise-out networks
+Consider the piecewise-linear diﬀerential equation given by:
+˙h =
+{
+− θ largeh + ση when x ≤ 0 and
+− θ smallh + ση when x > 0 (4)
+where 0 < θ small < θ large , and η is a white noise process. This is a piecewise version of an Orn stein-Uhlenbeck
+(OU) process (Uhlenbeck & Ornstein, 1930), and we can implem ent it in a noise-out, one-neuron CTRNN
+with ReLU activation and no inputs or activation bias as foll ows:
+τ dh
+dt = − h + ReLU(wrech) + σ
+θ small
+η, with τ = 1
+θ small
+, and wrec = − θ large − θ small
+θ small
+(5)
+In the absence of noise ( σ out = 0), this system has a single stable ﬁxed point at h = 0 (i.e., its ﬁxed point
+is exactly on the boundary between linear regions), but for σ out > 0, the stationary distribution acquires
+an increasing positive shift as the noise level increases (F igure 4b). This is because noise-induced deviations
+in the positive direction persist for longer owing to the sma ller decay rate on that side, and the larger the
+deviations are, the greater the discrepancy between the pos itive and negative decay times tends to be.
+Similar to the situation for noise-in networks, this emerge nt shift in the stationary distribution depends on
+the ﬁxed point being close to or coincident with the boundary between linear regions. If we add a large
+negative neural bias term inside the activation function in Equation 5, it would push the piecewise boundary
+to some large negative h value while leaving the ﬁxed point at h = 0. In this situation, there would be a
+negligible noise-induced shift in the stationary distribu tion because the dynamics would become equivalent
+to the standard Ornstein-Uhlenbeck process except in the ra re case of very large negative excursions from
+the ﬁxed point. We would get a similar result if we included a l arge positive neural bias, but in that case,
+both the piecewise boundary and the ﬁxed point would move in t he positive direction, but the boundary
+would move farther, producing a gap between the two.
+3.4 Noise-induced ﬁxed point shifts predict low-noise perf ormance deﬁcits
+To investigate the possibility that ﬁxed point shifts are re sponsible for the noise preference, we ﬁrst computed
+the ﬁxed points of our noise-in function computation networ ks, both with and without accounting for noise
+bias eﬀects; see Appendix C for the ﬁxed point ﬁnding procedu re. We computed the diﬀerence between the
+zero noise and training noise ﬁxed point locations, and we pr ojected these training-noise-induced ﬁxed point
+shifts by the transformation that produces the output ( z = Wouth + Bout) to compute the resulting shifts in
+the output. We found that these output shifts approximately predict the input-speciﬁc error biases observed
+when testing the networks with zero noise (Figure 5).
+8
+0
+1
+2
+3
+3 2 1 0 -1 -2 -3 
+σ = 0 
+σ = 0.5 
+σ = 1 
+σ = 1.5 
+σ = 2 
+expected activation  f( . ) 
+expected activation function argument /g80s
+a) Noise-in neuron: Mean excitation increases with 
+    the noise level when near saturation 
+0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 10
+0.1 
+0.2 
+0.3 
+0.4 
+0.5 
+0.6 effective fixed point shift 
+injected noise standard deviation /g86out
+b) Noise-out network: Noise shifts the effective fixed point 
+when a fixed point is between linear regions. 
+Noise can eﬀectively shift the ﬁxed points in both noise-in and noise-out networks 
+noise has 
+low eﬀect 
+noise has 
+low eﬀect 
+noise has 
+high eﬀect 
+dh/dt 
+h
+noise-free dynamics 
+Figure 4: Noise can shift the ﬁxed points of both noise-in and noise-ou t networks if they have
+ﬁxed points near a boundary between linear regions of their d ynamics. a) Functional relationship
+between the mean of a normal distribution before and after tr ansformation by the ReLU activation function
+for multiple diﬀerent standard deviations. When the absolu te value of the mean is on the order of the
+standard deviation, interaction with the nonlinearity cau ses a variance-dependent positive shift in the mean
+of the transformed distribution. As a result, the locations of ﬁxed points in a noise-in network will depend on
+the noise level if those ﬁxed points are situated near bounda ries between linear regions in the dynamics. b)
+Functional relationship between the mean of the stationary distribution of a piecewise Ornstein-Uhlenbeck
+process (Equations 4 and 5) and the standard deviation of the noise. Inset shows a noise-free single-neuron
+version of such a noise-out network. As the standard deviati on grows, the stationary distribution shifts in
+the positive direction because deviations in that directio n take longer to decay. This single-neuron example
+illustrates why the locations of ﬁxed points in a noise-out n etwork depend on the noise level if those ﬁxed
+points are situated near boundaries between linear regions .
+0 1 2 3 4 5 6 7
+input value x 
+0
+0.1 
+0.2 
+0.3 
+0.4 
+0.5 
+0.6 
+sin(x), ﬁxed readout time 
+0 7 input value x 
+0
+0.1 
+0.2 
+0.3 
+0.4 
+0.5 
+sin(x), random readout time 
+-4 -2 0 2 4
+input value x 
+0
+0.02 
+0.04 
+0.06 
+0.08 
+tanh(x), ﬁxed readout time 
+-4 -2 0 2 4
+input value x 
+tanh(x), random readout time 
+error with zero noise 
+mean error with training noise 
+output ﬁxed point shift 
+magnitude 
+the ﬁxed point shifts 
+predict the error with 
+zero noise  
+errors and error predictions 
+Noise-induced ﬁxed point shifts predict error 
+Figure 5: Noise-induced ﬁxed point shifts predict input-speciﬁc err or in noise-in function com-
+putation networks tested with zero noise. Noise induced ﬁxed point shifts projected onto the output
+matrix closely track the zero noise error proﬁle across the i nput domain, conﬁrming that noise-induced ﬁxed
+point shifts are responsible for the noise preference.
+9
+3.5 Single-neuron regulator: noise inside the activation f unction alters the loss landscape to favor
+solutions that rely on noise-induced ﬁxed point shifts
+Since both noise-in and noise-out networks can exhibit nois e-dependent ﬁxed point shifts, but we only see a
+noise preference in noise-in networks, we hypothesized tha t there may be some performance incentive speciﬁc
+to noise-in networks that drives the development of a prefer ence. Given our reasoning in Sections 3.3.1 and
+3.3.2, we sought to understand how the loss function varies w ith the distance between ﬁxed points and
+nonlinear boundaries in the dynamics. For simplicity, we us e the single-neuron regulator task to investigate
+this.
+In the single-neuron regulator task, the setpoint r determines where the neuron will attempt to center its
+stationary distribution. So by varying the setpoint, we con trol how close or how far the stationary distribution
+is from the saturation of the activation function. For the Re LU activation function, large positive setpoints
+encourage the stationary distribution to be far from the sat uration (where we do not expect noise preference),
+while small positive setpoints encourage stationary distr ibutions near the boundary of the saturation (where
+we may expect a noise preference). For the tanh activation fu nction, setpoints near zero encourage stationary
+distributions far from either saturation boundary, while s etpoints with absolute value close to one encourage
+stationary distributions near one of the saturation bounda ries. We trained many single-neuron regulators
+with either the ReLU or tanh activation functions, each with a diﬀerent combination of setpoint and pre-
+activation noise level, setting the post-activation noise level to one without loss of generality (implicitly scaling
+the problem by this noise level). This allowed us to observe w hich setpoints permit the best performance
+given the relative strength of the pre- and post-activation noise streams. We optimize the bias for various
+ﬁxed values of the recurrent weight because training both th e recurrent weight and the neural bias resulted
+in highly discrete, overshooting dynamics, which we do not o bserve in the other, more complicated networks.
+The single-neuron regulator experiments showed that there are regions in the parameter space where networks
+(both ReLU and tanh) exhibit a noise preference. When the pre -activation noise dominates the post-
+activation noise, the best networks tend to land inside or ne ar these regions with a noise preference, but
+when the post-activation noise dominates, they land square ly outside these regions (Figure 6). We suggest
+that this trend is due to a tradeoﬀ. If the stationary distrib ution straddles the saturation boundary, a portion
+of the pre-activation noise gets turned oﬀ, while leaving a p ortion of the post-activation noise out of reach
+for the recurrent weight to help in drawing the state back tow ard its expected value. Therefore, by placing
+the stationary distribution near saturation points, the ne twork can reduce the performance degradation
+caused by pre-activation noise at the price of exacerbating the performance degradation caused by post-
+activation noise (note that in our single neuron case, the pr ice of operation near saturation is just the
+increased inﬂuence of post-activation noise, but for multi -neuron networks without post-activation noise
+like the various other networks we present here, the price is really a loss of coupling between neurons, as
+saturated neurons become insensitive to their synaptic inp uts). For a network dominated by pre-activation
+noise, this is a good trade, so the stationary distribution s hould be placed near saturation, but for a network
+dominated by post-activation noise, this is a bad trade, so t he stationary distribution should be placed far
+from saturation. This is consistent with the observation th at networks with higher magnitude recurrent
+weights tolerate higher inside noise levels before opting t o place their setpoints near saturation boundaries
+(Figure 6), as networks with a larger recurrent weight are be tter able to reject noise without relying on
+the noise attenuation capability of the activation functio n; therefore, the pre-activation noise needs to be
+signiﬁcantly larger than the post-activation noise to ince ntivize the network to forgo the noise attenuation
+aﬀorded by the recurrent weight. Given the reasoning descri bed in Sections 3.3.1-3.3.2 and illustrated in
+Figure 4, which establishes that operation near saturation boundaries induces biases in network latents, and
+the evidence presented in Section 3.4 and Figure 5, which est ablishes that the noise preference in our function
+computation networks was likely a downstream result of such biases, this tradeoﬀ we describe is the likely
+cause for the discrepancy we observed between noise-in netw orks and noise-out networks. Put simply, noise-
+out networks tend to perform better on tasks involving outpu t variance reduction if they operate neurons
+far from saturation (where we do not expect a noise preference), while noise-in networks tend to perform
+better on such tasks if they operate neurons near saturation (where we do expect a noise preference), and
+this is because noise-in networks can leverage the activati on function saturation for noise attenuation, while
+noise-out networks cannot. Further, this reasoning does no t require that the activation function be rectifying,
+10
+simply that it should be saturating, which is consistent wit h the presence of the phenomenon in both ReLU
+and tanh single-neuron regulator experiments (Figure 6a-b ).
+w = -1 
+0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1
+Setpoint location 
+0.2 
+0
+0.4 
+0.6 
+0.8 
+1
+1.2 
+1.4 
+1.6 
+1.8 
+2
+Inside noise level 
+w = -2 
+00 0.5 1
+Setpoint location 
+0 0.5 1
+Setpoint location 
+0 0.5 1
+Setpoint location 
+1
+2Inside noise level 
+w = -3 w = -4 
+zero noise inside during testing 
+worsens performance 
+zero noise inside during testing 
+improves performance 
+optimal setpoint location for 
+each inside noise level 
+closer to 
+boundary 
+farther from 
+boundary 
+inside noise 
+dominates 
+outside noise 
+dominates 
+a.) Single-neuron ReLU network 
+b.) Single-neuron tanh network 
+ Noise preference emerges when inside noise dominates outside noise in saturating single-neuron regulators 
+W = -1
+Setpoint Location 
+-1 -0.8 -0.6 -0.4 -0.2 0 0.2 0.4 0.6 0.8 1
+0.2
+0.4
+0.6
+0.8
+1
+1.2
+1.4
+1.6
+1.8
+2
+zero noise inside during testing 
+worsens performance 
+zero noise inside during testing 
+improves performance 
+optimal setpoint location for 
+each inside noise level 
+inside noise 
+dominates 
+outside noise 
+dominates 0
+closer to 
+boundary 
+farther from 
+boundary 
+closer to 
+boundary 
+-1 0 10
+1
+2Inside noise level 
+w = -2 
+Setpoint location 
+Inside noise level 
+-1 0 1
+w = -3 
+Setpoint location 
+-1 0 1
+w = -4 
+Setpoint location 
+Figure 6: Single neuron regulator experiments show that increasing i nside noise-level encourages
+setpoints closer to the saturation boundaries a) Using ReLU activation function. As the pre-activation
+noise grows in relation to the post-activation noise, the op timal setpoint gets closer to the saturation boundary
+(r = 0 for ReLU, r = ± 1 for tanh), eventually getting close enough to produce a noi se preference. This
+is true for all values of the recurrent weight, w, that we sampled except for w = − 4 in the tanh network
+(though slightly higher inside noise would likely produce a noise preference). This explains why we see a
+noise preference in the noise-in (and not noise-out) functi on computation networks. b) Using tanh activation
+function also results in noise preference: because tanh sat urates for both high and low input values, we
+correspondingly ﬁnd noise preference when the setpoint loc ation is high or low.
+11
+4 Discussion
+Using a simple function computation framework, a maze navig ation framework, a standard multitask frame-
+work from cognitive neuroscience, and a path integration fr amework as illustrative examples, we have shown
+that noisy CTRNNs sometimes develop a preference for a speci ﬁc optimal noise level, equal to or close to
+that used during training: changes in the noise level at test time result in worse performance. When noise
+is injected before the application of the activation functi on, the networks tend to develop a noise preference,
+but when noise is injected after, they do not. By analyzing th e ﬁxed points of the noise-in function computa-
+tion networks, we found that the noise preference is driven b y noise-variance-dependent shifts in the neural
+state distributions. These shifts are caused by inhomogene ous noise attenuation that only occurs when the
+neural state is near a boundary between linear regions of the network dynamics. Though the locations of the
+stationary distributions of both noise-in and noise-out ne tworks will depend on the noise if they are placed
+near such boundaries, experiments with a single-neuron reg ulator problem showed that only the noise-in
+networks have a performance incentive to do so, thus explain ing why only the noise-in networks developed
+a noise preference.
+Our ﬁndings demonstrate that training noise can become an in tegral component of the computation learned
+by a network, shaping dynamical structure and inducing syst ematic output biases that render performance
+intrinsically dependent on the training noise level rather than merely regularized by it. For computational
+neuroscience, this suggests a concrete hypothesis: neural circuits operating near nonlinear activation bound-
+aries may leverage—or become functionally dependent on—sy naptic variability to stabilize activity and
+reduce variance, implying that some observed noise sensiti vity in biological systems could reﬂect learned
+dynamical structure rather than incidental variability. F or machine learning researchers, the results high-
+light a subtle failure mode of noise injection, namely overﬁ tting to the stochastic training environment itself,
+and thereby contribute to the broader scientiﬁc objective o f understanding how dynamical systems perform
+computation under noise, clarifying when variability serv es as a stabilizer or regularizer versus a hidden
+dependency.
+4.1 Noise as regularization
+Our analyses focused on the role noise might play in computat ion beyond regularization, and we found that
+indeed, for noise-out networks, the noise can become an esse ntial part of the computation (Figure 2a), with
+greater training noise levels resulting in sharper noise pr eference (Figure 2b). Given our explanation for this
+noise preference phenomenon, which hinges on the networks b eing incentivized to reduce activation variance
+caused by the noise, this trend, where greater training nois e induces a sharper noise preference, makes sense.
+Less noise means networks have less to gain by operating neur ons near saturation. However, we also found
+that performance at the preferred noise level becomes worse as the training noise is increased for the simple
+function computation networks we studied (Figure 2b). This suggests that, in these simple networks, the
+noise does not actually serve as a regularizer, or at least, i t does not confer the test performance advantage
+we would hope of a regularizer. We point out that regularizat ion is not expected to improve performance
+on the training set. On the contrary, regularization is expe cted to improve performance on the test set
+by reducing model conformity to the tails of the training dis tribution, which necessarily means decreasing
+training performance. For these function computation task s, and for all tasks explored in this work, there was
+no notion of a test set; during both training and testing, bat ches were sampled generatively from the same
+task distribution (which, in all tasks, lacked particularl y heavy tails), so the training performance deﬁcit
+that one expects to result from regularization applies to te sting as well. In such cases, the best we can hope
+for from noise as a regularizer is to improve the stability of training. In the simple function computation
+networks, training was stable and fast across all training n oise levels, and the main noise level we used (0.1)
+was selected without tuning. However, for the maze navigati on network, we found that the training noise
+level we used represents an approximate lower bound for what is required to permit stable training. For lower
+noise levels, we observed issues with dynamical instabilit y, resulting in frequent and catastrophic explosions
+in the performance cost. We observed similar instability in the multi-cognitive task suite network, which we
+initially tried to train with a noise level half that present ed here (note that Driscoll et al. (2024) used lower
+training noise, but they trained for vastly longer, and used more tasks, which may have had a stabilizing
+eﬀect on training).
+12
+4.2 Relevance of the noise preference phenomenon
+We observed nonzero noise preferences in recurrent (Figure s 2a-b, 3b-d, 6) and feed-forward (Figure 3d)
+noise-in networks with saturating activation functions, b oth rectifying and non-rectifying (Figure 6). Though
+our explanation for the emergence of a noise preference, whi ch we established in Sections 3.3-3.5, caters to
+the relatively restrictive case of recurrent networks that depend on latent ﬁxed points for computation,
+the essential elements of the explanation suggest the pheno menon is more general, as do our experiments
+with feedforward multilayer perceptrons (as opposed to RNN s) and the path integration task (which is a
+continuous attractor task rather than a ﬁxed-point task). T he essential elements of our explanation are the
+following. 1) When network performance is quantiﬁed via err or between outputs and deterministic targets,
+networks are incentivized to reduce the variance of their ou tputs, and by extension, any latents on which
+the outputs depend. 2) Saturating activation functions, output = f (input), induce noise-level-dependent
+activation (output) biases for noisy input distributions i f a signiﬁcant fraction of the input probability mass
+lies beyond a saturation boundary. They do this by asymmetri cally attenuating the inﬂuence of the input
+noise on the downstream output noise. Changing the variance of the input distribution shifts the output
+distribution, because increased probability mass in only o ne tail of the input distribution has an inﬂuence
+on the output distribution. This is in contrast to when the in put distribution is in a linear region of the
+activation function domain, where both tails of the input di stribution inﬂuence the output equally, so the
+mean of the output does not depend on the dispersion of the inp ut. 3) When the input distribution straddles
+a saturation boundary, the output distribution has lower va riance than when the input distribution is in a
+linear region of the activation function.
+Taken together, these key facts imply that saturating, nois e-in networks trained to match their outputs
+to targets are incentivized to operate neurons near saturat ion as a way of reducing their output variance,
+and therefore, they are incentivized to operate in a way that makes the means of their output distributions
+dependent on their synaptic noise. Noise preference develo ps because networks learn to compensate for this
+noise-dependence in their outputs, but their compensation is only correct when the synaptic noise is similar
+to what they saw in training. This explanation does not apply to noise-out networks because the second
+and third key facts listed above do not apply to noise-out net works, but it does apply to many networks of
+interest to neural network research in general. We framed ou r exploration in the context of computational
+neuroscience, but this was not necessary.
+4.3 Relation to phenomena like stochastic resonance
+We have presented a phenomenon involving an optimal, nonzer o noise level, but the phenomenon we outline
+here is distinct from the well-known stochastic resonance ( McDonnell & Abbott, 2009), and other simi-
+lar phenomena such as coherence resonance (Pikovsky & Kurth s, 1997; Hutt et al., 2020), and recurrence
+resonance (Katada & Nishimura, 2009; Metzner et al., 2024; K rauss et al., 2019). Speaking broadly, these
+phenomena apply to scenarios where a system’s behavior can b e described in terms of transitions between
+macro-states that are separated by thresholds (e.g., disti nct attractors, regimes on either side of a bifurca-
+tion, half-spaces on either side of a detection threshold, e tc.), and the performance criterion depends (either
+implicitly or explicitly) on both a measure of the ease with w hich the system makes transitions between
+macro-states and some measure of predictability. The role o f the noise in these systems is to provide a
+constant stream of disturbances that can nudge the system ac ross transition thresholds, and the existence of
+an optimal nonzero noise level stems from the tension betwee n ease of transitions and predictability of the
+system: in the simplest version of stochastic resonance, de tection of a weak sub-threshold signal is enabled
+by the addition of noise. Although our phenomenon arises fro m a vaguely similar tension (the networks
+learn to optimally trade neural coupling for a reduction in n eural variance by operating neurons near sat-
+uration), the optimality of the noise for our networks is a by product of the optimality of our networks for
+the noise: that is, it is an overﬁtting phenomenon. In contra st, the resonance phenomena only occur in
+systems that are overall suboptimal for the performance obj ective, in that one could improve performance
+in a system exhibiting a resonance phenomenon by altering sy stem parameters other than the noise level (to
+our knowledge this has only been explicitly discussed in the literature for stochastic resonance (Tougaard,
+2000), but it is likely also the case for the other resonance p henomena mentioned above). Interestingly, with
+the inclusion of additional costs related to eﬀort, e.g., me tabolic cost, stochastic resonance phenomena can
+13
+allow systems to use less energy by letting noise do some of th e work in pushing the system state across
+transition thresholds, as shown in Koren et al. (2025). In th is case, our phenomenon could increase eﬃciency
+the same way stochastic resonance does, as long as the eﬀort c ost does not directly penalize the injected noise
+(in Koren et al. (2025), the noise acted at the level of synapt ic currents, but the metabolic cost penalized
+output spike trains, thus satisfying the requirement that t he eﬀort cost does not penalize the noise directly).
+4.4 Future work
+We have shown that a noise preference emerges in noise-in net works trained on a few diﬀerent tasks, but
+all of our tasks, other than the path integration task, hinge on stabilizing network outputs around constant
+setpoints. As a result, most of our networks ended up relying on point attractors (Sussillo & Barak, 2013) to
+implement their computations, and the path integration net works likely relied on higher (two) dimensional
+continuous attractors (Khona & Fiete, 2022). However, many tasks relevant in neuroscience and beyond
+require computations that cannot be implemented by attract ors with neutral stability on the manifold. One
+example is locomotion tasks, where the outputs should exhib it the characteristics of stable periodic motion
+(Seethapathi & Srinivasan, 2019; Laszlo et al., 1996). Such tasks lend themselves to computation via limit
+cycles, which require nonzero autonomous dynamics on the at tractor manifold. In such instances, given
+the relatively permissive conditions that we have outlined here, we hypothesize that noise preferences may
+emerge. Future work should examine an even wider range of suc h tasks not easily solved by neutrally stable
+attractor dynamics, and ideally, also provide a mechanisti c interpretation of the resulting phenomena.
+Our numerical experiments used additive Gaussian noise. Al though additive Gaussian noise is common in
+the literature (e.g., Yang et al. (2019); Driscoll et al. (20 24)), explicitly signal-dependent noise models, such
+as multiplicative noise or Poisson noise, may be an importan t aspect of the noise environment of biological
+systems (Jones et al., 2002; Tolhurst et al., 1983; Medina, 2 011). Our explanation for the noise preference
+phenomenon depends on an induced signal dependence in the no ise distribution: for neurons near saturation,
+the portion of the noise attenuated by the activation functi on depends on the net synaptic drive. So, other
+signal-dependent noise models could also result in a prefer ence for speciﬁc noise parameters. Indeed, in
+the standard implementation of dropout (Srivastava et al., 2014), perhaps one of the most widely used
+signal-dependent noising procedures in the literature, a n ecessary step is to weight the layer outputs by
+the dropout probabilities, so that the dropout fraction can be set to zero at test time without degrading
+performance. Future work should investigate the potential for noise preference phenomena when using a
+variety of signal-dependent noise models.
+Though we have established that noise can serve a purpose bey ond regularization in noise-in networks, and
+we have drawn a distinction between noise-in and noise-out n etworks with respect to this point, we have not
+addressed how these two noising schemes diﬀer in their eﬀect iveness as regularization. Future work should
+involve some quantiﬁcation of regularization as a function of noise level, both noise-in and noise-out. This
+would help in providing implications of our work for practit ioners outside computational neuroscience, who
+may only be interested in noise as regularization, rather th an as a necessity for the ﬁdelity of their models.
+References
+J A Ainge, M A Van Der Meer, R F Langston, and E R Wood. Exploring the role of context-dependent
+hippocampal activity in spatial alternation behavior. Hippocampus, 17(10):988–1002, 2007.
+B D O Anderson and J B Moore. Optimal Control: Linear Quadratic Methods .
+Dover Books on Engineering. Dover Publications, 2007. ISBN 9780486457666. URL
+https://books.google.com/books?id=fW6TAwAAQBAJ.
+O Barak. Recurrent neural networks as versatile tools of neu roscience research. Current opinion in neuro-
+biology, 46:1–6, 2017.
+Chris M Bishop. Training with noise is equivalent to tikhono v regularization. Neural computation , 7(1):
+108–116, 1995.
+14
+Colin Bredenberg, Fabrice Normandin, Blake Richards, and G uillaume Lajoie. The oneirogen hypothesis:
+modeling the hallucinatory eﬀects of classical psychedeli cs in terms of replay-dependent plasticity mecha-
+nisms. Elife, jan 2026. doi: 10.7554/elife.105968.2. URL http://dx.doi.org/10.7554/eLife.105968.2.
+Yoram Burak and Ila R Fiete. Fundamental limits on persisten t activity in networks of noisy neurons.
+Proceedings of the National Academy of Sciences , 109(43):17645–17650, 2012.
+Christopher J Cueva and Xue-Xin Wei. Emergence of grid-like representations by training recurrent neural
+networks to perform spatial localization. arXiv preprint arXiv:1803.07770 , 2018.
+L N Driscoll, K Shenoy, and D Sussillo. Flexible multitask co mputation in recurrent networks utilizes shared
+dynamical motifs. Nature Neuroscience, 27(7):1349–1363, 2024.
+A A Faisal, L P J Selen, and D M Wolpert. Noise in the nervous sys tem. Nature reviews neuroscience, 9(4):
+292–303, 2008.
+V Goudar, B Peysakhovich, D J Freedman, E A Buﬀalo, and X-J Wan g. Schema formation in a neural popu-
+lation subspace underlies learning-to-learn in ﬂexible se nsorimotor problem-solving. Nature Neuroscience,
+26(5):879–890, 2023.
+U Güçlü and M A J Van Gerven. Modeling the dynamics of human bra in activity with recurrent neural
+networks. Frontiers in computational neuroscience , 11:7, 2017.
+A Hutt, J Lefebvre, D Hight, and H A Kaiser. Phase coherence in duced by additive gaussian and non-gaussian
+noise in excitable networks with application to burst suppr ession-like brain signals. Frontiers in Applied
+Mathematics and Statistics , Volume 5 - 2019, 2020. ISSN 2297-4687. doi: 10.3389/fams.2 019.00069. URL
+https://www.frontiersin.org/journals/applied-mathem atics-and-statistics/articles/10.3389/fams.2019.000
+K E Jones, A F C Hamilton, and D M Wolpert. Sources of signal-de pendent noise during isometric force
+production. Journal of neurophysiology , 88(3):1533–1544, 2002.
+N Katada and H Nishimura. Stochastic resonance in recurrent neural network with hopﬁeld-type memory.
+Neural processing letters , 30:145–154, 2009.
+M Khona and I R Fiete. Attractor and integrator networks in th e brain. Nature Reviews Neuroscience , 23
+(12):744–766, 2022.
+Mikail Khona, Sarthak Chandra, Joy J Ma, and Ila R Fiete. Winn ing the lottery with neural connec-
+tivity constraints: Faster learning across cognitive task s with spatially constrained sparse rnns. Neural
+Computation, 35(11):1850–1869, 2023.
+D P Kingma. Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980 , 2014.
+Veronika Koren, Simone Blanco Malerba, Tilo Schwalger, and Stefano Panzeri. Eﬃcient coding in biophysi-
+cally realistic excitatory-inhibitory spiking networks. eLife, 13:RP99545, mar 2025. ISSN 2050-084X. doi:
+10.7554/eLife.99545. URL https://doi.org/10.7554/eLife.99545.
+P Krauss, K Prebeck, A Schilling, and C Metzner. Recurrence r esonance” in three-neuron motifs. Frontiers
+in computational neuroscience , 13:64, 2019.
+Nanda H. Krishna, Colin Bredenberg, Daniel Levenstein, Bla ke Aaron Richards, and Guillaume La-
+joie. Suﬃcient conditions for oﬄine reactivation in recurr ent neural networks. In ICLR, 2024. URL
+https://openreview.net/forum?id=RVrINT6MT7.
+J Laszlo, M van de Panne, and E Fiume. Limit cycle control and i ts application to the animation of balancing
+and walking. In Proceedings of the 23rd annual conference on Computer graphics and interactive techniques,
+pp. 155–162, 1996.
+S H Lim, N B Erichson, L Hodgkinson, and M W Mahoney. Noisy recu rrent neural networks. Advances in
+Neural Information Processing Systems , 34:5124–5137, 2021.
+15
+M D McDonnell and D Abbott. What is stochastic resonance? deﬁ nitions, misconceptions, debates, and its
+relevance to biology. PLoS computational biology , 5(5):e1000348, 2009.
+Bruce L McNaughton, Francesco P Battaglia, Ole Jensen, Edva rd I Moser, and May-Britt Moser. Path
+integration and the neural basis of the’cognitive map’ . Nature Reviews Neuroscience , 7(8):663–678, 2006.
+J M Medina. Eﬀects of multiplicative power law neural noise i n visual information processing. Neural
+computation, 23(4):1015–1046, 2011.
+C Metzner, A Schilling, A Maier, and P Krauss. Recurrence res onance-noise-enhanced dynamics in recurrent
+neural networks. Frontiers in Complex Systems , 2:1479417, 2024.
+H Noh, T You, J Mun, and B Han. Regularizing deep neural networ ks by noise: Its interpretation and
+optimization. Advances in neural information processing systems , 30, 2017.
+D S Olton. Mazes, maps, and memory. American psychologist, 34(7):583, 1979.
+A S Pikovsky and J Kurths. Coherence resonance in a noise-dri ven excitable sys-
+tem. Phys. Rev. Lett. , 78:775–778, Feb 1997. doi: 10.1103/PhysRevLett.78.775. URL
+https://link.aps.org/doi/10.1103/PhysRevLett.78.775.
+Alexei Samsonovich and Bruce L McNaughton. Path integratio n and cognitive mapping in a continuous
+attractor neural network model. Journal of Neuroscience , 17(15):5900–5920, 1997.
+N Seethapathi and M Srinivasan. Step-to-step variations in human running reveal how humans run without
+falling. elife, 8:e38371, 2019.
+Ben Sorscher, Gabriel C Mel, Samuel A Ocko, Lisa M Giocomo, an d Surya Ganguli. A uniﬁed theory for
+the computational and mechanistic origins of grid cells. Neuron, 111(1):121–137, 2023.
+N Srivastava, G Hinton, A Krizhevsky, I Sutskever, and R Sala khutdinov. Dropout: a simple way to prevent
+neural networks from overﬁtting. The journal of machine learning research , 15(1):1929–1958, 2014.
+David Sussillo and Omri Barak. Opening the black box: low-di mensional dynamics in high-dimensional
+recurrent neural networks. Neural computation, 25(3):626–649, 2013.
+D J Tolhurst, J A Movshon, and A F Dean. The statistical reliab ility of signals in single neurons in cat and
+monkey visual cortex. Vision research, 23(8):775–785, 1983.
+J Tougaard. Stochastic resonance and signal detection in an energy detector–implications for biological
+receptor systems. Biological Cybernetics, 83(5):471–480, 2000.
+G E Uhlenbeck and L S Ornstein. On the theory of the brownian mo tion. Phys. Rev., 36:823–841, Sep 1930.
+doi: 10.1103/PhysRev.36.823. URL https://link.aps.org/doi/10.1103/PhysRev.36.823.
+S Vyas, M D Golub, D Sussillo, and K V Shenoy. Computation thro ugh neural population dynamics. Annual
+review of neuroscience , 43(1):249–275, 2020.
+P Y Wang, Y Sun, R Axel, L F Abbott, and G R Yang. Evolving the olf actory system with machine learning.
+Neuron, 109(23):3879–3892, 2021.
+G R Yang and M Molano-Mazón. Towards the next generation of re current network models for cognitive
+neuroscience. Current opinion in neurobiology , 70:182–192, 2021.
+G R Yang, M R Joglekar, H F Song, W T Newsome, and X-J Wang. Task r epresentations in neural networks
+trained to perform many cognitive tasks. Nature neuroscience, 22(2):297–306, 2019.
+Z You, J Ye, K Li, Z Xu, and P Wang. Adversarial noise layer: Reg ularize neural network by adding noise.
+In 2019 IEEE International Conference on Image Processing (IC IP), pp. 909–913. IEEE, 2019.
+16
+A Training details
+Code implementing all the experiments are provided as Suppl ementary Material. All training was done
+in MATLAB using the ADAM optimization algorithm (Kingma, 20 14) with learning rate decay. For the
+function computation and single-neuron regulator network s, we used an initial learning rate of 0.001, a
+momentum weight of 0.9, an RMSprop weight of 0.999, and ǫ = 10 − 7. The learning rate half-lives were 2,500
+batches for the function computation networks and 4,545 bat ches for the single-neuron networks; both were
+trained for a total of 10,000 batches. For the function compu tation networks, we used a batch size of 32
+trials, and for the single-neuron networks, we used a batch s ize of one. There was no explicit regularization
+in these networks except for noise injection, either inside or outside the activation function for the function
+computation networks, and both inside and outside in diﬀere nt proportions for the single-neuron networks.
+For the function computation networks, we used a ﬁxed noise s tandard deviation of 0.1, regardless of whether
+the noise was injected inside or outside the activation func tion. To initialize networks other than single-
+neuron regulator networks, we set all biases to zero and we se t all weights to be normally distributed with
+zero mean and standard deviation equal to 0 . 8/ √
+# of neurons (Driscoll et al., 2024; Yang et al., 2019).
+For the function computation networks, we used 100 neurons. For the single-neuron regulator networks, the
+only trained parameter was the bias, and we initialized it to be equal to r(1 − w), which places the ﬁxed
+point of the deterministic dynamics (of which there was only one, because all sampled weights were negative)
+exactly equal to the setpoint r. The initial neural activation states of the function compu tation networks
+were trained parameters set to zero at the start of training. For the regulator networks, the initial neural
+state was equal to the setpoint.
+For the maze navigation network, we used an initial learning rate of 0.004 and a learning rate half-life of
+1,500 batches, with the other ADAM parameters the same as for the function computation and single-neuron
+regulator networks. The maze network was larger than the fun ction computation networks, with 672 neurons,
+but we trained for fewer batches, only 6,000 (this speciﬁc ne twork size is not necessary for the noise preference
+phenomenon; it was inherited from unrelated work involving spatial embedding of neurons, for which this
+size was convenient). The batch size was 36, with any combina tion of starting and ending vertices equally
+likely and heterogeneous within a batch. Unlike for the othe r networks, we used some explicit regularization
+on the square of the maximum singular value of the recurrent w eight matrix to protect against dynamical
+and numerical instability during training (e.g., Goudar et al. (2023)). We implemented this by adding the
+following term to the loss function: (
+max ∥Wrecv∥
+∥v∥
+) 2
+(6)
+We added this term to the loss function with a scaling coeﬃcie nt of 0.001. In addition to this explicit
+regularization, we also injected Gaussian noise inside the activation function with zero mean and standard
+deviation equal to 0.0894. The maze network had multiple tra inable initial neural states (one for each vertex
+in the maze, with the initial state selected based on which ve rtex the trial starts on), each of which was set
+to the zero vector at the start of training.
+For the multi-cognitive task suite networks, we tried to follow the training procedure outlined in Driscoll et al.
+(2024), with the following deviations:
+• Instead of using the full list of 20 tasks, we use only ReactP ro/ReactAnti, DelayPro/DelayAnti, and
+MemoryPro/MemoryAnti.
+• We sampled the MemoryPro/MemoryAnti tasks twice as freque ntly as the others.
+• We trained for only 15,000 batches.
+• We used learning rate decay with a half-life of 7,500 batche s.
+• We only tried the ReLU activation function.
+• We only tried an inside-noise level of 0.1, as for most of our other networks.
+17
+All networks except the tanh single neuron regulators used R eLU or the SoftPlus activation function. The
+SoftPlus activation function is deﬁned as:
+SoftPlus(·) = ln(1 + eα (·))/α, (7)
+where α is a scaling factor that controls the sharpness of the transi tion between the ﬂat and sloped half-
+spaces. As α goes to inﬁnity, the SoftPlus function approaches the ReLU f unction. For all networks in this
+paper, unless otherwise speciﬁed, we used α = 10.
+For the feed-forward multilayer perceptron we trained for f unction computation, we used the Adam opti-
+mization algorithm with learning rate decay. We used an init ial learning rate of 0.001, a momentum weight
+of 0.9, an RMSprop weight of 0.999, and ǫ = 10 − 7. The learning rate half-life was 10,000 batches, and we
+trained for a total of 20,000 batches. We injected Gaussian n oise inside the activation function (which we
+chose to be the ReLU activation function) with a standard dev iation of 0.1. The cost function was the sum
+of a performance cost, which was just mean squared error, and an explicit regularization cost, which was the
+mean squared value of all the network weights. We added this t o the cost with a multiplier of 0.001. The
+network had two hidden layers of width 100. The input and outp ut layers both had only one unit, reﬂecting
+the fact that the sine function is univariate.
+For the path integration task, we used the Adam optimization algorithm with learning rate decay. We used
+an initial learning rate of 0.001, a momentum weight of 0.9, a n RMSprop weight of 0.999, and ǫ = 10 − 7.
+The learning rate half-life was 5,000 batches, and we traine d for a total of 10,000 batches of size 32. We
+injected Gaussian noise inside the activation function (wh ich we chose to be the ReLU activation function)
+with a standard deviation of 0.1. We used no explicit regular ization, and the performance cost was simply
+RMSE between the actual particle position and the network ou tput.
+B Task details
+B.1 Function computation
+In the function computation tasks, we trained the networks t o compute either the sine function over the
+interval [0 , 2π ] or the hyperbolic tangent function over the interval [ − 4, 4]. In either case, the networks
+receive a one-dimensional input corresponding to the argum ent of the function being approximated. For the
+recurrent networks, their input remains on throughout the e ntire trial, so there was no requirement for the
+networks to "remember" the input. All trials lasted a total o f 100 timesteps (feed-forward networks, of course,
+had no timesteps). In the deterministic readout variant of t his task paradigm, the network output was read
+in the ﬁnal time step for comparison to the target value; in th e random readout variant, the readout could
+be read at any time step in the interval [70, 100] with equal pr obability, forcing the network to maintain the
+correct output over that entire interval. In implementing t he random readout version of the task, we found
+that the networks learned more quickly if we considered two r eadout times, one in the ﬁnal time step and
+one randomly distributed over a fraction of the total durati on, as previously described. The loss function for
+these tasks was the root mean squared error between the targe t values and the network outputs at readout
+times.
+B.2 Maze navigation
+In the maze navigation task, we trained the network to naviga te between any pair of vertices in a maze
+like the one shown in Figure 3a, pausing on vertices along the way. The network needed to pause on each
+vertex for a uniformly random number of timesteps, forcing i t to rely on its inputs to determine when it
+should ﬁxate at a maze vertex or move to the next. We loosely mo deled the maze navigation framework after
+the multitask frameworks of Driscoll et al. (2024) and Yang e t al. (2019) in the computational neuroscience
+literature. The network received three kinds of input: part icle position state feedback, the destination
+indicator, and the ﬁxation indicator. The particle state fe edback was a 2-dimensional vector reporting the
+Cartesian coordinates of the particle in space in the curren t timestep. The destination indicator was a
+2-dimensional vector indicating the Cartesian coordinate s of the ﬁnal destination vertex in space, and the
+ﬁxation indicator was a 2-dimensional one-hot vector with b oth elements set to zero unless the network
+18
+should be paused at a vertex. In timesteps when the network sh ould be paused on the starting vertex of a
+trial, the ﬁrst element of the ﬁxation vector was set to one, a nd in timesteps when the network should be
+paused at any other vertex along the route, the second elemen t was set to one. The network output was
+the instantaneous velocity of the particle, represented in 2-dimensional Cartesian coordinates. To force the
+network to learn to stabilize the particle along the maze rou tes, zero-mean Gaussian noise with variance
+equal to 0.0005 in each dimension was added to the network out put in each time step, making it such that
+the particle would do a random walk if the network output were zero.
+At the start of a trial, the particle position is initialized at one of the vertices, and the network state is
+initialized accordingly (see Section A). In the ﬁrst 20 time steps, a period we refer to as the downtime period,
+the second element of the ﬁxation vector is on, and the destin ation indicator shows the coordinates of the
+starting maze vertex, making the input conditions identica l to if we had just ﬁnished a route terminating at
+the current starting vertex. Then, over a period with length uniformly distributed in [30 , 50] timesteps, which
+we call the starting ﬁxation period, only the ﬁrst element of the ﬁxation vector is on, and the destination
+vector shows the coordinates of the destination for the pres ent trial, which is how it will remain for the
+remainder of the trial. During the downtime and starting ﬁxa tion periods, the network must remain at the
+starting maze vertex. The rest of the trial then alternates b etween jaunt periods, intervals 20 timesteps
+long when both elements of the ﬁxation vector are set to zero a nd the network must navigate the particle
+to the next vertex along the route, and via ﬁxation periods, w hich have length distribution identical to that
+of the starting ﬁxation period, and during which only the sec ond element of the ﬁxation vector is turned
+on. For computational eﬃciency, we buﬀered out all trials to be 280 steps long, regardless of how long their
+corresponding routes were. To do this, we added extra time st eps to one of the ﬁxation periods at random,
+so there was a chance that any one pause could exceed the inter vals previously given. The loss function
+for the maze task was the root mean squared error between the p article position and its target position
+over all timesteps and trials in a batch. The target position for the particle during pauses was simply the
+vertex position at which it was supposed to be pausing, and du ring jaunt periods, we used a smooth cubic
+polynomial interpolator between the starting and ending ve rtices of the jaunt, constraining the starting and
+ending velocities of the jaunt to be zero.
+B.3 Multi-cognitive task suite
+We implemented only the ReactPro/ReactAnti, DelayPro/Del ayAnti, and MemoryPro/MemoryAnti tasks
+from Yang et al. (2019). Instead of the more biological versi ons used in Yang et al. (2019), which encode
+stimuli and responses as activity bumps on rings of input/ou tput units, we opted to use the versions from
+Driscoll et al. (2024), which encode the directional stimul i/responses with 2D unit vectors. We also only use
+a single stimulus modality (rather than two, as done in Yang e t al. (2019) and Driscoll et al. (2024)).
+B.4 Path integration
+We roughly recreated the path integration task exempliﬁed i n Cueva & Wei (2018). The network received
+inputs of particle heading (in radians) and discrete speed ( spatial length units), and it had to use these to
+update its outputs to reﬂect the current particle position. The particle’s motion was totally autonomous,
+so the network was simply responding to its motion with no abi lity to aﬀect it and no need to distinguish
+re-aﬀerent from ex-aﬀerent feedback. The particle execute d a smoothed random walk of approximately
+constant speed (heading changes in each time step were sampl ed from a normal distribution with µ = 0 ◦
+and σ = 20 ◦ , and the step lengths were sampled from a normal distributio n with µ = 0. 1 units and σ = 0. 01
+units). If this random walk brought the particle outside the 2.5 unit x 2.5 unit box in which the particle was
+constrained, the step was rejected, and the velocity was cor rected as if the particle had elastically collided
+with the wall. Each trial began with the particle in the cente r of the box and a uniformly random heading,
+and trials lasted 100 time steps, typically resulting in a fe w ( < 10) wall collisions.
+19
+B.5 Single-neuron regulator
+The scalar neural state ht of the single-neuron CTRNN with noise both inside and outsid e its activation
+function has dynamics deﬁned by the update rule:
+ht+1 = (1 − γ )ht + γ (f (wht + b + N (0, σ 2
+in)) + N (0, σ 2
+out)), (8)
+where h1 = r and f (·) is either the ReLU function or the tanh function. We conside red the regulator problem
+(Anderson & Moore, 2007) described by the loss function:
+min 1
+T
+T∑
+t=1
+(ht − r)2, (9)
+where r ≥ 0 is the constant setpoint for ht. We ﬁxed σ out (the noise standard deviation outside the activation
+function, set to one), T (the number of simulation time steps, set to 50) and γ (the ratio of the simulation
+timestep to the neural time constant, set to 0.2), and found t he optimal value of b (the activation bias) for
+diﬀerent combinations of w (the recurrent weight), σ in (the noise level inside the activation function), and
+r (the setpoint). We then measured the diﬀerence in performan ce between when σ in is left at the value for
+which the networks were optimized and when it is set to zero. F or each combination of w and σ in, we also
+identify the value of the setpoint r that permits the lowest loss function value among those we sa mpled.
+We considered a ﬁne sampling of 100 values for both r (evenly spaced in the interval [0,1]) and σ in (evenly
+spaced in the interval [0,2]), and we considered four values of w, namely {− 1, − 2, − 3, − 4} , with the largest
+magnitude w = − 4 selected such that the deterministic dynamics would extin guish any deviation from the
+ﬁxed point in a single time step if there were no noise. We set t he post-activation noise level to one for
+all experiments while varying the setpoint location and the inside noise level, without loss of generality,
+because the ﬁxed point shift phenomenon depends on how far a ﬁ xed point is from nonlinear boundaries in
+comparison to the noise standard deviation.
+C Fixed point ﬁnding with and without noise
+To ﬁnd the ﬁxed points of the noise-in function computation n etworks without accounting for noise-induced
+shifts (Driscoll et al., 2024), we optimized the following o bjective function with respect to the neural state
+h:
+∥γ (− h + f (Wrech + Winu + Bin))∥2. (10)
+This objective function is simply the squared magnitude of t he discrete change in h if we take a single
+simulation step starting from h, so its local minima correspond to locations in the neural ac tivation space
+where the network state changes most slowly in a local neighb orhood. We optimized this objective using
+ADAM with learning rate decay, using an initial learning rat e of 0.07, a momentum weight of 0.9, an
+RMSprop weight of 0.999, ǫ = 10 − 7, and a learning rate half-life of 1,386 optimization steps. We terminated
+the optimization when the objective dropped below 4 . 9 × 10− 9. To ﬁnd the ﬁxed point corresponding to a
+particular argument of the function to be approximated by th e network, we ran the network without noise
+over a full trial with that argument, taking the ﬁnal neural s tate as the initial guess for the ﬁxed point, and
+then we optimized the objective function with u set to the argument of interest.
+To ﬁnd the ﬁxed points of the noise-in function computation n etworks with noise accounted for, we followed
+the same procedure as for the noise-free ﬁxed points, but usi ng the following cost:
+∥γ (− h + E(f (Wrech + Winu + Bin + N (0, σ 2)))∥2, (11)
+where E(·) denotes a Monte Carlo approximation of the expected value, evaluated by averaging over 300
+samples, and σ is the noise standard deviation used during network trainin g, equal to 0.1. For these op-
+timizations, we used the same optimization parameters as fo r the noiseless procedure, except we used an
+initial learning rate of 0.0175, and we terminated the optim ization when the objective function dropped
+below 1
+100 σ 2(# of neurons) / (# of noisy samples) = 1
+3 × 10− 4.
+20
+To compute the magnitude of the output ﬁxed point shift induc ed by the noise, we simply took the diﬀerence
+between the noisy ﬁxed point and the noise-free ﬁxed point co rresponding to each input argument, left-
+multiplied it by the output matrix Wout, and took its magnitude.
+noise standard deviation 
+0
+0 0.10 0.12 0.14 0.16 0.02 0.04 0.06 0.08
+0.05
+0.10
+0.15
+0.20
+0.25
+root mean squared error 
+mean error 
+error standard deviation 
+0.10 0.12 0.08 
+Noise-preference behavior of noise-in networks emerges robustly and repeatably over distinct training runs 
+Error statistics of four diﬀerent networks, 
+trained independently on diﬀerent training runs 
+Figure A1: Noise preference across training runs. Illustrative example showing the noise-preference
+behavior was qualitatively similar for networks obtained f rom diﬀerent training runs, each starting from
+diﬀerent initial network initializations and trained with diﬀerent seeds for noise realizations. Noise-preference
+error statistics curves from four diﬀerent training runs ar e shown for the function computation task; not only
+are the curves qualitatively similar with a nonzero noise pr eference, they are also quantitatively similar, with
+some small variability to be expected from the stochasticit y of the training process and ﬁniteness of training
+runs. This robustness to training runs was generally true ac ross the diﬀerent task examples we considered
+(as long as the training noise was large enough as indicated i n Figure 2b).
+10 -3 10 -2 10 -1 10 0
+noise standard deviation 
+10 -3 
+10 -2 
+10 -1 
+four training noise levels 
+root mean squared error 
+mean error 
+error standard deviation 
+Noise-out function computation networks have 
+zero noise preference for across many training noise levels 
+total RMSE 
+has zero noise 
+preference 
+Figure A2: Noise-out networks with multiple training noise levels. Noise-out networks did not
+develop a non-zero noise preference for a range of training n oise levels across multiple orders of magnitude.
+Four training noise levels and the corresponding errors and error components are shown. This ﬁgure is
+the noise-out analog of Figure 2b, which showed that the nois e-in networks did develop a non-zero noise
+preference as long as the training noise level was high enoug h.
+21
