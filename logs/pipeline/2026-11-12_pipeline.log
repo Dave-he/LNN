@@ -1,0 +1,49 @@
+[2026-11-12 06:33:32] ssh key: /Users/hyx/.ssh/id_github_dave-he
+[2026-11-12 06:33:32] ===== LNN daily pipeline for 2026-11-12 =====
+[2026-11-12 06:33:32] repo: /Users/hyx/workspace/LNN
+[2026-11-12 06:33:32] skip: digest=0 report=1 commit=0 repro=1
+[2026-11-12 06:33:32] exec: git fetch --no-tags origin
+[2026-11-12 06:33:35]   retry 1/5 after 4s ...
+[2026-11-12 06:33:39] exec: git fetch --no-tags origin
+[2026-11-12 06:33:43] exec: git pull --ff-only origin HEAD
+[2026-11-12 06:33:46] [1/4] digest: 抓取 arXiv / GitHub / Hugging Face 更新
+[2026-11-12 06:33:46] exec: python3 scripts/daily_lnn_research.py         --date '2026-11-12'         --max-results '25'         --per-query '8'
+[2026-11-12 06:34:43] [2/4] report: SKIPPED
+[2026-11-12 06:34:43] [3/4] commit: 提交当日 docs/ papers/ analysis/ 变更
+[2026-11-12 06:34:43] exec: git add docs papers analysis
+[2026-11-12 06:34:43] exec: git commit -m 'chore(daily): LNN digest + 研读报告 2026-11-12'
+[2026-11-12 06:34:44] exec: git push origin HEAD
+[2026-11-12 06:34:47]   retry 1/5 after 4s ...
+[2026-11-12 06:34:51] exec: git push origin HEAD
+[2026-11-12 06:34:54]   retry 2/5 after 7s ...
+[2026-11-12 06:35:01] exec: git push origin HEAD
+[2026-11-12 06:35:08] [4/4] reproduce: SKIPPED
+[2026-11-12 06:35:08] ===== pipeline done =====
+[2026-11-12 06:40:18] ssh key: /Users/hyx/.ssh/id_github_dave-he
+[2026-11-12 06:40:18] ===== LNN daily pipeline for 2026-11-12 =====
+[2026-11-12 06:40:18] repo: /Users/hyx/workspace/LNN
+[2026-11-12 06:40:18] skip: digest=1 report=1 commit=0 repro=1
+[2026-11-12 06:40:18] exec: git fetch --no-tags origin
+[2026-11-12 06:40:22] exec: git pull --ff-only origin HEAD
+[2026-11-12 06:40:25] [1/4] digest: SKIPPED
+[2026-11-12 06:40:25] [2/4] report: SKIPPED
+[2026-11-12 06:40:25] [3/4] commit: 提交当日 docs/ papers/ analysis/ 变更
+[2026-11-12 06:40:25] exec: git add docs papers analysis
+[2026-11-12 06:40:25] exec: git commit -m 'chore(daily): LNN digest + 研读报告 2026-11-12'
+[2026-11-12 06:40:25] exec: git push origin HEAD
+[2026-11-12 06:40:28]   retry 1/5 after 4s ...
+[2026-11-12 06:40:32] exec: git push origin HEAD
+[2026-11-12 06:40:36]   retry 2/5 after 7s ...
+[2026-11-12 06:40:43] exec: git push origin HEAD
+[2026-11-12 06:41:24] [4/4] reproduce: SKIPPED
+[2026-11-12 06:41:24] ===== pipeline done =====
+[2026-11-12 06:41:42] ssh key: /Users/hyx/.ssh/id_github_dave-he
+[2026-11-12 06:41:42] ===== LNN daily pipeline for 2026-11-12 =====
+[2026-11-12 06:41:42] repo: /Users/hyx/workspace/LNN
+[2026-11-12 06:41:42] skip: digest=1 report=1 commit=1 repro=0
+[2026-11-12 06:41:42] [1/4] digest: SKIPPED
+[2026-11-12 06:41:42] [2/4] report: SKIPPED
+[2026-11-12 06:41:42] [3/4] commit: SKIPPED
+[2026-11-12 06:41:42] [4/4] reproduce: 按 digest 挑选并跑论文复现
+[2026-11-12 06:41:42] exec: /Users/hyx/workspace/LNN/.venv312/bin/python scripts/replicate_paper_dispatch.py         --date '2026-11-12'
+[2026-11-12 06:41:42] ===== pipeline done =====
