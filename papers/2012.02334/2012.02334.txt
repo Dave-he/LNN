@@ -1,0 +1,662 @@
+Proceedings of Machine Learning Research vol 144:1–12, 2021 3rd Annual Conference on Learning for Dynamics and Control
+Benchmarking Energy-Conserving Neural Networks for Learning
+Dynamics from Data
+Yaofeng Desmond Zhong YAOFENG .ZHONG @SIEMENS .COM
+Biswadip Dey BISWADIP .DEY @SIEMENS .COM
+Amit Chakraborty AMIT .CHAKRABORTY @SIEMENS .COM
+Siemens Corporation, 755 College Road East, Princeton, NJ 08536
+Editors: A. Jadbabaie, J. Lygeros, G. J. Pappas, P. A. Parrilo, B. Recht, C. J. Tomlin, M. N. Zeilinger
+Abstract
+The last few years have witnessed an increased interest in incorporating physics-informed inductive
+bias in deep learning frameworks. In particular, a growing volume of literature has been exploring
+ways to enforce energy conservation while using neural networks for learning dynamics from ob-
+served time-series data. In this work, we survey ten recently proposed energy-conserving neural
+network models, including HNN, LNN, DeLaN, SymODEN, CHNN, CLNN and their variants. We
+provide a compact derivation of the theory behind these models and explain their similarities and
+differences. Their performance are compared in 4 physical systems. We point out the possibility of
+leveraging some of these energy-conserving models to design energy-based controllers.
+Keywords: Inductive Bias, Deep Learning, Physics-based Priors, Neural ODE
+1. Introduction
+The motion of physical systems is governed by the laws of physics, which can be expressed as a
+set of differential equations. These equations describe how the state of the system, e.g., the po-
+sition and velocity of objects, evolve over time. Given such a set of differential equations and an
+initial state, we can solve the initial value problem for future states and predict the trajectory of
+the physical system. On the other hand, if the underlying dynamics, i.e., the differential equations,
+are unknown and a set of trajectory data is given instead, we can formulate a learning problem to
+infer the unknown dynamics that can explain the trajectory data and leverage the learned differential
+equations for making predictions based on a set of new initial states. From a learning perspective,
+deep neural networks are very effective function approximators (Pinkus, 1999; Liang and Srikant,
+2017) and recent advances in end-to-end representation learning have enabled their wide adoption
+in various application domains (Goodfellow et al., 2016). To avoid overﬁtting and enable general-
+ization beyond training data, the neural networks employ appropriate inductive bias by preferring
+certain representations over others (Haussler, 1988); often, the computation graph is constructed to
+capture/reﬂect some salient aspects of the problem under consideration.
+In recent years, a growing number of neural network models have been proposed to solve the
+problem of learning dynamics, expressed via a set of differential equations, from data (Lutter et al.,
+2019b; Greydanus et al., 2019; Zhong et al., 2020a; Chen et al., 2020; Roehrl et al., 2020; Cran-
+mer et al., 2020; Finzi et al., 2020). Most of these models are based on Neural ODE (Chen et al.,
+2018), a neural network approach to learning an unknown set of differential equations from trajec-
+tory data. When it comes to learning the motion of physical systems, we can leverage the laws of
+© 2021 Y .D. Zhong, B. Dey & A. Chakraborty.
+arXiv:2012.02334v6  [cs.LG]  28 Apr 2023
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+physics for data efﬁciency and generalization. Two popular choices to model the relevant physics
+are the Lagrangian and Hamiltonian dynamics, which are both reformulations of Newton’s second
+law and can model a broad class of physical systems. Moreover, both of these formalisms con-
+serve energy under proper assumptions, which serves as a great physics-based prior when modeling
+energy-conserved system. In addition, there is a growing volume of work that focuses on enforcing
+physics while learning the underlying dynamics from high-dimensional image sequence or video
+data (Zhong and Leonard, 2020; Allen-Blanchette et al., 2020).
+In this work, we benchmark ten recently introduced neural network models that impose struc-
+tures on the underlying computation graph for learning Lagrangian or Hamiltonian dynamics from
+trajectory data. To aid informed selection of neural network model(s) for a given task, we focus
+on highlighting and explaining the similarities and differences between these models in 4 physical
+systems.
+2. Preliminaries
+Lagrangian and Hamiltonian dynamics are both reformulations of Newton’s second law of motion.
+If holonomic constraints exist, those constraints can be enforced either implicitly or explicitly. The
+former is simpler to derive, while the latter simpliﬁes the functional form. In this section, we review
+Lagrangian and Hamiltonian dynamics with both implicit and explicit constraints, derived from
+D’Alembert’s principle (the principle of virtual work). Please see Goldstein et al. (2002) for more
+details on the implicit constraint derivation, and Date (2010), Finzi et al. (2020) for the explicit
+constraint derivation using variational principle. We wrap up this section by reviewing how to learn
+these dynamics from data.
+2.1. Lagrangian dynamics with implicit constraints
+For a rigid body system with degrees of freedom (DOF)M, the conﬁguration of rigid bodies at time
+t can be described by independent generalized coordinates q(t) = (q1(t),q 2(t),...,q M(t)). From
+D’Alembert’s principle (the principle of virtual work), Newton’s second law can be expressed as
+δqT
+[ d
+dt
+(∂L
+∂ ˙q
+)
+− ∂L
+∂q
+]
+= 0, (1)
+where the scalar functionL(q, ˙q) is the Lagrangian, ˙q = dq/dt andδq is the virtual displacement.
+Here we assume all the generalized forces are conservative which can be captured by a potential
+ﬁeld. As the M generalized coordinates are independent, each δqi can be varied independently.
+Then the only way for Equation (1) to hold is the following set ofM equations,
+d
+dt
+(∂L
+∂ ˙q
+)
+− ∂L
+∂q = 0, (2)
+which is also referred to as the Euler-Lagrange equation. We can symbolically expand the Euler-
+Lagrange equation into a set ofM second-order differential equations,
+¨q = (∇ ˙q∇T
+˙qL)−1[∇qL− (∇q∇T
+˙qL) ˙q], (3)
+where the operators are deﬁned as(∇ ˙q)i = ∂
+∂ ˙qi
+, (∇q∇T
+˙q)ij = ∂2
+∂qj∂ ˙qi
+and (∇ ˙q∇T
+˙q)ij = ∂2
+∂ ˙qj∂ ˙qi
+.
+2
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+The physical meaning of the LagrangianL(q, ˙q) is the difference between kinetic energyT (q, ˙q)
+and potential energyV (q). For rigid body systems, the Lagrangian is
+L(q, ˙q) =T (q, ˙q)−V (q) = 1
+2 ˙qT M(q) ˙q−V (q), (4)
+where M(q) is the positive deﬁnite mass matrix. With this form, Equation (3) can be written as
+¨q = M(q)−1[− ˙M(q) ˙q + 1
+2∇q
+(
+˙qT M(q) ˙q
+)
+−∇ qV (q)]. (5)
+2.2. Hamiltonian dynamics with implicit constraints
+The Hamiltonian dynamics can be derived by performing Legendre transformation on the La-
+grangian to get the conjugate momentump =∇ ˙qL and the HamiltonianH(q, p) = ˙qT p−L(q, ˙q).
+The Euler-Lagrangian equation (2) can then be expressed as the following Hamiltonian dynamics
+˙q =∇pH, ˙p =−∇qH. (6)
+Along a trajectory of Hamiltonian dynamics, the HamiltonianH is conserved, since
+˙H = (∇T
+qH) ˙q + (∇T
+pH) ˙p = 0. (7)
+For a rigid body system, we can use the structured Lagrangian in Equation (4) and get the
+conjugate momentum p = M(q) ˙q and the structured Hamiltonian
+H(q, p) = 1
+2 pT M−1(q)p +V (q), (8)
+The Hamiltonian equals the total energy of the rigid body system and Equation (7) shows the en-
+ergy conservation property of Hamiltonian dynamics. With the structured Hamiltonian (8), we can
+express the Hamiltonian dynamics as
+˙q = M−1(q)p, ˙p =−1
+2∇q
+(
+pT M−1(q)p
+)
+−∇ qV (q) (9)
+2.3. Lagrangian dynamics with explicit constraints
+The derivations above enforce holonomic constraints implicitly by choosing a number of gener-
+alized coordinates that equals the degrees of freedom M. To derive Lagrangian and Hamiltonian
+dynamics, we can also enforce the holonomic constraints explicitly so that we can use Cartesian
+coordinates to describe the conﬁguration of the rigid body system. Finzi et al. (2020) shows that
+choosing Cartesian coordinates and enforcing constraints explicitly simpliﬁes the functional form
+of Hamiltonian and Lagrangian, which facilitates learning. Here we show a derivation based on
+D’Alembert’s principle.
+Assume the conﬁguration of rigid bodies at timet can be described by a set of Cartesian coor-
+dinates x(t) = (x1(t),x 2(t),...,x D(t)). From D’Alembert’s principle, with a Lagrangian L(x, ˙x),
+Newton’s second law can be expressed as
+δxT
+[ d
+dt
+(∂L
+∂ ˙x
+)
+− ∂L
+∂x
+]
+= 0, (10)
+3
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+with the Lagrangian,
+L(x, ˙x) = 1
+2 ˙xT M ˙x−V (x), (11)
+where the mass matrix M =∇ ˙x∇T
+˙xL is a constant matrix that does not depend on the coordinates,
+which simpliﬁes the functional form of Lagrangian. Please see Finzi et al. (2020) for more details.
+Since the xis are not independent, we need to incorporate the relationship between the xis - the
+constraints - to set up the equations of motion. In general, for a system of DOF M, there exists
+D−M constraints. In this work, we assume all the constraints are holonomic, thus can be expressed
+asK =D−M equality constraints Φk(x) = 0 fork = 1, 2,...,K . We collect functionsΦk(x) into
+a column vector Φ(x) so the virtual displacementsδxis are related byK equations (DxΦ)δx = 0,
+whereDxΦ denotes the Jacobian. We introduceK Lagrangian multipliersλks collected as a column
+vectorλL∈ RK and we haveλT
+L(DxΦ)δx = 0. Adding this scalar to Equation (10), we get
+δxT
+[ d
+dt
+(∂L
+∂ ˙x
+)
+− ∂L
+∂x + (DxΦ)TλL
+]
+= 0. (12)
+Even though the δxis are not independent, we can choose Lagrangian multipliers λL such that the
+only solution to Equation (12) is one where the coefﬁcients of all δxis are zeros. We symbolically
+expand the coefﬁcients and get
+M¨x +∇xV + (DxΦ)TλL = 0. (13)
+Note here we use the fact that∇x∇T
+˙xL = 0 and∇xL =−∇xV . The Lagrangian multipliersλL can
+be solved as functions ofx and ˙x by leveraging ˙Φ = (DxΦ) ˙x = 0 and ¨Φ = (DxΦ)¨x+(Dx ˙Φ) ˙x = 0
+to eliminate ¨x. The solution is
+λL =−[(DxΦ)M−1(DxΦ)T ]−1[(DxΦ)M−1∇xV− (Dx ˙Φ) ˙x] (14)
+Substitute the solvedλL into Equation (13), we get a set ofD second-order differential equations,
+¨x = M−1(DxΦ)T [(DxΦ)M−1(DxΦ)T ]−1[(DxΦ)M−1∇xV− (Dx ˙Φ) ˙x]− M−1∇xV. (15)
+2.4. Hamiltonian dynamics with explicit constraints
+By applying Legendre transformation on the Lagrangian (11) we get the conjugate momentum
+px =∇ ˙xL = M ˙x, and the HamiltonianH(x, px) = ˙xT px−L(x, ˙x), which has differential
+δH = pT
+xδ ˙x + ˙xTδpx− (∇xL)Tδx− (∇ ˙xL)Tδ ˙x = (∇xH)Tδx + (∇pxH)Tδpx. (16)
+The second equality holds because of the deﬁnition ofδH. We can rewrite the equality as
+[
+δxT δpT
+x
+][∇xH +∇xL
+∇pxH− ˙x
+]
+=
+[
+δxT δpT
+x
+][∇xH + ˙px
+∇pxH− ˙x
+]
+= 0. (17)
+The ﬁrst equality holds by substituting in D’Alembert’s principle (10). If all the coordinates are
+independent, we recover the Hamiltonian dynamics with implicit constraint (6). The Cartesian
+coordinates are not independent so we need to explicitly add constraints with Lagrangian multi-
+pliers to derive equations of motion. Assume we have K = D−M holonomic constraints col-
+lected into a vector equality Φ(x) = 0, we can differentiate these constraints ˙Φ(x) = (DxΦ) ˙x =
+4
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+(DxΦ)M−1px = 0 so that we form additional K constraints that depend on both x and px. We
+denote z = (xT, pT
+x)T and the 2K constraints as Ψ(z) = (ΦT, ˙ΦT )T . Then elements in the differ-
+entialδz are related by (DzΨ)δz = 0. We introduce 2K Lagrangian multipliers λH∈ R2K and
+add the scalarλT
+H(DzΨ)δz = 0 to (17). We have
+δzT [∇zH + J˙z + (DzΨ)TλH] = 0, (18)
+where J is a symplectic matrix J = [ 0, ID;−ID, 0] and ID is the D×D identity matrix. Even
+though elements in δz are not independent, we can choose λH such that the only solution to (18)
+is one where the coefﬁcients of allδzi are zeros. Thus we get 2D equations. To solve for λH as a
+function of z, we leverage ˙Ψ = (DzΨ)˙z = 0 to eliminate ˙z and get
+λH =−[(DzΨ)J(DzΨ)T ]−1(DzΨ)J∇zH. (19)
+Finally we get the equations of motion as 2D ﬁrst order differential equations
+˙z = J∇zH− J(DzΨ)T [(DzΨ)J(DzΨ)T ]−1(DzΨ)J∇zH. (20)
+2.5. Learning of Dynamics
+All the dynamics derived above are ﬁrst-order or second-order ordinary differential equations (ODE).
+The second-order ODEs, e.g., (15), can be turned into a set of ﬁrst-order ODEs by choosing states,
+e.g., s = (xT, ˙xT )T . If we know how to learn ﬁrst-order ODEs from data, we will be able to learn
+Lagrangian or Hamiltonian dynamics of any form above.
+Neural ODE Chen et al. (2018) is a framework for learning a general ﬁrst-order ODE ˙s = f(s)
+with an unknown function f(s). The idea is to parametrize f(s) by a neural network. With an initial
+condition s0, we can use an ODE solver to solve the initial value problem for future states,
+ˆs1,..., ˆsT = ODESolve(fθ(s), s0, 1,...,T ), (21)
+where fθ(s) is the parametrization of f(s). We can then minimize the difference between the true
+states and the predicted states. As all the operations in the ODE Solver are differentiable, we can use
+back propagation to solve the optimization problem. To incorporate physics priors into this learning
+framework, we can parametrize unknown physical quantities in the derived dynamics above, e.g.,
+mass, potential energy, the Lagrangian and the Hamiltonian. The difference between various recent
+models lies in what form of dynamics they use and what physical quantities they parametrize, which
+is explained in the next section.
+3. Models Studied in this Survey
+Since the Lagrangian and Hamiltonian dynamics we consider here conserve energy, the neural net-
+work models that exploit Lagrangian and Hamiltonian dynamics automatically enforce energy con-
+servation. In this section, we brieﬂy summarize recent energy-conserving neural network models
+implemented in this benchmark study. As the original names of these models might not reﬂect the
+difference between them, we renamed a few models to emphasize the difference, while citing the
+original papers that introduced them.
+5
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+HNN: Greydanus et al. (2019) introduces Hamiltonian Neural Networks (HNN) to learn Hamil-
+tonian dynamics (6) from data by parametrizing the Hamiltonian H using a neural network. The
+original implementation assumes the data are in the form of (q, p, ˙q, ˙p)0,...,T . The learning is per-
+formed by feeding data(q, p) into the Hamiltonian neural network to get the scalarH(q, p), getting
+the right hand side (RHS) of (6) by automatic differentiation, and minimizing the violation of the
+dynamics (6) with data ( ˙q, ˙p). In this benchmark, we assume we can only access position and ve-
+locity data. Thus, in our implementation, we additionally parametrize the mass matrix M(q) using
+a neural network and leverage Neural ODE to learn the dynamics.
+HNN-structure: For rigid body systems, instead of parametrizing the Hamiltonian, we can lever-
+age the structure of the Hamiltonian (8) and parametrize the mass matrixM(q) and potential energy
+V (q) using neural networks. This allows us to learn Hamiltonian dynamics in the form of (9). This
+learning scheme is introduced as Symplectic ODE-Net (SymODEN) (Zhong et al., 2020a), which
+can jointly learn an additional control term. Dissipative SymODEN (Zhong et al., 2020b) jointly
+learns an additional dissipation term. Symplectic Recurrent Neural Network (SRNN) (Chen et al.,
+2020) also exploits the structure of the Hamiltonian by assuming a separable Hamiltonian.
+CHNN: By explicitly enforcing constraints, Hamiltonian dynamics in the form of (20) can be
+learned from Cartesian coordinate data. Since the mass matrix under Cartesian coordinates is con-
+stant and sparse, elements in the mass matrix can be set as learnable parameters. Moreover, for a
+system of multiple rigid bodies, the mass matrix is block diagonal, which further reduces the number
+of learnable parameters (Finzi et al., 2020). As the inverse of mass matrix appears all the forms of
+Hamiltonian dynamics, the block diagonality and sparsity of the constant mass matrix under Carte-
+sian coordinates facilitates the computation of matrix inverse. This learning scheme is introduced
+as Constrained HNN (CHNN) in Finzi et al. (2020).
+LNN: Cranmer et al. (2020) introduces Lagrangian Neural Networks (LNN) to learn Lagrangian
+dynamics (3) from position and velocity data by parametrizing the Lagrangian L using a neural
+network. The beneﬁt of this learning scheme is that it can learn any arbitrary Lagrangian, which
+does not need to be quadratic in velocity as in rigid body systems.
+LNN-structure: For rigid body systems, the structure of the Lagrangian (4) can be leveraged and
+the mass matrix M(q) and potential energy V (q) can be parametrized using neural networks to
+learn Lagrangian dynamics in the form of (5). This learning scheme is ﬁrst introduced as Deep
+Lagrangian Network (DeLaN) in Lutter et al. (2019b) which jointly learn an additional control term
+for the purpose of controlling robotic systems. DeLaN is also used in Lutter et al. (2019a) to learn
+and control under-actuated systems. DeLaN assumes that position q, velocity ˙q and acceleration ¨q
+data can be accessed from sensor and the violation of (5) is minimized. For the purpose of bench-
+marking, we leverage Neural ODE to learn (5) without acceleration data.
+CLNN: Learning Lagrangian dynamics with explicit constraints in the form of (15) from Carte-
+sian coordinate data is introduced as Constrained LNN (CLNN) in Finzi et al. (2020). Similar to
+CHNN, the mass matrix properties of block diagonality and sparsity in each block are exploited to
+facilitate learning.
+HNN-angle, HNN-structure-angle, LNN-angle, LNN-structure-angle: When enforcing con-
+straints implicitly, we will often encounter angular coordinates. If we treat each angular coordi-
+nate as a variable in R1, the learning algorithm would not be able to infer, for example, 0 and
+6
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+2π represents the same angle. In fact, each angular coordinate lies on the manifold S1 (circle) in-
+stead of manifold R1 (line). This problem can be solved by embedding an angular coordinate q
+as (cosq, sinq)∈ S1. Thus, for the four models that enforce constraints implicitly (HNN, HNN-
+strucure, LNN, LNN-structure), we also implement their angle-aware version (names with “angle”
+sufﬁx) by embedding each angular coordinate into S1 before feeding it into the neural networks.
+This angle-aware design is also implemented and studied in SymODEN (Zhong et al., 2020a).
+For models above that parametrize the mass matrix M(q) using a neural network, we leverage
+the fact that for a real physical system, the mass matrix is positive deﬁnite and can be expressed as
+M(q) = L(q)L(q)T (Cholesky decomposition), where L(q) is a lower triangular matrix. Thus,
+instead of parametrizing the mass matrix or the inverse of mass matrix, we parametrize L(q), as
+done in Lutter et al. (2019b) and Zhong et al. (2020a).
+4. Experiments
+4.1. Experimental Setup
+Figure 1: Left: 4-pendulum; Right: gyroscope
+Figure 1 shows an N-pendulum system and a gy-
+roscope. The N-pendulum is a set of 2D systems.
+The complexity of the dynamics increases as the
+number of pendulums increases. Except for the 1-
+pendulum, the systems are chaotic system which
+means accurate prediction is not possible whenN≥ 2 (Kwok et al., 2020). The gyroscope is a 3D
+system that exhibits complex dynamics including precession and nutation (Butikov, 2006). In this
+work, we simulate the 1-, 2- and 4-pendulum systems and the gyroscope to evaluate models.
+Data Generation and Training For each of the 4 physical systems, we randomly generate 800
+initial conditions of states and roll out simualtion trajectories for 100 time steps for training. We
+randomly generate another set of 100 initial conditions of 100 time steps for testing. Random Gaus-
+sian noises of standard deviation 0.01 are added independently to every coordinate and velocity. For
+the N-Pendulum systems, we use data in 2D Cartesian coordinates to train CHNN and CLNN, and
+data in planar angular coordinates to train the rest of the models. For the gyroscope, we use data in
+3D Cartesian coordinates of 4 chosen points in the gyroscope as done in (Finzi et al., 2020) to train
+CHNN and CLNN, and data in Euler angles to train the rest of the models. We generate trajecto-
+ries using RK4 integrator instead of symplectic integrators as done in Zhu et al. (2020), Sanchez-
+Gonzalez et al. (2019), Chen et al. (2020), Jin et al. (2020), Tong et al. (2020) because using RK4
+integrator allows us to incorporate control and dissipation into the framework, whereas symplectic
+integrators does not. For the N-pendulum systems and the gyroscope system, the integration inter-
+val are 0.03s and 0.02s, respectively. As function approximators, we use fully-connected feedfor-
+ward network with 3 hidden layers with 256 neurons/layers and Softplus activation. For learnable
+mass/moments in CLNN/CHNN, we implement them as learnable parameters passed through an
+exponential function, since the mass/moments are always positive for real physical systems. All
+models are trained with AdamW optimizer Loshchilov and Hutter (2019) for 1000 epochs and a
+learning rate of 0.001.
+Metrics We useL(s(0,...T ), ˆs(0,...,T )) =∑T
+t=0||ˆst− st||1 as the loss function for training, since it
+has been shown that the robustness ofL1 loss to outliers beneﬁts learning complex dynamics (Finzi
+7
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+1-Pendulum 2-Pendulum 4-Pendulum Gyroscope
+10−4
+10−3
+10−2
+10−1
+100
+101
+Traj. relative error
+CLNN LNN LNN-Angle LNN-Structure LNN-Structure-Angle
+1-Pendulum 2-Pendulum 4-Pendulum Gyroscope
+10−4
+10−3
+10−2
+10−1
+100
+101
+Traj. relative error
+CHNN HNN HNN-Angle HNN-Sturcture HNN-Structure-Angle
+Figure 2: The trajectory relative error (log scale) in the states (T = 4). Each error is averaged over
+trajectories with 100 test initial conditions. The absolute error bars show the standard
+deviation in log scale. Left: Lagrangian models; Right: Hamiltonian models.
+0.0 0.2 0.4
+Time (s)
+10−5
+10−3
+10−1
+101
+Relative Error
+1-Pendulum
+0.0 0.2 0.4
+Time (s)
+10−5
+10−3
+10−1
+101
+2-Pendulum
+0.0 0.2 0.4
+Time (s)
+10−5
+10−3
+10−1
+101
+4-Pendulum
+0.0 0.1 0.2 0.3
+Time (s)
+10−5
+10−3
+10−1
+101
+Gyroscope
+CLNN LNN LNN-Angle LNN-Structure LNN-Structure-Angle
+0.0 0.2 0.4
+Time (s)
+10−5
+10−3
+10−1
+101
+Relative Error
+1-Pendulum
+0.0 0.2 0.4
+Time (s)
+10−5
+10−3
+10−1
+101
+2-Pendulum
+0.0 0.2 0.4
+Time (s)
+10−5
+10−3
+10−1
+101
+4-Pendulum
+0.0 0.1 0.2 0.3
+Time (s)
+10−5
+10−3
+10−1
+101
+Gyroscope
+CHNN HNN HNN-Angle HNN-Structure HNN-Structure-Angle
+Figure 3: The relative error in the states (log scale). Each curve is averaged over the prediction
+trajectories of 100 test initial conditions. The vertical dashed lines shows the trajectory
+length in training. Top: Lagrangian models; bottom: Hamiltonian models.
+et al., 2020). While training, we set T = 4 and select random snapshots of length 5 from each
+long trajectory. We evaluate the performance of each model by the relative error at each time step
+||ˆst− st||2/||st||2 and the trajectory relative error∑T
+t=0||ˆst− st||2/||st||2, which sums up relative
+errors along a trajectory. We also analyze each model’s ability in conserving true energy with the
+absolute error in true energy|| ˆEt−Et||2. Since the absolute value of energy is not meaningful
+(potential energy is relative to an arbitrarily chosen zero position), we do not choose the relative
+error in true energy as the metric, which scales the absolute error by the absolute value of energy.
+4.2. Results
+Test error Figure 2 shows the trajectory relative error of 10 models on test trajectory data. The
+models with explicit constraints (CLNN and CHNN) consistently outperforms all the other models
+across all systems. The gap is the largest in the 3D system (Gyroscope) since with explicit con-
+straints, the dynamics under Cartesian coordinates do not suffer from gimbal lock, which occurs in
+8
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+0.0 0.2 0.4
+Time (s)
+10−6
+10−4
+10−2
+100
+102
+Abs. err. in true energy
+1-Pendulum
+0.0 0.2 0.4
+Time (s)
+10−6
+10−4
+10−2
+100
+102
+2-Pendulum
+0.0 0.2 0.4
+Time (s)
+10−6
+10−4
+10−2
+100
+102
+4-Pendulum
+0.0 0.1 0.2 0.3
+Time (s)
+10−6
+10−4
+10−2
+100
+102
+Gyroscope
+CLNN LNN LNN-Angle LNN-Structure LNN-Structure-Angle
+0.0 0.2 0.4
+Time (s)
+10−6
+10−4
+10−2
+100
+102
+Abs. err. in true energy
+1-Pendulum
+0.0 0.2 0.4
+Time (s)
+10−6
+10−4
+10−2
+100
+102
+2-Pendulum
+0.0 0.2 0.4
+Time (s)
+10−6
+10−4
+10−2
+100
+102
+4-Pendulum
+0.0 0.1 0.2 0.3
+Time (s)
+10−6
+10−4
+10−2
+100
+102
+Gyroscope
+CHNN HNN HNN-Angle HNN-Structure HNN-Structure-Angle
+Figure 4: Absolute error in true energy (log scale). Each curve is averaged over the prediction
+trajectories of 100 test initial conditions. The vertical dash lines shows the trajectory
+length in training. Top: Lagrangian models; bottom: Hamiltonian models.
+the dynamics under Euler angles (implicit constraints). For the models with implicit constraints,
+we can observe the beneﬁt of leveraging a structured Lagrangian/Hamiltonian and angle-aware de-
+sign. Comparing the angle-aware models with their non-angle-aware variants (e.g., LNN-Angle
+and LNN), we conclude that the angle-aware design in general beneﬁts learning. This conclusion
+is consistent with our intuition since respecting the geometry of coordinates lets models identify
+q and q± 2π, which helps models learn dynamics. Comparing models that leverage structured
+Lagrangian and those that do not (e.g., LNN-Structure and LNN), we observe that the structure
+beneﬁts the learning of 2 and 4-Pendulum systems while does not help the learning of 1-Pendulum
+and Gyroscope. The 1-Pendulum has simple dynamics, so it can be well learned without the struc-
+ture. As the number of pendulums increases, the structure in Lagrangian/Hamiltonian helps recover
+dynamics that explain the data. For 3D Gyroscope, it is unclear why the structure does not help. We
+leave it as an open question for future work.
+Long-term prediction. We evaluate 10 models on trajectories longer than those in training (T =
+4). Figure 3 shows the average relative error over 100 test trajectories of lengthT = 20. The vertical
+dashed line shows the length of training trajectories. The 2-Pendulum and 4-Pendulum are chaotic
+systems so accurate long-term prediction is not possible. In general, CHNN and CLNN performs
+the best across all systems considered. We have similar observations on the role of angle-aware
+design and the structured Lagrangian/Hamiltonian.
+Energy conservation All 10 models naturally incorporate the prior of energy conservation, which
+means the learned energy is conserved. However, the learned energy might not accurately represent
+the true energy. Figure 4 shows how the true energy calculated from prediction trajectories differ
+from the constant true energy along ground truth trajectories. We observe that although each model
+conserves its own learned energy, they all drift away from the constant true energy as time goes by.
+9
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+101 102 103 104
+Number of training trajectories
+10−3
+10−2
+10−1
+100
+101
+Traj. relative error
+CLNN LNN LNN-Angle LNN-Structure LNN-Structure-Angle
+101 102 103 104
+Number of training trajectories
+10−3
+10−2
+10−1
+100
+101
+Traj. relative error
+CHNN HNN HNN-Angle HNN-Structure HNN-Structure-Angle
+Figure 5: Trajectory relative error in the states (log scale) of 2-Pendulum with various sizes of
+training trajectories. Each curve is averaged over 100 test trajectories ( T = 4 ). Left:
+Lagrangian models; Right: Hamiltonian models.
+CLNN and CHNN has relative low drifts as compared to other models, which explains why they
+perform better in prediction.
+Data Efﬁciency To compare the data efﬁciency of 10 models, we change the size of training
+dataset on the 2-Pendulum system from as low as 10 trajectories to as high as 10,000 trajectories, as
+shown in Figure 5. We observe that CLNN and CHNN outperforms all the other models. We also
+ﬁnd that prior knowledge (structure/angle-aware) beneﬁts data efﬁciency.
+5. Conclusion and Discussion
+In this work, we benchmark recent energy-conserving neural network models that rely on La-
+grangian/Hamiltonian dynamics. CLNN and CHNN, which enforce constraints explicitly, have
+a signiﬁcant advantage in prediction over models that enforce constraints implicitly as observed
+in Finzi et al. (2020), because the Lagrangian and Hamiltonian assume a much simpler form in
+Cartesian coordinates. This is due to the fact that the mass matrix under Cartesian coordinates is
+coordinate-independent, whereas the mass matrix depends on the coordinates in a complicated way
+when we use angular coordinates to describe the system. Moreover, for those models that need
+to learn a coordinate-dependent mass matrix (all Hamiltonian models except CHNN, and LNN-
+Structure, LNN-Structure-Angle), the initialized parametrization of the mass matrix tend to be ill-
+conditioned, which makes training unstable. In practice, a small positive constant is added to the
+diagonal elements of the mass matrix parametrization to alleviate this problem; however, this caveat
+complicates the training of these implicit models. For LNN and LNN-Angle, which do not learn the
+mass matrix, it is implicitly derived from the Hessian of the Lagrangian; since computing Hessian
+involves two gradient operations, these two models incur an additional computational cost and re-
+sult in slower training. The advantage of models that enforce constraints implicitly lies in their easy
+implementation, whereas implementing CHNN and CLNN requires manually adding constraints
+for the systems of interest.
+We also emphasize the similarity and difference between the analytical forms that the mod-
+els learn and the intuition behind them. We conclude that angle-aware design in general beneﬁts
+learning and imposing structures on the Lagrangian and the Hamiltonian beneﬁts learning for 2D
+systems. In fact, CLNN and CHNN also leverage the structure in Lagrangian and Hamiltonian to
+simplify the dynamics. As the structure can be leveraged to design energy-based controllers (Zhong
+et al., 2020a), we believe it is promising to design controllers based on CLNN and CHNN.
+10
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+Acknowledgement
+The authors would like to thank Marc Finzi, Ke Alexander Wang, and Andrew Gordon Wilson for
+their helpful comments on the manuscript. The authors also ﬁnd their codebase released along with
+Finzi et al. (2020) helpful when conducting the experiments in this survey.
+References
+Christine Allen-Blanchette, Sushant Veer, Anirudha Majumdar, and Naomi Ehrich Leonard.
+Lagnetvip: A lagrangian neural network for video prediction. arXiv preprint arXiv:2010.12932,
+2020.
+Eugene Butikov. Precession and nutation of a gyroscope.European Journal of Physics, 27(5):1071,
+2006.
+Ricky TQ Chen, Yulia Rubanova, Jesse Bettencourt, and David K Duvenaud. Neural ordinary
+differential equations. In Advances in neural information processing systems, pages 6571–6583,
+2018.
+Zhengdao Chen, Jianyu Zhang, Martin Arjovsky, and L ´eon Bottou. Symplectic recurrent neural
+networks. In International Conference on Learning Representations, 2020.
+Miles Cranmer, Sam Greydanus, Stephan Hoyer, Peter Battaglia, David Spergel, and Shirley Ho.
+Lagrangian neural networks. In ICLR 2020 Workshop on Integration of Deep Neural Models and
+Differential Equations, 2020.
+Ghanashyam Date. Lectures on constrained systems. arXiv preprint arXiv:1010.2062, 2010.
+Marc Finzi, Ke Alexander Wang, and Andrew Gordon Wilson. Simplifying hamiltonian and la-
+grangian neural networks via explicit constraints. Advances in Neural Information Processing
+Systems, 33, 2020.
+Herbert Goldstein, Charles Poole, and John Safko. Classical mechanics, 2002.
+Ian Goodfellow, Aaron Courville, and Yoshua Bengio. Deep learning, volume 1. MIT Press, 2016.
+Samuel Greydanus, Misko Dzamba, and Jason Yosinski. Hamiltonian neural networks. InAdvances
+in Neural Information Processing Systems, pages 15379–15389, 2019.
+David Haussler. Quantifying inductive bias: AI learning algorithms and Valiant’s learning frame-
+work. Artiﬁcial Intelligence, 36(2):177–221, 1988.
+Pengzhan Jin, Zhen Zhang, Aiqing Zhu, Yifa Tang, and George Em Karniadakis. Sympnets: In-
+trinsic structure-preserving symplectic networks for identifying hamiltonian systems. Neural
+Networks, 132:166–179, 2020.
+Thomas M Kwok, Zheng Li, Ruxu Du, and Guanrong Chen. Modeling and experimental validation
+of the chaotic behavior of a robot whip. Journal of Mechanics, 36(3):373–394, 2020.
+Shiyu Liang and Rayadurgam Srikant. Why deep neural networks for function approximation? In
+International Conference on Learning Representations, 2017.
+11
+BENCHMARKING ENERGY -C ONSERVING NEURAL NETWORKS
+Ilya Loshchilov and Frank Hutter. Decoupled weight decay regularization. In International Con-
+ference on Learning Representations, 2019.
+Michael Lutter, Kim Listmann, and Jan Peters. Deep lagrangian networks for end-to-end learning
+of energy-based control for under-actuated systems. In 2019 IEEE/RSJ International Conference
+on Intelligent Robots and Systems (IROS), pages 7718–7725. IEEE, 2019a.
+Michael Lutter, Christian Ritter, and Jan Peters. Deep lagrangian networks: Using physics as model
+prior for deep learning. In International Conference on Learning Representations, 2019b.
+Allan Pinkus. Approximation theory of the mlp model in neural networks. Acta numerica, 8(1):
+143–195, 1999.
+Manuel A. Roehrl, Thomas A. Runkler, Veronika Brandtstetter, Michel Tokic, and Stefan Ober-
+mayer. Modeling system dynamics with physics-informed neural networks based on lagrangian
+mechanics. In 21st IFAC World Congress, 2020.
+Alvaro Sanchez-Gonzalez, Victor Bapst, Kyle Cranmer, and Peter Battaglia. Hamiltonian graph
+networks with ode integrators. arXiv preprint arXiv:1909.12790, 2019.
+Yunjin Tong, Shiying Xiong, Xingzhe He, Guanghan Pan, and Bo Zhu. Symplectic neural networks
+in taylor series form for hamiltonian systems. arXiv preprint arXiv:2005.04986, 2020.
+Yaofeng Desmond Zhong and Naomi Leonard. Unsupervised learning of lagrangian dynamics from
+images for prediction and control.Advances in Neural Information Processing Systems, 33, 2020.
+Yaofeng Desmond Zhong, Biswadip Dey, and Amit Chakraborty. Symplectic ode-net: Learning
+Hamiltonian dynamics with control. In International Conference on Learning Representations,
+2020a.
+Yaofeng Desmond Zhong, Biswadip Dey, and Amit Chakraborty. Dissipative symODEN: Encoding
+Hamiltonian dynamics with dissipation and control into deep learning. In ICLR 2020 Workshop
+on Integration of Deep Neural Models and Differential Equations, 2020b.
+Aiqing Zhu, Pengzhan Jin, and Yifa Tang. Deep hamiltonian networks based on symplectic integra-
+tors. arXiv preprint arXiv:2004.13830, 2020.
+12

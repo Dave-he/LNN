@@ -1,0 +1,665 @@
+History-informed Lagrangian Neural Networks
+Tianshuo Zhang , Xianglei Xing ⋆, Wenzhe Zhai , Jia Gao , and He Cao
+College of Intelligent Systems Science and Engineering,
+Harbin Engineering University, Harbin 150001, China
+Abstract.Forecasting the long-horizon evolution of mechanical sys-
+tems from position-only observations is a pivotal yet difficult task, as
+hidden velocities and trajectory-specific physical properties must be in-
+ferred simultaneously. Although physics-guided neural networks like La-
+grangian Neural Networks (LNNs) guarantee physical plausibility, they
+generally require complete state inputs and lack adaptability to chang-
+ing system parameters. To break these limitations, we introduce History-
+informed Lagrangian Neural Networks (HiLNN). Grounded in the insight
+that temporal position sequences implicitly encode underlying dynamics,
+HiLNN employs a recurrent encoder to extract a latent context from his-
+tory. This context not only reconstructs the unobserved initial velocity
+but also adaptively modulates the mass matrix, potential energy, and
+damping coefficients of a structured Lagrangian system. By leveraging a
+differentiable RK4 rollout scheme, the entire pipeline is optimized end-to-
+end under multi-step trajectory supervision and energy-consistency reg-
+ularization. Empirical evaluations across conservative, dissipative, and
+heterogeneous variable-parameter systems show that HiLNN delivers su-
+perior long-term prediction accuracy and maintains precise energy pro-
+files compared to state-of-the-art baselines. The source code is publicly
+available athttps://github.com/yingtian22/History-informed-LNN.
+Keywords:physical forecasting·Lagrangian neural networks·partial
+observations·system identification·structured dynamics
+1 Introduction
+Long-horizon forecasting of mechanical systems is fundamental to physical rea-
+soning, robotics, control, and scientific modeling [1,15,17,9,12]. A reliable model
+should remain stable and physically plausible during extended open-loop roll-
+outs, where small errors can recursively accumulate and produce unstable tra-
+jectories or inconsistent physical quantities such as velocity and energy.
+Recent neural dynamics models learn physical evolution from data through
+discrete-time transitions or continuous-time vector fields [15,3,16,13,10]. How-
+ever, they often treat dynamics as black-box mappings without explicit me-
+chanical structure, making long-term rollouts prone to error accumulation and
+physical inconsistency [17,7].
+⋆ Corresponding author: xingxl@hrbeu.edu.cn
+arXiv:2608.13215v1  [cs.LG]  13 Aug 2026
+2 T. Zhang et al.
+Fig. 1.Overview of HiLNN.
+Physics-guided neural dynamics address this limitation by incorporating me-
+chanical priors. Hamiltonian and Lagrangian Neural Networks derive dynamics
+from learned energy functions or Lagrangians, improving interpretability and
+rollout stability [7,4,14,6,22]. Recent extensions further handle constrained, con-
+trolled, or dissipative systems through explicit structure and energy-dissipation
+mechanisms [14,22,18,5]. However, most Lagrangian models require full initial
+states, especially velocity, and learn a fixed global dynamics function, limiting
+their use under position-only observations and trajectory-varying dynamics.
+Our key observation is that position history contains cues about missing
+states and trajectory-specific properties, consistent with delay-coordinate re-
+construction and recent studies on partial-observation dynamics learning [19,2].
+Although velocity and physical parameters are unobserved, temporal position
+evolution reflects local motion trends and hidden dynamical variations. We there-
+fore infer a compact latent context from history, enabling structured dynamics to
+adapt to each trajectory beyond current-position or finite-difference estimates.
+To this end, we propose HiLNN, a history-informed Lagrangian framework
+for position-only mechanical forecasting. Given a coordinate history, HiLNN uses
+a recurrent encoder to infer a latent dynamical context, which estimates the
+missing initial velocity and conditions context-dependent mass, potential, and
+optional damping terms. Starting from the inferred state, HiLNN performs dif-
+ferentiable RK4 rollout and jointly trains the encoder and structured dynamics
+module.
+We evaluate HiLNN on conservative, dissipative, and variable-parameter pen-
+dulum systems. Results show that HiLNN improves rollout accuracy and physi-
+cal consistency over representative baselines, including LNN, HNN, Neural ODE,
+and MLP predictors. Our contributions are summarized as follows:
+–We study position-only long-horizon mechanical forecasting, where hidden
+velocity and trajectory-specific dynamics are inferred from history.
+History-informed Lagrangian Neural Networks 3
+–We propose HiLNN, a history-informed Lagrangian framework that condi-
+tions mass, potential, and optional damping on latent context.
+–We show that HiLNN produces more accurate and physically consistent roll-
+outs on conservative, dissipative, and variable-parameter systems.
+2 Related Work
+2.1 Neural Dynamics Learning
+Neural networks, such as recurrent models and Neural ODEs [3,16,11], are widely
+used to model continuous or discrete dynamical systems. Despite their flexibility
+in predicting future evolution via numerical integration, these black-box models
+lack explicit mechanical structure, energy consistency, or physical constraints.
+Consequently, they often suffer from accumulated rollout errors and physically
+implausible predictions over long horizons. To address this, our work builds
+on structured physical dynamics and introduces history-dependent context to
+improve long-horizon forecasting under incomplete observations.
+2.2 Physics-Guided Neural Dynamics
+Physics-guided neural dynamics embed mechanical structures to improve pre-
+diction accuracy. Representative examples include Hamiltonian Neural Networks
+for energy conservation [7] and Lagrangian Neural Networks using the Euler–
+Lagrange equation [4]. Further extensions introduce mass matrices, dissipation,
+or domain priors to enhance interpretability [14,21]. However, these methods
+typically learn a single global model and require complete state observations.
+In contrast, our work conditions structured Lagrangian dynamics on a history-
+inferred latent context, adapting to partially observed and trajectory-dependent
+systems.
+2.3 Dynamics Learning from Partial Observations
+Physical dynamics are frequently observed through incomplete measurements,
+omitting key variables like velocity or damping. Existing approaches employ
+recurrent encoders, latent state-space models, or neural ODE variants to infer
+hidden states from observation histories [8,16,20]. Although effective, their latent
+dynamics remain black-box and lack explicit mechanical structure. Conversely,
+our method infers a latent mechanical context from position-only history to
+condition a Lagrangian dynamics model, enabling structured, long-horizon pre-
+diction under partial observability and trajectory-dependent variations.
+3 Method
+3.1 Problem Formulation
+We study long-horizon forecasting of mechanical systems from position-only ob-
+servations. Letq t ∈R d be the generalized coordinate and ˙q t ∈R d be the cor-
+responding velocity, forming the physical statex t = (q t,˙qt). Unlike standard
+4 T. Zhang et al.
+Lagrangian Neural Networks that usually assume access to the full initial state,
+we consider a partially observed setting where only a history of positions is
+available:
+Hq
+t ={q t−L+1, qt−L+2, . . . , qt}.(1)
+GivenH q
+t , the goal is to predict the future state trajectory
+ˆXt+1:t+H ={(ˆqt+1, ˆ˙qt+1), . . . ,(ˆqt+H , ˆ˙qt+H)}(2)
+over anH-step open-loop rollout.
+This setting requires inferring both the missing initial velocity and trajectory-
+specific dynamics from position history. HiLNN addresses this by using a history-
+informed context to condition a structured Lagrangian dynamics model.
+3.2 Overview of HiLNN
+HiLNN combines history-based state inference and structured Lagrangian dy-
+namics. As shown in Fig. 1, the position historyH q
+t is encoded into a latent
+context
+zt = Encθ(Hq
+t ),(3)
+which summarizes trajectory-specific dynamical information. The context is used
+by a velocity head to infer the missing initial velocity ˆ˙qt, forming
+ˆxt = (qt, ˆ˙qt).(4)
+It also conditions the Lagrangian module through context-dependent mass, po-
+tential, and optional damping terms. Starting from ˆxt, HiLNN performs an open-
+loop RK4 rollout forHsteps, withz t kept fixed as the inferred context of the
+current trajectory.
+Unlike conventional LNNs that require known velocities and use a fixed global
+dynamics model, HiLNN infers both hidden velocity and trajectory-specific con-
+text from history.
+3.3 History-Informed Context Encoder
+The history encoder maps the position history to a compact latent context.
+Given
+Hq
+t ={q t−L+1, qt−L+2, . . . , qt},(5)
+we encode the sequence with a recurrent network:
+ht = GRUθ(Hq
+t ),(6)
+whereh t is the final hidden representation. It is projected to the latent context:
+zt = MLPz(ht).(7)
+The contextz t captures information unavailable from the current position
+alone, including motion trends, hidden velocity cues, and parameter variations.
+It is shared by the velocity head and the Lagrangian module, and remains fixed
+during rollout.
+History-informed Lagrangian Neural Networks 5
+3.4 Context-Conditioned Lagrangian Dynamics
+To preserve mechanical structure, HiLNN models dynamics with a context-
+conditioned Lagrangian. Givenx= (q,˙q) and contextz t, we define
+Lθ(q,˙q, zt) =T θ(q,˙q, zt)−V ϕ(q, zt),(8)
+whereT θ andV ϕ denote the kinetic and potential energy terms, respectively.
+The kinetic energy is parameterized by a positive mass matrix:
+Tθ(q,˙q, zt) = 1
+2 ˙q⊤Mθ(q, zt) ˙q,(9)
+and the potential energy is predicted by a neural network conditioned on both
+the coordinate and the inferred context:
+Vϕ(q, zt) = MLPV ([q, zt]).(10)
+The mass term is constrained positive. For one-dimensional systems, we use
+Mθ(q, zt) = softplus
+ 
+MLPM([q, zt])
+
++ϵ,(11)
+whereϵensures numerical stability. For multi-dimensional systems, we use a
+positive diagonal mass matrix with element-wise softplus.
+The resulting acceleration is derived from the Euler–Lagrange equation:
+d
+dt
+∂Lθ
+∂˙q − ∂Lθ
+∂q =Q,(12)
+whereQis the generalized non-conservative force. We setQ= 0 for conservative
+systems and optionally use context-conditioned damping for dissipative systems:
+Q=−D ψ(q, zt) ˙q,(13)
+whereD ψ(q, zt) is constrained to be non-negative.
+In practice, the acceleration can be obtained by solving the Euler–Lagrange
+system:
+¨q=A−1
+ ∂Lθ
+∂q −B˙q+Q
+
+,(14)
+where
+A= ∂2Lθ
+∂˙q2 , B= ∂2Lθ
+∂q∂˙q.(15)
+Thus, dynamics are computed from a structured energy-based formulation rather
+than direct acceleration regression. Conditioning mass, potential, and damping
+onz t allows HiLNN to adapt to trajectory-dependent dynamics while retaining
+mechanical structure.
+6 T. Zhang et al.
+3.5 Initial State Inference and Differentiable RK4 Rollout
+Since the initial velocity is unobserved, HiLNN infers it from the last position
+and context:
+ˆ˙qt = MLPv([qt, zt]),(16)
+where [qt, zt] denotes concatenation. The initial state is then
+ˆxt = (qt, ˆ˙qt).(17)
+Starting from ˆxt, the model performs open-loop prediction using the context-
+conditioned dynamics. Let
+dx
+dt =f θ(x, zt) =
+
+˙q
+¨qθ(q,˙q, zt)
+
+,(18)
+where ¨qθ is derived from the context-conditioned Euler–Lagrange dynamics. We
+use a fourth-order Runge–Kutta integrator to advance the state:
+ˆxt+k+1 = RK4
+ 
+fθ,ˆxt+k, zt, ∆t
+
+, k= 0, . . . , H−1.(19)
+The rollout is fully differentiable, withz t fixed while the state is recursively
+updated by the learned dynamics.
+3.6 Training Objective
+HiLNN is trained end-to-end with multi-step rollout supervision. Given predicted
+trajectory ˆXt+1:t+H and ground truthX t+1:t+H, the rollout loss is
+Lroll = 1
+H
+HX
+k=1
+
+λq∥ˆqt+k −q t+k∥2
+2 +λ ˙q∥ˆ˙qt+k −˙qt+k∥2
+2
+
+,(20)
+whereλ q andλ ˙qbalance position and velocity prediction errors.
+When ground-truth velocity at timetis available, we additionally supervise
+the velocity head:
+Lv0 =∥ ˆ˙qt −˙qt∥2
+2.(21)
+This encourages a physically meaningful rollout initialization.
+We further add energy regularization for physical consistency. LetE(q,˙q)
+denote mechanical energy:
+LE = 1
+H
+HX
+k=1
+E(ˆqt+k, ˆ˙qt+k)−E(q t+k,˙qt+k)
+
+2
+2
+.(22)
+The final training objective is
+L=L roll +λ v0Lv0 +λ ELE,(23)
+whereλ v0 andλ E control initial velocity supervision and energy consistency. All
+losses are computed after differentiable RK4 rollout, enabling joint optimization
+of the encoder, velocity head, and Lagrangian dynamics.
+History-informed Lagrangian Neural Networks 7
+3.7 Implementation Details
+Unless otherwise specified, we use history lengthL= 8, prediction horizonH=
+32, and time interval∆t= 0.05. The encoder is a one-layer GRU with hidden
+dimension 64, followed by an MLP that outputs a 32-dimensional context. The
+velocity head is a lightweight MLP taking [q t, zt] as input.
+The context-conditioned mass and potential networks are MLPs with hidden
+dimension 128 and Tanh activations. Mass positivity is enforced by softplus with
+ϵ= 10 −3. Training and evaluation use RK4, and gradients are backpropagated
+through the full rollout without detaching intermediate states.
+We optimize the model using Adam with learning rate 10 −3, batch size 256,
+gradient clipping of 1.0, and early stopping with patience 15 over at most 50
+epochs. The default loss weights are
+λq = 1.0, λ ˙q= 0.1, λ v0 = 0.1, λ E = 0.01.(24)
+All results are evaluated under open-loop rollout using only observed history.
+4 Experiments
+4.1 Experimental Setup
+Datasets.We evaluate HiLNN on three pendulum-based systems: a fixed con-
+servative pendulum, a fixed damped pendulum, and a variable-parameter pen-
+dulum with trajectory-dependent dynamics. For all datasets, the model observes
+only a position history of lengthL= 8 and predictsH= 32 future steps with
+∆t= 0.05. Details are summarized in Table 1.
+T able 1.Dataset setup withL= 8,H= 32, and∆t= 0.05.
+Dataset Type Train/Val/Test Test win. Params Property
+Pendulum Fixed conservative 1000/200/200 32200 fixedl=1, m=1, c=0 Conservative
+Damped Fixed dissipative 1000/200/200 32200 fixedc=0.15 Decay
+Variable Variable params. 3000/500/500 80500 sampledl, m, cHeterogeneous
+Evaluation protocol.All methods follow the same position-only forecast-
+ing protocol. At test time, each model observes only the position history and
+performs open-loop rollout without future ground truth. We report MSE, MAE,
+Final MSE@32, and Energy MSE to measure trajectory accuracy, long-horizon
+error accumulation, and physical consistency.
+Baselines.We compare HiLNN with representative dynamics models, in-
+cluding LNN [4], HNN [7], Neural ODE [3], MLP-based predictors, and an LNN-
+multistep variant trained with rollout supervision. These baselines cover both
+black-box and physics-guided dynamics, enabling direct comparison with the
+proposed history-informed Lagrangian formulation.
+8 T. Zhang et al.
+Ground truthPrediction
+(a)
+Pendulum
+(b)
+Damped
+(c)
+Variable
+(d)
+LNN
+(e)
+LNN-multistep
+(f)
+HiLNN
+Fig. 2.Qualitative rollout comparison. Left: ground truth and HiLNN on three datasets
+(a–c). Right: ground truth and baseline predictions on the fixed pendulum (d–f).
+Implementation details.HiLNN uses a one-layer GRU to encode position
+history into a latent context, which is shared by the initial velocity head and
+the context-conditioned Lagrangian module. The mass and potential terms are
+modeled by MLPs, with mass positivity enforced by softplus and a small con-
+stant. Unless otherwise specified, training and evaluation use RK4 with gradients
+propagated through the full rollout horizon. The training configuration is shown
+in Table 2.
+T able 2.Training configuration of HiLNN.
+Item Value Item Value
+History lengthL8 Prediction horizonH32
+Time step∆t0.05 Encoder GRU
+GRU hidden dim. 64 Context dim.d z 32
+GRU layers 1 Lagrangian MLP hidden 128
+Mass positivityε10 −3 Integrator RK4
+Detach between steps False Optimizer Adam
+Learning rate 10 −3 Batch size 256
+Max epochs 50 Early-stop patience 15
+Gradient clip norm 1.0 Loss weightsλ q/λ˙q/λv0/λE = 1.0/0.1/0.1/0.01
+4.2 Main Quantitative Results
+Fig. 2 qualitatively compares 32-step open-loop rollouts: panels (a–c) show ground-
+truth and HiLNN trajectories on the fixed, damped, and variable pendulum
+datasets, while panels (d–f) contrast LNN, LNN-multistep, and HiLNN on the
+fixed pendulum, with HiLNN tracking the ground truth most closely. Table 3
+reports the overall comparison on the three pendulum systems. HiLNN achieves
+the best performance across conservative, dissipative, and variable-parameter
+settings. On the standard pendulum, it reduces the average MSE from 0.279 of
+History-informed Lagrangian Neural Networks 9
+LNN to 0.103, while also obtaining the lowest Final MSE@32 and Energy MSE,
+showing improved prediction accuracy and long-horizon physical consistency.
+The advantage is more pronounced on damped and variable-parameter sys-
+tems. For the damped pendulum, HiLNN achieves an average MSE of 4.28×10−3
+and reduces Energy MSE from 0.987 to 0.107 compared with LNN, indicating
+that the context-conditioned damping term captures dissipative dynamics. For
+the variable-parameter pendulum, HiLNN reduces MSE from 0.894 of LNN-
+multistep to 0.061 and Final MSE@32 from 2.295 to 0.193, suggesting that the la-
+tent context effectively adapts the structured dynamics to trajectory-dependent
+physical variations.
+Overall, these results show that a fixed global Lagrangian model is insufficient
+under position-only and heterogeneous dynamics. By inferring the missing initial
+velocity and conditioning Lagrangian components on history, HiLNN provides
+more accurate and physically coherent long-horizon forecasts.
+T able 3.Full quantitative results on the three pendulum systems.
+Dataset Method MSE↓MAE↓Final MSE@32↓Energy MSE↓
+Pendulum
+LNN [4] 0.279 0.116 0.483 4.222
+LNN [4]-multistep 0.415 0.238 0.857 5.906
+HNN [7] 1.646 0.826 2.740 17.512
+Neural ODE [3] 0.580 0.458 1.355 9.603
+MLP-one-step 0.261 0.156 0.564 3.695
+HiLNN 0.103 0.109 0.271 1.705
+Damped
+LNN [4] 0.037 0.104 0.149 0.987
+LNN [4]-multistep 0.042 0.124 0.089 1.338
+HiLNN 4.28×10 −3 0.036 0.018 0.107
+Variable
+LNN [4] 0.960 0.536 2.483 19.516
+LNN-multistep [4] 0.894 0.522 2.295 26.944
+HiLNN 0.061 0.113 0.193 1.759
+4.3 Long-Horizon Rollout Analysis
+To further analyze error accumulation, we report step-wise rollout errors over the
+32-step open-loop horizon. As shown in Fig. 3, HiLNN consistently achieves lower
+errors on all three systems, especially at medium and long horizons. This shows
+that the history-informed context improves prediction accuracy and mitigates
+recursive error growth in open-loop forecasting.
+Table 4 reports detailed rollout errors on the conservative pendulum. Al-
+though LNN has the lowest one-step error, its error grows quickly over longer
+horizons. HiLNN achieves lower errors from Step 8 onward and reduces the
+final-step error from 0.483 to 0.271, showing that velocity inference and history-
+conditioned Lagrangian dynamics improve long-horizon stability.
+10 T. Zhang et al.
+5 10 15 20 25 30
+Forecast step
+10−3
+10−2
+10−1
+100
+State MSE
+Pendulum
+5 10 15 20 25 30
+Forecast step
+State MSE
+Damped pendulum
+5 10 15 20 25 30
+Forecast step
+State MSE
+Variable-parameter pendulum
+LNN LNN-multistep HiLNN
+Fig. 3.Step-wise rollout error on the three pendulum systems. HiLNN achieves lower
+state MSE than LNN and LNN-multistep over the 32-step open-loop prediction horizon.
+Fig. 4.Energy behavior on the damped, standard, and variable-parameter pendulum
+systems.
+T able 4.Rollout error summary on the pendulum system. Values report state MSE
+at selected forecast steps.
+Method Step 1 Step 8 Step 16 Step 32 Avg.
+LNN [4] 2.17×10 −3 0.112 0.299 0.483 0.279
+LNN [4]-multistep 3.55×10 −3 0.162 0.402 0.857 0.415
+HNN [7] 0.024 0.897 1.848 2.740 1.646
+Neural ODE [3] 8.51×10 −3 0.252 0.504 1.355 0.580
+HiLNN 0.061 0.039 0.072 0.271 0.103
+The damped pendulum results in Table 5 further show HiLNN’s advantage
+under dissipative dynamics. Although LNN has a very small Step-1 error, its
+error grows rapidly at later steps. HiLNN achieves the lowest errors at Steps 8,
+16, and 32, reducing the final-step error from 0.149 to 0.018. This indicates that
+context-conditioned damping better captures long-term energy decay.
+The improvement is most evident in the variable-parameter setting, as shown
+in Table 6. Since trajectories follow different physical parameters, a single global
+Lagrangian model struggles with long-horizon prediction. HiLNN achieves the
+best performance at all selected steps and reduces the Step-32 error from 2.483/2.295
+to 0.193 compared with LNN/LNN-multistep. This indicates that the latent
+context captures trajectory-dependent dynamics and enables adaptation across
+heterogeneous systems.
+History-informed Lagrangian Neural Networks 11
+T able 5.Rollout error summary on the damped pendulum system. Values report state
+MSE at selected forecast steps.
+Method Step 1 Step 8 Step 16 Step 32 Avg.
+LNN [4] 2.08×10 −4 8.60×10 −3 0.016 0.149 0.037
+LNN [4]-multistep 6.62×10 −3 0.027 0.039 0.089 0.042
+HiLNN 2.68×10 −3 1.36×10 −3 2.21×10 −3 0.018 4.28×10 −3
+T able 6.Rollout error summary on the variable-parameter pendulum system. Values
+report state MSE at selected forecast steps.
+Method Step 1 Step 8 Step 16 Step 32 Avg.
+LNN [4] 6.12×10 −3 0.301 0.717 2.483 0.960
+LNN [4]-multistep 7.56×10 −3 0.350 0.685 2.295 0.894
+HiLNN 5.92×10 −3 0.016 0.042 0.193 0.061
+Overall, these analyses show that baseline models may achieve competitive
+short-term prediction but suffer from rapid error accumulation in long open-loop
+rollouts. HiLNN stabilizes error growth by using history to infer both the missing
+initial state and trajectory-specific dynamical context.
+4.4 Trajectory and Physical Consistency
+Beyond aggregate metrics, we further examine trajectory and energy behavior.
+Fig. 5 shows that HiLNN closely tracks the ground-truth positionqand ve-
+locity ˙qover 32 steps, whereas baselines show larger phase shifts or amplitude
+errors, consistent with Sec. 4.3. For physical consistency, Table 7 shows that
+HiLNN obtains the lowest energy errors at Steps 16 and 32 on the damped
+pendulum, reducing Test Energy MSE from 0.987 to 0.107 and mean absolute
+energy error from 0.686 to 0.167. These results suggest that history-informed
+context improves initialization and rollout dynamics, while context-conditioned
+damping better captures dissipative energy decay. These results indicate that
+history-informed context improves state initialization and dynamical evolution,
+while context-conditioned damping helps capture dissipative energy decay.
+The variable-parameter setting further evaluates physical consistency under
+trajectory-dependent parameters. As shown in Table 7, LNN and LNN-multistep
+accumulate large energy errors, with Test Energy MSE values of 19.516 and
+26.944. In contrast, HiLNN reduces Test Energy MSE to 1.759 and Step-32
+energy error from 26.111 to 3.646 compared with LNN. Although not best at
+Step 1, HiLNN achieves much lower later-step errors, showing that the learned
+context improves long-term physical consistency under heterogeneous dynamics.
+Overall, these results show that HiLNN improves both trajectory accuracy
+and physical consistency. By following dissipative energy decay and reducing
+long-horizon energy drift in parameter-varying systems, HiLNN validates the
+12 T. Zhang et al.
+T able 7.Energy behavior summary on damped and variable-parameter pendulum
+systems. For the damped system, the true energy drop is approximately 1.24 over 32
+steps on average.
+Dataset MethodE-MSE@1E-MSE@16E-MSE@32 Mean|err|TestE-MSE
+Damped
+LNN [4] 5.31×10 −3 0.800 2.607 0.686 0.987
+LNN [4]-multistep 0.225 1.277 2.825 0.730 1.338
+HiLNN 0.085 0.044 0.565 0.167 0.107
+Variable
+LNN [4]0.38631.072 26.111 2.004 19.516
+LNN [4]-multistep 0.462 44.162 31.178 2.073 26.944
+HiLNN 0.530 1.675 3.646 0.645 1.759
+0 5 10 15 20 25 30
+−0.5
+0.0
+0.5
+1.0
+q
+Pendulum
+Ground truth
+HiLNN
+0 5 10 15 20 25 30
+−1.5
+−1.0
+−0.5
+0.0
+0.5
+1.0
+1.5
+q
+Damped pendulum
+Ground truth
+HiLNN
+0 5 10 15 20 25 30
+−0.6
+−0.4
+−0.2
+0.0
+0.2
+0.4
+q
+Variable-parameter pendulum
+Ground truth
+HiLNN
+0 5 10 15 20 25 30
+Forecast step
+−3
+−2
+−1
+0
+1
+2
+3
+̇q
+Ground truth
+HiLNN
+0 5 10 15 20 25 30
+Forecast step
+−4
+−2
+0
+2
+4
+̇q
+Ground truth
+HiLNN
+0 5 10 15 20 25 30
+Forecast step
+−2
+−1
+0
+1
+2
+̇q
+Ground truth
+HiLNN
+Fig. 5.Representative trajectory predictions on the three pendulum systems. HiLNN
+closely follows the ground-truth positionqand velocity ˙qover the 32-step prediction
+horizon.
+benefit of combining history-informed context with structured Lagrangian dy-
+namics.
+4.5 Ablation Studies
+We conduct ablations on energy regularization, rollout training, initial velocity
+supervision, and history length.
+Unless otherwise specified, all ablations are performed on the pendulum set-
+ting. Table 8 summarizes the effects of energy regularization, rollout design,
+and initial velocity supervision. For energy regularization, removingλ E weakens
+physical consistency, yielding an MSE of 0.118 and an Energy MSE of 3.147,
+while a small weight improves the accuracy–energy trade-off. Specifically,λ E =
+0.01 gives the best overall MSE and Energy MSE, whereasλ E = 0.001 achieves
+the lowest Final MSE@32 but higher Energy MSE. A larger weight,λ E = 0.05,
+hurts both accuracy and energy consistency, indicating over-regularization; thus,
+we useλ E = 0.01 by default. For rollout training, the Euler variant with detached
+History-informed Lagrangian Neural Networks 13
+T able 8.Ablation summary of HiLNN on the pendulum system, covering energy
+regularization, rollout training design, and initial velocity supervision. “–” indicates
+that the metric is not applicable to the corresponding ablation.
+Ablation Setting MSE↓Final MSE@32↓Energy MSE↓Init. Vel. MSE↓
+Energy weight
+λE= 0 0.118 0.261 3.147 –
+λE= 0.001 0.1160.2532.680 –
+λE= 0.01 0.103 0.271 1.705 –
+λE= 0.05 0.261 0.495 4.041 –
+Rollout design
+HiLNN v1a, Euler, detach 0.449 1.025 9.070 –
+HiLNN v1b, RK4, full BPTT0.118 0.261 3.147 –
+LNN [4], RK4 0.279 0.482 4.222 –
+Init. velocityλv0= 0.1 0.118 0.261 3.147 0.115
+λv0= 00.1170.262 3.318 0.245
+states, HiLNN v1a, performs poorly, with an MSE of 0.449 and Final MSE@32
+of 1.025. Using RK4 with full backpropagation through time reduces them to
+0.118 and 0.261, respectively, and also outperforms the LNN baseline under the
+same RK4 protocol. This confirms the benefit of differentiable high-order inte-
+gration and full-horizon gradient propagation. Finally, removing the auxiliary
+initial velocity loss keeps rollout MSE similar but increases the initial velocity
+error from 0.115 to 0.245, showing thatL v0 mainly improves the accuracy and
+interpretability of the inferred initial state. We retain this loss to provide a more
+physical initialization for open-loop rollout.
+5 Conclusion
+In this paper, we proposed HiLNN, a history-informed Lagrangian framework
+for long-horizon mechanical forecasting from position-only observations. By in-
+ferring a latent context from observed history, HiLNN estimates the missing ini-
+tial velocity and adaptively conditions the mass, potential, and damping terms
+of a structured Lagrangian model. Combined with differentiable RK4 rollout
+and multi-step supervision, HiLNN preserves mechanical structure while im-
+proving long-horizon stability. Experiments on conservative, dissipative, and
+variable-parameter pendulum systems show that HiLNN achieves more accurate
+and physically consistent predictions than representative black-box and physics-
+guided baselines.
+Acknowledgements
+The work is supported by the National Natural Science Foundation of China
+under Grant No. 62076078, the Fundamental Research Funds for the Central
+Universities under Grant No. 3072024LJ0403, and the CAAI-Huawei MindSpore
+Open Fund under Grant No. CAAI–XSJLJJ–2020–033A.
+14 T. Zhang et al.
+References
+1. Battaglia, P.W., Pascanu, R., Lai, M., Rezende, D.J., Kavukcuoglu, K.: Interaction
+networks for learning about objects, relations and physics. In: Advances in Neural
+Information Processing Systems. vol. 29, pp. 4502–4510 (2016)
+2. Buisson-Fenet, M., Morgenthaler, V., Trimpe, S., Di Meglio, F.: Recognition mod-
+els to learn dynamics from partial observations with neural odes. Transactions on
+Machine Learning Research (2023)
+3. Chen, R.T.Q., Rubanova, Y., Bettencourt, J., Duvenaud, D.K.: Neural ordinary
+differential equations. In: Advances in Neural Information Processing Systems.
+vol. 31, pp. 6572–6583 (2018)
+4. Cranmer, M., Greydanus, S., Hoyer, S., Battaglia, P., Spergel, D., Ho, S.: La-
+grangian neural networks. In: ICLR 2020 Workshop on Integration of Deep Neural
+Models and Differential Equations (2020)
+5. Desai, S.A., Mattheakis, M., Sondak, D., Protopapas, P., Roberts,
+S.J.: Port-hamiltonian neural networks for learning explicit time-
+dependent dynamical systems. Physical Review E104(3), 034312 (2021).
+https://doi.org/10.1103/PhysRevE.104.034312
+6. Finzi, M., Wang, K.A., Wilson, A.G.: Simplifying hamiltonian and lagrangian neu-
+ral networks via explicit constraints. In: Advances in Neural Information Processing
+Systems. vol. 33, pp. 13880–13889 (2020)
+7. Greydanus, S., Dzamba, M., Yosinski, J.: Hamiltonian neural networks. In: Ad-
+vances in Neural Information Processing Systems. vol. 32, pp. 15353–15363 (2019)
+8. Krishnan, R.G., Shalit, U., Sontag, D.: Deep kalman filters. arXiv preprint
+arXiv:1511.05121 (2015)
+9. Li, M., Xiao, Y., Xing, X.: Trajectory prediction methods based on analytical
+mechanics and graph neural networks. CAAI Transactions on Intelligent Systems
+20(6), 1355–1365 (2025). https://doi.org/10.11992/tis.202501020
+10. Li, Y., Ding, K., Yang, C., Chen, S.Y., Tian, Y.: Distilling time series foundation
+models for efficient forecasting. In: IEEE International Conference on Acoustics,
+Speech and Signal Processing (2026)
+11. Li, Y., Ding, K., Yang, C., Wang, H., Wang, H., Duan, H., Liu, J., Tian, Y.:
+Ddtime: Dataset distillation with spectral alignment and information bottleneck
+for time-series forecasting. arXiv preprint arXiv:2511.16715 (2025)
+12. Li, Y., Dong, J., Liu, J., Koniusz, P., Zeng, H., Yang, C., Liu, J., Tian, Y.,
+Huang, T., Wu, H.: Evolving multimodal models for physical dynamics: A multi-
+objective neuroevolution approach. IEEE Transactions on Evolutionary Computa-
+tion (2026). https://doi.org/10.1109/TEVC.2026.3698641
+13. Li, Y., Yang, C., Zeng, H., Dong, Z., An, Z., Xu, Y., Tian, Y., Wu, H.: Frequency-
+aligned knowledge distillation for lightweight spatiotemporal forecasting. In: Pro-
+ceedings of the IEEE/CVF International Conference on Computer Vision. pp.
+7262–7272 (2025)
+14. Lutter, M., Ritter, C., Peters, J.: Deep lagrangian networks: Using physics as model
+prior for deep learning. In: International Conference on Learning Representations
+(2019)
+15. Nagabandi, A., Kahn, G., Fearing, R.S., Levine, S.: Neural network dynam-
+ics for model-based deep reinforcement learning with model-free fine-tuning. In:
+2018 IEEE International Conference on Robotics and Automation. pp. 7559–7566
+(2018). https://doi.org/10.1109/ICRA.2018.8463189
+History-informed Lagrangian Neural Networks 15
+16. Rubanova, Y., Chen, R.T.Q., Duvenaud, D.: Latent odes for irregularly-sampled
+time series. In: Advances in Neural Information Processing Systems. vol. 32 (2019)
+17. Sanchez-Gonzalez, A., Godwin, J., Pfaff, T., Ying, R., Leskovec, J., Battaglia,
+P.W.: Learning to simulate complex physics with graph networks. In: Proceedings
+of the 37th International Conference on Machine Learning. vol. 119, pp. 8459–8468
+(2020)
+18. Sosanya, A., Greydanus, S.: Dissipative hamiltonian neural networks: Learning
+dissipative and conservative dynamics separately. arXiv preprint arXiv:2201.10085
+(2022)
+19. Takens, F.: Detecting strange attractors in turbulence. In: Dynamical Systems and
+Turbulence, Warwick 1980, Lecture Notes in Mathematics, vol. 898, pp. 366–381.
+Springer, Berlin, Heidelberg (1981). https://doi.org/10.1007/BFb0091924
+20. Yildiz, C., Heinonen, M., Lahdesmaki, H.: Ode2vae: Deep generative second order
+odes with bayesian neural networks. In: Advances in Neural Information Processing
+Systems. vol. 32 (2019)
+21. Zhang, T., Zhai, W., Yann, R., Gao, J., Cao, H., Xing, X.: Floating-body hydro-
+dynamic neural networks. arXiv preprint arXiv:2509.13783 (2025)
+22. Zhong, Y.D., Dey, B., Chakraborty, A.: Symplectic ode-net: Learning hamiltonian
+dynamics with control. In: International Conference on Learning Representations
+(2020)

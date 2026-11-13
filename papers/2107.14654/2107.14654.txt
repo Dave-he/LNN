@@ -1,0 +1,397 @@
+BRAIN -I NSPIRED DEEP IMITATION LEARNING FOR
+AUTONOMOUS DRIVING SYSTEMS
+Hasan Bayarov Ahmedov
+Department of Computing Science
+University of Aberdeen
+King’s College, Aberdeen,
+AB24 3FX
+hasan.ahmedov.17@abdn.ac.uk
+Dewei Yi
+Department of Computing Science
+University of Aberdeen
+King’s College, Aberdeen,
+AB24 3FX
+dewei.yi@abdn.ac.uk
+Jie Sui
+School of Psychology
+University of Aberdeen
+King’s College, Aberdeen,
+AB24 3FX
+jie.sui@abdn.ac.uk
+ABSTRACT
+Autonomous driving has attracted great attention from both academics and industries. To realise
+autonomous driving, Deep Imitation Learning (DIL) is treated as one of the most promising solutions,
+because it improves autonomous driving systems by automatically learning a complex mapping from
+human driving data, compared to manually designing the driving policy. However, existing DIL
+methods cannot generalise well across domains, that is, a network trained on the data of source
+domain gives rise to poor generalisation on the data of target domain. In the present study, we
+propose a novel brain-inspired deep imitation method that builds on the evidence from human brain
+functions, to improve the generalisation ability of deep neural networks so that autonomous driving
+systems can perform well in various scenarios. Speciﬁcally, humans have a strong generalisation
+ability which is beneﬁcial from the structural and functional asymmetry of the two sides of the brain.
+Here, we design dual Neural Circuit Policy (NCP) architectures in deep neural networks based on
+the asymmetry of human neural networks. Experimental results demonstrate that our brain-inspired
+method outperforms existing methods regarding generalisation when dealing with unseen data. Our
+source codes and pretrained models are available at https://github.com/Intenzo21/Brain-Inspired-
+Deep-Imitation-Learning-for-Autonomous-Driving-Systems.
+Keywords Brain-inspired AI · Imitation Learning · Autonomous Vehicles
+1 Introduction
+Autonomous vehicles have received the attention of various industries and academic institutions. Due to their potential
+to improve the safety and efﬁciency of the driving experience, they are expected to have a massive economic impact
+within the next decade [ 1]. A machine learning (ML) approach, known as end-to-end learning, has been used to
+achieve such an autonomous driving system [2]. This approach refers to the use of a single, self-contained system that
+automatically translates a sensory input, such as a captured image, into a set of instructions for driving. This type of
+learning is called Deep Imitation Learning (DIL) [3, 4].
+A number of DIL algorithms have been developed in last two decades that overcome the lack of vast data for training
+procedures in Deep Learning (DL) models. For example, a data-driven, off-policy IL learning called Behavioural
+Cloning (BC) has been proposed to simulate human driving [5], which replaces deterministic behaviour with a human-
+driven paradigm that is sophisticated and ﬂexible in its response to different visual environments [ 6]. This method also
+allows a ﬁnal system to be built by improving its ability to generalise, that is, enabling the model to operate in a variety
+of circumstances [7].
+Successful deep neural networks with a single, task-speciﬁc algorithm should be able to generalise well across domains.
+Such an algorithm can enable simultaneous expression of generalisation ability by learning coherent representations and
+interpretable dynamics explanations of the world [8]. To some extent, deep neural networks, e.g., CNN, have shown
+generalisation ability on image classiﬁcation, recognition [9] and autonomous driving/collision avoidance [10, 11]
+arXiv:2107.14654v1  [cs.AI]  30 Jul 2021
+Brain-Inspired Deep Imitation Learning for Autonomous Driving Systems
+problems. However, this ability still needs to be further improved, especially in the ﬁeld of autonomous driving, which
+requires reﬂecting a spatiotemporal understanding of dynamic driving settings. From this point onwards, the primary
+aim of the present study is to explore whether a certain architecture (built on evidence in the human brain) generalises
+better than other architectures in autonomous driving models, by examining a range of methodologies, including
+Convolutional Neural Networks, single neural circuit policy networks, and dual neural circuit policy networks. We
+evaluate generlisation performance on diverse datasets, such as Udacity simulator dataset and comma.ai dataset.
+In the present study, we employ brain-inspired architectures into deep neural networks, where we build various end-
+to-end DIL model architectures and put them into competition with the reference neural network mentioned in [ 2].
+These network architectures are compared in terms of the training and generalisation Mean Squared Error (MSE) result
+between the model predictions and the actual steering angles provided by a human driver. The present brain-inspired
+models are built on the evidence of the asymmetry of neural connectivity in the human brain, because converging
+evidence from structural and functional neuroimaging studies has shown that the neural basis of human cognitive
+functions is extensively distributed in different regions across the two sides of the brain, which indicates the complexity
+of how humans respond to the environment via different levels of processing [12]. From an evolutionary perspective,
+the lateralised functions of human two brains increases with evolution [13]. Speciﬁcally, the present study adopts DIL
+in accomplishing dynamic vehicle control (e.g. steering angle, speed). A Udacity simulator [ 14] has been employed as
+a starting point which has been later replaced by the real-world comma.ai dataset [15]. Attempting to solve the task has
+required the utilisation of the Neural Circuit Policies (NCPs) model, a designed sparse RNN based on the Liquid Time
+Constant (LTC) neuron with synapse model, which is inspired by C. elegans organism nervous system [16]. Therefore,
+the key contribution of our work is summarised as follows.
+• We propose a brain-inspired DIL method to enhance the generalisation ability of autonomous driving models,
+where the design of dual NCP architectures replicates the human brain left and right hemispheres.
+• Various modiﬁcations of the newly developed composite networks are explored for fully leveraging the
+strengths of brain-inspired network architectures.
+• Our method is evaluated on the Udacity simulator and comma.ai datasets to demonstrate its performance
+against contemporary architectures.
+2 Related Work
+2.1 Convolutional Neural and Recurrent Neural Networks
+The Convolutional Neural Networks (CNNs) are one of the most popular type of Deep Neural Network (DNN) [17].
+It is named after the mathematical linear operation between matrices called convolution. This model has yielded
+groundbreaking results in a variety of pattern recognition ﬁelds, spanning from image processing to speech recognition,
+in the last years. Furthermore, it has been shown that CNNs perform exceptionally when it comes to ML problems. In
+particular, these networks are implemented in image data challenges. For instance, CNNs have achieved outstanding
+results on the largest image classiﬁcation dataset named ImageNet, Computer Vision (CV) problems, and on Natural
+Language Processing (NLP).
+Recurrent neural networks (RNNs) are a type of networks which are able to extract useful from sequential or time
+series data. RNNs show impressive performance on ordinal or temporal problems, such as language modelling [18] and
+translation, NLP, speech recognition [19], machine translation [20] and image captioning. They are integrated into many
+well-known applications e.g. Siri, voice search, and Google Translate etc. Similar to Feed Forward Neural Networks
+(FNNs) and CNNs, RNNs utilise training data to learn. RNNs were developed in response to a number of ﬂaws in the
+FNN model [21]: inability to handle sequential data; managing only the current input; no previous input memorisation.
+2.2 Neural Circuit Policies
+The architecture of NCPs (Figure 1) is galvanised by the C. elegans nematode wiring representation [22]. The wiring
+diagram of C. elegans attains a sparsity close to 90% [23] primarily consisting of feed forward links from sensors to
+intermediate neurons. Also, it comprises exceedingly cyclical connections between inter and command neurons and feed
+forward links from command to motor neurons. This particular topology has been shown to have computational beneﬁts
+such as effective distributed control with a minimal number of neurons [ 23], hierarchical temporal dynamics [ 24],
+robot-learning ability [25], and maximal knowledge transmission in sparse-ﬂow networks [ 26]. The neural dynamics of
+NCPs are deﬁned by continuous-time Ordinary Differential Equations (ODEs), which have been originally designed
+to model the nervous system dynamics of small beings like C. elegans [27]. At the heart of NCPs stands a nonlinear
+2
+Brain-Inspired Deep Imitation Learning for Autonomous Driving Systems
+Figure 1: FC vs. random vs. NCP wirings [16].
+time-varying synaptic propagation system, which enhances their expressiveness in modelling time series as opposed to
+their DL counterparts [27]. Moreover, LTCs are the foundational neural building blocks of NCPs [27].
+Brain-inspired NCP models paired with compact CNNs [ 28] have been shown promising performance on learning
+how to drive a vehicle directly from high-dimensional inputs in very minimal networks (19 neurons). NCPs are also
+advantageously employed in full-stack autonomous vehicle systems [29]. These neural network agents are capable of
+driving a vehicle on previously unknown routes while being resistant to input artefacts, acquiring short-term causal
+concepts, and achieving comprehensible dynamics.
+2.3 Deep Learning in Autonomous V ehicles
+The behavioural cloning related autonomous driving method was pioneered back in the late ’80s by Autonomous Land
+Vehicle In a Neural Network (ALVINN) [30]. ALVINN is described as a 3-layer back-propagation network designed
+for road following. ALVINN’s architecture is straightforward, consisting only of a fully connected network, which
+is relatively tiny by contemporary standards. Even though the network has been applied to uninvolved navigation
+environments, it shows how neural architectures can be used for end-to-end autonomous navigation. A similar approach
+was taken later in 2005 to train, this time, a CNN to drive an off-road mobile robot [31]. More recently, Bojarski et al.
+[2] propose a deeper CNN structure for lane following based solely on a front-facing camera. In all these cases, a DNN
+is found to be surprisingly effective at learning a complex mapping from a raw image to vehicle control.
+Recent research activities have focused on employing neural structures in grasping control policies and behaviours
+from raw sensor data. The majority of these approaches are accentuate either on Reinforcement Learning (RL) [32] or
+Supervised Learning (SL) [33, 34]. Furthermore, intriguing autonomous navigation architectures for self-driving cars
+[35] and event-based vision [36] for steering angle prediction have been suggested. However, none of these techniques
+has regarded the temporal domain for autonomous navigation.Blended neural networks, which fuse the advantages of
+many forms of neural networks, are gaining popularity in the ﬁeld of CV [37]. Also, these hybrid architectures have
+been proﬁciently administered and signiﬁed their performance in image captioning [38], image processing [39], action
+recognition [40], and other applications. Regardless, composite neural structures’ appliance in time series analysis is
+rather restricted. Combining CNN and Long Short-Term Memory (LSTM) can be done in a variety of ways, including
+training the models individually and then combining them, or the other way around [41]. The CNN’s convolutions can
+be used explicitly for reading data into the LSTM modules and such a stacked neural network conﬁguration can be
+referred to as convolutional LSTM or CNN-LSTM for short [42]. Du et al. [ 43] suggests an architecture for trafﬁc
+ﬂow forecasting that is derived from LSTM and CNN hybridisation. In trafﬁc ﬂow results, the structure emphasises the
+effects of local spatial and long dependency functions, as well as spatiotemporal associations. Lin et al. [37] propose an
+end-to-end hybrid neural network (CNN and LSTM) for studying local and global contextual features for time series
+pattern prediction. CNN and LSTM complement each other with the strengths of CNN in extracting spatial information
+and LSTM in temporal information [44].
+3
+Brain-Inspired Deep Imitation Learning for Autonomous Driving Systems
+3 Brain-inspired Deep Imitation Learning
+Various brain-inspired deep network networks are created to imitate human driving behaviour and resolve the sophis-
+tication of autonomous lane-keeping by comparing them and ﬁnding the best performing model. Initially, a CNN
+network is built reckon with the Nvidia’s framework as described in the paper of Bojarski et al. [2], which has been
+demonstrated as effective approach in the ﬁeld of autonomous vehicles. In our work, this network is used as a feature
+extractor located at front-end of the stacked models. We add the a bio-inspired RNN structure, called NCP, to the
+CNN head for supporting the brain-inspired frameworks in sequential information extraction and performing vehicle
+dynamics control.
+All of the developed models are trained by end-to-end learning, which directly links raw pixels from a single dash
+cam to steering instructions. In this paper, we use the autonomous lane following as the main criteria for assessing
+the performance of the developed models. We train the weights of our networks by minimising the MSE between the
+model predicted steering angles and the ground truth of steering angles. In addition, we employ the Udacity simulator
+environment to better visualise our models’ generalisation ﬁndings. This is accomplished by running the software to
+autonomously drive the automobile on both of the speciﬁed tracks using the pretrained architectures. The details of
+feature extractor (CNN model architecture) and brain-inspired network architectures used in our work are discussed as
+follows.
+3.1 CNN Model Architecture
+The CNN model used in Figure 2 consists of 9 layers, including a lambda normalisation layer, 5 Convolutional (Conv2D)
+layers, and 3 Fully Connected (FC/Dense) layers. For 5 Convolutional layers, the ﬁrst three Convolutional layers are
+with 5-by-5 kernel and last two layers Convolutional are with 3-by-3 kernel. The three FC layers are with 1164, 100, 50,
+and 10 neurons, respectively. The CNN model is used as a baseline model in this paper.
+Since the CNN model used in our brain-inspired framework is to perform as a spatial feature extractor, we only need
+the its front layers. To this end, the ﬁrst six layers are preserved and concatenated with the brain-inspired layers. In
+addition, a dropout layer is added for adapting to brain-inspired framework.
+Figure 2: Nvidia CNN structure [2].
+3.2 Brain-inspired Network Architectures
+Brain-inspired network architectures stack the front-end layers of above mentioned CNN model with a single and dual
+NCP-based RNN structures, which are named CNN-NCP and CNN-DNCP accordingly. Prior to determining the most
+promising combination of CNN and NCP models, the evaluations of various combinations are carried out to ﬁnd out the
+best one, where the different settings of the Dense layers of the CNN and their units are evaluated. To make different
+method more comparable with others, we attempt to make the resultant versions to be as identical as possible to the
+original one. Considering the performance results of the evaluated adjustments, a Dense layer with 100 units is chosen.
+After the last convolutional layer, we apply the aforementioned per-channel linear Dense layer to obtain 100 latent
+features serving as sensory inputs to the RNN compartment.
+4
+Brain-Inspired Deep Imitation Learning for Autonomous Driving Systems
+The front-end layers of CNN mode is placed before brain-inspired module for beginning with preliminary image feature
+extraction. These visual attribute extractions are then passed to the brain-inspired RNN, which utilises them along
+with the hidden state for sequential feature extraction and to predict the corresponding steering angles one by one.
+Each returned steering angle is determined via the modiﬁed features and the hidden state, which keeps the details from
+previous predictions intact. For each newly developed model, we keep the chosen CNN feature engineering head as
+it is except the last one. Moreover, every model has different NCP wiring settings. To make different settings more
+distinguishable, we name them by using a variant encoding up to fourth version (i.e. CNN-DNCP v4), as seen in Figure
+3. The wirings are sparsely designed using the NCP principles introduced in [29]. Any instance of the LTC is essentially
+an RNN since it is deﬁned as a series of ordinary differential equations in time.
+(a)
+(b)
+Left NCP Right NCPModel Inter Command Inter Command
+CNN-DNCP 3 5 4 6
+CNN-DNCP v2 9 7 12 8
+CNN-DNCP v3 12 8 5 3
+CNN-DNCP v4 12 8 5 3
+(c)
+Figure 3: Generalised versions (not all model neurons are displayed) of the hybrid brain-inspired model architectures
+and their NCP wiring settings. The sensory and motor neurons are set to 100 and 1 respectively for all models: (a)
+CNN-NCP structure (inter = 12, command = 8); (b) CNN-DNCP structure; (c) NCP wiring conﬁgurations of the
+developed CNN-DNCP models.
+4 Experimental Evaluation
+4.1 Datasets
+All the developed models are evaluated on Udacity Simulator and comma.ai datasets.
+Udacity Simulator Dataset : The initial dataset used to train the networks had been generated from Udacity’s self-
+driving car simulator. The simulator has two modes — training and autonomous. The training mode is used to capture
+training data while the autonomous mode is used to assess a learned model by running a driving script that autonomously
+navigates the car on the given track. Also, we use the lakeside track as our training data whereas the jungle track is
+employed as a testing ground for the already trained models. The developed architectures are evaluated with no prior
+5
+Brain-Inspired Deep Imitation Learning for Autonomous Driving Systems
+(a) (b)
+Figure 4: Model training performances (MSE results) on both datasets: (a) Udacity lakeside track; (b) Comma.ai sunny
+recordings.
+knowledge about the features of the map. The reason behind is to assess the generalisation ability of the models in a
+previously unseen environment.
+The Udacity dataset preprocessing includes: cropping and resizing the camera images from 160 x 320 to 66 x 200;
+colour space conversion from RGB to YUV; image data rescaling from [0, 255] to the [-1, 1] range. Moreover, we also
+perform data augmentation: choosing between the left, middle and right camera perspectives; image ﬂipping; image
+shifting; adding shadows; brightness alteration.
+Comma.ai Dataset: The comma.ai driving dataset employed is a publicly released part of the driving data adopted by
+Santana et al. [45]. The video and sensors in the dataset are the same as those used in the comma.ai self-driving vehicle
+research platform. In the released dataset there is a total of 45 GB or 7.25 hours of driving data divided into 11 video
+clips of variable size. Further detail about the dataset and the measurement equipment used can be found online on the
+companion website [15].
+During the data preprocessing step we observe the dataset recordings and split them into 3 - sunny, cloudy and night
+time camera recordings. The sunny weather videos are adopted for training while the other two types are left for
+architecture evaluation. In addition, the CNN-DNCP model architecture is dropped since it takes way too long to train
+and the loss result is strikingly unsatisfactory seen against those of the other models.
+4.2 Implementation Details
+We use Tensorﬂow with a single RTX 2060 GPU to train various networks. In this work, we split the data into 80%
+training set and 20% validation set to measure the performance after each epoch. We adopt the ReLU activation function.
+In most cases, activation functions are kept responsible for converting the sum of the node’s weighted input into either
+its activation or output. ReLU is a piecewise linear function that outputs zero if the input is negative and the input itself
+otherwise. For the loss function, we use MSE, which is the default loss function for a regression problem. In this work,
+we use the Adaptive Moment Estimation (Adam) as optimiser to minimise the loss function. The maximum number of
+epochs is set to 10 for training on above mentioned two datasets.
+4.3 Performance Comparison
+Two kinds of performance are evaluated in this paper, which are training performance and generalisation performance.
+Training Performance: In Figure 4, we observe the training results of models on Udacity and Comma.ai datasets.
+Regarding the performance on Udacity dataset, the CNN model achieves an MSE result that is 3.28% lower than the best
+CNN-DNCP brain-inspired model. In terms of loss performance on the comma.ai dataset, CNN once again outperforms
+the newly created brain-inspired models as seen in the ﬁgure. In other words, the CNN model delivers an MSE that
+is 1.6% better than the CNN-DNCP v3 framework outcome. Please notice that these are training results. A model
+performing well on the data from the same source domain does not guarantee that the model can generalise well on the
+data from another domain. Therefore, the generalisation ability of the models is also evaluated in the following section.
+Generalisation Performance: with the training performance, the brain-inspired (CNN-DNCP v2) model can reduce
+6.57% error when comparing with CNN model on Udacity dataset, which can be found in Figure 5.a. The models
+are trained on Udacity lakeside track data and evaluated on Udacity jungle map data for assessing the generalisation
+performance. Moreover, the Udacity simulator evaluation recordings are available at our Youtube channel playlist.
+In Figure 5.b and 5.c, we evaluate the generalisation performance by using cloudy weather and night time data from
+Comma.ai dataset, where models are trained on a kind of weather condition and evaluated on another kind of weather
+6
+Brain-Inspired Deep Imitation Learning for Autonomous Driving Systems
+(a)
+(b) (c)
+Figure 5: Model evaluation performances (MSE results) on both datasets: (a) Udacity jungle track; (b) Comma.ai
+cloudy weather recordings; (c) Comma.ai night time recordings.
+condition. The brain-inspired architecture (CNN-DNCP v4) is 5.80% and 34.05% more effective than the CNN model
+with regard to MSE on the cloudy and night time comma.ai recordings correspondingly.According to the experimental
+results, we observe that the brain-inspired models perform signiﬁcantly better than the CNN reference architecture in
+terms of MSE on generalisation performance.
+5 Conclusion and Future Work
+In this paper, we propose a brain-inspired deep imitation learning method to enhance generalisation ability on au-
+tonomous driving. The design of the proposed network is inspired by neuroscientiﬁc evidence on the functional
+asymmetry of the two sides of the human brain. In particular, we develop 5 variants of brain-inspired networks,
+which combine visual feature extracted from CNN with temporal recursion networks (NCP) for imitating human
+driving behaviours. The developed networks are evaluated on two big autonomous driving datasets, including Udacity
+simulation dataset and comma.ai real-world dataset in terms of their generalisation ability. Extensive experiments
+indicate that the designs of brain-inspired network architectures, such as the CNN-NCP and CNN-DNCP, demonstrate
+promising performance on end-to-end autonomous driving vehicles. Moreover, by using stacked composite models
+(which communicate time-related and sensory characteristics in addition to constant-length input representations) an
+increased generalisation performance is achievable against conventional autonomous driving methods such as CNNs.
+There is still room for future work. Since the functions of layers of DL networks are insufﬁciently understood and
+the design of networks lacks theory support from psychology and neuroscience, the future work can be linking a
+well-characterised neural architecture of social learning in humans to DL networks, examining whether the application
+of this psychological theory can provide novel insights for improving the efﬁciency of DL networks by reducing
+redundant layers of learning.
+Acknowledgments
+This work was was supported by the University of Aberdeen Internal Funding to Pump-Prime Interdisciplinary Research
+and Impact under grant number SF10206-57.
+References
+[1] Jonghoek Kim, Fumin Zhang, and Magnus Egerstedt. Curve tracking control for autonomous vehicles with rigidly
+mounted range sensors. Journal of Intelligent and Robotic Systems, 56(1):177–197, 2009.
+7
+Brain-Inspired Deep Imitation Learning for Autonomous Driving Systems
+[2] Mariusz Bojarski, Davide Del Testa, Daniel Dworakowski, Bernhard Firner, Beat Flepp, Prasoon Goyal,
+Lawrence D Jackel, Mathew Monfort, Urs Muller, Jiakai Zhang, et al. End to end learning for self-driving
+cars. arXiv preprint arXiv:1604.07316, 2016.
+[3] Michael Laskey, Jonathan Lee, Roy Fox, Anca Dragan, and Ken Goldberg. Dart: Noise injection for robust
+imitation learning. In Conference on robot learning, pages 143–156. PMLR, 2017.
+[4] Saumya Kumaar, Arpit Sangotra, Sudakshin Kumar, Mayank Gupta, SN Omkar, et al. Learning to navigate
+autonomously in outdoor environments: Mavnet. arXiv preprint arXiv:1809.00396, 2018.
+[5] Claire D’Este, Mark O’Sullivan, and Nicholas Hannah. Behavioural cloning and robot control. In Robotics and
+Applications, pages 179–182, 2003.
+[6] Saumya Kumaar Saksena, B Navaneethkrishnan, Sinchana Hegde, Pragadeesh Raja, and Ravi M Vishwanath.
+Towards behavioural cloning for autonomous driving. In 2019 Third IEEE International Conference on Robotic
+Computing (IRC), pages 560–567. IEEE, 2019.
+[7] Chenyi Chen, Ari Seff, Alain Kornhauser, and Jianxiong Xiao. Deepdriving: Learning affordance for direct
+perception in autonomous driving. In Proceedings of the IEEE international conference on computer vision, pages
+2722–2730, 2015.
+[8] Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. Deep learning. nature, 521(7553):436–444, 2015.
+[9] Alex Krizhevsky, Ilya Sutskever, and Geoffrey E Hinton. Imagenet classiﬁcation with deep convolutional neural
+networks. Advances in neural information processing systems, 25:1097–1105, 2012.
+[10] Mariusz Bojarski, Philip Yeres, Anna Choromanska, Krzysztof Choromanski, Bernhard Firner, Lawrence Jackel,
+and Urs Muller. Explaining how a deep neural network trained with end-to-end learning steers a car. arXiv
+preprint arXiv:1704.07911, 2017.
+[11] Saumya Kumaar, Sumedh Mannar, SN Omkar, et al. Juncnet: A deep neural network for road junction disam-
+biguation for autonomous vehicles. arXiv preprint arXiv:1809.01011, 2018.
+[12] Alfredo Brancucci, Giuliana Lucci, Andrea Mazzatenta, and Luca Tommasi. Asymmetries of the human social
+brain in the visual, auditory and chemical modalities.Philosophical Transactions of the Royal Society B: Biological
+Sciences, 364(1519):895–914, 2009.
+[13] Véronique Duboc, Pascale Dufourcq, Patrick Blader, and Myriam Roussigné. Asymmetry of the brain: develop-
+ment and implications. Annual review of genetics, 49:647–672, 2015.
+[14] Udacity. Udacity’s self-driving car simulator. https://github.com/udacity/self-driving-car-sim ,
+2019. Accessed: 1 April, 2021.
+[15] research.comma.ai. comma.ai research. https://research.comma.ai/, 2016. Accessed: 14 April, 2021.
+[16] Mathias Lechner. Code repository of the paper neural circuit policies enabling auditable autonomy published in
+nature machine intelligence. https://github.com/mlech26l/keras-ncp, 2020. Accessed: 24 Jan, 2021.
+[17] Francisco Bonin-Font, Alberto Ortiz, and Gabriel Oliver. Visual navigation for mobile robots: A survey. Journal
+of intelligent and robotic systems, 53(3):263–296, 2008.
+[18] Tomáš Mikolov, Martin Karaﬁát, Lukáš Burget, JanˇCernock`y, and Sanjeev Khudanpur. Recurrent neural network
+based language model. In Eleventh annual conference of the international speech communication association,
+2010.
+[19] Alex Graves, Abdel-rahman Mohamed, and Geoffrey Hinton. Speech recognition with deep recurrent neural
+networks. In 2013 IEEE international conference on acoustics, speech and signal processing, pages 6645–6649.
+Ieee, 2013.
+[20] Nal Kalchbrenner and Phil Blunsom. Recurrent continuous translation models. In Proceedings of the 2013
+conference on empirical methods in natural language processing, pages 1700–1709, 2013.
+[21] Avijeet Biswal. Recurrent neural network (rnn) tutorial for beginners. https://www.simplilearn.com/
+tutorials/deep-learning-tutorial/rnn, 2021. Accessed: 2 April, 2021.
+[22] Stephen R Wicks, Chris J Roehrig, and Catharine H Rankin. A dynamic network simulation of the nematode tap
+withdrawal circuit: predictions concerning synaptic function using behavioral criteria. Journal of Neuroscience,
+16(12):4017–4031, 1996.
+[23] Gang Yan, Petra E Vértes, Emma K Towlson, Yee Lian Chew, Denise S Walker, William R Schafer, and Albert-
+László Barabási. Network control principles predict neuron function in the caenorhabditis elegans connectome.
+Nature, 550(7677):519–523, 2017.
+8
+Brain-Inspired Deep Imitation Learning for Autonomous Driving Systems
+[24] Harris S Kaplan, Oriana Salazar Thula, Niklas Khoss, and Manuel Zimmer. Nested neuronal dynamics orchestrate
+a behavioral hierarchy across timescales. Neuron, 105(3):562–576, 2020.
+[25] Mathias Lechner, Ramin Hasani, Manuel Zimmer, Thomas A Henzinger, and Radu Grosu. Designing worm-
+inspired neural networks for interpretable robotic control. In 2019 International Conference on Robotics and
+Automation (ICRA), pages 87–94. IEEE, 2019.
+[26] Ramin Hasani, Mathias Lechner, Alexander Amini, Daniela Rus, and Radu Grosu. A natural lottery ticket winner:
+Reinforcement learning with ordinary neural circuits. In International Conference on Machine Learning, pages
+4082–4093. PMLR, 2020.
+[27] Ramin Hasani, Mathias Lechner, Alexander Amini, Daniela Rus, and Radu Grosu. Liquid time-constant networks.
+arXiv preprint arXiv:2006.04439, 2020.
+[28] Yann LeCun, Bernhard E Boser, John S Denker, Donnie Henderson, Richard E Howard, Wayne E Hubbard, and
+Lawrence D Jackel. Handwritten digit recognition with a back-propagation network. In Advances in neural
+information processing systems, pages 396–404, 1990.
+[29] Mathias Lechner, Ramin Hasani, Alexander Amini, Thomas A Henzinger, Daniela Rus, and Radu Grosu. Neural
+circuit policies enabling auditable autonomy. Nature Machine Intelligence, 2(10):642–652, 2020.
+[30] Dean A Pomerleau. Alvinn: An autonomous land vehicle in a neural network. Technical report, CARNEGIE-
+MELLON UNIV PITTSBURGH PA ARTIFICIAL INTELLIGENCE AND PSYCHOLOGY . . . , 1989.
+[31] Urs Muller, Jan Ben, Eric Cosatto, Beat Flepp, and Yann L Cun. Off-road obstacle avoidance through end-to-end
+learning. In Advances in neural information processing systems, pages 739–746. Citeseer, 2006.
+[32] Yuke Zhu, Roozbeh Mottaghi, Eric Kolve, Joseph J Lim, Abhinav Gupta, Li Fei-Fei, and Ali Farhadi. Target-driven
+visual navigation in indoor scenes using deep reinforcement learning. In 2017 IEEE international conference on
+robotics and automation (ICRA), pages 3357–3364. IEEE, 2017.
+[33] Nikolai Smolyanskiy, Alexey Kamenev, Jeffrey Smith, and Stan Birchﬁeld. Toward low-ﬂying autonomous
+mav trail navigation using deep neural networks for environmental awareness. In 2017 IEEE/RSJ International
+Conference on Intelligent Robots and Systems (IROS), pages 4241–4247. IEEE, 2017.
+[34] Shuyang Du, Haoli Guo, and Andrew Simpson. Self-driving car steering angle prediction based on image
+recognition. arXiv preprint arXiv:1912.05440, 2019.
+[35] Hanwool Woo, Yonghoon Ji, Hitoshi Kono, Yusuke Tamura, Yasuhide Kuroda, Takashi Sugano, Yasunori
+Yamamoto, Atsushi Yamashita, and Hajime Asama. Lane-change detection based on vehicle-trajectory prediction.
+IEEE Robotics and Automation Letters, 2(2):1109–1116, 2017.
+[36] Ana I Maqueda, Antonio Loquercio, Guillermo Gallego, Narciso García, and Davide Scaramuzza. Event-based
+vision meets deep learning on steering prediction for self-driving cars. In Proceedings of the IEEE Conference on
+Computer Vision and Pattern Recognition, pages 5419–5427, 2018.
+[37] Tao Lin, Tian Guo, and Karl Aberer. Hybrid neural networks for learning the trend in time series. In Proceedings
+of the twenty-sixth international joint conference on artiﬁcial intelligence , number CONF, pages 2273–2279,
+2017.
+[38] Jeffrey Donahue, Lisa Anne Hendricks, Sergio Guadarrama, Marcus Rohrbach, Subhashini Venugopalan, Kate
+Saenko, and Trevor Darrell. Long-term recurrent convolutional networks for visual recognition and description.
+In Proceedings of the IEEE conference on computer vision and pattern recognition, pages 2625–2634, 2015.
+[39] Jiang Wang, Yi Yang, Junhua Mao, Zhiheng Huang, Chang Huang, and Wei Xu. Cnn-rnn: A uniﬁed framework
+for multi-label image classiﬁcation. In Proceedings of the IEEE conference on computer vision and pattern
+recognition, pages 2285–2294, 2016.
+[40] Nicolas Ballas, Li Yao, Chris Pal, and Aaron Courville. Delving deeper into convolutional networks for learning
+video representations. arXiv preprint arXiv:1511.06432, 2015.
+[41] Li Deng and John C Platt. Ensemble deep learning for speech recognition. In Fifteenth annual conference of the
+international speech communication association, 2014.
+[42] Xingjian Shi, Zhourong Chen, Hao Wang, Dit-Yan Yeung, Wai-Kin Wong, and Wang-chun Woo. Convolutional
+lstm network: A machine learning approach for precipitation nowcasting. arXiv preprint arXiv:1506.04214, 2015.
+[43] Shengdong Du, Tianrui Li, Xun Gong, Yan Yang, and Shi Jinn Horng. Trafﬁc ﬂow forecasting based on hybrid
+deep learning framework. In 2017 12th international conference on intelligent systems and knowledge engineering
+(ISKE), pages 1–6. IEEE, 2017.
+9
+Brain-Inspired Deep Imitation Learning for Autonomous Driving Systems
+[44] Tara N Sainath, Oriol Vinyals, Andrew Senior, and Ha¸ sim Sak. Convolutional, long short-term memory, fully
+connected deep neural networks. In2015 IEEE international conference on acoustics, speech and signal processing
+(ICASSP), pages 4580–4584. IEEE, 2015.
+[45] Eder Santana and George Hotz. Learning a driving simulator. arXiv preprint arXiv:1608.01230, 2016.
+10

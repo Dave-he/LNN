@@ -1,0 +1,1057 @@
+Liquid Fourier Latent Dynamics Networks for fast
+GPU-based numerical simulations in computational cardiology
+Matteo Salvador 1,2,3,∗, Alison Lesley Marsden 1,2,3,4
+1 Institute for Computational and Mathematical Engineering, Stanford University, CA, USA
+2 Cardiovascular Institute, Stanford University, CA, USA
+3 Pediatric Cardiology, Stanford University, CA, USA
+4 Department of Bioengineering, Stanford University, CA, USA
+∗ Corresponding author (msalvad@stanford.edu)
+Abstract
+Scientific Machine Learning (ML) is gaining momentum as a cost-effective alternative to
+physics-based numerical solvers in many engineering applications. In fact, scientific ML is cur-
+rently being used to build accurate and efficient surrogate models starting from high-fidelity
+numerical simulations, effectively encoding the parameterized temporal dynamics underlying
+Ordinary Differential Equations (ODEs), or even the spatio-temporal behavior underlying Par-
+tial Differential Equations (PDEs), in appropriately designed neural networks. We propose
+an extension of Latent Dynamics Networks (LDNets), namely Liquid Fourier LDNets (LFLD-
+Nets), to create parameterized space-time surrogate models for multiscale and multiphysics
+sets of highly nonlinear differential equations on complex geometries. LFLDNets employ a
+neurologically-inspired, sparse, liquid neural network for temporal dynamics, relaxing the re-
+quirement of a numerical solver for time advancement and leading to superior performance in
+terms of tunable parameters, accuracy, efficiency and learned trajectories with respect to neural
+ODEs based on feedforward fully-connected neural networks. Furthermore, in our implemen-
+tation of LFLDNets, we use a Fourier embedding with a tunable kernel in the reconstruction
+network to learn high-frequency functions better and faster than using space coordinates directly
+as input. We challenge LFLDNets in the framework of computational cardiology and evaluate
+their capabilities on two 3-dimensional test cases arising from multiscale cardiac electrophysi-
+ology and cardiovascular hemodynamics. This paper illustrates the capability to run Artificial
+Intelligence-based numerical simulations on single or multiple GPUs in a matter of minutes and
+represents a significant step forward in the development of physics-informed digital twins.
+Keywords: Liquid Fourier Latent Dynamics Networks, Scientific Machine Learning, Computa-
+tional cardiology, Digital twins
+1
+arXiv:2408.09818v1  [cs.LG]  19 Aug 2024
+1 Introduction
+Physics-informed Machine Learning (ML) [25], and indeed scientific ML more broadly, is revolu-
+tionizing many disciplines, ranging from mechanical and aerospace engineering [10, 74] to compu-
+tational medicine [29] by strategically combining physical governing principles, scientific computing
+techniques, and fast data-driven approaches. Recent advances in operator learning [2], such as Deep
+Operator Networks [13, 17, 23, 41] Fourier and Graph Neural Operators [33, 34], General Neural
+Operator Transformers [14], Branched Latent Neural Maps [58] and Latent Dynamics Networks (LD-
+Nets) [53], enable the creation of fast and accurate surrogate models starting from a set of numerical
+simulations generated via high-performance computing after performing numerical discretization of
+Ordinary/Partial Differential Equations (ODEs/PDEs).
+In principle, these surrogate models reproduce the temporal/spatio-temporal behavior of dynam-
+ical systems described by differential equations, potentially spanning multiple PDE systems [50] and
+geometric variations [35] at the cost of a reasonably small approximation error. Nevertheless, they
+usually encode a limited set and variability of model parameters, initial and boundary conditions,
+presented in test cases computed in relatively simple computational domains in fairly regular meshes.
+LDNets, introduced in Regazzoni et al. [53], define a novel architecture to create surrogate mod-
+els for parameterized physical processes, such as those arising from systems of differential equations.
+LDNets jointly discover a low-dimensional nonlinear manifold while learning the spatio-temporal
+system dynamics, avoiding operations in the high-dimensional space. LDNets achieve higher ac-
+curacy on highly nonlinear mathematical problems with significantly fewer trainable parameters
+compared to both intrusive and non-intrusive state-of-the-art methods based on proper orthogonal
+decomposition, autoencoders, and various types of recurrent neural networks [53].
+In this paper, we propose an extension of LDNets, namely Liquid Fourier LDNets (LFLDNets),
+as an effective operator learning method that demonstrates superior performance in terms of number
+of tunable parameters, expressiveness, interpretability, overall accuracy and computational efficiency
+during training and inference. LFLDNets use a simple and compact Liquid Neural Network (LNN)
+instead of a feedforward Fully-Connected Neural Network (FCNN) to track the temporal dynamics
+of a set of states, capturing the global behavior of highly nonlinear parameterized multiscale PDEs.
+Furthermore, they use a Fourier embedding with a learnable kernel matrix for space coordinates, so
+that a second FCNN reconstructs the entire space-time dynamics of the PDE system by properly
+capturing complex functions.
+We demonstrate the capabilities of LFLDNets on two challenging 3D patient-specific cases arising
+in computational cardiology [44]. We first build multiscale surrogate models for cardiac electrophys-
+iology [57] in a complex pediatric congenital heart disease model and second simulate cardiovascular
+hemodynamics in a healthy pediatric aorta [65]. These geometries are spatially discretized with a
+fine unstructured tetrahedral grid; the hemodynamics case also contains anisotropic element refine-
+ment within the boundary layer. Furthermore, we demonstrate that even in these complex scenarios,
+LFLDNets allow for time steps that are orders of magnitude larger than those commonly used in
+physics-based simulations due to the constraints introduced by the specific numerical discretization
+scheme.
+This work introduces a new scientific ML tool, namely LFLDNets, and demonstrates its poten-
+tial in two realistic examples from computational medicine. During inference, LFLDNets produce,
+within some tolerance, results equivalent to 3D space-time cardiovascular simulations in a mat-
+ter of minutes on one or multiple Graphics Processing Units (GPUs) while spanning different sets
+of model parameters, initial, and boundary conditions. This tool defines another contribution to
+building complex multiscale and multiphysics spatio-temporal surrogate models to create accurate,
+efficient and certified digital replicas for cardiovascular applications [7, 9, 11, 12, 24, 57, 59, 69].
+2
+<latexit sha1_base64="fUbWjj7WvD4l4ztVoeWjw1A8aFU=">AAACAnicbVDLSsNAFJ3UV62vqCtxEyyCq5KIr2XRjatSwT6gDWEymbRDZyZhZiKUENz4K25cKOLWr3Dn3zhJs9DWAwNnzrmXe+/xY0qksu1vo7K0vLK6Vl2vbWxube+Yu3tdGSUC4Q6KaCT6PpSYEo47iiiK+7HAkPkU9/zJTe73HrCQJOL3ahpjl8ERJyFBUGnJMw+GDKoxgjRttTKv+AiWBlOeeWbdbtgFrEXilKQOSrQ982sYRChhmCtEoZQDx46Vm0KhCKI4qw0TiWOIJnCEB5pyyLB00+KEzDrWSmCFkdCPK6tQf3ekkEk5Zb6uzHeU814u/ucNEhVeuSnhcaIwR7NBYUItFVl5HlZABEaKTjWBSBC9q4XGUECkdGo1HYIzf/Ii6Z42nIvG+d1ZvXldxlEFh+AInAAHXIImuAVt0AEIPIJn8ArejCfjxXg3PmalFaPs2Qd/YHz+AEBnmAA=</latexit>
+NN dyn
+<latexit sha1_base64="ffOjS1WNm1IpdM9neDv0+ymWTVk=">AAAB83icbVDJSgNBEK1xjXGLevTSGAQPEmbE7Rj04jFCNpgZQk+nJ2nS0zN01wgh5De8eFDEqz/jzb+xsxw08UHB470qqupFmRQGXffbWVldW9/YLGwVt3d29/ZLB4dNk+aa8QZLZarbETVcCsUbKFDydqY5TSLJW9HgfuK3nrg2IlV1HGY8TGhPiVgwilYKkARCEd89J/WwUyq7FXcKsky8OSnDHLVO6SvopixPuEImqTG+52YYjqhGwSQfF4Pc8IyyAe1x31JFE27C0fTmMTm1SpfEqbalkEzV3xMjmhgzTCLbmVDsm0VvIv7n+TnGt+FIqCxHrthsUZxLgimZBEC6QnOGcmgJZVrYWwnrU00Z2piKNgRv8eVl0ryoeNeVq8fLcvVuHkcBjuEEzsCDG6jCA9SgAQwyeIZXeHNy58V5dz5mrSvOfOYI/sD5/AESmZBr</latexit>
+t2[0,T]
+<latexit sha1_base64="uKhx4VcJip73ka4PajS0OLJpOXM=">AAAB+nicbVC7TsMwFL3hWcorhZElokIqS5UgXmMFC2xFog+pjSrHdVqrjh3ZDqgK/RQWBhBi5UvY+BucNgO0HMny0Tn3yscniBlV2nW/raXlldW19cJGcXNre2fXLu01lUgkJg0smJDtACnCKCcNTTUj7VgSFAWMtILRdea3HohUVPB7PY6JH6EBpyHFSBupZ5e6gWB9NY7Mld5OKvq4Z5fdqjuFs0i8nJQhR71nf3X7AicR4RozpFTHc2Ptp0hqihmZFLuJIjHCIzQgHUM5iojy02n0iXNklL4TCmkO185U/b2Rokhl6cxkhPRQzXuZ+J/XSXR46aeUx4kmHM8eChPmaOFkPTh9KgnWbGwIwpKarA4eIomwNm0VTQne/JcXSfOk6p1Xz+5Oy7WrvI4CHMAhVMCDC6jBDdShARge4Rle4c16sl6sd+tjNrpk5Tv78AfW5w8zBpP4</latexit>
+I(t)
+<latexit sha1_base64="T3VmeUmsmbKFOPBmkTnLQvCKnkM=">AAAB+nicbVC7TsMwFL0pr1JeKYwsFhVSWaoE8RorWBiLRB9SG1WO47ZWHSeyHVAV+iksDCDEypew8Tc4bQZoOZLlo3PulY+PH3OmtON8W4WV1bX1jeJmaWt7Z3fPLu+3VJRIQpsk4pHs+FhRzgRtaqY57cSS4tDntO2PbzK//UClYpG415OYeiEeCjZgBGsj9e1yz494oCahuVI1reqTvl1xas4MaJm4OalAjkbf/uoFEUlCKjThWKmu68TaS7HUjHA6LfUSRWNMxnhIu4YKHFLlpbPoU3RslAANImmO0Gim/t5IcaiydGYyxHqkFr1M/M/rJnpw5aVMxImmgswfGiQc6QhlPaCASUo0nxiCiWQmKyIjLDHRpq2SKcFd/PIyaZ3W3Iva+d1ZpX6d11GEQziCKrhwCXW4hQY0gcAjPMMrvFlP1ov1bn3MRwtWvnMAf2B9/gBzVpQi</latexit>
+s(t)
+<latexit sha1_base64="kM8CyYAzytYobQIKnAo3PSbgciI=">AAACB3icbVDLSsNAFJ3UV62vqEtBgkWom5KIr2XRjcsK9gFNKZPJpB06mYSZG6GE7Nz4K25cKOLWX3Dn3zhps9DWA8MczrmXe+/xYs4U2Pa3UVpaXlldK69XNja3tnfM3b22ihJJaItEPJJdDyvKmaAtYMBpN5YUhx6nHW98k/udByoVi8Q9TGLaD/FQsIARDFoamIeuH0hMUt/1Iu6rSai/VGU1OMlSH7KBWbXr9hTWInEKUkUFmgPzy/UjkoRUAOFYqZ5jx9BPsQRGOM0qbqJojMkYD2lPU4FDqvrp9I7MOtaKbwWR1E+ANVV/d6Q4VPmKujLEMFLzXi7+5/USCK76KRNxAlSQ2aAg4RZEVh6K5TNJCfCJJphIpne1yAjrXEBHV9EhOPMnL5L2ad25qJ/fnVUb10UcZXSAjlANOegSNdAtaqIWIugRPaNX9GY8GS/Gu/ExKy0ZRc8++gPj8wcyBpos</latexit>
+ds(t)
+dt
+<latexit sha1_base64="AixcCAiIIiRYWYKfKXSznVA410g=">AAAB7nicbVBNS8NAEJ3Ur1q/qh69LBbBU0nEr2PRi8cK1hbaUDabTbt0swm7E6GE/ggvHhTx6u/x5r9x2+agrQ8GHu/NMDMvSKUw6LrfTmlldW19o7xZ2dre2d2r7h88miTTjLdYIhPdCajhUijeQoGSd1LNaRxI3g5Gt1O//cS1EYl6wHHK/ZgOlIgEo2ildk8oJCH2qzW37s5AlolXkBoUaParX70wYVnMFTJJjel6bop+TjUKJvmk0ssMTykb0QHvWqpozI2fz86dkBOrhCRKtC27fqb+nshpbMw4DmxnTHFoFr2p+J/XzTC69nOh0gy5YvNFUSYJJmT6OwmF5gzl2BLKtLC3EjakmjK0CVVsCN7iy8vk8azuXdYv7s9rjZsijjIcwTGcggdX0IA7aEILGIzgGV7hzUmdF+fd+Zi3lpxi5hD+wPn8ARJDj2k=</latexit>
+Z
+dt
+<latexit sha1_base64="4u1f/7tlRszbGN6Jzga5uIjnun8=">AAACCnicbVC7TsMwFHXKq5RXgJHFtEIqAlUJEo+xgoWxSPQhNVHlOE5r1XnIdhBRlJmFkd9gYQAhVr6ArX+D03YoLUeyfHzOvfK9x4kYFdIwRlphaXllda24XtrY3Nre0Xf3WiKMOSZNHLKQdxwkCKMBaUoqGelEnCDfYaTtDG9yv/1AuKBhcC+TiNg+6gfUoxhJJfX0Q8sJmSsSX11pnFVnn4/ZKZTHPb1i1Iwx4CIxp6RSL1snL6N60ujpP5Yb4tgngcQMCdE1jUjaKeKSYkaykhULEiE8RH3SVTRAPhF2Ol4lg0dKcaEXcnUCCcfqbEeKfJGPpyp9JAdi3svF/7xuLL0rO6VBFEsS4MlHXsygDGGeC3QpJ1iyRBGEOVWzQjxAHGGp0iupEMz5lRdJ66xmXtTO71Qa12CCIjgAZVAFJrgEdXALGqAJMHgCr+AdfGjP2pv2qX1NSgvatGcf/IH2/QsVkJ4e</latexit>
+u(x,t)
+<latexit sha1_base64="IsZ7ckv8EBeYl7XVLN4LemLD2VM=">AAACD3icbVC7TsMwFHXKq5RXgJElogIxVQniNVawwFIVRB9SGyLHdVurthPZDlIV5Q9Y+BUWBhBiZWXjb3DSIEHLkSyde+698j3HDymRyra/jMLc/MLiUnG5tLK6tr5hbm41ZRAJhBsooIFo+1BiSjhuKKIobocCQ+ZT3PJHF2m/dY+FJAG/VeMQuwwOOOkTBJWWPHO/y6AaIkjjWi3xskKwWGCU3P0UtaubxDPLdsXOYM0SJydlkKPumZ/dXoAihrlCFErZcexQuTEUiiCKk1I3kjiEaAQHuKMphwxLN878JNaeVnpWPxD6cWVl6u+NGDIpx8zXk+mNcrqXiv/1OpHqn7kx4WGkMEeTj/oRtVRgpeFYPaKdKzrWBCJB9K0WGkIBkdIRlnQIzrTlWdI8rDgnlePro3L1PI+jCHbALjgADjgFVXAJ6qABEHgAT+AFvBqPxrPxZrxPRgtGvrMN/sD4+AZ6OZ2V</latexit>
+NN NIR
+rec
+<latexit sha1_base64="3WRXAXEClFgYU07/vdT3vSVGcmQ=">AAACBHicbVC5TsNAEF2HK4TLQJlmRYREFdmIq4ygoSMgckixidbrcbLK+tDuGimyUtDwKzQUIETLR9DxN6wTFxB40khP781oZp6XcCaVZX0ZpYXFpeWV8mplbX1jc8vc3mnLOBUUWjTmseh6RAJnEbQUUxy6iQASehw63ugi9zv3ICSLo1s1TsANySBiAaNEaalvVp2rEAYEOzL1JCjshEQNPS+7mdz5fbNm1a0p8F9iF6SGCjT75qfjxzQNIVKUEyl7tpUoNyNCMcphUnFSCQmhIzKAnqYRCUG62fSJCd7Xio+DWOiKFJ6qPycyEko5Dj3dmd8o571c/M/rpSo4czMWJamCiM4WBSnHKsZ5IthnAqjiY00IFUzfiumQCEKVzq2iQ7DnX/5L2od1+6R+fH1Ua5wXcZRRFe2hA2SjU9RAl6iJWoiiB/SEXtCr8Wg8G2/G+6y1ZBQzu+gXjI9vjvqYEA==</latexit>
+⌦⇢Rd
+<latexit sha1_base64="Mp8yZbYF5Dy/nBVJRBaVVmadx84=">AAAB83icbVDLSgMxFL3js9ZXVXDjJlgEV2VG8LEsdeOyBfuAdiiZNNOGJpkhyYhl6G+4caGI2/6FX+DOjd9ipu1CWw8EDufcyz05QcyZNq775aysrq1vbOa28ts7u3v7hYPDho4SRWidRDxSrQBrypmkdcMMp61YUSwCTpvB8Dbzmw9UaRbJezOKqS9wX7KQEWys1HnsdgQ2AyVSb9wtFN2SOwVaJt6cFMvHtW82qXxUu4XPTi8iiaDSEI61bntubPwUK8MIp+N8J9E0xmSI+7RtqcSCaj+dZh6jM6v0UBgp+6RBU/X3RoqF1iMR2MksoV70MvE/r52Y8MZPmYwTQyWZHQoTjkyEsgJQjylKDB9ZgoliNisiA6wwMbamvC3BW/zyMmlclLyr0mXNtlGBGXJwAqdwDh5cQxnuoAp1IBDDE7zAq5M4z86b8z4bXXHmO0fwB87kBy81lX4=</latexit>
+x1
+<latexit sha1_base64="55vebGlVOPWgy7Wl+uD0ne9i96c=">AAAB83icbVDLSgMxFL1TX7W+qoIbN8EiuCozBR/LUjcuW7AP6Awlk2ba0GRmSDJiGfobblwo4rZ/4Re4c+O3mGm70NYDgcM593JPjh9zprRtf1m5tfWNza38dmFnd2//oHh41FJRIgltkohHsuNjRTkLaVMzzWknlhQLn9O2P7rN/PYDlYpF4b0ex9QTeBCygBGsjeQ+9lyB9VCKtDLpFUt22Z4BrRJnQUrVk8Y3m9Y+6r3ip9uPSCJoqAnHSnUdO9ZeiqVmhNNJwU0UjTEZ4QHtGhpiQZWXzjJP0LlR+iiIpHmhRjP190aKhVJj4ZvJLKFa9jLxP6+b6ODGS1kYJ5qGZH4oSDjSEcoKQH0mKdF8bAgmkpmsiAyxxESbmgqmBGf5y6ukVSk7V+XLhmmjBnPk4RTO4AIcuIYq3EEdmkAghid4gVcrsZ6tN+t9PpqzFjvH8AfW9AcwupV/</latexit>
+x2
+<latexit sha1_base64="UXz2i5IJN4Fx5nh3Yq857bQ4S6c=">AAACCnicbVC7TsMwFHXKq5RXgJHFUCEVCVUJ4jVWwMBYJPqQ2qhyHKe16jiR7SCqKDMLv8LCAEKsfAEbf4PTZigtR7J8fM698r3HjRiVyrJ+jMLC4tLySnG1tLa+sbllbu80ZRgLTBo4ZKFou0gSRjlpKKoYaUeCoMBlpOUOrzO/9UCEpCG/V6OIOAHqc+pTjJSWeuZ+1w2ZJ0eBvpKbtDL9fEyPoTrqmWWrao0B54mdkzLIUe+Z310vxHFAuMIMSdmxrUg5CRKKYkbSUjeWJEJ4iPqkoylHAZFOMl4lhYda8aAfCn24gmN1uiNBgczG05UBUgM562Xif14nVv6lk1AexYpwPPnIjxlUIcxygR4VBCs20gRhQfWsEA+QQFjp9Eo6BHt25XnSPKna59Wzu9Ny7SqPowj2wAGoABtcgBq4BXXQABg8gRfwBt6NZ+PV+DA+J6UFI+/ZBX9gfP0CrMCa4g==</latexit>
+D(x,t)
+<latexit sha1_base64="Mp8yZbYF5Dy/nBVJRBaVVmadx84=">AAAB83icbVDLSgMxFL3js9ZXVXDjJlgEV2VG8LEsdeOyBfuAdiiZNNOGJpkhyYhl6G+4caGI2/6FX+DOjd9ipu1CWw8EDufcyz05QcyZNq775aysrq1vbOa28ts7u3v7hYPDho4SRWidRDxSrQBrypmkdcMMp61YUSwCTpvB8Dbzmw9UaRbJezOKqS9wX7KQEWys1HnsdgQ2AyVSb9wtFN2SOwVaJt6cFMvHtW82qXxUu4XPTi8iiaDSEI61bntubPwUK8MIp+N8J9E0xmSI+7RtqcSCaj+dZh6jM6v0UBgp+6RBU/X3RoqF1iMR2MksoV70MvE/r52Y8MZPmYwTQyWZHQoTjkyEsgJQjylKDB9ZgoliNisiA6wwMbamvC3BW/zyMmlclLyr0mXNtlGBGXJwAqdwDh5cQxnuoAp1IBDDE7zAq5M4z86b8z4bXXHmO0fwB87kBy81lX4=</latexit>
+x1
+<latexit sha1_base64="55vebGlVOPWgy7Wl+uD0ne9i96c=">AAAB83icbVDLSgMxFL1TX7W+qoIbN8EiuCozBR/LUjcuW7AP6Awlk2ba0GRmSDJiGfobblwo4rZ/4Re4c+O3mGm70NYDgcM593JPjh9zprRtf1m5tfWNza38dmFnd2//oHh41FJRIgltkohHsuNjRTkLaVMzzWknlhQLn9O2P7rN/PYDlYpF4b0ex9QTeBCygBGsjeQ+9lyB9VCKtDLpFUt22Z4BrRJnQUrVk8Y3m9Y+6r3ip9uPSCJoqAnHSnUdO9ZeiqVmhNNJwU0UjTEZ4QHtGhpiQZWXzjJP0LlR+iiIpHmhRjP190aKhVJj4ZvJLKFa9jLxP6+b6ODGS1kYJ5qGZH4oSDjSEcoKQH0mKdF8bAgmkpmsiAyxxESbmgqmBGf5y6ukVSk7V+XLhmmjBnPk4RTO4AIcuIYq3EEdmkAghid4gVcrsZ6tN+t9PpqzFjvH8AfW9AcwupV/</latexit>
+x2
+<latexit sha1_base64="ffOjS1WNm1IpdM9neDv0+ymWTVk=">AAAB83icbVDJSgNBEK1xjXGLevTSGAQPEmbE7Rj04jFCNpgZQk+nJ2nS0zN01wgh5De8eFDEqz/jzb+xsxw08UHB470qqupFmRQGXffbWVldW9/YLGwVt3d29/ZLB4dNk+aa8QZLZarbETVcCsUbKFDydqY5TSLJW9HgfuK3nrg2IlV1HGY8TGhPiVgwilYKkARCEd89J/WwUyq7FXcKsky8OSnDHLVO6SvopixPuEImqTG+52YYjqhGwSQfF4Pc8IyyAe1x31JFE27C0fTmMTm1SpfEqbalkEzV3xMjmhgzTCLbmVDsm0VvIv7n+TnGt+FIqCxHrthsUZxLgimZBEC6QnOGcmgJZVrYWwnrU00Z2piKNgRv8eVl0ryoeNeVq8fLcvVuHkcBjuEEzsCDG6jCA9SgAQwyeIZXeHNy58V5dz5mrSvOfOYI/sD5/AESmZBr</latexit>
+t2[0,T]
+<latexit sha1_base64="veMI4K6KkjOG6JmJdF7uBaJFols=">AAACB3icbVDLSgMxFM34rPU16lKQYBHqpsyIr2XRhS4r2Ae0Q8lk0jY0kwxJRizD7Nz4K25cKOLWX3Dn35hpZ1FbD4ScnHMvuff4EaNKO86PtbC4tLyyWlgrrm9sbm3bO7sNJWKJSR0LJmTLR4owykldU81IK5IEhT4jTX94nfnNByIVFfxejyLihajPaY9ipI3UtQ86vmCBGoXmSm7S8vTzMT3u2iWn4owB54mbkxLIUeva351A4DgkXGOGlGq7TqS9BElNMSNpsRMrEiE8RH3SNpSjkCgvGe+RwiOjBLAnpDlcw7E63ZGgUGWzmcoQ6YGa9TLxP68d696ll1AexZpwPPmoFzOoBcxCgQGVBGs2MgRhSc2sEA+QRFib6IomBHd25XnSOKm455Wzu9NS9SqPowD2wSEoAxdcgCq4BTVQBxg8gRfwBt6tZ+vV+rA+J6ULVt6zB/7A+voF+X6aBw==</latexit>
+G(x)
+<latexit sha1_base64="Mp8yZbYF5Dy/nBVJRBaVVmadx84=">AAAB83icbVDLSgMxFL3js9ZXVXDjJlgEV2VG8LEsdeOyBfuAdiiZNNOGJpkhyYhl6G+4caGI2/6FX+DOjd9ipu1CWw8EDufcyz05QcyZNq775aysrq1vbOa28ts7u3v7hYPDho4SRWidRDxSrQBrypmkdcMMp61YUSwCTpvB8Dbzmw9UaRbJezOKqS9wX7KQEWys1HnsdgQ2AyVSb9wtFN2SOwVaJt6cFMvHtW82qXxUu4XPTi8iiaDSEI61bntubPwUK8MIp+N8J9E0xmSI+7RtqcSCaj+dZh6jM6v0UBgp+6RBU/X3RoqF1iMR2MksoV70MvE/r52Y8MZPmYwTQyWZHQoTjkyEsgJQjylKDB9ZgoliNisiA6wwMbamvC3BW/zyMmlclLyr0mXNtlGBGXJwAqdwDh5cQxnuoAp1IBDDE7zAq5M4z86b8z4bXXHmO0fwB87kBy81lX4=</latexit>
+x1
+<latexit sha1_base64="55vebGlVOPWgy7Wl+uD0ne9i96c=">AAAB83icbVDLSgMxFL1TX7W+qoIbN8EiuCozBR/LUjcuW7AP6Awlk2ba0GRmSDJiGfobblwo4rZ/4Re4c+O3mGm70NYDgcM593JPjh9zprRtf1m5tfWNza38dmFnd2//oHh41FJRIgltkohHsuNjRTkLaVMzzWknlhQLn9O2P7rN/PYDlYpF4b0ex9QTeBCygBGsjeQ+9lyB9VCKtDLpFUt22Z4BrRJnQUrVk8Y3m9Y+6r3ip9uPSCJoqAnHSnUdO9ZeiqVmhNNJwU0UjTEZ4QHtGhpiQZWXzjJP0LlR+iiIpHmhRjP190aKhVJj4ZvJLKFa9jLxP6+b6ODGS1kYJ5qGZH4oSDjSEcoKQH0mKdF8bAgmkpmsiAyxxESbmgqmBGf5y6ukVSk7V+XLhmmjBnPk4RTO4AIcuIYq3EEdmkAghid4gVcrsZ6tN+t9PpqzFjvH8AfW9AcwupV/</latexit>
+x2
+<latexit sha1_base64="ffOjS1WNm1IpdM9neDv0+ymWTVk=">AAAB83icbVDJSgNBEK1xjXGLevTSGAQPEmbE7Rj04jFCNpgZQk+nJ2nS0zN01wgh5De8eFDEqz/jzb+xsxw08UHB470qqupFmRQGXffbWVldW9/YLGwVt3d29/ZLB4dNk+aa8QZLZarbETVcCsUbKFDydqY5TSLJW9HgfuK3nrg2IlV1HGY8TGhPiVgwilYKkARCEd89J/WwUyq7FXcKsky8OSnDHLVO6SvopixPuEImqTG+52YYjqhGwSQfF4Pc8IyyAe1x31JFE27C0fTmMTm1SpfEqbalkEzV3xMjmhgzTCLbmVDsm0VvIv7n+TnGt+FIqCxHrthsUZxLgimZBEC6QnOGcmgJZVrYWwnrU00Z2piKNgRv8eVl0ryoeNeVq8fLcvVuHkcBjuEEzsCDG6jCA9SgAQwyeIZXeHNy58V5dz5mrSvOfOYI/sD5/AESmZBr</latexit>
+t2[0,T]
+<latexit sha1_base64="BDwizxac8prqSvCPtXG+QO/a2EU=">AAACFHicbVDLSsNAFJ3UV62vqks3g0UQlJKIr2WxG1elgn1AG8NkMmmHTiZhZiKUkI9w46+4caGIWxfu/BunaQRtPTBw7jn3MvceN2JUKtP8MgoLi0vLK8XV0tr6xuZWeXunLcNYYNLCIQtF10WSMMpJS1HFSDcSBAUuIx13VJ/4nXsiJA35rRpHxA7QgFOfYqS05JSP+gFSQ4xY0mikTlaIIPHGPL37Kep+/Rg26s3UKVfMqpkBzhMrJxWQo+mUP/teiOOAcIUZkrJnmZGyEyQUxYykpX4sSYTwCA1IT1OOAiLtJDsqhQda8aAfCv24gpn6eyJBgZTjwNWdk0XlrDcR//N6sfIv7YTyKFaE4+lHfsygCuEkIehRQbBiY00QFlTvCvEQCYSVzrGkQ7BmT54n7ZOqdV49uzmt1K7yOIpgD+yDQ2CBC1AD16AJWgCDB/AEXsCr8Wg8G2/G+7S1YOQzu+APjI9vanKfCA==</latexit>
+NN
+CfC ,NCP
+dyn
+<latexit sha1_base64="T3VmeUmsmbKFOPBmkTnLQvCKnkM=">AAAB+nicbVC7TsMwFL0pr1JeKYwsFhVSWaoE8RorWBiLRB9SG1WO47ZWHSeyHVAV+iksDCDEypew8Tc4bQZoOZLlo3PulY+PH3OmtON8W4WV1bX1jeJmaWt7Z3fPLu+3VJRIQpsk4pHs+FhRzgRtaqY57cSS4tDntO2PbzK//UClYpG415OYeiEeCjZgBGsj9e1yz494oCahuVI1reqTvl1xas4MaJm4OalAjkbf/uoFEUlCKjThWKmu68TaS7HUjHA6LfUSRWNMxnhIu4YKHFLlpbPoU3RslAANImmO0Gim/t5IcaiydGYyxHqkFr1M/M/rJnpw5aVMxImmgswfGiQc6QhlPaCASUo0nxiCiWQmKyIjLDHRpq2SKcFd/PIyaZ3W3Iva+d1ZpX6d11GEQziCKrhwCXW4hQY0gcAjPMMrvFlP1ov1bn3MRwtWvnMAf2B9/gBzVpQi</latexit>
+s(t)
+<latexit sha1_base64="4u1f/7tlRszbGN6Jzga5uIjnun8=">AAACCnicbVC7TsMwFHXKq5RXgJHFtEIqAlUJEo+xgoWxSPQhNVHlOE5r1XnIdhBRlJmFkd9gYQAhVr6ArX+D03YoLUeyfHzOvfK9x4kYFdIwRlphaXllda24XtrY3Nre0Xf3WiKMOSZNHLKQdxwkCKMBaUoqGelEnCDfYaTtDG9yv/1AuKBhcC+TiNg+6gfUoxhJJfX0Q8sJmSsSX11pnFVnn4/ZKZTHPb1i1Iwx4CIxp6RSL1snL6N60ujpP5Yb4tgngcQMCdE1jUjaKeKSYkaykhULEiE8RH3SVTRAPhF2Ol4lg0dKcaEXcnUCCcfqbEeKfJGPpyp9JAdi3svF/7xuLL0rO6VBFEsS4MlHXsygDGGeC3QpJ1iyRBGEOVWzQjxAHGGp0iupEMz5lRdJ66xmXtTO71Qa12CCIjgAZVAFJrgEdXALGqAJMHgCr+AdfGjP2pv2qX1NSgvatGcf/IH2/QsVkJ4e</latexit>
+u(x,t)
+<latexit sha1_base64="IsZ7ckv8EBeYl7XVLN4LemLD2VM=">AAACD3icbVC7TsMwFHXKq5RXgJElogIxVQniNVawwFIVRB9SGyLHdVurthPZDlIV5Q9Y+BUWBhBiZWXjb3DSIEHLkSyde+698j3HDymRyra/jMLc/MLiUnG5tLK6tr5hbm41ZRAJhBsooIFo+1BiSjhuKKIobocCQ+ZT3PJHF2m/dY+FJAG/VeMQuwwOOOkTBJWWPHO/y6AaIkjjWi3xskKwWGCU3P0UtaubxDPLdsXOYM0SJydlkKPumZ/dXoAihrlCFErZcexQuTEUiiCKk1I3kjiEaAQHuKMphwxLN878JNaeVnpWPxD6cWVl6u+NGDIpx8zXk+mNcrqXiv/1OpHqn7kx4WGkMEeTj/oRtVRgpeFYPaKdKzrWBCJB9K0WGkIBkdIRlnQIzrTlWdI8rDgnlePro3L1PI+jCHbALjgADjgFVXAJ6qABEHgAT+AFvBqPxrPxZrxPRgtGvrMN/sD4+AZ6OZ2V</latexit>
+NN NIR
+rec
+<latexit sha1_base64="OOqnx0rhySqs6+pvMT5e8XLBJj4=">AAACH3icbVDLSgMxFM3UV62vqks3oUWoKGWmYHVZ6sZlBfuAmaFk0rQNzSRDkhGHoX/h0o2/4saFIuKuf2P6WGjtgZDDOfdy7z1BxKjStj2xMmvrG5tb2e3czu7e/kH+8KilRCwxaWLBhOwESBFGOWlqqhnpRJKgMGCkHYxupn77gUhFBb/XSUT8EA047VOMtJG6+arrKcpLFS+iXiBYTyWh+dL64/jsAnpYqJWW380X7bI9A/xPnAUp1gre+dOkljS6+W+vJ3AcEq4xQ0q5jh1pP0VSU8zIOOfFikQIj9CAuIZyFBLlp7P7xvDUKD3YF9I8ruFM/d2RolBNtzOVIdJDtexNxVWeG+v+tZ9SHsWacDwf1I8Z1AJOw4I9KgnWLDEEYUnNrhAPkURYm0hzJgRn+eT/pFUpO9Xy5Z1Jow7myIITUAAl4IArUAO3oAGaAINn8ArewYf1Yr1Zn9bXvDRjLXqOwR9Ykx9IvaYh</latexit>
+[sin(2 ⇡Bx),cos(2 ⇡Bx)]
+<latexit sha1_base64="3WRXAXEClFgYU07/vdT3vSVGcmQ=">AAACBHicbVC5TsNAEF2HK4TLQJlmRYREFdmIq4ygoSMgckixidbrcbLK+tDuGimyUtDwKzQUIETLR9DxN6wTFxB40khP781oZp6XcCaVZX0ZpYXFpeWV8mplbX1jc8vc3mnLOBUUWjTmseh6RAJnEbQUUxy6iQASehw63ugi9zv3ICSLo1s1TsANySBiAaNEaalvVp2rEAYEOzL1JCjshEQNPS+7mdz5fbNm1a0p8F9iF6SGCjT75qfjxzQNIVKUEyl7tpUoNyNCMcphUnFSCQmhIzKAnqYRCUG62fSJCd7Xio+DWOiKFJ6qPycyEko5Dj3dmd8o571c/M/rpSo4czMWJamCiM4WBSnHKsZ5IthnAqjiY00IFUzfiumQCEKVzq2iQ7DnX/5L2od1+6R+fH1Ua5wXcZRRFe2hA2SjU9RAl6iJWoiiB/SEXtCr8Wg8G2/G+6y1ZBQzu+gXjI9vjvqYEA==</latexit>
+⌦⇢Rd
+<latexit sha1_base64="Mp8yZbYF5Dy/nBVJRBaVVmadx84=">AAAB83icbVDLSgMxFL3js9ZXVXDjJlgEV2VG8LEsdeOyBfuAdiiZNNOGJpkhyYhl6G+4caGI2/6FX+DOjd9ipu1CWw8EDufcyz05QcyZNq775aysrq1vbOa28ts7u3v7hYPDho4SRWidRDxSrQBrypmkdcMMp61YUSwCTpvB8Dbzmw9UaRbJezOKqS9wX7KQEWys1HnsdgQ2AyVSb9wtFN2SOwVaJt6cFMvHtW82qXxUu4XPTi8iiaDSEI61bntubPwUK8MIp+N8J9E0xmSI+7RtqcSCaj+dZh6jM6v0UBgp+6RBU/X3RoqF1iMR2MksoV70MvE/r52Y8MZPmYwTQyWZHQoTjkyEsgJQjylKDB9ZgoliNisiA6wwMbamvC3BW/zyMmlclLyr0mXNtlGBGXJwAqdwDh5cQxnuoAp1IBDDE7zAq5M4z86b8z4bXXHmO0fwB87kBy81lX4=</latexit>
+x1
+<latexit sha1_base64="55vebGlVOPWgy7Wl+uD0ne9i96c=">AAAB83icbVDLSgMxFL1TX7W+qoIbN8EiuCozBR/LUjcuW7AP6Awlk2ba0GRmSDJiGfobblwo4rZ/4Re4c+O3mGm70NYDgcM593JPjh9zprRtf1m5tfWNza38dmFnd2//oHh41FJRIgltkohHsuNjRTkLaVMzzWknlhQLn9O2P7rN/PYDlYpF4b0ex9QTeBCygBGsjeQ+9lyB9VCKtDLpFUt22Z4BrRJnQUrVk8Y3m9Y+6r3ip9uPSCJoqAnHSnUdO9ZeiqVmhNNJwU0UjTEZ4QHtGhpiQZWXzjJP0LlR+iiIpHmhRjP190aKhVJj4ZvJLKFa9jLxP6+b6ODGS1kYJ5qGZH4oSDjSEcoKQH0mKdF8bAgmkpmsiAyxxESbmgqmBGf5y6ukVSk7V+XLhmmjBnPk4RTO4AIcuIYq3EEdmkAghid4gVcrsZ6tN+t9PpqzFjvH8AfW9AcwupV/</latexit>
+x2
+<latexit sha1_base64="UXz2i5IJN4Fx5nh3Yq857bQ4S6c=">AAACCnicbVC7TsMwFHXKq5RXgJHFUCEVCVUJ4jVWwMBYJPqQ2qhyHKe16jiR7SCqKDMLv8LCAEKsfAEbf4PTZigtR7J8fM698r3HjRiVyrJ+jMLC4tLySnG1tLa+sbllbu80ZRgLTBo4ZKFou0gSRjlpKKoYaUeCoMBlpOUOrzO/9UCEpCG/V6OIOAHqc+pTjJSWeuZ+1w2ZJ0eBvpKbtDL9fEyPoTrqmWWrao0B54mdkzLIUe+Z310vxHFAuMIMSdmxrUg5CRKKYkbSUjeWJEJ4iPqkoylHAZFOMl4lhYda8aAfCn24gmN1uiNBgczG05UBUgM562Xif14nVv6lk1AexYpwPPnIjxlUIcxygR4VBCs20gRhQfWsEA+QQFjp9Eo6BHt25XnSPKna59Wzu9Ny7SqPowj2wAGoABtcgBq4BXXQABg8gRfwBt6NZ+PV+DA+J6UFI+/ZBX9gfP0CrMCa4g==</latexit>
+D(x,t)
+<latexit sha1_base64="Mp8yZbYF5Dy/nBVJRBaVVmadx84=">AAAB83icbVDLSgMxFL3js9ZXVXDjJlgEV2VG8LEsdeOyBfuAdiiZNNOGJpkhyYhl6G+4caGI2/6FX+DOjd9ipu1CWw8EDufcyz05QcyZNq775aysrq1vbOa28ts7u3v7hYPDho4SRWidRDxSrQBrypmkdcMMp61YUSwCTpvB8Dbzmw9UaRbJezOKqS9wX7KQEWys1HnsdgQ2AyVSb9wtFN2SOwVaJt6cFMvHtW82qXxUu4XPTi8iiaDSEI61bntubPwUK8MIp+N8J9E0xmSI+7RtqcSCaj+dZh6jM6v0UBgp+6RBU/X3RoqF1iMR2MksoV70MvE/r52Y8MZPmYwTQyWZHQoTjkyEsgJQjylKDB9ZgoliNisiA6wwMbamvC3BW/zyMmlclLyr0mXNtlGBGXJwAqdwDh5cQxnuoAp1IBDDE7zAq5M4z86b8z4bXXHmO0fwB87kBy81lX4=</latexit>
+x1
+<latexit sha1_base64="55vebGlVOPWgy7Wl+uD0ne9i96c=">AAAB83icbVDLSgMxFL1TX7W+qoIbN8EiuCozBR/LUjcuW7AP6Awlk2ba0GRmSDJiGfobblwo4rZ/4Re4c+O3mGm70NYDgcM593JPjh9zprRtf1m5tfWNza38dmFnd2//oHh41FJRIgltkohHsuNjRTkLaVMzzWknlhQLn9O2P7rN/PYDlYpF4b0ex9QTeBCygBGsjeQ+9lyB9VCKtDLpFUt22Z4BrRJnQUrVk8Y3m9Y+6r3ip9uPSCJoqAnHSnUdO9ZeiqVmhNNJwU0UjTEZ4QHtGhpiQZWXzjJP0LlR+iiIpHmhRjP190aKhVJj4ZvJLKFa9jLxP6+b6ODGS1kYJ5qGZH4oSDjSEcoKQH0mKdF8bAgmkpmsiAyxxESbmgqmBGf5y6ukVSk7V+XLhmmjBnPk4RTO4AIcuIYq3EEdmkAghid4gVcrsZ6tN+t9PpqzFjvH8AfW9AcwupV/</latexit>
+x2
+<latexit sha1_base64="ffOjS1WNm1IpdM9neDv0+ymWTVk=">AAAB83icbVDJSgNBEK1xjXGLevTSGAQPEmbE7Rj04jFCNpgZQk+nJ2nS0zN01wgh5De8eFDEqz/jzb+xsxw08UHB470qqupFmRQGXffbWVldW9/YLGwVt3d29/ZLB4dNk+aa8QZLZarbETVcCsUbKFDydqY5TSLJW9HgfuK3nrg2IlV1HGY8TGhPiVgwilYKkARCEd89J/WwUyq7FXcKsky8OSnDHLVO6SvopixPuEImqTG+52YYjqhGwSQfF4Pc8IyyAe1x31JFE27C0fTmMTm1SpfEqbalkEzV3xMjmhgzTCLbmVDsm0VvIv7n+TnGt+FIqCxHrthsUZxLgimZBEC6QnOGcmgJZVrYWwnrU00Z2piKNgRv8eVl0ryoeNeVq8fLcvVuHkcBjuEEzsCDG6jCA9SgAQwyeIZXeHNy58V5dz5mrSvOfOYI/sD5/AESmZBr</latexit>
+t2[0,T]
+<latexit sha1_base64="veMI4K6KkjOG6JmJdF7uBaJFols=">AAACB3icbVDLSgMxFM34rPU16lKQYBHqpsyIr2XRhS4r2Ae0Q8lk0jY0kwxJRizD7Nz4K25cKOLWX3Dn35hpZ1FbD4ScnHMvuff4EaNKO86PtbC4tLyyWlgrrm9sbm3bO7sNJWKJSR0LJmTLR4owykldU81IK5IEhT4jTX94nfnNByIVFfxejyLihajPaY9ipI3UtQ86vmCBGoXmSm7S8vTzMT3u2iWn4owB54mbkxLIUeva351A4DgkXGOGlGq7TqS9BElNMSNpsRMrEiE8RH3SNpSjkCgvGe+RwiOjBLAnpDlcw7E63ZGgUGWzmcoQ6YGa9TLxP68d696ll1AexZpwPPmoFzOoBcxCgQGVBGs2MgRhSc2sEA+QRFib6IomBHd25XnSOKm455Wzu9NS9SqPowD2wSEoAxdcgCq4BTVQBxg8gRfwBt6tZ+vV+rA+J6ULVt6zB/7A+voF+X6aBw==</latexit>
+G(x)
+<latexit sha1_base64="Mp8yZbYF5Dy/nBVJRBaVVmadx84=">AAAB83icbVDLSgMxFL3js9ZXVXDjJlgEV2VG8LEsdeOyBfuAdiiZNNOGJpkhyYhl6G+4caGI2/6FX+DOjd9ipu1CWw8EDufcyz05QcyZNq775aysrq1vbOa28ts7u3v7hYPDho4SRWidRDxSrQBrypmkdcMMp61YUSwCTpvB8Dbzmw9UaRbJezOKqS9wX7KQEWys1HnsdgQ2AyVSb9wtFN2SOwVaJt6cFMvHtW82qXxUu4XPTi8iiaDSEI61bntubPwUK8MIp+N8J9E0xmSI+7RtqcSCaj+dZh6jM6v0UBgp+6RBU/X3RoqF1iMR2MksoV70MvE/r52Y8MZPmYwTQyWZHQoTjkyEsgJQjylKDB9ZgoliNisiA6wwMbamvC3BW/zyMmlclLyr0mXNtlGBGXJwAqdwDh5cQxnuoAp1IBDDE7zAq5M4z86b8z4bXXHmO0fwB87kBy81lX4=</latexit>
+x1
+<latexit sha1_base64="55vebGlVOPWgy7Wl+uD0ne9i96c=">AAAB83icbVDLSgMxFL1TX7W+qoIbN8EiuCozBR/LUjcuW7AP6Awlk2ba0GRmSDJiGfobblwo4rZ/4Re4c+O3mGm70NYDgcM593JPjh9zprRtf1m5tfWNza38dmFnd2//oHh41FJRIgltkohHsuNjRTkLaVMzzWknlhQLn9O2P7rN/PYDlYpF4b0ex9QTeBCygBGsjeQ+9lyB9VCKtDLpFUt22Z4BrRJnQUrVk8Y3m9Y+6r3ip9uPSCJoqAnHSnUdO9ZeiqVmhNNJwU0UjTEZ4QHtGhpiQZWXzjJP0LlR+iiIpHmhRjP190aKhVJj4ZvJLKFa9jLxP6+b6ODGS1kYJ5qGZH4oSDjSEcoKQH0mKdF8bAgmkpmsiAyxxESbmgqmBGf5y6ukVSk7V+XLhmmjBnPk4RTO4AIcuIYq3EEdmkAghid4gVcrsZ6tN+t9PpqzFjvH8AfW9AcwupV/</latexit>
+x2
+<latexit sha1_base64="QA2c/z1BFp4TXDaLQihcaHunmkk=">AAACfnicbVHJbhNBEO0ZAgkTFgeOXCY4QQGEmYkE5BiRC0jZWJxEsh2rpqfstNLLqLsmyBrNZ/Bj3PItXGgvLHYoqdVPr151V73KCikcJcl1EN5aun1neeVutHrv/oOHjbVHJ86UlmObG2nsWQYOpdDYJkESzwqLoDKJp9nl3jh/eoXWCaO/0qjAnoKhFgPBgTzVb3zvavzGjVKg86rrCAj3Dw/rqpsZmbuR8lc1qutoTiZ0UdIXMdTzuo+LOhIKr8DWFdVRtPHn9fN063fq+Ua0OeU/Hx38ZfuNZtJKJhHfBOkMNNksjvuNH93c8FKhJi7BuU6aFNSrwJLgEn1bpcMC+CUMseOhBoWuV03sq+NNz+TxwFh/NMUT9t+KCpQbj+iVCujCLebG5P9ynZIGO71q4hZqPv1oUMqYTDzeRZwLi5zkyAPgVvheY34BFjj5jUXehHRx5JvgZLuVvm29+bTd3H0/s2OFPWFP2RZL2Tu2yz6wY9ZmnP0M1oMXwcuQhc/CV+HrqTQMZjWP2VyEO78ARyjEVg==</latexit>
+y1
+(t)
+<latexit sha1_base64="3J9ZMWYz3MavpCYACm6VAgvkKAo=">AAACfnicbVHJbhNBEO2ZsCTDZuDIZcAJCiDMjCVCjlG4ECkJYXESyXasmp6y00ovo+6aIGs0n8GPceNbuKS9sNihpFY/vXrVXfUqK6RwlCQ/g3Dlxs1bt1fXojt3791/0Hj46NiZ0nLscCONPc3AoRQaOyRI4mlhEVQm8SS7eD/Jn1yidcLorzQusK9gpMVQcCBPDRrfexq/caMU6LzqOQLC/cPDuuplRuZurPxVjes6WpAJXZT0RYz0om5vWUdC4SXYuqI6itb/vH7W3vyderEebcz4zx8P/rKDRjNpJdOIr4N0DppsHkeDxo9ebnipUBOX4Fw3TQrqV2BJcIm+rdJhAfwCRtj1UINC16+m9tXxhmfyeGisP5riKftvRQXKTUb0SgV07pZzE/J/uW5Jw+1+NXULNZ99NCxlTCae7CLOhUVOcuwBcCt8rzE/Bwuc/MYib0K6PPJ1cNxupVutt5/azZ3duR2r7Al7xjZZyt6xHfaBHbEO4+xX8DR4GbwKWfg8fB2+mUnDYF7zmC1EuH0FSMzEVw==</latexit>
+y2
+(t)
+<latexit sha1_base64="s1JtKAEOFyCjdklXlRFZdU5AoRY=">AAACpHicbVFbTxNBFJ5db1BvRR99WS0afGl2MaIvJgQflAShiAWStjRnZ0/LhLlsZs5Cms3+Mv6Fb/4bpktFWjzJZL585/vmXCbNpXAUx3+C8N79Bw8fLS03Hj95+ux5c+XFoTOF5djlRhp7nIJDKTR2SZDE49wiqFTiUXr2dZo/OkfrhNG/aJLjQMFYi5HgQJ4aNi/7Gi+4UQp0VvYdAeHO7m5V9lMjMzdR/ionVdWYkwmdF3Qgxnpet72oI6HwHGxV0kKirvNz78e833l/Y/WmiZMPa39feP/lxvKPWx02W3E7riO6C5IZaLFZdIbN3/3M8EKhJi7BuV4S5zQowZLgEn2PhcMc+BmMseehBoVuUNZLrqK3nsmikbH+aIpq9rajBOWmg3ilAjp1i7kp+b9cr6DR50FZ7xQ1vy40KmREJpr+WJQJi5zkxAPgVvheI34KFjj5f234JSSLI98Fh+vtZKP9cX+9tbk1W8cSe8XesDWWsE9sk31nHdZlPHgdfAs6wX74LtwJD8LutTQMZp6XbC7Ckys749TL</latexit>
+y3
+(t)= s(t)
+<latexit sha1_base64="2xI8eWqz4JPf2L3Iox5NkCPkz7M=">AAACk3icbVHbbtNAEF2bWzE3F8QTLxZppfIS2ZUolRAiKjyAREu5pK2UhGi8nqSr7sXaHRdFln+Iz+GNv2FzgZCUkVZ7dM6Z2ZnZvJTCUZr+CsJr12/cvLVxO7pz9979B/HmwxNnKsuxy4009iwHh1Jo7JIgiWelRVC5xNP84s1UP71E64TRX2lS4kDBWIuR4ECeGsY/+hq/c6MU6KLuOwLCD0dHTd3PjSzcRPmrnjRNtGITuqzoixjrVd/7dR8JhZdgm5qaKNr6W/1buvNHevZqWWxJbkXbc/Pnj4dLdhi30nY6i+QqyBagxRZxPIx/9gvDK4WauATnella0qAGS4JL9L1WDkvgFzDGnocaFLpBPdtpk2x7pkhGxvqjKZmx/2bUoNx0bu9UQOduXZuS/9N6FY32B/VsatR8/tCokgmZZPpBSSEscpITD4Bb4XtN+DlY4OS/MfJLyNZHvgpOdtvZXvv5p91W52Cxjg32hD1lOyxjL1iHvWPHrMt4EAd7weugEz4OX4YH4du5NQwWOY/YSoSHvwF8Rswn</latexit>
+y0
+(t)= I(t)
+Figure 1: Comparison between Latent Dynamics Networks (left) and Liquid Fourier Latent Dynamics
+Networks (right).
+2 Methods
+Here, we introduce LFLDNets and highlight the key differences between these and LDNets. We
+explain how LNNs work and discuss their advantages compared to neural ODEs based on FCNNs.
+We also show the importance of adding a proper Fourier embedding for the space coordinates to
+better learn high-frequency functions.
+Then, we present the mathematical governing equations and numerical formulations for two
+challenging test cases in cardiac electrophysiology and cardiovascular hemodynamics.
+2.1 Liquid Fourier Latent Dynamics Networks
+We compare the architectures of LDNets and LFLDNets in Figure 1. The general mathematical
+formulation for LFLDNets reads:
+
+
+
+s(t) = NN CfC,NCP
+dyn (I(t); wdyn), for t ∈ (0, T],
+s(0) = s0,
+u(x, t) = NN rec(s(t), [cos(2πBx), sin(2πBx)]T , G(x), D(x, t); wrec), for x ∈ Ωi, t ∈ [0, T],
+for i = {1, ..., NΩ}, where NΩ defines the total number of computational domains. As with LDNets
+[53], LFLDNets are made of two neural networks. The first, called the dynamics networkNN CfC,NCP
+dyn
+(with tunable parameters wdyn), accounts for the temporal evolution of a vector s(t) ∈ RNs that
+tracks the global state of a set of PDEs, starting from an initial condition s(0) = s0, in the time
+interval (0, T]. The second, called the reconstruction network NN rec (with trainable weights and
+biases wrec), operates in the space domain and reconstructs space-time variables, denoted as u(x, t),
+which can be any output extracted from a system of PDEs.
+3
+LFLDNets are neural operators that map time-dependent I(t) ∈ I , space-dependent G(x) ∈ G
+and space-time D(x, t) ∈ D input signals coming from physics-based model parameters, coefficients,
+forcing terms, initial and boundary conditions extracted from a set of differential equations, as well
+as geometrical parameters associated with one or multiple computational domains Ωi ⊂ RNd, such as
+those arising from statistical shape modeling [55] or signed distance fields [27, 67], into a space-time
+output field u(x, t) ∈ U . The matrix B ∈ RNf ×Nd represents a trainable Fourier encoding for the
+space coordinates x ∈ Ωi ⊂ RNd, where Nf is the total number of frequencies. We remark that
+scalar and vector model parameters can be reinterpreted as input signals that are constant in space
+and time [53, 58].
+Compared to LDNets, LFLDNets present two key novelties, residing in the use of LNNs and
+Fourier embedding, described below.
+2.1.1 Liquid Neural Networks
+LNNs are lightweight and flexible architectures, that remain adaptable after the training phase, with
+excellent generalization properties, even in the presence of scarce data and a significant amount
+of noise, by using a limited number of expressive biologically-inspired neurons and corresponding
+connections [15, 16, 30]. A similar trend in developing powerful, explainable and tiny ML models
+encoding the behavior of complex dynamical systems can be also observed in other recent works [40,
+53, 57, 59].
+In this section we review the mathematical framework of how LNNs evolved, moving from
+Liquid-Time Constant (LTC) networks [16] to neural circuit policies (NCPs) [30] and closed-form
+continuous-time (CfC) networks [15]. We also motivate why these architectures can lead to an
+improved design of LDNets [53].
+The first implementation of LNNs was built from neural ODEs [5], which model how dynamical
+systems evolve by introducing a neural network-based right hand side for a system of ODEs. Specif-
+ically, in neural ODEs, the time derivative of a hidden state vector y(t) ∈ RNy can be expressed as
+follows [16]:
+dy(t)
+dt = NN dyn(t, y(t), I(t); wdyn), (1)
+where NN dyn : R1+Ny+NI → RNy represents a FCNN, with weights and biases encoded in wdyn ∈
+RNw, vector I(t) ∈ I defines some time-dependent, exogenous, presynaptic input signals laying in a
+suitable functional space.
+LNNs in their first, LTC version, introduced a different expression of the right hand side compris-
+ing a liquid time-constant parameter vector wτ ∈ RNy and an additional tunable parameter vector
+A ∈ RNy, that is:
+dy(t)
+dt = −wτ ⊙ y(t) + S(t) = −wτ ⊙ y(t) + NN dyn(t, y(t), I(t); wdyn) ⊙ (A − y(t)), (2)
+where ⊙ is the Hadamard product. The term S(t) represents a conductance-based synapse model
+expressed using the Hodgkin-Huxley formalism [22]. Solving this set of ODEs rather than Equa-
+tion (1) offers several advantages, such as bounded dynamics for arbitrary sets of inputs, stability
+and superior expressivity [16].
+LTC networks still use FCNNs within NN dyn. On the other hand a NCP, which is built on top
+of LTC networks, replaces the FCNN in Equation (2) with a sparse recurrent neural network that
+is inspired by the nervous system of the Caenorhabditis elegans nematode [31]. NCPs show higher
+4
+generalizability, interpretability and robustness compared with orders-of-magnitude larger black-box
+ML models [30], and can learn causal relationships directly from data [71]. As shown in Figure 1
+(right), the NCP dynamics network NN NCP
+dyn is made up of four layers: the first input layer, where
+we find the sensory neurons y0(t) = I(t), the second and third layers, comprised of the inter neurons
+y1(t) and command neurons y2(t), respectively, and the four output layer, defined by the motor
+neurons y3(t) = s(t) [30]. For further details about NCPs and their wiring algorithm we refer to
+[30].
+Eventually, CfC networks NN CfC,NCP
+dyn , built on top of LTC networks with NCP, solve the dy-
+namical system modelled in Equation (2) by using a closed-form solution, which reads [15]:
+y(t) = (y0 − A) ⊙ e−[wτ+NN CfC,NCP
+dyn (y(t),I(t);wdyn)]t ⊙ NN CfC,NCP
+dyn (−y(t), −I(t); wdyn) + A, (3)
+where y(t) = [y1(t), y2(t), y3(t)]T , i.e. a vector containing all the neurons except the sensory ones.
+Specifically, CfC networks have an explicit time dependence in their formulation that, in contrast to
+other methods based on neural ODEs [5, 8, 52, 53], does not require a numerical solver with a specific
+time stepping scheme to obtain the temporal rollout. This closed-form solution also allows one to
+query y(t) at arbitrary times t, which do not need to be uniformly distributed in [0 , T]. However,
+training the dynamics network NN CfC,NCP
+dyn in Equation (3) presents several difficulties, which are
+mostly driven by vanishing/exploding gradient issues related to its exponential term. This leads
+to the final closed-form solution that propagates the input signals y0(t) = I(t) to the output state
+y3(t) = s(t) of the CfC, NCP dynamics network, which reads:
+yi+1(t) =σ(−f(yi(t); wi
+f)t) ⊙ g(yi(t), I(t); wi
+g)+
++
+
+1 − σ(−f(yi(t); wi
+f)t)
+
+⊙ h(yi(t); wi
+h) for i = 0, ...,2
+(4)
+where we remark that NN CfC,NCP
+dyn encodes the tunable parameters wdyn = [wi
+f , wi
+g, wi
+h]T for i =
+0, ...,2.
+The model expressed in Equation (4) is anticipated by a mixed long short-term memory (LSTM)
+architecture [21], which better captures long-term dependencies while avoiding gradient issues. Over-
+all, the CfC, NCP dynamics network is proven to be at least an order of magnitude faster than its
+ODE-based counterpart [15]. Furthermore, CfCs are as expressive as neural ODEs, while requiring
+fewer tunable parameters, thus maximizing the trade-off between accuracy and efficiency [15].
+We use the LeCun hyperbolic tangent activation function for all layers of theNN CfC,NCP
+dyn dynam-
+ics network. Moreover, we do not employ any backbone units, that is we learn f, g and h separately
+without any shared representations [15].
+2.1.2 F ourier encoding
+Instead of passing the space coordinates x ∈ Ω ⊂ Rd as inputs to the reconstruction network directly,
+we consider the following Fourier embedding [20]:
+x 7→ [cos(2πBx), sin(2πBx)]T ,
+where B ∈ RNf ×Nd is a trainable encoding, being Nf the number of frequencies. Specifically, adding
+Fourier features enables learning high-frequency functions faster and easier than using space coor-
+dinates, especially from complex space-time outputs exhibiting steep gradients and sharp variations
+[61, 62]. Differently from [20, 61], where Fourier Feature Networks or Sinusoidal Representation
+5
+Networks are employed, we do not consider any modifications in the structure of our feedforward
+fully-connected reconstruction network. Furthermore, differently from [53], we use the continuously
+differentiable Gaussian Error Linear Unit (GELU) activation function [19] in the reconstruction
+network.
+2.1.3 T raining and inference
+In each test case, we perform hyperparameter tuning to automatically find an optimal configuration
+for LFLDNets. The hyperparameters include the number of layers and neurons per layer of NN rec,
+the number of frequencies Nf for the Fourier embedding, the total number of neurons forNN CfC,NCP
+dyn
+(as the number of layers is fixed to 4), and the total number of statesNs. We use the Tree-structured
+Parzen Estimator (TPE) Bayesian algorithm to tune these hyperparameters [1, 4]. We fix the total
+number of trials to 20.
+We simultaneously train multiple neural networks using 4 Nvidia A40 GPUs of one supercomputer
+node available at the Stanford Research Computing Center. This node is equipped with 250 GB
+of RAM, so that the entire dataset of parameterized spatio-temporal numerical simulations can be
+loaded once during setup and specific portions are sent to the GPUs. We perform cross validation by
+considering a random, individual splitting of the dataset between training and validation set. After
+hyperparameter tuning, the final, optimal LFLDNet is trained on 1 Nvidia A40 GPU. However, the
+code already accommodates data and model distributed training across multiple GPUs to further
+speed up computation for larger neural networks than those considered in this paper.
+We do not perform gradient accumulation and we train LFLDNets in single-precision with the
+Adam optimizer [26] over 500 epochs for hyperparameter tuning and a maximum of 10.000 epochs
+for the final training, with an initial learning rate of 0.0003. For all cases, we consider a batch
+size equal to 5. In the training phase, at each epoch, 1.000 points are randomly sampled on the
+computational domain Ω. During inference, for GPU memory constraints, the mesh points x ∈ Ω
+are subdivided into 4 and 90 partitions for the electrophysiology and CFD test cases, respectively.
+On each subdivision, the LFLDNet is queried over the entire time domain t ∈ [0, T] to reproduce
+the whole solution field u(x, t). The number of subdivisions has been optimized to fulfill memory
+requirements according to the space-time resolution of the specific test case. Although the dynamics
+network, focusing on the temporal behavior only, can be queried just once for all partitions, we
+consider the LFLDNet as a whole during inference. This can certainly be optimized, but does not
+lead to a significant loss of performance, since the forward pass of the lightweight dynamics network
+is typically at least an order of magnitude faster than that of the reconstruction network.
+For the Python implementation, we rely on the integration between PyTorch Lightning and the
+Ray distributed framework [43] for training and inference of LFLDNets. For the implementation of
+the dynamics network, we employ the publicly available NCPs GitHub repository [30].
+We monitor the Mean Square Error (MSE), that is:
+L(uobs(x, t), upred(x, t)) = ||uobs(x, t) − upred(x, t)||2
+L2(Ω;[0,T]), (5)
+where upred(x, t) = NN rec(NN CfC,NCP
+dyn (I(t); wdyn), [cos(2πBx), sin(2πBx)]T , G(x), D(x, t); wrec).
+We perform an adimensionalization of inputs and outputs in the [−1, 1] interval. Differently from [53],
+we do not consider any L2 regularization for NN rec and NN CfC,NCP
+dyn or other application-specific
+terms in the loss function. Furthermore, the absence of an ODE-based solver for the dynamics
+network relaxes the need for a normalization time constant.
+6
+2.1.4 Software and hardware
+All numerical simulations are performed with svSolver [65] and svFSIplus [76], multiphysics and
+multiscale finite element solvers for cardiovascular and cardiac modeling examples, respectively. Both
+solvers are available as part of the SimVascular suite of applications [65]. Simulations were run on
+AMD-based and Intel-based Central Processing Unit (CPU) nodes available at the San Diego Super
+Computing Center (SDSC) Expanse cluster and Stanford Research Computing Center (SRCC),
+respectively. A LFLDNet always runs on 1 Nvidia A40 GPU within the computational resources of
+SRCC. Furthermore, this paper is accompanied by https://github.com/StanfordCBCL/LFLDNets,
+a GitHub repository containing a PyTorch Lightning-based code released under MIT License to run
+training/inference with LFLDNets and the dataset of numerical simulations collected for the different
+test cases.
+2.2 Cardiac electrophysiology
+We introduce the mathematical model and the numerical scheme related to the first test case for
+cardiac electrophysiology.
+2.2.1 Mathematical model
+We model cardiac electrophysiology in a 3D domain Ω = Ω BiV ∪ Ωpurk ⊂ R3 represented by a biven-
+tricular model of a 7-year-old female pediatric patient affected by hypoplastic left heart syndrome
+using the monodomain equation [6, 49] coupled with the ten Tusscher-Panfilov ionic model [64], that
+is:
+
+
+
+∂u
+∂t + Iion(u, y) − ∇ · (DM∇u) = Iapp(x, t; tstim
+LV ) in Ω × (0, T],
+(DM∇u) · n = 0 on ∂Ω × (0, T],
+dy
+dt = F (u, y; GCaL, GNa, GKr) in Ω × (0, T],
+u(x, 0) = u0(x), y(x, 0) = y0(x) in Ω .
+(6)
+The Purkinje system is generated by a fractal-tree method following prior work [56]. Trans-
+membrane potential u describes the propagation of the electric signal over the cardiac tissue, vector
+y = ( y1, . . . , yM+P ) defines the probability density functions of M = 12 gating variables, which
+represent the fraction of open channels across the membrane of a single cardiomyocyte, and the
+concentrations of P = 6 relevant ionic species. Among them, intracellular calcium Ca2+, sodium
+N a+ and potassium K+ play an important role for cardiac function [57].
+The right hand side F (u, y) defines the dynamics of the gating and concentration variables. The
+ionic current Iion(u, y) models the effect of the cellular level ODEs on the organ scale PDE. The
+analytical expressions of both F (u, y) and Iion(u, y) derive from the mathematical formulation of
+the ten Tusscher-Panfilov ionic model [64].
+The diffusion tensor is expressed as DM = DisoI + Danif0 ⊗ f0 in ΩBiV and DM = DpurkI in
+Ωpurk, where f0 expresses the biventricular fiber field [47]. Dani, Diso, Dpurk ∈ R+ represent the
+anisotropic, isotropic and Purkinje conductivities, respectively.
+We impose the condition of an electrically isolated domain by prescribing homogeneous Neumann
+boundary conditions ∂Ω, where n is the outward unit normal vector to the boundary.
+The action potential is triggered by a current Iapp(x, t; tstim
+LV ) that is applied at time t = 0 at
+the tip of the right bundle branch, followed by another stimulus at a variable time t = tstim
+LV at the
+beginning of the left bundle branch.
+7
+Parameter Description Range Units
+GCaL Maximal Ca2+ current conductance [1.99e-5, 7.96e-5] cm 3 ms−1 µF−1
+GNa Maximal N a+ current conductance [7.42, 29.68] nS pF −1
+GKr Maximal rapid delayed rectifier current conductance [0.08, 0.31] nS pF −1
+Dani Anisotropic conductivity [0.008298, 0.033192] mm 2 ms−1
+Diso Isotropic conductivity [0.002766, 0.011064] mm 2 ms−1
+Dpurk Purkinje conductivity [1.0, 3.5] mm 2 ms−1
+tstim
+LV Purkinje left bundle stimulation time [0, 100] ms
+Table 1: Parameter space sampled via latin hypercube for the cardiac electrophysiology test case.
+In Table 1 we report descriptions, ranges and units for the 7 multiscale model parameters that we
+explore via Latin Hypercube Sampling to generate the dataset of 150 electrophysiology simulations
+(100 for training, 50 for validation).
+2.2.2 Numerical discretization
+We perform space discretization of the monodomain equation coupled with the ten Tusscher-Panfilov
+ionic model using the Finite Element Method (FEM) with P1 Finite Elements. The tetrahedral mesh
+of the biventricular-purkinje system is comprised of 1,016,192 cells and 240,555 DOFs. We apply non-
+Gaussian quadrature rules to recover convergent conduction velocities of the biventricular-purkinje
+system [63]. Ionic conductances vary transmurally to account for epicardial, mid-myocardial and
+endocardial cells [64].
+For time discretization, we first update the variables of the ionic model and then the transmem-
+brane potential by employing an Implicit-Explicit numerical scheme [9, 48, 54]. Specifically, in the
+monodomain equation, the diffusion term is treated implicitly and the ionic term is treated explic-
+itly. Moreover, the ionic current is discretized by means of the Ionic Current Interpolation scheme
+[28]. We employ a time step ∆ t = 0.1 ms with Forward Euler scheme and we simulate one single
+heartbeat (T = 0.6 s).
+We apply a Laplace-Dirichlet Rule-Based algorithm [3] to generate the fiber, sheet and sheet-
+normal distributions on the myocardium using the following parameters: αepi = −60◦, αendo = 60◦,
+βepi = 20◦ and βendo = −20◦.
+2.3 Cardiovascular Fluid Dynamics
+We present the mathematical and numerical details for the second test case in the framework of
+computational fluid dynamics (CFD).
+2.3.1 Mathematical model
+The Navier-Stokes equations model the flow of an incompressible Newtonian viscous fluid in a com-
+putational domain Ω = Ω aorta ⊂ R3, defined by a patient-specific aorta, in the time interval (0 , T).
+The unknowns in primitive variables are velocity and pressure, i.e ( u, p), and the mathematical
+formulation reads [46]:
+8
+Parameter Description Range Units
+Ri
+p Proximal resistance in RCR boundary conditions [85.1, 1293.5] Pa s mL −1
+C i Capacitance in RCR boundary conditions [6.9e-5, 8.2e-4] mL Pa −1
+Ri
+d Distal resistance in RCR boundary conditions [126.9, 17442.9] Pa s mL −1
+Qinlet(t) Inlet volumetric flow rate [0, 448] mL s −1
+Table 2: Parameter space of the cardiovascular CFD test case. Note that the ranges for the RCR
+boundary conditions include all five outlets (i.e., i = 1 , ...,5), which can start from very different
+baseline values.
+
+
+
+ρ
+ ∂u
+∂t + u · ∇u
+
+= −∇p + µ∆u in Ω × (0, T],
+∇ · u = 0 in Ω × (0, T],
+u = u0 in Ω × {0},
+Q(t) =
+Z
+Γinlet
+uinletndΓ = Qinlet(t) on Γ inlet × (0, T],
+u = 0 on Γwall × (0, T],
+p(t) = fRCR(Qi
+outlet(t), ˙Qi
+outlet(t), Ri
+p, Ci, Ri
+d) on Γ outlet,i × (0, T], i = 1, ...,5,
+(7)
+where ρ = 1.06 g cm−3 the blood density and µ = 0.04 g cm−1 s−1 the dynamic viscosity. The first
+equation represents momentum conservation, whereas the second governs mass conservation. We
+apply a time-dependent, pulsatile inflow profile at the aortic inlet Γ inlet, no-slip Dirichlet boundary
+conditions on the outer wall Γ wall, and three-element Windkessel-type boundary conditions, also
+known as RCR models, at the five different outlets Γ outlet,i i = 1 , ...,5 where, for each outlet, we
+consider a proximal resistance Rp in series with a parallel distal resistance Rd and capacitance C
+[68]. For further mathematical details we refer to [65].
+In Table 2 we report descriptions, ranges and units for the inflow and outflow boundary conditions
+that we sample to generate the dataset of 32 CFD simulations (25 for training, 7 for validation).
+Following [45], we multiplied a baseline inlet flow rate and each of the parameters governing the
+outlet boundary conditions by independent factors uniformly distributed in the range [0.8, 1.2].
+2.3.2 Numerical discretization
+We perform space discretization of the Navier-Stokes equations using FEM with a Streamline-
+Upwind/Petrov-Galerkin (SUPG) and Pressure-Stabilizing/Petrov-Galerkin (PSPG) P1-P1 formu-
+lation [73]. The patient-specific aorta, which is taken from the Vascular Model Repository [75], is
+comprised of 3,018,813 cells and 560,868 DOFs.
+This stabilized FEM formulation is discretized in time using the generalized alpha time stepping
+scheme [39] with a time step size ∆ t = 0.001 s. We run the CFD simulation for 5 cardiac cycles,
+with a period that is equal to 0 .85 s, and we retain the last one for training and inference. For
+further details regarding numerical discretization within the SimVascular solver we refer to [65].
+9
+3 Results
+We build and present two surrogate models of cardiac and cardiovascular function using LFLDNets
+that effectively learn the parameterized spatio-temporal dynamics underlying sets of multiscale and
+multiphysics PDEs arising in computational electrophysiology and fluid dynamics.
+3.1 Test case 1: cardiac electrophysiology
+Hyperparameters
+NN CfC,NCP
+dyn /NN rec neurons NN rec layers Nf Ns
+tuning {200, 250, ... , 400} { 5, 10, 15} { 25, 50, ... , 200} { 50, 100, 150}
+final 200 10 50 50
+Table 3: LFLDNets hyperparameter tuning for the electrophysiology test case. Hyperparameter
+ranges (top) and optimized values (bottom). The final model sizes are NN CfC,NCP
+dyn (283K parame-
+ters), NN rec (432K parameters) and B (150 parameters).
+In Table 3 we report the range of hyperparameters we consider for tuning, along with the final
+set chosen by the Bayesian optimizer. We see that the optimal LFLDNet is compact, with less
+than a million tunable parameters. This is remarkable given the complexity of the 3D multiscale
+electrophysiology simulations encoded by this surrogate model.
+Training LFLDNets for hyperparameter tuning over 500 epochs takes from 10 minutes to 5
+hours, depending on the specific architecture. The optimal configuration achieves convergence at
+epoch 1.799 after 1 hour and 30 minutes of computation. Specifically, the normalized MSEs for the
+training (100 simulations) and validation (50 simulations) sets are 9.12e-4 and 3.15e-3, respectively,
+at epoch 1.799. Running inference over the whole spatio-temporal numerical simulation requires
+3 minutes in eager mode. On the other hand, a high-fidelity simulation takes about 1.5 hours on
+24 cores. In Figures 2 and 3 we depict the spatio-temporal evolution of the action potential and
+the pointwise absolute errors over the cardiac cycle at different time points for a random sample of
+the validation set, respectively. We show good agreement between the LFLDNets prediction and
+the original numerical simulation throughout the heartbeat, especially with respect to the overall
+propagation pattern and conduction velocities. The pointwise absolute error remains uniformly small
+over the cardiac cycle and increases only locally in correspondence with the wavefront during some
+instances of the depolarization and repolarization phases, which exhibit steep gradients. We also note
+that the uniform time step chosen for training and inference, i.e. ∆ t = 10 ms is orders of magnitude
+larger than the maximum time step allowed in the Finite Element simulations of the monodomain
+equation coupled with the ten Tusscher-Panfilov ionic model, due to stiffness, convergence and
+stability requirements. Furthermore, this test case presents bifurcations in the parameter space,
+as the simulated behavior ranges from sinus rhythm, which is a healthy propagation pattern, to
+different stages of bundle branch block, which is a pathological condition. As mentioned in the
+Methods section, all LFLDNets operations are performed on 1 Nvidia A40 GPU.
+In Figure 4 we compare the performance of LFLDNets with their original LDNet and LLDNet
+counterparts, i.e. LFLDNets without the Fourier embedding. We perform hyperparameter tuning for
+both LDNets and LLDNets using the same ranges of Table 3. We see that both architectures require
+larger neural networks than the optimal LFLDNet, which consists of 200 neurons for the dynamics
+network, 10 hidden layers with 200 neurons per layer for the reconstruction network. Specifically, the
+10
+(a) t = 20 ms
+ (b) t = 50 ms
+(c) t = 60 ms
+ (d) t = 200 ms
+(e) t = 250 ms
+ (f) t = 290 ms
+(g) t = 330 ms
+Figure 2: Electrophysiology test case. Comparison of the action potential u(x, t) throughout the
+heartbeat for a random sample in the validation set. LFLDNet prediction (left), ground truth from
+electrophysiology simulation (right).
+11
+(a) t = 60 ms
+ (b) t = 70 ms
+ (c) t = 100 ms
+(d) t = 200 ms
+ (e) t = 300 ms
+ (f) t = 400 ms
+(g) t = 500 ms
+Figure 3: Electrophysiology test case. Pointwise absolute difference |upred(x, t) − uobs(x, t)| between
+LFLDNets predictions and observations over the cardiac cycle for a random sample in the validation
+set.
+12
+100 200 300 400 50010−3
+10−2
+Normalized MSE [-]
+Training loss
+LDNet: N N dyn (450 n, 10 l), N N rec (450 n, 10 l), Ns = 150
+LLDNet: N N CfC,NCP
+dyn (300 n), N N rec (300 n, 10 l), Ns = 50
+LFLDNet: N N CfC,NCP
+dyn (200 n), N N rec (200 n, 10 l), Ns = 50, Nf = 50
+100 200 300 400 50010−3
+10−2
+Validation loss
+LDNet: N N dyn (450 n, 10 l), N N rec (450 n, 10 l), Ns = 150
+LLDNet: N N CfC,NCP
+dyn (300 n), N N rec (300 n, 10 l), Ns = 50
+LFLDNet: N N CfC,NCP
+dyn (200 n), N N rec (200 n, 10 l), Ns = 50, Nf = 50
+100 200 300 400 500
+Epoch [-]
+10−3
+10−2
+Normalized MSE [-]
+LFLDNet: N N CfC,NCP
+dyn (200 n), N N rec (200 n, 10 l), Ns = 50, Nf = 5
+LFLDNet: N N CfC,NCP
+dyn (200 n), N N rec (200 n, 10 l), Ns = 50, Nf = 50
+LFLDNet: N N CfC,NCP
+dyn (200 n), N N rec (200 n, 10 l), Ns = 50, Nf = 500
+100 200 300 400 500
+Epoch [-]
+10−3
+10−2
+LFLDNet: N N CfC,NCP
+dyn (200 n), N N rec (200 n, 10 l), Ns = 50, Nf = 5
+LFLDNet: N N CfC,NCP
+dyn (200 n), N N rec (200 n, 10 l), Ns = 50, Nf = 50
+LFLDNet: N N CfC,NCP
+dyn (200 n), N N rec (200 n, 10 l), Ns = 50, Nf = 500
+Figure 4: Electrophysiology test case. Comparison of training and validation losses between LDNets,
+LLDNets, and LFLDNets after hyperparameter tuning (top). Comparison of training and validation
+losses for different Fourier embedding dimensions within the optimal LFLDNets (bottom).
+optimal LDNet has 10 hidden layers with 450 neurons per layer for both networks, whereas LLDNet
+presents 300 neurons for the dynamics network, 10 hidden layers with 300 neurons per layer for the
+reconstruction network. We remark that CfC, NCPs have a fixed number of hidden layers, which
+is set to 4, and the only tunable hyperparameter is given by the total amount of neurons, which
+is divided into sensory, inter, command, and motor neurons according to the specified number of
+inputs and states. We also notice that the optimal dimension of the state vector is 150 for LDNet
+13
+0 100 200 300 400 500 600
+Time [ms]
+−0.2
+−0.1
+0.0
+0.1
+0.2
+0.3
+States [-]
+(a) LDNets
+0 100 200 300 400 500 600
+Time [ms]
+−1.00
+−0.75
+−0.50
+−0.25
+0.00
+0.25
+0.50
+0.75
+States [-]
+(b) LLDNets
+0 100 200 300 400 500 600
+Time [ms]
+−1.00
+−0.75
+−0.50
+−0.25
+0.00
+0.25
+0.50
+0.75
+1.00
+States [-]
+(c) LFLDNets
+Figure 5: Electrophysiology test case. Evolution of the global state vector s(t) over the cardiac
+cycle for a specific choice of the input signals I(t) coming from a random sample in the validation
+set. Different colors identify different components of s(t). Optimal LDNet (top), optimal LLDNet
+(center) and optimal LFLDNet (bottom).
+and 50 for LLDNet/LFLDNet, resulting in a smaller state representation for the liquid counterpart.
+Furthermore, the lighter LFLDNet manifests faster convergence and lower normalized MSEs from
+the very first epochs. Training the optimal LDNet, LLDNet and LFLDNet for 500 epochs takes
+14
+approximately 30, 40 and 50 minutes, respectively.
+In Figure 4 we also perform a convergence study in terms of the dimension of the Fourier features,
+where we show that larger embeddings are associated with better convergence to smaller normalized
+MSEs. However, this comes at the cost of more expensive training and slightly higher memory
+requirements to store a larger Fourier embedding.
+In Figure 5 we compare LDNets, LLDNets and LFLDNets in terms of the state vector s(t)
+temporal dynamics for a random sample of the validation set. We see that 150 LDNets states mostly
+exhibit stretched and compact trajectories, whereas 50 states for both LLDNets and LFLDNets show
+smooth trajectories that are varying throughout the heartbeat according to the features of the cardiac
+electrophysiology simulation and cover more uniformly the bounded [-1, 1] non-dimensional range.
+This motivates why the optimal architectures for LLDNets and LFLDNets have a lower number of
+states than LDNets.
+Overall, we show that LFLDNets demonstrate superior performance in terms of number of tun-
+able parameters for the dynamics and reconstruction networks, generalization errors, state vector
+temporal dynamics, training and inference times with respect to LDNets.
+3.2 Test case 2: cardiovascular fluid dynamics
+Hyperparameters
+NN CfC,NCP
+dyn /NN rec neurons NN rec layers Nf Ns
+tuning {200, 250, ... , 400} { 5, 10, 15} { 25, 50, ... , 200} { 50, 100, 150}
+final 300 5 100 100
+Table 4: LFLDNets hyperparameter tuning for the CFD test case. Hyperparameter ranges (top)
+and optimized values (bottom). The final model sizes are NN CfC,NCP
+dyn (633K parameters), NN rec
+(542K parameters) and B (300 parameters).
+In Table 4 we show the tuning ranges and final values of the LFLDNets hyperparameters after
+running the TPE algorithm. Although we consider a challenging CFD test case, we still obtain an
+optimal LFLDNet that is quite small, on the order of a million of tunable parameters. It should be
+noted that by considering only the final heartbeat, which is closer to the limit cycle, the LFLDNet
+spans different initial conditions for each numerical simulation due to different choices of boundary
+conditions from Table 2, which further increases the overall training complexity.
+According to the specific architecture, hyperparameter tuning for LFLDNets over 500 epochs
+requires from 30 minutes to 9 hours. The optimal configuration achieves convergence at epoch 5.599
+after 6 hours of computation, with a normalized MSE of 3.32e-4 over the training set (25 simulations)
+and 5.25e-4 for the validation set (7 simulations). Running inference on a spatio-temporal, numerical
+simulation in eager (rather than graph) execution requires about 45 minutes. We note that these
+computational times can be significantly reduced by training or querying LFLDNets with a coarser
+spatio-temporal resolution, as here we consider 240 snapshots over 560,868 DOFs compared to the
+60 time points over 240,555 DOFs of the electrophysiology test case. A high-fidelity simulation takes
+about 3 to 4 hours on 128 cores [45]. In Figures 6 and 7 we depict the spatio-temporal evolution of
+the velocity magnitude over the cardiac cycle for a random sample of the validation set. We remark
+that, during both training and inference, we apply a mask over Γwall to strongly impose homogeneous
+Dirichlet boundary conditions within the LFLDNet. We see that the LFLDNet output closely match
+the high-fidelity numerical simulation, although small eddies are not well captured throughout the
+15
+(a) t = 21 ms
+ (b) t = 59.5 ms
+(c) t = 112 ms
+ (d) t = 140 ms
+(e) t = 262.5 ms
+Figure 6: CFD test case. Comparison of the velocity magnitude ||u(x, t)|| during systole for a
+random sample in the validation set. LFLDNet prediction (left), ground truth from CFD simulation
+(right).
+16
+(a) t = 42 ms
+ (b) t = 70 ms
+(c) t = 105 ms
+ (d) t = 193 ms
+(e) t = 297.5 ms
+Figure 7: CFD test case. Comparison of the velocity magnitude ||u(x, t)|| over the cardiac cycle
+along some slices for a random sample in the validation set. LFLDNet prediction (left), ground
+truth from CFD simulation (right).
+17
+0 200 400 600 800
+Time [ms]
+−1.00
+−0.75
+−0.50
+−0.25
+0.00
+0.25
+0.50
+0.75
+1.00
+States [-]
+Figure 8: CFD test case. Evolution of the global state vector s(t) over the cardiac cycle for a specific
+choice of the input signals I(t) coming from a random sample in the validation set. Different colors
+identify different components of s(t).
+cardiac cycle and the approximation error in the arteries is higher than that observed along the
+ascending and descending aorta. This can also be motivated by the small training set, consisting
+of only 25 simulations while covering a large parameter space of plausible initial and boundary
+conditions, which is nevertheless sufficient to ensure small generalization errors and to correctly
+capture large to medium-sized eddies thanks to all the mathematical properties of LFLDNets. In fact,
+a larger training set, combined with bigger dynamics and reconstruction networks, a higher number
+of states (and Fourier features) would potentially allow for better performance [53]. Furthermore,
+we stress that the uniform time step chosen for training and inference, i.e. ∆ t = 0.0035 s, is higher
+than that allowed by the Courant-Friedrichs-Lewy (CFL) condition. As mentioned in the Methods
+section, all the mathematical operations involving LFLDNets run on 1 Nvidia A40 GPU.
+In Figure 8 we depict the trajectories of the global state vector s(t) coming from the optimal
+LFLDNet for a random sample of the validation set. Again, we notice that these 100 states present a
+smooth temporal dynamics that uniformly span the bounded [-1, 1] non-dimensional range. However,
+significant variability within s(t) occurs in the time interval [100 , 300] ms, i.e., during the ejection
+part of the systolic phase, where jets, complex flow patterns, and a high velocity field are experienced.
+4 Discussion
+We proposed LFLDNets, a novel neural operator that extends the capabilities of LDNets [53] in key
+ways, to create reduced-order surrogate models capable of capturing the spatio-temporal dynamics of
+parameterized time-dependent PDEs. We considered two challenging 3D test cases in computational
+cardiology to show their advantages and features, and assess performance.
+LFLDNets uses a CfC, NCP dynamics network to define the time evolution of a global state
+vector characterizing the dynamical system [15, 30]. Unlike neural ODEs, LNNs exploit a closed-form
+18
+solution of the ODE system and let the state vector evolve without a specific temporal discretization
+scheme. Furthermore, these sparse neural networks are at least an order of magnitude faster and more
+expressive than neural ODEs, while requiring fewer tunable parameters than other fully-connected
+architectures, thus providing improved accuracy and computational efficiency [5, 15].
+Similar to LDNets, the second component of LFLDNets is made by a FCNN, called reconstruction
+network, to recover a generic space-time field of interest [53]. However, in LFLDNets, the spatial
+coordinates provided as input to the reconstruction network are fed into a trainable Fourier encoding
+so as to prioritize the learning of high-frequency functions over smooth features during training. This
+allows the model to represent a wider range of frequency content than prior methods with a slight
+increase in computational cost.
+CfC, NCP dynamics networks provided superior convergence during training along with smooth
+temporal dynamics that is also broader, better distributed, and more representative of the physical
+system compared to the neural ODE counterpart. In fact, as also observed in [37, 58], enforcing
+sparsity and breaking symmetries in the inherent structure of a neural network played a crucial
+role in the optimization process to determine a smoother landscape of local minima and a more
+monotonic decay of the loss function.
+The generalization error decreased as the dimensionality of the Fourier embedding increases. As
+shown in [53], a similar trend can also be observed when increasing the number of states. We also
+found that increasing the number of Fourier frequencies allowed us to obtain a faster decay of the
+loss function, which also start from lower values since the very first epochs, at the expense of having
+a larger input layer in the reconstruction network combined with a larger Fourier embedding.
+In terms of activation functions, the use of LeCun hyperbolic tangent in the dynamics network
+and GELU in the reconstruction network resulted in a better and smoother decay of the loss function
+than pure hyperbolic tangent in both neural networks. For the architectures explored in this paper,
+these relaxed the need for a learning rate scheduler in the Adam optimizer and corresponding
+hyperparameter tuning during the training phase.
+Unlike LDNets, the use of the first-order stochastic Adam optimizer alone achieved low general-
+ization errors and did not hinder convergence with respect to its combination with a second-order
+deterministic optimizer, such as L-BFGS [38], which would also have been particularly challenging
+and expensive during training for the architectures of this paper, which are on the order of a million
+of tunable parameters.
+We also observed a negligible performance loss when switching from double-precision to single-
+precision training. With respect to LDNets, this allowed us to speed up the computation and
+reduce the memory requirements, which is especially important for GPU training and bigger neural
+networks. However, we remark that all wall times reported in this paper refer to eager mode
+execution. This means that there is still room for improvement during training and inference in
+terms of overall computational time by switching to graph execution.
+We tried to add physics-based terms, such as the imposition of a divergence-free velocity field
+in the CFD test case, to the data-driven loss function based on the MSE, but did not observe a
+significant improvement in accuracy. This is motivated by the access to the full spatio-temporal
+numerical solution during the training phase. Furthermore, the summation of a physics-based loss
+term, which encodes the strong form of a differential equation, involves an additional computational
+burden where the space and time derivatives are evaluated numerically using automatic differentia-
+tion. On the other hand, a non-intrusive scientific ML method provides a faster tool where specific
+PDEs primal variables can be targeted during training, such as the velocity field but not the pressure
+in the Navier-Stokes equations, using a standard data-driven loss function that is agnostic to the
+actual application.
+We also explored different architectures for the dynamics network. Thanks to their remarkable
+19
+generalization properties in many different applications, we tried to use transformers for the dy-
+namics network [36, 66]. However, this method, in its original form, has higher spatio-temporal
+computational complexity during training and inference compared to LNNs, lack interpretability,
+which is especially important in computational medicine, and require larger training datasets to show
+good performance. While this is generally not a limitation in other domains, such as language or vi-
+sion, scientific computing may require running complex numerical simulations via high-performance
+computing, and generating arbitrarily large datasets is often not a viable option. Nevertheless, if
+properly trained on large datasets, transformer-based models are better at learning very long tem-
+poral sequences than LNNs [15]. Moreover, overparameterized transformer-based neural networks
+show good out-of-distribution properties after a long training process that goes beyond the classical
+optimal point where validation loss starts to increase while training loss continues to decrease [72].
+Similarly, we tested different reconstruction networks. First, we considered implicit neural rep-
+resentations with periodic activation functions, but we did not observe better performance than the
+Fourier embedding [61]. Second, we employed graph neural networks, which generally increased the
+computational cost during training and inference and did not provide better convergence properties
+compared to a FCNN. Nonetheless, further investigation is certainly needed, as this tool can be very
+flexible in generalizing to different cardiovascular geometries [45], which is not considered in this
+work.
+With respect to other neural operators [14, 34, 35, 41, 50, 51, 70], we showed that LFLDNets are
+very lightweight and can be seamlessly trained in the physical space on complex geometries. This is
+not always feasible, such as with Fourier neural operators [33], which require a structured grid and can
+only work on unstructured meshes by introducing a structured reparameterization in a latent space
+[32]. Furthermore, our method allows to span generic sets of initial and boundary conditions, as well
+as physics-based model parameters, forcing terms, space, time, space-time coefficients underpinning
+multiscale and multiphysics sets of PDEs.
+5 Conclusions
+We introduce an extension of LDNets, namely LFLDNets, to improve and scale space-time surrogate
+models of arbitrary physical processes based on PDEs in terms of accuracy, computational efficiency,
+memory requirements and model dimension. This is achieved by combining a neurologically-inspired,
+liquid dynamics network in time with a reconstruction network in space enriched by a Fourier em-
+bedding. We challenge LFLDNets on two different test cases in pediatrics arising from cardiac
+electrophysiology for congenital heart disease and cardiovascular hemodynamics for a healthy aorta.
+In both cases, LFLDNets demonstrate that significantly smaller dynamics and reconstruction net-
+works reach lower generalization errors, improved temporal dynamics of the state vector, together
+with faster training and inference, compared to prior approaches, such as LDNets or LLDNets, i.e.
+LFLDNets without the Fourier encoding for space coordinates.
+Future developments of this work should further improve the performance of the proposed method
+as well as the range of possible applications in engineering and digital twinning. Some examples
+could be reinterpreting multifidelity domain decomposition approaches [18, 23] or recent advances
+in local neural operators [42] within LFLDNets to further reduce the surrogate modeling error,
+incorporating recent discoveries in expressive and interpretable Kolmogorov-Arnold networks [40]
+and related extensions [60] into the reconstruction network, as they also allow for continual learning,
+and encoding different geometries into LFLDNets.
+20
+Acknowledgements
+This project has been funded by the Benchmark Capital Fellowship from the Vera Moulton Wall
+Center at Stanford, the SimCardio NSF grant 1663671 and the NIH grant R01HL173845. We thank
+Dr. Luca Pegolotti for providing the dataset of numerical simulations for the CFD test case and
+for his comments on the manuscript. We also thank Prof. Francesco Regazzoni for his feedback on
+LFLDNets.
+21
+References
+[1] T. Akiba, S. Sano, T. Yanase, T. Ohta, and M. Koyama. “Optuna: A Next-generation Hyper-
+parameter Optimization Framework”. In:Proceedings of the 25rd ACM SIGKDD International
+Conference on Knowledge Discovery and Data Mining . 2019.
+[2] K. Azizzadenesheli, N. Kovachki, Z. Li, M. Liu-Schiaffini, J. Kossaifi, and A. Anandkumar.
+“Neural operators for accelerating scientific simulations and design”. In:Nature Reviews Physics
+(2024).
+[3] J. D. Bayer, R. C. Blake, G. Plank, and N. Trayanova. “A novel rule-based algorithm for as-
+signing myocardial fiber orientation to computational heart models”. In: Annals of Biomedical
+Engineering 40 (2012), pp. 2243–2254.
+[4] J. Bergstra, R. Bardenet, Y. Bengio, and B. K´ egl. “Algorithms for hyper-parameter optimiza-
+tion”. In: Advances in neural information processing systems 24 (2011).
+[5] R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and D. Duvenaud. “Neural Ordinary Differential
+Equations”. In: arXiv:1806.07366 (2019).
+[6] P. Colli Franzone, L. Pavarino, and S. Scacchi. Mathematical cardiac electrophysiology. Vol. 13.
+Springer, 2014.
+[7] J. Corral-Acero, F. Margara, M. Marciniak, C. Rodero, and et al. “The ‘Digital Twin’ to enable
+the vision of precision cardiology”. In: European Heart Journal 41.48 (2020), pp. 4556–4564.
+[8] E. Dupont, A. Doucet, and Y. W. Teh. “Augmented Neural ODEs”. In: arXiv:1904.01681
+(2019).
+[9] M. Fedele, R. Piersanti, F. Regazzoni, M. Salvador, P. C. Africa, M. Bucelli, A. Zingaro, L.
+Dede’, and A. Quarteroni. “A comprehensive and biophysically detailed computational model
+of the whole human heart electromechanics”. In: Computer Methods in Applied Mechanics and
+Engineering 410 (2023), p. 115983.
+[10] A. Ferrari and K. Willcox. “Digital twins in mechanical and aerospace engineering”. In: Nature
+Computational Science 4 (2024), pp. 178–183.
+[11] T. Gerach, S. Schuler, J. Fr¨ ohlich, et al. “Electro-Mechanical Whole-Heart Digital Twins: A
+Fully Coupled Multi-Physics Approach”. In: Mathematics 9.11 (2021).
+[12] K. Gillette, M. Gsell, A. Prassl, E. Karabelas, U. Reiter, G. Reiter, T. Grandits, C. Payer,
+D. ˇStern, M. Urschler, J. Bayer, C. Augustin, A. Neic, T. Pock, E. Vigmond, and G. Plank.
+“A Framework for the generation of digital twins of cardiac electrophysiology from clinical
+12-leads ECGs”. In: Medical Image Analysis 71 (2021), p. 102080.
+[13] S. Goswami, A. Bora, Y. Yu, and G. E. Karniadakis. “Physics-Informed Deep Neural Operator
+Networks”. In: Machine Learning in Modeling and Simulation: Methods and Applications. 2023,
+pp. 219–254.
+[14] Z. Hao, Z. Wang, H. Su, C. Ying, Y. Dong, S. Liu, Z. Cheng, J. Song, and J. Zhu. “GNOT:
+A General Neural Operator Transformer for Operator Learning”. In: Proceedings of the 40th
+International Conference on Machine Learning (2023).
+[15] R. Hasani, M. Lechner, A. Amini, L. Liebenwein, A. Ray, M. Tschaikowski, G. Teschl, and
+D. Rus. “Closed-form continuous-time neural networks”. In: Nature Machine Intelligence 4
+(2022), 992––1003.
+[16] R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu. “Liquid time-constant networks”.
+In: Proceedings of the AAAI Conference on Artificial Intelligence 35 (2021), 7657––7666.
+22
+[17] J. He, S. Kushwaha, J. Park, S. Koric, D. Abueidda, and I. Jasiuk. “Sequential Deep Operator
+Networks (S-DeepONet) for predicting full-field solutions under time-dependent loads”. In:
+Engineering Applications of Artificial Intelligence 127 (2024), p. 107258.
+[18] A. Heinlein, A. A. Howard, D. Beecroft, and P. Stinis. “Multifidelity domain decomposition-
+based physics-informed neural networks and operators for time-dependent problems”. In:
+arXiv:2401.07888 (2024).
+[19] D. Hendrycks and K. Gimpel. “Gaussian Error Linear Units (GELUs)”. In: arXiv:1606.08415
+(2016).
+[20] O. Hennigh, S. Narasimhan, M. A. Nabian, A. Subramaniam, K. Tangsali, Z. Fang, M. Ri-
+etmann, W. Byeon, and S. Choudhry. “NVIDIA SimNet: An AI-Accelerated Multi-Physics
+Simulation Framework”. In: International Conference on Computational Science (2020).
+[21] S. Hochreiter and J. Schmidhuber. “Long Short-Term Memory”. In: Neural Computation 9.8
+(1997), pp. 1735–1780.
+[22] A. L. Hodgkin and A. F. Huxley. “A quantitative description of membrane current and its
+application to conduction and excitation in nerve”. In:The Journal of Physiology 117.4 (1952),
+pp. 500–544.
+[23] A. A. Howard, M. Perego, G. E. Karniadakis, and P. Stinis. “Multifidelity Deep Operator
+Networks For Data-Driven and Physics-Informed Problems”. In: Journal of Computational
+Physics (2023), p. 112462.
+[24] A. Jung, M. A. F. Gsell, C. M. Augustin, and G. Plank. “An Integrated Workflow for Building
+Digital Twins of Cardiac Electromechanics-A Multi-Fidelity Approach for Personalising Active
+Mechanics”. In: Mathematics 10.5 (2022).
+[25] G. E. Karniadakis, I. G. Kevrekidis, L. Lu, P. Perdikaris, S. Wang, and L. Yang. “Physics-
+informed machine learning”. In: Nature Reviews Physics 3 (2021), 422––440.
+[26] D. P. Kingma and J. Ba. “Adam: A Method for Stochastic Optimization”. In: arXiv:1412.6980
+(2014).
+[27] F. Kong, S. Stocker, P. S. Choi, M. Ma, D. B. Ennis, and A. Marsden. “SDF4CHD: Generative
+Modeling of Cardiac Anatomies with Congenital Heart Defects”. In: arXiv:2311.00332 (2023).
+[28] S. Krishnamoorthi, M. Sarkar, and W. S. Klug. “Numerical quadrature and operator split-
+ting in finite element methods for cardiac electrophysiology”. In: International Journal for
+Numerical Methods in Biomedical Engineering 29 (11 2013), pp. 1243–1266.
+[29] R. Laubenbacher, B. Mehrad, I. Shmulevich, and N. Trayanova. “Digital twins in medicine”.
+In: Nature Computational Science 4 (2024), pp. 184–191.
+[30] M. Lechner, R. Hasani, A. Amini, T. A. Henzinger, D. Rus, and R. Grosu. “Neural circuit
+policies enabling auditable autonomy”. In: Nature Machine Intelligence 2.10 (2020), pp. 642–
+652.
+[31] M. C. K. Leung, P. L. Williams, A. Benedetto, C. Au, K. J. Helmcke, M. Aschner, and
+J. N. Meyer. “Caenorhabditis elegans: An Emerging Model in Biomedical and Environmental
+Toxicology”. In: Toxicological Sciences 106 (2008), pp. 5–208.
+[32] Z. Li, D. Z. Huang, B. Liu, and A. Anandkumar. “Fourier Neural Operator with Learned
+Deformations for PDEs on General Geometries”. In: Journal of Machine Learning Research
+24 (2023), pp. 1–26.
+23
+[33] Z. Li, N. Kovachki, K. Azizzadenesheli, B. Liu, K. Bhattacharya, A. Stuart, and A. Anandku-
+mar. “Fourier Neural Operator for Parametric Partial Differential Equations”. In:International
+Conference on Learning Representations (2021).
+[34] Z. Li, N. Kovachki, K. Azizzadenesheli, B. Liu, A. Stuart, K. Bhattacharya, and A. Anand-
+kumar. “Multipole Graph Neural Operator for Parametric Partial Differential Equations”. In:
+Advances in Neural Information Processing Systems (2020).
+[35] Z. Li, N. Kovachki, C. Choy, B. Li, J. Kossaifi, S. P. Otta, M. A. Nabian, M. Stadler, C.
+Hundt, K. Azizzadenesheli, and A. Anandkumar. “Geometry-Informed Neural Operator for
+Large-Scale 3D PDEs”. In: Neural Information Processing Systems (2023).
+[36] Z. Li, K. Meidani, and A. B. Farimani. “Transformer for Partial Differential Equations’ Op-
+erator Learning”. In: Transactions on Machine Learning Research (2023).
+[37] D. Lim, M. Putterman, R. Walters, H. Maron, and S. Jegelka. “The Empirical Impact of
+Neural Parameter Symmetries, or Lack Thereof”. In: arXiv:2405.20231 (2024).
+[38] D. Liu and J. Nocedal. “On the limited memory BFGS method for large scale optimization”.
+In: Mathematical Programming 45 (1989), pp. 503–528.
+[39] J. Liu, I. S. Lan, O. Z. Tikenogullari, and A. L. Marsden. “A note on the accuracy of the
+generalized-α scheme for the incompressible Navier-Stokes equations”. In: International Jour-
+nal for Numerical Methods in Engineering 122.2 (2021), pp. 638–651.
+[40] Z. Liu, Y. Wang, S. Vaidya, F. Ruehle, J. Halverson, M. Soljaˇ ci´ c, T. Y. Hou, and M. Tegmark.
+“KAN: Kolmogorov-Arnold Networks”. In: arXiv:2404.19756 (2024).
+[41] L. Lu, P. Jin, G. Pang, Z. Zhang, and G. E. Karniadakis. “Learning nonlinear operators via
+DeepONet based on the universal approximation theorem of operators”. In: Nature Machine
+Intelligence 3 (2021), pp. 218–229.
+[42] M. Miguel Liu-Schiaffini, J. Berner, B. Bonev, T. Kurth, K. Azizzadenesheli, and A. Anandku-
+mar. “Neural Operators with Localized Integral and Differential Kernels”. In:arXiv:2402.16845
+(2024).
+[43] P. Moritz, R. Nishihara, S. Wang, A. Tumanov, R. Liaw, E. Liang, M. Elibol, Z. Yang, W.
+Paul, M. I. Jordan, and I. Stoica. “Ray: A Distributed Framework for Emerging AI Appli-
+cations”. In: Proceedings of the 13th USENIX Conference on Operating Systems Design and
+Implementation. 2018, pp. 561–577.
+[44] S. A. Niederer, J. Lumens, and N. A. Trayanova. “Computational models in cardiology”. In:
+Nature Reviews Cardiology 16 (2019), pp. 100–111.
+[45] L. Pegolotti, M. R. Pfaller, N. L. Rubio, K. Ding, R. B. Brufau, E. Darve, and A. L. Marsden.
+“Learning reduced-order models for cardiovascular simulations with graph neural networks”.
+In: Computers in Biology and Medicine (2024).
+[46] M. R. Pfaller, J. Pham, N. M. Wilson, D. W. Parker, and A. L. Marsden. “On the Periodicity of
+Cardiovascular Fluid Dynamics Simulations”. In: Annals of Biomedical Engineering 49 (2021),
+pp. 3574–3592.
+[47] R. Piersanti, P. C. Africa, M. Fedele, et al. “Modeling cardiac muscle fibers in ventricular
+and atrial electrophysiology simulations”. In: Computer Methods in Applied Mechanics and
+Engineering 373 (2021), p. 113468.
+[48] R. Piersanti, F. Regazzoni, M. Salvador, et al. “3D-0D closed-loop model for the simulation
+of cardiac biventricular electromechanics”. In: Computer Methods in Applied Mechanics and
+Engineering 391 (2022), p. 114607.
+24
+[49] A. Quarteroni, L. Dede’, A. Manzoni, and C. Vergara. Mathematical Modelling of the Hu-
+man Cardiovascular System: Data, Numerical Approximation, Clinical Applications . Cam-
+bridge University Press, 2019.
+[50] M. A. Rahman, R. J. George, M. Elleithy, D. Leibovici, Z. Li, B. Bonev, C. White, J. Berner,
+R. A. Yeh, J. Kossaifi, K. Azizzadenesheli, and A. Anandkumar. “Pretraining Codomain At-
+tention Neural Operators for Solving Multiphysics PDEs”. In: arXiv:2403.12553 (2024).
+[51] B. Raonic, R. Molinaro, T. Rohner, and E. Mishra S. de Bezenac. “Convolutional Neural
+Operators”. In: ICLR Workshop on Physics for Machine Learning . 2023.
+[52] F. Regazzoni, L. Dede’, and A. Quarteroni. “Machine learning for fast and reliable solution
+of time-dependent differential equations”. In: Journal of Computational Physics 397 (2019),
+p. 108852.
+[53] F. Regazzoni, S. Pagani, M. Salvador, L. Dede’, and A. Quarteroni. “Learning the intrin-
+sic dynamics of spatio-temporal processes through Latent Dynamics Networks”. In: Nature
+Communications 15 (2023).
+[54] F. Regazzoni, M. Salvador, P. C. Africa, M. Fedele, L. Dede’, and A. Quarteroni. “A car-
+diac electromechanical model coupled with a lumped-parameter model for closed-loop blood
+circulation”. In: Journal of Computational Physics 457 (2022), p. 111083.
+[55] C. Rodero, M. Strocchi, M. Marciniak, S. Longobardi, J. Whitaker, M. D. O’Neill, K. Gillette,
+C. Augustin, G. Plank, E. J. Vigmond, P. Lamata, and S. A. Niederer. “Linking statistical
+shape models and simulated function in the healthy adult human heart”. In: PLOS Computa-
+tional Biology 17 (2021), pp. 1–28.
+[56] F. Sahli Costabal, D. E. Hurtado, and E. Kuhl. “Generating Purkinje networks in the human
+heart”. In: Journal of biomechanics 49 (2016), pp. 2455–2465.
+[57] M. Salvador, F. Kong, M. Peirlinck, D. W. Parker, H. Chubb, A. M. Dubin, and A. L. Marsden.
+“Digital twinning of cardiac electrophysiology for congenital heart disease”. In: Journal of the
+Royal Society Interface (2024).
+[58] M. Salvador and A. L. Marsden. “Branched Latent Neural Maps”. In: Computer Methods in
+Applied Mechanics and Engineering 418 (2024), p. 116499.
+[59] M. Salvador, M. Strocchi, F. Regazzoni, C. M. Augustin, L. Dede’, S. A. Niederer, and A. Quar-
+teroni. “Whole-heart electromechanical simulations using Latent Neural Ordinary Differential
+Equations”. In: npj Digital Medicine 7 (2024).
+[60] K. Shukla, J. D. Toscano, Z. Wang, Z. Zou, and G. E. Karniadakis. “A comprehensive and FAIR
+comparison between MLP and KAN representations for differential equations and operator
+networks”. In: arXiv:2406.02917 (2024).
+[61] V. Sitzmann, J. N. P. Martel, A. W. Bergman, D. B. Lindell, and G. Wetzstein. “Implicit
+neural representations with periodic activation functions”. In: arXiv:2006.09661 (2020).
+[62] M. Tancik, P. P. Srinivasan, B. Mildenhall, S. Fridovich-Keil, N. Raghavan, U. Singhal, R.
+Ramamoorthi, J. T. Barron, and R. Ng. “Fourier features let networks learn high frequency
+functions in low dimensional domains”. In: arXiv:2006.10739 (2020).
+[63] O. Z. Tikenogullari, M. Peirlinck, H. Chubb, A. M. Dubin, E. Kuhl, and A. L. Marsden. “Effects
+of cardiac growth on electrical dyssynchrony in the single ventricle patient”. In: Computer
+Methods in Biomechanics and Biomedical Engineering 0.0 (2023), pp. 1–17.
+25
+[64] K. H. ten Tusscher and A. V. Panfilov. “Alternans and spiral breakup in a human ventricular
+tissue model”. In: American Journal of Physiology. Heart and Circulatory Physiology 291
+(2006), pp. 1088–1100.
+[65] A. Updegrove, N. M. Wilson, J. Merkow, H. Lan, A. L. Marsden, and S. C. Shadden. “Sim-
+Vascular: An Open Source Pipeline for Cardiovascular Simulation”. In: Annals of Biomedical
+Engineering 45 (2017), 525–541.
+[66] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser, and
+I. Polosukhin. “Attention is All You Need”. In: Advances in Neural Information Processing
+Systems. Vol. 30. 2017.
+[67] J. Verh¨ ulsdonk, T. Grandits, F. Sahli Costabal, T. Pinetz, R. Krause, A. Auricchio, G. Haase,
+S. Pezzuto, and A. Effland. “Shape of my heart: Cardiac models through learned signed dis-
+tance functions”. In: Proceedings of Machine Learning Research (2024), pp. 1–22.
+[68] I. E. Vignon-Clementel, C. A. Figueroa, K. E. Jansen, and C. A. Taylor. “Outflow boundary
+conditions for 3D simulations of non-periodic blood flow and pressure fields in deformable
+arteries”. In: Computer Methods in Biomechanics and Biomedical Engineering 13.5 (2010),
+pp. 625–640.
+[69] F. Viola, G. Del Corso, R. De Paulis, and R. Verzicco. “GPU accelerated digital twins of the
+human heart open new routes for cardiovascular research”. In: Scientific Reports 13 (2023).
+[70] P. R. Vlachas, G. Arampatzis, C. Uhler, and P. Koumoutsakos. “Multiscale simulations of
+complex systems by learning their effective dynamics”. In: Nature Machine Intelligence 4.4
+(2022), pp. 359–366.
+[71] C. Vorbach, R. Hasani, A. Amini, M. Lechner, and D. Rus. “Causal navigation by continuous-
+time neural networks”. In: Proceedings of Advances in Neural Information Processing Systems
+(2021), 12425––12440.
+[72] B. Wang, X. Yue, Y. Su, and H. Sun. “Grokked Transformers are Implicit Reasoners: A
+Mechanistic Journey to the Edge of Generalization”. In: arXiv:2405.15071 (2024).
+[73] C. H. Whiting and K. E. Jansen. “A stabilized finite element method for the incompressible
+Navier–Stokes equations using a hierarchical basis”. In: International Journal for Numerical
+Methods in Fluids 35.1 (2001), pp. 93–116.
+[74] K. Willcox and B. Segundo. “The role of computational science in digital twins”. In: Nature
+Computational Science 4 (2024), pp. 147–149.
+[75] N. M. Wilson, A. K. Ortiz, and A. B. Johnson. “The Vascular Model Repository: A Public
+Resource of Medical Imaging Data and Blood Flow Simulation Results”. In:Journal of Medical
+Devices 7.4 (2013), p. 0409231.
+[76] C. Zhu, V. Vedula, D. Parker, N. Wilson, S. Shadden, and A. Marsden. “svFSI: A Multiphysics
+Package for Integrated Cardiac Modeling”. In: Journal of Open Source Software 7.78 (2022),
+p. 4118.
+26
