@@ -1,0 +1,39 @@
+[2026-11-14 06:31:09] ssh key: /Users/hyx/.ssh/id_github_dave-he
+[2026-11-14 06:31:09] ===== LNN daily pipeline for 2026-11-14 =====
+[2026-11-14 06:31:09] repo: /Users/hyx/workspace/LNN
+[2026-11-14 06:31:09] skip: digest=0 report=1 commit=0 repro=1
+[2026-11-14 06:31:09] exec: git fetch --no-tags origin
+[2026-11-14 06:31:13] exec: git pull --ff-only origin HEAD
+[2026-11-14 06:31:17] [1/4] digest: 抓取 arXiv / GitHub / Hugging Face 更新
+[2026-11-14 06:31:17] exec: python3 scripts/daily_lnn_research.py         --date '2026-11-14'         --max-results '25'         --per-query '8'
+[2026-11-14 06:33:51] [2/4] report: SKIPPED
+[2026-11-14 06:33:51] [3/4] commit: 提交当日 docs/ papers/ analysis/ 变更
+[2026-11-14 06:33:51] exec: git add docs papers analysis
+[2026-11-14 06:33:51] exec: git commit -m 'chore(daily): LNN digest + 研读报告 2026-11-14'
+[2026-11-14 06:33:52] exec: git push origin HEAD
+[2026-11-14 06:33:57] [4/4] reproduce: SKIPPED
+[2026-11-14 06:33:57] ===== pipeline done =====
+[2026-11-14 06:48:24] ssh key: /Users/hyx/.ssh/id_github_dave-he
+[2026-11-14 06:48:24] ===== LNN daily pipeline for 2026-11-14 =====
+[2026-11-14 06:48:24] repo: /Users/hyx/workspace/LNN
+[2026-11-14 06:48:24] skip: digest=1 report=1 commit=0 repro=1
+[2026-11-14 06:48:24] exec: git fetch --no-tags origin
+[2026-11-14 06:48:29] exec: git pull --ff-only origin HEAD
+[2026-11-14 06:48:33] [1/4] digest: SKIPPED
+[2026-11-14 06:48:33] [2/4] report: SKIPPED
+[2026-11-14 06:48:33] [3/4] commit: 提交当日 docs/ papers/ analysis/ 变更
+[2026-11-14 06:48:33] exec: git add docs papers analysis
+[2026-11-14 06:48:33] exec: git commit -m 'chore(daily): LNN digest + 研读报告 2026-11-14'
+[2026-11-14 06:48:33] exec: git push origin HEAD
+[2026-11-14 06:48:56] [4/4] reproduce: SKIPPED
+[2026-11-14 06:48:56] ===== pipeline done =====
+[2026-11-14 06:49:19] ssh key: /Users/hyx/.ssh/id_github_dave-he
+[2026-11-14 06:49:19] ===== LNN daily pipeline for 2026-11-14 =====
+[2026-11-14 06:49:19] repo: /Users/hyx/workspace/LNN
+[2026-11-14 06:49:19] skip: digest=1 report=1 commit=1 repro=0
+[2026-11-14 06:49:19] [1/4] digest: SKIPPED
+[2026-11-14 06:49:19] [2/4] report: SKIPPED
+[2026-11-14 06:49:19] [3/4] commit: SKIPPED
+[2026-11-14 06:49:19] [4/4] reproduce: 按 digest 挑选并跑论文复现
+[2026-11-14 06:49:19] exec: /Users/hyx/workspace/LNN/.venv312/bin/python scripts/replicate_paper_dispatch.py         --date '2026-11-14'
+[2026-11-14 06:49:19] ===== pipeline done =====
