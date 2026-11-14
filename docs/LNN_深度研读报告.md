@@ -1727,6 +1727,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-15**：[[docs/daily/2026-11-15_LNN_research_digest.md|每日追踪]]，候选论文 95 篇，仓库 45 个，模型 15 个。
 - **2026-11-14**：[[docs/daily/2026-11-14_LNN_research_digest.md|每日追踪]]，候选论文 95 篇，仓库 45 个，模型 17 个。
   - **研读 4 篇**（selector top-3 **连续第 6 天**全部为已知误命中，已手动改选；**其中 1 篇还是靠独立的覆盖度自检才捞出来的**）：[[docs/reports/Benchmarking_Energy_Conserving_Neural_Networks_2012.02334_研读报告.md|Benchmarking Energy-Conserving NNs：十个能量守恒模型的统一基准 + 一次缩写撞车样本 (2012.02334)]]、[[docs/reports/History_informed_Lagrangian_Neural_Networks_2608.13215_研读报告.md|HiLNN：从位置历史反推缺失速度与轨迹特异质量矩阵 (2608.13215)]]、[[docs/reports/Brain_Inspired_Deep_Imitation_Learning_NCP_2107.14654_研读报告.md|Brain-Inspired DIL：双 NCP 跨域赢、同域输，增益随域偏移放大 (2107.14654)]]、[[docs/reports/Liquid_Fourier_Latent_Dynamics_Networks_2408.09818_研读报告.md|LFLDNets：CfC/NCP 闭式解做 PDE 代理模型的时间推进器 (2408.09818)]]。
   - **selector 输出的 3 个 top 候选全部排除**：`2607.15232` (score 10, LFM2 tokenizer 扩展 —— **连续第 6 天**的同一已知误命中，索引 1401 行已判 false positive)、`2412.17006` (score 9, LTC 气候韧性代理建模，eess.SY 纯仿真)、`2309.13499v2` (score 9, 多智能体 STL 控制器的 "closed-form continuous-time" **字面命中** —— 是控制器的解析反馈律，与 CfC 无关)。**连续第 6 天同一批 top-3 误命中** —— selector 的强关键词打分 + `already_reported` 覆盖检查在这批论文上**稳定失灵**，必须每日人工复核、不可照抄。
@@ -1818,14 +1819,4 @@ positioning_updated: 2026-09-14
 - **2026-10-17**：[[docs/daily/2026-10-17_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 21 个。
 - **2026-10-16**：[[docs/daily/2026-10-16_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
 - **2026-10-15**：[[docs/daily/2026-10-15_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
-- **2026-10-14**：[[docs/daily/2026-10-14_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 19 个；研读报告生成 **0 篇**（`select_papers_for_report.py` → `{candidates: [], n_total_arxiv: 12, n_skipped_reported: 12}`，12/12 已被 `docs/reports/` 覆盖）。本条与前几日"饱和"复盘的关键差别：**今日 arXiv 为实时抓取成功（`errors=[]`），已核验 10-08 之后确实没有新的 LNN 论文**，所以饱和是领域事实而不是抓取故障。
-  - **数据源核验（本次重抓，`generated_at` 08:45 UTC）**：arXiv `/api/query` **成功**（`errors` 为空数组）；同一 9 词 OR 查询连续 3 次直连均成功（0.3s / 0.4s / 2.3s，63.5KB），证明此前 10-12/13/14 的 timeout 是**瞬时抖动而非持续故障**。结果集与 10-13 池**逐 id 完全一致**（24 篇，最新 `2610.12337v1` ContiLNN @ 2026-10-08）。**订正前几日的告警叙事**："arXiv 连续 3 天失败 / digest 其实是昨日池复用"成立（单次尝试失败 + fallback 保留旧池），但**内容本身并未失真**——旧池就是正确答案。
-  - **今日修掉的 4 个流水线缺陷**（均有离线回归测试，`tests/test_daily_pipeline_matching.py`，18 条全绿；本机 `python3 -m pytest` 会静默收集 0 条，故用 unittest）：
-    1. `daily_lnn_research.fetch_arxiv` **零重试**——单次 `urlopen(timeout=30)` 失败就退回旧池。新增 `request_text_retry()`，退避 `(8, 30, 60)` 秒（Varnish 清理窗口 30~60s），`/api/query` 与 RSS 两条路径都走重试；退避耗尽仍失败才交还 RSS / 前日 fallback。
-    2. `replicate_paper_dispatch` **关键词误匹配**——对 `title + summary` 做裸子串匹配，把 Liquid Fusion SOD (`2606.26849v1`, 与 imitation learning 无关) 误路由到 `experiment_imitation_lnn.py`，命中的是摘要里 "**limit**ation" 的子串 `"imitation"`。改为：关键词按**词边界**匹配**标题**，仅高特异度多词锚点（`henry hub` / `behavior cloning` / `mixture density` 等）允许在摘要匹配；并剥离 markdown 链接。修复后今日 0 误判，正例回归通过。
-    3. 同上脚本**硬编码 `python3`**（本机无 torch，连续 ≥5 天 exit 1）——新增 `resolve_python()`，按 `PYTHON_BIN → sys.executable → …` 探测首个 `import torch` 成功的解释器（与 `run_daily_lnn_task.sh: resolve_bench_python` 同一套候选），无 torch 时退回 `PYTHON_BIN` 让失败日志可读。
-    4. `update_indexes` **索引静默截断（数据丢失）**——旧实现按行过滤 `- **` 前缀后截断前 29 行：缩进复盘明细被整段丢弃，且老条目的 `- **workaround**` 这类**续行**也占容量，把 29 行先吃光，导致 10-06~10-01 等真实日期条目被挤出索引（实测 HEAD 区块 42 个顶格 `- **` 里 12 个是续行）。重跑一次即触发。改为按"日期条目 + 其缩进/续行"成块保留、容量按**天数**（`INDEX_MAX_DAYS=30`）计，丢弃日期时连带丢弃其子项。修复后 18/18 日期条目 + 6 条嵌套明细 + 12 条老续行全部保留且幂等。**注**：本日重跑一度把索引截到 8 个条目，已 `git checkout` 回滚并用修复后逻辑重生成。
-  - **Jetson benchmark（04:38 自动跑）**：`status=ok_cpu`、`CUDA: False`、系统内存 `free 230 MB / total 7620 MB`（与 2026-09-29 记录的 RAM 耗尽回退同签名）。`status_note` 原文："CUDA was unavailable, so these are CPU timings measured on the Jetson host. They are not GPU/edge performance evidence." —— 功耗/温度采样来自真实传感器有效，**步/秒与精度不是边缘推理性能证据，不得外推**。本次给 `write_report` 补了标题下的状态横幅，让 `ok_cpu` 在正文顶部可见（原先该段在结果表之后第 191 行，只读报告容易漏看）。
-  - **复现 dispatcher**：修复后今日 **0 个 target**（正确早返回，不空跑）。此前 09:15 的 `[exit] 1` 记录是上一会话对 Liquid Fusion SOD 的误路由所致，与 imitation 实验无关；`logs/pipeline/2026-10-14_reproduce.log` 中的 conda 环境重跑仅作归档，不构成对原论文的复现。
-  - **LNN 约束自检**：本日未新增任何论文级 claim，§0 八条禁止 claim 与 §五 诚实约束均未触碰；`2606.26849v1` LFNet 报告 2026-09-29 已存在（LFNet 属 SSM+异构表征融合的 SOD 方法，**不构成"LNN 改进主基准"证据**）。
 <!-- daily-lnn-index:end -->
