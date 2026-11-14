@@ -1,0 +1,980 @@
+CPS-LLM: Large Language Model based Safe Usage Plan Generator for
+Human-in-the-Loop Human-in-the-Plant Cyber-Physical System
+Ayan Banerjee, Aranyak Maity, Payal Kamboj, Sandeep K.S. Gupta
+IMPACT Lab, School of Computing and Augmented Intelligence
+Arizona State University, Tempe, Az
+{abanerj3, amaity1, pkamboj, sandeep.gupta }@asu.edu
+Abstract
+We explore the usage of large language models (LLM)
+in human-in-the-loop human-in-the-plant cyber-physical sys-
+tems (CPS) to translate a high-level prompt into a person-
+alized plan of actions, and subsequently convert that plan
+into a grounded inference of sequential decision-making au-
+tomated by a real-world CPS controller to achieve a control
+goal. We show that it is relatively straightforward to contextu-
+alize an LLM so it can generate domain-specific plans. How-
+ever, these plans may be infeasible for the physical system to
+execute or the plan may be unsafe for human users. To ad-
+dress this, we propose CPS-LLM, an LLM retrained using
+an instruction tuning framework, which ensures that gener-
+ated plans not only align with the physical system dynam-
+ics of the CPS but are also safe for human users. The CPS-
+LLM consists of two innovative components: a) a liquid time
+constant neural network-based physical dynamics coefficient
+estimator that can derive coefficients of dynamical models
+with some unmeasured state variables; b) the model coeffi-
+cients are then used to train an LLM with prompts embodied
+with traces from the dynamical system and the corresponding
+model coefficients. We show that when the CPS-LLM is in-
+tegrated with a contextualized chatbot such as BARD it can
+generate feasible and safe plans to manage external events
+such as meals for automated insulin delivery systems used by
+Type 1 Diabetes subjects.
+Introduction
+Safety criticality implies that the operation of the au-
+tonomous cyber-physical system (CPS) has the potential to
+harm human participants who are affected by the CPS goal.
+Given the impending risks to the human user, safety-critical
+applications often operate with a human-in-the-loop (HIL)
+system (Li et al. 2014). In such systems, the human is in
+charge of starting and stopping automation and can provide
+manual inputs when safety concerns or operational ineffi-
+ciencies are perceived. In medical applications such as au-
+tomated insulin delivery, this system results in a human-
+in-the-loop human-in-the-plant (HIL-HIP) (Maity, Banerjee,
+and Gupta 2023) system model (Figure 1). In such a sys-
+tem model, the human user is the monitor/decision maker
+and also part of the physical plant controlled by the CPS
+(Fig. 1). The HIP component results in complex dynamical
+Copyright © 2024, Association for the Advancement of Artificial
+Intelligence (www.aaai.org). All rights reserved.
+Autonomous 
+System
+Unperturbed 
+Dynamics
+Plant Dynamics
+ሶ𝑋 = 𝑓𝜔(𝑋)
+Control Action
+𝑢 = 𝜋(𝑋, 𝑠)𝑋
+Input 
+Effects
+𝑢
+𝑔𝜔(𝑋)
+Human In The Plant Dynamics
+ሶ𝑿(𝒕) = 𝒇𝝎 𝑿(𝒕) + 𝒈𝝎 𝑿(𝒕) (𝝅 𝑿(𝒕), 𝒔 𝒕 + 𝒖𝒆𝒙(𝒕))
+Human In The 
+Loop
+{𝑠 𝑝1 , 𝑠 𝑝2 … 𝑠(𝑝𝑎)}
+{𝑢𝑒𝑥 𝑞1 , 𝑢𝑒𝑥 𝑞2 … 𝑢𝑒𝑥(𝑞𝑏)}
+𝑝𝑖 and 𝑞𝑖 are time points
+𝜔 is the personalized 
+coefficients of the physical 
+dynamics 
+Usage Plan
+It is a temporal alignment 
+of 𝑠(𝑝𝑖) and 𝑢𝑒𝑥(𝑞𝑖)
+Figure 1: Human-in-the-loop Human-in-the-plant au-
+tonomous cyber-physical systems (CPS).
+systems such as biological or biochemical processes, with
+hard requirements on safety that must be satisfied under all
+circumstances. Moreover, the HIP components contribute to
+increased variability and uncertainty in the plant dynamics
+compared to CPS without HIP. This necessitates the devel-
+opment of personalized CPS solutions to effectively address
+the unique challenges posed by the presence of the human
+in the plant.
+The existing safety certification process assumes a control
+affine system model, where the plant state X is assumed to
+follow the dynamics in Eqn 1.
+˙X = fω(X) + gω(X)π(X, s), (1)
+where fω(.) is the un-perturbed plant response dynamics and
+gω(.) is the input effect both parameterized by coefficient set
+ω, and π(., .) is a controller that computes an input to the
+plant based on the plant state X and controller configura-
+tion s (Figure 1). In a HIL-HIP architecture, the input to the
+plant is given by:u = π(X, s) +uex, where uex ∈ Uex is an
+external input from the human user, and s can be manually
+changed by the human user. Despite the human user being an
+integral part of CPS operation, safety assurance using con-
+trol affine assumption considers humans as external to the
+system. As such an “average user” is considered under spe-
+cific operational scenarios so that human inputs uex ∈ Uex
+arXiv:2405.11458v1  [cs.AI]  19 May 2024
+and the configuration changes s ∈ S are modeled as noise
+disturbances with a known probability distribution.
+Large-scale deployment and day-to-day usage imply that
+a significant number of users will be non-conformal to
+the “average user” settings, resulting in novel and unfore-
+seen usage scenarios. To achieve a level of performance
+similar to that obtained in the safety certification process,
+a real user may undertake personalization usage plans .
+These plans consist of a temporal sequence of b external
+inputs ( uex(ti)) at times qi and/or a system configuration
+changes ( s(pi)) at times pi, applied with or without con-
+sultations from expert advisory agents (such as clinicians),
+{s(p1) . . . s(pa)} S{uex(q1) . . . uex(qb)}. Such inputs may
+have a causal relation with the HIP state X, are out of dis-
+tribution, and may violate safety criteria. Such an unverified
+personalization usage plan carries the risk of compromising
+operational safety (Banerjee et al. 2023; Maity et al. 2022).
+Main Contribution: In this study, we assume that the au-
+tonomous system (Figure 1) or π(.) in CPS is already
+safety certified with control affine assumption for the “av-
+erage user”, and is a black box . Our aim is to investigate
+whether large language models (LLM) can effectively gen-
+erate a personalized and safe usage plan for HIL-HIP CPS
+where the plant model is given by:
+˙X = fω(X) + gω(X)(π(X, s) + uex), (2)
+Here, uex ∈ Uex is a set of personalized inputs, and s ∈ S
+is a set of controller configuration changes specific to a real-
+life user. We validate the presented technique by generating
+safe usage plans for automated insulin delivery (AID) sys-
+tems aimed at controlling glucose levels in individuals with
+Type 1 Diabetes (T1D).
+CPS usage plan generation problem definition
+Formally we define the problem as follows (Figure 2 ):
+Input:
+• A black box CPS π(X, s) which only receives input X
+and configurations s and provides control action u. The
+software for π is not accessible.
+• A safety criteria expressed using a signal temporal logic
+(STL) formula (Kress-Gazit, Fainekos, and Pappas 2009)
+ϕt.
+• A set of error free traces of X satisfying ϕt.
+• The plant model structure fω and gω with unknown ω.
+• An initial state X(t0) and initial input action uex(t0).
+Output:
+Find a personalized usage plan
+{s(p1) . . . s(pa)} S{uex(q1) . . . uex(qb)} such that ϕt
+is satisfied ∀t ∈ [0 . . . T], T is the planning horizon and
+qi, pi ∈ [0 . . . T]∀i.
+Why use LLMs for usage plan generation?
+Three broad classes of safe CPS control synthesis exist-
+a) Optimization approach: For linear systems with even-
+tual guarantees, a linear quadratic Gaussian (LQG) opti-
+mal control strategy exists (Karaman, Sanfelice, and Fraz-
+zoli 2008), which guarantees that a safety property will be
+satisfied. For non-linear systems with eventual guarantees,
+control Lyapunov function (CLF) theory exists (Richards,
+Berkenkamp, and Krause 2018), which guarantees safety in
+the absence of human inputs.
+b) Game theoretic approach: The controller synthesis
+problem has been modeled as a two-player game between
+the environment and the controller for safe HIL control (Li
+et al. 2014). These methods work well for 1D meta-planning
+problems such as the detection of safe switching time but
+cannot determine the actions that should be taken by the
+user.
+c) Reinforcement learning (RL) approach: Safe
+RL (Garcıa and Fern ´andez 2015) is an emerging ap-
+proach that models agents with a value function that has
+control objective as the reward and safety violation as the
+penalty function (Garcıa and Fern ´andez 2015). Safe RL
+technique starts an initial safe model predictive control
+(MPC) design that may not be effective, and for each control
+step evaluates the value function. If the value function is
+less than a threshold indicating heavy penalty, the safe
+RL defaults to the MPC strategy, else it uses the strategy
+obtained by maximizing the value function. This approach
+has been frequently used in robotics, however, the value
+function evaluation strategy does not involve human inputs.
+The key advantages that LLMs like GPT3 (Brown et al.
+2020), BARD (GoogleAI 2023), Llama-2 (Touvron et al.
+2023) offer over the above-mentioned traditional techniques
+are:
+Natural language interface: Interaction with LLMs is in-
+tuitive for the CPS user, and may provide inherent explain-
+ability and reasoning for the generated plans.
+Learning novel plans: Unlike the above-mentioned tech-
+niques that operate efficiently only when the set of applica-
+ble plans is finite, LLMs can explore a significantly large
+set of applicable usage plans documented in textual forms.
+For example, doctor’s notes contain information on the safe
+usage of an AID system for T1D. LLMs can tap into such
+resources to derive novel plans.
+Online user guidance: Users can guide the LLMs in real
+time to derive safe and effective usage plans through an in-
+tuitive chat interface.
+Abilities of LLMs
+An LLM’s responses are generated based on the patterns
+learned from diverse data sources. It can generate creative
+and imaginative responses, which might or might not align
+with factual or realistic plans. The efficacy of LLMs in gen-
+erating accurate plans or delivering meaningful responses
+without hallucination depends on the quality of prompts pro-
+vided and the inherent capabilities of the model. In relation
+to LLMs we first clarify the assumed meanings of the fol-
+lowing terms:
+a) Embodied prompt: A prompt where text is interleaved
+with time series traces of the physical dynamics of CPS.
+b) LLM fine tuning: By LLM fine tuning we mean re-
+training a pre-trained LLM with domain specific embodied
+prompts. An untuned LLM means it is not trained with do-
+main specific embodied prompts.
+c) LLM contextualization: By contextualization we mean
+presenting the LLM with example prompts and responses
+before we provide the main prompt whose response is ex-
+pected from the LLM.
+d) LLM training: This means training an LLM architecture
+from scratch. This is never done in the paper.
+In the context of our study, we categorize the capabilities
+of LLMs into the following key areas:
+• In-context learning (ICL) : GPT-3 (Brown et al.
+2020) introduces In-Context Learning (ICL), enabling
+the model to generate anticipated outputs for test in-
+stances without additional training. ICL involves provid-
+ing the model with a prompt consisting of input-output
+pairs that demonstrate a task, allowing it to make pre-
+dictions on test inputs based on the provided examples.
+While the 175B GPT-3 model shows strong ICL abil-
+ity overall, its effectiveness varies depending on the task.
+For example, the 13B version excels in arithmetic tasks,
+but the larger 175B model struggles in tasks like Persian
+Question-Answering (Zhao and Zhou 2023). Table 1 dis-
+cusses the state-of-the-art LLMs, their architecture type,
+model size, ICL and instruction tuning capability.
+• Instruction following: Instruction tuning (IT) involves
+fine-tuning using a diverse set of multi-task datasets
+formatted in natural language descriptions. An instruc-
+tion instance consists of a task description (instruction),
+an optional input, the corresponding output, and, if ap-
+plicable, a limited number of demonstrations. LLMs
+have demonstrated proficiency in executing tasks not en-
+countered during training using IT. By leveraging in-
+struction tuning, LLMs exhibit the capability to fol-
+low task instructions for novel tasks without the need
+for explicit examples, resulting in enhanced generaliza-
+tion. Experimental findings indicate that the instruction-
+tuned LaMDA-PT, Llama (Touvron et al. 2023) exhibit
+a significant performance boost on unfamiliar instruc-
+tion tasks, however, they might under perform on user
+queries (Zhao and Zhou 2023).
+• Reinforcement Learning with human feedback
+(RLHF): For LLMs that are trained to encompass the
+characteristics of both high-quality and low-quality data
+from pre-training corpora there is a potential for them
+to generate content that could be toxic, biased, harmful
+or unsafe to humans. To address this concern, aligning
+LLMs with human values, such as being helpful, honest,
+and harmless, became crucial. InstructGPT introduces
+an effective tuning approach that empowers LLMs to
+adhere to specified instructions using RLHF and involves
+humans in the training loop through carefully designed
+labeling strategies (Zhao and Zhou 2023).
+Challenges of using LLMs for planning
+LLMs demonstrate exceptional performance in natural lan-
+guage processing tasks, however, using them to generate a
+sequence of external inputs and controller set points in the
+continuous time real number domain is still an unexplored
+area. In this domain, LLMs are yet to be tested extensively.
+Table 1: Comparison of LLMs based on their abilities. Ab-
+breviations: ICL-In-context learning , IT-Instruction tuning.
+Models Architecture Model
+Size
+ICL IT
+GPT3 (Brown et al.
+2020)
+Causal decoder 175B ✓
+Llama-2 (Touvron
+et al. 2023)
+Causal decoder 70B ✓ ✓
+PaLM (BARD chat-
+bot) (Chowdhery
+and Narang 2022)
+Causal decoder 540B ✓ ✓
+BERT (Devlin et al.
+2019)
+Bidirectional Encoder 340M
+LaMDA (Thoppilan
+and Freitas 2022)
+Causal decoder 137B
+Alpaca (Taori et al.
+2023)
+Causal decoder 7B ✓
+C1: Physically infeasible plan: LLMs can generate CPS
+usage plan that is infeasible. An example of an infeasible
+plan is shown in the “Automated Insulin Delivery Example”
+section of the paper.
+C2: Unsafe plan: Even if LLMs generate a feasible plan,
+there is no guarantee that the LLMs may generate a plan
+that is safe for the HIP component of the CPS. This is also
+demonstrated in the “Automated Insulin Delivery Example”
+section.
+C3: Agnostic of personalized HIP physical dynamics:
+The main reason that LLM may generate infeasible and un-
+safe plans is that they are not trained with the knowledge of
+dynamical systems that govern the temporal evolution of the
+plant with the specific real world human user embedded in
+the plant.
+Overview of Approach and Technical
+Innovations
+Our strategy for addressing the problem of generating a
+safe CPS usage plan comprises two key phases: a) pre-
+processing, and b) deployment (Figure 2).
+Pre-processing: This stage consists of two parts:
+a) CPS-LLM: An LLM, specifically LLAMA-7B
+model (Touvron et al. 2023) is instruction tuned with
+embodied instructional prompts that explain the relation
+between the dynamics coefficient ω and the functions fω(.)
+and gω(.). For this purpose, we use the ALPACA prompt
+response model (Chen et al. 2023) to organize training
+data. It consists of three parts: i) instruction, which states
+an inference task related to the physical dynamics of the
+HIP such as derive ω from a trace of fω(.), ii) an embodied
+input, where textual description of a scenario is interleaved
+with the trace of fω(.), and iii) an output response that is
+the answer to the inference task for the scenario described
+in the embodied input such as the value of ω.
+b) Dynamics coefficient extractor: Dynamics coefficient ex-
+tractor tuned to extract the unknown coefficients ω. For this
+purpose, we utilize a liquid time constant neural network
+(LTC NN) architecture which is proven to be a universal
+Feasibility of using Large Language Models in 
+safe and effective usage plan generation for CPS
+PlanningDomain
+Contributions Model Coefficient Learning with limited 
+measurability using Liquid Neural Networks
+Machine Learning
+CPS-LLM planning operation overview
+Inputs:
+A. Black box certified safe CPS
+B. Safety STL 𝜙𝑡
+C. Error free data satisfying 𝜙𝑡
+D. Plant physics model structure with unknown coefficients
+Liquid NN Decoder 
+instantiationD Liquid NN model
+C
+Embodied LLM fine tuning 
+with physical dynamics
+Model 
+weights
+Physical Dynamics 
+Coefficient Learning
+Personalized Prompt 
+Generator
+CPS-LLM
+Chat Reinforcement 
+Learning
+Action Evaluation
+STL 𝜙𝑡 satisfied i.e. 
+robustness > threshold
+Query
+Feedback to 
+user
+Execute in 
+A
+No
+Yes
+Action at time 𝑡
+ALPACA Structure based 
+prompt generator
+User Data
+B
+Pre-processing Deployment
+Prompt embodied 
+with traces 𝑡 =  𝑓𝜔
+for some 𝜔
+Personalized 
+Coefficient 𝜔𝑝
+Prompt 
+embodied  
+with 𝜔𝑃 
+Traces 
+𝑓𝜔𝑃 𝑋
+1
+2
+3
+4 5
+6
+Figure 2: Contributions of the paper and the operation of the CPS-LLM planning method.
+function approximator (Hasani et al. 2021). The liquid neu-
+ral network is an encoder-decoder architecture where the en-
+coder models the function ω = f −1
+ω (X) and the decoder is a
+simulator for fω such that the input trace can be replicated.
+c) Contextualization of a chat using RL: We used
+BARD (GoogleAI 2023), a PaLM based chatbot, to contex-
+tualize an LLM with queries and their corresponding inter-
+pretations into planning tasks. Through this process, the chat
+RL component learns the universal set of actions.
+Deployment: In this stage, the user provides two inputs: a)
+a natural language prompt that describes a CPS usage plan
+discovery task through a chat RL interface, BARD in this
+case (GoogleAI 2023), and b) a trace τ = {X(t)∀t ∈ [t0 −
+th, t0]} of the physical dynamics of the CPS, where t0 is the
+current time and theth is the past horizon. With these inputs,
+the plan generation mechanism operates with the following
+steps:
+Step 1: The trace τ is used to recover the personalized
+dynamics coefficients for the real user ωP using the LTC
+NN (Hasani et al. 2021) encoder-decoder architecture.
+Step 2: The coefficient ωP is then used in an embedded
+prompt to solve the inverse inference problem for the phys-
+ical dynamics, where the fine-tuned LLAMA model is in-
+structed to derive a trace X(t) : ∀t ∈ [t0, t0 + tf ], where tf
+is the future horizon for the given ωP and the current state
+X(t0).
+Step 3: This trace is used by a chat RL interface BARD to
+map to the appropriate plan.
+Step 4: The plan is then evaluated for safety through forward
+simulation of the plant dynamics.
+Step 5: If the plan is safe, then it is executed and the cycle
+continues. But if it is unsafe, then feedback is provided to
+the user.
+Technical Innovations
+In this study, we have two main innovations: a) in the plan-
+ning domain, we evaluate the feasibility of using LLMs for
+safe and effective generation of usage plan for CPS, and b) in
+the machine learning (ML) domain, we demonstrate a LTC
+NN based model parameter estimation for CPS when some
+of the state variables of the physical dynamics are not mea-
+sured.
+Automated Insulin Delivery Example
+We illustrate the usage of CPS-LLM using the example of
+the Artificial Pancreas (AP). The AP uses the HIL-HIP ar-
+chitecture and is a safety-critical medical device. The LLM
+based planning architecture is used to protect the system
+from critical errors as well as personalize the system based
+on the dynamically changing user context. AID systems are
+exemplary CPS used by T1D subjects to automate insulin
+delivery with the aim of controlling blood glucose level
+within a tight range of 70 mg/dl to 180 mg/dl, while prevent-
+ing hypoglycemia when blood glucose level measured by the
+Continuous Glucose Monitor (CGM) falls below 70 mg/dl.
+However, AID systems may not effectively handle glucose
+fluctuations induced by factors like meals, exercise, or med-
+ication intake such as hydrocortisone. In order to maintain
+safe and efficient operation, the user has to undertake a CPS
+usage plan by either providing external bolus insulin uex or
+by changing the set point configuration of the AID controller
+s. For example, the Loop AID system (Jeyaventhan et al.
+2021), has a set point of 90 mg/dl throughout the day, except
+for meal time when the set point is increased to 110 mg/dl
+and an external insulin bolus is injected. The set point is re-
+verted back to 90 mg/dl 2 hrs after meal intake. The bolus
+computation follows the standard clinical process, where the
+user sets a carb ratio (CR) which is the units of insulin used
+to cover per gram of carbohydrate. Before a meal intake, the
+user makes an informed estimate of the grams of carbohy-
+drates. The insulin dosage is then computed as the ratio of
+the grams of carbohydrate to the CR minus any residual in-
+sulin still in the body, also known as insulin on board (IOB).
+This residual insulin or IOB depends on the insulin pharma-
+cokinetics, given by Equation 4, which is the plant dynamics
+obtained from Bergman Minimal Model (BMM) (Bergman
+2021), and is very difficult for a human to guess.
+dy
+dt = z, dz
+dt = −2k1z − k2
+1y + k2
+1uex, diob
+dt = −niob + p1(y + Ib), (3)
+where X = y, z, iob, k1 is the diffusion coefficient for
+insulin, and n and p1 are patient specific metrics. Here,
+we assume that y and z are internal state variables of the
+BMM and are not measurable. As such some simple formu-
+las based on linearity assumptions are used by mobile apps
+to estimate IOB and consequently meal bolus such as Bo-
+lus Wizard (Shashaj, Busetto, and Sulli 2008). The insulin
+intake is assumed to decrease linearly over time, the slope
+determined by the insulin action time setting set by the user.
+However, it is a gross estimate and often inaccurate. The fi-
+nal meal insulin intake is determined by Equation 4.
+M ealBolus = Carbohydrate (g)/CR − IOB. (4)
+We used a self-adaptive MPC controller Tandem Control
+IQ (Forlenza et al. 2019) which gives us the control actions
+u = π(X, s). A trace T is a collection of CGM trajectories
+for an extended run of the AP controller, which in this case
+consists of X = y, z, iob, the control actions u and the set
+point s. In addition, users can also manually provide prim-
+ing bolus uex to prepare for an unplanned glycemic event
+such as a meal. The outcome is measured using four metrics:
+a) percentage time in range (TIR), 70mg/dl ≤ CGM ≤
+180mg/dl, b) mean CGM, c) time above range (TAR), when
+CGM > 180mg/dl, and d) time below range (TBR), when
+CGM < 70mg/dl.
+In this paper, we demonstrate how the CPS-LLM can be
+used to derive a safe meal management plan when integrated
+with an AID controller that relies on the human user to in-
+ject external insulin to control post-prandial (after meal) hy-
+perglycemia. In this section, we show the performance of
+any general LLM used for this planning purpose and in the
+subsequent section we show how CPS-LLM provides much
+safer and more efficacious insulin dosage recommendations.
+Signal temporal logic based safety definitions
+STL formulas can be applied to continuous time signals to
+define specific properties that hold true over some notions of
+time. STL formula satisfaction can be evaluated using a ro-
+bustness function (Donz ´e and Maler 2010). The robustness
+value ρ maps an STL ϕ, the continuous-time signal, and a
+time t ∈ [0, T ] to a real value. American Diabetes Associa-
+tion (ADA) established safety criteria can be specified using
+STL ϕt : GI (T BR < 4%), where GI denotes globally true.
+Evaluation of Safety
+The safety of the LLM-generated plan is evaluated using for-
+ward simulation. For the AID system, we use the T1D simu-
+lator from UV A PADOV A (Man et al. 2014). In the T1D sim-
+ulator, we instantiated virtual patients with the same BMM
+model coefficients as obtained from the LTC NN discussed
+in the “Liquid Time Constant Neural Networks based coef-
+ficient estimation” section. We simulate for the future time
+horizon tf to determine whether the plan generated by the
+LLM is safe.
+LLMs generate unsafe insulin dosage
+We used an untuned Llama2 7B model (Touvron et al. 2023)
+and contextualized it using the prompts shown below:
+Q1: I am eating 30g carbs. Carb ratio is 5. Insulin on
+board is 3 U. How much bolus should I take?
+Answer: You should take 3 U bolus
+Q2: I am eating 20g carbs. Carb ratio is 5. Insulin on
+board is 1 U. How much bolus should I take?
+Answer: You should take 3 U bolus
+Q3: I am eating 7g carbs to avoid hypoglycemia. Carb
+ratio is 5. Insulin on board is 2 U. How much bolus
+should I take?
+Answer: You should take 0 U bolus
+Q4: I am eating 60g carbs. Carb ratio is 5. Insulin on
+board is 4 U. How much bolus should I take?
+Answer: You should take 8 U bolus
+Q5: I am eating 25g carbs. Carb ratio is 5. Insulin on
+board is 3 U. How much bolus should I take?
+Answer: You should take 2 U bolus
+Q6: I am eating 7g carbs to avoid hypoglycemia. Carb
+ratio is 5. Insulin on board is 1 U. How much bolus
+should I take?
+Answer: You should take 0 U bolus
+Based on this contextualization, we prompted the
+LLAMA 7B model with the following inference prompt:
+I am eating 45 g carbs. Carb ratio is 5. Insulin on board
+is 2 U. How much bolus should I take?
+The response obtained from the LLM was as follows:
+Let’s calculate the bolus dose based on the informa-
+tion provided: Carb intake: 45g Carb ratio: 5 In-
+sulin on board: 2 U The formula for calculating
+the bolus dose is: Bolus dose=(Carb intake/Carb ra-
+tio)+Insulin on board Substituting in the values: Bo-
+lus dose=(45/5)+2=9+2=11 U Therefore, based on the
+provided information, you should take 11 units of bolus
+insulin for a 45g carb intake with a carb ratio of 5 and
+2 units of insulin on board.
+Clearly, the LLM was computing incorrect insulin dosage
+since it could not infer that IOB should be subtracted from
+Carb intake/ CR computation. Instead it added the IOB to
+the ratio and resulted in 2 U higher insulin dosage which
+may result in severe hypoglycemia.
+LLMs generate physically inconsistent insulin
+delivery
+A prompt with a serious safety condition of hypoglycemia
+resulted in a physically incoherent explanation of insulin
+computation. We provided the following prompt:
+I am eating 7 g carbs to avoid hypoglycemia. Carb
+ratio is 5. Insulin on board is 3 U. How much bolus
+should I take?
+The response provided by the LLM model is as follows:
+When you’re eating a small amount of carbohydrates
+to avoid hypoglycemia, it’s common to adjust the bo-
+lus insulin dose carefully. Let’s calculate the bolus dose
+using the given information: Carb intake: 7g Carb ra-
+tio: 5 Insulin on board: 3 U The formula for calcu-
+lating the bolus dose is: Bolus dose=(Carb intakeCarb
+ratio)+Insulin on board Substituting in the values: Bo-
+lus dose=(7/5)+3 Since the result is less than 1 (1.4 in
+this case), it’s common practice not to round up to a
+whole unit when the carb dose is less than the smallest
+insulin dose the person can measure. So, in this case,
+you might consider not taking any additional bolus in-
+sulin to avoid over-treatment with insulin. Always con-
+sult with your healthcare provider or diabetes care team
+for personalized advice based on your specific circum-
+stances.
+This is a numerically and physically incoherent explana-
+tion of the insulin dosage.
+LLMs provides incoherent outputs
+When the physical dynamics of the human body were used
+as a prompt, the LLAMA2 7B model was unable to produce
+the required results.
+Below is an instruction that describes the task of find-
+ing the Insulin On Board of a type 1 diabetic patient
+paired with a diffusion parameter of the Bergman Mini-
+mal Model for an insulin intake. Write a corresponding
+output that is the Insulin On Board time series.
+### Instruction: My diffusion parameter is 0.0196 and
+I took an insulin dosage of 5U. What is my Insulin On
+Board percentage time series?
+The response provided by the base Llama2 7B model is
+as follows:
+### Response: The following data was calculated using
+the diffusion parameter 1.669 and the insulin intake of
+0.005055
+Table 2: Physical model coefficients derived using LTC NN
+for AID under different conditions when compared against
+the original parameter settings in simulation.
+Data Type k1(10−2) n(10−2) 1/min p1(10−2)
+1/min
+Simulation 9.8 14.06 2.8
+Train 9.78 14.06 2.62
+Test [9.79 9.81] [14.05 14.07] [2.56 2.75]
+Overnight 9.8 14.06 4.0
+Afternoon 9.78 14.06 2.62
+Evening 9.82 14.05 3.6
+As we can see, the LLM model did not generate any
+meaningful response to the prompt embedded with physical
+dynamics.
+Determining the feasibility of LLMs in AID
+usage plan generation
+Simulation setup
+We used a virtual patient with BMM parameters shown in
+Table 2 as simulation settings. We generated 218 meal in-
+stances of sizes ranging from 7 g to 50 g for various CR
+settings ranging from 10 to 25. We set up the virtual patients
+with prior insulin usage starting from 30 mins before meal to
+3 hrs before meal. We integrated a MPC controller similar to
+Control IQ that generates the insulin outputs u = π(X, s) in
+addition to the prior bolus and also the meal bolus. The meal
+bolus for each of the cases were generated by the CPS-LLM
+and compared against untuned LLM and bolus wizard.
+Liquid Time Constant Neural Networks based
+coefficient estimation
+Liquid neural networks (LNN) are neural networks where
+the hidden state dynamics are given by a time con-
+stant component and a parameterized non-linear compo-
+nent. LNNs are considered to be universal function ap-
+proximators and are shown to learn complex non-linear
+functions with much less number of cells than traditional
+deep learning techniques. A comprehensive implementa-
+tion of LNNs is provided in https://github.com/topics/liquid-
+neural-networks and also discussed in (Hasani et al. 2021).
+LTC NN based diffusion coefficient estimate: The LTC
+NN based encoder decoder architecture is shown in Figure 3.
+The input to the LLM is a set of 20,000 traces of IOB compu-
+tations following Equation 3 for various values of k1. Each
+trace is 200 minutes long and is organized into batches of 32.
+An LTC NN network with 32 hidden nodes is connected to a
+3 × 1 dense layer with sigmoid activation function. The out-
+put of the dense layer acts as the coefficients of the dynam-
+ics of Equation 3. Runge Kutta integration method is used
+in the decoder to reconstruct the IOB data using the outputs
+of the dense layer as coefficients (Butcher 1996). The root
+mean square error (RMSE) between the dense layer output
+and the real data is used as a loss function for the LTC NN
+network. The network is trained for 200 epochs and the ac-
+curacy of parameter extraction under various simulation set-
+Input Data
+𝐼
+32 × 200 
+LNN 
+Cell 1
+LNN 
+Cell 32
+3 × 1
+Dense 
+Layer
+Sigmoid Activation 
+Function
+Runge Kutta 
+Simulation of Physics 
+model with 
+coefficients 𝜔
+Dense layer 
+outputs are 
+model 
+coefficients 𝜔
+Reconstructed 
+Input
+𝐼𝑅
+32 × 200 
+Loss = 
+𝐼 − 𝐼𝑅 2
+BackpropagationLNN: Liquid Time Constant 
+Recurrent Neural Networks
+Figure 3: Liquid Time Constant Network based encoder decoder architecture for dynamics coefficient extraction.
+tings and training data is shown in Table 2. The coefficient
+extraction is evaluated for training set (60% of the data), test
+set (40% of the data) and also segregated by overnight period
+where there is no meal, afternoon period with lunch meal
+and evening period with dinner. We see from Table 2 that the
+LTC NN could recover the dynamics coefficient with good
+accuracy and less variance despite having no measurements
+of y and z and only sampled measurements of iob.
+Embodied fine tuning of Llama-2 to get CPS-LLM
+For this experiment, we use two different types of LLMs 1)
+Proprietary LLMs accessed via an API and, 2) Open Source
+LLMs. We use the first LLM category (BARD) to develop
+domain-specific embodied prompts based on user queries.
+These embodied prompts incorporate various personalized
+factors of the user. The second category of LLMs we use is
+the state-of-the-art LLAMA2 model developed by Meta AI.
+This model is fine-tuned on domain-specific datasets that en-
+compass the constraints from both the cyber and the physical
+world. We use the 7B base version of the LLAMA2 model
+for this experiment.
+Prompt Generation The BARD model was used using
+the interactive GUI. For the BARD model, we primed the
+model with a few examples and used it to generate personal-
+ized domain-specific embodied prompts. Upon careful con-
+sideration of the different prompting techniques, we selected
+the ALPACA (Taori et al. 2023) format for fine-tuning the
+Llama2-7B model. To prime the model for better IT we use
+the following system prompt-
+Below is an instruction that describes the task of finding
+the diffusion parameter of the Bergman Minimal Model
+paired with a time series of 40 Insulin on Board.
+The system prompt is followed by an instruction, an in-
+put, and the corresponding output. An example of the entire
+prompt is
+### Instruction: Find out the diffusion parameter from
+the Bergman Minimal Model with the following time
+series. The 40 values corresponding to 400 seconds of
+IOB values
+### Input: 1.0 0.99948 0.99747 0.99411 0.98975
+0.98473 0.97931 0.97371 0.96808 0.96254 0.95717
+0.95205 0.94719 0.94264 0.93839 0.93446 0.93084
+0.92752 0.92448 0.92171 0.9192 0.91693 0.91488
+0.91303 0.91137 0.90988 0.90855 0.90735 0.90629
+0.90534 0.90449 0.90374 0.90307 0.90248 0.90195
+0.90148 0.90107 0.90071 0.90038 0.9001
+### Response: 0.015
+Testing evaluation of CPS-LLM
+The fine tuned LLAMA model, i.e. CPS-LLM was tested
+with the query of the following form:
+Below is an instruction that describes the task of find-
+ing the Insulin On Board of a type 1 diabetic patient
+paired with a diffusion parameter of the Bergman Mini-
+mal Model for an insulin intake. Write a corresponding
+output that is the Insulin On Board timeseries.
+### Instruction: I took an insulin dosage now. What is
+my Insulin On Board percentage timeseries?
+### Input:
+diffusion parameter = 0.025
+The following form of response was obtained from the
+CPS-LLM model:
+### Response: Your timeseries is 1.0, 0.9995 . . .
+Figure 4 shows that the CPS-LLM can regenerate the
+IOB sequence that is physically consistent for previously un-
+known diffusion coefficient inputs. Moreover, the RMSE be-
+tween the CPS-LLM generated IOB values and IOB gener-
+ated from the T1D simulator by solving the BMM equations
+(Equation 3) is 6% (± 3%).
+Safety of plan generated by CPS-LLM planner
+We tested three different CPS usage plan generation mech-
+anisms, each interfaced with the MPC Control IQ type con-
+trollers. The first approach is manual plan generation, where
+0102030time in mins00.20.40.60.81Percentageinsulinonboard
+Diffusion coefficient 0.0125
+RMSE = 0.077505
+0102030time in mins00.20.40.60.81Percentageinsulinonboard
+Diffusion coefficient 0.01081
+RMSE = 0.07554
+0102030time in mins00.20.40.60.81Percentageinsulinonboard
+Diffusion coefficient 0.012231
+RMSE = 0.041203
+0102030time in mins00.20.40.60.81Percentageinsulinonboard
+Diffusion coefficient 0.011539
+RMSE = 0.031964
+0102030time in mins00.20.40.60.81Percentageinsulinonboard
+Diffusion coefficient 0.01074
+RMSE = 0.14907
+0102030time in mins00.20.4
+0.60.81Percentageinsulinonboard
+Diffusion coefficient 0.011423
+RMSE = 0.11873
+0102030time in mins00.20.4
+0.60.81Percentageinsulinonboard
+Diffusion coefficient 0.010873
+RMSE = 0.12945
+0102030time in mins00.20.4
+0.60.81Percentageinsulinonboard
+Diffusion coefficient 0.010996
+RMSE = 0.012244
+0102030time in mins00.20.4
+0.60.81Percentageinsulinonboard
+Diffusion coefficient 0.01118
+RMSE = 0.10942
+0102030time in mins00.20.4
+0.60.81Percentageinsulinonboard
+Diffusion coefficient 0.012388
+RMSE = 0.029421
+Simulation DataCPS-LLM generated time series
+Figure 4: Time series generated by CPS-LLM and the RMSE with respect to simulation results.
+CPS Usage Plan 
+generation method
+Time in Range 
+(70 – 180 
+𝑚𝑔
+𝑑𝑙 )
+Time Above 
+Range (> 180 
+𝑚𝑔
+𝑑𝑙 )
+Time Below 
+Range (<70 
+𝑚𝑔
+𝑑𝑙 )
+Time Below Range 
+Critical (< 54 
+𝑚𝑔
+𝑑𝑙 )
+MPC + Manual plan 
+generation with Bolus 
+Wizard
+78.2% (±21.1) 17.4% (±17.3) 4.4% (±4.2) 1% (± 1)
+MPC + Untuned LLM 
+with LLAMA 2
+81.2% (±18) 9.9% (±4.2) 8.8% (±𝟏. 𝟏) 2.6%(±0.1)
+MPC + CPS-LLM fine-
+tuned with prompts 
+embodied with IoB
+dynamics
+81%(±12) 16%(±7) 3%(±𝟐)
+(Least 
+hypoglycemia)
+0% (0)
+Figure 5: Safe glucose control results for three approaches
+of generating CPS usage plan: 1) Manual, 2) using untuned
+LLM, and 3) using CPS-LLM.
+the user uses the bolus wizard and the standard linear as-
+sumption on the IOB computation to compute the meal bo-
+lus insulin in accordance with the rule described in Equa-
+tion 4. The second approach is the untuned LLM Llama-
+2 7B model interfaced with contextualized BARD chat RL
+to determine the usage plan and integrated with MPC. The
+third approach is the integration of CPS-LLM (fine tuned
+LLAMA2 7B model), contextualized BARD, and the MPC
+controller. Figure 5 shows that the CPS-LLM integration
+provides the safest plan. The untuned LLM is poorer than
+the manual determination of bolus and may even jeopardize
+safety since it has the highest hypoglycemia rate. This shows
+that it is feasible to use LLMs in planning, however, the im-
+portant steps of contextualization and embodied fine-tuning
+are essential. Without such approaches, the LLM may put
+safety at risk when used for planning.
+Conclusions
+In this paper, we have demonstrated the feasibility of using
+LLMs in planning the personalized usage of a CPS. We have
+answered an important question in the planning community
+and shown the first use of LLMs in planning control tasks
+for safety-critical HIL-HIP systems. The example used in
+the paper is in the medical domain, which enhances the sig-
+nificance of the results. Our main observations are that it is
+feasible to use LLMs for planning control tasks, provided
+two important steps are meticulously designed: a) contex-
+tualization of the chat RL, and b) fine-tuning of the LLM
+internal weights through embodied training, where textual
+instructions and interpretations are intertwined with traces
+from the real world system. This is only an initial attempt
+at using LLMs in safety-critical planning and although it
+has been shown for only one example, the methodology is
+general and its application to other examples such as au-
+tonomous cars and unmanned aerial vehicles is potentially
+feasible, albeit yet to be tested. The approach described in
+this paper may start a new domain of research that is cru-
+cial for the progress of LLMs and planning in the domain of
+safety/mission critical cyber physical systems with Human-
+in-the-Loop and Human-in-the-Plant.
+References
+Banerjee, A.; Maity, A.; Gupta, S. K.; and Lamrani, I.
+2023. Statistical Conformance Checking of Aviation Cyber-
+Physical Systems by Mining Physics Guided Models. In
+2023 IEEE Aerospace Conference, 1–8. IEEE.
+Bergman, R. N. 2021. Origins and history of the minimal
+model of glucose regulation. Frontiers in endocrinology ,
+11: 583016.
+Brown, T.; Mann, B.; Ryder, N.; Subbiah, M.; Kaplan, J. D.;
+Dhariwal, P.; Neelakantan, A.; Shyam, P.; Sastry, G.; Askell,
+A.; Agarwal, S.; Herbert-V oss, A.; Krueger, G.; Henighan,
+T.; Child, R.; Ramesh, A.; Ziegler, D.; Wu, J.; Winter,
+C.; Hesse, C.; Chen, M.; Sigler, E.; Litwin, M.; Gray, S.;
+Chess, B.; Clark, J.; Berner, C.; McCandlish, S.; Radford,
+A.; Sutskever, I.; and Amodei, D. 2020. Language Mod-
+els are Few-Shot Learners. In Larochelle, H.; Ranzato, M.;
+Hadsell, R.; Balcan, M.; and Lin, H., eds.,Advances in Neu-
+ral Information Processing Systems, volume 33, 1877–1901.
+Curran Associates, Inc.
+Butcher, J. C. 1996. A history of Runge-Kutta methods.
+Applied numerical mathematics, 20(3): 247–260.
+Chen, L.; Li, S.; Yan, J.; Wang, H.; Gunaratna, K.; Yadav,
+V .; Tang, Z.; Srinivasan, V .; Zhou, T.; Huang, H.; et al. 2023.
+Alpagasus: Training a better alpaca with fewer data. arXiv
+preprint arXiv:2307.08701.
+Chowdhery, A.; and Narang, S. e. a. 2022. PaLM: Scaling
+Language Modeling with Pathways.
+Devlin, J.; Chang, M.-W.; Lee, K.; and Toutanova, K. 2019.
+BERT: Pre-training of Deep Bidirectional Transformers for
+Language Understanding. In North American Chapter of the
+Association for Computational Linguistics.
+Donz´e, A.; and Maler, O. 2010. Robust satisfaction of tem-
+poral logic over real-valued signals. In International Con-
+ference on Formal Modeling and Analysis of Timed Systems,
+92–106. Springer.
+Forlenza, G. P.; Ekhlaspour, L.; Breton, M.; Maahs, D. M.;
+Wadwa, R. P.; DeBoer, M.; Messer, L. H.; Town, M.; Pin-
+nata, J.; Kruse, G.; et al. 2019. Successful at-home use of
+the tandem control-IQ artificial pancreas system in young
+children during a randomized controlled trial.Diabetes tech-
+nology & therapeutics, 21(4): 159–169.
+Garcıa, J.; and Fern´andez, F. 2015. A comprehensive survey
+on safe reinforcement learning. Journal of Machine Learn-
+ing Research, 16(1): 1437–1480.
+GoogleAI. 2023. Bard: A Large Language Model
+from Google AI. https://ai.googleblog.com/2022/01/lamda-
+language-model-for-dialogue.html. Accessed December 23,
+2023.
+Hasani, R.; Lechner, M.; Amini, A.; Rus, D.; and Grosu, R.
+2021. Liquid time-constant networks. In Proceedings of
+the AAAI Conference on Artificial Intelligence , volume 35,
+7657–7666.
+Jeyaventhan, R.; Gallen, G.; Choudhary, P.; and Hussain, S.
+2021. A real-world study of user characteristics, safety and
+efficacy of open-source closed-loop systems and Medtronic
+670G. Diabetes, Obesity and Metabolism , 23(8): 1989–
+1994.
+Karaman, S.; Sanfelice, R. G.; and Frazzoli, E. 2008. Opti-
+mal control of mixed logical dynamical systems with linear
+temporal logic specifications. In 2008 47th IEEE Confer-
+ence on Decision and Control, 2117–2122. IEEE.
+Kress-Gazit, H.; Fainekos, G. E.; and Pappas, G. J. 2009.
+Temporal-logic-based reactive mission and motion plan-
+ning. IEEE transactions on robotics, 25(6): 1370–1381.
+Li, W.; Sadigh, D.; Sastry, S. S.; and Seshia, S. A. 2014.
+Synthesis for human-in-the-loop control systems. In Tools
+and Algorithms for the Construction and Analysis of Sys-
+tems: 20th International Conference, TACAS 2014, Held as
+Part of the European Joint Conferences on Theory and Prac-
+tice of Software, ETAPS 2014, Grenoble, France, April 5-13,
+2014. Proceedings 20, 470–484. Springer.
+Maity, A.; Banerjee, A.; and Gupta, S. 2023. Detection of
+Unknown-Unknowns in Cyber-Physical Systems using Sta-
+tistical Conformance with Physics Guided Process Models.
+arXiv preprint arXiv:2309.02603.
+Maity, A.; Banerjee, A.; Lamrani, I.; and Gupta, S. K. 2022.
+Cyphytest: Cyber physical interaction aware test case gen-
+eration to identify operational changes. In 2022 IEEE 5th
+International Conference on Industrial Cyber-Physical Sys-
+tems (ICPS), 01–06. IEEE.
+Man, C. D.; Micheletto, F.; Lv, D.; Breton, M.; Kovatchev,
+B.; and Cobelli, C. 2014. The UV A/PADOV A type 1 dia-
+betes simulator: new features. Journal of diabetes science
+and technology, 8(1): 26–34.
+Richards, S. M.; Berkenkamp, F.; and Krause, A. 2018. The
+lyapunov neural network: Adaptive stability certification for
+safe learning of dynamical systems. In Conference on Robot
+Learning, 466–476. PMLR.
+Shashaj, B.; Busetto, E.; and Sulli, N. 2008. Benefits of a
+bolus calculator in pre-and postprandial glycaemic control
+and meal flexibility of paediatric patients using continuous
+subcutaneous insulin infusion (CSII). Diabetic Medicine ,
+25(9): 1036–1042.
+Taori, R.; Gulrajani, I.; Zhang, T.; Dubois, Y .; Li,
+X.; Guestrin, C.; Liang, P.; and Hashimoto B., T.
+2023. Alpaca: A Strong, Replicable Instruction-
+Following Model. Human Centered Artificial Intel-
+ligence. Website: Stanford University, Web page:
+https://crfm.stanford.edu/2023/03/13/alpaca.html.
+Thoppilan, R.; and Freitas, D. D. e. a. 2022. LaMDA: Lan-
+guage Models for Dialog Applications. arXiv:2201.08239.
+Touvron, H.; Martin, L.; Stone, K.; Albert, P.; Almahairi, A.;
+Babaei, Y .; Bashlykov, N.; Batra, S.; Bhargava, P.; Bhosale,
+S.; et al. 2023. Llama 2: Open foundation and fine-tuned
+chat models. arXiv preprint arXiv:2307.09288.
+Zhao, W. X.; and Zhou, K. e. a. 2023. A Survey of Large
+Language Models. arXiv:2303.18223.

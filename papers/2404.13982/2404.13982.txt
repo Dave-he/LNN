@@ -1,0 +1,950 @@
+Liquid-Graph Time-Constant Network
+for Multi-Agent Systems Control
+Antonio Marino 1, Claudio Pacchierotti 2, Paolo Robuffo Giordano 2
+Abstract— In this paper, we propose the Liquid-Graph Time-
+constant (LGTC) network, a continuous graph neural network
+(GNN) model for control of multi-agent systems based on the
+recent Liquid Time Constant (LTC) network. We analyse its
+stability leveraging contraction analysis and propose a closed-
+form model that preserves the model contraction rate and does
+not require solving an ODE at each iteration. Compared to
+discrete models like Graph Gated Neural Networks (GGNNs),
+the higher expressivity of the proposed model guarantees
+remarkable performance while reducing the large amount
+of communicated variables normally required by GNNs. We
+evaluate our model on a distributed multi-agent control case
+study (flocking) taking into account variable communication
+range and scalability under non-instantaneous communication.
+Index Terms— Distributed Control, Graph Neural Network,
+Stability Analysis
+I. INTRODUCTION
+Communication is a crucial element in achieving dis-
+tributed solutions for multi-agent systems (MAS) from con-
+trol to planning [2]. Like many distributed control algo-
+rithms, also learning-based control can benefit from inter-
+agent communication to partition the prediction process
+across multiple machines contributing to task scalability and
+prediction accuracy [6].
+Leveraging communication, recent trends in data-driven
+distributed control involve employing Graph Neural Net-
+works (GNNs) to encode distributed control and planning
+solutions. In this respect, Gama et al. [7] extend GNNs
+to flocking control for large teams. Additional examples
+of the use of GNNs for distributed control are found in
+space coverage [8], multi-robot path planning [9], and motion
+planning [10], including obstacle-rich environments [11].
+GNNs also enhance multi-agent perception [12] and enable
+distributed active information acquisition [13], translating
+multi-robot information gathering into graph representation
+and formulating GNN-based decision-making.
+In the recent literature, one of the objectives is to make the
+learning-based method robust and stable [14]. In this context,
+many works applied contraction analysis to demonstrate
+recurrent neural network stability [15], or directly closed-
+loop stability in continuous learning [16] and adaptive con-
+trol [17]. Recently, the stability analyses presented in [18],
+[19] showcased the concepts of ISS (Input-to-State Stability)
+1 A. Marino is with Univ Rennes, CNRS, Inria, IRISA – Rennes, France.
+E-mail: antonio.marino@irisa.fr.
+2 C. Pacchierotti and P. Robuffo Giordano are with CNRS, Univ Rennes,
+Inria, IRISA – Rennes, France. E-mail: {claudio.pacchierotti,prg}@irisa.fr.
+This work was supported by the ANR-20-CHIA-0017 project “MULTI-
+SHARED”.
+and incremental ISS ( δISS) [20], [21] in the context of
+LSTMs and GRUs, which are two of the most popular
+recurrent neural network models. Inspired by these last
+results, we proposed [22] the conditions for δISS of the
+recurrent version of GNN, i.e. Gated Graph Neural Networks
+(GGNN) [23].
+In this study, we introduce a continuous graph ordinary
+differential equation (ODE) network called Liquid-Graph
+Time-Constant (LGTC) network, inspired by its single-agent
+counterpart, the Liquid Time Constant (LTC) network [24].
+The LTC network demonstrates a strong representation learn-
+ing capability, empowering agents to extrapolate and make
+inferences even in unfamiliar scenarios. Additionally, its
+closed-form version [25] eliminates the need to solve the
+initial value problem of the ODE, a requirement in other
+ODE networks [26]–[28]. In the existing literature, there are
+few attempts to make graph ODEs for modelling dynamic
+network systems [29], predicting traffic flow [30], or for
+sequential recommendations [31]. These models typically
+employ an auto-regressive network over a vector field mod-
+elled by a Graph Neural Network (GNN), initializing the
+internal state with the previous layer’s output. In contrast, the
+proposed LGTC aims to introduce a novel model that learns
+a dynamic (or “liquid”) time constant, influenced by both
+input data and the internal state communicated over the agent
+graph. This dynamic time constant enables each element of
+the state to capture specific dynamics, thereby enhancing the
+model’s predictive capabilities. The specialized dynamics can
+be used to reduce the number of the network’s internal state
+(memory) and consequently the number of information each
+agent needs to communicate. The final aim of this study is to
+approach model-based algorithms’ communication efficiency
+while increasing prediction accuracy, which in control trans-
+lates into a higher distributed control efficiency.
+In addition, our contribution includes proposing an ap-
+proximated closed-form for the LGTC system, enhancing the
+computational efficiency and reducing the communication
+load. We proceed to evaluate the proposed models alongside
+GGNN and GraphODE in a flocking control example.
+II. PRELIMINARIES
+Let G = ( V, E) be an undirected graph where V =
+{v1, . . . , vN } is the vertex set (representing the N agents
+in the group) and E ⊆ V × V is the edge set. Each edge
+ek = ( i, j ) ∈ E is associated with a weight wij ≥ 0 such
+that wij > 0 if the agent i and j can interact and wij = 0
+otherwise. As usual, we denote with Ni = {j ∈ V| wij > 0}
+the set of neighbors of agent i. We also let A ∈ RN ×N
+arXiv:2404.13982v3  [cs.MA]  1 Mar 2025
+be the adjacency matrix with entries given by the weights
+wij. Defining the degree matrix D = diag( di) with di =P
+j∈Ni wij, the Laplacian matrix of the graph is L = D−A.
+The graph signal x ∈ RN , whose i-component xi is
+assigned to agent i, can be processed over the network by
+the following linear combination rule applied by each agent
+six =
+X
+j∈Ni
+sji(xi − xj), (1)
+where si is the i-th row of S. The signal manipulation can
+be operated by means of any graph shift operator S ⊆
+S, e.g., Laplacian, adjacency matrix, weighted Laplacian ,
+which respects the sparsity pattern of the graph. Later, in
+Sect. V, we will use the Laplacian as support matrix, as it is
+commonly used in distributed control. However, the proposed
+techniques do not assume the use of a specific support matrix.
+Performing k repeated applications of S on the same signal
+represents the aggregation of the k-hop neighbourhood in-
+formation. In analogy with traditional signal processing, this
+property can be used to define a linear graph filtering [32]
+that processes the multi features signal x ∈ RN ×G with G
+features:
+HS(x) =
+KX
+k=0
+SkxHk (2)
+where the weights Hk ∈ RG×F define the output of the
+filter. Note that Sk = S(Sk−1), so that it can be com-
+puted locally with repeated 1-hop communications between
+a node and its neighbors. Hence, the computation of HS is
+distributed on each node.
+A. Graph Neural Network
+Although HS is simple to evaluate, it can only represent
+a linear mapping between input and output filters. GNNs
+increase the expressiveness of the linear graph filters by
+means of pointwise nonlinearities ρ : RN ×Fl−1 → RN ×Fl−1
+following a filter bank. Letting HSl be a bank of Fl−1 × Fl
+filters at layer l, the GNN layer is defined as
+xl = ρ(HSl(xl−1)), xl−1 ∈ RN ×Fl−1 . (3)
+Starting by l = 0 with F0, the signal tensor xln ∈ RN ×Fln
+is the output of a cascade of ln GNN layers. This specific
+type of GNN is commonly referred to as a convolution
+graph network because each layer utilizes a graph signal
+convolution (2). By the use of imitation learning or similar
+techniques, the GNN can learn a distributed policy by finding
+the optimal filter weights Hk to propagate information
+among the agents and generate the desired output. Notably,
+each agent employs an identical version of the network and
+exchanges intermediate quantities with the other agents in the
+network through the application of S, resulting in an overall
+distributed neural network. GNNs inherit some interesting
+properties from graph filters, such as permutational equiv-
+ariance [33] and their local and distributed nature, showing
+superior ability to process graph signals [9], [13], [34].
+B. Gated Graph Neural Network
+Recurrent models of GNNs can solve time-dependent
+problems. These models, similarly to recurrent neural net-
+works (RNNs), are known as graph recurrent neural networks
+(GRNNs). GRNNs utilize memory to learn patterns in data
+sequences, where the data is spatially encoded within graphs,
+regardless of the team size of the agents [35]. However,
+traditional GRNNs encounter challenges such as vanishing
+gradients, which are also found in RNNs. Additionally, they
+face difficulties in handling long sequences in space, where
+certain nodes or paths within the graph might be assigned
+more importance than others in long-range exchanges, caus-
+ing imbalances in the graph’s informational encoding.
+Forgetting factors can be applied to mitigate this problem,
+reducing the influence of past or new signal on the state. A
+Gated Graph Neural Network (GGNN) [23] is a recurrent
+Graph Neural Network that uses a gating mechanism to
+control how the past information influences the update of the
+GNN states. We can add a state and an input gates, ˆq, ˜q ∈
+Q ⊆ [0, 1]N ×F , that are multiplied via the Hadamard prod-
+uct ◦ by the state and the inputs of the network, respectively.
+These two gates regulate how much the past information
+and the input are used to update the network’s internal state.
+GGNNs admit the following state-space representation [36],
+
+
+
+˜q = σ( ˜AS(x) + ˜BS(u) +ˆb)
+ˆq = σ( ˆAS(x) + ˆBS(u) +˜b)
+x+ = σc(ˆq ◦ AS(x) + ˜q ◦ BS(u) + b)
+(4)
+with σ(x) = 1
+1+e−x being the logistic function, and σc(x) =
+ex−e−x
+ex+e−x being the hyperbolic tangent. ˆAS, ˆBS are graph
+filters of the forgetting gate, ˜AS, ˜BS are graph filters (2) of
+the input gate, and AS and BS are the state graph filters (2).
+ˆb,˜b, b ∈ RN ×F are respectively the biases of the gates and
+the state built as 1N ⊗b with the same bias for every agents.
+We consider the system under the following assumption
+Assumption 1. The input u is unity-bounded: u ∈ U ⊆
+[−1, 1]N ×G , i.e. ||u||∞ ≤ 1.
+We identify the induced ∞-norm as || · || ∞. We used the
+following notation for the filters in the system (4):
+SI,K ≜ [I, S, . . . , SK]
+A0,K ≜ [A0, . . . , AK]T B0,K ≜ [B0, . . . , BK]T
+˜A0,K ≜ [ ˜A0, . . . , ˜AK]T ˆA0,K ≜ [ ˆA0, . . . , ˆAK]T
+˜B0,K ≜ [ ˜B0, . . . , ˜BK]T ˆB0,K ≜ [ ˆB0, . . . , ˆBK]T
+(5)
+where K is the filters length. Then, in light of assumption 1
+and knowing that ||x||∞ ≤ 1, each gate feature qi satisfies:
+|ˆqi| ≤ σ(||SI,K ||∞(|| ˆA0,K ||∞ + || ˆB0,K ||∞) + ||ˆb||∞) ≜ σˆq.
+(6)
+Assumption 2. Given any two support matrices ||S1(t)||∞
+and ||S2(t)||∞, ∀t ∈ R+ associated with two different
+graphs, they are bounded by the same || ¯S||∞; moreover, they
+are lower bounded by || ˜S||∞.
+In our previous work [22], we derived the following stability
+condition
+Theorem 1. Under Assumptions 1 and 2, a sufficient con-
+dition for the system (4) to be δISS is Aδ ≤ 1; where
+Aδ ≜ σˆq|| ¯SI,K ||∞||A0,K ||∞ + 1
+4 || ¯SI,K ||2
+∞|| ˆA0,K ||∞||A0,K ||∞
++ 1
+4 || ¯SI,K ||2
+∞|| ˜A0,K ||∞||B0,K ||∞.
+(7)
+Where ¯SI,K is the defined as in eq. (5)
+Remark 1. In practice, Assumption 2 is met by limiting the
+cardinality of #Ni < N for every agent i in the team. For
+normalized Laplacian, the assumption is met without any
+further restrictions on the graph topology.
+III. LIQUID-GRAPH TIME CONSTANT NETWORK
+In light of the recent findings on the continuous time
+neural ODE, we want to propose a novel continuous-time
+graph neural network: Liquid-Graph Time-Constant (LGTC)
+network. Inspired by the LTC network proposed in [24], the
+LGTC is described by the following ODE:
+(
+f = ρ( ˆAS(x) + bx) + ρ( ˆBS(u) + bu)
+˙x = −(b + f) ◦ x −PK
+k=1 SkxAk. + f ◦ σc(BS(u)) (8)
+where ρ(x) = ReLU(x). Like in GGNN system,
+ˆAS, ˆBS, AS, BS are graph filters (2) and bx, bu, b ∈ RN ×F are
+biases of the model. This model disposes of an input-state-
+dependent varying time-constant allowing single elements of
+the hidden state to identify specialized dynamical systems for
+input features arriving at each time step.
+In the following results on the system, we used the vector
+operator X| that rearranges the elements of matrix X in a
+vector. For the system in (8), the following lemma holds
+Lemma 1. If bi > 0 and AT
+k ⊗ Sk ≥ 0, for k = [1, . . . , K],
+the state feature i at time t is bounded in the range [−1, 1]
+if x(0) ∈ X ⊆ [−1, 1]N ×F .
+Proof. Defining the following Lypunov function
+V = 1
+2 xT
+| x|
+Its time derivative along the system trajectories is
+˙V = −xT
+| diag(b|)x| − xT
+| diag(f|)x|
+− xT
+|
+KX
+k=1
+AT
+k ⊗ Skx| + xT
+| diag(f|)σc(BS(u))|
+By imposing bi ≥ 0 and PK
+k=1 AT
+k ⊗ Sk ≥ 0 for k =
+[1, . . . , K], we have
+˙V < −xT
+| diag(f|)x| + xT
+| diag(f|)σc(BS(u))|
+When xi > 1, ˙Vi < 0, because the term
+xT
+| diag(f|)σc(BS(u))| ≤ 1T diag(f|)1 and reminding
+that fi > 0. The proof is completed by noting that ˙Vi < 0
+when xi < −1 with a similar reasoning.
+We denote the vector field of the dynamic system (8) with
+F (x, u, S, t) : X × U × S ×R≥0 → RN ×F and its jacobian with
+DxF =
+∂F|
+∂x|
+. Giving the induced infinite log-norm definition
+µ∞(X) = max i(xii +Pn
+j=1,j̸=1 |xij|) [37], the followings
+results are known [15]:
+Definition III.1. The vector field F is strongly infinitesimally
+contracting if:
+µ∞(DxF ) < −c (9)
+With c > 0 known as contraction rate.
+Definition III.2. For a vector map F satisfying III.1 and
+given lu, l S the Lipschitz constants of F in the input u
+and S, any two solutions x1 and x2 with initial conditions
+x1(0), x2(0) and inputs u1(t), u2(t) satisfy the δISS
+relationship
+||x1(t) − x2(t)||∞ ≤ e−ct||x1(0) − x2(0)||∞
++ lu
+c (1 − e−ct)supτ ∈[0,t]||u1(τ) − u2(τ)||∞
++ lS
+c (1 − e−ct)supτ ∈[0,t]||S1(τ) − S2(τ)||∞
+(10)
+For the neural network (8), we provide the following theorem
+Theorem 2. Under Assumption 2, with x(0) ∈ X , sys-
+tem (8) is δISS if the following constraints are satisfied
+c ≥ 0; b ≥ 0; µ∞(
+KX
+k=1
+AT
+k ⊗ Sk) ≥ 0 (11)
+with c = ||b||∞ + ||A1,K ||∞|| ˜S1,K ||∞
++ ||bx||∞ − || ˆAT
+0,K ||∞|| ¯S0,K ||∞
+. (12)
+Proof. Let be σu = σc(BS(u)) ⊆ [−1, 1]N ×F , the log-norm
+of the jacobian µ∞(DxF ) has its superior in:
+sup
+x
+µ∞(DxF ) = sup
+x
+µ∞(− diag(b|) − diag(f|)
+−
+KX
+k=1
+AT
+k ⊗ Sk + diag(σu| − x|) diag(Dxf)
+KX
+k=0
+ˆAT
+k ⊗ Sk)
+≤ −||b||∞ + µ∞( −
+KX
+k=1
+AT
+k ⊗ Sk) + sup
+x
+[−||f|||∞
++µ∞(diag(σu| − x|) diag(Dxf)
+KX
+k=0
+ˆAT
+k ⊗ Sk)]
+where Dxf ∈ [0, 1]N F is the derivative of f in x|. The last
+inequality follows by µ∞(X) = ||X||∞ when X > 0 and by
+the fact that b| ≥ 0 and f| ≥ 0. Moreover, we can note that
+−||f|||∞ ≤ −||ρ( ˆAS(x)+ bx)|||∞. Giving σu| ∈ [−1, 1]N F and
+−µ∞(AT
+k ⊗ Sk) ≤ 0, by lemma 1, x| ∈ [−1, 1]N F. Therefore,
+we get
+µ∞(DxF ) ≤ − ||b||∞ − ||
+KX
+k=1
+AT
+k ⊗ Sk||∞−
+||ρ( ˆAS(x + bx))||∞ + max
+d∈[−1,1]N F
+2µ∞(diag(d)
+KX
+k=0
+ˆAT
+k ⊗ Sk)
+≤ −||b||∞ − ||
+KX
+k=1
+AT
+k ⊗ Sk||∞ − ||ρ( ˆAS(x + bx))||∞+
+2 max(µ∞( −
+KX
+k=0
+ˆAT
+k ⊗ Sk), µ∞(
+KX
+k=0
+ˆAT
+k ⊗ Sk))
+To further reduce the previous inequality, we can use the sub
+multiplicity property of the infinite norm and the fact that the
+last term in the previous inequality is ≤ ||PK
+k=1
+ˆAT
+k ⊗ Sk||∞
+to derive
+µ∞(DxF ) ≤ − ||b||∞ − ||A1,K ||∞|| ˜S1,K ||∞
+− ||bx||∞ + || ˆAT
+0,K ||∞|| ¯S0,K ||∞ = −c
+From the statement in the Theorem 2, the system is contrac-
+tive under the defintion III.1 and δISS under the definition
+III.2 with
+lu =(2|| ˆB0,K ||∞ + (|| ˆA0,K ||∞|| ¯S0,K ||∞ + || ˆB0,K ||∞|| ¯S0,K ||∞
++ ||bx||∞ + ||bu||∞)||B0,K ||∞)|| ¯S0,K ||∞
+lS =
+ 
+k + 1
+2
+!
+(((|| ˆA0,K ||∞|| ¯S0,K ||∞ + || ˆB0,K ||∞|| ¯S0,K ||∞
++ ||bx||∞ + ||bu||∞)||B1,K−1||∞ + 2|| ˆA1,K−1||∞
++ 2|| ˆB1,K−1||∞)|| ¯S1,K−1||∞ − || ˜S1,K−1||∞||A1,K−1||∞)
+(13)
+We omitted the derivation of lu and lS which can be found by
+computing supu ||DuF ||∞, supS ||DsF ||∞, respectively.
+The higher expressivity of the LTC model has been proved
+in [24] via principal component analysis on trajectory depth.
+The results of this analysis showed that LTC performs at
+worst like a discrete RNN model over short trajectories, but
+its expressive power does not decrease on longer trajectories.
+We can derive the same conclusion for LGTC, which shares
+with LTC the main components but over a network of
+agents. This higher expressivity allows us to reduce the
+communicated state variables. Therefore, we can select a
+subset of state features F ′ << F and a subset of input
+features G′ << G to communicate. Denoting by xF ′ the
+features to communicate and by xF −F ′ the features to not
+communicate, we can encode the reduced communication in
+the equations above by changing the filter bank in eq (2) asPK
+k=0[IN xF −F ′ , SkxF ′]Hk with IN the identity matrix of
+dimension N. With these reduced graph filters, Theorem 2
+still holds true.
+To compute the state of the system in eq. (8) at any time
+point T , the neural network must implement and ODE solver,
+like Runga-Kutta (RK), that simulates the system starting
+from a trajectory x(0), to x(T ). When used in a prediction
+framework, the neural layer (8) will forward the state x(T )
+to the next layers. Since the system is stiff, the authors
+in [24] proposed an hybrid solver for LTC networks that has
+the additional advantage of reducing the vanishing gradient
+problem due to the ODE resolution. We modified this solver
+to handle our network as follows:
+x(t + ∆) = x(t) + ∆(−PK
+k=1 Skx(t)Ak + f ◦ σc(BS(u))
+1 + ∆(b + f) .
+(14)
+With ∆ = T /n being a fixed step size for n evaluations
+of (14), starting from t = 0 until reaching t = T . The support
+matrix S and the input u are fixed in the simulation interval
+[0, T]. Each iteration of (14) requires to communicate again
+the network state, e.g. x(t + ∆) to evaluate x(t + 2∆).
+Therefore, solving the ODE nullifies the reduction in the
+communicated variables for the high expressivity of the
+model. For this reason, we provide in the next section a
+closed-form solution for LGTC that does not require an ODE
+solver, thus significantly gaining in computation time and
+communication load.
+IV. CLOSED-FORM APPROXIMATION
+By fixing the input and support matrix between the interval
+t = [0 , T], the ODE solution should satisfy the following
+integral:
+x(T ) = x(0) +
+Z T
+0
+F (x(τ), S(0), u(0))dτ (15)
+However, solving this integral is not straightforward due to
+the non-linearity in F . We aim to find an approximate form
+of eq. (15) that keeps the same dynamic properties of the
+original system. Given the following quantities
+fi = − Dxf diag(x(T )|)
+KX
+k=0
+ˆAT
+k ⊗ S(0)k +
+KX
+k=1
+AT
+k ⊗ S(0)k
+fx =ρ( ˆAS(x(T )) + bx)
+fσ =ρ( ˆBS(u(0)) + bu) + ρ( ˆAS(x(0)) + bx)
+we propose the following closed-form approximation
+x(T )| =e−(diag(b|)+diag(fx|)+fi)T diag(σ(2fσ)|)x(0)|
++ diag(1 − σ(2fσ)|)σu|. (16)
+Reminding that σu = σc(BS(u(0))), one can easily demon-
+strate that x(T ) ∈ X since its expression is a convex
+combination with coefficient σ(2fσ) and 1 − σ(2fσ). This
+closed-form solution maintains the contraction rate as stated
+by the following theorem.
+Theorem 3. With t = [0 , T], the state trajectory (16) is a
+closed-form approximation of the dynamic system (8) with
+the same contraction rate c of the Theorem 2.
+Proof. The theorem can be demonstrated by showing that the
+closed-loop system maintains the same dynamic properties.
+We start the proof by highlighting the relationship between
+the superior of the induced log-norm and the superior of the
+time derivative of the induced norm of the matrix exponential
+sup
+x
+µ∞(DxF ) = ∂
+∂t sup
+x
+|| exp(DxF t)||∞
+
+t=0+
+(17)
+Therefore, we can show that the equivalence between the
+right-hand side of the previous relation and the induced norm
+of the jacobian (Dxx(T )) of eq. (16). Let’s name Fex the
+argument of the exponential in the eq. (16). ||Dxx(t)||∞
+satisfies the following :
+||Dxx(t)|||∞ = ||eFex diag(σ(2fσ)|)+
+diag(x|)eFex(diag(σ(2fσ)|)
+KX
+k=0
+ˆAT
+k ⊗ Skt+
+diag(x|)eFex2 diag(Dσ|)
+KX
+k=0
+ˆAT
+k ⊗ Sk−
+diag(σu)2 diag(Dσ|)
+KX
+k=0
+ˆAT
+k ⊗ Sk||∞
+≤ ||eFex ||∞ + ||eFex
+KX
+k=0
+ˆAT
+k ⊗ Skt||∞+
+0.5(||eFex ||∞ + 1)||
+KX
+k=0
+ˆAT
+k ⊗ Sk||∞
+≤ ||eFex ||∞+||eFex
+KX
+k=0
+ˆAT
+k ⊗ Skt||∞ + ||
+KX
+k=0
+ˆAT
+k ⊗ Sk||∞
+(18)
+where the last inequalities come from similar reasons to
+the proof in the theorem 2 and the Lipschitz constant of
+σ(2x) equal to 0.5. The following time derivative proves the
+equality (17)
+∂
+∂t sup
+x
+||Dxx(t)|||∞
+
+t=0+ = − ||b||∞ − ||A1,K ||∞|| ˜S1,K ||∞−
+||bx||∞ + || ˆAT
+0,K ||∞|| ¯S0,K ||∞
+(19)
+Moreover, one can easily demonstrate that the Lipschitz
+constant in u and S is upper bounded by lu, lS respectively,
+taking into account that te−(F )t; F > 0 can be upper
+bounded by 1.
+With a fixed T , the state trajectory (16) can serve as a
+discrete-time system that in training and evaluation requires
+one iteration/communication to be evaluated, against the n
+iteration required by the continuous system. However, equa-
+tion (16) can not be directly distributed over the agents due
+to the kronacker product terms appearing in fi. Moreover,
+notably, the exponential term in recursion causes vanishing
+gradient problems in training. Therefore, we modified the
+trajectory (16) to tackle these two issues. First, we multiply
+the kronacker product terms by x/(x + ϵ), with / being
+the division element by element and a small ϵ. Second, we
+replace the exponential term with a sigmoidal nonlinearity
+which decreases much more smoothly. The resulting closed-
+form graph time constant (CfGC) system is:
+
+
+
+fσ = ρ( ˆBS(u) + bu) + ρ( ˆAS(x) + bx)
+fx = ρ( ˆAS(x) + bx)
+fi = −Dxf ˆAS(x) +PK
+k=1 SkxAk/(x + ϵ)
+x+ = (x ◦ σ(−(b + fx + fi)t + π) − σu) ◦ σ(2fσ) + σu
+(20)
+This system still satisfies the theorem 3 for ϵ → 0 since
+σ(−F t+π)
+
+t=0 ≈ 1. The model in (20) is different from the
+one in (8), even if, when they have the same weight matrices,
+they have approximately the same dynamic properties. We
+demonstrate this good approximation in the result Section V.
+Fig. 1: Flocking control : a group of agents (yellow dots)
+move in order to reach the same velocity and to avoid
+collision. The leader (red dot) moves in order to reach the
+target (blue cross) and avoids the collision with the other
+agents.
+V. VALIDATION EXAMPLE
+We experimentally validated the neural networks proposed
+in a flocking control example. Despite its simplicity, this
+scenario has been previously studied [38] using different
+approaches such as GNN, LSTM, allowing for a direct
+comparison with the proposed model. We also explicitly
+compare GraphODE [29], GGNN, LGTC and CfGC, satis-
+fying the conditions in Theorem 1, 2 and 3 respectively. The
+stability condition is imposed by the following regularization
+in addition to the training loss:
+Π =
+X
+i
+Softplus(pi) (21)
+With pi being only one element equal to δAi − 1 to satisfy
+the Theorem 1 and equal to [−c, −b, −µ∞(PK
+k=1 AT
+k ⊗Sk)]
+for Theorem 2 and 3. The Softplus is introduced to have
+a smooth ReLU function that can be regulated through its
+β to enforce a higher contraction rate and consequently fast
+convergence. We used β = 10.
+In the following, we show a case study involving flocking
+control (Fig. 1) with a leader. In this problem, the agents
+are initialized to follow random velocities while the goal
+is to have them all travelling at the same velocity while
+avoiding collisions with each other. Moreover, one of the
+agents takes the leader role, conducting the team toward a
+target unknown to the other agents. Flocking is a canonical
+problem in decentralized robotics [39], [40].
+We considered N agents described by the position r(t) ∈
+RN ×2 and the velocity v(t) ∈ RN ×2 with a double integrator
+dynamics
+r(t + 1) = r(t) + T v(t); v(t + 1) = v(t) + T u(t);
+with the discrete acceleration u(t) ∈ RN ×2 taken as system
+input. Note that the agent dynamics is used for building the
+dataset and for simulation purposes, but it is not provided to
+the learning algorithm. The flocking expert controller [38]
+for the follower agents is given by
+uf(t) = 1
+N
+NX
+i=1
+vi(t) − ∇rCA(r(t), rj(t))|j=1...N (22a)
+and for the leader it is
+ul(t) = −Wp(rl(t) − d(t)) − ∇rl CA(rl(t), rj(t))|j=1...N
+(22b)
+where Wp is a gain, rl ∈ R2 is the leader position,
+∇rCA(r(t), rj(t))/∇rl CA(rl(t), rj(t)) are the gradient of
+the collision avoidance potential with respect to the position
+of the agents/leader r/rl, evaluated at the position r(t)/rl(t)
+and the position of every other agent rj(t) at time t. The
+i-element of ∇rCA for each robot i with respect to robot j
+is given by [41]
+∇ri CA(rij) =
+(
+− rij
+||rij ||4
+2
+− rij
+||rij ||2
+2
+if ||rij||2
+2 ≤ RCA
+0 otherwise
+(23)
+with rij = ri −rj and RCA > 0 indicating the minimum ac-
+ceptable distance between agents. This potential function is a
+non-negative, non-smooth function that goes to infinity when
+the distance reduces and grows when the distance exceeds
+RCA, in order to avoid the team losing connectivity [41].
+uf(t), ul(t) are a centralized controller since computing
+them requires agent i to have instantaneous evaluation of
+1
+N
+PN
+i=1 vi(t) and rj(t) of every other agent j in the team.
+RCA and Wp are tunable parameters of the controllers.
+Neural Network Architecture
+We assume that the agents form a communication graph
+when they are in a sphere of radius R between each others
+and that exchanges occur at the sampling time T = 0.05 s, so
+that the action clock and the communication clock coincide.
+The input features vector wi ∈ R10 of the robot i for the
+designed neural network is
+wi =
+"
+vi,
+X
+j∈N Si
+rij
+||rij||4
+2
+,
+X
+j∈N Si
+rij
+||rij||2
+2
+,
+{02, rl − d}, {[0, 1], [1, 0]}
+# (24)
+where N Si is the set of the sensing agents within a sphere of
+radius RCA centred in the robot i. Moreover, the vector wi
+contains the zero vector 02 ∈ R1×2 and the one-hot encoding
+[0, 1], if the agent is a follower, while (rl − d) and [1, 0], if
+the agent is a leader. We chose the one-hot encoding instead
+of the binary one because it allows differentiating the neural
+network weights between the leader and the follower. Note
+that we assume all the information in the vector wi to be
+locally available at the sampling/control time T .
+The core of the neural network for the flocking control is a
+layer of GGNN, GraphODE, LGTC or CfGC with F = 50
+features in the hidden state and filter length K = 2 . Note
+that the choice of K affects the complexity of the stability
+condition imposed since it will constrain more parame-
+ters. For LGTC and GraphODE, we implement the hybrid
+solver (14) and RK4, respectively. The input features are first
+processed by a cascade of two fully connected layers of 128
+nodes before feeding the graph neural network. A readout
+of two layers with 128 nodes combines the F -features GNN
+hidden state to get the bidimensional control u saturated to
+the maximum admissible control. The input layers and the
+readout that encapsulate the graph neural network shape a
+more realistic setting to test the stability of the graph neural
+network that is usually used in combination with other kinds
+of neural models. To reduce the communicated variables, we
+used F ′ = 4 and G = 4 for a subset of the state and the
+input to communicate. Following the Remark 1, we used
+normalized Laplacian as a support matrix.
+Training
+We collected a dataset by recording 60 trajectories, further
+separated into three subsets of training, validation and test set
+using the proportion 70% − 10% − 20%, respectively. Each
+trajectory is generated by randomly positioning the agents in
+a square such that their inter-distance is between 0.6 m and
+1.0 m and that their initial velocities are picked at random
+from the interval [−2, 2] m/s in each direction. The leader is
+randomly selected among the agents and the target position
+is randomly located within a square of length 20 m centered
+at the location of the leader. Regardless of the target location,
+the trajectories have a duration of 2.5 s and input saturation
+at 5 m/s2. Moreover, the 60 trajectories are recorded with a
+random number of agents among N = [4, 6, 10, 12, 15]. We
+fixed the communication range to R = 4 m and the sensing
+to RCA = 1 m. We trained the models for 120 epochs
+and executed the DAGGER algorithm [42] every 20 epochs.
+The algorithm evaluates the expert controller in (22) on the
+enrolled state trajectories applying the learned control and
+adding them to the training set. Note that, thanks to the use
+of DAGGER, we do not need a large dataset. We solve the
+imitation learning problem using the ADAM algorithm [43]
+with a learning rate 1e − 3 and forgetting factors 0.9 and
+0.999. The loss function used for imitation learning is the
+mean squared error between the output of the model and the
+optimal control action.
+Results
+In Fig. 2, we show a comparison between GraphODE,
+GGNN, LGTC and CfGC controllers for the flocking control
+case. We evaluate the 4 controllers on 2 sets of experiments
+with 20 trajectories each. In the experiments, we varied
+team size and communication range to test the robustness
+of the controllers. Figure 2 reports the leader position error
+evaluated after a fixed time of 2.5s with respect to the leader
+starting location, i.e. ef /es with ef , es respectively being
+the final and the initial square distance of the leader from
+the target. We also show the average flocking error in the
+interval [0, 2.5s] in logarithmic scale. We assume that the
+communication happens within the sampling time T .
+In the first experiment, the controller scalability is evalu-
+ated for team sizes N = [4, 10, 25, 50] with a communication
+range at 4 m. Figure 2 shows empirically the higher predic-
+tion abilities of LGTC and CfGC compared to GGNN, as
+they are up to 40% for the flocking error and 10% for the
+leader error closer to the expert controller. This is despite
+LGTC and CfGC communicating fewer state and input
+Fig. 2: Flocking and Leader Error for GGNN, LGCT, CfGC and GraphODE, varying the team size N with a communication
+range of 4m and a variable communication range with N = 25.
+variables as explained in the previous section. Moreover, the
+performances of LGTC and CfGC are close to each other,
+confirming the good approximation of CfGC. Sometimes,
+for example, for the flocking error with N = 10 , we can
+see CfGC performing better than LGTC of 1 −2%. This can
+be justified by the fact that CfGC is simpler to train, as it
+is a discrete model, and so it reduces the vanishing gradient
+phenomena. In general, GraphODE is the one that performs
+the worst both for leader and flocking errors. This can be
+explained easily by no direct use of the input features, as
+they are only used to initialize the internal state, resulting in
+an auto-regressive model.
+In the second set of experiments, we evaluate the per-
+formances of the networks when the communication range
+differs from the training range R = 4 m. For 2 m all the
+models show a drop in the performances with 0.18 m/s in
+the flocking error for GGNN,LGTC and CfGC, and 0.3 m/s
+for GraphODE. This drop appears due to the lower ability to
+broadcast the information among the agents when they space
+out over 2 m. As expected, when the communication range
+increases, the flocking errors decrease for all controllers,
+since they can communicate with more agents at the same
+time. However, in this case, the leader error increases,
+since the leader is often “encapsulated” by the other team
+agents and it is thus forced to follow them to not collide,
+causing a slower convergence to the target. Note that this
+behaviour also affects the expert controller. Notably, also for
+this experiment, LGTC and CfCG have better performances
+compared to the others and are similar to each other.
+VI. CONCLUSIONS
+In this work, we model a new continuous-time graph
+neural network, Liquid-Graph Time-constant (LGTC). Its
+enhanced prediction capabilities allow us to reduce com-
+munication load, one of the main drawbacks of GNNs.
+We analyze its dynamic properties leveraging contraction
+analysis and find a closed-form approximation (CfGC) that
+preserves the dynamic properties of the system. We validate
+the proposed model in a flocking control case and compare it
+with δISS GGNN and the GraphODE. Results suggest that,
+despite the reduced communicated vector, LGTC and CfGC
+have performances closer to the centralized expert and more
+robust to parametric changes in a deployment scenario, such
+as communication radius and team size. Future works will
+consider how to further reduce the communication load, still
+high compared to model-based approaches, as well as an
+experimental validation on quadrotor UA Vs.
+REFERENCES
+[1] A. Dorri, S. S. Kanhere, and R. Jurdak, “Multi-agent systems: A
+survey,” Ieee Access, vol. 6, pp. 28 573–28 593, 2018.
+[2] J. Cort ´es and M. Egerstedt, “Coordinated control of multi-robot
+systems: A survey,” SICE Journal of Control, Measurement, and
+System Integration, vol. 10, no. 6, pp. 495–503, 2017.
+[3] G.-B. Huang, L. Chen, C. K. Siew, et al. , “Universal approximation
+using incremental constructive feedforward networks with random
+hidden nodes,” IEEE Trans. Neural Networks, vol. 17, no. 4, pp. 879–
+892, 2006.
+[4] S. Batra, Z. Huang, A. Petrenko, T. Kumar, A. Molchanov, and G. S.
+Sukhatme, “Decentralized control of quadrotor swarms with end-to-
+end deep reinforcement learning,” in Conference on Robot Learning .
+PMLR, 2022, pp. 576–586.
+[5] C. He, Y . Wan, Y . Gu, and F. L. Lewis, “Integral reinforcement
+learning-based multi-robot minimum time-energy path planning sub-
+ject to collision avoidance and unknown environmental disturbances,”
+IEEE Control Systems Letters , vol. 5, no. 3, pp. 983–988, 2020.
+[6] N. Majcherczyk, N. Srishankar, and C. Pinciroli, “Flow-fl: Data-
+driven federated learning for spatio-temporal predictions in multi-robot
+systems,” in 2021 IEEE International Conference on Robotics and
+Automation (ICRA). IEEE, 2021, pp. 8836–8842.
+[7] F. Gama, E. Tolstaya, and A. Ribeiro, “Graph neural networks for
+decentralized controllers,” in ICASSP 2021-2021 IEEE International
+Conference on Acoustics, Speech and Signal Processing (ICASSP) .
+IEEE, 2021, pp. 5260–5264.
+[8] Q. Li, W. Lin, Z. Liu, and A. Prorok, “Message-aware graph attention
+networks for large-scale multi-robot path planning,” IEEE Robotics
+and Automation Letters , vol. 6, no. 3, pp. 5533–5540, 2021.
+[9] E. Tolstaya, J. Paulos, V . Kumar, and A. Ribeiro, “Multi-robot cov-
+erage and exploration using spatial graph neural networks,” in 2021
+IEEE/RSJ International Conference on Intelligent Robots and Systems
+(IROS). IEEE, 2021, pp. 8944–8950.
+[10] A. Khan, A. Ribeiro, V . Kumar, and A. G. Francis, “Graph neural
+networks for motion planning,” arXiv preprint arXiv:2006.06248 ,
+2020.
+[11] X. Ji, H. Li, Z. Pan, X. Gao, and C. Tu, “Decentralized, unlabeled
+multi-agent navigation in obstacle-rich environments using graph
+neural networks,” in 2021 IEEE/RSJ International Conference on
+Intelligent Robots and Systems (IROS) . IEEE, 2021, pp. 8936–8943.
+[12] Y . Zhou, J. Xiao, Y . Zhou, and G. Loianno, “Multi-robot collaborative
+perception with graph neural networks,” IEEE Robotics and Automa-
+tion Letters, vol. 7, no. 2, pp. 2289–2296, 2022.
+[13] M. Tzes, N. Bousias, E. Chatzipantazis, and G. J. Pappas, “Graph
+neural networks for multi-robot active information acquisition,” arXiv
+preprint arXiv:2209.12091, 2022.
+[14] L. Hewing, K. P. Wabersich, M. Menner, and M. N. Zeilinger,
+“Learning-based model predictive control: Toward safe learning in
+control,” Annual Review of Control, Robotics, and Autonomous Sys-
+tems, vol. 3, pp. 269–296, 2020.
+[15] A. Davydov, S. Jafarpour, and F. Bullo, “Non-euclidean contraction
+theory for robust nonlinear stability,” IEEE Transactions on Automatic
+Control, vol. 67, no. 12, pp. 6667–6681, 2022.
+[16] B. Song, J.-J. Slotine, and Q.-C. Pham, “Stability guarantees for
+continuous rl control,” arXiv preprint arXiv:2209.07324 , 2022.
+[17] H. Tsukamoto, S.-J. Chung, and J.-J. Slotine, “Learning-based adaptive
+control using contraction theory,” in 2021 60th IEEE Conference on
+Decision and Control (CDC) . IEEE, 2021, pp. 2533–2538.
+[18] F. Bonassi, M. Farina, and R. Scattolini, “On the stability properties
+of gated recurrent units neural networks,” Systems & Control Letters ,
+vol. 157, p. 105049, 2021.
+[19] E. Terzi, F. Bonassi, M. Farina, and R. Scattolini, “Learning model
+predictive control with long short-term memory networks,” Interna-
+tional Journal of Robust and Nonlinear Control , vol. 31, no. 18, pp.
+8877–8896, 2021.
+[20] F. Bayer, M. B ¨urger, and F. Allg ¨ower, “Discrete-time incremental iss:
+A framework for robust nmpc,” in 2013 European Control Conference
+(ECC). IEEE, 2013, pp. 2068–2073.
+[21] W. D’Amico, A. La Bella, and M. Farina, “An incremental input-
+to-state stability condition for a generic class of recurrent neural
+networks,” arXiv preprint arXiv:2210.09721 , 2022.
+[22] A. Marino, C. Pacchierotti, and P. R. Giordano, “Input state stability
+of gated graph neural networks,” IEEE Transactions on Control of
+Network Systems, pp. 1–12, 2024.
+[23] L. Ruiz, F. Gama, and A. Ribeiro, “Gated graph recurrent neural
+networks,”IEEE Transactions on Signal Processing, vol. 68, pp. 6303–
+6318, 2020.
+[24] R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu, “Liquid
+time-constant networks,” in Proceedings of the AAAI Conference on
+Artificial Intelligence, vol. 35, no. 9, 2021, pp. 7657–7666.
+[25] R. Hasani, M. Lechner, A. Amini, L. Liebenwein, A. Ray,
+M. Tschaikowski, G. Teschl, and D. Rus, “Closed-form continuous-
+time neural networks,” Nature Machine Intelligence , vol. 4, no. 11,
+pp. 992–1003, 2022.
+[26] E. Haber and L. Ruthotto, “Stable architectures for deep neural
+networks,” Inverse problems, vol. 34, no. 1, p. 014004, 2017.
+[27] R. T. Chen, Y . Rubanova, J. Bettencourt, and D. K. Duvenaud, “Neu-
+ral ordinary differential equations,” Advances in neural information
+processing systems, vol. 31, 2018.
+[28] M. Lechner, R. Hasani, M. Zimmer, T. A. Henzinger, and R. Grosu,
+“Designing worm-inspired neural networks for interpretable robotic
+control,” in 2019 international conference on robotics and automation
+(ICRA). IEEE, 2019, pp. 87–94.
+[29] M. Poli, S. Massaroli, J. Park, A. Yamashita, H. Asama, and
+J. Park, “Graph neural ordinary differential equations,” arXiv preprint
+arXiv:1911.07532, 2019.
+[30] Y . Qin, W. Ju, H. Wu, X. Luo, and M. Zhang, “Learning graph ode
+for continuous-time sequential recommendation,” IEEE Transactions
+on Knowledge and Data Engineering , 2024.
+[31] Y . Su, B. Ren, and K. Zhang, “Graph ode recurrent neural networks for
+traffic flow forecasting,” in 2022 IEEE 5th International Conference
+on Electronics and Communication Engineering (ICECE) . IEEE,
+2022, pp. 178–182.
+[32] D. I. Shuman, S. K. Narang, P. Frossard, A. Ortega, and P. Van-
+dergheynst, “The emerging field of signal processing on graphs: Ex-
+tending high-dimensional data analysis to networks and other irregular
+domains,” IEEE Signal Processing Magazine , vol. 30, no. 3, pp. 83–
+98, 2013.
+[33] F. Gama, J. Bruna, and A. Ribeiro, “Stability properties of graph neural
+networks,”IEEE Transactions on Signal Processing, vol. 68, pp. 5680–
+5695, 2020.
+[34] Q. Li, F. Gama, A. Ribeiro, and A. Prorok, “Graph neural networks
+for decentralized path planning,” in Proc. International Conference on
+Autonomous Agents and Multiagent Systems , 2020, pp. 1901–1903.
+[35] F. Gu, H. Chang, W. Zhu, S. Sojoudi, and L. El Ghaoui, “Implicit
+graph neural networks,” Advances in Neural Information Processing
+Systems, vol. 33, pp. 11 984–11 995, 2020.
+[36] D. Lukovnikov, J. Lehmann, and A. Fischer, “Improving the long-
+range performance of gated graph neural networks,” arXiv preprint
+arXiv:2007.09668, 2020.
+[37] T. Str ¨om, “On logarithmic norms,” SIAM Journal on Numerical
+Analysis, vol. 12, no. 5, pp. 741–753, 1975.
+[38] E. Tolstaya, F. Gama, J. Paulos, G. Pappas, V . Kumar, and A. Ribeiro,
+“Learning decentralized controllers for robot swarms with graph neural
+networks,” in Conference on robot learning . PMLR, 2020, pp. 671–
+682.
+[39] W. Yu, G. Chen, and M. Cao, “Distributed leader–follower flocking
+control for multi-agent dynamical systems with time-varying veloci-
+ties,” Systems & Control Letters , vol. 59, no. 9, pp. 543–552, 2010.
+[40] L. E. Beaver and A. A. Malikopoulos, “An overview on optimal
+flocking,” Annual Reviews in Control , vol. 51, pp. 88–99, 2021.
+[41] H. G. Tanner, A. Jadbabaie, and G. J. Pappas, “Stable flocking of
+mobile agents part i: dynamic topology,” in 42nd IEEE International
+Conference on Decision and Control (IEEE Cat. No. 03CH37475) ,
+vol. 2. IEEE, 2003, pp. 2016–2021.
+[42] S. Ross, G. Gordon, and D. Bagnell, “A reduction of imitation learning
+and structured prediction to no-regret online learning,” in Proceedings
+of the fourteenth international conference on artificial intelligence and
+statistics. JMLR Workshop and Conference Proceedings, 2011, pp.
+627–635.
+[43] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimiza-
+tion,” CoRR, vol. abs/1412.6980, 2014.
