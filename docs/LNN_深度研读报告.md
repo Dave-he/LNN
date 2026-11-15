@@ -1764,6 +1764,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-16**：[[docs/daily/2026-11-16_LNN_research_digest.md|每日追踪]]，候选论文 95 篇，仓库 0 个，模型 0 个。
 - **2026-11-15**：[[docs/daily/2026-11-15_LNN_research_digest.md|每日追踪]]，候选论文 95 篇，仓库 45 个，模型 15 个。
   - **研读 3 篇**（selector top-3 **连续第 7 天**全部为已知误命中，已手动改选）：[[docs/reports/Closed_form_Continuous_time_Neural_Networks_CfC_2106.13898_研读报告.md|Closed-form Continuous-time Neural Networks：本仓代码基座的奠基论文 + "LTC 在不规则采样下崩到 49%" 的警讯 (2106.13898)]]、[[docs/reports/Liquid_Graph_Time_Constant_Network_Multi_Agent_Control_2404.13982_研读报告.md|LGTC/CfGC：连续时间图网络 + 收缩率定理给闭式解背书 (2404.13982)]]、[[docs/reports/CPS_LLM_Safe_Usage_Plan_Generator_LTC_Coefficient_Estimation_2405.11458_研读报告.md|CPS-LLM：LTC 作部分可观测系统的参数辨识器 + 未微调 LLM 在安全关键规划里更危险 (2405.11458)]]。
   - **selector 输出的 3 个 top 候选全部排除**：`2607.15232v1` (score 10, LFM2 tokenizer 扩展 —— **连续第 7 天**的同一已知误命中，索引 1401 行已判 false positive)、`2412.17006v1` (score 9, LTC 气候韧性代理建模，eess.SY 纯仿真，**自 10-29 起已被连续 6 轮明确排除**)、`2309.13499v2` (score 9, 多智能体 STL 闭环控制器的 "closed-form continuous-time" **字面命中** —— 是控制器的解析反馈律，与 CfC 无关)。**连续第 7 天同一批 top-3 误命中** —— selector 的强关键词打分 + `already_reported` 覆盖检查在这批论文上**稳定失灵**，必须每日人工复核、不可照抄。**建议尽快给 selector 增加"标题级强关键词"过滤与"作者+参数指纹"去重**。
@@ -1868,5 +1869,4 @@ positioning_updated: 2026-09-14
 - **2026-10-18**：[[docs/daily/2026-10-18_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
 - **2026-10-17**：[[docs/daily/2026-10-17_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 21 个。
 - **2026-10-16**：[[docs/daily/2026-10-16_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
-- **2026-10-15**：[[docs/daily/2026-10-15_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
 <!-- daily-lnn-index:end -->
