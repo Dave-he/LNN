@@ -1,0 +1,1031 @@
+Firebolt-VL: Efficient Vision-Language Understanding
+with Cross-Modality Modulation
+Quoc-Huy Trinh1,∗, Mustapha Abdullahi1,∗, Bo Zhao1,†, Debesh Jha2,†
+1Aalto University 2University of South Dakota
+∗ Equal Contribution † Corresponding Author
+Abstract
+Recent advances in multimodal large language models
+(MLLMs) have enabled impressive progress in vision-
+language understanding, yet their high computational cost
+limits deployment in resource-constrained scenarios such
+as personal assistants, document understanding, and smart
+cameras. Most existing methods rely on Transformer-
+based cross-attention, whose quadratic complexity hinders
+efficiency. Moreover, small vision-language models often
+struggle to precisely capture fine-grained, task-relevant vi-
+sual regions, leading to degraded performance on fine-
+grained reasoning tasks that limit their effectiveness in
+the real world. To address these issues, we introduce
+Firebolt-VL, an efficient vision-language model that re-
+places the Transformer-based decoder with a Liquid Foun-
+dation Model (LFM) decoder. To further enhance visual
+grounding, we propose a Token-Grid Correlation Module,
+which computes lightweight correlations between text to-
+kens and image patches and modulates via the state-space
+model with FiLM conditioning. This enables the model to
+selectively emphasize visual regions relevant to the textual
+prompt while maintaining linear-time inference. Experi-
+mental results across multiple benchmarks demonstrate that
+Firebolt-VL achieves accurate, fine-grained understanding
+with significantly improved efficiency. Our model and code
+are available at:https://fireboltvl.github.io
+1. Introduction
+Multimodal Large Language Models (MLLMs) have
+rapidly advanced vision-language capabilities, achieving
+strong performance on tasks such as image captioning [23,
+26], visual question answering (VQA) [2, 26, 47], and op-
+tical character recognition (OCR) [33, 41]. Recent state-of-
+the-art models such as LLaV A [22, 27, 28], IDEFICS [21],
+OpenFlamingo v2 [3], MiniGPT-4 [5, 47], Chameleon [37],
+InternVL [9], Qwen-VL [4], and FastV [6] underscore the
+growing importance of MLLMs in real-world applications.
+MMMU_Val
+MME_p
+MMB_devAI2D
+POPE
+25.3
+19.0
+26.6
+26.4
+1196.2
+1302.8
+1291.6
+1376.2
+59.6
+57.7
+59.6
+64.6
+36.6
+38.1
+42.1
+46.2
+84.5
+84.3
+87.0
+69.4
+MobileVLM
+MobileVLM V2
+MoE-LLaVA
+Firebolt-VL (Ours)
+(a) Task performance.
+MobileVLM
+MobileVLM V2
+MoE-LLaVA
+SmolVLM2
+Firebolt-VL (Ours)
+Models
+0
+20
+40Throughput (tok/s)
+39.99 42.86
+19.97
+37.80
+46.67 (b) Throughput efficiency.
+Figure 1. Performance and latency efficiency of Firebolt-VL on
+multiple tasks compared with state-of-the-art baselines. Firebolt-
+VL is both competitive and efficient, demonstrating strong gener-
+alization across diverse tasks.
+Nevertheless, deploying MLLMs remains challenging in
+resource-constrained settings due to their high computa-
+tional and memory demands. Improving efficiency is there-
+fore critical for enabling low-latency and on-device mul-
+timodal interaction, achieving seamless integration of lin-
+guistic and visual reasoning in practical technologies.
+Most recent MLLMs are built upon Transformer-based
+Large Language Models (LLMs), which exhibit quadratic
+computational complexity with respect to the input se-
+quence length [15, 39]. As a result, inference is often ineffi-
+cient on resource-constrained devices, and latency increases
+sharply for long-context multimodal inputs. Therefore, im-
+proving LLM efficiency is crucial to enable faster inference
+and facilitate the deployment of MLLMs in low-resource
+environments.
+To alleviate the compute and memory overhead of
+MLLMs, several efficient architectures have been pro-
+posed, including Kosmos-2 [34], MobileVLM [42], Mo-
+bileVLM V2 [10], MoE-LLaV A [25], LLaV A-Phi [48],
+and SmolVLM2 [31]. These models either leverage
+lightweight language backbones or incorporate Mixture-of-
+Experts (MoE) mechanisms [11] to reduce the number of
+active parameters and computational cost. Although such
+approaches have shown promising results on relatively sim-
+ple benchmarks, such as image captioning and VQA, they
+arXiv:2604.04579v2  [cs.CV]  7 Apr 2026
+still face two major challenges. First, small Transformer-
+based architectures exhibit quadratic computational com-
+plexity and limited capacity to model long-range dependen-
+cies. Second, there is a lack of precision when attending
+to task-relevant visual regions, which often leads to failures
+in handling fine-grained or detail-oriented questions that re-
+quire rich visual representations.
+In this work, we address these limitations by introducing
+a token-grid correlation and modulation mechanism, imple-
+mented as the Cross-Modal Modulator (CMM). This mod-
+ule fuses visual grid representations with instruction text
+tokens to emphasize task-relevant visual cues. By doing
+so, the CMM enables the model to attend more effectively
+to fine-grained and detail-oriented information, enhancing
+its ability to reason over complex visual inputs. Further-
+more, we explore the integration of the Liquid Foundation
+Model (LFM) [1, 19] with our proposed CMM for an ef-
+ficient MLLM. From all of our proposed approaches, we
+designFirebolt-VL, an efficient MLLM for broad vision-
+language understanding evaluated on tasks including image
+captioning, VQA, chart understanding, and fine-grained vi-
+sual reasoning, as shown in Figure 1.
+In summary, our main contributions are fourfold:
+(1) We introduceFirebolt-VL, a novel MLLM that inte-
+grates the Liquid Foundation Model (LFM) [1, 19] for ef-
+ficient sequence modeling, significantly reducing computa-
+tional cost while maintaining strong multimodal reasoning
+performance.
+(2) We propose aCross-Modal Modulatormechanism
+that fuses visual grid representations with text tokens. This
+enables more precise attention to task-relevant regions and
+improves the model’s capacity for fine-grained visual un-
+derstanding.
+(3) We conduct extensive experiments on multiple bench-
+marks, including image captioning, VQA, and OCR. Re-
+sults demonstrate that Firebolt-VL achieves competitive
+or superior performance compared to existing efficient
+MLLMs, while substantially improving inference efficiency
+and scalability.
+(4) We release the source code and pretrained model to
+promote transparency and encourage further research in the
+development of efficient MLLMs.
+2. Related Work
+2.1. Multimodal Large Language Model
+Multimodal large language models (MLLMs) have become
+a central research direction due to their wide applicabil-
+ity in document understanding, smart cameras, and virtual
+assistants. Recent advancements in state-of-the-art archi-
+tectures [3–6, 9, 21, 22, 27, 28, 37, 47] have achieved re-
+markable progress in visual understanding and text gener-
+ation, bringing MLLMs closer to practical, real-world de-
+ployment.
+Despite these advancements, the computational demands
+of modern Vision–Language Models (VLMs) remain a ma-
+jor barrier. To deal with this challenge, early efforts such
+as MobileVLM [42] and MobileVLM V2 [10] reduce the
+computational burden by employing lightweight Mobile-
+LLaMA backbones for text generation. Subsequent ap-
+proaches, including MoE-LLaV A [25] and LLaV A-Phi [48],
+adopt Mixture-of-Experts (MoE) [11] to activate only a
+fraction of parameters during inference, thereby eliminating
+redundant computation. More recently, SmolVLM2 [31] in-
+troduced a language backbone combined with pixel-shuffle
+and inner-patching strategies to reduce the number of visual
+tokens to improve efficiency.
+While these models show promising performance and in-
+creasing adoption, they still rely heavily on Transformer-
+based architectures whose attention mechanism incurs
+quadratic time and memory complexity. This fundamen-
+tal limitation restricts their ability to scale to long-context
+inputs and prevents truly lightweight, real-time deploy-
+ment. To address this limitation, the design of Firebolt-
+VL integrates a Liquid-based [19] language model, which
+is leveraged by the Liquid Foundation Model (LFM) de-
+coder [1]. This enables forward passes in linear-time com-
+plexity and significantly improves the overall efficiency of
+vision-language modeling.
+2.2. Cross-modal Integration
+In recent works, most VLMs introduce cross-modal align-
+ment through a simple linear projection layer, which maps
+visual features into a joint embedding space shared with the
+language encoder. While effective for large-scale models
+with strong visual backbones, this strategy becomes prob-
+lematic for compact VLMs, whose vision encoders possess
+limited representational capacity, often resulting in weak or
+unstable alignment.
+To improve alignment quality in smaller models, sev-
+eral enhanced strategies have been proposed. Dense Con-
+nector [44] enriches the visual representation by aggre-
+gating multi-level features from earlier layers. Align-
+KD [12] leverages knowledge distillation to transfer cross-
+modal alignment cues from larger teacher models, thereby
+strengthening the alignment of compact VLMs. Building
+on this direction, Align-GPT [46] introduces a hierarchical
+alignment scheme that learns multiple alignment levels dur-
+ing pre-training and adaptively fuses them during instruc-
+tion tuning to support diverse task requirements.
+Despite their effectiveness, these approaches still ex-
+hibit limited interactive fusion between visual and textual
+cues, often failing to direct the model’s attention toward the
+most relevant visual regions for a given instruction. Qwen-
+VL [4] addresses this issue by incorporating cross-attention
+between image and text tokens, enabling richer cross-modal
+interaction. However, cross-attention incurs quadratic com-
+putational complexity, making it unsuitable for lightweight
+or latency-constrained deployment.
+To overcome these limitations, in Firebolt-VL, we
+introduce the Cross-Modal Modulator (CMM), which
+is designed via the integration of a state-space model
+(SSM) [15–17] and FiLM [35] to fuse grid-level visual to-
+kens with textual representations, and efficiently capture
+the long sequence features for the Large Language Model.
+By computing lightweight token–grid correlations and ap-
+plying FiLM-based modulation within an SSM framework,
+CMM allows the model to dynamically emphasize the
+most informative visual elements while maintaining near-
+linear complexity. This design enables stronger fine-grained
+grounding and contextually accurate multimodal reasoning
+without the computational overhead of cross-attention, and
+it can be scaled further for dealing with the long video input
+or long sequence signal inference of the MLLMs.
+3. Method
+3.1. Preliminaries
+State-Space Models (SSM).An SSM [18] is a sequence
+model that modifies the hidden stateh(t)over time through
+a linear dynamical system. Following this concept, the
+Structured State-Space Model (S4) [16] and Mamba [15]
+introduce a parameterization ofAthat guarantees stabil-
+ity and expressiveness, allowing efficient training on long
+sequences while preserving global dependencies. S4 thus
+bridges the gap between the dynamical-system view of se-
+quence modeling and the content-based attention mecha-
+nism [39] of Transformers.
+Feature-wise Linear Modulation (FiLM).Feature-wise
+Linear Modulation (FiLM) [35] is a lightweight yet effec-
+tive conditioning mechanism that modulates one modal-
+ity’s representation based on another by applying learned,
+feature-wise affine transformations. Given a visual feature
+vectorx∈R D and a conditioning signalc(e.g., a text em-
+bedding), FiLM generates two modulation parameters,γ(c)
+andβ(c), through a learnable function such as a linear pro-
+jection:
+FiLM(x,c) =γ(c)⊙x+β(c),(1)
+where⊙denotes element-wise multiplication. Through this
+formulation, FiLM enables the conditioning signal to adap-
+tively scale and shift visual features, integrating seman-
+tic cues into the representation without requiring explicit
+token-level attention.
+3.2. Overview
+Figure 2 presents the overall architecture of our framework,
+which comprises three main modules: the Vision Encoder
+V is(·), the Large Language ModelLLM(·), and the pro-
+posed Cross-Modal ModulatorCM M(·).
+3.3. Vision Encoder
+For the vision encoder, we leverage the SigLIP [38] model,
+a multilingual vision–language encoder that replaces the
+traditional softmax contrastive objective with a sigmoid-
+based loss for image–text alignment. Given an input im-
+ageX I ∈R 3×H×W , the encoder first divides the image
+into several patches and processes them through a Vision
+Transformer (ViT) backbone to obtain global embeddings
+of gridsX v ∈R G×Dv, whereGdenotes the number of
+visual grids andD v is the embedding dimension.
+In our framework, we employ the SigLIP encoder to ex-
+tract grid-level visual embeddingsX v from the input image
+while preserving native aspect ratios. These embeddings are
+then projected into the shared latent space for multimodal
+fusion via the proposed Cross-Modal Modulator (CMM),
+ensuring fine-grained correspondence between textual cues
+and spatial visual features.
+3.4. Large Language Model
+A key limitation of Transformer-based MLLMs lies in the
+quadratic computational complexity of the attention mech-
+anism. Although FlashAttention has been proposed to re-
+duce the complexity in the attention computation, it still
+poses a challenge due to the KV cache for calculating the
+attention weight. In this work, we replace the Transformer-
+based backbone with a Liquid hypothesis-based language
+model [19], instantiated from the pretrained LFM2 text-
+only model [1]. This exploration improves MLLM effi-
+ciency as the Liquid-based model achieves substantially
+smaller time complexity than the attention-based model.
+Given the concatenated multimodal representation from
+CMM and the textual embeddings, denoted asH=
+[Xt;X mm]∈R (Lt+Lmm)×Dt, The model autoregressively
+generates the target sequenceY={y i}Ly
+i=1 as depicted in
+Equation 2.
+pθ(Y|H) =
+LyY
+i=1
+pθi (yi |H, y <i).(2)
+whereθdenotes all learnable parameters.
+Lastly, the predicted tokens are detokenized to produce
+the final natural-language response. By unifying the two
+modalities with a single autoregressive decoder, Liquid sim-
+plifies the architecture, reduces modality-specific alignment
+overhead, and enables scalable, efficient multimodal rea-
+soning.
+3.5. Cross-Modal Modulator (CMM)
+In prior efficient MLLM works, such as Mobile-VLM [10,
+42] and SmolVLM2 [31], various projectors have been in-
+Projection + split
+FiLM-in
+SSM
+FiLM-out
+Feed Forward
+CMM LFM
+Output Tokens
+Question/Instruction
+What is the dessert in the image ?
+Tokenizer
+Input Image
+...
+Tuned
+ Frozen Token Grid CMM TokenText Token
+1
+stage # stage #
+1
+2
+2
+1
+2
+Vision
+Encoder
+...
+...
+Figure 2. Overview of the Firebolt-VL architecture. The Cross-Modal Modulator (CMM) fuses textual instructions with the visual repre-
+sentations of the query image to produce conditioned tokens, which are then processed by the Liquid Foundation Model (LFM). The model
+is trained in two stages: (1) CMM pre-training to initialize modulation parameters, and (2) end-to-end training of the full framework.
+troduced to align vision-token embeddings with the text-
+token embedding space. Our intuition suggests that the pri-
+mary challenge of the lightweight Vision-Language Model
+is the region-level visual awareness, which limits perfor-
+mance on VQA tasks that require rich visual details. To
+alleviate this limitation, we propose the Cross-Modal Mod-
+ulator (CMM), which leverages the SSM and FiLM to effi-
+ciently attend to the text feature in the specific patches fea-
+ture. This enables the model to focus more precisely on the
+task-relevant visual regions to answer the input instruction.
+Given the text embeddingX t ∈R T×D t, with time step
+Tand the grid-level visual representationsX v ∈R G×Dv,
+with the number of gridsG, the CMM outputs a multimodal
+representation sequenceX mm ∈R T×D t.
+To identify the image patches most relevant to each text
+token, we first compute a correlation matrix between text
+and vision embeddings. Both modalities are projected into
+a shared latent space as shown in Equation 3:
+X ′
+t =W tXt, X ′
+v =W vXv (3)
+The projected embeddings are then split into multiple heads,
+X H
+t ∈R H×T×D H andX H
+v ∈R H×G×D H . We compute
+the scaled dot-product correlation matrixSmm between text
+tokens and vision grids as:
+Smm =σ
+ 
+X H
+t X H
+v
+⊤
+√DH
+!
+,(4)
+whereσ(·)denotes the softmax function applied along the
+grid dimension to normalize the correlation scores to the
+range(0,1). This operation yields attention weights indi-
+cating how strongly each text token attends to each visual
+grid. We further retain only the top-kgrid locations per
+token to focus on the most relevant visual patches. The op-
+timalkvalue is analyzed in Section 5.3.
+After selecting the relevant patches, we average the
+correlation matrix across attention heads and compute a
+weighted sum over the visual features to obtain the per-
+token visual context embeddingc∈R T×D t as follows:
+ˆSg = 1
+H
+HX
+h=1
+S(h)
+mm, c=
+GX
+g=1
+ˆSgX ′
+v. (5)
+We then leverage the FiLM operator to fuse the text embed-
+ding with its corresponding visual context linearly:
+Xf =LN(X t)⊙(1 +α γ in) +α β in,
+where[γ in, βin] =W f c. (6)
+Here,W f is the FiLM projection weight mapping the con-
+textcinto two modulation vectors—thescaleγ in and the
+shiftβ in. The scalar parameterαis a learnable gate that con-
+trols the strength of cross-modal modulation. Intuitively,γin
+scales the feature channels of the text representation based
+on visual evidence, whileβ in adds adaptive offsets to intro-
+duce new activations conditioned on the image. Together,
+these parameters reshape the text representation according
+to what each token “sees” before sequential modeling.
+The visually modulated representationXf is then processed
+by the SSM to capture the hidden-state of the visual-text
+integration features:
+Yf =SSM(X f ).(7)
+The SSM efficiently models sequential interactions in
+O(T)time, allowing the text representation to evolve while
+preserving visual conditioning. Unlike self-attention, which
+explicitly computes pairwise interactions, the SSM propa-
+gates information implicitly through state transitions, cap-
+turing both local and global dependencies in a linear and
+memory-efficient manner. We evaluate alternative SSM
+variants in Section 5.3. After sequential modeling, we ap-
+ply a second FiLM modulation,FiLM-out, to scale it to the
+same space of the visual context:
+Yf =Y⊙(1 +α γ out) +α β out,
+where[γ out, βout] =W ′
+f c. (8)
+Similar to FiLM-in,γ out andβ out adjust the post-SSM fea-
+tures based onc, ensuring alignment between textual and
+visual features after temporal mixing.
+Finally, residual connections and a feed-forward network
+(FFN) refine the fused representations:
+Xout =LN
+ 
+(Xt +Y f ) +FFN(X t +Y f )
+
+,(9)
+where LN denotes the Layer Normalization, and FFN repre-
+sents the Feed Forward layer. This step stabilizes the multi-
+modal representation and enhances expressiveness through
+non-linear transformations in the FFN. The outputX out ∈
+RB×T×D t thus contains text features that are visually mod-
+ulated and temporally contextualized by the SSM.
+To obtain a global multimodal representation, we aggregate
+the token-level outputsX out using mean pooling:
+z= 1
+T
+TX
+t=1
+Xout,t.(10)
+The resulting vectorX mm ∈R B×Dt serves as a com-
+pact fused embedding that captures both linguistic and vi-
+sual semantics. This embedding is subsequently passed to
+the language decoding stage for multimodal reasoning and
+response generation.
+Complexity Analysis:CMM performs the token-grid cor-
+relation only once to derive a compact visual context and re-
+places the repeated cross-attention mechanism with a linear-
+time State-Space Model (SSM), whose complexity scales as
+O(T GDt +T D 2
+t +T D tf(T)), wheref(T)∈ {1,logT}.
+As a result, CMM achieves nearly linear scaling with re-
+spect to sequence lengthTand cost with respect to grid
+sizeG(for fixed or sparse top-k), substantially reducing
+both computational and memory overhead while preserv-
+ing effective cross-modal alignment through FiLM-based
+modulation. In contrast, typical multimodal fusion relies on
+cross-attention between text and vision tokens, which com-
+putes the attention matrixS mm =Softmax(QK ⊤/√Dt)
+and the weighted aggregationAV, resulting in a compu-
+tational complexity ofO(T GD t)per layer and a memory
+requirement proportional toT×G. While effective, this op-
+eration becomes expensive as the scaling of the text length
+Tand visual gridsGwhen compared with CMM.
+4. Experimental Setup
+4.1. Training Recipe
+We train the Firebolt-VL model in two stages, as illustrated
+in Figure 2. In the first stage, we initialize the CMM module
+while freezing the vision encoder and the language model.
+The CC3M dataset [32, 36] is employed for the initializa-
+tion. In the second stage, we perform end-to-end training
+to enhance its reasoning ability. Specifically, we leverage
+the LLaV A-CoT dataset [43], and our processed MMPR-
+v1.2 [7, 8, 40] dataset follows the chain-of-thought format
+of the LLaV A-CoT to enable the model to learn reasoning
+capabilities.
+4.2. Implementation Details
+Both stages of the model are trained using 2 NVIDIA H100
+80GB GPUs with a batch size of 128 in stage 1, and 8 in
+stage 2. For the optimizer, we employ the AdamW opti-
+mizer with a learning rate of5×10 −4 for the first stage and
+1×10 −4 for the second stage. The model is trained for 5
+epochs in each of the two stages. The best model is selected
+after 2 epochs in each stage. We select the best model using
+the perplexity metric on the validation set.
+4.3. Comparison Baseline
+To assess the generalization and reasoning ability of
+Firebolt-VL across diverse environments, we evaluate on
+multiple benchmarks such as VQAv2 [14], POPE [24],
+AI2D [20], MMMU [45] validation set, MME [13], SQA-
+Image [30], and MMB [29] development set. For a fair
+comparison, we conduct the benchmark against models
+trained on a comparable dataset scales. We consider two
+evaluation settings. The first setting compares against
+the big models, which have more than 7 billion param-
+eters, including IDEFICS (2023) [21], OpenFlamingo v2
+(2023) [3], MiniGPT-4-v1 (2023) [47], MiniGPT-4-v2 [5],
+Chameleon (2024) [37], and FastV (2024) [6]. The sec-
+ond setting compares small models, which have fewer than
+3 billion parameters, involving these methods: Kosmos-
+2 (2023) [34], MobileVLM (2024) [42], MobileVLM
+V2 (2024) [10], MoE-LLaV A (2024) [25], LLaV A-Phi
+(2024) [48], and SmolVLM2 (2025) [31].
+Method LLM Parameters VQAv2 POPE AI2D MMMU val MMEp SQAI MMBdev
+IDEFICS [21] LLaMA 9.0B 60.0 81.9 42.2 18.4 1177.3 53.5 45.3
+OpenFlamingo v2 [3] MPT 9.0B 60.4 52.6 31.7 28.8 607.2 44.8 –
+MiniGPT-4-v1 [47] Vicuna 8.0B – 34.6 28.4 23.6 1047.4 39.6 –
+MiniGPT-4-v2 [5] LLaMA 2 8.0B – 60.0 30.5 25.0 968.4 54.7 –
+Chameleon [37] LLaMA 2 7.0B – 19.4 46.0 22.4 202.7 46.8 –
+FastV [6] Vicuna 7.0B 55.0 48.0 42.7 22.0 873.2 51.1 –
+Kosmos-2 [34] GPT 2 1.7B 45.6 66.3 25.6 23.7 721.1 32.7 –
+MobileVLM [42] Mobile-LLaMA 1.7B – 84.5 36.6 25.3 1196.2 57.3 59.6
+MobileVLM V2 [10] Mobile-LLaMA 1.7B – 84.3 38.1 19.0 1302.8 66.7 57.7
+MoE-LLaV A [25] Qwen 2.2B 76.2 87.042.1 26.6 1291.6 63.1 59.6
+LLaV A-Phi [48] Phi 2 2.7B 71.4 85.0 – – 1335.1 68.459.8
+SmolVLM2 [31] Mobile-LLaMA 0.3B – 54.3 39.228.91236.5 58.8 –
+Firebolt- VL (Ours) LFM2 0.8B 76.6 69.4 46.2 26.4 1376.2 56.7 64.6
+Table 1. Quantitative comparison of the proposedFirebolt-VLmodel with existing MLLMs across seven benchmarks. The superscriptp
+denotes the perception score on the MME benchmark, while SQA I refers the ScienceQA-IMG [30]. The best results are shown inbold,
+and the second-best results are underlined. “–” indicates results not reported in the original papers.
+Correct Answer: New York
+What is the destination city searched in
+this image?
+Which of these deﬁne dairy item?
+A. C   B. D (Correct)   C. B    D. A
+A
+B
+D
+Visual Question Answering  Visual Multiple Choice 
+ The diagram below shows a food chain.
+If the smaller toothed whales ate all theleopard seals, the population of krills
+would most likely.A. Remain the same   B. Decrease  C. Increase (Correct)   D. NA
+Page showing multiple
+ﬂights on an app.
+The destination citysearched in the image
+is New York.
+The destination citysearched in this image
+is San Francisco.
+SmolVLM 2
+C
+Firebolt-VL
+SmolVLM 2
+MobileVLM
+ V2
+B A
+MobileVLM
+V2
+Correct Answer: 32
+Can you see if this is 32 bit or 64
+bit? Thanks.
+A DVD is on its ownwith the title
+Walmart on the top.
+32
+It is a 64-bit CD
+MobileVLM 
+V2
+Firebolt-VL
+MobileVLM
+ V2
+Firebolt-VL
+SmolVLM 2
+SmolVLM 2
+Firebolt-VL
+Hi, I just wanted to conﬁrm that these areindeed pork chops. Any other information
+that is clear would be appreciated. Thankyou.
+Correct Answer: Yes
+The product number on
+this package is 60/70.
+The overall image gives a
+clear view of the priceand brand information,
+making it easy forpotential customers tomake a purchase.
+Firebolt-VL
+Yes, there is a slice ofbacon visible in the
+image, which is a type ofmeat.
+SmolVLM 2
+MobileVLM
+V2
+Correct Answer: caffeinated
+Is this caffeinated or decaffeinated?
+A blue and redPepsi can layingon its side with
+the word "P" inwhite.
+caffeinated
+caffeinated
+SmolVLM 2
+Firebolt-VL
+MobileVLM
+V2
+Figure 3. Qualitative comparison of responses from Firebolt-VL with recent efficient vision–language models, including MobileVLM
+V2 [10] and SmolVLM2 [31], on detail-dependent question-answering tasks. Firebolt-VL demonstrates stronger fine-grained grounding
+and more accurate, instruction-aligned responses.
+5. Results
+5.1. Quantitative Results
+Comparison with previous works in image understand-
+ing.From the benchmark results in Table 1, despite having
+fewer than 1B parameters, Firebolt-VL achieves competi-
+tive performance compared to much larger models (over 7B
+parameters), and clearly outperforms compact models in the
+0.3B–3B range. Although there is a performance drop on
+the POPE benchmark, this may be due to the SSM’s implicit
+state propagation being less effective at suppressing halluci-
+nated content than explicit attention. Notably, Firebolt-VL
+attains the highest scores on both VQAv2 and MME bench-
+marks, demonstrating strong visual reasoning and percep-
+tual alignment capabilities, which reflect the efficacy of the
+CMM module in enhancing the perception ability of the
+MLLMs. These findings highlight the effectiveness of our
+designed fusing module in capturing long multimodal se-
+quence dependencies efficiently, without relying on a heavy
+attention-based mechanism. Results suggest that structured
+state-space modeling offers a promising alternative for scal-
+able and efficient multimodal understanding.
+Comparison of efficiency with prior efficient vision-
+language models.To evaluate the computational efficiency
+of Firebolt-VL against MobileVLM [42], MobileVLM
+V2 [10], MoE-LLaV A [25], and SmolVLM2 [31], we con-
+duct experiments on the POPE [24] dataset using two key
+metrics:latencyandthroughput(tokens per second). All
+models were evaluated on a single NVIDIA H100 GPU with
+a maximum output length of 256 tokens for consistent com-
+parison. As shown in Figure 1b, Firebolt-VL achieves the
+highest throughput at 46.67 (tokens/sec) among lightweight
+multimodal baselines. Figure 4 further illustrates the ac-
+curacy–latency trade-off, where Firebolt-VL achieves com-
+petitive perception performance while maintaining low la-
+tency. These results demonstrate the strong computa-
+tional efficiency of our Liquid-based backbone and the
+lightweight nature of our Cross-Modal Modulator. Overall,
+the integration of structured state-space modeling enables
+fast multimodal reasoning while maintaining low computa-
+tional overhead, making Firebolt-VL suitable for real-time
+and resource-constrained deployment scenarios.
+40 45 50 55 60 65
+Latency (ms)
+1200
+1300
+1400MMEp score
+1.7B
+1.7B 2.2B
+0.3B
+0.8B
+MobileVLM
+MobileVLM V2
+MoE-LLaVA
+SmolVLM2
+Firebolt-VL (Ours)
+Figure 4. Accuracy–latency comparison of compact MLLMs.
+Bubble area denotes parameter count (B), and annotations indicate
+the exact model size. Firebolt-VL provides a favorable accuracy–
+latency trade-off, achieving a higher MME p perception score at
+lower inference latency.
+5.2. Qualitative Results
+In Figure 3, we present qualitative results that highlight
+Firebolt-VL’s visual reasoning and text generation abilities
+across both visual question answering and visual multiple-
+choice tasks, compared against two efficient multimodal
+baselines—SmolVLM2 [31] and MobileVLM V2 [10]. Un-
+like prior lightweight models, which often produce generic
+descriptions, Firebolt-VL consistently generates precise,
+question-grounded answers. For example, when asked
+about the “destination city being searched,” Firebolt-VL
+correctly attends to the search bar region in the image and
+extracts the appropriate answer, while baselines fail to lo-
+calize this detail.
+Similarly, in multiple-choice question, Firebolt-VL demon-
+strates reliable fine-grained visual discrimination, such as
+identifying subtle differences among dairy product labels or
+tracking hierarchical relations in food chains. These exam-
+ples collectively show that Firebolt-VL effectively attends
+to task-relevant visual grids and leverages localized visual
+cues to produce more accurate and context-aware responses
+than existing efficient VLMs. Therefore, these results show-
+case the perceptual improvements introduced by the CMM
+module, which strengthens the overall framework and can
+then be extended for further applications.
+5.3. Ablation Studies
+State-space model (SSM) choice.To determine the most
+suitable state-space model for our Firebolt-VL framework,
+we conduct experiments to evaluate the impact of differ-
+ent SSM variants on overall performance. Specifically,
+we compared three representative models—Mamba [15],
+S4D [17], and S4 [16], as depicted in Table 2.
+Approach POPE AI2D MMMU val Average
+Mamba [15] 57.4 39.9 23.6 40.3
+S4D [17]69.945.6 23.7 46.4
+S4[16] 69.446.2 26.4 47.3
+Table 2. Performance comparison of Mamba, S4D, and S4 state-
+space models on POPE [24], AI2D [20], and MMMU val [45]
+benchmarks. Structured models (S4/S4D) outperform Mamba.
+From the results, it can be observed that S4 and S4D
+yield higher performance compared to Mamba, indicating
+that structured state-space models are more effective in cap-
+turing the interactions between textual and visual embed-
+dings. Since the visual embeddings represent information
+from five spatial grids of the image, the structured state-
+space architecture enables more accurate modeling of ge-
+ometric relationships during the transition process, thereby
+achieving superior results compared to the Mamba model.
+Cross-modal fusion mechanism choice.To evaluate the
+effectiveness of the CMM module, we conduct experiments
+comparing three fusion strategies: (1) Prepend, where the
+projected image features from the MLP layer are passed
+through the language Model; (2) Cross-attend, where cross-
+attention follows Q-Former implementation [23] is applied
+to enable interaction between visual and textual features;
+and (3) CMM (ours), the proposed module that integrates
+state-space modeling for efficient and structured cross-
+modal fusion. The experimental results are depicted in Ta-
+ble 3.
+Approach MME AI2D MMMU val
+Prepend 981.5 24.1 22.1
+Cross-attended 1036.5 45.1 24.4
+CMM (Ours) 1376.2 46.2 26.4
+Table 3. Performance of different connector methods on
+MME [13], AI2D [20], and MMMU val [45]. Our proposed CMM
+outperforms both Prepend and Cross-attention fusion across all
+benchmarks.
+From the benchmark results, we observe that in the
+MME perception benchmark, the CMM approach signif-
+icantly outperforms both the Cross-attend and Prepend
+methods, demonstrating that our fusion mechanism effec-
+tively enhances the model’s perceptual ability. Moreover, in
+the AI2D and MMMUval benchmarks, CMM also achieves
+higher scores—particularly on chart and diagram questions
+in AI2D and on mathematics and coding-related questions
+in MMMU val. In detail, it shows that the combination of
+FiLM and state-space can effectively fuse the vision and
+the text features, where the text features are long-range de-
+pendencies when compared with the Q-Former approach,
+showing a considerable improvement in the benchmark re-
+sults. In general, these results indicate that CMM en-
+ables more precise contextual alignment between modali-
+ties, leading to an overall improvement in the model’s rea-
+soning and understanding performance.
+Top-kgrid assessment.To assess how many visual grids
+should be selected by the CMM module, we evaluate model
+performance under different values ofk, wherekrepresents
+the number of top-ranked visual grids processed by the fu-
+sion mechanism. Due to computational constraints, the vi-
+sion encoder produces five grids; therefore, we evaluate top-
+kvalues ranging from 1 to 5.
+Datasetk= 1k= 2k= 3k= 4k= 5
+MME1039.8 1192.0 1258.61376.21289.4
+AI2D43.9 44.1 45.446.245.6
+MMMUval 22.2 24.3 25.826.426.0
+Table 4. Effect of top-kgrid selections on MME [13], AI2D [20],
+and MMMU val [45]. Performance improves up tok= 4and
+slightly drops atk= 5.
+From Table 4, we observe that performance improves con-
+sistently askincreases from 1 to 4 across all bench-
+marks (MME, AI2D, and MMMU val). Notably, the results
+on MMMU val increase as top-kincreases, suggesting that
+reasoning-intensive tasks benefit from integrating multiple
+visual cues. These results indicate that relying solely on the
+single most salient grid (k= 1) is insufficient for robust
+multimodal understanding, and that attending to multiple
+top-ranked grids allows the model to capture fine-grained
+details and complementary visual signals better. However,
+whenk= 5, there is a slight performance drop. Overall, in-
+creasingkallows the model to aggregate information from
+a broader visual context, which may help capture additional
+details that are relevant to the question; however, selecting
+too many grids can also introduce noise or dilute the contri-
+bution of the most informative regions.
+6. Conclusion
+We present Firebolt-VL, an efficient multimodal LLM that
+leverages the Liquid-based language decoder and incorpo-
+rates a lightweight fusion mechanism combining a state-
+space model with linear feature modulation. This design
+specifically addresses the challenge of fine-grained detail
+perception in efficient vision–language models. We demon-
+strate that our proposed Cross-Modal Modulator (CMM)
+enables the model to be aware of the precise visual details
+that are directly relevant to the input question or instruction.
+By integrating a Liquid-based language model (LFM2) [1]
+within the VLM framework, Firebolt-VL achieves com-
+petitive performance compared to attention-based architec-
+tures while maintaining a lightweight design. As a result,
+our approach achieves strong perceptual and reasoning per-
+formance with reduced computational overhead. This ap-
+proach can potentially be extended to long video sequences
+and broader visual grounding tasks.
+Limitations.Our current model operates on single-image
+inputs, and extending CMM to support multiple images
+or video sequences remains an open challenge. We have
+not yet developed a version of CMM optimized for video
+inputs; however, future work will explore efficient cross-
+modal connectors capable of integrating temporal visual in-
+formation with textual instructions.
+Acknowledgements
+This work was supported by the Research Council of
+Finland (Grant No. 362729), Business Finland (Grant
+No. 169/31/2024), and the Finnish Doctoral Program
+Network in Artificial Intelligence, AI-DOC (Grant No.
+VN/3137/2024-OKM-6), awarded to Bo Zhao. D. Jha is
+supported in part by the U.S. Department of Education
+(P116Z240151 to the University of South Dakota and the
+South Dakota School of Mines & Technology). The views
+expressed are those of the author(s) and do not necessarily
+represent the official views of the U.S. Department of Edu-
+cation.
+References
+[1] Liquid AI. Liquid Foundation Models: Our First Series of
+Generative AI Models|Liquid AI, 2024. 2, 3, 8
+[2] Stanislaw Antol, Aishwarya Agrawal, Jiasen Lu, Margaret
+Mitchell, Dhruv Batra, C. Lawrence Zitnick, and Devi
+Parikh. VQA: Visual Question Answering. In2015 IEEE
+International Conference on Computer Vision (ICCV), pages
+2425–2433, 2015. ISSN: 2380-7504. 1
+[3] Anas Awadalla, Irena Gao, Josh Gardner, Jack Hessel, Yusuf
+Hanafy, Wanrong Zhu, Kalyani Marathe, Yonatan Bitton,
+Samir Gadre, Shiori Sagawa, et al. Openflamingo: An open-
+source framework for training large autoregressive vision-
+language models.arXiv preprint arXiv:2308.01390, 2023.
+1, 2, 5, 6
+[4] Jinze Bai, Shuai Bai, Yunfei Chu, Zeyu Cui, Kai Dang,
+Xiaodong Deng, Yang Fan, Wenbin Ge, Yu Han, Fei
+Huang, et al. Qwen technical report.arXiv preprint
+arXiv:2309.16609, 2023. 1, 2
+[5] Jun Chen, Deyao Zhu, Xiaoqian Shen, Xiang Li, Zechun
+Liu, Pengchuan Zhang, Raghuraman Krishnamoorthi,
+Vikas Chandra, Yunyang Xiong, and Mohamed Elhoseiny.
+Minigpt-v2: large language model as a unified interface
+for vision-language multi-task learning.arXiv preprint
+arXiv:2310.09478, 2023. 1, 5, 6
+[6] Liang Chen, Haozhe Zhao, Tianyu Liu, Shuai Bai, Junyang
+Lin, Chang Zhou, and Baobao Chang. An image is worth 1/2
+tokens after layer 2: Plug-and-play inference acceleration for
+large vision-language models. InProceedings of the Euro-
+pean Conference on Computer Vision, pages 19–35, 2024. 1,
+2, 5, 6
+[7] Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, Guo Chen,
+Sen Xing, Muyan Zhong, Qinglong Zhang, Xizhou Zhu,
+Lewei Lu, Bin Li, Ping Luo, Tong Lu, Yu Qiao, and Jifeng
+Dai. Internvl: Scaling up vision foundation models and
+aligning for generic visual-linguistic tasks.arXiv preprint
+arXiv:2312.14238, 2023. 5
+[8] Zhe Chen, Weiyun Wang, Hao Tian, Shenglong Ye, Zhang-
+wei Gao, Erfei Cui, Wenwen Tong, Kongzhi Hu, Jiapeng
+Luo, Zheng Ma, et al. How far are we to gpt-4v? closing
+the gap to commercial multimodal models with open-source
+suites.arXiv preprint arXiv:2404.16821, 2024. 5
+[9] Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, Guo Chen,
+Sen Xing, Muyan Zhong, Qinglong Zhang, Xizhou Zhu,
+Lewei Lu, et al. Internvl: Scaling up vision foundation mod-
+els and aligning for generic visual-linguistic tasks. InPro-
+ceedings of the IEEE/CVF conference on computer vision
+and pattern recognition, pages 24185–24198, 2024. 1, 2
+[10] Xiangxiang Chu, Limeng Qiao, Xinyu Zhang, Shuang Xu,
+Fei Wei, Yang Yang, Xiaofei Sun, Yiming Hu, Xinyang
+Lin, Bo Zhang, et al. Mobilevlm v2: Faster and
+stronger baseline for vision language model.arXiv preprint
+arXiv:2402.03766, 2024. 1, 2, 3, 5, 6, 7
+[11] William Fedus, Barret Zoph, and Noam Shazeer. Switch
+transformers: Scaling to trillion parameter models with sim-
+ple and efficient sparsity.Journal of Machine Learning Re-
+search, 23(120):1–39, 2022. 1, 2
+[12] Qianhan Feng, Wenshuo Li, Tong Lin, and Xinghao Chen.
+Align-kd: Distilling cross-modal alignment knowledge for
+mobile vision-language large model enhancement. InPro-
+ceedings of the Computer Vision and Pattern Recognition
+Conference, pages 4178–4188, 2025. 2
+[13] Chaoyou Fu, Peixian Chen, Yunhang Shen, Yulei Qin,
+Mengdan Zhang, Xu Lin, Jinrui Yang, Xiawu Zheng, Ke Li,
+Xing Sun, Yunsheng Wu, Rongrong Ji, Caifeng Shan, and
+Ran He. Mme: A comprehensive evaluation benchmark for
+multimodal large language models, 2025. 5, 8
+[14] Yash Goyal, Tejas Khot, Douglas Summers-Stay, Dhruv Ba-
+tra, and Devi Parikh. Making the v in vqa matter: Elevating
+the role of image understanding in visual question answer-
+ing. InProceedings of the IEEE conference on computer
+vision and pattern recognition, pages 6904–6913, 2017. 5
+[15] Albert Gu and Tri Dao. Mamba: Linear-time sequence mod-
+eling with selective state spaces. InProceedings of the First
+conference on language modeling, 2024. 1, 3, 7
+[16] Albert Gu, Karan Goel, and Christopher R ´e. Efficiently
+modeling long sequences with structured state spaces.arXiv
+preprint arXiv:2111.00396, 2021. 3, 7
+[17] Albert Gu, Karan Goel, Ankit Gupta, and Christopher R ´e.
+On the parameterization and initialization of diagonal state
+space models.Advances in Neural Information Processing
+Systems, 35:35971–35983, 2022. 3, 7
+[18] James D Hamilton. State-space models.Handbook of econo-
+metrics, 4:3039–3080, 1994. 3
+[19] Ramin Hasani, Mathias Lechner, Tsun-Hsuan Wang,
+Makram Chahine, Alexander Amini, and Daniela Rus. Liq-
+uid structural state-space models. InProceedings of the
+Eleventh International Conference on Learning Representa-
+tions, 2023. 2, 3
+[20] Aniruddha Kembhavi, Mike Salvato, Eric Kolve, Minjoon
+Seo, Hannaneh Hajishirzi, and Ali Farhadi. A diagram is
+worth a dozen images. InProceedings of the European con-
+ference on computer vision, pages 235–251, 2016. 5, 7, 8
+[21] Hugo Laurenc ¸on, Lucile Saulnier, L´eo Tronchon, Stas Bek-
+man, Amanpreet Singh, Anton Lozhkov, Thomas Wang, Sid-
+dharth Karamcheti, Alexander Rush, Douwe Kiela, et al.
+Obelics: An open web-scale filtered dataset of interleaved
+image-text documents.Advances in Neural Information Pro-
+cessing Systems, 36:71683–71702, 2023. 1, 2, 5, 6
+[22] Feng Li, Renrui Zhang, Hao Zhang, Yuanhan Zhang, Bo Li,
+Wei Li, Zejun Ma, and Chunyuan Li. Llava-next-interleave:
+Tackling multi-image, video, and 3d in large multimodal
+models.arXiv preprint arXiv:2407.07895, 2024. 1, 2
+[23] Junnan Li, Dongxu Li, Silvio Savarese, and Steven Hoi.
+Blip-2: Bootstrapping language-image pre-training with
+frozen image encoders and large language models. InIn-
+ternational conference on machine learning, pages 19730–
+19742, 2023. 1, 7
+[24] Yifan Li, Yifan Du, Kun Zhou, Jinpeng Wang, Wayne Xin
+Zhao, and Ji-Rong Wen. Evaluating object hallucina-
+tion in large vision-language models.arXiv preprint
+arXiv:2305.10355, 2023. 5, 7
+[25] Bin Lin, Zhenyu Tang, Yang Ye, Jiaxi Cui, Bin Zhu, Peng
+Jin, Jinfa Huang, Junwu Zhang, Yatian Pang, Munan Ning,
+et al. Moe-llava: Mixture of experts for large vision-
+language models.arXiv preprint arXiv:2401.15947, 2024.
+1, 2, 5, 6, 7
+[26] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee.
+Visual Instruction Tuning.Advances in Neural Information
+Processing Systems, 36:34892–34916, 2023. 1
+[27] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee.
+Visual instruction tuning.Advances in neural information
+processing systems, 36:34892–34916, 2023. 1, 2
+[28] Haotian Liu, Chunyuan Li, Yuheng Li, and Yong Jae Lee.
+Improved baselines with visual instruction tuning. InPro-
+ceedings of the IEEE/CVF conference on computer vision
+and pattern recognition, pages 26296–26306, 2024. 1, 2
+[29] Yuan Liu, Haodong Duan, Yuanhan Zhang, Bo Li, Songyang
+Zhang, Wangbo Zhao, Yike Yuan, Jiaqi Wang, Conghui He,
+Ziwei Liu, et al. Mmbench: Is your multi-modal model an
+all-around player? InProceedings of the European confer-
+ence on computer vision, pages 216–233, 2024. 5
+[30] Pan Lu, Swaroop Mishra, Tanglin Xia, Liang Qiu, Kai-Wei
+Chang, Song-Chun Zhu, Oyvind Tafjord, Peter Clark, and
+Ashwin Kalyan. Learn to explain: Multimodal reasoning via
+thought chains for science question answering.Advances
+in Neural Information Processing Systems, 35:2507–2521,
+2022. 5, 6
+[31] Andr ´es Marafioti, Orr Zohar, Miquel Farr ´e, Merve Noyan,
+Elie Bakouch, Pedro Cuenca, Cyril Zakka, Loubna Ben
+Allal, Anton Lozhkov, Nouamane Tazi, et al. Smolvlm:
+Redefining small and efficient multimodal models.arXiv
+preprint arXiv:2504.05299, 2025. 1, 2, 3, 5, 6, 7
+[32] Edwin G. Ng, Bo Pang, Piyush Sharma, and Radu Soricut.
+Understanding guided image captioning performance across
+domains.arXiv preprint arXiv:2012.02339, 2020. 5
+[33] Jaeyoo Park, Jin Young Choi, Jeonghyung Park, and
+Bohyung Han. Hierarchical Visual Feature Aggre-
+gation for OCR-Free Document Understanding, 2024.
+arXiv:2411.05254 [cs]. 1
+[34] Zhiliang Peng, Wenhui Wang, Li Dong, Yaru Hao, Shaohan
+Huang, Shuming Ma, and Furu Wei. Kosmos-2: Ground-
+ing multimodal large language models to the world.arXiv
+preprint arXiv:2306.14824, 2023. 1, 5, 6
+[35] Ethan Perez, Florian Strub, Harm De Vries, Vincent Du-
+moulin, and Aaron Courville. Film: Visual reasoning with a
+general conditioning layer. InProceedings of the AAAI con-
+ference on artificial intelligence, 2018. 3
+[36] Piyush Sharma, Nan Ding, Sebastian Goodman, and Radu
+Soricut. Conceptual captions: A cleaned, hypernymed, im-
+age alt-text dataset for automatic image captioning. InPro-
+ceedings of the 56th Annual Meeting of the Association for
+Computational Linguistics, 2018. 5
+[37] Chameleon Team. Chameleon: Mixed-modal early-fusion
+foundation models.arXiv preprint arXiv:2405.09818, 2024.
+1, 2, 5, 6
+[38] Michael Tschannen, Alexey Gritsenko, Xiao Wang, Muham-
+mad Ferjad Naeem, Ibrahim Alabdulmohsin, Nikhil
+Parthasarathy, Talfan Evans, Lucas Beyer, Ye Xia, Basil
+Mustafa, et al. Siglip 2: Multilingual vision-language en-
+coders with improved semantic understanding, localization,
+and dense features.arXiv preprint arXiv:2502.14786, 2025.
+3
+[39] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-
+reit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia
+Polosukhin. Attention is all you need.Advances in neural
+information processing systems, 30, 2017. 1, 3
+[40] Weiyun Wang, Zhe Chen, Wenhai Wang, Yue Cao,
+Yangzhou Liu, Zhangwei Gao, Jinguo Zhu, Xizhou Zhu,
+Lewei Lu, Yu Qiao, and Jifeng Dai. Enhancing the reason-
+ing ability of multimodal large language models via mixed
+preference optimization.arXiv preprint arXiv:2411.10442,
+2024. 5
+[41] Haoran Wei, Yaofeng Sun, and Yukun Li. DeepSeek-OCR:
+Contexts Optical Compression, 2025. arXiv:2510.18234
+[cs]. 1
+[42] Qinzhuo Wu, Weikai Xu, Wei Liu, Tao Tan, Jianfeng Liu,
+Ang Li, Jian Luan, Bin Wang, and Shuo Shang. Mobilevlm:
+A vision-language model for better intra-and inter-ui under-
+standing.arXiv preprint arXiv:2409.14818, 2024. 1, 2, 3, 5,
+6, 7
+[43] Guowei Xu, Peng Jin, Hao Li, Yibing Song, Lichao Sun, and
+Li Yuan. Llava-cot: Let vision language models reason step-
+by-step, 2024. 5
+[44] Huanjin Yao, Wenhao Wu, Taojiannan Yang, YuXin Song,
+Mengxi Zhang, Haocheng Feng, Yifan Sun, Zhiheng Li,
+Wanli Ouyang, and Jingdong Wang. Dense connector for
+mllms.Advances in Neural Information Processing Systems,
+37:33108–33140, 2024. 2
+[45] Xiang Yue, Yuansheng Ni, Kai Zhang, Tianyu Zheng, Ruoqi
+Liu, Ge Zhang, Samuel Stevens, Dongfu Jiang, Weiming
+Ren, Yuxuan Sun, et al. Mmmu: A massive multi-discipline
+multimodal understanding and reasoning benchmark for ex-
+pert agi. InProceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition, pages 9556–
+9567, 2024. 5, 7, 8
+[46] Fei Zhao, Taotian Pang, Chunhui Li, Zhen Wu, Junjie Guo,
+Shangyu Xing, and Xinyu Dai. Aligngpt: Multi-modal large
+language models with adaptive alignment capability.arXiv
+preprint arXiv:2405.14129, 2024. 2
+[47] Deyao Zhu, Jun Chen, Xiaoqian Shen, Xiang Li, and Mo-
+hamed Elhoseiny. Minigpt-4: Enhancing vision-language
+understanding with advanced large language models.arXiv
+preprint arXiv:2304.10592, 2023. 1, 2, 5, 6
+[48] Yichen Zhu, Minjie Zhu, Ning Liu, Zhiyuan Xu, and Yaxin
+Peng. Llava-phi: Efficient multi-modal assistant with small
+language model. InProceedings of the 1st International
+Workshop on Efficient Multimedia Computing under Limited,
+pages 18–22, 2024. 1, 2, 5, 6

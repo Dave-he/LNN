@@ -36,7 +36,6 @@ treatment [2]. Manual planimetry, the clinical gold standard, is subjective, slo
 and varies between observers, so automated segmentation has become a priority.
 ⋆ Equal contribution.
 arXiv:2611.04233v1  [cs.CV]  3 Nov 2026
-
 2 T. Acharjee et al.
 In many settings, and especially in low and middle income regions, this must
 run with limited specialist time and limited computing hardware, which favors
@@ -81,7 +80,6 @@ gion extraction, and WSNet [13] added a wound-oriented pipeline with dedi-
 cated pre-processing. On the FUSeg 2021 benchmark, FUSegNet [14] reported
 the strongest published result and remains the reference point for this dataset.
 State-space (Mamba) models have also entered the field, from lightweight ulcer
-
 LINDA 3
 Fig. 1.The proposed LINDA, illustrating the integration of the ResNet-34 encoder,
 Additive LSS Fusion, LTC Refinement Loop, and Deep Supervision Decoder.
@@ -111,7 +109,6 @@ the following subsections.
 3.1 Local Self-Similarity (LSS) Fusion
 To add an explicit structural prior, the LSS Extractor operates on the input im-
 ageIbefore any deep encoding. Densely overlapping local patchespi ∈R K×K×3
-
 4 T. Acharjee et al.
 are extracted, and to stay robust to the uneven illumination common in wound
 photography, each is zero-centered and normalized (Eq. 1):
@@ -159,7 +156,6 @@ BCE +L (k)
 Dice
 
 +λ bLBAL (4)
-
 LINDA 5
 with weightsλ m = 1.0, λ a1 = 0.4, λ a2 = 0.2, andλ b = 0.5. The BAL grounds
 the prediction in tissue structure by matching the Sobel gradients∇(·)of the
@@ -202,7 +198,6 @@ tractor and LTC loop are trained from scratch. The task is binary, wound against
 background; the necrotic and granulation regions noted earlier describe the vi-
 sual difficulty inside the wound, not separate classes. We report Dice (DSC),
 IoU, and the 95th-percentile Hausdorff Distance (HD95), all on the wound class.
-
 6 T. Acharjee et al.
 Fig. 2.Sample images and ground-truth masks from the FUSeg 2021 challenge dataset.
 T able 1.Quantitative comparison of LINDA against representative segmentation
@@ -237,7 +232,6 @@ wound rim. LINDA reaches these numbers with 25.70M parameters, far fewer
 than heavy encoders such as ResNet101-UNet [25], TransUNet [6], and Mask
 R-CNN [24], which supports its use where computing is limited. FUSegNet [14],
 the FUSeg 2021 challenge winner, is included as a domain-specific reference; un-
-
 LINDA 7
 der the same 100-epoch schedule it trails LINDA on all three metrics, while its
 originally published Dice, obtained with heavier training, is higher.
@@ -279,7 +273,6 @@ behaves like a local edge map: it stays quiet over uniform background and re-
 sponds along the wound rim, which is exactly where boundary errors are most
 costly. These maps feed the encoder, and the Mean channel is the target of the
 boundary loss (Eq. 5), so they give a direct, image-level account of the structural
-
 8 T. Acharjee et al.
 T able 3.Effect of the number of LTC refinement stepsTon the FUSeg validation set.
 Dice/IoU in %, HD95 in pixels;T=4(shaded) is used.
@@ -305,7 +298,6 @@ produces accurate masks with the tightest boundaries in our comparison at only
 25.70M parameters, and since the LSS maps are computed before encoding,
 they also give a readable view of the cues the model follows, with no separate
 explanation step, thus making it a faithful and explainable segmentation model.
-
 LINDA 9
 6 Impact in RCS
 In resource constrained setting, it is crucial to balance performance, model size
@@ -350,7 +342,6 @@ lime. Can we trust ai with our ears? a cross-domain comparative analysis of ex-
 plainability in audio intelligence.IEEE Access, 13:179733–179758, 2025.
 10. Alican Akman and Björn W Schuller. Audio explainable artificial intelligence: A
 review.Intelligent Computing, 3:0074, 2024.
-
 10 T. Acharjee et al.
 11. BasHMVanderVelden,HugoJKuijf,KennethGAGilhuijs,andMaxAViergever.
 Explainable artificial intelligence (xai) in deep learning-based medical image anal-
@@ -401,7 +392,6 @@ volume 162, pages 94–114, 2020.
 Darrell. Unsupervised universal image segmentation. InProceedings of the
 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR),
 2024.
-
 LINDA 11
 27. Vijay Badrinarayanan, Alex Kendall, and Roberto Cipolla. Segnet: A deep con-
 volutional encoder-decoder architecture for image segmentation.IEEE TPAMI,

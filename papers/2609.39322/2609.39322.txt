@@ -1,0 +1,506 @@
+A Biophysically DetailedC. elegansCircuit as a Task-Agnostic
+Dynamical Core for Visually Robust Robot Manipulation
+A PREPRINT
+Linrui Qian†1, Jiajia Zhang †1, Gan He 1, Bohan Sun 1, Zhiwei Lin 1,2, Qianhao Wang1, Zewu Cai 1, Nianyu Yi2,
+Mengdi Zhao3, and Kai Du *4
+1CogLeap.AI Space Intelligence (Wuxi) Technology Co., Ltd., Beijing 100080, China
+2School of Mathematics and Computational Science, Xiangtan University, Xiangtan 411105, China
+3Institute for Brain and Intelligence, Fudan University, Shanghai 200433, China.
+4Department of Psychological and Cognitive Sciences, Tsinghua University, Beijing 100084, China
+ABSTRACT
+Robot policies are usually trained for one task, one body and one visual environment, and generalize
+poorly beyond these conditions. Whether a nervous system can instead supply the sensorimotor
+computation through its evolved wiring and biophysics remains unresolved. Here we embed a
+biophysically detailedCaenorhabditis eleganssensorimotor circuit — 136 multicompartment neurons
+with realistic morphologies and electrophysiological characteristics — as the dynamical core of a
+visuomotor policy. Only thin task-specific adapters are trained; the core’s synaptic weights stay
+fixed while its membrane voltages evolve freely. Across different MetaWorld tasks the core matches
+or exceeds diffusion-policy, action-chunking-transformer and neural-circuit-policy baselines, and
+degrades less under visual perturbations. Replacing the core with generic network models such
+as MLP, LSTM, transformer or reservoir networks removes the advantage. Furthermore, on a real
+robotic arm the core withstands diverse visual perturbations that collapse the baselines. Our results
+suggest that visual robustness can be inherited from biophysically detailed circuit dynamics rather
+than learned by task-specific controllers.
+KeywordsCaenorhabditis elegans, biophysically detailed model, task-agnostic dynamical core, visual robustness,
+neural manifold
+1 Introduction
+Robot learning has usually converged on a familiar recipe: a task-specific sensory encoder, a high-capacity temporal
+model, and a task-specific action decoder, all trained together on demonstrations of the task at hand. This recipe is
+powerful but structurally fragile. Because the sensorimotor computation lives inside parameters that were fitted to
+one task, one body and one visual environment, every new setting invites retraining, and closed-loop stability under
+distribution shift is difficult to guarantee a prior. A large literature compensates with data augmentation, domain
+randomization or explicit system dentification [Tobin et al., 2017, Hendrycks and Dietterich, 2019]. An alternative is to
+inherit the computation itself: to take a nervous system whose connectivity and dynamics were shaped by evolution,
+reuse it with its parameters held fixed, and thereby obtain the dynamical core of many controllers.
+The nematodeCaenorhabditis elegansis the natural test case. Its 302 neurons and their chemical and electrical synapses
+have been mapped completely [White et al., 1986], the wiring is non-random and exhibits hierarchical, modular and
+rich-club organization [Varshney et al., 2011, Towlson et al., 2013], and whole-brain calcium imaging now provides
+population-level activity that constrains models of its dynamics [Cook et al., 2019]. BAAIWorm integrates these
+constraints into a multicompartment brain model with realistic morphology that is closed onto a body–environment
+simulator [Zhao et al., 2024]. Whether such a circuit, detached from the worm’s own body, can act as a task-agnostic
+†These authors contributed equally.
+∗Correspondence to:kai_du@tsinghua.edu.cn
+arXiv:2609.39322v1  [cs.RO]  30 Sep 2026
+C. eleganscircuit for visually robust manipulationA PREPRINT
+dynamical core for an articulated robot is an open question with consequences for both robotics and neuroscience: it
+asks whether evolved wiring encodes a computational prior that survives a change of embodiment.
+Here we test that hypothesis directly. We reuse the complete 136-neuron sensorimotor circuit of BAAIWorm, with
+its 1,901 inter-neuron connections (1,115 chemical synapses and 786 gap junctions) and its biophysically detailed
+multicompartment neuron models, as a dynamical core whose synaptic weights are fixed and whose membrane
+voltages evolve freely in continuous time. RGB images are compressed by a task-specific convolutional encoder into
+a low-dimensional sensory drive that is injected into the circuit as clamp currents; the resulting motor-neuron state
+is conditioned by FiLM and decoded into a short action chunk. Only the encoder, FiLM parameters and decoder are
+trained, and the same fixed-parameterC. eleganscore is shared by every task.
+We report three findings. First, the arrangement is task-agnostic: across simulated manipulation tasks the core performs
+competitively and degrades less under visual perturbation than diffusion-policy (DP) [Chi et al., 2023], action-chunking-
+transformer (ACT) [Zhao et al., 2023] and neural-circuit-policy (NCP) [Lechner et al., 2020] systems. Second, the
+advantage is attributable to the core rather than to the adapters, its size or generic recurrence: with the interface, data
+and training protocol held fixed, replacing the core by MLP, LSTM, transformer or reservoir alternatives removes it.
+Third, the effect of robustness and ablation effects transfer well to a real robot.
+Our claims are bounded deliberately. We do not claim zero-shot transfer to unseen tasks, generalisation across arbitrary
+bodies or cameras, or that the present experiments exhaust the space of perturbations. We also stress that BAAIWorm is
+a published model that we reuse, not a model we introduce. What we claim is that a biophysically detailed, biologically
+constrained sensorimotor circuit can act as a task-agnostic dynamical core for robot manipulation, that its contribution
+is localized to the circuit that generic recurrent cores do not reproduce.
+excute first 4 steps planned but
+not executed
+ Sensory(Si) Inter(Ij) motor(Mk) 
+time-varying neural activity(membrane potential)
+Sensory drive
+	zt
+Neural state
+	ht
+Context-conditioned
+neural state
+Feature concatenation
+(fusion)
+ht
+Action chunk decoder
+(MLP)
+2
+zt R15
+sensory
+ drive
+ht zt
+4-frame visual history
+RGB image sequence Visual encoder Connectome-constrained BNN
+136 neurons | 1901 physical connections 
+continuous-time neural dynamics
+Comoact feature extractor 
+(CNN)
+Film modulation Robot execution
+2
+ receeding-horizon closed-loop control  |  predict 8 , execute 4
+re-observe and replan
+(15-D) 
+8-step action chunk
+BAAIWorm
+Figure 1:A biophysically detailedC. eleganssensorimotor circuit as the task-agnostic dynamical core of a
+visuomotor policy.Continuous RGB frames are compressed into a low-dimensional sensory drive that is injected
+into the connectome-constrained circuit as clamp currents. The circuit’s motor-neuron state is conditioned with visual
+features by FiLM and decoded into an action chunk that is executed in a receding-horizon loop (predict eight steps,
+execute four, re-observe and replan). The circuit contains 136 multicompartment neurons and 1,901 interneuron
+connections; its parameters are fixed after training and its membrane voltages evolve freely, and only the encoder, FiLM
+parameters and action decoder are trained. The circuit is the complete sensorimotor model of BAAIWorm [Zhao et al.,
+2024], reused here without modification.
+2
+C. eleganscircuit for visually robust manipulationA PREPRINT
+2 Results
+2.1 A biophysically detailed sensorimotor circuit as a task-agnostic dynamical core
+The system is defined in figure 1. A four-frame RGB history is encoded by a compact CNN into a 15-dimensional
+sensory drive. Rather than being fed to a task network, the drive is converted into clamp currents and injected into
+the 136-neuron circuit, whose neurons are multicompartment models with realistic dendrites and active conductances,
+including voltage-gated calcium channels and calcium-regulated potassium channels. The circuit evolves in continuous
+time; its 80 motor neurons form a motor neural state that is modulated by FiLM and concatenated with the visual
+feature, and a small decoder produces an eight-step action chunk of which four steps are executed before replanning.
+Only the encoder, the FiLM parameters and the decoder are trained, and the same core is used for every task. The
+design therefore separates two roles that are usually entangled: a task-specific interface that maps observations to the
+core’s input space, and a task-agnostic dynamical core that generates the sensorimotor trajectories.
+a coffee-push hammer
+door-open assembly
+coffee-push hammer door-open assembly
+0.00
+0.25
+0.50
+0.75
+1.00
+Clean success rate
+b
+Ours NCP ACT DP
+c sensor noise lighting change
+background change
+noise light background
+0.0
+0.5
+1.0
+Success rate
+d coffee-push
+noise light background
+hammer
+noise light background
+0.0
+0.5
+1.0
+Success rate
+door-open
+noise light background
+assembly
+Ours NCP ACT DP
+Figure 2:A single core across four simulated manipulation tasks and three perturbations. a, Simulator frames
+of the four tasks (coffee-push, hammer, door-open, assembly).b, Clean success rate of the core, NCP, ACT and DP;
+the core matches or exceeds every baseline.c, The perturbations, shown on simulator frames: additive image noise
+(σ= 0.10 ), lighting change, background change and object displacement.d, Success rate under each perturbation, one
+panel per task; within each tick the bars are Ours, NCP, ACT and DP.
+2.2 A single core sustains diverse manipulation tasks under visual perturbation
+We first asked whether a single core can be shared by several manipulation tasks. Four MetaWorld tasks were evaluated
+with the same core and task-specific adapters: coffee-push, hammer, door-open and assembly. Clean success rates of
+the core matched or exceeded DP, ACT and NCP in every task (Fig. 2b): coffee-push 0.92 versus 0.86 (DP), 0.94 (ACT)
+3
+C. eleganscircuit for visually robust manipulationA PREPRINT
+and 0.86 (NCP); hammer 0.98 versus 0.28, 0.94 and 0.62; door-open 1.00 versus 1.00, 1.00 and 1.00; assembly 1.00
+versus 0.78, 1.00 and 0.52.
+Under perturbation the differences became qualitative rather than incremental (Fig. 2c,d). With pixel-level Gaussian
+noise (single intensity, σ= 0.10 ) the core was almost unchanged (0.90–1.00 across the four tasks), whereas ACT,
+NCP and DP fell to 0.00–0.26, 0.08–0.46 and 0.28–1.00. Under illumination change the core retained 0.82–0.98 while
+ACT, DP and NCP dropped to 0.80–0.88, 0.14–0.96 and 0.12–0.80, and under background change the core (0.80–0.88)
+and ACT (0.86) stayed largely intact while DP (0.00–0.48) and NCP (0.04–0.56) collapsed. The core’s advantage is
+therefore not confined to a single task or perturbation type, and it is not explained by a better clean policy: on three of
+four tasks the clean rates were already at ceiling for every method.
+2.3 Robustness is carried by the circuit, not by the interface
+Because the adapter is trained per task, a natural objection is that the observed robustness comes from the interface
+rather than from the circuit. Figure 3 addresses this with a shared-interface core-replacement experiment. Holding the
+visual encoder, the FiLM mechanism, the action decoder and the action representation fixed, we replaced the circuit
+with six alternatives: the full circuit, an MLP, an LSTM, a transformer and a reservoir, and additionally with a reservoir
+read out by a trained linear decoder.
+σ = 0.00
+(clean)
+Ours
+σ = 0.15
+(moderate)
+σ = 0.25
+(extreme)
+MLP LSTM Transformer Reservoir Reservoir+RO
+0.00 0.25 0.50 0.75 1.00
+Normalized time
+0
+2
+4
+6
+8
+10Speed (σ = 0.15)
+band = 0.03
+Ours
+0.00 0.25 0.50 0.75 1.00
+Normalized time
+0
+2
+4
+6
+8
+10
+band = 0.62
+MLP
+0.00 0.25 0.50 0.75 1.00
+Normalized time
+0
+2
+4
+6
+8
+10
+band = 0.28
+LSTM
+0.00 0.25 0.50 0.75 1.00
+Normalized time
+0
+2
+4
+6
+8
+10
+band = 0.35
+Transformer
+0.00 0.25 0.50 0.75 1.00
+Normalized time
+0
+2
+4
+6
+8
+10
+band = 0.59
+Reservoir
+0.00 0.25 0.50 0.75 1.00
+Normalized time
+0
+2
+4
+6
+8
+10
+band = 0.58
+Reservoir+RO
+0.00 0.05 0.10 0.15 0.20 0.25
+Noise σ (normalized)
+Temporal jitter
+Normalized jerk
+Path curvature
+Velocity dissim.
+T angling Q
+1.00 0.99 1.04 1.01 1.00 0.89
+1.00 0.99 1.04 1.01 0.89 0.39
+0.00 0.00 0.00 0.00 0.00 0.02
+0.00 0.00 0.00 0.03 0.07 0.03
+0.13 0.13 0.14 0.13 0.14 0.11
+Ours
+0.00 0.05 0.10 0.15 0.20 0.25
+Noise σ (normalized)
+1.00 1.23 1.50 1.97 2.15 2.61
+1.00 1.34 1.67 2.24 2.54 3.64
+0.03 0.02 0.02 0.01 0.01 0.02
+0.00 0.03 0.06 0.30 0.69 0.77
+0.50 0.31 0.47 0.62 0.61 0.71
+MLP
+0.00 0.05 0.10 0.15 0.20 0.25
+Noise σ (normalized)
+1.00 1.19 1.45 1.81 2.15 2.05
+1.00 1.26 1.58 2.08 2.49 2.29
+0.02 0.02 0.02 0.03 0.03 0.04
+0.00 0.03 0.13 0.17 0.40 0.71
+0.23 0.26 0.34 0.28 0.32 0.48
+LSTM
+0.00 0.05 0.10 0.15 0.20 0.25
+Noise σ (normalized)
+1.00 1.05 1.13 1.26 1.47 1.69
+1.00 1.06 1.17 1.33 1.57 1.65
+0.01 0.01 0.01 0.02 0.02 0.02
+0.00 0.01 0.05 0.20 0.32 0.54
+0.39 0.37 0.38 0.44 0.43 0.67
+Transformer
+0.00 0.05 0.10 0.15 0.20 0.25
+Noise σ (normalized)
+1.00 1.21 1.67 2.03 2.36 2.55
+1.00 1.23 1.69 1.98 2.16 2.35
+0.01 0.01 0.01 0.01 0.01 0.01
+0.00 0.06 0.45 0.54 0.74 0.85
+0.34 0.37 0.62 0.64 0.73 1.00
+Reservoir
+0.00 0.05 0.10 0.15 0.20 0.25
+Noise σ (normalized)
+1.00 1.28 1.71 2.13 2.64 2.34
+1.00 1.30 1.77 2.13 2.71 2.03
+0.03 0.01 0.01 0.01 0.01 0.01
+0.00 0.10 0.26 0.90 0.85 0.82
+0.58 0.28 0.35 0.47 0.41 0.35
+Reservoir+RO
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+light = robust · dark = degraded
+a
+b
+c
+clean trajectory
+noisy trials (n = 20)
+display projection
+speed computed in 80-D state space
+v_t = || z_{t+1} − z_t ||_2
+Figure 3:Robustness is carried by the circuit, not by the interface. a, Motor-state trajectories of the full circuit and
+five replacement cores at three noise levels, projected onto a manifold fitted to the clean trajectories of each model.
+Clean trajectories are black; colored lines are individual noisy trials.b, Speed profiles on the manifold for moderate
+noise (σ= 0.15 ), with the band width between the noisy and clean profiles reported above each panel.c, Five dynamical
+metrics (temporal jitter, normalized jerk, path curvature, velocity dissimilarity and tangling) as a function of the noise
+level, normalized so that 1 marks the clean reference. All variants share the same encoder, FiLM mechanism, decoder
+and action representation; only the core differs.
+The high-dimensional motor states of these variants were projected onto a three-dimensional manifold fitted to the clean
+trajectories of each model (Fig. 3a). Under increasing noise the full circuit’s noisy trajectories stayed close to its clean
+manifold, while the replacement cores drifted away and dispersed. The speed profiles on the manifold (Fig. 3b) show
+the same asymmetry: the full circuit’s speed band around the clean profile is 0.03, compared with 0.62 (MLP), 0.28
+4
+C. eleganscircuit for visually robust manipulationA PREPRINT
+(LSTM), 0.35 (transformer), 0.59 (reservoir) and 0.58 (reservoir read-out). Five trajectory-shape and dynamics metrics
+(Fig. 3c) reproduce this ordering across the noise sweep, with effect sizes that grow with noise. The advantage is thus
+not a property of the interface, of parameter count or of recurrence in general; it is carried by the specific circuit.
+2.4 Robustness and ablation effects transfer to a real robot
+The final question is whether the picture survives on physical hardware. We deployed the core and the baselines on a
+real robot performing a cup-push task from a fixed initial pose (Fig. 4a). In the nominal condition the core succeeded in
+18/20 trials, ACT in 16/20 and DP in 14/20. Under the four perturbations the ordering became decisive (Fig. 4b): the
+core retained 15–16/20 whereas ACT fell to 8–14/20 and DP to 0–12/20, with the largest separations under illumination
+change (15/8/0) and object displacement (15/9/6). NCP was excluded because its nominal real-robot success was
+already low (13/20).
+The commanded action shows the same asymmetry (Fig. 4c): the noisy trials of ACT and DP leave the clean manifold
+(spread/shift 0.79/2.10, 1.60/30.05 and 1.11/3.26). The same ranking appears when the core is replaced on the robot
+(Fig. 4d): the full circuit is the only variant above 50% under every perturbation, whereas MLP, LSTM, transformer and
+reservoir replacements stay at or below 45% and lose most or all perturbed trials.
+Lighting change
+Background change Object change
+Sensor noise
+Perturbations
+Experimental setup Success rate under perturbation
+Background
+6-Dof Robot Arm
+Overall setup
+2
+1
+3
+Tabletop Workspace
+5
+Task Object
+3rd-person Camera
+Gripper
+f
+4
+0
+20
+40
+60
+80
+100
+Base Lighting change BackgroundchangeSensor noise Object change
+Object change
+ACTOurs DP
+a b
+c
+d Ablation analysis: core replacement
+Manifold under noise
+Base Sensor noise Lighting change Background
+change
+0
+20
+40
+60
+80
+100Success rate (%) Success rate (%)
+MLP LSTM Transformer ReservoirOurs
+Ours
+Figure 4:Robustness, deviation dynamics and ablation on a real robot. a, Experimental setup and the four
+perturbations (sensor noise, lighting change, background change and object change).b, Success rate of the core, ACT
+and DP under the nominal condition and under each perturbation (Ours red, ACT grey, DP light grey).c, Manifold
+of each policy’s own representation (Ours motor neural state, ACT action chunk, DP action prediction) projected on
+the first two principal components fitted to that model’s clean repeats; annotations give the ratio of noisy to clean
+trial-to-trial spread and the center shift.d, Ablation analysis by core replacement: success rate of the MLP, LSTM,
+transformer and reservoir replacements together with the full core (Ours red) under the nominal condition and each
+perturbation.
+3 Discussion
+Our results support three statements. The first is that a biophysically detailed biological sensorimotor circuit can act as a
+task-agnostic dynamical core: one circuit, constrained by biological data and held its weights fixed, supported multiple
+simulated manipulation tasks through thin task-specific adapters. The second is attribution. Because the interface, data,
+optimizer and evaluation were held fixed, and because replacing the core with MLP, LSTM, transformer or reservoir
+alternatives removed the advantage, the effect localizes to the circuit rather than to the adapter, to parameter count or to
+5
+C. eleganscircuit for visually robust manipulationA PREPRINT
+recurrence as such. The third concerns real-world transferability: robustness and ablation effects of the core can transfer
+well to a real robot.
+These findings connect to two literatures. In neuroscience, the idea that nervous systems exploit low-dimensional
+population dynamics to generate behaviour is well established for reaching and other motor tasks [Churchland et al.,
+2012, Cunningham and Yu, 2014, Gallego et al., 2017, Vyas et al., 2020], and recurrent networks trained on tasks
+reproduce many of those geometric signatures [Sussillo and Barak, 2013, Maheswaranathan et al., 2019]. Our results
+add a complementary observation: when the recurrent substrate is a real connectome with biologically constrained cell
+models, the resulting dynamics are not only interpretable but also transferable to a body that the circuit never evolved
+for. In machine learning, the same result speaks to the value of structured priors [Jaeger and Haas, 2004, Maass et al.,
+2002, Lukoševiˇcius and Jaeger, 2009] and specifically to the observation that recurrent processing confers robustness
+that feed-forward architectures lack [Kietzmann et al., 2019]. A fixed-parameter biological circuit is a strong version of
+this prior: it is not a regularizer added to a task network but the generator of the task’s sensorimotor trajectories.
+Several limitations bound these claims. The number of real-robot tasks is small: we report one manipulation task with a
+fixed initial pose, and although the perturbations are physically realistic, they do not exhaust the space of distribution
+shifts. Second, the biological circuit is reused rather than created here, and its behavioural repertoire is that of a
+small sensorimotor system; how far the same principle extends to tasks requiring long-horizon planning or dexterous
+manipulation is an open question.
+The practical implication is nevertheless concrete. If a biophysically detailed circuit supplies the dynamical core, the
+fragile part of a robot-learning pipeline shrinks to the adapters that map observations into the core and its state into
+actions, and robustness and interpretability follow from the same experimentally constrained object.
+4 Methods
+4.1 Biological core
+The core is the brain model of BAAIWorm [Zhao et al., 2024]: 136 neurons (15 sensory, 41 interneurons and 80 motor
+neurons) with realistic morphology, multicompartment dynamics (Hodgkin–Huxley somas, passive neurites, fourteen
+ion-channel families including voltage-gated calcium channels and calcium-regulated potassium channels) and the
+worm’s connectome, comprising 1,901 inter-neuron connections (1,115 chemical synapses and 786 gap junctions)
+plus 15 sensory-input connections. The core is simulated in continuous time; its synaptic weights are fixed in every
+experiment reported here, whereas its membrane voltages evolve freely.
+4.2 Interface and training
+Four consecutive RGB frames are encoded by a small convolutional network into a 15-dimensional sensory drive. The
+drive is scaled into clamp currents and injected into the sensory neurons; the simulation is advanced between control
+steps and the 80 motor-neuron voltages form the motor neural state. A FiLM mechanism conditions this state on the
+visual feature, and a multi-layer perceptron decodes an eight-step action chunk of which four steps are executed before
+the next observation is processed (predict 8, execute 4, re-observe and replan). Only the encoder, FiLM parameters and
+decoder are trained, by behaviour cloning from demonstrations; the core receives no gradient updates.
+4.3 Baseline policies
+DP [Chi et al., 2023] and ACT [Zhao et al., 2023] were trained with their original recipes on the same demonstrations
+and the same action representation. NCP [Lechner et al., 2020] was trained as a native system with its own interface
+and is therefore reported as a system-level baseline rather than as a core replacement. For the shared-interface core
+replacement, the encoder, FiLM mechanism, decoder, optimizer, data and checkpoint-selection rule were held fixed
+while the core was replaced by: an MLP, an LSTM, a transformer, a reservoir, and a reservoir with a trained linear
+read-out.
+4.4 Simulated tasks and perturbations
+MetaWorld [Yu et al., 2019] provided coffee-push, hammer, door-open and assembly. Three perturbations were applied:
+pixel-level Gaussian noise at a single intensity (σ= 0.10 ), illumination change and background change. Success rates
+were measured with 50 evaluations. The core-replacement used the same encoder, FiLM mechanism and decoder, and
+the manifold and speed analyses were computed on the motor states of the same rollouts.
+6
+C. eleganscircuit for visually robust manipulationA PREPRINT
+4.5 Manifold, speed and recovery analyses
+Motor states from clean and perturbed rollouts were standardized and projected onto the three leading principal
+components fitted to the clean trajectories of the corresponding model. We quantified the displacement of noisy
+trajectories from the clean manifold, the band width of the speed profile around the clean profile, and five trajectory
+metrics (temporal jitter, normalized jerk, path curvature, velocity dissimilarity and tangling), each normalized to its
+clean reference.
+4.6 Real-robot protocol and statistics
+A six-degree-of-freedom arm with a parallel gripper performed a cup-push task from a fixed initial pose, driven by
+the policies’ own outputs at the control rate. Each policy was evaluated in 20 trials under the nominal condition and
+under four perturbations: additive image noise (σ= 30 ), turning off three light sources, replacing the background with
+a green cloth, and displacing the task objects. Success was judged by an on-site annotator against a fixed criterion.
+References
+J. Tobin, R. Fong, A. Ray, J. Schneider, W. Zaremba, and P. Abbeel. Domain randomization for transferring deep neural
+networks from simulation to the real world, 2017. In IEEE/RSJ International Conference on Intelligent Robots and
+Systems (IROS), 23–30.https://doi.org/10.1109/IROS.2017.8202133.
+D. Hendrycks and T. Dietterich. Benchmarking neural network robustness to common corruptions and perturbations,
+2019. Preprint athttps://arxiv.org/abs/1903.12261.
+J. G. White, E. Southgate, J. N. Thomson, and S. Brenner. The structure of the nervous system of the nematode
+Caenorhabditis elegans.Philosophical Transactions of the Royal Society of London. B, 314(1165):1–340, 1986.
+doi:10.1098/rstb.1986.0056.
+L. R. Varshney, B. L. Chen, E. Paniagua, D. H. Hall, and D. B. Chklovskii. Structural properties of theCaenorhabditis
+elegansneuronal network.PLoS Computational Biology, 7(2):e1001066, 2011. doi:10.1371/journal.pcbi.1001066.
+E. K. Towlson, P. E. Vértes, S. E. Ahnert, W. R. Schafer, and E. T. Bullmore. The rich club of theC. elegansneuronal
+connectome.Journal of Neuroscience, 33(15):6380–6387, 2013. doi:10.1523/JNEUROSCI.3784-12.2013.
+S. J. Cook, T. A. Jarrell, C. A. Brittin, Y . Wang, A. E. Bloniarz, M. A. Yakovlev, K. C. Q. Nguyen, L. T.-H. Tang, E. A.
+Bayer, J. S. Duerr, H. E. Bülow, O. Hobert, D. H. Hall, and S. W. Emmons. Whole-animal connectomes of both
+Caenorhabditis eleganssexes.Nature, 571:63–71, 2019. doi:10.1038/s41586-019-1352-7.
+M. Zhao, N. Wang, X. Jiang, X. Ma, H. Ma, G. He, K. Du, L. Ma, and T. Huang. An integrative data-driven model
+simulatingC. elegansbrain, body and environment interactions.Nature Computational Science, 4:978–990, 2024.
+doi:10.1038/s43588-024-00738-w.
+C. Chi, S. Feng, Y . Du, Z. Xu, E. Cousineau, B. Burchfiel, and S. Song. Diffusion policy: visuomotor policy learning
+via action diffusion, 2023. In Robotics: Science and Systems XIX. https://doi.org/10.15607/RSS.2023.XIX.
+026.
+T. Z. Zhao, V . Kumar, S. Levine, and C. Finn. Learning fine-grained bimanual manipulation with low-cost hardware,
+2023. In Robotics: Science and Systems XIX.https://doi.org/10.15607/RSS.2023.XIX.016.
+M. Lechner, R. Hasani, A. Amini, T. A. Henzinger, D. Rus, and R. Grosu. Neural circuit policies enabling auditable
+autonomy.Nature Machine Intelligence, 2:642–652, 2020. doi:10.1038/s42256-020-00237-3.
+M. M. Churchland, J. P. Cunningham, M. T. Kaufman, J. D. Foster, P. Nuyujukian, S. I. Ryu, and K. V . Shenoy. Neural
+population dynamics during reaching.Nature, 487:51–56, 2012. doi:10.1038/nature11129.
+J. P. Cunningham and B. M. Yu. Dimensionality reduction for large-scale neural recordings.Nature Neuroscience, 17:
+1500–1509, 2014. doi:10.1038/nn.3776.
+J. A. Gallego, M. G. Perich, L. E. Miller, and S. A. Solla. Neural manifolds for the control of movement.Neuron, 94:
+978–984, 2017. doi:10.1016/j.neuron.2017.05.025.
+S. Vyas, M. D. Golub, D. Sussillo, and K. V . Shenoy. Computation through neural population dynamics.Annual Review
+of Neuroscience, 43:249–275, 2020. doi:10.1146/annurev-neuro-092619-094115.
+D. Sussillo and O. Barak. Opening the black box: low-dimensional dynamics in high-dimensional recurrent neural
+networks.Neural Computation, 25:626–649, 2013. doi:10.1162/NECO_a_00409.
+N. Maheswaranathan, A. H. Williams, M. D. Golub, S. Ganguli, and D. Sussillo. Universality and individuality in neural
+dynamics across large populations of recurrent networks, 2019. Preprint athttps://arxiv.org/abs/1907.08549.
+7
+C. eleganscircuit for visually robust manipulationA PREPRINT
+H. Jaeger and H. Haas. Harnessing nonlinearity: predicting chaotic systems and saving energy in wireless communica-
+tion.Science, 304:78–80, 2004. doi:10.1126/science.1091277.
+W. Maass, T. Natschläger, and H. Markram. Real-time computing without stable states: a new framework for neural
+computation based on perturbations.Neural Computation, 14:2531–2560, 2002. doi:10.1162/089976602760407955.
+M. Lukoševiˇcius and H. Jaeger. Reservoir computing approaches to recurrent neural network training.Computer
+Science Review, 3:127–149, 2009. doi:10.1016/j.cosrev.2009.03.005.
+T. C. Kietzmann, C. J. Spoerer, L. K. A. Sörensen, R. M. Cichy, R. Haan, and N. Kriegeskorte. Recurrence is required to
+capture the representational dynamics of the human visual system.Proceedings of the National Academy of Sciences,
+116:21854–21863, 2019. doi:10.1073/pnas.1905544116.
+T. Yu, D. Quillen, Z. He, R. Julian, K. Hausman, C. Finn, and S. Levine. Meta-world: a benchmark and evaluation for
+multi-task and meta reinforcement learning, 2019. Preprint athttps://arxiv.org/abs/1910.10897.
+8
