@@ -1,0 +1,446 @@
+arXiv:2012.02414v1  [cs.LG]  4 Dec 2020
+Universal Approximation Property of
+Neural Ordinary Differential Equations
+Takeshi Teshima
+The University of Tokyo, RIKEN
+teshima@ms.k.u-tokyo.ac.jp
+Koichi Tojo
+RIKEN
+koichi.tojo@riken.jp
+Masahiro Ikeda
+RIKEN
+masahiro.ikeda@riken.jp
+Isao Ishikawa
+Ehime University, RIKEN
+ishikawa.isao.zx@ehime-u.ac.jp
+Kenta Oono
+The University of Tokyo
+kenta_oono@mist.i.u-tokyo.ac.jp
+Abstract
+Neural ordinary differential equations (NODEs) is an invertible neural network
+architecture promising for its free-form Jacobian and the availability of a tractable
+Jacobian determinant estimator. Recently, the representation power of NODEs has
+been partly uncovered: they form an Lp-universal approximator for continuous
+maps under certain conditions. However, the Lp-universality may fail to guaran-
+tee an approximation for the entire input domain as it may still hold even if the
+approximator largely differs from the target function on a small region of the input
+space. To further uncover the potential of NODEs, we show their stronger approx-
+imation property, namely the sup-universality for approximating a large class of
+diffeomorphisms. It is shown by leveraging a structure theorem of the diffeomor-
+phism group, and the result complements the existing literature by establishing a
+fairly large set of mappings that NODEs can approximate with a stronger guaran-
+tee.
+1 Introduction
+Neural ordinary differential equations (NODEs) [1] are a family of deep neural networks that in-
+directly model functions by transforming an input vector through an ordinary differential equation
+(ODE). When viewed as an invertible neural network (INN) architecture, NODEs have the advantage
+of having free-form Jacobian, i.e., it is invertible without restricting the Jacobian’s structure, unlike
+other INN architectures [2]. For the out-of-box invertibility and the availability of a tractable unbi-
+ased estimator of the Jacobian determinant [3], NODEs have been used for constructing continuous
+normalizing ﬂows for generative modeling and density estimation [1, 3, 4].
+Recently, the representation power of NODEs has been partly uncovered in Li et al. [5], namely, a
+sufﬁcient condition for a family of NODEs to be an Lp-universal approximator (see Deﬁnition 4) for
+continuous maps has been established. However, the universal approximation property with respect
+to the Lp-norm can be insufﬁcient as it does not guarantee an approximation for the entire input
+domain: Lp approximation may still hold even if the approximator largely differs from the target
+function on a small region of the input space.
+NeurIPS 2020 workshop on Differential Geometry meets Deep Learning.
+In this work, we elucidate that the NODEs are a sup-universal approximator (Deﬁnition 4) for a
+fairly large class of diffeomorphisms, i.e., smooth invertible maps with smooth inverse. Our result
+establishes a function class that can be approximated using NODEs with a stronger guarantee than in
+the existing literature [5]. We prove the result by using a structure theorem of differential geometry to
+represent a diffeomorphism as a ﬁnite composition of ﬂow endpoints, i.e., diffeomorphisms that are
+smooth transformations of the identity map. The NODEs are themselves examples of ﬂow endpoints,
+and we derive the main result by approximating the ﬂow endpoints by the NODEs.
+2 Preliminaries and goal
+In this section, we deﬁne the family of NODEs considered in the present paper as well as the notion
+of universality.
+2.1 Neural ordinary differential equations (NODEs)
+Let R (resp. N) denote the set of all real values (resp. all positive integers). Throughout the paper,
+we ﬁx d ∈ N. Let Lip(Rd) := {f : Rd → Rd | f is Lipschitz continuous}. It is known that
+any autonomous ODE (i.e., one that is deﬁned by a time-invariant vector ﬁeld) with a Lipschitz
+continuous vector ﬁeld has a solution and that the solution is unique:
+Fact 1 (Existence and uniqueness of a global solution to an ODE [6]). Let f ∈ Lip(Rd). Then, a
+solution z : R → Rd to the following ordinary differential equation exists and it is unique:
+z(0) = x, ˙z(t) = f (z(t)), t ∈ R, (1)
+where x ∈ Rd, and ˙z denotes the derivative of z.
+In view of Fact 1, we use the following notation.
+Deﬁnition 1. For f ∈ Lip(Rd), x ∈ Rd, and t ∈ R, we deﬁne
+IVP[f ](x,t) := z(t),
+where z : R → Rd is the unique solution to Equation (1).
+Deﬁnition 2 (Autonomous-ODE ﬂow endpoints; Li et al. [5]). For F ⊂ Lip(Rd), we deﬁne
+Ψ(F) := {IVP[f ](·, 1) | f ∈ F }.
+Deﬁnition 3 (INNH-NODE). Let Aﬀ denote the group of all invertible afﬁne maps on Rd, and let
+H ⊂ Lip(Rd). Deﬁne the invertible neural network architecture based on NODEs as
+INNH-NODE := {W ◦ ψk ◦ · · · ◦ ψ1 | ψ1,...,ψk ∈ Ψ(H),W ∈ Aﬀ,k ∈ N}.
+2.2 Goal: the notions of universality and their relations
+Here, we deﬁne the notions of universality. Let m,n ∈ N. For a subset K ⊂ Rm and a map
+f : K → Rn, we deﬁne ‖f ‖sup,K := supx∈K ‖f (x)‖, where ‖ · ‖ denotes the Euclidean norm.
+Also, for a measurable map f : Rm → Rn, a subset K ⊂ Rm, and p ∈ [1, ∞), we deﬁne ‖f ‖p,K := (∫
+K ‖f (x)‖p dx )1/p .
+Deﬁnition 4 (sup-universality and Lp-universality). Let M be a model, which is a set of measurable
+mappings from Rm to Rn. Let F be a set of measurable mappings f : Uf → Rn, where Uf is a
+measurable subset of Rm, which may depend on f . We say that M is a sup-universal approximator
+or has the sup-universal approximation property for F if for any f ∈ F, any ε> 0, and any compact
+subset K ⊂ Uf , there exists g ∈ M such that ‖f − g‖sup,K <ε. The Lp-universal approximation
+property is deﬁned by replacing ‖·‖sup,K with ‖·‖p,K in the above.
+Our goal. Our goal is to elucidate the representation power of INNs composed of NODEs by
+proving the sup-universality of INNH-NODE for a fairly large class of diffeomorphisms, i.e., smooth
+invertible functions with smooth inverse.
+2
+3 Main result
+In this section, we present our main result, Theorem 1.
+First, we deﬁne the following class of invertible maps, which will be our target to be approximated.
+Deﬁnition 5 (C 2-diffeomorphisms: D2). We deﬁne D2 as the set of all C 2-diffeomorphisms f :
+Uf → Im(f ) ⊂ Rd , where Uf ⊂ Rd is open and C 2-diffeomorphic to Rd, and it may depend on f .
+The set D2 is a fairly large class: it contains any C 2-diffeomorphism deﬁned on the entire Rd, an
+open convex set, or more generally, a star-shaped open set.
+Now, we state our main result to establish a class that the invertible neural networks based on NODEs
+can approximate with respect to the sup-norm.
+Theorem 1 (Universality of NODEs). Assume H ⊂ Lip(Rd) is a sup-universal approximator for
+Lip(Rd). Then, INNH-NODE is a sup-universal approximator for D2.
+Examples of H include the multi-layer perceptron with ﬁnite weights and Lipschitz-continuous
+activation functions such as rectiﬁed linear unit (ReLU) activation [1, 7], as well as the Lipschitz
+Networks [8, Theorem 3].
+Proof outline. To prove Theorem 1, we take a similar strategy to that of Theorem 1 of [9] but with a
+major modiﬁcation to adapt to our problem. First, the approximation target is reduced from D2 to the
+set of compactly-supported diffeomorphisms from Rd to Rd, denoted by Diﬀ 2 c , by applying Fact 2
+in Appendix A.1. Then, it is shown that we can represent each f ∈ Diﬀ 2 c as a ﬁnite composition
+of ﬂow endpoints (Deﬁnition 7 in Appendix A.1), each of which can be approximated by a NODE.
+The decomposition of f into ﬂow endpoints is realized by relying on a structure theorem of Diﬀ 2 c
+(Fact 4 in Appendix A.1) attributed to Herman, Thurston [10], Epstein [11], and Mather [12, 13].
+Note that we require a different deﬁnition of ﬂow endpoints (Deﬁnition 7 in Appendix A.1) from
+that employed in [9, Corollary 2] in order to incorporate sufﬁcient smoothness of the underlying
+ﬂows.
+4 Related work and Discussion
+In this section, we overview the existing literature on the representation power of NODEs to provide
+the context of the present paper.
+Lp-universal approximation property of NODEs. Li et al. [5] considered NODEs capped with
+a terminal family to map the output of NODEs to a vector of the desired output dimension, and its
+Proposition 3.8 showed that the model class has the Lp-universality for the set of all continuous
+maps from Rd to Rn (n ∈ N), under a certain sufﬁcient condition. In comparison to our result here,
+the result of Li et al. [5] established the universality of NODEs for a larger target function class
+(namely continuous maps) with a weaker notion of approximation (namely Lp-universality).
+Limitations on the representation power of NODEs. Zhang et al. [14] formulated its Theorem 1
+to show that NODEs are not universal approximators by presenting a function that a NODE cannot
+approximate. The existence of this counterexample does not contradict our result because our ap-
+proximation target D2 is different from the function class considered in Zhang et al. [14]: the class
+in Zhang et al. [14] can contain discontinuous maps whereas the elements of D2 are smooth and
+invertible.
+Universality of augmented NODEs. As a device to enhance the representation power of NODEs,
+increasing the dimensionality and padding zeros to the inputs/outputs has been explored [14, 15].
+Zhang et al. [14] showed that the augmented NODEs (ANODEs) are universal approximators for
+homeomorphisms. The approach has a limitation that it can undermine the invertibility of the model:
+unless the model is ideally trained so that it always outputs zeros in the zero-padded dimensions,
+the model can no longer represent an invertible map operating on the original dimensionality. On
+the other hand, the present work explores the universal approximation property of NODEs that is
+achieved without introducing the complication arising from the dimensionality augmentation.
+3
+Relation between INNH-NODE and time-dependent NODEs. Our result can be readily extended
+to the design choice of NODEs that includes the time-index as an argument of f . It can be done
+by limiting our attention to the subset of the considered class of f consisting of all time-invariant
+ones as in the following. Let a ∈ (0, ∞] and consider ˜f : Rd × (−a,a) be such that there exists a
+continuous function ℓ : (−a,a) → R≥0 satisfying
+‖ ˜f(x1,t) − ˜f (x2,t)‖ ≤ ℓ(t)‖x1 − x2‖.
+Then, the initial value problem
+z(0) = x, ˙z(t) = ˜f (z(t),t), t ∈ (−a,a)
+has a solution z : (−a,a) → Rd and it is unique [6], synonymously to Fact 1. Then, given a set
+˜H of such mappings ˜f , we can consider its subset H that contains only the time-invariant elements,
+i.e., H ⊂ ˜H such that for any f ∈ H and any x ∈ Rd, f (x, ·) is a constant mapping. Such an f
+is an element of Lip(Rd) with inf t∈(−a,a) ℓ(t) ≥ 0 being a Lipschitz constant. Then, we can apply
+Theorem 1 to H and its induced INNH-NODE.
+5 Conclusion
+In this paper, we uncovered the sup-universality of the INNs composed of NODEs for approximating
+a large class of diffeomorphisms. This result complements the existing literature that showed the
+weaker approximation property of NODEs, namely Lp-universality, for general continuous maps.
+Whether the sup-universality holds for a larger class of maps than D2 is an important research
+question for future work. Also, it is important for future work to quantitatively evaluate how many
+layers of NODEs are required to approximate a given diffeomorphism with a speciﬁed smoothness
+such as a bi-Lipschitz constant to evaluate the efﬁciency of the approximation.
+Acknowledgments
+The authors would like to thank the anonymous reviewers for the insightful discussions. This work
+was supported by RIKEN Junior Research Associate Program. TT was supported by Masason Foun-
+dation. II and MI were supported by CREST:JPMJCR1913.
+References
+[1] R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and D. K. Duvenaud, “Neural ordinary differential
+equations,” in Advances in Neural Information Processing Systems 31, 2018, pp. 6571–6583.
+[2] G. Papamakarios, E. Nalisnick, D. J. Rezende, S. Mohamed, and B. Lakshminarayanan, “Nor-
+malizing ﬂows for probabilistic modeling and inference,” arXiv:1912.02762 [cs, stat], 2019.
+[3] W. Grathwohl, R. T. Q. Chen, J. Bettencourt, I. Sutskever, and D. Duvenaud, “FFJORD: Free-
+form continuous dynamics for scalable reversible generative models,” in 7th International
+Conference on Learning Representations, 2019.
+[4] C. Finlay, J.-H. Jacobsen, L. Nurbekyan, and A. M. Oberman, “How to train your neural ODE:
+The world of Jacobian and kinetic regularization,” in Proceedings of the 37 Th International
+Conference on Machine Learning, 2020.
+[5] Q. Li, T. Lin, and Z. Shen, “Deep learning via dynamical systems: An approximation perspec-
+tive,” arXiv:1912.10382 [cs, math, stat], 2020.
+[6] W. Derrick and L. Janos, “A global existence and uniqueness theorem for ordinary differential
+equations,” Canadian Mathematical Bulletin, vol. 19, no. 1, pp. 105–107, 1976.
+[7] Y. LeCun, Y. Bengio, and G. Hinton, “Deep learning,” Nature, vol. 521, no. 7553, pp. 436–
+444, 2015.
+[8] C. Anil, J. Lucas, and R. Grosse, “Sorting out Lipschitz function approximation,” in Proceed-
+ings of the 36th International Conference on Machine Learning, 2019, pp. 291–301.
+[9] T. Teshima, I. Ishikawa, K. Tojo, K. Oono, M. Ikeda, and M. Sugiyama, “Coupling-based in-
+vertible neural networks are universal diffeomorphism approximators,” in Advances in Neural
+Information Processing Systems 33, in press.
+4
+[10] W. Thurston, “Foliations and groups of diffeomorphisms,” Bulletin of the American Mathe-
+matical Society, vol. 80, no. 2, pp. 304–307, 1974.
+[11] D. B. A. Epstein, “The simplicity of certain groups of homeomorphisms,” Compositio Math-
+ematica, vol. 22, no. 2, pp. 165–173, 1970.
+[12] J. N. Mather, “Commutators of diffeomorphisms,” Commentarii mathematici Helvetici,
+vol. 49, no. 1, pp. 512–528, 1974.
+[13] ——, “Commutators of diffeomorphisms: II,” Commentarii Mathematici Helvetici, vol. 50,
+no. 1, pp. 33–40, 1975.
+[14] H. Zhang, X. Gao, J. Unterman, and T. Arodz, “Approximation capabilities of neural ODEs
+and invertible residual networks,” in Proceedings of the 37th International Conference on
+Machine Learning, vol. 119, 2020.
+[15] E. Dupont, A. Doucet, and Y. W. Teh, “Augmented neural ODEs,” in Advances in Neural
+Information Processing Systems 32, 2019, pp. 3140–3150.
+[16] S. Lang, Differential Manifolds. New York: Springer-Verlag, 1985.
+[17] P. Hartman, Ordinary Differential Equations. Society for Industrial and Applied Mathematics,
+2002, vol. 38.
+[18] T. H. Gronwall, “Note on the Derivatives with Respect to a Parameter of the Solutions of a
+System of Differential Equations,” Annals of Mathematics, vol. 20, no. 4, pp. 292–296, 1919.
+5
+Appendices
+This is the Supplementary Material for “Universal approximation property of neural ordinary differ-
+ential equations.” Table 1 summarizes the abbreviations and the symbols used in the paper.
+Table 1: Abbreviation and notation table.
+Abbreviation/Notation Meaning
+INN Invertible neural networks
+NODE Neural ordinary differential equations
+Aﬀ Set of invertible afﬁne transformations
+IVP[f ](x,t) The (unique) solution to an initial value problem evaluated at t
+Ψ(F) Set of NODEs obtained from the Lipschitz continuous vector ﬁelds F
+Lip(Rd) The set of all Lipschitz continuous maps from Rd to Rd
+INNH-NODE INNs composed of Aﬀ and NODEs parametrized by H ⊂ Lip(Rd)
+d ∈ N Dimensionality of the Euclidean space under consideration
+D2 Set of all C 2-diffeomorphisms with C 2-diffeomorphic domains
+Diﬀ r c Group of compactly-supported C r -diffeomorphisms on Rd (1 ≤ r ≤ ∞)
+‖·‖ Euclidean norm
+‖·‖op Operator norm
+‖·‖sup,K Supremum norm on a subset K ⊂ Rd
+‖·‖p,K Lp-norm on a subset K ⊂ Rd
+Id Identity map
+supp Support of a map
+A Proof of Theorem 1
+Here, we provide a proof of Theorem 1. In Section A.1, we display the known facts and show the
+lemmas used for the proof. In Section A.2, we prove Theorem 1.
+A.1 Lemmas and known facts
+We use the following deﬁnition and facts from Teshima et al. [9].
+Deﬁnition 6 (Compactly supported diffeomorphism). We use Diﬀ r c to denote the set of all com-
+pactly supported C r -diffeomorphisms (1 ≤ r ≤ ∞) from Rd to Rd. Here, we say a diffeomorphism
+f on Rd is compactly supported if there exists a compact subset K ⊂ Rd such that for any x /∈ K,
+f (x) = x. We regard Diﬀ r c as a group whose group operation is function composition.
+The following fact enables us to reduce the approximation problem for D2 to that for Diﬀ 2 c .
+Fact 2 (Lemma 5 of Teshima et al. [9]). Let f : U → Rd be an element of D2, and let K ⊂ U be a
+compact set. Then, there exists h ∈ Diﬀ 2 c and an afﬁne transform W ∈ Aﬀ such that
+W ◦ h|K = f |K .
+The following fact enables the component-wise approximation, i.e., given a transformation that is
+represented by a composition of some transformations, we can approximate it by approximating
+each constituent and composing them.
+Fact 3 (Compatibility of composition and approximation; Proposition 6 of Teshima et al. [9]). Let
+M be a set of locally bounded maps from Rd to Rd, and F1,...,Fk be continuous maps from Rd
+to Rd. Assume for any ε> 0 and any compact set K ⊂ Rd, there exist ~G1,..., ~Gk ∈ M such that,
+for 1 ≤ i ≤ k,
+‖‖Fi − ~Gi ‖‖ sup,K <ε. Then for any ε> 0 and any compact set K ⊂ Rd, there exist
+G1,...,Gk ∈ M such that
+‖Fk ◦ · · · ◦ F1 − Gk ◦ · · · ◦ G1‖sup,K <ε.
+6
+The following fact is attributed to Herman, Thurston [10], Epstein [11], and Mather [12, 13]. See
+Fact 2 of Teshima et al. [9] and the remarks therein for details. Let Id denote the identity map.
+Fact 4 (Fact 2 of Teshima et al. [9]). If r ⁄= d + 1, the group Diﬀ r c is simple, i.e., any normal
+subgroup H ⊂ Diﬀ r c is either {Id} or Diﬀ r c .
+Next, we deﬁne a subset of Diﬀ r c called the ﬂow endpoints. In Lemma 1, it is shown that the set of
+ﬂow endpoints generates a non-trivial normal subgroup of Diﬀ r c . Therefore, by combining it with
+Fact 3, we can represent any element of Diﬀ r c as a ﬁnite composition of ﬂow endpoints, each of
+which can be approximated by the NODEs.
+While Corollary 2 of Teshima et al. [9] also deﬁned a set of ﬂow endpoints in Diﬀ 2 c , it differs from
+the one deﬁned here which is tailored for our purpose. The two deﬁnitions can be interpreted as
+describing two different generators of the same group Diﬀ 2 c . Let supp denote the support of a map.
+Deﬁnition 7 (Flow endpoints Sr in Diﬀ r c ). Let 1 ≤ r ≤ ∞. Let Sr ⊂ Diﬀ r c be the set of diffeomor-
+phisms g of the form g(x) = Φ(x, 1) for some map Φ : Rd × U → Rd such that
+• U ⊂ R is an open interval containing [0, 1],
+• Φ(x, 0) = x,
+• Φ(·,t) ∈ Diﬀ r c for any t ∈ U ,
+• Φ(x,s + t) = Φ(Φ(x,s),t) for any s,t ∈ U with s + t ∈ U ,
+• Φ is C r on Rd × U ,
+• There exists a compact subset KΦ ⊂ Rd such that ∪t∈U suppΦ(·,t) ⊂ KΦ.
+The difference between Deﬁnition 7 and the one in Corollary 2 of Teshima et al. [9] mainly lies in
+the last two conditions. Technically, these two conditions are used in Section A.2 for showing that
+the partial derivative of Φ in t at t = 0 is Lipschitz continuous.
+Lemma 1 (Modiﬁed Corollary 2 of Teshima et al. [9]). Let 1 ≤ r ≤ ∞ and Sr ⊂ Diﬀ r c be the set
+of all ﬂow endpoints. Then, the subset H r of Diﬀ r c deﬁned by
+H r := {g1 ◦ · · · ◦ gn | n ≥ 1,g1,...,gn ∈ Sr }
+forms a subgroup of Diﬀ r c and it is a non-trivial normal subgroup.
+Proof of Lemma 1. First, we prove that H r forms a subgroup of Diﬀ r c . By deﬁnition, for any g,h ∈
+H r , it holds that g ◦ h ∈ H r. Also, H r is closed under inversion; to see this, it sufﬁces to show that
+Sr is closed under inversion. Let g = Φ(·, 1) ∈ Sr . Consider the map φ : Rd × U → Rd deﬁned
+by φ(·,t) := Φ−1(·,t). It is easy to conﬁrm that φ satisﬁes the conditions of Deﬁnition 7, hence
+g−1 = φ(·, 1) is an element of Sr. Note that φ is conﬁrmed to be C r on Rd × U by applying the
+inverse function theorem to (t, x) ↦→ (t, Φ(x,t)).
+Next, we prove that H r is normal. To show that the subgroup generated by Sr is normal, it sufﬁces
+to show that Sr is closed under conjugation. Take any g ∈ Sr and h ∈ Diﬀ r c , and let Φ be a ﬂow
+associated with g. Then, the function Φ′ : Rd × U → Rd deﬁned by Φ′(·,s) := h−1 ◦ Φ(·,s) ◦ h is a
+ﬂow associated with h−1 ◦g ◦h satisfying the conditions in Deﬁnition 7, which implies h−1 ◦g ◦h ∈
+Sr, i.e., Sr is closed under conjugation.
+Next, we prove that H r is non-trivial by constructing an element of Sr that is not the identity
+element. First, consider the case d = 1. Let ˜v : R → R≥0 be a non-constant C ∞-function such that
+supp ˜v ⊂ [0, 1] and ˜v(k)(0) = 0 for any k ∈ N. Then deﬁne v : R → R by
+v(x) =
+{
+˜v(|x|) x |x| if x ⁄= 0,
+0 if x = 0,
+which is a C ∞-function on R with a compact support. Since v is Lipschitz continuous and C ∞,
+there exists IVP[v] that is a C ∞-function over R × R; see Fact 1 and [17, Chapter V, Corollary 4.1].
+Let Kv ⊂ R be a compact subset that contains supp v. Then, by considering the ordinary dif-
+ferential equation by which IVP[v] is deﬁned, we see that ⋃ t∈R supp IVP[v](·,t) ⊂ Kv and
+7
+also that IVP[v](x, 0) = x. We also have IVP[v](x,s + t) = IVP[v](IVP[v](x,s),t) for any
+s,t ∈ R. In particular, we have IVP[v](·,s)−1 = IVP[v](·, −s) for any s ∈ R. Therefore, we
+have IVP[v](·, 1) ∈ Sr. Since v ⁄≡ 0, IVP[v](·, 1) is not an identity map and thus Sr is not trivial.
+Next, we consider the case d ≥ 2. Take a C ∞-function φ : R → R with supp φ = [1, 2] and a
+nonzero skew-symmetric matrix A (i.e. A⊤ = −A) of size d, and let X(x) := φ(‖x‖)A. We deﬁne
+a C ∞-map Φ : Rd × R → Rd by
+Φ(x,t) := exp(tX(x))x.
+Since exp(tX(x)) is an orthogonal matrix for any t ∈ R and x ∈ Rd, Φ is a C ∞-ﬂow on Rd. Now,
+it is enough to show that there exists a compact set KΦ ⊂ Rd satisfying ∪t∈Rsupp Φ(·,t) ⊂ KΦ.
+Let KΦ := {x ∈ Rd | ‖x‖ ≤ 2}. Then the inclusion supp Φ(·,t) ⊂ KΦ holds for any t ∈ R since
+X(x) = 0 for x ∈ Rd \ KΦ.
+The following lemma allows us to approximate an autonomous ODE ﬂow endpoint by approximat-
+ing the differential equation. See Deﬁnition 2 for the deﬁnition of Ψ(·).
+Lemma 2 (Approximation of Autonomous-ODE ﬂow endpoints). Assume H ⊂ Lip(Rd) is a sup-
+universal approximator for Lip(Rd). Then, Ψ(H) is a sup-universal approximator for Ψ(Lip(Rd)).
+Proof. Let φ ∈ Ψ(Lip(Rd)). Then, by deﬁnition, there exists F ∈ Lip(Rd) such that φ =
+IVP[F ](·, 1). Let LF denote the Lipschitz constant of F . In the following, we approximate
+IVP[F ](·, 1) by approximating F using an element of H.
+Let ε > 0, and let K ⊂ Rd be a compact subset of Rd. We show that there exists f ∈ H such
+that ‖IVP[F ](·, 1) − IVP[f ](·, 1)‖sup,K < ε. Note that IVP[f ](·, ·) is well-deﬁned because H ⊂
+Lip(Rd). Deﬁne
+K ′ :=
+{
+x ∈ Rd
+⏐⏐⏐⏐ infy∈IVP[F ](K,[0,1]) ‖x − y‖ ≤ 2eLF } .
+Then, K ′ is compact. This follows from the compactness of IVP[F ](K, [0, 1]): (i) K ′ is bounded
+since IVP[F ](K, [0, 1]) is bounded, and (ii) it is closed since the function miny∈IVP[F ](K,[0,1]) ‖x−
+y‖ is continuous and hence K ′ is the inverse image of a closed interval [0, 2eLF ] by a continuous
+map.
+Since H is assumed to be a sup-universal approximator for Lip(Rd), for any δ > 0, we can take
+f ∈ H such that ‖f − F ‖sup,K′ <δ. Let δ be such that 0 <δ < min{ε/(2eLF ), 1}, and take such
+an f .
+Fix x0 ∈ K and deﬁne ∆x0 (t) := ‖IVP[F ](x0,t) − IVP[f ](x0,t)‖. Let B := δeLF and we show
+that
+∆x0 (t) < 2B
+holds for all t ∈ [0, 1]. We prove this by contradiction. Suppose that there exists t′ for which the
+inequality does not hold. Then, the set T := {t ∈ [0, 1]|∆x0 (t) ≥ 2B} is not empty and thus
+τ := inf T ∈ [0, 1]. For this τ , we show both ∆x0 (τ ) ≤ B and ∆x0 (τ ) ≥ 2B. First, we have
+∆x0 (τ ) = ‖IVP[F ](x0,τ ) − IVP[f ](x0,τ )‖
+=
+‖‖‖‖x0 + ∫ τ 0 F (IVP[F ](x0,t))dt − x0 − ∫ τ 0 f (IVP[f ](x0,t))dt ‖‖‖‖
+≤
+‖‖‖‖ ∫ τ
+0
+(F (IVP[F ](x0,t)) − F (IVP[f ](x0,t)))dt
+‖‖‖‖
++
+‖‖‖‖ ∫ τ 0 (F (IVP[f ](x0,t)) − f (IVP[f ](x0,t)))dt ‖‖‖‖ .
+The last term can be bounded as
+‖‖‖‖ ∫ τ 0 (F (IVP[f ](x0,t)) − f (IVP[f ](x0,t)))dt ‖‖‖‖ ≤ ∫ τ 0 δdt
+8
+because of the following argument. If τ = 0, then both sides equal to zero, hence it holds with
+equality. If τ > 0, then for any t < τ , we have IVP[f ](x0,t) ∈ K ′ because t < τ implies
+∆x0 (t) ≤ 2B. In this case, ‖F − f ‖sup,K′ <δ implies the inequality. Therefore, we have
+∆x0 (τ ) ≤ LF
+∫ τ
+0
+∆x0 (t)dt +
+∫ τ
+0
+δdt.
+Now, by applying Grönwall’s inequality [18], we obtain
+∆x0 (τ ) ≤ δτeLF τ ≤ B.
+On the other hand, by the deﬁnition of T and the continuity of ∆x0 (·), we have ∆x0 (τ ) ≥ 2B.
+These two inequalities contradict.
+Therefore, ‖IVP[F ](·, 1) − IVP[f ](·, 1)‖sup,K = supx0∈K ∆x0 (1) ≤ 2B = 2δeLF holds. Since
+δ <ε/(2eLF ), the right-hand side is smaller than ε.
+Finally, we display a lemma that is useful in the case of d = 1. It is proved by convolving a smooth
+bump-like function.
+Fact 5 (Lemma 11 of Teshima et al. [9]). Let τ : R → R be a strictly increasing continuous function.
+Then, for any compact subset K ⊂ R and any ε> 0, there exists a strictly increasing C ∞-function
+˜τ such that
+‖τ − ˜τ ‖sup,K <ε.
+A.2 Proof of Theorem 1
+Proof of Theorem 1. Let F : U → Rd be an element of D2. Take any compact set K ⊂ U and
+ε> 0. First, thanks to Fact 2, there exists a G ∈ Diﬀ 2 c and an afﬁne transform W ∈ Aﬀ such that
+W ◦ G|K = F |K .
+Now, if d ≥ 2, then 2 ⁄= d + 1, hence we can immediately use Fact 4 and Lemma 1 to show that
+there exists a ﬁnite set of ﬂow endpoints (Deﬁnition 7) g1,...,gk ∈ S2 such that
+G = gk ◦ · · · ◦ g1.
+On the other hand, if d = 1, by Fact 5, for any δ > 0, we can ﬁnd ˜G that is a C ∞-diffeomorphism
+on R such that
+‖‖‖G − ˜G ‖‖‖
+sup,K
+<δ. Without loss of generality, we may assume that ˜G is compactly
+supported so that ˜G ∈ Diﬀ ∞ c . Then, we can use Fact 4 and Lemma 1 to show that there exists a
+ﬁnite set of ﬂow endpoints (Deﬁnition 7) g1,...,gk ∈ S∞ such that
+˜G = gk ◦ · · · ◦ g1.
+We now construct fj ∈ Lip(Rd) such that gj = IVP[fj ](·, 1). By Deﬁnition 7, for each gj (1 ≤
+j ≤ k), there exists an associated ﬂow Φj . Now, deﬁne
+fj (·) := ∂Φj (·,t) ∂t ⏐⏐⏐⏐ t=0 .
+Then, fj ∈ Lip(Rd) because it is a compactly-supported C 1-map: it is compactly supported since
+there exists a compact subset Kj ⊂ Rd containing the support of Φ(·,t) for all t, and hence Φ(·,t)−
+Φ(·, 0) is zero in the complement of Kj .
+Now, Φj (x,t) = IVP[fj ](x,t) since, by additivity of the ﬂows,
+∂Φj
+∂t (x,t) = lim s→0
+Φj (x,t + s) − Φj (x,t)
+s = lim s→0
+Φj (Φj (x,t),s) − Φj (Φj (x,t), 0)
+s
+= ∂Φj (Φj (x,t),s) ∂s ⏐⏐⏐⏐ s=0 = fj (Φj (x,t)),
+and hence it is a solution to the initial value problem that is unique. As a result, we have gj =
+Φj (·, 1) = IVP[fj ](·, 1).
+9
+By combining Fact 3 and Lemma 2, there exist φ1,...,φk ∈ Ψ(H) such that
+‖gk ◦ · · · ◦ g1 − φk ◦ · · · ◦ φ1‖sup,K < ε ‖W ‖op ,
+where ‖·‖op denotes the operator norm. Therefore, we have that W ◦ φk ◦ · · · ◦ φ1 ∈ INNH-NODE
+satisﬁes
+‖F − W ◦ φk ◦ · · · ◦ φ1‖sup,K = ‖W ◦ G − W ◦ φk ◦ · · · ◦ φ1‖sup,K
+≤ ‖W ‖op ‖gk ◦ · · · ◦ g1 − φk ◦ · · · ◦ φ1‖sup,K
+<ε
+if d ≥ 2. For d = 1, it can be shown that there exists W ◦ φk ◦ · · · ◦ φ1 ∈ INNH-NODE that satisﬁes
+‖F − W ◦ φk ◦ · · · ◦ φ1‖sup,K <ε in a similar manner.
+B Terminal time of autonomous-ODE ﬂow endpoints
+In Deﬁnition 2, the choice of the terminal value of the time variable, t = 1, is only technical. To
+see this, let T > 0. If we consider w : R → Rd that is the solution of the initial value problem
+w(0) = x, ˙w(t) = (Tf )(w(t)) (t ∈ R) as well as z : R → Rd that is the unique solution to z(0) =
+x, ˙z(t) = f (z(t)) (t ∈ R), then w(t) = z(Tt) holds. Therefore, IVP[f ](x,Tt) = IVP[Tf ](x,t).
+As a result, IVP[f ](x,T ) = IVP[Tf ](x, 1) holds. Therefore, it holds that
+{IVP[f ](·,T ) | f ∈ F } = {IVP[Tf ](·, 1) | f ∈ F } = Ψ(T F).
+Thus, even if we consider T ⁄= 1, if the set F is a cone, the set of the autonomous-ODE ﬂow
+endpoints remains the same.
+C Comparison between Lp-universality and sup-universality
+In this section, we discuss the advantage of having a representation power guarantee in terms of the
+sup-norm instead of the Lp-norm in function approximation tasks.
+Roughly speaking, the function approximation should be robust under a slight change of norms, but
+Lp-universal approximation property can be sensitive to the choice of p. To make this point, we
+construct an example: even if a model g sufﬁciently approximates a target f with the norm ‖ · ‖1,K ,
+the model g may fail to approximate f with ‖ · ‖p,K for any p> 1, even if p is very close to 1.
+Let h : (0, 1) → R be a strictly increasing function such that
+{‖h‖p′,[0,1] < ∞ if p′ = 1,
+‖h‖p′,[0,1] = ∞ if p′ > 1.
+For example, h(x) = − ∑∞ k=1 x1/k−1/k3 satisﬁes this condition. Then, we deﬁne
+gn(x) = x + h(x) n .
+Now, the sequence {gn}∞ n=1 approximates Id in L1-norm in the sense that for any small ε > 0, for
+sufﬁciently large N , it holds that
+‖gN − Id‖1,[0,1] <ε, (2)
+(3)
+However, the same gN fails to approximate Id in Lp-norm (p > 1) since it always holds that, for
+sufﬁciently small δ ∈ (0, 1/2),
+‖gN − Id‖p,[δ,1−δ] ≥ 1. (4)
+This example highlights that ﬁxing p ﬁrst and guaranteeing approximation in Lp-norm may not
+sufﬁce for guaranteeing the approximation in Lp′ -norm (p′ > p). On the other hand, having a
+guarantee in sup-norm sufﬁces for providing an approximation guarantee in Lp-norm for p ≥ 1
+simultaneously.
+10
