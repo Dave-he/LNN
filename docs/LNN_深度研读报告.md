@@ -1794,6 +1794,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-18**：[[docs/daily/2026-11-18_LNN_research_digest.md|每日追踪]]，候选论文 95 篇，仓库 45 个，模型 16 个。
 - **2026-11-16**：[[docs/daily/2026-11-16_LNN_research_digest.md|每日追踪]]，候选论文 95 篇，仓库 0 个，模型 0 个。
   - **研读 3 篇**（selector top-3 **连续第 8 天**全部为已知误命中，已手动改选；**其中 1 篇还是靠独立的覆盖度自检才捞出来的**）：[[docs/reports/C_elegans_Connectome_Core_Task_Agnostic_Dynamical_Core_2609.39322_研读报告.md|C. elegans 连接组回路作任务无关动力学核：冻结权重的生物接线图换来视觉鲁棒性 (2609.39322)]]、[[docs/reports/Firebolt_VL_Cross_Modality_Modulation_S4_LFM2_2604.04579_研读报告.md|Firebolt-VL：S4 + 双向 FiLM 取代交叉注意力，"Liquid" 一词实为泛化用法 (2604.04579)]]、[[docs/reports/Locating_Repairing_Domain_Shift_VLM_Trajectory_Planning_2611.10720_研读报告.md|MoLaRx：把域偏移定位成"模态 × 层"二维张量，只修出问题的位置 (2611.10720)]]。
   - **selector 输出的 3 个 top 候选全部排除**：`2607.15232v1` (score 10, LFM2 tokenizer 扩展 —— **连续第 8 天**的同一已知误命中，索引 1401 行已判 false positive)、`2412.17006v1` (score 9, LTC 气候韧性代理建模，eess.SY 纯仿真，**自 10-29 起已被连续 7 轮明确排除**)、`2309.13499v2` (score 9, 多智能体 STL 闭环控制器的 "closed-form continuous-time" **字面命中** —— 是控制器的解析反馈律，与 CfC 无关)。**连续第 8 天同一批 top-3 误命中** —— selector 的强关键词打分 + `already_reported` 覆盖检查在这批论文上**稳定失灵**，必须每日人工复核、不可照抄。**建议尽快给 selector 增加"标题级强关键词"过滤与"作者+参数指纹"去重**。
@@ -1909,5 +1910,4 @@ positioning_updated: 2026-09-14
 - **2026-10-19**：[[docs/daily/2026-10-19_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
 - **2026-10-18**：[[docs/daily/2026-10-18_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
 - **2026-10-17**：[[docs/daily/2026-10-17_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 21 个。
-- **2026-10-16**：[[docs/daily/2026-10-16_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
 <!-- daily-lnn-index:end -->
