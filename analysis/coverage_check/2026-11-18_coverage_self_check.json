@@ -1,0 +1,168 @@
+{
+  "date": "2026-11-18",
+  "purpose": "AGENTS.md 约束 7 覆盖度自检：区分『领域事实』与『覆盖盲区』",
+  "digest_pool": {
+    "n_papers": 95,
+    "n_errors": 0,
+    "errors": [],
+    "github_repos": 45,
+    "huggingface_models": 16,
+    "max_results_used_by_script": 25
+  },
+  "independent_sweep_max_results_100": {
+    "per_group_hits": {
+      "LNN": 38
+    },
+    "group_counts": {
+      "LNN": 38,
+      "LTC": 29,
+      "CfC": 17,
+      "NCP": 7,
+      "LSSM": 2
+    },
+    "n_unique": 82,
+    "in_sweep_but_dropped_from_pool": [
+      {
+        "id": "2006.04439",
+        "published": "2020-06-08",
+        "title": "Liquid Time-constant Networks",
+        "already_reported": true
+      },
+      {
+        "id": "2112.11231",
+        "published": "2021-12-20",
+        "title": "Accurate online training of dynamical spiking neural networks through Forward Propagation Through Time",
+        "already_reported": true
+      },
+      {
+        "id": "2304.13429",
+        "published": "2023-04-26",
+        "title": "GENIE-NF-AI: Identifying Neurofibromatosis Tumors using Liquid Neural Network (LTC) trained on AACR GENIE Datasets",
+        "already_reported": true
+      },
+      {
+        "id": "2404.05304",
+        "published": "2024-04-08",
+        "title": "Liquid Neural Network-based Adaptive Learning vs. Incremental Learning for Link Load Prediction amid Concept Drift due to Network Failures",
+        "already_reported": true
+      },
+      {
+        "id": "2405.00365",
+        "published": "2024-05-01",
+        "title": "Robust Continuous-Time Beam Tracking with Liquid Neural Network",
+        "already_reported": true
+      },
+      {
+        "id": "2405.07291",
+        "published": "2024-05-12",
+        "title": "Robust Beamforming with Gradient-based Liquid Neural Network",
+        "already_reported": true
+      },
+      {
+        "id": "2406.15149",
+        "published": "2024-06-21",
+        "title": "Gaussian Splatting to Real World Flight Navigation Transfer with Liquid Networks",
+        "already_reported": true
+      },
+      {
+        "id": "2407.20590",
+        "published": "2024-07-30",
+        "title": "Exploring Liquid Neural Networks on Loihi-2",
+        "already_reported": true
+      },
+      {
+        "id": "2408.09818",
+        "published": "2024-08-19",
+        "title": "Liquid Fourier Latent Dynamics Networks for fast GPU-based numerical simulations in computational cardiology",
+        "already_reported": true
+      },
+      {
+        "id": "2504.02352",
+        "published": "2025-04-03",
+        "title": "Liquid Neural Networks: Next-Generation AI for Telecom from First Principles",
+        "already_reported": true
+      },
+      {
+        "id": "2507.08821",
+        "published": "2025-06-30",
+        "title": "LNN-powered Fluid Antenna Multiple Access",
+        "already_reported": true
+      },
+      {
+        "id": "2510.04187",
+        "published": "2025-10-05",
+        "title": "A Complement to Neural Networks for Anisotropic Inelasticity at Finite Strains",
+        "already_reported": true
+      },
+      {
+        "id": "2609.39322",
+        "published": "2026-09-30",
+        "title": "A Biophysically Detailed C. elegans Circuit as a Task-Agnostic Dynamical Core for Visually Robust Robot Manipulation",
+        "already_reported": true
+      }
+    ]
+  },
+  "additional_sweeps": {
+    "wide_queries": {
+      "n_entries": 393
+    },
+    "lineage_queries": {
+      "n_entries": 166
+    },
+    "title_level_queries": {
+      "n_entries": 361
+    }
+  },
+  "strong_keyword_universe_coverage": {
+    "note": "标题级 LNN 家族论文 54 篇，全部已有研读报告覆盖 → 无新强关键词论文属『领域事实』",
+    "n_genuine_lnn_family_titles": 54,
+    "n_uncovered": 0
+  },
+  "mechanism_level_coverage_gap": {
+    "note": "连续时间谱系（以数学机制命名、标题不含 LNN/LTC/CfC/NCP 强关键词）存在真实覆盖盲区",
+    "selected_today": [
+      {
+        "id": "2005.08926",
+        "title": "Neural Controlled Differential Equations for Irregular Time Series (NeurIPS 2020)",
+        "zero_repo_coverage": true,
+        "never_in_digest_pool": true
+      },
+      {
+        "id": "2012.02414",
+        "title": "Universal Approximation Property of Neural ODEs (NeurIPS 2020 Workshop)",
+        "zero_repo_coverage": true,
+        "never_in_digest_pool": true
+      },
+      {
+        "id": "2303.10909",
+        "title": "Graph Neural Rough Differential Equations for Traffic Forecasting (ACM 2023)",
+        "zero_repo_coverage": true,
+        "never_in_digest_pool": true
+      }
+    ]
+  },
+  "selector_top3_all_rejected": [
+    {
+      "id": "2607.15232v1",
+      "score": 10,
+      "reason": "LFM2 tokenizer 扩展；仅用 LFM2 做实验，与 LNN 无关（连续第 9 天误命中）"
+    },
+    {
+      "id": "2412.17006v1",
+      "score": 9,
+      "reason": "LTC 气候韧性代理建模；eess.SY 纯仿真，机制简单，证据价值低"
+    },
+    {
+      "id": "2309.13499v2",
+      "score": 9,
+      "reason": "多智能体 STL 闭环控制器；'closed-form continuous-time' 为控制律字面命中，与 CfC 无关"
+    }
+  ],
+  "known_false_positive_trap": {
+    "id": "2611.04233",
+    "title": "LINDA: Low Resource Foot Ulcer Segmentation using Local Similarity and Iterative Neural Dynamics",
+    "duplicate_of": "2603.00459",
+    "evidence": "同作者（Chatterjee/Chakrabarty/Acharjee）、同 FUSeg 2021 数据集、同 25.70M 参数量、同 LSS 先验 + LTC 边界精炼；仅 Dice 86.96→86.68、HD95 8.91→6.37",
+    "consecutive_days": 8
+  }
+}
