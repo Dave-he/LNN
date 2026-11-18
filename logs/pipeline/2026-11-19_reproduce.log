@@ -1,0 +1,45 @@
+[2026-11-19 06:54:32] digest 2026-11-19 无命中复现规则的论文, 跳过
+
+=== 2026-11-19 06:58:14 reproducing 2603.27058v1 via scripts/experiment_imitation_lnn.py ===
+title : Liquid Networks with Mixture Density Heads for Efficient Imitation Learning
+hit   : imitation
+cmd   : .venv312/bin/python scripts/experiment_imitation_lnn.py --recurrent cfc --head mdn --samples 1000 --epochs 12
+note  : 该论文**不在 2026-11-19 digest 渲染表 (12 行) 内**, 但在当日候选池 95 篇内且命中复现规则;
+        dispatcher 只读渲染表 (B5 类截断盲区, 第 4 次同型复发) 故报"无命中"。
+        本条由人工复核后按 dispatcher 的同一规则与同一脚本手工补跑, 语义与 dispatcher 等价。
+[exit] 0
+
+--- 手工复现输出摘要 ---
+Model: cfc + mdn | Device: cpu | Samples: 1000 | Parameters: 18,025
+Epoch   1 | Train 1.7603 | Val loss 1.6650 | Val MSE 0.0054
+Epoch   5 | Train -0.4195 | Val loss -1.2315 | Val MSE 0.0013
+Epoch  10 | Train -3.7059 | Val loss -3.8218 | Val MSE 0.0010
+Epoch  12 | Train -3.7994 | Val loss -3.8676 | Val MSE 0.0010
+Test loss: -3.733517 | Test MSE: 0.001116
+JSON written: analysis/control/2026-11-19_065814_imitation_lnn.json
+Report written: analysis/control/2026-11-19_065814_imitation_lnn.md
+
+--- 复现口径说明 (引用时必须带) ---
+这是**合成 toy imitation** 数据上的 MDN-CfC 复现 (与 2603.27058 原文的 Push-T / RoboMimic /
+PointMaze 不可直接比较), 目的是维持"MDN 头 + CfC"这条路的每日可复现回归线。
+本仓 NR-01 的判定 (MDN-CfC 在模仿学习上 2.4x 改善 → 证伪) 依据的是 r307 toy benchmark,
+**不由本次复现改变**; 本次结果 (test MSE 0.001116) 仅为**训练收敛性**证据, **不构成对
+2603.27058 的复现或证伪**, 引用时必须标注"合成数据 / 非原论文数据集"。
+
+--- dispatcher 覆盖盲区审计 (2026-11-19 独立复核) ---
+dispatcher (replicate_paper_dispatch.py) 的输入是 select_papers_for_report.parse_digest(date)
+的 `arxiv` 列表, 即 **digest markdown 渲染表的前 12 行**, **不是**当日候选池 95 篇。
+今日渲染表 12 篇全部不命中任何复现规则 → dispatcher 报"无命中", 经独立复核为**真实空集**
+(不是解析失败): 12 篇逐条核过标题与摘要, 零命中。
+但当日候选池 95 篇中有 **11 篇** 命中复现规则, 其中 3 个脚本各命中一批:
+  replicate_paper_experiment.py : 2604.24788 (natural gas)          [历史已跑 24 次]
+  replicate_temporal_dropout.py : 2606.28827 / 2605.27467 / 2604.07219 /
+                                  2603.00153 / 2511.09909 / 2510.25020 / 2310.03915
+                                  [2606.28827 已跑 1 次; 其余 6 篇零次]
+  experiment_imitation_lnn.py  : 2603.27058 (imitation) / 2107.14654 (imitation) /
+                                  2606.21295 (behavior cloning, 摘要锚点)
+                                  [3 篇均零次 —— 本次补跑 2603.27058]
+⇒ 这是 2026-10-26 流水线审计 B5 ("下游只读渲染表 = 截断盲区") 的**第 4 次同型复发**,
+   首次命中 **reproduce dispatcher** 这条链路。建议修复: dispatcher 改读
+   papers/daily/<date>_lnn_research.json 全量池 (与 B5 对 PDF 下载器的修复同法),
+   属用户决策范畴, 本次未擅自改动脚本。
