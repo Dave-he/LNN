@@ -1,0 +1,1112 @@
+LogSig-SSM: Time-Series Modelling with Multi-Scale
+Log-Signature Compression for State-Space Models
+Felix Oury
+Department of Computing
+Imperial College London
+felix.oury19@imperial.ac.uk
+Nicolas Calvo Peiro
+Department of Bioengineering
+Imperial College London
+nicolas.calvo-peiro19@imperial.ac.uk
+Reiko J. Tanaka
+Department of Bioengineering
+Imperial College London
+r.tanaka@imperial.ac.uk
+Abstract
+Time-series data are often sampled irregularly at high frequencies and exhibit long-
+range dependencies, which makes long-horizon modelling difficult. Continuous-
+time models such as neural controlled differential equations (NCDEs) and neural
+rough differential equations (NRDEs) can handle irregular sampling, but they
+scale poorly to long sequences. Selective state-space models (SSMs) such as
+Mamba scale linearly with sequence length, but they provide limited recurrent
+mixing across hidden dimensions within a single block. We propose LogSig-SSM
+(Log-Signature Compression for State-Space Models), which first compresses
+long multivariate time series into a shorter sequence of tokens using multi-scale
+windowed log-signatures, and then processes these tokens with a selective SSM
+backbone. LogSig-SSM is scalable and robust to irregular sampling, combining
+log-signature tokens that capture higher-order cross-channel interactions with a
+selective SSM that models long-range dependencies. The model also admits a
+continuous-time interpretation as an NCDE/NRDE-style system driven by a log-
+signature-based input, in which selectivity induces an input-dependent rescaling of
+the latent dynamics. Across four benchmarks, namely long-sequence classification
+on UEA, high-frequency physiological regression on PPG-DaLiA, multivariate
+weather forecasting, and irregularly sampled clinical prediction on PhysioNet
+Sepsis, LogSig-SSM outperforms or matches strong SSM and continuous-time
+baselines while training up to 30× faster and using up to 37× less GPU memory
+than Mamba on the longest sequences.1
+1 Introduction
+Time-series modelling has numerous real-world applications in domains such as healthcare [9] and
+finance [16]. These applications typically involve signals, such as ECG or transaction prices, that are
+irregularly sampled at high frequencies and contain information spanning long time scales. Processing
+these long sequences creates memory and computational bottlenecks which motivate the development
+of models that scale to long sequences while remaining reliable under irregular sampling rates. Two
+widely-used approaches are continuous-time models and State-Space-Models (SSMs).
+Continuous-time models such as Neural Ordinary Differential Equations (NODEs) [5] and Neural
+Controlled Differential Equations (NCDEs) [19] treat observed time-series data as discrete-time
+1Code: https://github.com/felix-oury/LogSigSSM.
+40th Conference on Neural Information Processing Systems (NeurIPS 2026).
+arXiv:2610.05051v1  [cs.LG]  4 Oct 2026
+samples from an underlying continuous-time process. NCDEs operate on continuous interpolations
+of the data and naturally accommodate irregularly-sampled observations. However, training and
+inference can become costly on longer sequences because numerical solvers often require more
+integration steps. To address this computational bottleneck, Neural Rough Differential Equations
+(NRDEs) [25] and Log-NCDEs [38] employ the log-ODE method [6, 11] which summarises infor-
+mation between time intervals with truncated log-signatures, enabling the solver to take fewer, larger
+steps. Signature-based summarisation has also been adapted to improve computational efficiency and
+handle irregular sampling in discrete models such as RNNs [20] and transformers [24].
+In parallel, structured SSMs [4, 8, 14, 15, 31, 34] have emerged as an efficient alternative to attention-
+based models. Unlike transformers, whose computational cost scales quadratically [36], modern
+SSMs achieve linear-time processing, constant-memory inference, and efficient GPU-parallel training.
+SSMs have also shown competitive performance across various sequence modelling tasks [21, 32, 33,
+43]. Recent selective SSMs, such as Mamba [14], introduced input-dependent gating enabling the
+model to filter context content rather than uniformly compressing it. Additionally, novel theoretical
+work [7] has established that SSMs admit a continuous-time interpretation as linear controlled
+differential equations (CDEs), connecting them to the continuous-time modelling framework.
+However, recent empirical studies highlight two key limitations of Mamba. First, performance can
+degrade on very long sequences, where Mamba-based models may underperform attention-based
+baselines [37]. Existing approaches mitigate this limitation through token pruning or decimation
+[40, 3]. Second, Mamba’s diagonal state transition admits no within-block mixing across hidden
+dimensions. As Cirone et al. [7, Cor 4.4] show, the closure of a single Mamba block decomposes
+as a sum of per-channel functionals. This means genuinely multivariate path functionals, such as
+Lévy areas, which depend on the joint behaviour of two channels, lie outside this closure. Two
+mitigations exist for this limitation, but come with costs. Stacking blocks with linear inter-block
+mixing eventually recovers full expressivity (Prop. 4.5 in [7]), but only as both depth and hidden-
+state size grow without bound, i.e. cross-channel structure is paid for in model size. Replacing
+the diagonal state transition with richer structure [39, 35] avoids the depth cost, but at non-trivial
+efficiency overhead (PD-SSM reports approximately 6× slower runtime than Mamba [35]). These
+limitations motivate a complementary strategy: compressing the effective sequence length while
+injecting explicit higher-order cross-channel information at the input, leaving the efficient diagonal
+scan intact.
+Log-signature features [23] provide exactly such input-level functionals. They encode iterated
+integrals of the path, including Lévy areas, while inheriting invariance to monotone time reparame-
+terisations and thus offering robustness to irregular sampling. Building on this idea, we introduce
+LogSig-SSM, a two-stage architecture that achieves both accuracy and efficiency on long sequences.
+First, a long multivariate sequence is mapped to a shorter token sequence by computing truncated
+log-signatures over strided windows at multiple scales, yielding compact descriptors that explicitly
+capture cross-channel dependencies. Second, these tokens are processed by a diagonal selective SSM,
+which efficiently models long-range dependencies over the reduced sequence length.
+Our contributions are:
+• We introduce LogSig-SSM, a model that integrates log-signature tokenisation with selective
+SSMs. The tokeniser compresses long, irregularly-sampled multivariate sequences into
+compact summaries by computing truncated log-signatures over multi-scale windows.
+• We provide a continuous-time interpretation of LogSig-SSM by extending the linear-CDE
+view of SSMs [7], interpreting the model as an NCDE/NRDE-style system driven by
+log-signature-derived controls with input-dependent time rescaling of the latent dynamics.
+• We establish a depth–truncation tradeoff. A single LogSig-SSM block followed by an MLP
+can approximate any continuous functional of the windowed log-signature up to depth m,
+while the same class of functionals lies outside the closure of a single diagonal Mamba
+block (even with a pointwise MLP, which cannot recover features absent from the block
+state) and requires chained blocks to recover.
+• We evaluate LogSig-SSM on four benchmarks: long-sequence time-series classification
+(UEA), high-frequency physiological signal regression (PPG-DaLiA), multivariate weather
+forecasting, and irregularly sampled early sepsis prediction (PhysioNet Sepsis). LogSig-
+SSM matches or exceeds strong SSM and continuous-time baselines and reduces training
+time by 30× and GPU memory by 37× relative to standard Mamba on the longest sequences.
+2
+2 Theoretical Background
+We review the theoretical foundations of LogSig-SSM: (i) structured SSMs, which serve as the
+sequential processing backbone, (ii) their continuous-time interpretation as linear CDEs, and (iii)
+log-signatures, which provide compact summaries of multivariate time-series over time intervals.
+2.1 Structured State-Space Models
+Modern SSM sequence layers can be viewed as discretisations of a continuous-time linear state-space
+system. Let X : [0, 1] → Rd be an input signal observed at time points 0 ≤ t0 < · · · < tL ≤ 1.
+We write xℓ := X(tℓ) for the resulting discrete sequence and xi,ℓ := Xi(tℓ) for its ith channel. A
+channel-wise linear SSM processes each channel Xi with its own latent state Hi : [0, 1] → KN and
+produces a scalar output yi : [0, 1] → R:
+dHi(t)
+dt = AiHi(t) + Bi Xi(t), yi(t) = CiHi(t), (1)
+where Ai ∈ KN ×N is structured (often diagonal), Bi ∈ KN , Ci ∈ K1×N , and K ∈ {R, C}. To
+apply SSMs to discrete sequence data, we discretise the continuous-time dynamics using a step size
+∆i > 0. Under a zero-order hold (ZOH) discretisation with step ∆i:
+Hi,ℓ = AiHi,ℓ−1 + Bixi,ℓ, Ai = e∆i Ai , Bi = (∆iAi)−1(e∆i Ai − I)∆iBi. (2)
+A key design choice in modern SSMs is how the continuous-dynamics are discretised. Linear Time-
+Invariant (LTI) SSMs, such as S4 [15] and S5 [34], use a fixed step size ∆i learned at training time,
+giving time-invariant operators (Ai, Bi). Selective SSMs, such as Mamba [14], instead make the
+step size input-dependent. This induces input-dependent selectivity, meaning the model can adapt its
+update rate across the sequence, focusing on important information while down-weighting irrelevant
+inputs. In addition, the input and output projections sB : Rd → RN and sC : Rd → R1×N are
+learned functions of the current sample xℓ. In Mamba, the channel-wise internal step is defined as
+∆i,ℓ = softplus(α⊤ i xℓ + βi), αi ∈ Rd, βi ∈ R, (3)
+yielding input-dependent operators,
+Ai,ℓ = exp(∆i,ℓAi), Bi,ℓ = (∆i,ℓAi)−1  exp(∆i,ℓAi) − I  ∆i,ℓ sB (xℓ), C i,ℓ = sC (xℓ). (4)
+For small ∆i,ℓ, Bi,ℓ ≈ ∆i,ℓsB (xℓ), so selectivity acts as input-dependent scaling of the state update.
+2.2 Unifying View: Linear CDEs and SSMs
+SSM layers admit a continuous-time interpretation as linear CDEs [7], a connection we extend in
+Section 3.2.1 to derive LogSig-SSM’s continuous-time form. Let Ht ∈ RN denote the hidden state
+and let ω : [0, 1] → Rdω and ξ : [0, 1] → Rdξ be control paths. We consider the linear CDE
+dHt =
+dωX
+i=1
+AiHt dωi t + WB dξt, H0 ∈ RN , (5)
+for learnable matrices Ai ∈ RN ×N and WB ∈ RN ×dξ 2. Selective SSMs correspond to input-
+dependent driving paths (ωX , ξX ). Viewed in this continuous-time framework, selectivity can be
+interpreted as an input-dependent adaptive time rescaling: the model dynamically adjusts how quickly
+its latent state evolves based on the characteristics of the input [7].
+2.3 Path Signatures and Log-Signatures
+The signature transform represents a path through its hierarchy of iterated integrals [23, 6]. Formally,
+let X ∈ C 1([0, 1]; Rd) be a path and fix 0 ≤ a < b ≤ 1. The path signature of X over [a, b] is the
+(infinite) collection of iterated integrals:
+Sig(X)a,b :=
+
+1, X1 a,b, X2 a,b, . . .  , Xm a,b := Z
+a<u1 <···<um<b
+dXu1 ⊗ · · · ⊗ dXum , (6)
+2To avoid overloading notation, we use WB for the time-invariant injection matrix in the linear CDE view (denoted B in
+[7]). We reserve sB (·) for Mamba’s input-dependent projection in selective scans, written as B in [14].
+3
+Figure 1: Discrete-time LogSig-SSM pipeline. A multivariate time series x ∈ Rdx ×T is summarised
+at strided anchors ˜tτ := tτ s. For each scale k, a windowed segment Wk(x)τ is extracted, and its
+truncated log-signature coordinate vector, uτ,k := ϕmk
+
+LogSigmk
+ 
+Wk(x)τ
+
+∈ RDk , is computed.
+These are concatenated across scales to form the token Uτ := concat
+ 
+uτ,1, . . . , uτ,K
+
+∈ RDtot .
+Finally, Uτ is projected to the scan width d via a learned linear embedding to form eUτ = WinUτ ,
+which serves as the input to the Mamba block.
+where Xm a,b ∈ (Rd)⊗m. In practice, we truncate the signature at depth M and write SigM (X)a,b := 
+1, X1 a,b, . . . , XM a,b  . The signature is invariant under monotone time reparameterisations [23]. If
+γ : [0, 1] → [a, b] is a continuous, non-decreasing, surjective reparameterisation, then
+Sig(X)a,b = Sig(X ◦ γ)0,1. (7)
+This ensures the signature depends on the geometric path traced over [a, b] rather than the sampling
+density, providing natural robustness to irregular sampling once a path interpolation is fixed.
+The log-signature is the tensor-algebra logarithm LogSig(X)a,b := log(Sig(X)a,b), which lies in the
+free Lie algebra and, after choosing a Lie basis, provides a compact coordinate representation of the
+same information. Its truncation inherits the same reparameterisation invariance:
+LogSigM (X)a,b = LogSigM (X ◦ γ)0,1. (8)
+In LogSig-SSM (Section 3.1), we compute truncated log-signatures on overlapping windows at
+multiple scales to form a compressed token stream.
+3 LogSig-SSM Methodology
+We introduce LogSig-SSM, a selective SSM driven by log-signature tokenisation. LogSig-SSM (i)
+compresses a multivariate input sequence into a sequence of interval descriptors using multi-scale
+windowed log-signatures, and (ii) processes the resulting token stream with a selective SSM backbone
+for efficient long-range propagation. Figure 1 summarises the discrete-time implementation.
+3.1 Discrete-Time Implementation of LogSig-SSM
+Let x ∈ Rdx ×T be a multivariate time-series with samples {xj }T −1 j=0 observed at times 0 = t0 <
+· · · < tT −1 (not necessarily uniformly spaced). Fix a stride s ∈ N and define anchor indices τ ∈
+{1, . . . , T ′} with T ′ := ⌊ T −1 s ⌋ and anchor times ˜tτ := tτ s. Fix K ∈ N window scales, specified by
+hyperparameters {Lk}K k=1 (window lengths) and {mk}K k=1 (log-signature truncation depths), where
+the index k enumerates scales. For each scale k and anchor τ , let Wk,τ denote the windowed samples,
+Wk,τ := {(tj , xj ) : max(0, ˜tτ − Lk) ≤ tj ≤ ˜tτ }. Let Wk(x)τ : [max(0, ˜tτ − Lk), ˜tτ ] → Rdx be
+the bounded-variation path obtained by piecewise-linear interpolation of Wk,τ . Define its truncated
+4
+log-signature by LogSigmk
+ 
+Wk(x)τ
+
+∈ g(≤mk )(Rdx ), where g(≤m)(Rdx ) is the step-m truncated
+free Lie algebra over Rdx . We tokenise with the log-signature rather than the signature. The two
+are related by a polynomial bijection and carry the same information at equal depth (Section 2.3).
+The log-signature is the redundancy-free coordinate system for that content and the driver of the
+log-ODE method underlying the NRDE and Log-NCDE models we build on. In implementation the
+log-signature is represented by its coordinate vector in a fixed basis: let ϕmk : g(≤mk )(Rdx ) → RDk
+be the corresponding coordinate map, and define
+uτ,k := ϕmk
+
+LogSigmk
+ 
+Wk(x)τ
+
+∈ RDk .
+Stacking across K scales yields the LogSig-SSM token
+Uτ := concat
+ 
+uτ,1, . . . , uτ,K
+
+∈ RDtot , Dtot :=
+KX
+k=1
+Dk. (9)
+The model dimension (scan width) d is a design choice and may differ from Dtot. Accordingly, the
+scan input is obtained by applying a learned linear embedding to each token,
+eUτ := Win Uτ ∈ Rd, Win ∈ Rd×Dtot . (10)
+The resulting sequence eU1:T ′ is viewed as d channels, indexed by i ∈ {1, . . . , d}. The token stream is
+then processed by a stack of Mamba blocks [14], each governed by the selective scan from Section 2.1.
+The discretisation step ∆i,τ ∈ R+, the input projection sB ( eUτ ) ∈ RN , and the output projection
+sC ( eUτ ) ∈ R1×N are all functions of the current input eUτ ∈ Rd, where N denotes the state size.
+Referencing the ZOH recurrence derived in (2), the per-channel state Hi,τ evolves by
+Hi,τ = Ai,τ Hi,τ −1 + Bi,τ eUi,τ , yi,τ = sC ( eUτ ) Hi,τ , (11)
+where Ai,τ = exp(∆i,τ Ai). Using the small-step approximation from Section 2.1, the driving term
+simplifies to: Bi,τ eUi,τ ≈ ∆i,τ sB ( eUτ ) eUi,τ .
+3.2 Continuous-time Interpretation of LogSig-SSM
+3.2.1 LogSig-SSM as a Linear CDE
+To obtain a continuous-time interpretation, we adopt the small-step approximation (Section 2.1)
+standard in selective SSM analysis [7]. Consider the sequence of tokens {Uτ }T ′ τ =1 from (9). We define
+a piecewise-constant control path U : [0, 1] → RDtot by choosing a partition 0 = r0 < · · · < rT ′ = 1
+and setting:
+U (t) = Uτ , t ∈ [rτ −1, rτ ) for τ = 1, . . . , T ′. (12)
+The effective driving signal is then the projection eU (t) := Win U (t) ∈ Rd. As shown in Ap-
+pendix A.1, LogSig-SSM admits the Linear CDE representation
+dH
+eU
+i;t = AiH
+eU
+i;t dω
+eU
+i;t + WB dξ
+eU
+i;t, H
+eU
+i;0 = hi,0, i = 1, . . . , d, (13)
+where WB ∈ RN ×d is the injection matrix, consistent with the discrete-time projection sB (u) =
+WB u. The system is driven by
+ω
+eU
+i;t :=
+Z t
+0
+σ(eα⊤ i eUs + eβi) ds ∈ R, ξ eU i;t := Z t
+0
+eUs eU i s σ(eα⊤ i eUs + eβi) ds ∈ Rd, (14)
+for parameters eαi ∈ Rd and eβi ∈ R. Since eU (t) = Win U (t) and U is constructed from multi-scale
+windowed log-signatures of the original path, the drivers remain log-signature-induced functionals of
+the original trajectory.
+5
+3.2.2 Relation to Neural RDEs: Interval-Driven Dynamics
+Under the ZOH extension (12), the drivers (ω eU i , ξ eU i ) are affine on each interval with constant
+derivatives since eUs = eUτ for s ∈ [rτ −1, rτ ). Summarising each interval by the driver increments
+Λ eU i,τ := (∆ω eU i,τ , ∆ξ eU i,τ )⊤, equation (13) reduces to the NRDE-style integral form for t ∈ (rτ −1, rτ ):
+H
+eU
+i;t = H
+eU
+i;rτ −1 +
+Z t
+rτ −1
+
+AiH
+eU
+i;s, WB
+ 1
+∆rτ
+Λ
+eU
+i,τ ds. (15)
+In particular, ∆ω eU i,τ = σ(eα⊤ i eUτ + eβi)∆rτ acts as a content-dependent internal-time allocation per
+interval. LogSig-SSM’s construction is inspired by NRDEs [25] but introduces two key differences.
+First, NRDEs use the log-signature of the raw path over a single window per interval. LogSig-SSM
+instead uses a multi-scale token Uτ concatenating log-signatures at K different window lengths,
+providing descriptors at complementary resolutions within a single token. Second, the drivers Λ eU i,τ
+are content-dependent, unlike the fixed interval parametrisation in NRDEs. Therefore, LogSig-SSM
+learns to allocate internal time selectively across the compressed sequence. The derivation of (15)
+from (13) is provided in Appendix A.2.
+4 Theoretical Analysis
+We highlight three theoretical attributes of LogSig-SSM. First, we establish a depth-truncation tradeoff
+by showing that injecting cross-channel path geometry directly into the tokens allows LogSig-SSM to
+expose non-commutative multivariate features in a single diagonal block that would otherwise require
+deep, chained Mamba blocks [7]. Second, tokenisation reduces the effective sequence length, cutting
+selective scan complexity by a factor of T /T ′ relative to Mamba. Third, LogSig-SSM inherits within-
+window time-reparameterisation invariance from the log-signature transform, providing robustness to
+irregular sampling.
+4.1 Single-layer expressivity via a log-signature driver lift
+A single diagonal Mamba block cannot represent non-commutative cross-channel iterated integrals
+of its input path; recovering them requires chained Mamba blocks (Cor. 4.4 and Sec. C.2.1 of Cirone
+et al. [7]). LogSig-SSM bypasses this depth cost by lifting the input before the scan. By construction,
+the token Uτ contains every log-signature coordinate of the windowed path Wk(X)τ up to depth mk.
+The following proposition formalises the resulting depth–truncation tradeoff.
+Proposition 4.1 (Depth–truncation tradeoff; Proof in App. A.3). Fix a compact family X ⊂
+C 1 b ([0, Tend]; Rdx ) with dx ≥ 2, a window scale (Lk, mk), an anchor τ , and 2 ≤ m ≤ mk.
+Let F : X → R be a continuous functional that factors as F (X) = f (LogSigm(Wk(X)τ )) for
+some continuous f . Then: (i) for every ε > 0, a single LogSig-SSM block followed by a post-scan
+MLP approximates F uniformly on X to error ε; (ii) there exist such F with F /∈ F (1) Mamba[X ], where
+F (1) Mamba[X ] denotes the uniform closure on X of functionals computable by a single diagonal Mamba block on the raw input path (Cor. 4.4 of [7]); (iii) any raw-input Mamba approximation of such F
+requires chained diagonal blocks; recovering depth-m cross-channel features in particular requires
+chains of depth growing with m in the construction of Cirone et al. [7] (Sec. C.2.1, Prop. 4.5),
+whereas LogSig-SSM realises F in a single block whenever mk ≥ m.
+Remark 4.2 (Multi-scale and asymptotic universality). Proposition 4.1 reflects a depth–truncation
+tradeoff, not an expressivity gap. The benefit is that LogSig-SSM moves the cost of cross-channel
+geometry from the online selective scan to an offline, parallel tokeniser. Across scales, any depth-
+≤ mk coordinate at scale k enters Uτ linearly; thus, a single LogSig-SSM block captures features that
+would otherwise require a Mamba chain whose depth grows with maxk mk. By signature universality
+[23], in the limit mk → ∞ a single LogSig-SSM block approximates any continuous functional of
+windowed paths, consistent with the asymptotic universality of chained diagonal Mamba on raw X
+(Prop. 4.5 of Cirone et al. [7]).
+4.2 Computational Efficiency and Scan Complexity
+The selective scan scales linearly with sequence length and constitutes the main time-sequential
+component of a Mamba layer [14]. Recent studies indicate that Mamba-style models can degrade
+6
+at extreme context lengths, which has been linked to length-dependent state decay and a reduced
+effective memory horizon [3, 37, 40]. Consequently, reducing the effective sequence length is a
+critical design component for selective SSMs. LogSig-SSM performs this compression explicitly by
+replacing the length-T input sequence with a token sequence of length T ′ ≈ T /s, where s ∈ N is the
+stride. Since the selective scan cost scales as O(Bsz · T · N · D), compression from T to T ′ reduces
+scan FLOPs by a factor of T /T ′ ≈ s. Additionally, log-signature tokenisation is a one-time offline
+pre-processing step: precomputed features are not in the training-time backpropagation graph, and
+computation is highly optimised in libraries such as iisignature [29] and Signatory [18].
+4.3 Robustness to Irregular Sampling
+Since log-signatures are invariant under monotone time reparameterisations (Section 2.3), tokens
+computed from windowed paths encode path geometry rather than sampling density. Under a
+fixed interpolation, two observation sequences whose windowed paths coincide up to a monotone
+reparameterisation yield identical tokens and therefore identical model outputs.
+Proposition 4.3 (Within-window invariance to monotone time reparameterisation). Let bX, bX ′ :
+[0, Tend] → Rdx be two bounded-variation interpolants and Iτ,k := [˜tτ − Lk, ˜tτ ] the time interval
+for window (τ, k). For every scale k and anchor τ , assume there exists a continuous, non-decreasing,
+surjective map γτ,k : Iτ,k → Iτ,k such that Wk( bX ′)τ (t) = Wk( bX)τ (γτ,k(t)), ∀t ∈ Iτ,k. Then
+Uτ ( bX) = Uτ ( bX ′) for all τ, and LogSigSSM( bX) = LogSigSSM( bX ′).
+Proof. The reparameterisation invariance of the signature (cf. (7)) gives Sig(Wk( bX)τ ) =
+Sig(Wk( bX ′)τ ). Taking the truncated log-signature and applying the fixed coordinate map ϕmk
+yields uτ,k( bX) = uτ,k( bX ′). Concatenating across scales gives Uτ ( bX) = Uτ ( bX ′), and the claim
+follows from the determinism of the selective scan.
+The theoretical guarantee is local to each window. However, Section 5.4 provides empirical evidence
+that this local invariance is sufficient in practice: LogSig-SSM is highly competitive with specialised
+irregular-time methods on PhysioNet Sepsis, a dataset where only 10.3% of values are observed.
+5 Experimental Evaluation
+We empirically test the performance of LogSig-SSM across four settings: long-range multivariate
+classification, high-frequency physiological regression, multivariate weather forecasting, and irregu-
+larly sampled clinical prediction. Baselines span SSM/recurrent models, continuous-time models,
+and general time-series methods. We follow the Log-NCDE protocol [38] for UEA and PPG-DaLiA,
+the LinOSS protocol [31] for weather forecasting, and the Neural CDE protocol [19] for PhysioNet
+Sepsis. All experiments were done on a NVIDIA RTX 4090 GPU. Full runtime, memory, and
+hyperparameter details are in Appendix B and F.
+5.1 UEA time-series classification
+Following the Log-NCDE protocol [38], we evaluate on the six longest-sequence datasets of the UEA
+Archive [2], split 70:15:15 over five random seeds. LogSig-SSM achieves the best average accuracy
+across the sixteen models (71.7%) and the best average rank (2.7) (Table 1).
+LogSig-SSM demonstrates a distinct advantage on signal types where standard diagonal SSMs
+severely struggle, most notably on the ETHANOLCONCENTRATION task (4 classes; chance 25%).
+While diagonal SSMs fail to surpass 30% accuracy and the best non-SSM baseline reaches 40.5%,
+LogSig-SSM reaches the highest accuracy of 51.4%. This signal is an absorption curve whose classes
+differ by smooth shifts in peak shape over extended regions rather than by high-frequency variation
+(Figure 2), a global trajectory geometry that multi-scale log-signature tokens capture directly and that
+diagonal SSM backbones cannot resolve on their own.
+Beyond accuracy, LogSig-SSM delivers large efficiency gains, summarised for EIGENWORMS in
+Table 2. On EIGENWORMS (17,984 time points), LogSig-SSM trains in 4 s per 1000 steps versus
+122 s for Mamba (30× faster), while using only 362 MB GPU memory versus 13,486 MB for Mamba
+(37× less). Log-signature tokenisation is a one-time offline step taking 1.6 s for the full dataset, and
+6 s for all six UEA datasets together, about 1% of a single training run per dataset (Table 6). These
+7
+gains come at no accuracy cost: LogSig-SSM leads on EIGENWORMS while requiring 10× less
+memory than LinOSS-IM.
+Table 1: UEA long-sequence classification accuracy (% ↑), mean ± std over five random splits, and
+average rank over the six datasets (↓, competition ranking, missing entries ranked last). Bold = best,
+underline = second best, italic = third best per column (ties share a mark). †Transformer OOM on
+EIGENWORMS; TSPulse not evaluated on EIGENWORMS; ∗Model evaluated on 1 seed.
+Model EigenWorms SCP1 SCP2 Ethanol Heartbeat Motor Avg Rank
+Seq. length 17,984 896 1,152 1,751 405 3,000
+# classes 5 2 2 4 2 2
+Continuous-time models
+NRDE [25] 83.9±7.3 80.9±2.5 53.7±6.9 25.3±1.8 72.9±4.8 47.0±5.7 60.6 11.5
+NCDE [19] 75.0±3.9 79.8±5.6 53.0±2.8 29.9±6.5 73.9±2.6 49.5±2.8 60.2 11.3
+Log-NCDE [38] 85.6±5.1 83.1±2.8 53.7±4.1 34.4±6.4 75.2±4.6 53.7±5.3 64.3 7.7
+General time-series models
+Transformer† [24] OOM 84.3±6.3 49.1±2.5 40.5±6.3 70.5±0.1 50.5±3.0 59.0 10.3
+RFormer [24] 90.3±0.0 81.2±2.0 52.3±3.0 34.7±4.0 72.5±0.0 55.8±6.0 64.5 8.0
+TS2Vec∗ [41] 84.7 81.2 57.8 30.8 68.3 51.0 62.3 9.3
+MOMENT∗ [13] 80.9 84.0 47.8 35 .7 72.2 50.0 61.8 10.2
+TSPulse†∗ [10] — 83.6 51.1 24.7 70.2 58.0 57.5 11.7
+SSM / recurrent models
+LRU [27] 87.8±2.8 82.6±3.4 51.2±3.6 21.5±2.1 78.4±6.7 48.4±5.0 61.7 9.7
+S5 [34] 81.1±3.7 89.9±4.6 50.5±2.6 24.1±4.3 77 .7 ±5 .5 47.7±5.5 61.8 9.3
+Mamba [14] 70.9±15.8 80.7±1.4 48.2±3.9 27.9±4.5 76.2±3.8 47.7±4.5 58.6 12.5
+LinOSS-IMEX [31] 80.0±2.7 87.5±4.0 58.9±8.1 29.9±1.0 75.5±4.3 57.9±5.3 65.0 6.7
+LinOSS-IM [31] 95.0±4.4 87.8±2.6 58.2±6.9 29.9±0.6 75.8±3.7 60.0±7.5 67 .8 4 .3
+D-LinOSS [4] 93 .9 ±3 .2 88.9±3.0 58.6±2.3 29.9±0.6 75.8±4.9 61.1±2.0 68.0 3.7
+PD-SSM [35] 90.0±5.7 80.9±2.0 56.1±8.6 34.7±4.0 80.0±2.6 60.0±3.7 67.0 5.2
+LogSig-SSM 95.3±3.6 88 .4 ±1 .9 58 .4 ±2 .9 51.4±6.9 76.9±9.7 59.9±3.4 71.7 2.7
+Table 2: Efficiency on EIGENWORMS (T = 17,984): GPU memory (MB), wall-clock time per 1000
+training steps (s) on one RTX 4090, and test accuracy (%). Full results in Appendix B.
+NCDE NRDE Log-NCDE Mamba S5 LinOSS-IM D-LinOSS LogSig-SSM
+Mem. (MB) 2484 2506 2510 13486 6646 3488 3488 362
+Time (s/1k steps) 24595 5386 1956 122 31 14 14 4
+Accuracy (%) 75.0 83.9 85.6 70.9 81.1 95.0 93.9 95.3
+5.2 PPG-DaLiA time-series regression
+PPG-DALIA [28] is a multimodal physiological regression benchmark for heart-rate estimation
+from wrist-worn sensors. It contains recordings from 15 subjects during daily activities, each with
+approximately 150 minutes of data sampled at up to 128 Hz. Following the Log-NCDE protocol [38],
+recordings are converted into long sequences via a sliding window of length 49,920 and stride 4,992.
+LogSig-SSM attains MSE 4.46×10−2, a 28% improvement over D-LinOSS [4] (6.16×10−2) and
+58% over Mamba [14] (10.65×10−2), the strongest relative gain across all four benchmarks (Table 3,
+left). On these ultra-long sequences (49,920 time steps), log-signature tokenisation directly alleviates
+the long-context degradation that limits standard selective SSMs, making training feasible in regimes
+where several baselines are memory-constrained.
+5.3 Weather Forecasting
+Following the precedent set by prior state-space models [15, 31], we evaluate LogSig-SSM’s capacity
+to serve as a general-purpose sequence-to-sequence model on long-horizon forecasting tasks. We
+focus on the challenging weather prediction benchmark introduced by Zhou et al. [42], specifically
+targeting the hardest configuration: predicting the future 720 timesteps (one month of hourly multi-
+variate climatological data) based directly on the preceding 720 timesteps. Without incorporating
+any domain-specific inductive biases or specialised forecasting architectures, LogSig-SSM achieves
+an MAE of 0.432 (Table 3), reducing the best prior result from D-LinOSS (0.486) by 11% and
+outperforming all other baselines by a larger margin. These results demonstrate that multi-scale
+log-signature tokenisation effectively generalises to standard long-horizon forecasting settings.
+8
+Table 3: Results on regression, forecasting, and irregular-sampling benchmarks. Left: PPG-DaLiA
+heart-rate regression, MSE ×10−2 (↓), mean ± std over five runs [28]. Centre: weather forecasting
+MAE (↓), predict 30 days of hourly data from the preceding 30 days; Informer† uses canonical
+self-attention. Right: PhysioNet Sepsis AUROC (↑), 10.3% of values observed; OI = with observation
+indicators [30]. Bold = best, underline = second best per sub-table.
+Regression (PPG-DaLiA) Forecasting (Weather) Irregular Sampling (PhysioNet Sepsis)
+Model MSE×10−2 Model MAE Method OI No OI
+NRDE 9.90±0.97 Informer 0.731 GRU-∆t 87.8±0.6 84.0±0.7
+NCDE 13.54±0.69 Informer† 0.741 GRU-D 87.1±2.2 85.0±1.3
+Log-NCDE 9.56±0.59 LogTrans 0.773 GRU-ODE 85.2±1.0 77.1±2.4
+LRU 12.17±0.49 Reformer 1.575 ODE-RNN 87.4±1.6 83.3±2.0
+S5 12.63±1.25 LSTMa 1.109 Neural CDE 88.0±0.6 77.6±0.9
+S6 12.88±2.05 LSTnet 0.757 ANCDE 90.0±0.2 82.3±0.3
+Mamba 10.65±2.20 S4 0.578 Neural LSDE 90.9±0.4 87.9±0.8
+LinOSS-IMEX 7.50±0.46 LinOSS-IMEX 0.508 Neural LNSDE 91.1±0.2 88.1±0.2
+LinOSS-IM 6.40±0.23 LinOSS-IM 0.528 Neural GSDE 90.9±0.1 88.4±0.2
+D-LinOSS 6.16±0.73 D-LinOSS 0.486
+LogSig-SSM 4.46±0.60 LogSig-SSM 0.432 LogSig-SSM 90.4±0.4 87.4±0.8
+5.4 Sepsis Prediction on PhysioNet (Irregular Sampling)
+We evaluate on the PhysioNet 2019 early sepsis prediction challenge [30, 12]. Comprising 40,335
+variable-length ICU stays with 34 features, this dataset is extremely sparse (only 10.3% observed
+values), providing a direct test of the irregular-sampling robustness established in Section 4.3.
+Predicting sepsis occurrence based on the first 72 hours, we evaluate AUROC both with and without
+appended observation indicators (OI) (Table 3, right).
+LogSig-SSM achieves an AUROC of 90.4/87.4 (with/without OI). It performs competitively with
+purpose-built irregular-time models (Neural LSDE, LNSDE, GSDE [26]) and outperforms Neural
+CDE (88.0/77.6) [19], ANCDE (90.0/82.3) [17], and all GRU variants. This empirically confirms
+that within-window reparameterisation invariance yields practical robustness under extreme sparsity.
+5.5 Ablation Studies
+Table 4 isolates the contributions of LogSig-SSM along two axes, the tokeniser and the backbone,
+with every variant tuned under the same protocol and budget. Read top to bottom, the descriptor rows
+decompose the 13.1 pp gap between raw Mamba (58.6%) and LogSig-SSM (71.7%). Compression
+alone contributes little, +0.3 pp with Catch24 statistics that discard the path and +1.5 pp with a
+learned per-channel descriptor that keeps it. Linear channel mixing adds +2.8 pp (62.9%), multi-scale
+spectral content another +4.7 pp (67.6%), multi-scale increments, the depth-one log-signature, a
+further +1.9 pp (69.5%), and the second-order terms the final step to 71.7%. This last term, the
+cross-channel geometry, is the one that neither linear projections nor spectral summaries express.
+With the tokeniser fixed, S5 and Transformer backbones both far exceed raw Mamba, so the tokens
+are useful regardless of backbone, while selective recurrence still leads on each of the six datasets.
+Truncation depth. The depth-one row of Table 4 is a matched-budget arm that re-searches the
+tokeniser with the depth fixed at one (Appendix D). Forcing depth one costs 2.3 points on average,
+almost entirely on the three datasets with few channels (7.2, 4.3 and 2.8 on EIGENWORMS, SCP1 and
+SCP2). Wavelet scattering makes the content of the second-order terms visible: on those three datasets
+the depth-one arm is level with Wst-Mamba (−1.0, −1.8, +2.5 points) while depth two leads it by
+6.2, 2.5 and 5.3, so the margin over the strongest alternative descriptor is exactly the cross-channel
+geometry of Proposition 4.1. Signature tokens of the same depth and configuration cost 3.1 points on
+average over the same three datasets and roughly double tokenisation time (Appendix C.1).
+Search-free tokeniser. The tokeniser still improves performance without hyperparameter tun-
+ing. Keeping the Mamba backbone of the reported LogSig-SSM configuration and replacing the
+searched tokeniser hyperparameters by a rule based on the sequence length alone (s = T /100,
+lengths [T /25, T /100], depths [2, 1]), LogSig-SSM still reaches 64.0% average accuracy, above S5
+9
+(61.8), LRU (61.7) and Mamba (58.6), and searching the tokeniser adds the remaining 7.7 points
+(Appendix F).
+Table 4: UEA ablations, average accuracy over the six datasets (% ↑). All variants share the 200-trial
+Optuna protocol and budget of LogSig-SSM, and its window positions and token dimension where
+applicable; ∆ is relative to raw Mamba. Per-dataset results in Appendix C, Table 7.
+Configuration Avg. acc. (%) ∆ (pp) What it adds
+Window descriptor (all rows compress the sequence), Mamba backbone fixed
+Mamba (raw input) 58.6 – no compression, no channel mixing
+Catch24 statistics [22] 58.9 +0.3 path discarded, summary statistics only
+Depthwise convolution 60.1 +1.5 channels kept separate
+Standard convolution 62.9 +4.3 first-order (linear) channel mixing
+Wavelet scattering 67.6 +9.0 multi-scale spectral content, no cross-channel geometry
+Log-signature, depth one 69.5 +10.9 multi-scale increments, no cross-channel content
+Log-signature, depth two (LogSig-SSM) 71.7 +13.1 second-order terms: cross-channel geometry, Lévy areas
+(Prop. 4.1)
+Backbone, log-signature tokeniser fixed
+LogSig-S5 63.0 +4.4 LTI recurrence, no selectivity
+LogSig-Transformer 65.4 +6.8 attention, no recurrence
+6 Conclusion
+We introduce LogSig-SSM, which combines multi-scale windowed log-signature tokenisation with
+a selective SSM backbone for long-horizon time-series modelling. By replacing pointwise inputs
+with interval descriptors, LogSig-SSM compresses long, irregularly sampled sequences into a shorter
+token stream while injecting higher-order cross-channel information through log-signature features,
+enabling scan-efficient long-range propagation while increasing single-block multivariate expressivity.
+Beyond its discrete-time formulation, LogSig-SSM extends the linear CDE view of selective SSMs [7]
+to log-signature-derived driving paths, yielding an NRDE-style interval-driven form in which se-
+lectivity allocates internal time across the compressed sequence in a content-dependent manner.
+Empirically, LogSig-SSM achieves the best or competitive performance across the four benchmarks
+above while substantially reducing training time and GPU memory relative to Mamba-style baselines.
+Ablation studies confirm that the gains arise from the geometric content of log-signature tokens, with
+selective recurrence providing additional margin on tasks requiring content-dependent aggregation.
+A limitation for LogSig-SSM is that for genuinely single-channel paths, log-signature tokens reduce
+to path increments and the higher-order cross-channel structure becomes degenerate, although
+augmenting the path with time as an additional channel restores non-trivial structure. The token width
+grows as O(dm x /m), so tokenisation time and the size of the input embedding increase rapidly with
+the number of channels. Finally, window lengths and stride are still selected per dataset (Appendix F).
+Learned or adaptive window selection is a natural direction for reducing this overhead.
+Acknowledgments and Disclosure of Funding
+We thank Helena Latorre Moreno for her feedback on the mathematical proofs and Foucault de
+Jerphanion for his help in the early stages of this work. This work was supported by the UKRI AI
+Centre for Doctoral Training in Digital Healthcare (grant number EP/Y030974/1).
+10
+References
+[1] Takuya Akiba, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama. Optuna:
+A Next-generation Hyperparameter Optimization Framework, July 2019. URL http://arxiv.
+org/abs/1907.10902. arXiv:1907.10902 [cs].
+[2] Anthony Bagnall, Hoang Anh Dau, Jason Lines, Michael Flynn, James Large, Aaron Bostrom,
+Paul Southam, and Eamonn Keogh. The UEA multivariate time series classification archive,
+2018, October 2018. URL http://arxiv.org/abs/1811.00075. arXiv:1811.00075 [cs].
+[3] Assaf Ben-Kish, Itamar Zimerman, Shady Abu-Hussein, Nadav Cohen, Amir Globerson, Lior
+Wolf, and Raja Giryes. Decimamba: Exploring the length extrapolation potential of mamba,
+2025. URL https://arxiv.org/abs/2406.14528.
+[4] Jared Boyer, T. Konstantin Rusch, and Daniela Rus. Learning to Dissipate Energy in Oscil-
+latory State-Space Models, September 2025. URL http://arxiv.org/abs/2505.12171.
+arXiv:2505.12171 [cs].
+[5] Ricky T. Q. Chen, Yulia Rubanova, Jesse Bettencourt, and David Duvenaud. Neural ordinary
+differential equations, 2019. URL https://arxiv.org/abs/1806.07366.
+[6] Ilya Chevyrev and Andrey Kormilitzin. A Primer on the Signature Method in Machine Learning,
+January 2016. URL http://arxiv.org/abs/1603.03788. arXiv:1603.03788 [stat].
+[7] Nicola Muca Cirone, Antonio Orvieto, Benjamin Walker, Cristopher Salvi, and Terry Lyons.
+Theoretical Foundations of Deep Selective State-Space Models, January 2025. URL http:
+//arxiv.org/abs/2402.19047. arXiv:2402.19047 [cs].
+[8] Tri Dao and Albert Gu. Transformers are SSMs: Generalized Models and Efficient Algorithms
+Through Structured State Space Duality, May 2024. URL http://arxiv.org/abs/2405.
+21060. arXiv:2405.21060 [cs].
+[9] Jessilyn Dunn, Lukasz Kidzinski, Ryan Runge, Daniel Witt, Jennifer L. Hicks, Sophia Miryam
+Schüssler-Fiorenza Rose, Xiao Li, Amir Bahmani, Scott L. Delp, Trevor Hastie, and
+Michael P. Snyder. Wearable sensors enable personalized predictions of clinical lab-
+oratory measurements. Nature Medicine, 27(6):1105–1112, June 2021. ISSN 1546-
+170X. doi: 10.1038/s41591-021-01339-0. URL https://www.nature.com/articles/
+s41591-021-01339-0.
+[10] Vijay Ekambaram, Subodh Kumar, Arindam Jati, Sumanta Mukherjee, Tomoya Sakai, Pankaj
+Dayama, Wesley M. Gifford, and Jayant Kalagnanam. Tspulse: Tiny pre-trained models with
+disentangled representations for rapid time-series analysis, 2026. URL https://arxiv.org/
+abs/2505.13033.
+[11] Peter K. Friz and Nicolas B. Victoir. Multidimensional Stochastic Processes as Rough Paths:
+Theory and Applications. Cambridge Studies in Advanced Mathematics. Cambridge University
+Press, 2010.
+[12] Ary L. Goldberger, Luis A. N. Amaral, Leon Glass, Jeffrey M. Hausdorff, Plamen Ch. Ivanov,
+Roger G. Mark, Joseph E. Mietus, George B. Moody, Chung-Kang Peng, and H. Eugene
+Stanley. Physiobank, physiotoolkit, and physionet. Circulation, 101(23):e215–e220, 2000. doi:
+10.1161/01.CIR.101.23.e215. URL https://www.ahajournals.org/doi/abs/10.1161/
+01.CIR.101.23.e215.
+[13] Mononito Goswami, Konrad Szafer, Arjun Choudhry, Yifu Cai, Shuo Li, and Artur Dubrawski.
+Moment: A family of open time-series foundation models, 2024. URL https://arxiv.org/
+abs/2402.03885.
+[14] Albert Gu and Tri Dao. Mamba: Linear-Time Sequence Modeling with Selective State Spaces,
+May 2024. URL http://arxiv.org/abs/2312.00752. arXiv:2312.00752 [cs].
+[15] Albert Gu, Karan Goel, and Christopher Ré. Efficiently Modeling Long Sequences
+with Structured State Spaces, August 2022. URL http://arxiv.org/abs/2111.00396.
+arXiv:2111.00396 [cs].
+11
+[16] Nikolaus Hautsch. Modelling Irregularly Spaced Financial Data, volume 539 of Lecture
+Notes in Economics and Mathematical Systems. Springer, Berlin, Heidelberg, 2004. ISBN
+978-3-540-21134-1 978-3-642-17015-7. doi: 10.1007/978-3-642-17015-7. URL http://
+link.springer.com/10.1007/978-3-642-17015-7.
+[17] Sheo Yon Jhin, Heejoo Shin, Sujie Kim, Seoyoung Hong, Minju Jo, Solhee Park, Noseong
+Park, Seungbeom Lee, Hwiyoung Maeng, and Seungmin Jeon. Attentive neural controlled
+differential equations for time-series classification and forecasting. Knowl. Inf. Syst., 66(3):
+1885–1915, November 2023. ISSN 0219-1377. doi: 10.1007/s10115-023-01977-5. URL
+https://doi.org/10.1007/s10115-023-01977-5.
+[18] Patrick Kidger and Terry Lyons. Signatory: differentiable computations of the signature and
+logsignature transforms, on both cpu and gpu, 2021. URL https://arxiv.org/abs/2001.
+00706.
+[19] Patrick Kidger, James Morrill, James Foster, and Terry Lyons. Neural Controlled Differential
+Equations for Irregular Time Series. In Advances in Neural Information Processing Systems,
+volume 33, pages 6696–6707. Curran Associates, Inc., 2020.
+[20] Shujian Liao, Terry J. Lyons, Weixin Yang, Kevin Schlegel, and Hao Ni. Logsig-rnn: a novel
+network for robust and efficient skeleton-based action recognition. CoRR, abs/2110.13008,
+2021. URL https://arxiv.org/abs/2110.13008.
+[21] Opher Lieber, Barak Lenz, Hofit Bata, Gal Cohen, Jhonathan Osin, Itay Dalmedigos, Erez
+Safahi, Shaked Meirom, Yonatan Belinkov, Shai Shalev-Shwartz, Omri Abend, Raz Alon,
+Tomer Asida, Amir Bergman, Roman Glozman, Michael Gokhman, Avashalom Manevich,
+Nir Ratner, Noam Rozen, Erez Shwartz, Mor Zusman, and Yoav Shoham. Jamba: A hybrid
+transformer-mamba language model, 2024. URL https://arxiv.org/abs/2403.19887.
+[22] Carl H. Lubba, Sarab S. Sethi, Philip Knaute, Simon R. Schultz, Ben D. Fulcher, and Nick S.
+Jones. catch22: CAnonical Time-series CHaracteristics, January 2019. URL http://arxiv.
+org/abs/1901.10200. arXiv:1901.10200 [cs].
+[23] Terry J Lyons, Michael Caruana, and Thierry Lévy. Differential equations driven by rough
+paths: Ecole d’Eté de Probabilités de Saint-Flour XXXIV-2004. Springer, 2007.
+[24] Fernando Moreno-Pino, Alvaro Arroyo, Harrison Waldon, Xiaowen Dong, and Álvaro Cartea.
+Rough Transformers for Continuous and Efficient Time-Series Modelling, March 2024. URL
+http://arxiv.org/abs/2403.10288. arXiv:2403.10288 [stat].
+[25] James Morrill, Cristopher Salvi, Patrick Kidger, James Foster, and Terry Lyons. Neural Rough
+Differential Equations for Long Time Series, June 2021. URL http://arxiv.org/abs/2009.
+08295. arXiv:2009.08295 [cs].
+[26] YongKyung Oh, Dong-Young Lim, and Sungil Kim. Stable neural stochastic differential
+equations in analyzing irregular time series data, 2025. URL https://arxiv.org/abs/2402.
+14989.
+[27] Antonio Orvieto, Samuel L. Smith, Albert Gu, Anushan Fernando, Caglar Gulcehre, Razvan
+Pascanu, and Soham De. Resurrecting Recurrent Neural Networks for Long Sequences, March
+2023. URL http://arxiv.org/abs/2303.06349. arXiv:2303.06349 [cs].
+[28] Attila Reiss, Ina Indlekofer, Philip Schmidt, and Kristof Van Laerhoven. Deep PPG: Large-scale
+heart rate estimation with convolutional neural networks. Sensors, 19(14):3079, 2019. doi:
+10.3390/s19143079. URL https://doi.org/10.3390/s19143079.
+[29] Jeremy Reizenstein and Benjamin Graham. The iisignature library: efficient calculation of
+iterated-integral signatures and log signatures, 2018. URL https://arxiv.org/abs/1802.
+08252.
+[30] Matthew Reyna, Chris Josef, Russell Jeter, Supreeth Shashikumar, Benjamin Moody, M. Bran-
+don Westover, Ashish Sharma, Shamim Nemati, and Gari D. Clifford. Early Prediction of Sepsis
+from Clinical Data: The PhysioNet/Computing in Cardiology Challenge 2019. PhysioNet,
+August 2019. doi: 10.13026/v64v-d857. URL https://doi.org/10.13026/v64v-d857.
+Version 1.0.0.
+12
+[31] T. Konstantin Rusch and Daniela Rus. Oscillatory State-Space Models, June 2025. URL
+http://arxiv.org/abs/2410.03943. arXiv:2410.03943 [cs].
+[32] Yair Schiff, Chia-Hsiang Kao, Aaron Gokaslan, Tri Dao, Albert Gu, and Volodymyr Kuleshov.
+Caduceus: Bi-directional equivariant long-range dna sequence modeling, 2024. URL https:
+//arxiv.org/abs/2403.03234.
+[33] Siavash Shams, Sukru Samet Dindar, Xilin Jiang, and Nima Mesgarani. Ssamba: Self-supervised
+audio representation learning with mamba state space model. In 2024 IEEE Spoken Language
+Technology Workshop (SLT), page 1053–1059. IEEE, December 2024. doi: 10.1109/slt61566.
+2024.10832304. URL http://dx.doi.org/10.1109/SLT61566.2024.10832304.
+[34] Jimmy T. H. Smith, Andrew Warrington, and Scott W. Linderman. Simplified State Space
+Layers for Sequence Modeling, March 2023. URL http://arxiv.org/abs/2208.04933.
+arXiv:2208.04933 [cs].
+[35] Aleksandar Terzi´c, Nicolas Menet, Michael Hersche, Thomas Hofmann, and Abbas Rahimi.
+Structured sparse transition matrices to enable state tracking in state-space models, 2025. URL
+https://arxiv.org/abs/2509.22284.
+[36] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez,
+Lukasz Kaiser, and Illia Polosukhin. Attention is all you need. CoRR, abs/1706.03762, 2017.
+URL http://arxiv.org/abs/1706.03762.
+[37] Roger Waleffe, Wonmin Byeon, Duncan Riach, Brandon Norick, Vijay Korthikanti, Tri Dao,
+Albert Gu, Ali Hatamizadeh, Sudhakar Singh, Deepak Narayanan, Garvit Kulshreshtha, Vartika
+Singh, Jared Casper, Jan Kautz, Mohammad Shoeybi, and Bryan Catanzaro. An empirical study
+of mamba-based language models, 2024. URL https://arxiv.org/abs/2406.07887.
+[38] Benjamin Walker, Andrew D. McLeod, Tiexin Qin, Yichuan Cheng, Haoliang Li, and Terry
+Lyons. Log Neural Controlled Differential Equations: The Lie Brackets Make a Difference,
+October 2024. URL http://arxiv.org/abs/2402.18512. arXiv:2402.18512 [cs].
+[39] Benjamin Walker, Lingyi Yang, Nicola Muca Cirone, Cristopher Salvi, and Terry Lyons.
+Structured linear cdes: Maximally expressive and parallel-in-time sequence models, 2025. URL
+https://arxiv.org/abs/2505.17761.
+[40] Zhifan Ye, Kejing Xia, Yonggan Fu, Xin Dong, Jihoon Hong, Xiangchi Yuan, Shizhe Diao,
+Jan Kautz, Pavlo Molchanov, and Yingyan Celine Lin. Longmamba: Enhancing mamba’s
+long context capabilities via training-free receptive field enlargement, 2025. URL https:
+//arxiv.org/abs/2504.16053.
+[41] Zhihan Yue, Yujing Wang, Juanyong Duan, Tianmeng Yang, Congrui Huang, Yunhai Tong,
+and Bixiong Xu. Ts2vec: Towards universal representation of time series, 2022. URL https:
+//arxiv.org/abs/2106.10466.
+[42] Haoyi Zhou, Shanghang Zhang, Jieqi Peng, Shuai Zhang, Jianxin Li, Hui Xiong, and Wancai
+Zhang. Informer: Beyond efficient transformer for long sequence time-series forecasting, 2021.
+URL https://arxiv.org/abs/2012.07436.
+[43] Jingwei Zuo, Maksim Velikanov, Dhia Eddine Rhaiem, Ilyas Chahed, Younes Belkada, Guil-
+laume Kunsch, and Hakim Hacid. Falcon mamba: The first competitive attention-free 7b
+language model, 2024. URL https://arxiv.org/abs/2410.05355.
+13
+A Additional Derivations
+A.1 Derivation of the Linear CDE Interpretation of the Selective Scan
+We provide the derivation underlying the continuous-time interpretation stated in Section 3.2.1,
+following the standard small-step approximation used in selective SSM analyses [7] and replacing
+the pointwise input by the embedded token path eU.
+In the continuous-time formulation we take WB ∈ RN ×d and identify the discrete-time input
+projection by sB ( eU ) := WB eU ∈ RN . Fix a partition 0 = r0 < · · · < rT ′ = 1 and extend the
+embedded token sequence { eUτ }T ′ τ =1 to a ZOH path eU : [0, 1] → Rd by (12). Introduce a base step
+δ > 0 and rescale
+eαi := αi/δ, eβi := βi/δ, i = 1, . . . , d. (16)
+Following [7], we further approximate the softplus gate by a ReLU, σ(x) = ReLU(x) ≈ log(1 + ex),
+which yields for small δ,
+∆i( eU ) = softplus(α⊤ i eU + βi) = softplus   δ(eα⊤ i eU + eβi)  ≈ δ σ(eα⊤ i eU + eβi). (17)
+Consequently, as δ → 0, a first-order expansion of the matrix exponential gives
+Ai( eU ) = exp(∆i( eU )Ai) = exp   δ σ(eα⊤ i eU + eβi) Ai  ≈ I + δ σ(eα⊤ i eU + eβi) Ai. (18)
+For the injection, we use the standard small-step approximation consistent with the Mamba-style
+selective scan:
+Bi( eUτ ) eU i τ ≈ sB ( eUτ ) ∆i( eUτ ) eU i τ ≈ sB ( eUτ ) σ(eα⊤ i eUτ + eβi) δ eU i τ . (19)
+Substituting (18)–(19) into the selective recurrence (11) gives the Euler-type update
+Hi,τ = Hi,τ −1 + AiHi,τ −1 σ(eα⊤ i eUτ + eβi) δ + sB ( eUτ ) eU i τ σ(eα⊤ i eUτ + eβi) δ, (20)
+which is the forward Euler discretisation of the ODE
+˙H eU i;t = AiH eU i;t σ(eα⊤ i eUt + eβi) + sB ( eUt) eU i t σ(eα⊤ i eUt + eβi), i = 1, . . . , d. (21)
+Define the drivers
+ω
+eU
+i;t :=
+Z t
+0
+σ(eα⊤ i eUs + eβi) ds ∈ R, ξ eU i;t := Z t
+0
+eUs eU i s σ(eα⊤ i eUs + eβi) ds ∈ Rd. (22)
+Then (21) can be rewritten in linear CDE form as
+dH
+eU
+i;t = AiH
+eU
+i;t dω
+eU
+i;t + WB dξ
+eU
+i;t, H
+eU
+i;0 = hi,0, i = 1, . . . , d, (23)
+which matches (13) in the main text.
+For completeness, note that if eU (t) is held constant on [rτ −1, rτ ) and the system is evolved for an
+internal increment ∆i,τ , the exact ZOH discretisation gives:
+Hi,τ = exp(∆i,τ Ai) Hi,τ −1 + (∆i,τ Ai)−1  exp(∆i,τ Ai) − I    ∆i,τ sB ( eUτ )  eU i τ . (24)
+In particular, taking ∆i,τ = ∆i( eUτ ) yields the Mamba-style selective recurrence
+Hi,τ = Ai,τ Hi,τ −1 + Bi,τ eU i τ ,
+with Ai,τ = exp(∆i,τ Ai) and Bi,τ = (∆i,τ Ai)−1  exp(∆i,τ Ai) − I  (∆i,τ sB ( eUτ )).
+14
+A.2 Derivation of the NRDE Interval Form
+We derive the interval-driven dynamics stated in Section 3.2.1, starting from the linear CDE (13)
+under the ZOH extension (12).
+Since eU (t) = eUτ is constant on [rτ −1, rτ ), the drivers defined in (14) are affine on each interval with
+constant derivatives:
+d
+dt ω
+eU
+i;t = σ(eα⊤ i eUτ + eβi), d dt ξ eU i;t = eUτ eU i τ σ(eα⊤ i eUτ + eβi), t ∈ [rτ −1, rτ ). (25)
+Substituting into (13) gives the ODE on the interval
+d
+dt H
+eU
+i;t = AiH
+eU
+i;t σ(eα⊤ i eUτ + eβi) + WB eUτ eU i τ σ(eα⊤ i eUτ + eβi). (26)
+Defining the interval increments
+Λ
+eU
+i,τ :=
+ 
+∆ω eU i,τ
+∆ξ eU i,τ
+!
+=
+
+σ(eα⊤ i eUτ + eβi) ∆rτ
+eUτ eU i τ σ(eα⊤ i eUτ + eβi) ∆rτ
+
+, ∆rτ := rτ − rτ −1, (27)
+and writing the ODE in the form d dt H eU i;t = [AiH eU i;t, WB ] 1 ∆rτ Λ eU i,τ , integration over [rτ −1, t] yields
+H
+eU
+i;t = H
+eU
+i;rτ −1 +
+Z t
+rτ −1
+
+AiH
+eU
+i;s, WB
+ 1
+∆rτ
+Λ
+eU
+i,τ ds, t ∈ (rτ −1, rτ ), (28)
+which is equation (15) in the main text. The term ∆ω eU i,τ = σ(eα⊤ i eUτ + eβi)∆rτ depends on the input
+content eUτ , making the internal-time allocation content-dependent rather than fixed as in standard
+NRDEs.
+A.3 Proof of Proposition 4.1
+Closure of a single Mamba block. For a generic input path γ, the uniform closure of a single
+diagonal Mamba block (Cor. 4.4 of Cirone et al. [7]) takes the form
+F (1) Mamba[X ] := n (γ, t) 7→ Pd i=1 ψi(ωγ,i t ) + Pd i=1 R t 0 ϕi(ωγ,i t − ωγ,i s ) dξγ,i s o γ∈X , (29)
+with continuous ψi, ϕi : R → R (notation as in Cirone et al. [7]). Each summand depends on γ
+only through scalar gate paths ωγ,i and ds-driven integrators ξγ,i; in particular, no dγ-driven iterated
+integral appears.
+Proof of (i). By construction, the token Uτ ∈ RDtot contains every log-signature coordinate of
+Wk(X)τ up to depth mk ≥ m (Eq. 9). After fixing a Lie basis on the truncated free Lie algebra, the
+assumed factorisation of F gives F (X) = ˜f (Uτ (X)) for some continuous ˜f : RDtot → R. The map
+X 7→ Uτ (X) is continuous and X is compact, so the image U := {Uτ (X) : X ∈ X } ⊂ RDtot is
+compact. Take state dimension d ≥ Dtot and Win ∈ Rd×Dtot injective; the image eU := WinU is
+also compact.
+We adopt the small-step parameterisation Bi,τ = ∆i,τ sB ( eUτ ), implemented in Mamba [14] and
+used in the linear-CDE bridge of Cirone et al. [7] (cf. Section 3.2.1). Here sB ( eU ) = WB eU and
+sC ( eU ) = WC eU are linear in eU with learnable parameters WB , WC , while Bi,τ and sC ( eUτ ) vary in
+τ through their input dependence. Since softplus is continuous and strictly positive and eU is compact,
+∆i,τ = softplus(α⊤ i eUτ +βi) is uniformly bounded above and below by constants ∆max ≥ ∆min > 0,
+so Bi,τ is uniformly bounded. Writing
+Ai = − diag(λi,1, . . . , λi,N ), λi,k ≥ λmin > 0,
+yields
+Ai,τ = diag
+ 
+e−λi,1 ∆i,τ , . . . , e−λi,N ∆i,τ  , ∥Ai,τ ∥ ≤ e−λmin ∆min λmin →∞ −−−−−−→ 0,
+15
+uniformly on eU.
+The recurrence Hi,τ = Ai,τ Hi,τ −1 + Bi,τ eU i τ keeps H uniformly bounded; taking λmin → ∞,
+Hi,τ → ∆i,τ WB eUτ eU i τ ,
+being a continuous function of eUτ alone. The limiting per-anchor readout vector {yi,τ :=
+sC ( eUτ ) Hi,τ }d i=1 is then a smooth map g : eU → Rd, polynomial in eUτ modulated by the soft-
+plus gate.
+For d ≥ Dtot, g is a smooth map between spaces of matching ambient dimension. There exist
+parameters (WB , WC , α, β, A) such that g is injective on the compact set eU . Combined with
+injectivity of Win, the composed map Uτ 7→ {yi,τ }d i=1 is injective on U . Standard MLP universality
+on the compact image then approximates ˜f uniformly, hence F , to error ε.
+Proof of (ii). By Cor. 4.4 of Cirone et al. [7], every feature in F (1) Mamba[X ] factorises through scalar
+gates ωX,i and ds-driven integrators ξX,i as in (29); in Mamba, dξX,i s = XsX i s σ(eαi ·Xs + eβi) ds is
+ds-driven, depending on X only through pointwise values Xs. A pointwise post-scan MLP composed
+with such block outputs produces only continuous functions of F (1) Mamba[X ]; since closure features are ds-driven and scalar-gated, no dX-driven iterated integral lies in this composed family. The Lévy
+area
+A12 t = 1 2
+Z t
+0
+ 
+X 1 s dX 2 s − X 2 s dX 1 s 
+is a dX-driven iterated integral, antisymmetric under 1 ↔ 2; no finite combination of ds-driven
+features in the closure can reproduce it, so A12 /∈ F (1) Mamba[X ].
+Proof of (iii). Direct from Sec. C.2.1 of Cirone et al. [7]: chained diagonal blocks recover progres-
+sively richer iterated-integral features as the chain depth grows, populating the state at each anchor
+with the cross-channel structure that is unavailable at chain depth one. The asymptotic universality
+of Cirone et al. [7] (Prop. 4.5) requires chain depth growing with the maximum iterated-integral
+depth being recovered, whereas LogSig-SSM realises any such feature in a single block provided
+∃ k : mk ≥ m. □
+16
+B Memory and Runtime
+Table 5 summarises the compute requirements of each model on the UEA classification benchmarks
+of Section 5.1. Baseline numbers are taken from [38, 4], and we report parameter count |θ|, GPU
+memory usage (MB), and wall-clock time per 1000 training steps (s), all measured on a single
+NVIDIA RTX 4090.
+LogSig-SSM is the most compute-efficient approach. It has the lowest memory usage on all six
+datasets, often an order of magnitude below Mamba, and it is the fastest (or joint fastest) model on
+all six datasets, with large gains over the continuous-time baselines. These gains follow from the
+architecture: log-signature tokenisation shortens the effective sequence before the selective scan,
+reducing both the number of recurrent updates and the activations stored for backpropagation. On the
+two widest datasets (Heartbeat, 61 channels; MotorImagery, 64 channels) the depth-two tokens are
+1,891- and 4,160-dimensional, which raises the parameter count of the input embedding but leaves
+the footprint at 54 MB and 78 MB.
+Tokenisation is a one-time offline computation and is not part of the training graph. Table 6 reports
+its cost with iisignature [29] on CPU, with the Lie basis built once per dataset rather than once
+per series (the emitted features are identical): all six datasets are tokenised in 6 s in total, about 1% of
+one training run per dataset. Tokenisation is linear in the sequence length and in the number of series,
+parallel over both, and the work at each anchor is set by maxk Lk and maxk mk rather than by the
+length of the stream, so it also runs online: tokens are emitted every s samples with latency bounded
+by s and a buffer of maxk Lk samples, and the optional global branch can be maintained at constant
+cost per anchor through Chen’s identity. The binding constraint is channel width, since the depth-m
+token has O(dm x /m) coordinates.
+Table 5: Compute requirements for the UEA classification tasks of Section 5. Bold indicates the
+lowest value per dataset for parameter count (|θ|), GPU memory usage (MB), and time (seconds) per
+1000 steps. All statistics were recorded on an NVIDIA RTX 4090.
+NRDE NCDE Log-NCDE LRU S5 Mamba S6 LinOSS-IMEX LinOSS-IM D-LinOSS LogSig-SSM
+EigenWorms
+|θ| 105110 166789 37977 101129 22007 27381 15045 26119 134279 134279 52933
+mem. 2506 2484 2510 10716 6646 13486 7922 6556 3488 3488 362
+time 5386 24595 1956 94 31 122 68 37 14 14 4
+SCP1
+|θ| 117187 166274 91557 25892 226328 184194 24898 447944 991240 992776 310786
+mem. 716 694 724 960 1798 1110 904 4768 4772 4790 202
+time 1014 973 635 9 17 7 3 42 38 38 3
+SCP2
+|θ| 200707 182914 36379 26020 5652 356290 26018 448072 399112 399496 352642
+mem. 712 692 714 954 762 2460 1222 4772 2724 2736 76
+time 1404 1251 583 9 9 32 7 55 22 22 2
+Ethanol
+|θ| 93212 133252 31452 76522 76214 1032772 5780 70088 6728 71112 158516
+mem. 712 692 710 1988 1520 4876 938 4766 1182 4774 82
+time 2256 2217 2056 16 9 255 4 48 8 37 4
+Heartbeat
+|θ| 15657742 1098114 168320 338820 158310 1034242 6674 29444 10936 4356 396546
+mem. 6860 1462 2774 1466 1548 1650 606 922 928 672 54
+time 9539 1177 826 8 11 34 4 4 7 4 2
+Motor
+|θ| 1134395 186962 81391 107544 17496 228226 52802 106024 91844 20598 70034
+mem. 4552 4534 4566 8646 4616 3120 4056 12708 4510 4518 78
+time 7616 3778 730 51 16 35 34 128 11 20 5
+17
+Table 6: Log-signature tokenisation cost for LogSig-SSM on the UEA datasets, using iisignature
+[29] on CPU: wall-clock seconds for the whole dataset (mean ± std over five seeds) and the same
+time as a percentage of one training run.
+Dataset dx T Tokenisation (s) % of one training run
+EigenWorms 6 17,984 1.587 ± 0.004 1.2
+SCP1 6 896 0.887 ± 0.051 0.8
+SCP2 7 1,152 0.052 ± 0.026 0.1
+Ethanol 3 1,751 0.113 ± 0.031 0.1
+Heartbeat 61 405 0.959 ± 0.026 0.9
+Motor 64 3,000 2.469 ± 0.103 1.5
+All six 6.07
+C Ablation Studies on UEA
+Table 7 gives the per-dataset results behind Table 4. Every variant uses the same two-stage Optuna
+protocol and budget as LogSig-SSM (Appendix F), with backbone-appropriate ranges substituted
+where needed.
+Tokeniser variants (Mamba backbone fixed).
+• Mamba (no tokenisation): the raw input sequence is processed directly by Mamba, with
+no compression.
+• ConvDepthwise-Mamba: a 1-D depthwise (per-channel) convolutional layer over each
+window, projecting to the same token dimension as LogSig-SSM. This isolates compression
+with no cross-channel mixing.
+• ConvMixing-Mamba: a standard 1-D convolutional layer over each window, adding linear
+cross-channel mixing on top of compression.
+• Catch24-Mamba: Catch24 statistical summaries per window, i.e. the 22 catch22 fea-
+tures [22] together with the mean and standard deviation of the window, computed separately
+for each channel.
+• Wst-Mamba: 1-D wavelet-scattering coefficients (Kymatio Scattering1D with Morlet
+wavelets) per window, capturing multi-scale spectral content.
+Wst-Mamba is the only variant ahead of LogSig-SSM on any dataset, on EthanolConcentration (53.5
+against 51.4, within one standard deviation).
+Backbone variants (log-signature tokeniser fixed). The same log-signature tokens are fed to
+Mamba (selective recurrence), S5 (LTI recurrence) and a standard Transformer (attention). LogSig-
+SSM (Mamba) leads on each of the six datasets, with the largest margin on EthanolConcentration,
+where discriminative information is concentrated in content-defined regions of the sequence.
+Table 7: UEA ablations (% accuracy ↑, mean ± std over five splits). Top: tokeniser variants with
+the Mamba backbone fixed. Bottom: backbone variants with the log-signature tokeniser fixed. All
+variants share the same window positions, token dimensions where applicable, and Optuna budget
+(Appendix F). Bold = best per column.
+Model EigenWorms SCP1 SCP2 Ethanol Heartbeat Motor Avg
+Tokeniser variants (Mamba backbone)
+Mamba (raw input) 70.9±15.8 80.7±1.4 48.2±3.9 27.9±4.5 76.2±3.8 47.7±4.5 58.6
+ConvDepthwise-Mamba 78.4±3.0 83.9±5.8 45.2±3.8 35.8±12.5 68.7±4.3 48.6±2.4 60.1
+ConvMixing-Mamba 85.9±11.8 81.4±3.4 51.0±3.1 33.6±5.6 74.9±10.3 50.6±3.8 62.9
+Catch24-Mamba 72.5±11.0 82.4±4.7 44.5±4.2 34.5±5.7 66.8±6.1 52.8±7.0 58.9
+Wst-Mamba 89.1±12.5 85.9±1.2 53.1±5.6 53.5±4.0 72.9±6.3 51.0±9.5 67.6
+Backbone variants (log-signature tokeniser)
+LogSig-S5 85.0±4.5 87.5±2.3 54.4±3.8 25.6±2.7 71.6±8.5 53.7±4.7 63.0
+LogSig-Transformer 93.1±4.9 83.9±3.8 53.7±3.1 36.0±3.4 72.1±8.0 53.7±4.6 65.4
+LogSig-SSM (ours) 95.3±3.6 88.4±1.9 58.4±2.9 51.4±6.9 76.9±9.7 59.9±3.4 71.7
+18
+C.1 Signature versus log-signature tokens
+The truncated signature and log-signature are related by a polynomial bijection, so at equal depth they
+carry identical information and any continuous functional of one is a continuous functional of the
+other. What the log-signature gives up is universality for linear readouts, which the nonlinear readout
+of LogSig-SSM does not need. We use the log-signature because it is the driver with which the
+models we build on are defined (the log-ODE method underlying NRDEs [25] and Log-NCDEs [38]),
+because it is the redundancy-free coordinate system for that content, and because iisignature
+accumulates it directly in a Lie basis rather than taking a logarithm of the signature. Table 8 compares
+the two token types directly in accuracy and tokenisation time on EigenWorms, SCP1 and SCP2, the
+three datasets on which the second-order terms are load-bearing (Appendix D): the log-signature
+coordinates of the reported configuration are replaced by signature coordinates of the same depth with
+every other hyperparameter fixed, and since the two coincide at depth one the comparison isolates
+how the higher levels are coordinatised. The log-signature leads on all three, by 3.1 points on average,
+and is about twice as fast to compute.
+Table 8: Signature against log-signature tokens at the same depth and configuration (Table 11): test
+accuracy (%, mean over five seeds) and whole-dataset tokenisation time with iisignature (s, best
+of three).
+Accuracy (%) Tokenisation (s)
+Dataset Log-signature Signature Log-signature Signature
+EigenWorms 95.3 94.4 1.56 3.73
+SCP1 88.4 85.7 0.85 1.34
+SCP2 58.4 52.9 0.04 0.05
+Average / total 80.7 77.6 2.45 5.12
+D Truncation Depth: Matched-Budget Comparison
+A level-one log-signature over a window is its increment and carries no cross-channel content,
+second-order terms are where cross-channel interactions (Lévy areas) enter the token. To decide the
+depth without per-dataset selection, we ran, for each dataset, a fresh 100-trial Optuna search over the
+tokeniser hyperparameters (window lengths, number of scales, stride) with the backbone fixed at the
+reported configuration (Table 11) and the depth forced to one or to two on every window, so that both
+arms receive a matched budget at their own best tokeniser configuration. Table 9 reports test accuracy
+over five seeds.
+Table 9: Matched-budget comparison of truncation depth mk = 1 against mk = 2 on every window
+(UEA accuracy %; mean ± std over five seeds). ∆ is the gain of depth two. The depth-two column is
+the configuration reported in Table 1.
+Dataset dx mk = 1 mk = 2 ∆
+EigenWorms 6 88.1±6.4 95.3±3.6 +7.2
+SCP1 6 84.1±1.4 88.4±1.9 +4.3
+SCP2 7 55.6±4.9 58.4±2.9 +2.8
+Ethanol 3 51.0±4.2 51.4±6.9 +0.4
+Heartbeat 61 78.3±9.4 76.9±9.7 −1.4
+Motor 64 59.6±7.5 59.9±3.4 +0.3
+Average (UEA) 69.5 71.7 +2.3
+The two directions do not cost the same. Forcing depth one costs 2.3 points on average, with
+losses of 7.2, 4.3 and 2.8 on the three datasets with few channels, where the second-order terms
+are load-bearing: on these three datasets the depth-one arm is level with the strongest alternative
+tokeniser (Wst-Mamba, Table 7; −1.0, −1.8, +2.5), while depth two leads it by 6.2, 2.5 and 5.3
+points. Forcing depth two costs at most 1.4 points on any dataset and about 0.2 points on average
+relative to selecting the better depth per dataset, within seed noise everywhere. On Heartbeat and
+19
+MotorImagery the depth-two token per branch (1,891 and 2,080 coordinates) is 6.6× and 7.9× wider
+than the training set, so the second-order coordinates are under-determined and sit on a plateau
+that we expect to relax with more data. On Ethanol the discriminative structure is carried by the
+increments, and the extra depth neither helps nor hurts. Depth two is therefore a safe default, its cost
+being tokenisation time on wide inputs (Table 6), and we report it throughout.
+E Signal Visualisation
+We visualise representative signals from the six UEA classification tasks used in our evaluation
+(Figure 2). The goal is to highlight the qualitative differences in temporal structure across datasets,
+which helps explain the heterogeneous empirical performance observed in Table 1.
+The datasets separate naturally into two regimes. Five datasets (SelfRegulationSCP1, SelfRegu-
+lationSCP2, MotorImagery, Heartbeat, EigenWorms) exhibit high-frequency, oscillatory, or noise-
+dominated dynamics, where discriminative information is often localised in short-time patterns or
+frequency content. In contrast, EthanolConcentration consists of smooth absorption spectra with a
+single broad peak, where class differences manifest as global shifts in shape and location over long
+time horizons.
+This distinction is important for interpreting our results. Multi-scale log-signature tokens sum-
+marise the geometry of the path over extended intervals, capturing global shape characteristics and
+cross-channel relationships. This is well matched to signals such as EthanolConcentration, where
+discriminative structure is inherently low-frequency and global. This supports the interpretation that
+the gains of LogSig-SSM arise from its ability to capture multi-scale path geometry, rather than
+compression alone.
+Figure 2: Representative time-series from the six UEA datasets. EthanolConcentration exhibits
+smooth, low-frequency structure with global shape variation, while the other datasets are dominated
+by high-frequency or noisy dynamics.
+F Selected Hyperparameters
+F.1 Hyperparameter optimisation protocol
+We optimise log-signature tokenisation and the Mamba backbone using a two-stage Optuna [1]
+protocol with 100 trials per stage. Stage 1 searches the tokenisation space with the backbone fixed
+at a small reference Mamba (d=64, 2 layers, N =32, convolution width 3, expansion 2). Stage
+2 searches the Mamba backbone jointly with a local neighbourhood of the stage-1 tokenisation.
+The same protocol and budget are used for the LogSig-S5 and LogSig-Transformer ablations, with
+backbone-appropriate hyperparameter ranges substituted in Stage 2.
+20
+Stage 1 tokenisation ranges. Stride s ∈ {2, . . . , 199}; number of multi-scale branches K ∈
+{1, . . . , 5}, bounded by the number of distinct admissible window lengths; window lengths Lk drawn
+from a T -dependent geometric menu with values T /r for r ∈ {4, . . . , 64}, each lower-bounded
+by a small constant; an optional global branch (window equal to the full sequence). On UEA the
+truncation depth is fixed at mk = 2 on every window. On PPG-DaLiA, Weather and PhysioNet the
+per-branch depth was searched in {1, . . . , mmax} with mmax=4 if dx ≤ 20 and mmax=2 otherwise,
+and every selected configuration contains a depth-two branch.
+Stage 2 local tokenisation neighbourhood. Stride is scaled by {0.5, 0.75, 1.0, 1.5, 2.0} around
+the stage-1 best; the number of branches K ∗ ± 1; per-branch window lengths are scaled by
+{0.5, 0.75, 1.0, 1.5, 2.0}; where the depth is searched, depths within m∗ k ± 1, clamped to [1, mmax].
+Stage 2 backbone ranges (Mamba). Learning rate ∈ {10−3, 10−4, 10−5}; model dimension d ∈
+{16, 64, 128}; blocks ∈ {2, 4, 6}; state size N ∈ {16, 64, 256}; convolution width ∈ {2, 3, 4}; expan-
+sion ∈ {1, 2, 4}; per-feature normalisation ∈ {True, False}. For LogSig-S5, the layer/block/state-size
+ranges are searched in place of the Mamba-specific hyperparameters; for LogSig-Transformer, number
+of layers, attention heads, feedforward dimension, dropout, and learning rate are searched.
+Comparison to prior protocols. For fairness with prior work, we adopt the same Mamba hyperpa-
+rameter grid as the Log-NCDE protocol [38] and its models following this protocol [31, 4]: learning
+rate, time-channel inclusion, hidden dimension, number of layers, state dimension, convolution width,
+and expansion factor, with the same value ranges on each axis. Walker et al. [38] search this grid
+exhaustively, evaluating 36 · 2 = 1458 Mamba configurations (and a comparable 1296-point grid for
+Log-NCDE itself). We instead use Optuna to evaluate 100 Mamba configurations in Stage 2 over the
+same axes and ranges. Two consequences follow. First, our Mamba backbone is searched over the
+same space as the strongest published Mamba results on these benchmarks, so the comparison in
+Table 1 is structurally fair. Second, our budget is smaller in raw trial count but is allocated adaptively
+rather than uniformly. Stage 1 separately searches the tokenisation space, so the total budget per
+dataset is 200 trials, of which 100 involve backbone selection.
+Search-free rule. The search is not required to beat raw SSMs. With the Mamba backbone fixed at
+the reported LogSig-SSM configuration of each dataset and every tokeniser hyperparameter set from
+the sequence length alone (s = T /100, lengths [T /25, T /100], depths [2, 1]), applied unchanged
+to all six datasets, LogSig-SSM reaches 64.0% average UEA accuracy (Table 10), above S5 (61.8),
+LRU (61.7) and Mamba (58.6), and searching the tokeniser adds the remaining 7.7 points. The full
+per-axis study is provided with the code.
+Table 10: Search-free rule on UEA (accuracy %, mean ± std over five seeds): tokeniser hyperpa-
+rameters set from the sequence length alone, Mamba backbone as in Table 11, against the searched
+configuration and the raw SSM baselines of Table 1.
+Model EigenWorms SCP1 SCP2 Ethanol Heartbeat Motor Avg
+LogSig-SSM (searched) 95.3±3.6 88.4±1.9 58.4±2.9 51.4±6.9 76.9±9.7 59.9±3.4 71.7
+LogSig-SSM (rule, no search) 92.5±6.8 85.5±3.5 51.9±8.9 32.3±2.1 72.2±7.3 49.7±4.8 64.0
+S5 81.1±3.7 89.9±4.6 50.5±2.6 24.1±4.3 77.7±5.5 47.7±5.5 61.8
+LRU 87.8±2.8 82.6±3.4 51.2±3.6 21.5±2.1 78.4±6.7 48.4±5.0 61.7
+Mamba 70.9±15.8 80.7±1.4 48.2±3.9 27.9±4.5 76.2±3.8 47.7±4.5 58.6
+21
+F.2 Log-signature tokeniser
+Table 11: Selected hyperparameters for LogSig-SSM. LR: learning rate; Hidden: model dimension
+d; State: state size N ; Blocks: number of Mamba blocks; Time: time channel appended to the input;
+Conv: convolution width; Exp: expansion factor; Norm: per-feature normalisation; Lengths/Depths:
+window lengths Lk and truncation depths mk; Global: depth of the optional global branch (– = none).
+Dataset LR Hidden State Blocks Time Conv Exp Norm Lengths / Depths Stride Global
+EigenWorms 1e-3 64 64 2 F 2 1 T [281] / [2] 21 –
+Ethanol 1e-3 16 256 6 T 2 2 T [18, 132] / [2, 2] 66 –
+Heartbeat 1e-3 128 64 2 F 4 1 T [143] / [2] 26 –
+Motor 1e-4 16 16 2 T 3 1 F [51, 16] / [2, 2] 50 –
+SCP1 1e-3 128 64 2 F 3 2 T [56] / [2] 5 1
+SCP2 1e-4 128 16 2 T 2 3 T [36] / [2] 46 –
+PPG-DaLiA 1e-3 16 128 4 T 3 4 T [64, 8, 8] / [2, 2, 1] 64 –
+Weather 1e-3 32 32 6 F 2 2 T [20, 30, 90] / [1, 2, 1] 7 1
+PhysioNet (OI) 1e-3 64 128 6 F 4 2 T [6, 2, 2] / [1, 2, 1] 1 –
+PhysioNet (no OI) 5e-4 32 16 4 F 4 2 T [4, 6, 22] / [2, 2, 2] 1 –
+F.3 Ablation variants
+Tables 12–15 list the selected configurations of the LogSig-S5, LogSig-Transformer, Catch24-Mamba
+and Wst-Mamba variants.
+Table 12: Selected hyperparameters for LogSig-S5 (log-signature tokens + S5). Blocks are reported
+as layers×blocks.
+Dataset LR Hidden State Blocks Time Norm Lengths Depths Stride Global
+EigenWorms 1e-3 64 16 4×4 F F [562, 281] [2, 2] 57 F
+Ethanol 1e-3 16 64 2×2 F T [109, 43] [2, 1] 70 F
+Heartbeat 1e-5 64 16 6×2 T T [14] [1] 3 F
+Motor 1e-4 64 16 4×4 T F [93, 250, 125] [2,1,2] 35 T
+SCP1 1e-3 16 256 6×4 F F [112, 18] [1, 1] 30 F
+SCP2 1e-4 16 64 4×2 F T [18, 144, 192] [4,2,3] 13 T
+Table 13: Selected hyperparameters for LogSig-Transformer (log-signature tokens + Transformer).
+FFN: feed-forward dimension; Global: depth of the optional global branch (– = none).
+Dataset LR Hidden Heads FFN State Blocks Time Norm Lengths Depths Stride Global
+EigenWorms 1e-3 128 4 256 64 2 T T [374, 899] [2, 1] 55 –
+Ethanol 1e-3 16 8 128 64 6 T F [22, 48, 114] [1, 1, 1] 74 –
+Heartbeat 1e-5 16 8 256 64 4 T T [16, 25] [1, 1] 14 –
+Motor 1e-4 16 8 512 64 4 T T [250, 46] [1, 1] 46 –
+SCP1 1e-4 16 8 512 64 4 T T [74] [1] 14 1
+SCP2 1e-3 128 8 512 64 2 T T [68] [2] 76 –
+Table 14: Selected hyperparameters for Catch24-Mamba (Catch24 tokens).
+Dataset LR Hidden State Blocks Time Conv Exp Norm Lengths Stride
+EigenWorms 1e-3 64 256 6 T 2 4 T [70, 749, 499, 70, 35] 135
+Ethanol 1e-3 128 256 4 T 3 3 T [109, 350, 13, 109, 350] 79
+Heartbeat 1e-5 128 64 2 T 3 2 F [11, 16, 50, 8, 3] 38
+Motor 1e-3 64 16 6 F 3 3 T [187, 11] 163
+SCP1 1e-4 64 16 2 T 4 2 T [179, 9, 179, 32, 224] 98
+SCP2 1e-3 64 256 6 T 4 3 T [192, 48, 115, 192] 67
+22
+Table 15: Selected hyperparameters for Wst-Mamba (wavelet-scattering tokens, Kymatio
+Scattering1D with Morlet wavelets).
+Dataset LR Hidden State Blocks Conv Exp WST Lengths Stride
+EigenWorms 1e-3 128 64 6 2 1 [749, 2997] 48
+Ethanol 1e-4 128 64 2 3 4 [18, 291, 62, 48] 66
+Heartbeat 1e-4 64 64 2 3 4 [67, 67, 40] 75
+Motor 1e-5 16 16 2 2 1 [375, 125, 150, 187] 125
+SCP1 1e-5 128 256 2 4 2 [179, 28] 122
+SCP2 1e-3 16 16 2 3 1 [48, 4, 96, 48, 192] 141
+23

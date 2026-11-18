@@ -1,0 +1,1448 @@
+Log Neural Controlled Differential Equations:
+The Lie Brackets Make a Difference
+Benjamin Walker 1 Andrew D. McLeod 1 Tiexin Qin 2 Yichuan Cheng 2 Haoliang Li 2 Terry Lyons 1
+Abstract
+The vector field of a controlled differential equa-
+tion (CDE) describes the relationship between a
+control path and the evolution of a solution path.
+Neural CDEs (NCDEs) treat time series data as
+observations from a control path, parameterise a
+CDE’s vector field using a neural network, and
+use the solution path as a continuously evolving
+hidden state. As their formulation makes them
+robust to irregular sampling rates, NCDEs are a
+powerful approach for modelling real-world data.
+Building on neural rough differential equations
+(NRDEs), we introduce Log-NCDEs, a novel, ef-
+fective, and efficient method for training NCDEs.
+The core component of Log-NCDEs is the Log-
+ODE method, a tool from the study of rough paths
+for approximating a CDE’s solution. Log-NCDEs
+are shown to outperform NCDEs, NRDEs, the lin-
+ear recurrent unit, S5, and MAMBA on a range of
+multivariate time series datasets with up to 50,000
+observations.
+1. Introduction
+1.1. Multivariate Time Series Modelling
+Neural controlled differential equations (NCDEs) offer a
+number of advantages for modelling real-world multivariate
+time series. These include being robust to irregular sampling
+rates and decoupling the number of forward passes through
+their neural network from the number of observations in
+the time series. However, there exists a gap in performance
+between NCDEs and current state-of-the-art approaches for
+time series modelling, such as S5, the linear recurrent unit
+(LRU), and MAMBA (Smith et al., 2023; Orvieto et al.,
+2023; Gu & Dao, 2023).
+1Mathematical Institute, University of Oxford, UK
+2Department of Electrical Engineering, City University of Hong
+Kong. Correspondence to: Benjamin Walker <mlbenjamin
+walker@gmail.com>.
+Proceedings of the 41 st International Conference on Machine
+Learning, Vienna, Austria. PMLR 235, 2024. Copyright 2024 by
+the author(s).
+This paper demonstrates that, on a range of multivariate
+time series benchmarks, NCDEs can outperform current
+state-of-the-art approaches by utilising a tool from the study
+of rough paths, the Log-ODE method. We refer to this new
+approach as Log-NCDEs1.
+1.2. Neural Controlled Differential Equations
+Let {(ti, xi)}n i=0 denote a set of observations from a mul-
+tivariate time series, where xi ∈ Rv−1. Let X : [t0, tn] →
+Rv be a continuous interpolation, such that Xti = (ti, xi),
+where subscript on time-dependent variables denotes evalua-
+tion. Let ht ∈ Ru and zt ∈ Rw be the NCDE’s hidden state
+and output at time t respectively. Let ξϕ : Rv → Ru and
+fθ : Ru → Ru×v be neural networks, and lψ : Ru → Rw
+be a linear map, where ϕ, θ, and ψ represent the learnable
+parameters. A NCDE is defined by
+ht0 = ξϕ(t0, x0),
+ht = ht0 +
+Z t
+t0
+fθ (hs)dXs,
+zt = lψ (ht),
+(1)
+for t ∈ [t0, tn], where fθ (hs)dXs is matrix-vector multi-
+plication (Kidger et al., 2020). Details on the regularity
+required for existence and uniqueness of the solution to
+(1) can be found in Appendix A.1. By an extension of the
+Picard-Lindel¨of Theorem, a sufficient condition is X be-
+ing of bounded variation and fθ being Lipschitz continuous
+(Lyons et al., 2007, Theorem 1.3).
+NCDEs are an attractive option for modelling multivariate
+time series. They are universal approximators of continu-
+ous real-valued functions on time series data (Kidger, 2022,
+Theorem 3.9). Additionally, since they interact with time
+series data through X, NCDEs are unaware of when the
+time series was observed. This makes them robust to irreg-
+ular sampling rates. Furthermore, the number of forward
+passes through fθ when evaluating (1) is controlled by the
+differential equation solver. This is opposed to recurrent
+models, where it is controlled by the number of observations
+n. By decoupling the number of forward passes through
+1https://github.com/Benjamin-Walker/
+Log-Neural-CDEs
+1
+arXiv:2402.18512v4  [cs.LG]  23 Oct 2025
+Log Neural Controlled Differential Equations
+their neural network from the number of observations in
+the time series, NCDEs can mitigate exploding or vanishing
+gradients on highly-sampled time series.
+To make use of the techniques developed for training neural
+ordinary differential equations (ODEs) (Chen et al., 2018),
+NCDEs are typically rewritten as an ODE,
+˜ht = ˜ht0 +
+Z t
+t0
+gθ,X (˜hs)ds, (2)
+where ˜ht0 = ht0 . Kidger et al. (2020) proposed taking X
+to be a differentiable interpolation and
+gθ,X (˜hs) = fθ (˜hs) dX ds . (3)
+1.3. Neural Rough Differential Equations
+Neural rough differential equations (NRDEs) are based on
+the Log-ODE method, which is discussed briefly here, and
+in full detail in Section 2.
+Given a set of intervals {[ri, ri+1]}m−1 i=0 satisfying t0 =
+r0 < . . . < rm = tn, the Log-ODE method replaces a CDE
+with an ODE on each interval. For a depth−N method, the
+ODE on [ri, ri+1] is defined by
+gθ,X (˜hs) = ¯fθ
+
+˜hs
+ log(SN (X)[ri ,ri+1 ])
+ri+1 − ri
+, (4)
+where ¯fθ is constructed using the iterated Lie brackets of
+fθ and log(SN (X)[ri ,ri+1 ]) is the depth-N truncated log-
+signature of X over [ri, ri+1] (Boutaib et al., 2013). Infor-
+mally, ¯fθ is a high order description of the vector field fθ
+and log(SN (X)[ri ,ri+1 ]) is a high order description of the
+control path X over [ri, ri+1]. Note that when using (3), ˜ht
+is exactly ht for all t ∈ [t0, tn], whereas when using (4), ˜ht
+is an approximation of ht when t ∈ {ri}m i=1.
+NRDEs replace (3) with (4), but instead of calculating ¯fθ
+using the iterated Lie brackets of fθ , it is treated as a neu-
+ral network ¯fθ : Ru → Ru×β(v,N ), where β(v, N ) is the
+dimension of a depth−N truncated log-signature of a v di-
+mensional path. By neglecting the structure of ¯fθ , NRDEs
+are able to reduce the computational burden of evaluating
+the vector field, at the cost of increasing the output dimen-
+sion of the neural network.
+Compared to NCDEs, NRDEs can reduce the number of
+forward passes through the network while evaluating the
+model, as the vector field is autonomous on each interval
+[ri, ri+1]. This has been shown to lead to improved classifi-
+cation accuracy, alongside reduced time and memory-usage,
+on time series with up to 17,000 observations (Morrill et al.,
+2021). Furthermore, as it is no longer necessary to apply a
+differentiable interpolation to the time series data, NRDEs
+are applicable to a wider range of input signals.
+1.4. Contributions
+This paper introduces Log-NCDEs, which build on NRDEs
+by constructing ¯fθ using the iterated Lie brackets of a
+NCDE’s vector field, fθ . For depth’s N ≥ 2, this change
+drastically reduces the output dimension of the model’s
+neural network, without impacting the model’s expressiv-
+ity. Furthermore, it improves model performance on every
+dataset considered in this paper. Calculating the Lie brackets
+requires that fθ satisfies a regularity constraint, specifically
+being Lip(γ) for γ ∈ (N − 1, N ]. Section 3.2 presents a
+novel theoretical result bounding the Lip(γ)−norm for a
+class of fully connected neural networks when 1 < γ ≤ 2.
+Following this, Section 3.3 details how to efficiently cal-
+culate the Lie brackets of a Lip(γ) neural network using
+standard machine learning tools. The paper concludes by
+showing that, over a range of multivariate time series bench-
+marks, Log-NCDEs outperform NCDEs, NRDEs, S5, LRU,
+and MAMBA.
+2. Mathematical Background
+The following section provides a thorough mathematical de-
+scription of the Log-ODE method. It will introduce Lip(γ)
+regularity, the Lie bracket of two vector fields, and the sig-
+nature and log-signature of a path, alongside their respective
+spaces, the tensor algebra and the free Lie algebra.
+2.1. The Tensor Algebra
+Definition 2.1. Let U , V , and W be vector spaces. The ten-
+sor product space U ⊗ V is the unique (up to isomorphism)
+space such that for all bilinear functions κ : U × V → W
+there exists a unique linear map τ : U ⊗ V → W , such that
+κ = τ ◦ ⊗ (Roman, 2007, Chapter 14).
+As an example, let V = R2 and W = R3. In this case,
+the tensor product is the outer product of the two vectors,
+and the resulting tensor product space is the space of 2 × 3
+matrices, R2 ⊗ R3 = R2×3. The tensor product of v ∈ R2
+and w ∈ R3 is defined by
+v ⊗ w =
+
+a
+b
+
+⊗
+
+
+c
+d
+e
+
+ =
+
+ac ad ae
+bc bd be
+
+, (5)
+where any bilinear function κ(v, w) can be written as a
+linear function τ (v ⊗ w).
+Definition 2.2. The tensor algebra space is the space
+T ((V )) = {x = (x0, x1, . . .)|xi ∈ V ⊗i}, (6)
+where V ⊗0 = R, V ⊗1 = V , and V ⊗j = V ⊗ V ⊗j−1
+(Roman, 2007, Chapter 14).
+Details on the choice of norm for V ⊗i when V is a complete
+2
+Log Neural Controlled Differential Equations
+normed vector space, i.e. a Banach space, can be found in
+Appendix A.2.
+2.2. Lip(γ) Functions
+Let V and W be Banach spaces and L(V, W ) denote the
+space of linear mappings from V to W equipped with the
+operator norm.
+Definition 2.3. A linear map l ∈ L(V ⊗j , W ) is j symmet-
+ric if for all v1 ⊗ · · · ⊗ vj ∈ V ⊗j and all bijective functions
+p : {1, . . . , j} → {1, . . . , j} (Roman, 2007, Chapter 14),
+l(v1 ⊗ . . . ⊗ vj ) = l(vp(1) ⊗ · · · ⊗ vp(j)). (7)
+Let Ls(V ⊗j , W ) denote the set of all j symmetric linear
+maps.
+Definition 2.4. Let γ > 0, k ∈ Z such that γ ∈ (k, k + 1],
+F be a closed subset of V , and f 0 : F → W . For j ∈
+{1, . . . , k}, let f j : F → Ls(V ⊗j , W ). The collection
+(f 0, f 1, . . . , f k) is an element of Lip(γ) if there exists M ≥
+0 such that for j ∈ {0, . . . , k},
+sup
+x∈F
+||f j (x)||L(V ⊗j ,W ) ≤ M, (8)
+and for j ∈ {0, . . . , k}, all x, y ∈ F , and each v ∈ V ⊗j
+(Stein, 1970),
+ f j (y)(v) − Pk−j l=0 f j+l (x)(v⊗(y−x)⊗l ) l!   W
+|x − y|γ−j V ≤ M. (9)
+If f = (f 0, f 1, . . . , f k) ∈ Lip(γ), then the Lip(γ)−norm,
+denoted ||f ||Lip(γ), is the smallest M for which (8) and (9)
+hold. When 0 < γ ≤ 1, then k = 0 and f 0 ∈ Lip(γ)
+implies f 0 is bounded and γ−H¨older continuous. When
+γ = 1, then f 0 is bounded and Lipschitz. In this paper, we
+are concerned with the regularity of vector fields on Ru. In
+this case, f ∈ Lip(γ) for γ ∈ (k, k + 1] implies that f is
+bounded, has k bounded derivatives, and the kth derivative
+satisfies
+||Dkf (y) − Dkf (x)|| ≤ M |x − y|γ−k, (10)
+for all x, y ∈ Ru.
+2.3. The Free Lie Algebra
+Definition 2.5. A Lie algebra is a vector space V with a
+bilinear map [·, ·] : V × V → V satisfying [w, w] = 0 and
+the Jacobi identity,
+[[x, y], z] + [[y, z], x] + [[z, x], y] = 0, (11)
+for all w, x, y, z ∈ V . The map [·, ·] is called the Lie bracket
+(Reutenauer, 1993).
+Any associative algebra, (V, ×), has a Lie bracket structure
+with Lie bracket defined by
+[x, y] = x × y − y × x, (12)
+for all x, y ∈ V . For example, V = Rn×n with the matrix
+product. For another example, consider the vector space
+of infinitely differentiable functions from Ru to Ru with
+pointwise addition, denoted C ∞(Ru, Ru). This space is a
+Lie algebra when equipped with the Lie bracket
+[a, b](x) = Jb(x)a(x) − Ja(x)b(x), (13)
+for a, b ∈ C ∞(Ru, Ru) and x ∈ Ru, where Ja(x) ∈ Ru×u
+is the Jacobian of a with entries given by J ij a (x) = ∂j ai(x)
+for i, j ∈ {1, . . . , u} (Kirillov, 2008).
+Definition 2.6. Let A be a non-empty set, L0 be a Lie
+algebra, and ϕ : A → L0 be a map. The Lie algebra L0 is
+said to be the free Lie algebra generated by A if for any Lie
+algebra L and any map f : A → L, there exists a unique
+Lie algebra homomorphism g : L0 → L such that g ◦ ϕ = f
+(Reutenauer, 1993).
+The free Lie algebra generated by V is the space
+L((V )) = {(l0, l1, . . .) : li ∈ Li}, (14)
+where L0 = 0, L1 = V , and Li+1 is the span of [v, l] for
+v ∈ V and l ∈ Li.
+2.4. The Log-Signature
+Let X : [t0, tn] → V have bounded variation and define
+X n [t0 ,tn ] =
+Z
+· · ·
+Z
+| {z }
+u1 <···<un
+ui ∈[t0 ,tn ]
+dXu1 ⊗ · · · ⊗ dXun ∈ V ⊗n. (15)
+The signature of the path X is
+S(X)[t0 ,tn ] = (1, X 1 [t0 ,tn ], . . . , X n [t0 ,tn ], . . .) ∈ ˜T ((V )),
+(16)
+where ˜T ((V )) = {x ∈ T ((V ))|x = (1, . . .)} (Lyons
+et al., 2007). The depth-N truncated signature is defined as
+SN (X)[t0 ,tn ] = (1, X 1 [t0 ,tn ], . . . , X N [t0 ,tn ]) ∈ ˜T N (V ). The signature is an infinite dimensional vector which describes
+the path X over the interval [t0, tn]. In fact, assuming X
+contains time as a channel, linear maps on S(X)[t0 ,tn ] are
+universal approximators for continuous, real-valued func-
+tions of X (Lyons, 2014; Arribas, 2018). This property of
+the signature relies on the shuffle-product identity, which
+states that polynomials of the elements in a truncated signa-
+ture can be rewritten as linear maps on the signature trun-
+cated at greater depth (Ree, 1958; Chevyrev & Kormilitzin,
+2016). A consequence of the shuffle-product identity is that
+not every term in the signature provides new information
+about the path X. The transformation which removes the
+information redundancy is the logarithm.
+3
+Log Neural Controlled Differential Equations
+Figure 1. A schematic diagram of the Log-ODE method.
+Definition 2.7. For x ∈ ˜T ((V )), the logarithm is defined
+by
+log(x) = log(1 + t) =
+∞X
+n=1
+(−1)n
+n t⊗n, (17)
+where t = (0, x1, x2, . . .) (Reutenauer, 1993).
+It was shown by Chen (1957) that
+log(S(X)[t0 ,tn ]) ∈ L((V )). (18)
+This result plays a crucial role in the Log-ODE method.
+2.5. The Log-ODE Method
+The vector field of a CDE is typically thought of as a matrix-
+valued function f : Ru → Ru×v . An equivalent formu-
+lation is f being a linear map acting on dX ∈ Rv and
+returning a vector field on Ru. In other words, f (·)dX :
+Ru → Ru. This formulation will prove more useful in the
+following section.
+Let X : [t0, tn] → Rv be a continuous path. The (truncated)
+log-signature is a map which takes X to the (truncated)
+free Lie algebra LN (Rv ). If f (·)dX is restricted to smooth
+vector fields on Ru, then f (·)dX is a linear map from Rv
+to the Lie algebra C ∞(Ru, Ru). By definition 2.6, there
+exists a unique linear map ¯f from LN (Rv ) to the smooth
+vector fields on Ru. Figure 1 is a schematic diagram of this
+relationship. Since ¯f is a Lie algebra homomorphism, it can
+be defined recursively by
+¯f (·)a = f (·)a, a ∈ Rv (19)
+and
+¯f (·)[a, b] = [ ¯f (·)a, ¯f (·)b] (20)
+for [a, b] ∈ LN (Rv ).
+Over an interval, the Log-ODE method approximates a CDE
+using an autonomous ODE constructed by applying the lin-
+ear map ¯f to the truncated log-signature of the control, as
+seen in (21) (Lyons, 2014). There exist theoretical results
+bounding the error in the Log-ODE method’s approxima-
+tion, including when the control and solution paths live in
+infinite dimensional Banach spaces (Boutaib et al., 2013).
+However, for a given set of intervals, the series of vector
+fields {gX (·)}∞ N =1 is not guaranteed to converge. In prac-
+tice, N is typically chosen as the smallest N such that a
+reasonably sized set of intervals {ri}m i=0 gives an approx-
+imation error of the desired level. A recent development
+has been the introduction of an algorithm which adaptively
+updates N and {ri}m i=0 (Bayer et al., 2023).
+3. Method
+3.1. Log Neural Controlled Differential Equations
+Log-NCDEs use the same underlying model as NRDEs
+ht = ht0 +
+Z t
+t0
+gθ,X (hs)ds,
+gθ,X (hs) = ¯fθ (hs) log(SN (X)[ri ,ri+1 ]) ri+1 − ri , (21)
+but with two major changes. First, instead of parameterising
+¯fθ using a neural network, it is constructed using the iterated
+Lie brackets of a NCDE’s neural network, fθ , via (19) and
+(20). Second, fθ is ensured to be a Lip(γ) function for
+γ ∈ (N − 1, N ]. Figure 2 is a schematic diagram of a
+Log-NCDE.
+These changes have a major benefit. For N > 1, Log-
+NCDEs are exploring a drastically smaller output space
+during training than NRDEs, while maintaining the same
+expressivity, as NCDEs are universal approximators. This
+is because the output dimension of fθ is u × v, whereas the
+output dimension of ¯fθ is u × β(v, N ). Figure 3 compares
+these values for paths of dimension v from 1 to 15 and
+truncation depths of N = 1 and N = 2. This benefit comes
+at the cost of needing to calculate the iterated Lie brackets
+when evaluating Log-NCDEs, which will be quantified in
+Section 3.4 and explored empirically in Section 5.2.
+When N = 1, (21) simplifies to
+gθ,X (hs) = fθ (hs) Xri+1 − Xri
+ri+1 − ri
+. (22)
+Hence, in this case the only difference between Log-NCDEs
+and NRDEs is the regularisation of fθ . Furthermore, (22)
+and (3) are equivalent when X is a linear interpolation.
+Therefore, the approach of NCDEs, NRDEs, and Log-
+NCDEs coincide when using a depth−1 Log-ODE approxi-
+mation (Morrill et al., 2021).
+3.2. Lip(γ) Neural Networks
+The composition of two Lip(γ) functions is Lip(γ) (Cass
+et al., 2012, Lemma 2.2). Hence, a simple approach to ensur-
+ing a fully connected neural network (FCNN) is Lip(γ) is to
+make each layer Lip(γ). This can be achieved by choosing
+an infinitely differentiable activation function, such as SiLU
+(Elfwing et al., 2018). However, in practice this may not
+4
+Log Neural Controlled Differential Equations
+Figure 2. A schematic diagram of the training loop for a Log-NCDE. The coloured circles labelled data observations represent irregular
+samples from a time series. The purple line labelled system response is a potentially time varying label one wants to predict. The
+log-signatures of the data observations over each interval [ri, ri+1] are combined with the iterated Lie brackets of fθ to produce the vector
+field gθ,X from (21). The pink dashed line represents the solution of (1) and the solid black line represents the approximation obtained by
+solving (21). A linear map lψ gives the Log-NCDE’s prediction and a loss function L(·, ·) is used to update fθ ’s parameters.
+Figure 3. A plot of β(v, N ) against v for N = 1, 2. The output
+dimension of a NRDE’s neural network is Ru×β(v,N ), whereas for
+a Log-NCDE it is Ru×v .
+ensure sufficient regularity, as demonstrated by Theorem
+3.1.
+Theorem 3.1. Let fθ be a FCNN with input dimension
+nin, hidden dimension nh, depth m, and activation function
+SiLU. Assuming the input x = [x1, . . . , xnin ]T satisfies
+|xj | ≤ 1 for j = 1, . . . , nin, then fθ ∈ Lip(2) and
+||fθ ||Lip(2) ≤ CPm!
+ 
+{||W i||2, ||bi||2}m i=1  (23)
+where C is a constant depending on nin, nh, and m,
+{W i}m i=1 and {bi}m i=1 are the weights and biases of ith
+layer of fθ , and Pm! is a polynomial of order m!.
+Proof. A proof is given in Appendix B.
+Assuming that each layer {Li}m i=1 of fθ satisfies
+||Li||Lip(2) = 1, an explicit evaluation of (23) gives
+||fθ ||Lip(2) ≤ 52m−1 −1. (24)
+For a depth 7 FCNN, this bound is greater than the max-
+imum value of a single precision floating point number.
+Hence, it may be necessary to control ||fθ ||Lip(2) explicitly
+during training. This is achieved by modifying the neural
+network’s loss function L to
+L 7→ L + λ
+ mX
+i=1
+||W i||2 + ||bi||2
+!
+, (25)
+where λ is a hyperparameter controlling the weight of the
+penalty. This is an example of weight regularisation, which
+has long been understood to improve generalisation in NNs
+(Hinton, 1987; Krogh & Hertz, 1991). Equation 25 is specif-
+ically a variation of spectral norm regularisation (Yoshida &
+Miyato, 2017).
+3.3. Constructing the Log-ODE Vector Field
+The linear map ¯fθ in (21) is defined recursively by (19)
+and (20). Assuming fθ (·)a is infinitely differentiable, then
+fθ (·)a is an element of the Lie algebra C ∞(Ru, Ru) and
+[fθ (·)a, fθ (·)b] = Jfθ (·)afθ (·)b − Jfθ (·)bfθ (·)a, (26)
+as discussed in Section 2.3. Let {ej }v j=1 be the usual basis
+of Rv . A choice of basis for LN (Rv ) is a Hall basis, denoted
+5
+Log Neural Controlled Differential Equations
+{ˆek}β(v,N ) k=1 , which is a specific subset of up to the (N − 1)th
+iterated Lie brackets of {ej }v j=1 (Hall, 1950). Rewriting
+(21) using a Hall basis,
+¯fθ (hs) log(SN (X)[ri ,ri+1 ]) ri+1 − ri = β(v,N )X k=1 λk ¯fθ (hs)ˆek, (27)
+where λk is the term in the scaled log-signature correspond-
+ing to the basis element ˆek. Since each ˆek can be written
+as iterated Lie brackets of {ej }v j=1, it is possible to replace
+¯fθ (·)ˆek with the iterated Lie brackets of fθ (·)ei using (19)
+and (20). Each fθ (·)ei : Ru → Ru is a vector field defined
+by the ith column of the neural network’s output. Hence,
+gθ,X can be evaluated at a point using iterated Jacobian-
+vector products (JVPs) of fθ .
+3.4. Computational Cost
+When the signature truncation depth N is greater than 1,
+NRDEs and Log-NCDEs incur an additional computational
+cost for each evaluation of the vector field, which we quan-
+tify here for N = 2. Assume that a NCDE, NRDE, and
+Log-NCDE are all using an identical FCNN as their vec-
+tor field, except for the dimension of the final layer in the
+NRDE. Let m and nh be the depth and dimension of the
+FCNN’s hidden layers respectively, and u and v be the di-
+mension of ht and X from (1) respectively. Letting Fx be
+the number of FLOPs to evaluate model x’s vector field,
+FNCDE = 2unh + 2(m − 1)n2 h + 2uvnh,
+FNRDE = 2unh + 2(m − 1)n2 h + u(v2 − v)nh,
+FLog-NCDE = 3vFNCDE,
+(28)
+where the number of FLOPs to calculate a JVP is 3 times
+that of evaluating the FCNN and v JVPs of fθ are needed
+to evaluate (27) when N = 2 (Griewank & Walther, 2008,
+Chapter 4). Log-NCDEs and NRDEs have the same asymp-
+totic computational complexity in each variable. However,
+each JVP is evaluated at the same point hs. This allows the
+computational burden of Log-NCDEs on high-dimensional
+time series to be reduced by constructing a batched function
+using Jax’s vmap (Bradbury et al., 2018). The computa-
+tional cost is evaluated empirically in Section 5.2.
+3.5. Limitations
+In this paper, we only consider Log-NCDEs which use a
+depth−1 or depth−2 Log-ODE approximation. This is due
+to the following two limitations. First, there are no the-
+oretical results explicitly bounding the Lip(γ) norm of a
+neural network for γ > 2. Second, the computational cost
+required to evaluate gθ,X grows rapidly with the depth N .
+This can make N > 2 computationally infeasible, especially
+for high-dimensional time series. Another general limita-
+tion of NCDEs is the need to solve the differential equation
+Figure 4. An example path from the toy dataset, where each colour
+represents a channel in the path.
+recursively, preventing parallelisation. This is in contrast
+to non-selective structured state-space models, whose un-
+derlying model is a differential equation that can be solved
+parallel in time (Gu et al., 2022).
+4. Experiments
+4.1. Baseline Methods
+Log-NCDEs are compared against six models, which rep-
+resent the state-of-the-art for a range of deep learning ap-
+proaches to time series modelling. Four of these models
+are stacked recurrent models, which use the same general
+architecture, but with different recurrent layers. The archi-
+tecture used in this paper is based on the one introduced
+by Smith et al. (2023) and the four different recurrent lay-
+ers considered are LRU, S5, MAMBA, and S6, the selec-
+tive state-space recurrence introduced as a component of
+MAMBA (Orvieto et al., 2023; Smith et al., 2023; Gu &
+Dao, 2023). The other two baseline models are continuous
+models; a NCDE using a Hermite cubic spline with back-
+ward differences as the interpolation and a NRDE (Kidger
+et al., 2020; Morrill et al., 2021). Further details on all
+model architectures can be found in Appendices C.1 and
+C.2.
+4.2. Toy Dataset
+We construct a toy dataset of 100,000 time series with 6
+channels and 100 regularly spaced samples each. For every
+time step, the change in each channel is sampled indepen-
+dently from the discrete probability distribution with density
+p(n) =
+Z n+0.5
+n−0.5
+1√
+2π e− 1 2 x2 dx, (29)
+where n ∈ Z. In other words, the change in a channel at each
+time step is a sample from a standard normal distribution
+rounded to the nearest integer. Figure 4 is a plot of a sample
+path from the toy dataset.
+6
+Log Neural Controlled Differential Equations
+We consider four different binary classifications on the toy
+dataset. Each classification is a specific term in the signature
+of the path which depends on a different number of channels.
+1. Was the change in the third channel,
+R 1
+0 dX 3 s , greater
+than zero?
+2. Was the area integral of the third and sixth channels,R 1
+0
+R u
+0 dX 3 s dX 6 u, greater than zero?
+3. Was the volume integral of the third, sixth, and first
+channels,
+R 1
+0
+R v
+0
+R u
+0 dX 3 s dX 6 udX 1 v , greater than zero?
+4. Was the 4D volume integral of the third, sixth, first,
+and fourth channels,
+R 1
+0
+R w
+0
+R v
+0
+R u
+0 dX 3 s dX 6 udX 1 v dX 4 w,
+greater than zero?
+On this dataset, all models use a hidden state of dimension
+64 and Adam with a learning rate of 0.0003 (Kingma & Ba,
+2017). LRU, S5, S6, and MAMBA use six blocks. NRDE
+and Log-NCDE take ri+1 − ri to be 4 observations and the
+signature truncation depth N to be 2. Full hyperparameter
+choices are given in Appendix C.3.
+4.3. UEA Multivariate Time Series Classification
+Archive
+The models considered in this paper are evaluated on six
+datasets from the UEA multivariate time series classification
+archive (UEA-MTSCA)2. These six datasets were chosen
+via the following two criteria. First, only datasets with
+more than 200 total cases were considered. Second, the
+six datasets with the most observations were chosen, as
+datasets with many observations have previously proved
+challenging for deep learning approaches to time series
+modelling. Further details on the chosen datasets can be
+found in Appendix C.4. Following Morrill et al. (2021),
+the original train and test cases are combined and resplit
+into new random train, validation, and test cases using a
+70 : 15 : 15 split.
+Hyperparameters for all models are found using a grid
+search over the validation accuracy on a fixed random split
+of the data. Full details on the hyperparameter grid search
+are in Appendix C.4. Having fixed their hyperparameters,
+models are compared on their average test set accuracy over
+five different random splits of the data. In order to compare
+models on their average GPU memory and run time, 1000
+steps of training are run on an NVIDIA RTX 4090. The av-
+erage run time is estimated by combining the time for 1000
+training steps with the average total number of training steps
+from the five runs over the random data splits.
+2As of June 1st 2024, the EigenWorms dataset at https://
+timeseriesclassification.com has 23 duplicated time
+series, which were removed for the experiments in this paper.
+4.4. PPG-DaLiA
+PPG-DaLiA is a multivariate time series regression dataset,
+where the aim is to predict a person’s heart rate using data
+collected from a wrist-worn device (Reiss et al., 2019).
+The dataset consists of fifteen individuals with around 150
+minutes of recording each at a maximum sampling rate
+of 128 Hz. There are six channels; blood volume pulse,
+electrodermal activity, body temperature, and three-axis ac-
+celeration. The data is split into a train, validation, and test
+set following a 70 : 15 : 15 split for each individual. After
+splitting the data, a sliding window of length 49920 and step
+size 4992 is applied.
+Hyperparameters are found using the same method as for
+the UEA-MTSCA, but with validation mean squared error
+and slightly different hyperparameter choices given the high
+number of observations. Full details can be found in Ap-
+pendix C.4. Having fixed their hyperparameters, models
+are compared on their average mean squared error over five
+different runs on the same fixed data split.
+5. Results
+5.1. Toy Dataset
+Figure 5 compares the performance of the models consid-
+ered in this paper on the four different toy dataset classifica-
+tions. As expected, given that the classifications considered
+are solutions to CDEs, NCDE’s are the best performing
+model. Since NRDEs and Log-NCDEs are fixed to ri+1 −ri
+being 4 observations and N = 2, they are both approxima-
+tions of a CDE. Notably, Log-NCDEs consistently outper-
+form NRDEs, providing empirical evidence that NRDEs
+do not always accurately learn the Lie bracket structure of
+¯fθ . All of the stacked recurrent models perform well when
+the label depends on one or two channels. However, their
+performance begins to decrease for three channels, and only
+MAMBA performs well when the label depends on four
+channels.
+5.2. UEA-MTSCA
+Table 1 reports the average and standard deviation of each
+model’s test set accuracy over five data splits. MAMBA
+achieves the lowest average accuracy. NCDEs and NRDEs
+have similar accuracies except on EigenWorms, the dataset
+with the most observations, where NRDEs significantly
+improve over NCDEs. However, NRDEs are still outper-
+formed on average accuracy by three stacked recurrent mod-
+els: LRU, S5, and S6. Log-NCDEs are the best performing
+model on average accuracy and rank. Compared to NRDEs,
+they achieve an equal or higher average accuracy on all six
+datasets and a lower standard deviation on four datasets.
+These results highlight the improvement in performance
+which can be achieved by calculating the Lie brackets.
+7
+Log Neural Controlled Differential Equations
+Figure 5. Validation accuracy against number of steps for LRU, S5, S6, MAMBA, NCDE, NRDE, and Log-NCDE on the four different
+classifications considered for the toy dataset.
+Table 1. Test set accuracy on a subset of the UEA-MTSCA. The best performing model is highlighted in bold and the second best is
+underlined. The average accuracy and average rank are also reported.
+Dataset Method LRU S5 S6 MAMBA NCDE NRDE Log-NCDE
+EigenWorms 87.8 ± 2.8 81.1 ± 3.7 85.0 ± 16.1 70.9 ± 15.8 75.0 ± 3.9 83.9 ± 7.3 85.6 ± 5.1
+EthanolConcentration 21.5 ± 2.1 24.1 ± 4.3 26.4 ± 6.4 27.9 ± 4.5 29.9 ± 6.5 25.3 ± 1.8 34.4 ± 6.4
+Heartbeat 78.4 ± 6.7 77.7 ± 5.5 76.5 ± 8.3 76.2 ± 3.8 73.9 ± 2.6 72.9 ± 4.8 75.2 ± 4.6
+MotorImagery 48.4 ± 5.0 47.7 ± 5.5 51.3 ± 4.7 47.7 ± 4.5 49.5 ± 2.8 47.0 ± 5.7 53.7 ± 5.3
+SelfRegulationSCP1 82.6 ± 3.4 89.9 ± 4.6 82.8 ± 2.7 80.7 ± 1.4 79.8 ± 5.6 80.9 ± 2.5 83.1 ± 2.8
+SelfRegulationSCP2 51.2 ± 3.6 50.5 ± 2.6 49.9 ± 9.5 48.2 ± 3.9 53.0 ± 2.8 53.7 ± 6.9 53.7 ± 4.1
+Av. 61.7 61.8 62.0 58.6 60.2 60.6 64.3
+Av. Rank 3.5 4.0 3.5 5.5 4.5 4.9 2.1
+8
+Log Neural Controlled Differential Equations
+Table 2. Average GPU memory and run time for each model over
+the six datasets from the UEA-MTSCA experiments.
+Model Av. GPU Mem. (MB) Av. run time (s)
+LRU 4121.67 466.09
+S5 2815.00 244.78
+S6 2608.00 578.15
+MAMBA 4450.33 1553.83
+NCDE 1759.67 6649.91
+NRDE 2676.33 7284.20
+Log-NCDE 1999.67 2128.32
+Table 3. Average test set mean squared error on the PPG-DaLiA
+dataset.
+Model MSE (×10−2)
+LRU 12.17 ± 0.49
+S5 12.63 ± 1.25
+S6 12.88 ± 2.05
+MAMBA 10.65 ± 2.20
+NCDE 13.54 ± 0.69
+NRDE 9.90 ± 0.97
+Log-NCDE 9.56 ± 0.59
+Table 2 details the average GPU memory and run time for
+each model, with the results for individual datasets given
+in Appendix C.5. The major contributors to NCDEs high
+average run time are time series with many observations.
+Using a depth−2 Log-ODE method decreases the com-
+putational burden on datasets with many observations for
+both NRDEs and Log-NCDEs. Although NRDEs and Log-
+NCDEs have the same asymptotic computational complex-
+ity, using a batched function to calculate the Lie brackets
+leads to Log-NCDEs having a lower computational burden
+on high-dimensional time series than NRDEs, as discussed
+in Section 3.4. Hence, Log-NCDEs have a lower average
+run time than both NCDEs and NRDEs. Despite these im-
+provements, all four stacked recurrent models have lower
+average run times than Log-NCDEs.
+5.3. PPG-DaLiA
+Table 3 contains the average and standard deviation of each
+model’s test set mean squared error on the PPG-DaLiA
+dataset. In contrast to the UEA-MTSCA experiments,
+MAMBA is the best performing stacked recurrent model.
+However, Log-NCDEs still achieve the best performance,
+obtaining the lowest average test set mean squared error and
+the second lowest standard deviation.
+6. Discussion
+Recent theoretical work on the expressive power of struc-
+tured state space models may provide an explanation for
+their performance on the toy dataset. It has been shown that
+the recurrent layer of non-selective state space models, such
+as S5, are unable to capture terms in the signature that de-
+pend on more than one channel. Instead, the computational
+burden is placed on the non-linear mixing in-between recur-
+rent blocks. Furthermore, it has been shown that stacked
+selective state-space models, such as MAMBA, can capture
+higher order terms in the signature with only linear mix-
+ing layers (Cirone et al., 2024). Although the toy dataset
+highlights a potential limitation of the stacked recurrent
+models, this did not translate into poor performance on the
+real-world datasets considered in this paper.
+Log-NCDEs achieve the highest average accuracy on the
+UEA-MTSCA datasets and the lowest mean squared error
+on the PPG-DaLiA dataset. In particular, they improve
+upon NRDEs on every dataset. These results highlight the
+effectiveness of the Log-ODE method for improving the per-
+formance of NCDEs and the importance of calculating the
+Lie brackets when applying the Log-ODE method. Further-
+more, despite increasing the computational cost of each vec-
+tor field evaluation, Log-NCDEs have a lower average run
+time than both NCDEs and NRDEs on the UEA-MTSCA
+datasets. Empirical evidence suggests this is due to the
+Log-ODE method improving efficiency on time series with
+many observations, and calculating the Lie brackets lower-
+ing the computational burden of the Log-ODE method on
+high-dimensional time series. In addition to achieving state-
+of-the-art performance on the regularly sampled datasets
+considered in this paper, Log-NCDEs maintain the ability
+of NCDEs to naturally handle irregular sampling, making
+them an attractive option for real-world applications.
+7. Conclusion
+Building on NRDEs, this paper introduced Log-NCDEs,
+which utilise the Log-ODE method to train NCDEs in an
+effective and efficient manner. This required proving a
+novel theoretical result bounding the Lip(γ) norm of fully
+connected neural networks for 1 < γ ≤ 2, as well as de-
+veloping an efficient method for calculating the iterated
+Lie brackets of a neural network. A thorough empirical
+evaluation demonstrated the benefits of calculating the Lie
+brackets when applying the Log-ODE method. Furthermore,
+it showed that Log-NCDEs can achieve state-of-the-art per-
+formance on a range of multivariate time series datasets.
+A reasonable direction of future work is extending Log-
+NCDE’s to depth−N Log-ODE methods for N > 2. This
+would require proving an equivalent result to Theorem 3.1
+for γ > 2. Furthermore, it would be necessary to address the
+computational cost of the iterated Lie brackets. This could
+be achieved by using a structured neural network with cheap
+Jacobian-vector products as the CDE vector field. Another
+avenue of future work could be incorporating the recently
+developed adaptive version of the Log-ODE method (Bayer
+et al., 2023).
+9
+Log Neural Controlled Differential Equations
+Impact Statement
+This paper presents Log Neural Controlled Differential
+Equations, a novel approach aimed at advancing the field of
+time series modelling. Potential applications of the method
+include healthcare, finance, and biology, where accurate
+time series modeling plays a crucial role. Despite the clear
+potential for positive impact, care must be taken to further
+understand the capabilities and limitations of the model be-
+fore real-world deployment. Additionally, structured state-
+space models, an alternative approach to time series mod-
+elling, have recently been integrated into large language
+models (LLMs). The advancement of LLMs has many po-
+tential societal consequences, both positive and negative.
+Acknowledgements
+Benjamin Walker was funded by the Hong Kong Innovation
+and Technology Commission (InnoHK Project CIMDA).
+Andrew McLeod was funded in part by the EPSRC [grant
+number EP/S026347/1] and in part by The Alan Turing
+Institute under the EPSRC grant EP/N510129/1. Terry
+Lyons was funded in part by the EPSRC [grant number
+EP/S026347/1], in part by The Alan Turing Institute under
+the EPSRC grant EP/N510129/1, the Data Centric Engi-
+neering Programme (under the Lloyd’s Register Foundation
+grant G0095), the Defence and Security Programme (funded
+by the UK Government) and the Office for National Statis-
+tics & The Alan Turing Institute (strategic partnership) and
+in part by the Hong Kong Innovation and Technology Com-
+mission (InnoHK Project CIMDA). The authors would like
+to acknowledge the use of the University of Oxford Ad-
+vanced Research Computing (ARC) facility in carrying out
+this work. http://dx.doi.org/10.5281/zenodo.22558
+References
+Arribas, I. P. Derivatives pricing using signature payoffs.
+arXiv:1809.09466, 2018.
+Bayer, C., Breneis, S., and Lyons, T. An adaptive algorithm
+for rough differential equations. arXiv:2307.12590, 2023.
+Boedihardjo, H., Geng, X., Lyons, T., and Yang, D. The
+signature of a rough path: Uniqueness. Advances in
+Mathematics, 293:720–737, 2016. ISSN 0001-8708.
+Boutaib, Y., Gyurk´o, L., Lyons, T., and Yang, D. Dimension-
+free euler estimates of rough differential equations. Revue
+Roumaine des Mathematiques Pures et Appliquees, 59:
+25–53, 2013.
+Bradbury, J., Frostig, R., Hawkins, P., Johnson, M. J., Leary,
+C., Maclaurin, D., Necula, G., Paszke, A., VanderPlas, J.,
+Wanderman-Milne, S., and Zhang, Q. JAX: composable
+transformations of Python+NumPy programs, 2018. URL
+http://github.com/google/jax.
+Cass, T., Litterer, C., and Lyons, T. New Trends in Stochastic
+Analysis and Related Topics: A Volume in Honour of
+Professor K. D. Elworthy. Interdisciplinary mathematical
+sciences. World Scientific, 2012. ISBN 9789814360913.
+Chen, K. T. Integration of paths, geometric invariants and a
+generalized baker- hausdorff formula. Annals of Mathe-
+matics, 65:163, 1957.
+Chen, T. Q., Rubanova, Y., Bettencourt, J., and Duvenaud,
+D. Neural ordinary differential equations. In NeurIPS,
+pp. 6572–6583, 2018.
+Chevyrev, I. and Kormilitzin, A. A primer on the signature
+method in machine learning. arXiv:1603.03788, 2016.
+Cirone, N. M., Orvieto, A., Walker, B., Salvi, C., and Lyons,
+T. Theoretical foundations of deep selective state-space
+models. arXiv:2402.19047, 2024.
+Dauphin, Y. N., Fan, A., Auli, M., and Grangier, D.
+Language modeling with gated convolutional networks.
+arXiv:1612.08083, 2017.
+Elfwing, S., Uchibe, E., and Doya, K. Sigmoid-weighted
+linear units for neural network function approximation
+in reinforcement learning. Neural Networks, 107:3–11,
+2018. Special issue on deep reinforcement learning.
+Griewank, A. and Walther, A. Evaluating Derivatives. Soci-
+ety for Industrial and Applied Mathematics, 3600 Market
+Street, Floor 6, Philadelphia, PA, 2nd edition, 2008.
+Gu, A. and Dao, T. Mamba: Linear-time sequence modeling
+with selective state spaces. arXiv:2312.00752, 2023.
+Gu, A., Goel, K., and R´e, C. Efficiently modeling long se-
+quences with structured state spaces. In The International
+Conference on Learning Representations (ICLR), 2022.
+Hall, M. A basis for free lie rings and higher commutators
+in free groups. In Proceedings of the American Mathe-
+matical Society, volume 1, pp. 575–581, 1950.
+Hinton, G. E. Learning translation invariant recognition
+in massively parallel networks. In Proceedings of the
+Parallel Architectures and Languages Europe, Volume I:
+Parallel Architectures PARLE, pp. 1–13, Berlin, Heidel-
+berg, 1987. Springer-Verlag.
+Kidger, P. On neural differential equations. arXiv:
+2202.02435, 2022.
+Kidger, P., Morrill, J., Foster, J., and Lyons, T. Neural Con-
+trolled Differential Equations for Irregular Time Series.
+In Advances in Neural Information Processing Systems,
+2020.
+10
+Log Neural Controlled Differential Equations
+Kingma, D. P. and Ba, J. Adam: A method for stochastic
+optimization. arXiv:1412.6980, 2017.
+Kirillov, Jr, A. An Introduction to Lie Groups and Lie
+Algebras. Cambridge Studies in Advanced Mathematics.
+Cambridge University Press, 2008.
+Krogh, A. and Hertz, J. A. A simple weight decay can
+improve generalization. In Proceedings of the 4th Inter-
+national Conference on Neural Information Processing
+Systems, NIPS’91, pp. 950–957, San Francisco, CA, USA,
+1991. Morgan Kaufmann Publishers Inc.
+Lyons, T. Differential equations driven by rough signals (i):
+An extension of an inequality of l. c. young. Mathematical
+Research Letters, 1:451–464, 1994.
+Lyons, T. Rough paths, signatures and the modelling of
+functions on streams. arXiv:1405.4537, 2014.
+Lyons, T. and Qian, Z. Path Integration Along Rough Paths.
+Oxford University Press, 12 2002.
+Lyons, T., Caruana, M., and L´evy, T. Differential Equations
+Driven by Rough Paths: ´Ecole D’´et´e de Probabilit´es de
+Saint-Flour XXXIV-2004. Springer, 2007.
+Lyons, T. J. Differential equations driven by rough sig-
+nals. Revista Matem´atica Iberoamericana, 14(2):215–
+310, 1998.
+Morrill, J., Salvi, C., Kidger, P., Foster, J., and Lyons, T.
+Neural rough differential equations for long time series,
+2021.
+Orvieto, A., Smith, S. L., Gu, A., Fernando, A., Gulcehre,
+C., Pascanu, R., and De, S. Resurrecting recurrent neural
+networks for long sequences. arXiv:2303.06349, 2023.
+Ree, R. Lie elements and an algebra associated with shuffles.
+Annals of Mathematics, 68:210, 1958.
+Reiss, A., Indlekofer, I., Schmidt, P., and Van Laerhoven,
+K. Deep ppg: Large-scale heart rate estimation with
+convolutional neural networks. Sensors, 19(14), 2019.
+Reutenauer, C. Free Lie Algebras. LMS monographs.
+Clarendon Press, 1993.
+Roman, S. Advanced Linear Algebra. Graduate Texts in
+Mathematics. Springer New York, 2007.
+Smith, J. T. H., Warrington, A., and Linderman, S. W. Sim-
+plified state space layers for sequence modeling. In Inter-
+national Conference on Learning Representations, 2023.
+Stein, E. M. Singular Integrals and Differentiability Proper-
+ties of Functions (PMS-30). Princeton University Press,
+1970.
+Yoshida, Y. and Miyato, T. Spectral norm regularization for
+improving the generalizability of deep learning. ArXiv:
+1705.10941, 2017.
+Young, L. C. An inequality of the h¨older type, connected
+with stieltjes integration. Acta Mathematica, 67:251–282,
+1936.
+11
+Log Neural Controlled Differential Equations
+A. Additional Mathematical Details
+A.1. Existence and Uniqueness
+Let V and W be Banach spaces, X : [0, T ] → V and y : [0, T ] → W be continuous paths, and f (·)ν be a linear map from
+ν ∈ V to vector fields on W . Assume that X, Y , and f are regular enough for the integral
+Z t
+0
+f (Ys)dXs (30)
+to be defined for all t ∈ [0, T ] in the Young sense (Young, 1936). The path Y is said to obey a controlled differential
+equation (CDE) if
+Yt = Y0 +
+Z t
+0
+f (Ys)dXs, (31)
+for t ∈ [0, T ], where Y0 ∈ W is the initial condition and X is the control (Lyons et al., 2007). The existence and uniqueness
+of the solution to a CDE depends on the smoothness of the control path X and the vector field f . We will measure the
+smoothness of a path by the smallest p ≥ 1 for which the p−variation is finite and the smoothness of a vector field by the
+largest γ > 0 such that the function is Lip(γ) (defined in Section 2.2).
+Definition A.1. (Partition) A partition of a real interval [0, T ] is a set of real numbers {ri}m i=0 satisfying 0 = r0 < . . . <
+rm = T .
+Definition A.2. (p−variation (Young, 1936)) Let V be a Banach space, D = (r0, · · · , rm) ⊂ [0, T ] be a partition of [0, T ],
+and p ≥ 1 be a real number. The p−variation of a path X : [0, T ] → V is defined as
+||X||p =
+"
+sup
+D
+X
+ri ∈D
+|Xri − Xri+1 |p
+# 1
+p
+. (32)
+Theorem A.3. Let 1 ≤ p < 2 and p − 1 < γ ≤ 1. If W is finite-dimensional, X has finite p−variation, and f is Lip(γ),
+then (31) admits a solution for every y0 ∈ W (Lyons, 1994).
+Theorem A.4. Let 1 ≤ p < 2 and p < γ. If X has finite p−variation and f is Lip(γ), then (31) admits a unique solution
+for every y0 ∈ W (Lyons, 1994).
+These theorems extend the classic differential equation existence and uniqueness results to controls with unbounded variation
+but finite p−variation for p < 2. A proof of these theorems is can be found in (Lyons et al., 2007). These theorems are
+sufficient for the differential equations considered in this paper. However, there are many settings where the control has
+infinite p−variation for all p < 2, such as Brownian motion. The theory of rough paths was developed in order to give
+meaning to (31) when the control’s p−variation is finite only for p ≥ 2 (Lyons, 1998). An introduction to rough path theory
+can be found in (Lyons et al., 2007).
+A.2. The Tensor Algebra
+Let V be a Banach space and V ⊗n denote the tensor powers of V ,
+V ⊗n = V ⊗ · · · ⊗| {z }
+n-1 times
+V. (33)
+There is choice in the norm of V ⊗n. In this paper, we follow the setting of (Boedihardjo et al., 2016) and (Lyons & Qian,
+2002). It is assumed that each V ⊗n is endowed with a norm such that the following conditions hold for all v ∈ V ⊗n and
+w ∈ V ⊗m:
+1. ||v|| = ||v1 ⊗ · · · ⊗ vn|| = ||vp(1) ⊗ · · · ⊗ vp(n)|| for all all bijective functions p : {1, . . . , n} → {1, . . . , n},
+2. ||v ⊗ w|| ≤ ||v|| ||w||,
+3. for any bounded linear functional f on V ⊗n and g on V ⊗m, there exists a unique bounded linear functional f ⊗ g on
+V ⊗(m+n) such that (f ⊗ g)(v ⊗ w) = f (v)g(w).
+12
+Log Neural Controlled Differential Equations
+Definition A.5. (The Tensor Algebra (Lyons et al., 2007)) For n ≥ 1, let V ⊗n be equipped with a norm satisfying the above
+conditions, and define V ⊗0 = R. The tensor algebra space is the set
+T ((V )) = {x = (x0, x1, . . .)|xk ∈ V ⊗k} (34)
+with product z = x ⊗ y defined by
+zk = (x ⊗ y)k =
+kX
+j=0
+xj ⊗ yk−j . (35)
+The tensor algebra’s product is associative and has unit 1 = (1, 0, 0, . . .). As T ((V )) is an associative algebra, it has a Lie
+algebra structure, with Lie bracket
+[x, y] = x ⊗ y − y ⊗ x (36)
+for x, y ∈ T ((V )) (Reutenauer, 1993).
+B. Proof of Theorem 3.1
+The proof of Theorem 3.1 relies on two lemmas. The first is a bound on the Lip(γ)−norm of the composition of two Lip(γ)
+functions. The second is a bound on the Lip(2)−norm of each layer of a fully connected neural network (FCNN).
+B.1. Composition of Lip(γ) Functions
+Lemma B.1. (Composed Lip(γ)−norm (Cass et al., 2012)) Let U , V , and W be Banach spaces and Σ ⊂ U and Ω ⊂ V
+be closed. For γ ≥ 1, let f ∈ Lip(γ, Σ, Ω) and g ∈ Lip(γ, Ω, W ). Then the composition g ◦ f : Ω → W is Lip(γ) with
+||g ◦ f ||Lip(γ) ≤ Cγ ||g||Lip(γ) max
+n
+||f ||k+1 Lip(γ), 1 o , (37)
+where k is the unique integer such that γ ∈ (k, k + 1] and Cγ is a constant independent of f and g.
+The original statement of lemma B.1 in (Cass et al., 2012) gives (37) as
+||g ◦ f ||Lip(γ) ≤ Cγ ||g||Lip(γ) max
+n
+||f ||k Lip(γ), 1 o . (38)
+We believe this is a small erratum, as for g : [0, 1] → [0, 1] defined as g(x) = x, (38) implies there exists C1 > 0 such that
+||g ◦ f ||Lip(1) = ||f ||Lip(1) ≤ C1||g||Lip(1) = C1 (39)
+for all bounded and Lipschitz f : [0, 1] → [0, 1]. As a counterexample, for any C1 > 0, take f (x) = xn with n >
+max{C1, 1}. The following proof of lemma B.1 is given in (Cass et al., 2012).
+Proof. Let (g ◦ f )0, . . . , (g ◦ f )k be defined by the generalisation of the chain rule to higher derivatives. Explicit calculation
+can be used to verify that if f and g are Lip(γ), definition 2.4 implies g ◦ f is Lip(γ) with ||g ◦ f ||Lip(γ) obeying (37).
+Bounding the Lip(γ)−norm of a neural network (NN) requires an explicit form for Cγ in (37). This can be obtained via the
+explicit calculations mentioned in the proof of lemma B.1. Here, we present the case γ ∈ (1, 2].
+Lemma B.2. Let U , V , and W be Banach spaces and Σ ⊂ U and Ω ⊂ V be closed. For γ ∈ (1, 2], let f = (f (0), f (1)) ∈
+Lip(γ, Σ, Ω) and g = (g(0), g(1)) ∈ Lip(γ, Ω, W ). Consider h(0) : Σ → W and h(1) : Σ → L(V, W ) defined for p ∈ Σ
+and v ∈ V by
+h(0)(p) := g(0)
+
+f (0)(p)  and h(1)(p)[v] := g(1)  f (0)(p)  h f (1)(p)[v] i . (40)
+Then h :=
+ 
+h(0), h(1) ∈ Lip(γ, Σ, W ) and
+||h||Lip(γ,Σ,W ) ≤ (1 + 2γ ) ||g||Lip(γ,Ω,W ) max n 1, ||f ||γ Lip(γ,Σ,Ω) o . (41)
+13
+Log Neural Controlled Differential Equations
+Proof. From definition 2.4, f (0) : Σ → Ω, f (1) : Σ → L(U, V ), g(0) : Ω → W and g(1) : Ω → L(V, W ). Furthermore,
+for all p ∈ Σ
+(I)
+ f (0)(p)  
+V
+≤ ||f ||Lip(γ,Σ,Ω) and (II)
+ f (1)(p)  
+L(U,V )
+≤ ||f ||Lip(γ,Σ,Ω). (42)
+Similarly, for all x ∈ Ω we have that
+(I)
+ g(0)(x)  
+W
+≤ ||g||Lip(γ,Ω,W ) and (II)
+ g(1)(x)  
+L(V,W )
+≤ ||g||Lip(γ,Ω,W ). (43)
+Define Rf 0 : Σ × Σ → V and Rf 1 : Σ × Σ → L(U, V ) by
+Rf 0 (p, q) := f (0)(q) − f (0)(p) − f (1)(p)[q − p],
+Rf 1 (p, q)[u] := f (1)(q)[u] − f (1)(p)[u], (44)
+for any p, q ∈ Σ and u ∈ U. Then
+(I)
+ Rf 0 (p, q)   V ≤ ||f ||Lip(γ,Σ,Ω)||q − p||γ U ,
+(II)
+ Rf 1 (p, q)   L(U,V ) ≤ ||f ||Lip(γ,Σ,Ω)||q − p||γ−1 U . (45)
+Similarly, define Rg 0 : Ω × Ω → W and Rg 1 : Ω × Ω → L(V, W ) by
+Rg 0 (x, y) := g(0)(y) − g(0)(x) − g(1)(x)[y − x],
+Rg 1 (x, y)[v] := g(1)(y)[v] − g(1)(x)[v], (46)
+for x, y ∈ Ω and v ∈ V . Then,
+(I) ||Rg 0 (x, y)||W ≤ ||g||Lip(γ,Ω,W )||y − x||γ V
+(II) ||Rg 1 (x, y)||L(V,W ) ≤ ||g||Lip(γ,Ω,W )||y − x||γ−1 V . (47)
+Define h(0) : Σ → W and h(1) : Σ → L(V, W ) as in (40),
+h(0)(p) := g(0)
+
+f (0)(p)  and h(1)(p)[u] := g(1)  f (0)(p)  h f (1)(p)[u] i , (48)
+for p ∈ Σ and u ∈ U. Finally, define remainder terms Rh 0 : Σ × Σ → W and Rh 1 : Σ × Σ → L(U, W ) by
+Rh 0 (p, q) := h(0)(q) − h(0)(p) − h(1)(p)[q − p],
+Rh 1 (p, q)[u] := h(1)(q)[u] − h(1)(p)[u], (49)
+for p, q ∈ Σ and u ∈ U . We now establish that h = (h(0), h(1)) ∈ Lip(γ, Σ, W ) and that the norm estimate claimed in (41)
+is satisfied.
+First we consider the bounds on h(0) and h(1). For any p ∈ Σ, (I) in (43) implies that
+ h(0)(p)  
+W
+=
+ g(0)  f (0)(p)  
+W
+≤ ||g||Lip(γ,Ω,W ) (50)
+since f (0)(p) ∈ Ω. Further, for any p ∈ Σ and any u ∈ U, (43) and (II) in (42) imply that
+ h(1)(p)[u]  
+W
+=
+ g(1)  f (0)(p)  h f (1)(p)[u] i 
+W
+≤
+ g(1)  f (0)(p)  
+L(V,W )
+ f (1)(p)  
+L(U,V )
+||u||U
+≤ ||g||Lip(γ,Ω,W )||f ||Lip(γ,Σ,Ω)||u||U
+14
+Log Neural Controlled Differential Equations
+since f (0)(p) ∈ Ω. Taking the supremum over u ∈ U with unit U-norm, it follows that
+ h(1)(p)  
+L(U,W )
+≤ ||g||Lip(γ,Ω,W )||f ||Lip(γ,Σ,Ω). (51)
+Now we consider the bounds on Rh 0 and Rh 1 . For this purpose we fix p, q ∈ Σ and u ∈ U . We first assume that ||q − p||U > 1.
+In this case we may use (50) and (51) to compute that
+Rh 0 (p, q)  W =  h(0)(q) − h(0)(p) − h(1)(p)[q − p]   W
+≤ 2||g||Lip(γ,Ω,W ) + ||g||Lip(γ,Ω,W )||f ||Lip(γ,Σ,Ω)||q − p||U .
+Since γ > 1 means that 1 < ||q − p||U < ||q − p||γ U , we deduce that
+Rh 0 (p, q)  W ≤ ||g||Lip(γ,Ω,W )   2 + ||f ||Lip(γ,Σ,Ω)  ||q − p||γ U . (52)
+Similarly, we may use (51) and that ||q − p||γ−1 U > 1 to compute that
+Rh 1 (p, q)[u]  W =  h(1)(q)[u] − h(1)(p)[u]   W ≤ 2||g||Lip(γ,Ω,W )||f ||Lip(γ,Σ,Ω)||q − p||γ−1 U ||u||U . (53)
+Taking the supremum over u ∈ U with unit U-norm in (53) yields the estimate that
+Rh 1 (p, q)  L(V,W ) ≤ 2||g||Lip(γ,Ω,W )||f ||Lip(γ,Σ,Ω)||q − p||γ−1 U . (54)
+Together, (52) and (54) establish the remainder term estimates required to conclude that h = (h(0), h(1)) ∈ Lip(γ, Σ, W ) in
+the case that ||q − p||U > 1.
+We next establish similar remainder term estimates when ||q − p||U < 1. Thus we fix p, q ∈ Σ and assume that
+||q − p||U < 1. Note that γ > 1 means that ||q − p||γ U < ||q − p||U < 1. Additionally,
+ f (0)(q) − f (0)(p)  
+V
+(44)
+=
+ f (1)(p)[q − p] + Rf 0 (p, q)   V ,
+≤ ||f ||Lip(γ,Σ,Ω) (||q − p||U + ||q − p||γ U ) ,
+≤ 2||f ||Lip(γ,Σ,Ω)||q − p||U ,
+(55)
+where (II) in (42) and (I) in (45) have been used. We now consider the term Rh 0 (p, q). We start by observing that
+Rh 0 (p, q) (49) = h(0)(q) − h(0)(p) − h(1)(p)[q − p]
+(48)
+= g(0)
+
+f (0)(q)  − g(0)  f (0)(p)  − g(1)  f (0)(p)  h f (1)(p)[q − p] i
+(46)
+= g(1)
+
+f (0)(p)  h f (0)(q) − f (0)(p) − f (1)(p)[q − p] i + Rg 0  f (0)(p), f (0)(q) 
+(44)
+= g(1)
+
+f (0)(p)  h Rf 0 (p, q) i + Rg 0  f (0)(p), f (0)(q)  .
+Consequently, by using (II) in (43) to estimate the term g(1)   f (0)(p)  , (I) in (45) to estimate the term Rf 0 (p, q), and (I) in
+(47) to estimate the term Rg 0   f (0)(p), f (0)(q)  , we may deduce that
+Rh 0 (p, q)  W ≤ ||g||Lip(γ,Ω,W )  ||f ||Lip(γ,Σ,Ω)||q − p||γ U +  f (0)(q) − f (0)(p)   γ V  . (56)
+The combination of (55) and (56) yields the estimate
+Rh 0 (p, q)  W ≤ ||g||Lip(γ,Ω,W )  ||f ||Lip(γ,Σ,Ω) + 2γ ||f ||γ Lip(γ,Σ,Ω)  ||q − p||γ U . (57)
+15
+Log Neural Controlled Differential Equations
+Turning our attention to Rh 1 , we fix u ∈ U and compute that
+Rh 1 (p, q)[u] (49) = h(1)(q)[u] − h(1)(p)[u]
+(48)
+= g(1)
+
+f (0)(q)  h f (1)(q)[u] i − g(1)  f (0)(p)  h f (1)(p)[u] i
+(46)
+= g(1)
+
+f (0)(p)  h f (1)(q)[u] − f (1)(p)[u] i + Rg 1  f (0)(p), f (0)(q)  h f (1)(q)[u] i
+(44)
+= g(1)
+
+f (0)(p)  h Rf 1 (p, q)[u] i + Rg 1  f (0)(p), f (0)(q)  h f (1)(q)[u] i .
+Consequently, by using (II) in (43) to estimate the term g(1)   f (0)(p)  , (II) in (42) to estimate the term f (1)(q), (II) in (45)
+to estimate the term Rf 1 (p, q), and (II) in (47) to estimate the term Rg 1   f (0)(p), f (0)(q)  , we may deduce that
+Rh 1 (p, q)[u]  W ≤ ||g||Lip(γ,Ω,W )||f ||Lip(γ,Σ,Ω)  ||q − p||γ−1 U +  f (0)(q) − f (0)(p)   γ−1 V  ||u||U . (58)
+The combination of (55) and (58) yields the estimate that
+Rh 1 (p, q)[u]  W ≤ ||g||Lip(γ,Ω,W )  ||f ||Lip(γ,Σ,Ω) + 2γ−1||f ||γ Lip(γ,Σ,Ω)  ||q − p||γ−1 U ||u||U . (59)
+Taking the supremum over u ∈ U with unit U-norm in (59) yields the estimate that
+Rh 1 (p, q)  L(V,W ) ≤ ||g||Lip(γ,Ω,W )  ||f ||Lip(γ,Σ,Ω) + 2γ−1||f ||γ Lip(γ,Σ,Ω)  ||q − p||γ−1 U . (60)
+Finally, we complete the proof by combining the various estimates we have established for h to obtain the Lip(γ, Σ, W )-norm
+bound claimed in (41).
+We start this task by combining (52) and (57) to deduce that for every p, q ∈ Σ we have
+Rh 0 (p, q)  W ≤
+(
+||g||Lip(γ,Ω,W )
+ 
+2 + ||f ||Lip(γ,Σ,Ω)
+
+||q − p||γ U if ||q − p||U > 1
+||g||Lip(γ,Ω,W )
+
+||f ||Lip(γ,Σ,Ω) + 2γ ||f ||γ Lip(γ,Σ,Ω)
+
+||q − p||γ U if ||q − p||U ≤ 1. (61)
+Moreover, the combination of (54) and (60) yields the estimate that
+ Rh 1 (p, q)   L(V,W ) ≤ ( 2||g||Lip(γ,Ω,W )||f ||Lip(γ,Σ,Ω)||q − p||γ−1 U if ||q − p||U > 1 ||g||Lip(γ,Ω,W )  ||f ||Lip(γ,Σ,Ω) + 2γ−1||f ||γ Lip(γ,Σ,Ω)  ||q − p||γ−1 U if ||q − p||U ≤ 1. (62)
+A consequence of (61) is that
+Rh 0 (p, q)  W ≤ (1 + 2γ ) ||g||Lip(γ,Ω,W ) max n ||f ||γ Lip(γ,Σ,Ω), 1 o ||q − p||γ U , (63)
+whilst a consequence of (62) is that
+Rh 1 (p, q)  L(V,W ) ≤   1 + 2γ−1 ||g||Lip(γ,Ω,W ) max n ||f ||γ Lip(γ,Σ,Ω), 1 o ||q − p||γ−1 U . (64)
+Therefore, by combining (50), (51), (63), and (64), we conclude both that h = (h(0), h(1)) ∈ Lip(γ, Σ, W ) and that
+||h||Lip(γ,Σ,W ) ≤ (1 + 2γ ) ||g||Lip(γ,Ω,W ) max n ||f ||γ Lip(γ,Σ,Ω), 1 o . (65)
+Note that (41) is a stricter bound than (37), as for γ ∈ (k, k + 1],
+max
+n
+||f ||γ Lip(γ,Σ,Ω), 1 o ≤ max n ||f ||k+1 Lip(γ), 1 o . (66)
+There is equality when ||f ||Lip(γ) ≤ 1 or γ = 2.
+16
+Log Neural Controlled Differential Equations
+B.2. Lip(2)−norm of a Neural Network Layer
+Lemma B.2 allows us to bound the Lip(2)−norm of a neural network (NN) given a bound on the Lip(2)−norm of each
+layer of a NN. We demonstrate this here for a simple NN.
+Definition B.3. (Fully Connected NN) Let m, nin, nout, nh ∈ N and fθ be a fully connected NN with m layers, input
+dimension nin, output dimension nout, hidden dimension nh, and activation function σ. Given an input x ∈ Rnin , the
+output of the NN is defined as
+y = Lm(· · · (L1(x)) · · · ), (67)
+where L1 : Rnin → Rnh , Li : Rnh → Rnh for i = 2, . . . , m − 1, and Lm : Rnh → Rnout . Each layer is defined by
+Li(y) =
+
+
+Li 1(y)
+...
+Li α(y)
+
+ =
+
+
+σ(li 1(y))
+...
+σ(li α(y))
+
+ =
+
+
+σ(W i 1 · y + bi 1)
+...
+σ(W i α · y + bi α)
+
+ , (68)
+where y ∈ Rβ , W i = [W i 1 , . . . , W i α]T ∈ Rα×β and bi = [bi 1, . . . , bi α]T ∈ Rα are the learnable parameters and
+(α, β) =
+
+
+
+(nh, nin), i = 1,
+(nh, nh), i = 2, . . . , m − 1,
+(nout, nh), i = m.
+(69)
+Definition B.4. (SiLU (Elfwing et al., 2018)) The activation function SiLU : R → R is defined as
+SiLU(y) = y 1 + e−y . (70)
+Lemma B.5. Let fθ be a fully connected NN with activation function SiLU. Assume the input is normalised such that
+x = [x1, . . . , xnin ]T satisfies |xj | ≤ 1 for j = 1, . . . , nin. Then
+||Li||Lip(2) ≤
+
+
+nX
+j=1
+max
+
+0.5||W i j ||2 2, 1.1||W i j ||2, Γi||W i j ||2 + |bi j | 	2
+
+
+1
+2
+, (71)
+where
+Γi = √nh||W i−1||2
+
+· · ·
+√nh||W 2||2  √nin||W 1||2 + ||b1||2  + ||b2||2  + · · ·  + ||bi−1||2. (72)
+Proof. Consider L1 : A → Rn, where A ⊂ Rnin is the set of x = [x1, . . . , xnin ]T satisfying |xj | ≤ 1 for j = 1, . . . , nin.
+Each L1 j : Rnin → R is composed of a linear layer l1 j and a SiLU. First, we show that
+(L1 j , ∇L1 j ) =
+ 
+l1 j
+1 + e−l1 j , el1 j (el1 j + l1 j + 1) (el1 j + 1)2 W 1 j ! ∈ Lip(2), (73)
+where l1 j (x) = W 1 j · x + b1 j . So,
+max
+x∈A
+|L1 j (x)| ≤ max x∈A |l1 j (x)| ≤ √nin||W 1 j ||2 + |b1 j | (74)
+and
+||∇L1 j ||2 ≤ 1.1||W 1 j ||2. (75)
+Since L1 j is at least twice differentiable,
+|L1 j (y) − L1 j (x) − ∇L1 j (x)(y − x)|
+||y − x||2 2 = |(y − x)T ∇2L1 j (b)(y − x))| 2|x − y|2 2 ≤ 1 2 β(∇2L1 j (b)), (76)
+17
+Log Neural Controlled Differential Equations
+where b = x + t(y − x) for some t ∈ (0, 1) and β(A) = max{|λmax(A)|, |λmin(A)|}. Similarly,
+||∇L1 j (y) − ∇L1 j (x)||2
+||y − x||2
+= |∇2L1 j (z)(y − x)|2
+|x − y|2
+≤ ||∇2L1 j (z)||2 = β(∇2L1 j (z)), (77)
+where z = x + α(y − x) for some α ∈ (0, 1). Now,
+∇2L1 j = el1 j (2 + 2el1 j + l1 j (1 − el1 j ) (el1 j + 1)3 W 1 j ⊗ W 1 j , (78)
+which has one non-zero eigenvalue
+β(∇2L1 j ) = el1 j (2 + 2el1 j + l1 j (1 − el1 j ) (el1 j + 1)3 ||W 1 j ||2 2 (79)
+satisfying
+max
+x∈Rnin
+β(∇2L1 j (x)) = 0.5||W 1 j ||2 2. (80)
+Therefore,
+||L1 j ||Lip(2) = max  0.5||W 1 j ||2 2, 1.1||W 1 j ||2, √nin||W 1 j ||2 + |b1 j | 	 , (81)
+and
+||L1||Lip(2) =
+
+
+nX
+j=1
+max
+
+0.5||W 1 j ||2 2, 1.1||W 1 j ||2, √nin||W 1 j ||2 + |b1 j | 	2
+
+
+1
+2
+. (82)
+The calculations for subsequent layers are very similar, except that the input to each layer is no longer restricted to A. For
+example,
+max
+x∈A
+|L2 j (L1(x))| = max x∈A |W 2 j · SiLU(W 1x + b1) + b2 j |,
+≤
+ √nin||W 1||2 + ||b1||2  ||W 2 j ||2 + |b2 j |. (83)
+In general
+||Li||Lip(2) ≤
+
+
+nX
+j=1
+max
+
+0.5||W i j ||2 2, 1.1||W i j ||2, Γi||W i j ||2 + |bi j | 	2
+
+
+1
+2
+, (84)
+where
+Γi = √nh||W i−1||2
+
+· · ·
+√nh||W 2||2  √nin||W 1||2 + ||b1||2  + ||b2||2  + · · ·  + ||bi−1||2. (85)
+B.3. Proof of Theorem 3.1
+Theorem B.6. Let fθ be a FCNN with input dimension nin, hidden dimension nh, depth m, and activation function SiLU
+(Elfwing et al., 2018). Assuming the input x = [x1, . . . , xnin ]T satisfies |xj | ≤ 1 for j = 1, . . . , nin, then fθ ∈ Lip(2) and
+||fθ ||Lip(2) ≤ CPm!(||W 1||2, . . . , ||W m||2, ||b1||2, . . . , ||bm||2) (86)
+where C is a constant depending on nin, nh, and m, {W i}m i=1 and {bi}m i=1 are the weights and biases of ith layer of fθ ,
+and Pm! is a polynomial of order m!.
+Proof. Lemma B.5 means that each layer Lj of fθ is Lip(2) with norm satisfying
+||Lj ||Lip(2) ≤ CPj (||W1||2, . . . , ||Wj ||2, ||b1||2, . . . , ||bj ||2), (87)
+where C is a constant depending on n and nin and Pj is a jth order polynomial. Applying lemma B.2 gives the bound in
+(86).
+18
+Log Neural Controlled Differential Equations
+Table 4. A summary of the subset of the UEA-MTSCA datasets used in this paper.
+Dataset Dimension Number of Observations Classes
+EigenWorms 6 17984 5
+EthanolConcentration 3 1751 4
+Heartbeat 61 405 2
+MotorImagery 64 3000 2
+SelfRegulationSCP1 6 896 2
+SelfRegulationSCP2 7 1152 2
+C. Experimental Details
+C.1. Stacked Recurrent Models
+The stacked recurrent models considered in this paper are based on the official implementation of S5 located at https:
+//github.com/lindermanlab/S5 (Smith et al., 2023). A recurrent block consists of a batch or layer normalisation,
+a recurrent layer, a GLU layer (Dauphin et al., 2017), dropout with rate 0.1, and a skip connection. A full model consists of
+a linear encoder, a number of stacked recurrent blocks, and a final linear layer. The four different recurrent layers considered
+are the linear recurrent unit, S5, S6, and MAMBA, where S6 refers to the selective state-space recurrence introduced by
+Gu & Dao (2023) and MAMBA refers to the combination of a gated MLP, convolution, and S6 recurrence that was also
+introduced by Gu & Dao (2023). S5 and LRU use batch normalisation, whereas S6 and MAMBA use layer normalisation.
+C.2. CDE Models
+NCDEs, NRDEs, and Log-NCDEs use a single linear layer as ξϕ. NCDEs and NRDEs use FCNNs as their vector fields
+configured in the same way as their original papers (Kidger et al., 2020; Morrill et al., 2021). NCDEs use ReLU activation
+functions for the hidden layers and a final activation function of tanh. NRDEs use the same, but move the tanh activation
+function to be before the final linear layer in the FCNN. Log-NCDEs use a FCNN with SiLU activation functions for the
+hidden layers and a final activation function of tanh. NRDEs and Log-NCDEs take their intervals ri+1 − ri to be a fixed
+number of observations, referred to as the Log-ODE step.
+C.3. Toy Dataset Details
+On the toy dataset, all models use a hidden state of dimension 64 and Adam with a learning rate of 0.0003 (Kingma &
+Ba, 2017). LRU, S5, S6, and MAMBA use 6 blocks and S5, S6, and MAMBA use a state dimension of 64. S5 uses
+2 initialisation blocks and MAMBA uses a convolution dimension of 4 and an expansion factor of 2. NCDEs, NRDEs,
+and Log-NCDEs use a FCNN with width 128 and depth 3 as their vector field. Furthermore, they all use Heun as their
+differential equation solver with a fixed stepsize of 0.01. NRDEs and Log-NCDEs use a Log-ODE step of 4 and a signature
+truncation depth of 2. Log-NCDEs do not use any Lip(γ) regularisation, i.e. λ = 0.
+C.4. UEA-MTSCA and PPG-DaLiA Details
+Table 4 provides details on the dimension, number of observations, and number of classes for the datasets chosen from the
+UEA-MTSCA for the experiments conducted in this paper. Care is necessary when using the EigenWorms dataset. As of June
+1st 2024, the train and test splits obtained from https://timeseriesclassification.com/description.
+php?Dataset=EigenWorms contain repeated time series. The repeated data was removed for the experiments in this
+paper. Tables 5 and 6 give an overview of the hyperparameters optimised over during the UEA-MTSCA and PPG-DaLiA
+experiments for the stacked recurrent models and the NCDE models respectively. The optimisation was performed using
+a grid search of the validation accuracy for the UEA-MTSCA datasets and the mean squared error for the PPG-DaLiA
+dataset. All models and experiments used Adam as their optimiser and a batch size of 32, except the stacked recurrent
+models on PPG-DaLiA, which used a batch size of 4 due to memory constraints. NCDEs, NRDEs, and Log-NCDEs use
+Heun as their differential equation solver with a fixed stepsize of 1/ max{500, 1 + (Time series length/Log-ODE step)},
+with Log-ODE step = 1 for NCDEs. Additionally, Log-NCDEs scale down their initial FCNN parameters by a factor of
+1000 to reduce the starting Lip(2) norm of the vector field.
+19
+Log Neural Controlled Differential Equations
+Table 5. Hyperparameters selected by the optimisation for LRU, S5, S6, and MAMBA on the UEA-MTSCA datasets and PPG-DaLiA
+dataset. The following abbreviations are used: EigenWorms (EW), EthanolConcentration (EC), Heartbeat (HB), MotorImagery (MI),
+SelfRegulationSCP1 (SCP1), SelfRegulationSCP2 (SCP2), and PPG-DaLiA (PPG). A ✗ denotes that the hyperparameter is not applicable
+to that model.
+Hyperparameters Options Method LRU S5 S6 MAMBA
+Learning Rate 10−3 EW, MI, SCP1, SCP2, PPG HB, MI, SCP1, PPG EW, HB, MI, SCP2 EW, EC, PPG
+10−4 HB EW, SCP2 SCP1, PPG HB, SCP2
+10−5 EC EC EC MI, SCP1
+Include Time True EC, HB, SCP2 EW, EC, SCP2, PPG EC, HB, MI, PPG EW, EC, SCP2
+False EW, MI, SCP1, PPG HB, MI, SCP1 EW, SCP1, SCP2 HB, MI, SCP1, PPG
+Hidden Dimension 16 MI MI, SCP2, PPG EW, EC, HB, MI, SCP2 EW
+64 EW, EC, SCP1, SCP2 EW SCP1, PPG EC, HB, SCP2
+128 HB, PPG EC, HB, SCP1 MI, SCP1, PPG
+Number of Layers 2 HB, SCP1, SCP2 EW, EC, SCP2 SCP1, SCP2, PPG MI, SCP1
+4 EW HB EW, EC, HB, MI EC, HB, PPG
+6 EC, MI, PPG MI, SCP1, PPG EW, SCP2
+State Dimension 16 EC, SCP1, SCP2 EW, EC, HB, SCP1 EC, HB, SCP1 SCP1
+64 EW MI, SCP2, PPG EW, PPG EW, MI, SCP2, PPG
+256 HB, MI, PPG MI, SCP2 EC, HB
+S5 Initialisation Blocks 2 ✗ SCP2, PPG ✗ ✗
+4 ✗ HB, MI ✗ ✗
+8 ✗ EW, EC, SCP1 ✗ ✗
+Convolution Dimension 2 ✗ ✗ ✗ EW, HB, SCP2
+3 ✗ ✗ ✗ MI, PPG
+4 ✗ ✗ ✗ EC, SCP1
+Expansion Factor 1 ✗ ✗ ✗ EW, MI, SCP1
+2 ✗ ✗ ✗ SCP2, PPG
+4 ✗ ✗ ✗ EC, HB
+20
+Log Neural Controlled Differential Equations
+Table 6. Hyperparameters selected by the optimisation for NCDE, NRDE, and Log-NCDE on the UEA-MTSCA datasets and PPG-DaLiA
+dataset. Given the length of each timeseries in the PPG-DaLiA dataset, different choices were considered for the Log-ODE depth and
+step, which are shown here in red. The following abbreviations are used: EigenWorms (EW), EthanolConcentration (EC), Heartbeat
+(HB), MotorImagery (MI), SelfRegulationSCP1 (SCP1), SelfRegulationSCP2 (SCP2), and PPG-DaLiA (PPG). A ✗ denotes that the
+hyperparameter is not applicable to that model.
+Hyperparameters Options Method NCDE NRDE Log-NCDE
+Learning Rate 10−3 EW, EC, HB, MI, SCP2, PPG EW, EC, HB, SCP1, PPG EW, HB, MI, PPG
+10−4 SCP1 MI, SCP2 EC, SCP1, SCP2
+10−5
+Include Time True EW, EC, HB, MI, PPG EC, SCP1, SCP2, PPG EW, EC, HB, PPG
+False SCP1, SCP2 EW, HB, MI MI, SCP1, SCP2
+Hidden Dimension 16 MI, PPG HB, MI
+64 EW, EC, HB, SCP1 EC, SCP1
+128 EW, EC, HB, SCP1, SCP2 MI, SCP2, PPG EW, SCP2, PPG
+Vector Field (Depth, Width) (2, 32) EW, SCP2
+(3, 64) EW EC, MI, PPG
+(3, 128) EW HB HB, SCP1
+(4, 128) EC, HB, MI, SCP1, SCP2, PPG EC, MI, SCP1, SCP2, PPG
+Log-ODE (Depth, Step) (1, 1) ✗ EC, MI, SCP1, SCP2 EC
+(2, 2) ✗ HB HB
+(2, 4) ✗ EW SCP2
+(2, 8) ✗
+(2, 12) ✗ EW
+(2, 16) ✗ MI, SCP1
+(1, 10) ✗ PPG PPG
+(2, 10) ✗
+(2, 100) ✗
+(2, 1000) ✗
+Regularisation λ 10−3 ✗ ✗ EW, MI, SCP2
+10−6 ✗ ✗ EC, HB
+0.0 ✗ ✗ SCP1, PPG
+21
+Log Neural Controlled Differential Equations
+C.5. Additional Memory and run time Results
+Models are compared on their average GPU memory usage and run time for the UEA-MTSCA datasets. In order to compare
+the models, 1000 steps of training were run on an NVIDIA RTX 4090 with each model using the hyperparameters obtained
+from the hyperparameter optimisation. The specific choices of the hyperparameters are listed in Tables 5 and 6. In addition
+to the time for 1000 steps and GPU memory usage, shown in Figures 6a and 6b respectively, the average number of total
+training steps taken to produce the results in Table 1 is recorded in Figure 6c. Combining the results for time for 1000
+training steps and total number of training steps gives an approximation of the total run time on the same hardware, and
+these results are shown in Figure 6d.
+Although the time per training step is lower for stacked recurrent models than NCDEs, NRDEs, or Log-NCDEs, they
+also require more training steps to converge. Additionally, NCDEs, NRDEs, and Log-NCDEs require less GPU memory.
+The largest contributors to the average run time of NCDEs are the datasets with the most observations, EigenWorms and
+MotorImagery. The positive impact of the Log-ODE method on computational burden is demonstrated empirically by
+the decrease in run time achieved by NRDEs and Log-NCDEs on EigenWorms when using a depth−2 Log-ODE method.
+When a depth−1 Log-ODE method is used, such as NRDEs on MotorImagery, the same decrease is not observed. Section
+3.4 demonstrated that Log-NCDEs and NRDEs have the same asymptotic computational complexity. However, when
+using a depth−2 Log-ODE approximation and the same stepsize, NRDEs and Log-NCDEs exhibit drastically different run
+times on Heartbeat, a high-dimensional dataset. This difference is partly explained by the model’s having different optimal
+hyperparameter choices, but even when using identical hyperparameters to the NRDE, Log-NCDE’s run time for 1000 steps
+of training is 1673 seconds, whereas NRDE’s run time is 9539 seconds. The remaining difference in run time is due to
+calculating the JVPs of fθ using a batched function, as discussed in Section 3.4. If instead the JVPs are calculated using a
+for-loop, then Log-NCDEs run time increases to 17045 seconds.
+22
+Log Neural Controlled Differential Equations
+(a) Memory
+ (b) Time
+(c) Number of steps
+ (d) Total time
+Figure 6. Memory, time for 1000 steps, number of steps, and approximate total time for each model and dataeset from the UEA-MTSCA
+considered in this paper on an NVIDIA RTX 4090. The following abbreviations are used: EigenWorms (EW), EthanolConcentration
+(EC), Heartbeat (HB), MotorImagery (MI), SelfRegulationSCP1 (SCP1), and SelfRegulationSCP2 (SCP2).
+23

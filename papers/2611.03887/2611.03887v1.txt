@@ -1,0 +1,3610 @@
+The Information Limits of Neural Controlled Differential Equations
+Under Sparse Observations
+Rostislav Gusev 1 Evgenia Romanenkova 1 Alexey Zaytsev 1
+Abstract
+Neural controlled differential equations (Neural
+CDEs) evolve hidden states along continuous
+paths constructed by interpolating discrete ob-
+servations. Sparse measurements leave the in-
+put between observation times undetermined, and
+admissible continuous paths consistent with the
+same data can produce different terminal states.
+We characterize this ambiguity for planar drivers
+with bounded speed. The set of compatible ter-
+minal states admits a leading-order zonotopic ap-
+proximation determined by feasible signed areas
+and transported Lie brackets. Its projection onto
+a scalar prediction yields a computable, target-
+specific ambiguity certificate. We also study the
+number of measurements needed to reduce the
+remaining uncertainty. For nondegenerate pla-
+nar CDEs, the optimal worst-case radius over de-
+terministic adaptive sampling policies scales as
+N −1 when speed is bounded and N −2 when both
+speed and acceleration are bounded, where N is
+the number of observation intervals. Synthetic ex-
+periments assess the certificate using admissible
+continuous completions and examine the role of
+path regularity.
+1. Introduction
+Neural controlled differential equations (Neural CDEs) pro-
+cess irregularly sampled time series by evolving hidden
+states along continuous control paths constructed from dis-
+crete observations (Kidger et al., 2020; Morrill et al., 2022).
+Interpolation specifies the control between sampled times.
+When the observations come from an underlying contin-
+uous signal, its evolution between measurements remains
+unknown. Different continuous paths can agree with every
+recorded value and still drive the same CDE to different
+terminal states.
+1Applied AI Institute. Correspondence to: Rostislav Gusev
+<gavkav05@gmail.com>.
+Preprint. November 4, 2026.
+These differences arise from path geometry that point obser-
+vations do not capture. The observed endpoints determine
+the increments of a planar control, while the signed areas
+traced between them remain undetermined. In a CDE with
+noncommuting vector fields, these areas influence the hid-
+den state, and their effects propagate through the subsequent
+dynamics. The resulting variation in the terminal response
+depends on the geometry permitted by the observations and
+the sensitivity of the CDE to that geometry.
+The size of this ambiguity matters when a Neural CDE is
+used to model a continuously driven system. Observation
+schedules with the same number of measurements can con-
+strain a prediction to different degrees, depending on where
+the missing path information affects the dynamics. An in-
+terpolated control provides a prediction, while the range
+of responses across compatible continuous paths describes
+how much of that prediction is determined by the avail-
+able measurements. Quantifying this range can help assess
+the adequacy of a sampling schedule and identify intervals
+where additional observations would be informative.
+Previous analyses of Neural CDEs have examined interpola-
+tion schemes and sampling-dependent approximation and
+generalization (Morrill et al., 2022; Bleistein & Guilloux,
+2024). Higher-order signatures and Lie brackets have also
+been used to understand and approximate CDE dynamics
+(Walker et al., 2024). We study how the information missing
+from a discrete observation record affects the responses of
+a fixed CDE. The admissible inputs are continuous paths
+satisfying the observed values and prescribed regularity con-
+straints. Their terminal responses form the identified set
+associated with the observation record.
+Our main results are summarized below.
+• Geometry of partial identification. We character-
+ize the leading terminal-state identified set for planar
+CDEs with bounded-speed inputs. Feasible signed ar-
+eas and transported Lie brackets determine a zonotopic
+approximation with a uniform Hausdorff error bound.
+• Target-specific ambiguity certificate. We derive a
+computable certificate for scalar predictions that com-
+bines the unresolved path geometry on each observa-
+1
+arXiv:2611.03887v1  [cs.LG]  2 Nov 2026
+The Information Limits of Neural CDEs Under Sparse Observations
+tion interval with the sensitivity of the terminal output
+to that geometry.
+• Minimax limits of observation. We establish min-
+imax rates of N −1 under bounded speed and N −2
+under bounded speed and acceleration for planar CDEs
+with nonvanishing transported Lie-bracket sensitivity.
+The bounds hold over deterministic adaptive observa-
+tion policies, where N denotes the number of observa-
+tion intervals.
+• Empirical evaluation. We evaluate the certificate
+on trained planar Neural CDEs using admissible con-
+tinuous completions of sparse observations. The ex-
+periments examine certificate accuracy, the effect of
+path regularity, and the selection of additional measure-
+ments.
+2. Related Work
+Neural CDEs and sparse observations. Kidger et al.
+(2020) introduced Neural CDEs for irregularly sampled
+and partially observed time series, using continuous con-
+trol paths constructed from discrete measurements. The
+choice of interpolation affects the information available to
+the model, particularly in online prediction (Morrill et al.,
+2022). More recent work develops injective embeddings of
+irregular data without reconstructing the observed variables
+(Walker et al., 2026). Theoretical analyses by Bleistein
+& Guilloux (2024) establish sampling-dependent general-
+ization bounds and characterize sampling-induced approx-
+imation bias using continuity properties of CDE solutions.
+These results describe how sampling and continuous repre-
+sentations affect Neural CDE predictions.
+Path geometry and uncertain dynamics. Higher-order
+path information influences controlled dynamics through
+iterated integrals and Lie brackets. Log-NCDEs exploit this
+structure to approximate CDE solutions using higher-order
+log-signatures (Walker et al., 2024). In stochastic settings,
+Malham & Wiese (2014) study the conditional distribution
+of Levy area for a Brownian path with prescribed endpoints.
+Inverse problems for rough differential equations investi-
+gate recovery of the driving signal from observed responses
+(Bailleul & Diehl, 2015; Morrish et al., 2026). Reachability
+analysis studies the sets of states generated by admissible
+inputs (Althoff et al., 2021). Discrete observations of the
+driver impose a different constraint: the compatible input
+paths must agree at the measured times, and their unresolved
+geometry determines the range of possible CDE responses.
+Optimal recovery and information limits. Optimal re-
+covery theory establishes worst-case limits on reconstruct-
+ing functions from finitely many observations (Micchelli
+et al., 1976). Information-based complexity provides a
+general framework for studying the information required
+to approximate a functional (Traub et al., 1988). Related
+questions arise for stochastic differential equations. M¨uller-
+Gronbach (2004) derive minimal approximation errors from
+sequential observations of the driving Brownian motion and
+construct asymptotically optimal adaptive methods. The
+information radius considered here measures the worst-
+case variation of a CDE output over observation-compatible
+drivers satisfying deterministic regularity constraints. Its
+dependence on transported Lie-bracket sensitivity connects
+these information limits to the dynamics and the prediction
+target.
+Adaptive computation and observation design. Adap-
+tive numerical methods use estimates of local error to al-
+locate computational effort. Moon et al. (2003) establish
+convergence and complexity results for adaptive ODE ap-
+proximation, while Bayer et al. (2023) develop an adaptive
+RDE solver based on local error contributions to the global
+solution error. Active sensing concerns the acquisition of
+additional measurements. Qin et al. (2023) develop a Neural-
+CDE-based sensing policy that selects observation times and
+measured variables under prediction-risk and acquisition-
+cost objectives. In the present setting, measurement loca-
+tions are evaluated through the ambiguity remaining among
+admissible continuous drivers, linking observation design
+to the radius of information.
+3. Problem Formulation
+Controlled dynamics and observations. Let T > 0, let
+d, m ≥ 1, and let X : [0, T ] → Rd be an unknown contin-
+uous input. Fix an initial state z0 ∈ Rm and vector fields
+Vj : Rm → Rm, j = 1, . . . , d. The input drives the con-
+trolled differential equation
+dZt =
+dX
+j=1
+Vj (Zt) dX j t , Z0 = z0. (1)
+For a given input X, the solution is denoted by Zt(X) ∈
+Rm. We consider a scalar terminal output F (X) =
+g(ZT (X)), where g : Rm → R is a fixed readout. The
+regularity assumptions on the vector fields and the readout
+are specified in the corresponding theorems.
+The input is observed at times 0 = t0 < · · · < tn = T ,
+giving S = {(ti, xi)}n i=0, where xi = Xti ∈ Rd. These
+observations constrain the values of X at the sampled times,
+leaving its evolution between measurements unspecified.
+To characterize the possible continuous paths, we impose
+regularity bounds on the input.
+For k = 1, 2, let W k,∞([0, T ]; Rd) denote the Sobolev
+space of paths whose weak derivatives up to order k are
+essentially bounded. We use their continuous representa-
+2
+The Information Limits of Neural CDEs Under Sparse Observations
+Sampling-induced ambiguity in Neural CDEs
+Observed skeleton
+and compatible paths
+piecewise-linear reference ¯X
+compatible paths X ∈ XL(S)
+t
+X 1 t
+t1 t2 t3 t4 t5 t6
+Hidden planar area
+same endpoints
+different ai(X)
+All paths share the samples: Xti = xi.
+Their hidden signed areas ai(X) can differ.
+(Only one coordinate of the planar driver is shown.)
+Theorem 4.1 Terminal-state identified set
+z1
+z2
+¯zT
+ZT (S) ≈ ¯zT + K(S)
+K(S) = ∑ i[−A⋆ i , A⋆ i ] bi
+Transported Lie brackets bi
+Hausdorff error O(S3 + S2 2 )
+Theorem 4.2 Target-specific ambiguity certificate
+y− g(¯zT ) y+
+y
+diam YT (S) = 2R2(S) + O(δ2)
+R2(S) = ∑ i A⋆ i |ci|
+Theorems 5.1 and 5.2 Minimax observation limits (schematic)
+Bounded speed Speed + accelerationRN
+101 102 10310−5
+10−4
+10−3
+10−2
+10−1
+100
+Θ(N −1)
+N
+101 102 10310−5
+10−4
+10−3
+10−2
+10−1
+100
+Θ(N −2)
+N
+Figure 1. Sampling-induced ambiguity in Neural CDEs. A discrete observation record S = {(ti, xi)} admits multiple bounded-speed
+continuous paths X ∈ XL(S) (colored curves). The dashed line represents the piecewise-linear reference ¯X. Only the first coordinate of
+the planar input is shown. Paths sharing the same observations may have different signed areas ai(X) between measurements. Theorem 4.1
+approximates the terminal-state identified set by ¯zT + K(S), where ¯zT = ZT ( ¯X) and K(S) is the zonotope generated by feasible signed
+areas and transported Lie brackets, defined in (4). The Hausdorff approximation error is O(S3 + S2 2 ). Theorem 4.2 gives a leading-order
+approximation to the scalar response identified set by the interval with endpoints y± = g(¯zT ) ± R2(S) (δ = maxi(ti+1 − ti)), where the
+target-specific radius R2(S) is defined in (6). Theorems 5.1 and 5.2 establish minimax information-radius rates Θ(N −1) and Θ(N −2)
+under bounded speed and bounded speed plus acceleration, respectively. Here N is the number of final observation intervals, and the
+minimax radius RN is defined in (3). The rates hold under the nondegeneracy assumptions of the respective theorems. The plotted curves
+are schematic.
+tives, so the values Xti are well defined. For prescribed
+bounds L, M > 0, define the classes of continuous paths
+compatible with the observations:
+XL(S) =
+
+X ∈ W 1,∞([0, T ]; Rd) :
+Xti = xi, i = 0, . . . , n,
+∥ ˙X∥L∞ ≤ L 	 ,
+XL,M (S) =
+
+X ∈ XL(S) ∩ W 2,∞ :
+∥ ¨X∥L∞ ≤ M 	 .
+All derivative bounds hold almost everywhere and use
+the Euclidean norm. The speed-bounded class XL(S) is
+nonempty exactly when ∥xi+1 − xi∥ ≤ L(ti+1 − ti) on
+every observation interval, since the piecewise-linear in-
+terpolation is then admissible. The observations therefore
+determine the minimum feasible speed bound, but place no
+finite upper bound on the speed of an unobserved comple-
+tion. Both L and M are prescribed regularity assumptions.
+If XL,M (S) = ∅, those bounds are inconsistent with the
+observed record.
+Response identified sets. Let C(S) denote either XL(S)
+or XL,M (S). The terminal states generated by paths in this
+class form the identified set
+ZT (S; C) = {ZT (X) : X ∈ C(S)} ⊆ Rm.
+The corresponding scalar outputs form
+YT (S; C) = {F (X) : X ∈ C(S)} ⊆ R. (2)
+Adaptive observations and information limits. The
+identified set quantifies the ambiguity remaining after a
+particular set of measurements. We also consider how small
+this ambiguity can become when observation times are se-
+lected to reduce it.
+For the minimax problem, we specialize to planar drivers
+(d = 2). For the fixed-initial-state CDE in (1), translating
+the driver by −X0 leaves the solution unchanged, since only
+3
+The Information Limits of Neural CDEs Under Sparse Observations
+the increments of X enter the equation. We may therefore
+take X0 = 0 without loss of generality. Let XL and XL,M
+denote the corresponding regularity classes with X0 = 0
+but no prescribed observations at later times; the policy
+produces the observation record. A deterministic policy
+π ∈ ΠN observes X0 and XT without cost and may request
+at most N − 1 additional values of X. Each measurement
+time may depend on all previous queries and their observed
+values, and the queries need not be ordered chronologically.
+Thus N denotes the maximum number of resulting obser-
+vation intervals. The complete sequence of queries and
+observations, including the stopping decision, is denoted by
+Oπ (X).
+Two admissible paths are indistinguishable to the policy
+if they produce the same observation transcript. Given a
+path X ∈ C, where C ∈ {XL, XL,M }, the paths remaining
+compatible with its transcript form
+Fπ (X; C) = { eX ∈ C : Oπ ( eX) = Oπ (X)}.
+For a set of drivers B, write F (B) = {F (Y ) : Y ∈ B}.
+The policy therefore leaves a range of possible outputs
+F (Fπ (X; C)).
+We seek the observation policy that minimizes the largest
+possible residual output radius. For any nonempty bounded
+set A ⊆ R, define rad(A) = diam(A)/2 = (sup A −
+inf A)/2. This leads to the deterministic minimax radius of
+information,
+RN (F ; C) := inf π∈ΠN sup X∈C rad
+ 
+F
+ 
+Fπ (X; C)
+
+. (3)
+For a fixed policy, the supremum measures its worst-case
+ambiguity over admissible input paths. The infimum then
+selects the policy with the smallest such worst-case radius.
+Hence RN (F ; C) quantifies the information about the ter-
+minal response that cannot be resolved by any deterministic
+adaptive sampling strategy with the given observation bud-
+get.
+4. Geometry of Partial Identification
+4.1. Unobserved area and terminal states
+We specialize to planar drivers (d = 2). Fix an observed
+record S and a prescribed speed bound L > 0 such that
+XL(S) ̸= ∅. Let ¯X be the piecewise-linear interpolation of
+the observed values, defined on each interval [ti, ti+1] by
+¯Xt = xi + t − ti ti+1 − ti (xi+1 − xi).
+The feasibility condition ∥xi+1 −xi∥ ≤ L(ti+1 −ti) ensures
+that ¯X ∈ XL(S). We use this path as a reference for the
+CDE dynamics and write ¯zt = Zt( ¯X) for the corresponding
+hidden state, with ¯zi = ¯zti .
+The observations determine the displacement xi+1 − xi on
+each interval [ti, ti+1]. The signed area traced by the path
+relative to its chord is
+ai(X) = 1 2 Z ti+1 ti  (X 1 t − x1 i ) dX 2 t − (X 2 t − x2 i ) dX 1 t  .
+Let A⋆(r, ℓ) denote the maximum absolute signed area
+enclosed by a planar path of length at most ℓ and the
+chord joining its endpoints, whose distance is r. The fixed-
+endpoint Dido theorem gives the exact range of admissi-
+ble areas on observation interval i as [−A⋆ i , A⋆ i ], where
+A⋆ i = A⋆(∥xi+1 − xi∥, L(ti+1 − ti)). Under the speed
+constraint, these areas can be chosen independently across
+observation intervals. The geometric result and the charac-
+terization of A⋆ are given in Appendix A.
+To describe how the unobserved signed area affects the CDE,
+let ΦX s,t(z) denote the state at time t obtained by solving the
+CDE along X, starting from z ∈ Rm at time s. We compare
+the evolutions along X and ¯X on interval [ti, ti+1], both
+starting from the reference state ¯zi. Since the paths have the
+same endpoints, their leading-order difference is
+ΦX ti ,ti+1 (¯zi) − Φ ¯X ti ,ti+1 (¯zi)
+= ai(X)[V1, V2](¯zi) + O
+ 
+L3(ti+1 − ti)3 ,
+where [V1, V2] = DV2 V1 − DV1 V2. The remainder is
+uniform over admissible path segments. The local expansion
+is proved in Appendix B.
+The area-induced change appears in the state at ti+1 and
+affects the terminal state through the subsequent dynam-
+ics. Along the reference path, the derivative of the state
+evolution on interval i with respect to its initial state is
+Ji = Dz Φ ¯X ti ,ti+1 (¯zi) ∈ Rm×m. It maps a small change in
+the state at ti to its first-order effect at ti+1.
+A change in the state at ti+1 is subsequently transported
+by Ji+1, then by Ji+2Ji+1, and so on. The complete linear
+transport from ti+1 to T is
+Pi = Jn−1 · · · Ji+1 ∈ Rm×m, Pn−1 = I.
+The terminal-state direction associated with one unit of
+signed area on interval i is therefore bi = Pi[V1, V2](¯zi) ∈
+Rm.
+Combining the feasible areas over all observation intervals
+gives the zonotope
+K(S) =
+(n−1X
+i=0
+aibi : |ai| ≤ A⋆ i for all i
+)
+⊆ Rm. (4)
+The coefficients ai in the definition of K(S) vary indepen-
+dently over the intervals [−A⋆ i , A⋆ i ]. For a particular admis-
+sible path X, they take the values ai(X). Thus the zono-
+tope contains all combinations of the leading area-induced
+changes permitted by the observations.
+4
+The Information Limits of Neural CDEs Under Sparse Observations
+To state the approximation error, define the sums of squared
+and cubed variation bounds over the observation intervals:
+S2 =
+n−1X
+i=0
+L2(ti+1 − ti)2, S3 =
+n−1X
+i=0
+L3(ti+1 − ti)3.
+To compare the terminal-state identified set with its zono-
+topic approximation ¯zT + K(S), we use the Hausdorff dis-
+tance between nonempty compact sets A, B ⊆ Rm, defined
+by
+dH(A, B) = max
+
+sup
+a∈A
+inf
+b∈B
+∥a − b∥, sup
+b∈B
+inf
+a∈A
+∥b − a∥
+
+.
+The two terms measure how far each set extends beyond the
+other. A bound on dH therefore controls both the approxi-
+mation of admissible terminal states by the zonotope and
+the approximation of points in the zonotope by admissible
+terminal states.
+Theorem 4.1 (Planar response identified set). Let T, L > 0,
+z0 ∈ Rm, and V1, V2 ∈ C 4 b (Rm; Rm). For an obser-
+vation record S = {(ti, xi)}n i=0 with 0 = t0 < · · · <
+tn = T and xi ∈ R2, let XL(S) consist of all paths
+X ∈ W 1,∞([0, T ]; R2) satisfying Xti = xi for every i
+and ∥ ˙X∥L∞ ≤ L.
+There exists a constant CZ = CZ (V1, V2, L, T ) > 0 such
+that, for every observation record S with XL(S) ̸= ∅, the
+terminal-state identified set ZT (S; XL) satisfies
+dH(ZT (S; XL), ¯zT + K(S)) ≤ CZ (S3 + S2 2 ). (5)
+The same constant applies to all such observation records,
+independently of the number and placement of measure-
+ments. Its explicit value and the complete proof are given in
+Appendix B.
+Each observation interval contributes to the leading terminal-
+state ambiguity through the segment [−A⋆ i , A⋆ i ]bi, whose ex-
+tent is determined by the unresolved signed area and whose
+direction is determined by the transported Lie bracket.
+Since K(S) is centrally symmetric, the terminal-state diam-
+eter satisfies
+diam ZT (S; XL) = 2 max ∥u∥=1
+n−1X
+i=0
+A⋆ i |u⊤bi| + O(S3 + S2 2 ).
+Writing δ = maxi(ti+1 − ti), we have S2 ≤ L2T δ and
+S3 ≤ L3T δ2. The approximation error is therefore O(δ2)
+for fixed dynamics, L, and T . The leading ambiguity is
+determined by the transported brackets and may vanish
+when the dynamics are insensitive to the unresolved areas.
+4.2. Target-specific ambiguity certificate
+The state identified set describes variation in the full hidden
+state. For a scalar prediction F (X) = g(ZT (X)), the effect
+of a small change in the terminal state is determined at
+first order by the gradient of g. Let g ∈ C 2(Rm; R) have
+bounded first and second derivatives. Applying this gradient
+to the area-induced direction bi gives the scalar sensitivity
+ci = ∇g(¯zT )⊤bi ∈ R.
+The resulting target-specific ambiguity radius is
+R2(S) =
+n−1X
+i=0
+A⋆ i |ci|. (6)
+Each term combines the area permitted by the observations
+with the sensitivity of the prediction to the corresponding
+terminal-state direction.
+Theorem 4.2 (Target-specific ambiguity certificate). Under
+the assumptions of Theorem 4.1, let g ∈ C 2(Rm; R) have
+bounded first and second derivatives. There exists a con-
+stant CY = CY (V1, V2, g, L, T ) > 0 such that, for every
+observation record S with XL(S) ̸= ∅, the scalar response
+identified set YT (S; XL) satisfies
+dH
+ 
+YT (S; XL),[F ( ¯X) − R2(S),
+F ( ¯X) + R2(S)]  ≤ CY (S3 + S2 2 ). (7)
+Consequently,
+|diam YT (S; XL) − 2R2(S)| ≤ 2CY (S3 + S2 2 ).
+The same constant applies to all such observation records,
+independently of the number and placement of measure-
+ments. Its explicit value and the complete proof are given in
+Appendix C.
+The certificate approximates the half-width of the scalar
+response identified set. An interval with ci = 0 contributes
+no leading-order ambiguity to the prediction, even if its
+feasible area is nonzero. When all coefficients vanish, the
+remaining output variation is controlled by the higher-order
+remainder.
+The coefficients ci can be computed without explicitly form-
+ing the transport products Pi. Let λi ∈ Rm denote the
+sensitivity of the terminal scalar output to the reference state
+at time ti, with the subsequent control fixed to ¯X. At the
+terminal time this sensitivity is λn = ∇g(¯zT ). Propagating
+it backward through the derivatives Ji gives
+λi = J ⊤ i λi+1, i = n − 1, . . . , 0.
+Since λi+1 = P ⊤ i ∇g(¯zT ), we obtain
+ci = λ⊤ i+1[V1, V2](¯zi).
+The adjoint computation is justified in Appendix C.
+5
+The Information Limits of Neural CDEs Under Sparse Observations
+5. Minimax Limits of Observation
+For a fixed set of observations, the identified set describes
+the remaining uncertainty in the CDE response. We study
+how this uncertainty decreases as more measurements be-
+come available. The minimax radius RN , defined in (3),
+gives the smallest worst-case radius attainable by a deter-
+ministic adaptive policy. Throughout this section, the driver
+is planar, the endpoints X0 and XT are observed without
+cost, and the policy may request at most N − 1 additional
+values.
+5.1. Information limits for nondegenerate planar CDEs
+The minimax bounds depend on how strongly the termi-
+nal prediction responds to unobserved path geometry. To
+quantify this dependence, fix a unit vector u ∈ R2 and a
+speed 0 < v < L. Consider the straight reference driver
+¯Xt = vtu and its CDE solution ¯zt = Zt( ¯X). The sensitiv-
+ity of the terminal output to the state at time t is described
+by the adjoint λt ∈ Rm, which satisfies
+˙λt = −vD(u1V1 + u2V2)(¯zt)⊤λt,
+λT = ∇g(¯zT ).
+The corresponding sensitivity to signed area is
+βv,u(t) =
+λ⊤ t [V1, V2](¯zt) .
+This is the continuous-time counterpart of the target-specific
+coefficients ci from Section 4.
+We assume that the prediction is sensitive to signed area
+on at least one interval I = [a, b] ⊂ (0, T ), with a < b.
+Specifically, βv,u(t) ≥ β0 > 0 for every t ∈ I. This
+condition allows the influence of unobserved path geometry
+to be bounded from below.
+Recall the maximal-area function A⋆(r, ℓ) from Section 4.
+On a reference interval of duration s, the endpoint displace-
+ment has length vs and the available path length is Ls.
+The scaling of planar area gives A⋆(vs, Ls) = s2A⋆(v, L).
+Since v < L, the coefficient A⋆(v, L) is strictly positive.
+Theorem 5.1 (Bounded-speed information limit). Let
+T, L > 0, V1, V2 ∈ C 4 b (Rm; Rm), and g ∈ C 2 b (Rm; R).
+Consider the global class XL of planar drivers X ∈
+W 1,∞([0, T ]; R2) satisfying X0 = 0 and ∥ ˙X∥L∞ ≤ L.
+Suppose there exist a unit vector u ∈ R2, a speed 0 < v <
+L, and an interval I ⊂ (0, T ) such that βv,u(t) ≥ β0 > 0
+for all t ∈ I. Then
+lim inf
+N →∞
+N RN (F ; XL)
+≥ A⋆(v, L)
+Z
+I
+q
+βv,u(t) dt
+2
+.
+(8)
+Uniform sampling provides a matching worst-case up-
+per bound of order N −1. Consequently, RN (F ; XL) =
+Θ(N −1).
+The positive lower constant depends on the feasible hidden
+area and the sensitivity of the terminal prediction to that
+area. Positivity of βv,u on a single interval is sufficient
+to establish the N −1 minimax rate over all deterministic
+adaptive observation policies. The constant is independent
+of the observation budget and the policy. The complete
+proof is given in Appendix E.
+Theorem 5.2 (Bounded-acceleration information limit). Let
+T, L, M > 0, V1, V2 ∈ C 4 b (Rm; Rm), and g ∈ C 3 b (Rm; R).
+Consider the global class XL,M of planar drivers X ∈
+W 2,∞([0, T ]; R2) satisfying X0 = 0, ∥ ˙X∥L∞ ≤ L, and
+∥ ¨X∥L∞ ≤ M . Suppose there exist a unit vector u ∈ R2,
+a speed 0 < v < L, and an interval I ⊂ (0, T ) such that
+βv,u(t) ≥ β0 > 0 for all t ∈ I. Then
+lim inf
+N →∞
+N 2RN (F ; XL,M )
+≥ vM 32 Z I βv,u(t)1/3 dt 3 . (9)
+Uniform sampling provides a matching worst-case upper
+bound of order N −2. Hence RN (F ; XL,M ) = Θ(N −2).
+Bounding acceleration restricts how far a compatible contin-
+uous path can deviate from the piecewise-linear reference
+between observation times. Under the same nondegener-
+acy condition, the minimax radius decreases at rate N −2,
+compared with N −1 under the speed constraint alone. The
+lower bound retains the dependence on the prediction target
+through βv,u and applies to every deterministic adaptive
+policy. The complete proof is given in Appendix F.
+Sharp canonical case. An exact finite-budget result is
+available for the CDE that computes signed area. Con-
+sider the three-dimensional system with initial state Z0 =
+0, vector fields V1(z) = (1, 0, −z2/2)⊤ and V2(z) =
+(0, 1, z1/2)⊤, and readout g(z) = z3. Its output equals the
+signed area of the planar input path relative to its starting
+point. Although these vector fields and the readout are un-
+bounded on R3, for fixed L, T they admit smooth bounded
+extensions that agree with them on a bounded neighbor-
+hood of the states reachable from Z0 = 0 under XL. These
+extensions leave the output unchanged on XL.
+Proposition 5.3 (Exact minimax radius for the area CDE).
+Let T, L > 0 and N ≥ 1. For the bounded-speed class XL,
+the area-sensitive CDE satisfies
+RN (F ; XL) = L2T 2 2πN . (10)
+A uniform nonadaptive observation grid attains this radius
+among all deterministic adaptive policies with at most N
+final observation intervals.
+The exact equality holds for every finite observation budget.
+For this CDE, adaptive selection of measurement times does
+6
+The Information Limits of Neural CDEs Under Sparse Observations
+not improve the worst-case information radius achieved
+by uniform sampling. The complete proof is given in Ap-
+pendix D.
+6. Experiments
+We train Neural CDEs on densely observed planar trajecto-
+ries and evaluate them using progressively sparser observa-
+tions, keeping the model parameters fixed. The experiments
+include two path-dependent regression targets, signed area
+and the output of a nonlinear controlled system, together
+with an endpoint-dependent negative control. All reported
+diameters and output spreads are normalized by the training-
+set standard deviation of the corresponding target. The
+experimental procedures and additional results are provided
+in Appendices H and I.
+6.1. Certificate accuracy for admissible completions
+We evaluate the certificate by comparing its predicted di-
+ameter 2R2(S) with the output variation of two admissi-
+ble continuous paths sharing the same observations. On
+each observation interval, circular-arc completions attain
+the maximal positive and negative signed areas permitted
+by the speed bound. The first path chooses the sign of each
+area according to the corresponding coefficient ci, and the
+second uses the opposite signs. Both paths agree at every
+observation time and satisfy the prescribed speed constraint.
+Their terminal output difference provides a feasible lower
+bound on the identified-set diameter.
+Across 96 evaluations of the path-dependent targets, the
+predicted diameter and the feasible output spread have a
+Spearman correlation of 0.9987. The median ratio of fea-
+sible to predicted diameter is 0.981. As the number of
+observations increases from five to 33, the median relative
+discrepancy decreases from 5.49% to 1.69% (Figure 2, left).
+The feasible spread decreases with a fitted log–log slope
+of 1.01 against the maximum observation gap, while the
+absolute discrepancy decreases with a slope of 1.55. For the
+endpoint-dependent negative control, the median certificate
+diameter is only 0.07% of the corresponding scale for path-
+dependent targets.
+6.2. Effect of path regularity
+We compare the bounded-speed certificate with the
+acceleration-aware leading outer approximation on smooth
+input paths satisfying both velocity and acceleration con-
+straints. Across 72 evaluations of path-dependent targets,
+the acceleration-aware approximation has a median width
+equal to 7.11% of the bounded-speed certificate. The fitted
+sampling exponents are 1.04 and 2.26, respectively (Fig-
+ure 2, right).
+To assess the acceleration-aware approximation, we opti-
+mize over globally C 1 admissible completions whose ve-
+locities agree at observation times. The resulting feasible
+output spread has a Spearman correlation of 0.975 with
+the outer approximation, but its median magnitude is only
+9.11% of that approximation.
+The outer approximation combines bounds obtained sepa-
+rately on individual observation intervals. Globally C 1 paths
+must also satisfy velocity compatibility across neighboring
+intervals, and the numerical search explores a restricted
+family of admissible completions. The observed difference
+therefore does not determine how much conservatism arises
+from each source. The fitted exponents describe the finite-
+resolution certificates; the minimax results in Section 5
+concern worst-case ambiguity over adaptive observation
+policies.
+6.3. Certificate-guided observation design
+We evaluate sequential measurement selection starting from
+five uniformly or irregularly spaced observations. Each pol-
+icy acquires six additional measurements, selecting the mid-
+point of one observation interval at each step. The trained
+CDE remains fixed, and its ambiguity certificate is recom-
+puted after every acquisition.
+We compare the rule that selects the largest local contribu-
+tion A⋆ i |ci| with a closed-form midpoint-reduction score,
+longest-gap selection, geometry-only and sensitivity-only
+scores, and random selection. A one-step look-ahead oracle
+evaluates the underlying signal at every candidate midpoint
+and selects the measurement producing the smallest recom-
+puted certificate radius.
+We measure acquisition performance by the area under
+the certificate-radius curve, normalized by its initial value.
+Lower values indicate faster reduction of the certificate over
+the six acquisitions.
+Across 24 initial observation records, the median normalized
+area is 3.633 for both largest-local-ambiguity and midpoint-
+reduction selection. The one-step oracle achieves 3.626,
+compared with 3.823 for longest-gap selection and 4.544
+for random selection.
+The two certificate-guided rules choose different initial in-
+tervals in four of the 24 cases. The midpoint-reduction score
+produces a smaller recomputed radius in one of those four
+cases. On this benchmark, selecting the largest local ambi-
+guity achieves nearly the same certificate reduction as the
+one-step oracle, with no additional improvement from the
+midpoint-reduction score.
+7
+The Information Limits of Neural CDEs Under Sparse Observations
+0.5 1 2 4 8
+Predicted diameter 2R2 (target SD)
+0.5
+1
+2
+4
+8
+Feasible spread (target SD)
+Signed-area target
+Nonlinear CDE
+Equality
+(a)
+1/32 1/16 1/8 1/4
+Largest observation gap δ
+10−2
+10−1
+100
+Median certiﬁcate (target SD)
+Speed only (δ 1.04)
+Speed + accel. (δ 2.26)
+(b)
+Figure 2. Certificate accuracy and path regularity. (a) Predicted diameter 2R2(S) against the nonlinear output spread between
+admissible circular-arc completions. The dashed line indicates equality. (b) Median leading certificate diameters under bounded-speed
+and bounded-acceleration assumptions as the maximum observation gap decreases. All widths are normalized by the corresponding target
+standard deviation.
+7. Discussion and Limitations
+The identified set characterizes the terminal responses of
+a fixed CDE across continuous paths compatible with the
+observations and prescribed regularity bounds. When the
+driver represents a physical signal, its width quantifies the
+effect of unobserved evolution between measurements. If
+the continuous path serves only as a computational represen-
+tation of discrete data, the certificate instead approximates
+the variation in model outputs across the prescribed class of
+alternative continuous reconstructions. Predictive accuracy
+also depends on the learned dynamics and the relationship
+between the CDE output and the target variable.
+The admissible path class determines the range of pos-
+sible responses. A bounded-speed assumption gives an
+exact feasible signed-area interval on each observation
+gap. Bounding acceleration further restricts this range and
+requires velocities to agree across neighboring intervals.
+The acceleration-aware certificate consequently provides an
+outer approximation to the leading ambiguity. Its practi-
+cal interpretation requires regularity bounds that reflect the
+underlying signal, since bounds that exclude the true path
+invalidate the corresponding identification guarantee.
+The present geometric characterization applies to planar
+drivers. The minimax rates additionally require nonvanish-
+ing transported Lie-bracket sensitivity and concern determin-
+istic adaptive observation policies. For higher-dimensional
+inputs, the unresolved second-level geometry contains cou-
+pled area components whose joint feasibility must be charac-
+terized. Establishing a corresponding identified-set approxi-
+mation would extend the certificate beyond planar controls.
+The certificate-guided acquisition rule also raises the ques-
+tion of how closely its sequential performance approaches
+the optimal adaptive information radius.
+Our experiments evaluate the geometric certificate and se-
+quential measurement selection on synthetic planar signals.
+Assessing their use for physical sensing requires densely
+recorded continuous processes, where additional measure-
+ments can be acquired and their effect on predictive perfor-
+mance evaluated.
+8. Conclusion
+Discrete observations of a continuous driver can leave the
+terminal response of a fixed CDE undetermined. For planar
+bounded-speed inputs, we characterize the leading geometry
+of the response identified set through feasible signed areas
+and transported Lie brackets, and derive a computable cer-
+tificate for scalar predictions. The certificate quantifies how
+the unobserved geometry on each observation interval con-
+tributes to uncertainty in a given output. For nondegenerate
+planar CDEs, the minimax residual radius under determin-
+istic adaptive sampling scales as N −1 with bounded speed
+and as N −2 when acceleration is also bounded. The result-
+ing characterization connects the information missing from
+a given observation record with the rate at which further
+measurements can reduce the ambiguity.
+References
+Althoff, M., Frehse, G., and Girard, A. Set propaga-
+tion techniques for reachability analysis. Annual
+Review of Control, Robotics, and Autonomous
+Systems, 4(Volume 4, 2021):369–395, 2021.
+ISSN 2573-5144. doi: https://doi.org/10.1146/
+annurev-control-071420-081941. URL https://www.
+annualreviews.org/content/journals/10.
+8
+The Information Limits of Neural CDEs Under Sparse Observations
+1146/annurev-control-071420-081941.
+Bailleul, I. and Diehl, J. The inverse problem for rough
+controlled differential equations. SIAM Journal on Con-
+trol and Optimization, 53(5):2762–2780, 2015. doi:
+10.1137/140995982. URL https://doi.org/10.
+1137/140995982.
+Bayer, C., Breneis, S., and Lyons, T. An adaptive algorithm
+for rough differential equations, 2023. URL https:
+//arxiv.org/abs/2307.12590.
+Bleistein, L. and Guilloux, A. On the generalization and
+approximation capacities of neural controlled differen-
+tial equations. In The Twelfth International Confer-
+ence on Learning Representations, 2024. URL https:
+//openreview.net/forum?id=kILAd8RdzA.
+Juillet, N. A counterexample for the geometric traveling
+salesman problem in the Heisenberg group. Revista
+Matem´atica Iberoamericana, 26(3):1035 – 1056, 2010.
+Kidger, P., Morrill, J., Foster, J., and Lyons, T. Neural Con-
+trolled Differential Equations for Irregular Time Series.
+2020.
+Malham, S. J. and Wiese, A. Efficient almost-
+exact l´evy area sampling. Statistics & Prob-
+ability Letters, 88:50–55, 2014. ISSN 0167-
+7152. doi: https://doi.org/10.1016/j.spl.2014.01.
+022. URL https://www.sciencedirect.com/
+science/article/pii/S0167715214000339.
+Micchelli, C. A., Rivlin, T. J., and Winograd, S. The optimal
+recovery of smooth function. Numerische Mathematik,
+26:191–200, 1976. URL http://eudml.org/doc/
+132409.
+Moon, K.-S., Szepessy, A., Tempone, R., and Zouraris, G.
+Convergence rates for adaptive approximation of ordinary
+differential equations. Numerische Mathematik, 96:99–
+129, 11 2003. doi: 10.1007/s00211-003-0466-9.
+Morrill, J., Kidger, P., Yang, L., and Lyons, T. On the
+choice of interpolation scheme for neural CDEs. Transac-
+tions on Machine Learning Research, 2022. ISSN 2835-
+8856. URL https://openreview.net/forum?
+id=caRBFhxXIG.
+Morrish, T., Papamarkou, T., Papavasiliou, A., and Zhao,
+Y. The inverse problem for single trajectories of rough
+differential equations. SIAM/ASA Journal on Uncertainty
+Quantification, 14(3):1234–1280, 2026. doi: 10.1137/
+25M177148X. URL https://doi.org/10.1137/
+25M177148X.
+M¨uller-Gronbach, T. Optimal pointwise approximation
+of SDEs based on Brownian motion at discrete points.
+The Annals of Applied Probability, 14(4):1605 – 1642,
+2004. doi: 10.1214/105051604000000954. URL https:
+//doi.org/10.1214/105051604000000954.
+Qin, Y., van der Schaar, M., and Lee, C. Risk-averse ac-
+tive sensing for timely outcome prediction under cost
+pressure. In Thirty-seventh Conference on Neural In-
+formation Processing Systems, 2023. URL https:
+//openreview.net/forum?id=aw1vLo7TE7.
+Traub, J., Wasilkowski, G., and Wo, H. Wo zniakowski, H.,
+Information-Based Complexity. 1988.
+Walker, B., McLeod, A. D., Qin, T., Cheng, Y., Li, H., and
+Lyons, T. Log neural controlled differential equations:
+the lie brackets make a difference. In Proceedings of
+the 41st International Conference on Machine Learning,
+ICML’24. JMLR.org, 2024.
+Walker, B., Bloch, A., Yang, L., Morley, S., and Lyons, T.
+Faithful embeddings of irregular and asynchronous data
+for online log-ncdes, 2026. URL https://arxiv.
+org/abs/2605.30213.
+9
+The Information Limits of Neural CDEs Under Sparse Observations
+A. Mathematical Preliminaries and Geometric Results
+A.1. Conventions and compatibility with observations
+Throughout the proofs, vector norms are Euclidean and norms of linear or multilinear maps are induced operator norms.
+Since the drivers are absolutely continuous, every integral against dXt is evaluated as an integral against ˙Xt dt. For
+planar vectors we write u ∧ v = u1v2 − u2v1; in particular, |u ∧ v| ≤ ∥u∥∥v∥. Our convention for the Lie bracket is
+[V1, V2] = DV2 V1 − DV1 V2.
+The constants used below depend only on the parameters specified at their definitions. They are independent of the
+observation partition and admissible driver; constants in the minimax bounds are also independent of the observation policy
+and budget N. Any constant used to select a sufficiently small interval or absorb a remainder is fixed before that choice.
+The piecewise-linear path through the observed points is denoted by ¯X. On [ti, ti+1] it is given by
+¯Xt = xi + t − ti ti+1 − ti (xi+1 − xi), ˙¯Xt = xi+1 − xi ti+1 − ti .
+Lemma A.1 (Feasibility under a speed bound). Let 0 = t0 < · · · < tn = T and L > 0. The completion class XL(S)
+defined in Section 3 is nonempty if and only if ∥xi+1 − xi∥ ≤ L(ti+1 − ti) for every i = 0, . . . , n − 1.
+Proof. If X ∈ XL(S), the fundamental theorem of calculus and the speed constraint yield
+∥xi+1 − xi∥ =
+ Z ti+1
+ti
+˙Xt dt
+ ≤ Z ti+1
+ti
+∥ ˙Xt∥ dt ≤ L(ti+1 − ti).
+Conversely, if all these inequalities hold, then on each open observation interval
+∥ ˙¯Xt∥ = ∥xi+1 − xi∥ ti+1 − ti ≤ L.
+The segments join continuously at the observations. Therefore ¯X ∈ W 1,∞([0, T ]; R2), agrees with S, and belongs to
+XL(S). No matching of velocities across the observation times is needed in W 1,∞.
+The same chord inequalities are necessary for XL,M (S), but not sufficient: a globally W 2,∞ path must also have compatible
+velocities at neighboring observation intervals.
+A.2. Signed areas and the Dido fiber
+On an observation interval, the second-level iterated integrals are
+Xjk i =
+Z ti+1
+ti
+(X j t − xj i ) dX k t , j, k ∈ {1, 2}.
+Their antisymmetric part is the signed area relative to the straight chord:
+ai(X) = 1 2   X12 i − X21 i  = 1 2 Z ti+1 ti  (X 1 t − x1 i ) dX 2 t − (X 2 t − x2 i ) dX 1 t  .
+To see which part the endpoints determine, apply the product rule:
+X12 i + X21 i =
+Z ti+1
+ti
+d
+
+(X 1 t − x1 i )(X 2 t − x2 i )  = (x1 i+1 − x1 i )(x2 i+1 − x2 i ).
+In particular, the symmetric part is fixed by the observed increment while ai(X) need not be. For the straight path, ¯Xt − xi
+and ˙¯Xt are parallel, so ai( ¯X) = 0.
+10
+The Information Limits of Neural CDEs Under Sparse Observations
+Lemma A.2 (Fixed-endpoint Dido area fiber). Fix two endpoints in R2 at distance r, and a positive path-length budget
+ℓ ≥ r. Among absolutely continuous curves between the endpoints whose lengths do not exceed ℓ, the attainable signed
+areas relative to the chord form exactly [−A⋆(r, ℓ), A⋆(r, ℓ)], where
+A⋆(r, ℓ) = ℓ2 2θ2 (θ − sin θ), r ℓ = 2 sin(θ/2) θ , 0 ≤ θ ≤ 2π. (11)
+At the endpoints, the expression is interpreted by continuity: A⋆(ℓ, ℓ) = 0 and A⋆(0, ℓ) = ℓ2/(4π).
+Proof. The extremality of a circular arc for the fixed-endpoint, fixed-length area problem is the classical Dido isoperimetric
+theorem (Juillet, 2010). We use this theorem for maximality and calculate the maximal area and the complete feasible
+interval directly.
+Let R be the radius and θ the central angle of the maximizing arc. Its length is ℓ = Rθ, while its chord has length
+r = 2R sin(θ/2). Thus
+R = ℓ θ , r ℓ = 2(ℓ/θ) sin(θ/2) ℓ = 2 sin(θ/2) θ .
+The area bounded by the arc and its chord is the signed sector area minus the signed triangle area. Substituting the radius
+gives
+A⋆(r, ℓ) = R2θ 2 − R2 sin θ 2 = R2 2 (θ − sin θ) = ℓ2 2θ2 (θ − sin θ).
+When θ ↓ 0, the expansions sin θ = θ − θ3/6 + O(θ5) and 2 sin(θ/2)/θ → 1 give A⋆(ℓ, ℓ) = 0. When θ = 2π, the chord
+vanishes and
+A⋆(0, ℓ) = ℓ2 2(2π)2 (2π − sin 2π) = ℓ2 4π .
+It remains to show that every area between the extreme values is attained under the same speed bound. Fix an interval
+[ti, ti+1], parameterize a maximizing arc X ⋆ at constant speed ℓ/(ti+1 − ti), and let ¯X be the straight path between the
+same endpoints. For 0 ≤ α ≤ 1 set X (α) t = (1 − α) ¯Xt + αX ⋆ t . The endpoints remain fixed, and for almost every t,
+∥ ˙X (α) t ∥ = ∥(1 − α) ˙¯Xt + α ˙X ⋆ t ∥ ≤ (1 − α) r ti+1 − ti + α ℓ ti+1 − ti ≤ ℓ ti+1 − ti .
+The area of this path is continuous in α. Indeed, substituting the interpolation into its definition gives
+2ai(X (α)) = (1 − α)2
+Z ti+1
+ti
+( ¯Xt − xi) ∧ d ¯Xt
++ α2
+Z ti+1
+ti
+(X ⋆ t − xi) ∧ dX ⋆ t
++ α(1 − α)
+Z ti+1
+ti
+( ¯Xt − xi) ∧ dX ⋆ t
++ α(1 − α)
+Z ti+1
+ti
+(X ⋆ t − xi) ∧ d ¯Xt.
+The four integrals are independent of α; the area is therefore a polynomial in α, with values 0 at α = 0 and A⋆(r, ℓ) at
+α = 1. The intermediate value theorem gives every area in [0, A⋆(r, ℓ)]. Reflection across the chord preserves endpoints
+and length and reverses signed area; when the endpoints coincide, any reflection axis through their common point serves the
+same purpose. Hence the full interval [−A⋆(r, ℓ), A⋆(r, ℓ)] is attainable.
+For a speed bound L, the length on [ti, ti+1] does not exceed L(ti+1 − ti). We therefore use the established notation
+A⋆ i = A⋆(∥xi+1 − xi∥, L(ti+1 − ti)). Formula (11) also shows the homogeneity A⋆(ρr, ρℓ) = ρ2A⋆(r, ℓ) for every ρ > 0.
+Corollary A.3 (Independent areas under a speed bound). Fix the observed planar record S and a speed bound L such that
+XL(S) ̸= ∅. For any numbers a0, . . . , an−1 satisfying |ai| ≤ A⋆ i , there exists X ∈ XL(S) with ai(X) = ai simultaneously
+for all i.
+11
+The Information Limits of Neural CDEs Under Sparse Observations
+Proof. For each i, Lemma A.2 supplies an absolutely continuous path on [ti, ti+1] with the prescribed endpoints, signed area
+ai, and speed at most L. Concatenate the paths in increasing order of their intervals. They agree at each shared endpoint xi
+and are uniformly L-Lipschitz, so the concatenation is a globally absolutely continuous path with ∥ ˙X∥L∞ ≤ L. It matches
+S and realizes all the specified areas. The construction does not require its one-sided velocities to agree at the observation
+times.
+Lemma A.4 (Maximum of the Dido profile). For every ℓ > 0 and 0 ≤ r ≤ ℓ,
+A⋆(r, ℓ) ≤ ℓ2 2π , with equality at r = 2ℓ π . (12)
+Proof. For fixed ℓ, differentiate the Dido expression directly in the angle θ:
+d
+dθ
+θ − sin θ
+2θ2 = θ(1 − cos θ) − 2(θ − sin θ) 2θ3 = 2 sin θ − θ(1 + cos θ) 2θ3 = cos(θ/2) θ3   2 sin(θ/2) − θ cos(θ/2)  .
+The factor in parentheses is positive for 0 < θ < 2π, because it is zero at θ = 0 and its derivative is
+d
+dθ
+ 
+2 sin(θ/2) − θ cos(θ/2)
+
+= θ 2 sin(θ/2) > 0.
+The sign of the area derivative is therefore the sign of cos(θ/2): positive for 0 < θ < π and negative for π < θ < 2π. At
+θ = π,
+r
+ℓ = 2 sin(π/2) π = 2 π ,
+A⋆(r, ℓ) = ℓ2 2π2 (π − sin π) = ℓ2 2π .
+This proves the claimed sharp bound. The maximizing curve is a semicircle.
+A.3. One-gap geometry under bounded acceleration
+Fix one observation interval [ti, ti+1] and assume X ∈ W 2,∞([ti, ti+1]; R2) with Xti = xi, Xti+1 = xi+1, ∥ ˙X∥L∞ ≤ L,
+and ∥ ¨X∥L∞ ≤ M.
+The signed area has the exact decomposition
+ai(X) =
+Z ti+1
+ti
+(Xt − ¯Xt) ∧ xi+1 − xi ti+1 − ti dt + 1 2 Z ti+1 ti (Xt − ¯Xt) ∧  ˙Xt − xi+1 − xi ti+1 − ti  dt.
+To derive this identity, expand the defining area integral using Xt − xi = ( ¯Xt − xi) + (Xt − ¯Xt) and ˙Xt = ˙¯Xt + ( ˙Xt − ˙¯Xt):
+2ai(X) =
+Z ti+1
+ti
+( ¯Xt − xi) ∧ ˙¯Xt dt
++
+Z ti+1
+ti
+( ¯Xt − xi) ∧ ( ˙Xt − ˙¯Xt) dt
++
+Z ti+1
+ti
+(Xt − ¯Xt) ∧ ˙¯Xt dt
++
+Z ti+1
+ti
+(Xt − ¯Xt) ∧ ( ˙Xt − ˙¯Xt) dt.
+The first integral vanishes because its vectors are parallel. Integrating the second by parts and using Xti = ¯Xti and
+Xti+1 = ¯Xti+1 gives
+Z ti+1
+ti
+( ¯Xt − xi) ∧ ( ˙Xt − ˙¯Xt) dt =  ( ¯Xt − xi) ∧ (Xt − ¯Xt) ti+1 ti − Z ti+1
+ti
+˙¯Xt ∧ (Xt − ¯Xt) dt
+=
+Z ti+1
+ti
+(Xt − ¯Xt) ∧ xi+1 − xi ti+1 − ti dt.
+The second and third integrals in the expansion are therefore equal. Dividing by two gives the stated decomposition.
+12
+The Information Limits of Neural CDEs Under Sparse Observations
+Lemma A.5 (Deviation from the chord). If X ∈ W 2,∞([ti, ti+1]; R2) has the prescribed endpoints and ∥ ¨X∥L∞ ≤ M ,
+then, for every t ∈ [ti, ti+1],
+∥Xt − ¯Xt∥ ≤ M 2 (t − ti)(ti+1 − t),  ˙Xt − xi+1 − xi ti+1 − ti  ≤ M 2(ti+1 − ti)  (t − ti)2 + (ti+1 − t)2 .
+Proof. Integrating the acceleration twice from ti yields
+Xt − xi =
+Z t
+ti
+˙Xτ dτ = (t − ti) ˙Xti +
+Z t
+ti
+Z τ
+ti
+¨Xs ds dτ = (t − ti) ˙Xti +
+Z t
+ti
+(t − s) ¨Xs ds.
+The last equality follows by reversing the order of integration on {(s, τ ) : ti ≤ s ≤ τ ≤ t}: for fixed s, the outer time τ
+ranges from s to t. Setting t = ti+1 gives
+xi+1 − xi = (ti+1 − ti) ˙Xti +
+Z ti+1
+ti
+(ti+1 − s) ¨Xs ds.
+Solving this equality for ˙Xti and substituting back into the earlier expression yields
+˙Xti = xi+1 − xi ti+1 − ti − 1 ti+1 − ti
+Z ti+1
+ti
+(ti+1 − s) ¨Xs ds,
+Xt − ¯Xt =
+Z t
+ti
+(t − s) ¨Xs ds − t − ti ti+1 − ti
+Z ti+1
+ti
+(ti+1 − s) ¨Xs ds.
+Split the final integral at t and collect the coefficients of ¨Xs on each part:
+Xt − ¯Xt =
+Z t
+ti
+
+(t − s) − (t − ti)(ti+1 − s) ti+1 − ti
+
+¨Xs ds − t − ti ti+1 − ti
+Z ti+1
+t
+(ti+1 − s) ¨Xs ds
+= − ti+1 − t ti+1 − ti
+Z t
+ti
+(s − ti) ¨Xs ds − t − ti ti+1 − ti
+Z ti+1
+t
+(ti+1 − s) ¨Xs ds.
+Applying ∥ ¨Xs∥ ≤ M and evaluating both integrals explicitly gives
+∥Xt − ¯Xt∥ ≤ M (ti+1 − t) ti+1 − ti
+Z t
+ti
+(s − ti) ds + M (t − ti) ti+1 − ti
+Z ti+1
+t
+(ti+1 − s) ds
+= M (ti+1 − t)(t − ti)2
+2(ti+1 − ti) + M (t − ti)(ti+1 − t)2 2(ti+1 − ti)
+= M 2 (t − ti)(ti+1 − t).
+For the velocity estimate, the endpoint condition gives xi+1 − xi =
+R ti+1
+ti
+˙Xs ds. Consequently,
+˙Xt − xi+1 − xi ti+1 − ti = 1 ti+1 − ti
+Z ti+1
+ti
+( ˙Xt − ˙Xs) ds.
+Since ˙Xt − ˙Xs = R t s ¨Xτ dτ, we have ∥ ˙Xt − ˙Xs∥ ≤ M |t − s|. Splitting the integral at t then gives
+ ˙Xt − xi+1 − xi ti+1 − ti  ≤ M ti+1 − ti Z t ti (t − s) ds + Z ti+1 t (s − t) ds 
+= M ti+1 − ti
+ (t − ti)2
+2 + (ti+1 − t)2 2 
+= M 2(ti+1 − ti)  (t − ti)2 + (ti+1 − t)2 .
+13
+The Information Limits of Neural CDEs Under Sparse Observations
+This proves both estimates with the explicit constant M from the acceleration assumption and no dependence on the number
+of observation intervals.
+Proposition A.6 (Acceleration-aware area bounds). Let A⋆ L,M (∥xi+1 − xi∥, ti+1 − ti) be the supremum of |ai(X)| over
+paths on [ti, ti+1] with these endpoints, ∥ ˙X∥L∞ ≤ L and ∥ ¨X∥L∞ ≤ M. For every feasible such interval,
+A⋆ L,M (∥xi+1 − xi∥, ti+1 − ti)
+≤ min
+(
+A⋆
+ 
+∥xi+1 − xi∥, L(ti+1 − ti)
+
+, ∥xi+1 − xi∥M (ti+1 − ti)2
+12 + M 2(ti+1 − ti)4 80 ) . (13)
+For any unit vector ν perpendicular to xi+1 − xi and any µ ∈ [0, M ] satisfying
+∥xi+1 − xi∥2
+(ti+1 − ti)2 + µ2(ti+1 − ti)2 4 ≤ L2,
+the parabolic path
+X par t = ¯Xt + µ 2 (t − ti)(ti+1 − t)ν
+is feasible on this interval and has |ai(X par)| = ∥xi+1 − xi∥µ(ti+1 − ti)2/12.
+Proof. By the exact area decomposition and the first estimate of Lemma A.5, the chord–deviation contribution satisfies
+ Z ti+1
+ti
+(Xt − ¯Xt) ∧ xi+1 − xi ti+1 − ti dt  ≤ ∥xi+1 − xi∥ ti+1 − ti Z ti+1 ti ∥Xt − ¯Xt∥ dt ≤ ∥xi+1 − xi∥M 2(ti+1 − ti) Z ti+1 ti (t − ti)(ti+1 − t) dt.
+The integral equals
+Z ti+1
+ti
+(t − ti)(ti+1 − t) dt =
+ (ti+1 − ti)(t − ti)2
+2 − (t − ti)3 3 ti+1 ti = (ti+1 − ti)3  1 2 − 1 3  = (ti+1 − ti)3 6 .
+Substitution gives the first contribution ∥xi+1 − xi∥M (ti+1 − ti)2/12.
+For the second contribution, use both bounds of Lemma A.5:
+1
+2
+ Z ti+1
+ti
+(Xt − ¯Xt) ∧
+
+˙Xt − xi+1 − xi ti+1 − ti
+
+dt
+ ≤ 1 2 Z ti+1 ti ∥Xt − ¯Xt∥  ˙Xt − xi+1 − xi ti+1 − ti  dt
+≤ M 2
+8(ti+1 − ti)
+Z ti+1
+ti
+(t − ti)(ti+1 − t) ×
+
+(t − ti)2 + (ti+1 − t)2 dt.
+Expanding the integrand gives
+(t − ti)(ti+1 − t)
+
+(t − ti)2 + (ti+1 − t)2 = −2(t − ti)4 + 4(ti+1 − ti)(t − ti)3
+− 3(ti+1 − ti)2(t − ti)2 + (ti+1 − ti)3(t − ti).
+Its integral is
+Z ti+1
+ti
+(t − ti)(ti+1 − t)
+
+(t − ti)2 + (ti+1 − t)2 dt
+=
+"
+− 2(t − ti)5
+5 + (ti+1 − ti)(t − ti)4 − (ti+1 − ti)2(t − ti)3 + (ti+1 − ti)3(t − ti)2 2 #ti+1
+ti
+= (ti+1 − ti)5
+
+− 2 5 + 1 − 1 + 1 2 
+= (ti+1 − ti)5
+10 .
+14
+The Information Limits of Neural CDEs Under Sparse Observations
+Multiplying by M 2/[8(ti+1 − ti)] yields M 2(ti+1 − ti)4/80. Adding the two contributions gives the acceleration-based
+upper estimate. The length bound
+R ti+1
+ti ∥ ˙Xt∥ dt ≤ L(ti+1 − ti) independently yields the Dido estimate; taking their minimum proves (13).
+To prove the lower witness statement, consider the displayed parabolic path. Differentiating gives
+˙X par t = xi+1 − xi ti+1 − ti + µ 2 (ti+1 + ti − 2t)ν,
+¨X par t = −µν.
+Since ν ⊥ (xi+1 − xi) and |ti+1 + ti − 2t| ≤ ti+1 − ti,
+∥ ˙X par t ∥2 = ∥xi+1 − xi∥2 (ti+1 − ti)2 + µ2(ti+1 + ti − 2t)2 4 ≤ ∥xi+1 − xi∥2 (ti+1 − ti)2 + µ2(ti+1 − ti)2 4 ≤ L2,
+∥ ¨X par t ∥ = µ ≤ M.
+The deviation X par t − ¯Xt and its derivative are both parallel to ν, so their wedge product is zero. Using the first term in the
+exact area decomposition and the integral already evaluated above,
+ai(X par) = µ 2(ti+1 − ti)   ν ∧ (xi+1 − xi)  × Z ti+1 ti (t − ti)(ti+1 − t) dt = µ(ti+1 − ti)2 12   ν ∧ (xi+1 − xi)  .
+Orthogonality and ∥ν∥ = 1 give |ν ∧ (xi+1 − xi)| = ∥xi+1 − xi∥, completing the proof.
+For the observed record S, assume that the prescribed speed and acceleration bounds admit a compatible path, so XL,M (S) ̸=
+∅. The resulting bound ∥xi+1 − xi∥ ≤ L(ti+1 − ti) implies
+A⋆ L,M (∥xi+1 − xi∥, ti+1 − ti) ≤ LM 12 (ti+1 − ti)3 + M 2 80 (ti+1 − ti)4.
+If δ = maxi(ti+1 − ti), summing these one-gap bounds and using P i(ti+1 − ti) = T yields
+n−1X
+i=0
+A⋆ L,M (∥xi+1 − xi∥, ti+1 − ti) ≤ LM 12 X i (ti+1 − ti)3 + M 2 80 X i (ti+1 − ti)4 ≤ LM T 12 δ2 + M 2T 80 δ3.
+For comparison, Lemma A.4 gives P i A⋆ i ≤ L2T δ/(2π) under the speed-only constraint. These are upper bounds on the
+sums of gap-wise area budgets. In particular, under a global W 2,∞ constraint, velocities must agree at shared observation
+times, so the one-gap areas cannot generally be selected independently. The proposition does not claim a sharp global
+acceleration-constrained identified set.
+B. Proof of the Response Identified-Set Theorem
+For s ≤ t, let ΦX s,t(z) denote the state at time t of the CDE driven by X on [s, t], starting from state z at time s. Then
+Zt(X) = ΦX 0,t(z0) and ¯zt = Φ ¯X 0,t(z0). Uniqueness gives ΦX s,t = ΦX r,t ◦ ΦX s,r for s ≤ r ≤ t.
+B.1. The local CDE expansion
+The assumption V1, V2 ∈ C 4 b (Rm; Rm) makes the following field norms finite:
+Mk = sup
+z∈Rm
+
+
+2X
+j=1
+∥DkVj (z)∥2
+
+
+1/2
+, k = 0, 1, 2,
+where D0Vj = Vj . Thus M0 bounds the vector fields, while M1 and M2 bound their first and second derivatives. These
+bounds depend only on the fixed vector fields.
+15
+The Information Limits of Neural CDEs Under Sparse Observations
+Lemma B.1 (Uniform one-interval area expansion). Fix any observation interval [ti, ti+1] and any admissible path X on it.
+Compare the state at ti+1 under X with that under its straight chord ¯X, starting both solutions from the same arbitrary
+state z at ti. Then ΦX ti ,ti+1 (z) − Φ ¯X ti ,ti+1 (z) − ai(X)[V1, V2](z)  ≤ ClocL3(ti+1 − ti)3. (14)
+The fixed coefficient Cloc is defined at the end of the proof in terms of M0, M1, M2. It is independent of the initial state, the
+interval, the skeleton, and the admissible completion.
+Proof. Set Zt = ΦX ti ,t(z), with Zti = z. Its integral equation is
+Zt − z =
+2X
+j=1
+Z t
+ti
+Vj (Zτ ) ˙X j τ dτ.
+By the triangle inequality and Cauchy–Schwarz, for every t ∈ [ti, ti+1],
+∥Zt − z∥ ≤
+Z t
+ti
+ 2X j=1 Vj (Zτ ) ˙X j τ  dτ ≤ Z t ti   2X j=1 ∥Vj (Zτ )∥2   1/2 ∥ ˙Xτ ∥ dτ ≤ M0 Z t ti ∥ ˙Xτ ∥ dτ.
+Subtract the first-order expression obtained by freezing the fields at z. Since
+R t
+ti
+˙X j τ dτ = X j t − xj i , the difference is exactly
+Zt − z −
+2X
+k=1
+Vk(z)(X k t − xk i ) =
+2X
+j=1
+Z t
+ti
+ 
+Vj (Zτ ) − Vj (z)
+ ˙X j τ dτ.
+The mean-value formula, the definition of M1, and the preceding state estimate give
+Zt − z − 2X k=1 Vk(z)(X k t − xk i )  ≤ M1 Z t ti ∥Zτ − z∥ ∥ ˙Xτ ∥ dτ
+≤ M0M1
+Z t
+ti
+Z τ
+ti
+∥ ˙Xs∥ ds
+
+∥ ˙Xτ ∥ dτ = M0M1 2 Z t ti ∥ ˙Xτ ∥ dτ 2 .
+The last equality is obtained by differentiating 1 2 ( R τ ti ∥ ˙Xs∥ ds)2 with respect to τ and evaluating the endpoints.
+For each field, Taylor’s formula at z gives
+Vj (Zt) = Vj (z) + DVj (z)(Zt − z) +
+Z 1
+0
+(1 − θ)D2Vj   z + θ(Zt − z)  [Zt − z, Zt − z] dθ.
+Substituting the first-order decomposition of Zt − z gives
+Vj (Zt) − Vj (z) −
+2X
+k=1
+DVj (z)Vk(z)(X k t − xk i )
+= DVj (z)
+ 
+Zt − z −
+2X
+k=1
+Vk(z)(X k t − xk i )
+!
++
+Z 1
+0
+(1 − θ)D2Vj   z + θ(Zt − z)  [Zt − z, Zt − z]dθ.
+Take the Euclidean norm over the two field indices. The first term is controlled by the previous first-order error and M1; the
+second uses M2 and
+R 1
+0 (1 − θ) dθ = 1/2. Thus
+ 2X
+j=1
+Vj (Zt) − Vj (z) − 2X k=1 DVj (z)Vk(z)(X k t − xk i )  2!1/2
+≤ M0M 2 1
+2
+Z t
+ti
+∥ ˙Xτ ∥ dτ
+2
++ M 2 0 M2
+2
+Z t
+ti
+∥ ˙Xτ ∥ dτ
+2
+= M0M 2 1 + M 2 0 M2
+2
+Z t
+ti
+∥ ˙Xτ ∥ dτ
+2
+.
+16
+The Information Limits of Neural CDEs Under Sparse Observations
+Return to the integral equation at ti+1 and substitute the expanded fields term by term:
+ΦX ti ,ti+1 (z) = z +
+2X
+j=1
+Vj (z)
+Z ti+1
+ti
+dX j t +
+2X
+j,k=1
+DVj (z)Vk(z)
+Z ti+1
+ti
+(X k t − xk i ) dX j t + RX (z)
+= z +
+2X
+j=1
+Vj (z)(xj i+1 − xj i ) +
+2X
+j,k=1
+DVj (z)Vk(z)Xkj i + RX (z),
+where Xkj i = R ti+1 ti (X k t − xk i ) dX j t is the second-level integral from Appendix A. The error RX (z) is precisely the integral of the two-field difference bounded above. Consequently,
+∥RX (z)∥ ≤ M0M 2 1 + M 2 0 M2 2 × Z ti+1 ti Z t ti ∥ ˙Xs∥ ds 2 ∥ ˙Xt∥ dt
+= M0M 2 1 + M 2 0 M2
+6 ×
+Z ti+1
+ti
+∥ ˙Xt∥ dt
+3
+≤ M0M 2 1 + M 2 0 M2
+6 L3(ti+1 − ti)3.
+To check the equality, differentiate 1 3 ( R t ti ∥ ˙Xs∥ ds)3 and integrate the result over [ti, ti+1].
+The product rule identifies the second-level terms fixed by the endpoints:
+X11 i =
+ 1
+2 (X 1 t − x1 i )2
+ti+1
+ti
+= 1 2 (x1 i+1 − x1 i )2,
+X22 i =
+ 1
+2 (X 2 t − x2 i )2
+ti+1
+ti
+= 1 2 (x2 i+1 − x2 i )2,
+X12 i + X21 i =
+Z ti+1
+ti
+d
+
+(X 1 t − x1 i )(X 2 t − x2 i )  = (x1 i+1 − x1 i )(x2 i+1 − x2 i ),
+X12 i − X21 i =
+Z ti+1
+ti
+
+(X 1 t − x1 i ) dX 2 t − (X 2 t − x2 i ) dX 1 t  = 2ai(X).
+Adding and subtracting the last two identities gives
+X12 i = 1 2 (x1 i+1 − x1 i )(x2 i+1 − x2 i ) + ai(X),
+X21 i = 1 2 (x1 i+1 − x1 i )(x2 i+1 − x2 i ) − ai(X).
+For the straight path, the corresponding integrals are
+¯X k t − xk i = t − ti ti+1 − ti (xk i+1 − xk i ),
+d ¯X j t = xj i+1 − xj i ti+1 − ti dt, Z ti+1
+ti
+(t − ti) dt =
+ (t − ti)2
+2
+ti+1
+ti
+= (ti+1 − ti)2
+2 ,
+Z ti+1
+ti
+( ¯X k t − xk i ) d ¯X j t = xk i+1 − xk i ti+1 − ti xj i+1 − xj i ti+1 − ti × Z ti+1 ti (t − ti) dt = 1 2 (xk i+1 − xk i )(xj i+1 − xj i ).
+Thus the first-level terms and the diagonal second-level terms in the expansions of ΦX ti ,ti+1 (z) and Φ ¯X ti ,ti+1 (z) agree; their
+two mixed terms differ by ai(X) and −ai(X). Subtracting the two expansions gives
+ΦX ti ,ti+1 (z) − Φ ¯X ti ,ti+1 (z) = ai(X)DV2(z)V1(z) − ai(X)DV1(z)V2(z) + RX (z) − R ¯X (z)
+= ai(X)[V1, V2](z) + RX (z) − R ¯X (z).
+17
+The Information Limits of Neural CDEs Under Sparse Observations
+Both X and ¯X have variation at most L(ti+1 − ti). Applying the already established error bound separately to them yields
+ΦX ti ,ti+1 (z) − Φ ¯X ti ,ti+1 (z) − ai(X)[V1, V2](z)  ≤ ∥RX (z)∥ + ∥R ¯X (z)∥
+≤ M0M 2 1 + M 2 0 M2
+6 L3(ti+1 − ti)3 + M0M 2 1 + M 2 0 M2 6 L3(ti+1 − ti)3
+= M0M 2 1 + M 2 0 M2
+3 L3(ti+1 − ti)3.
+We therefore fix
+Cloc := M0M 2 1 + M 2 0 M2 3 .
+This proves the lemma with a coefficient independent of the interval and the path.
+B.2. Derivatives and transport along the reference path
+To control propagation of a state perturbation along the reference chord, set Zt = Φ ¯X ti ,t(z) on [ti, ti+1]. The derivatives
+Dz Zt and D2 z Zt are taken with respect to the initial state Zti = z. At z = ¯zi this is the reference trajectory, and the state
+satisfies
+d
+dt Zt =
+2X
+j=1
+xj i+1 − xj i
+ti+1 − ti
+Vj (Zt).
+Differentiating with respect to z gives the first variational equation and its initial condition:
+d
+dt Dz Zt =
+2X
+j=1
+xj i+1 − xj i
+ti+1 − ti
+DVj (Zt)Dz Zt, Dz Zti = I.
+Integrating this equation and applying M1 gives
+∥Dz Zt∥ ≤ 1 + M1
+∥xi+1 − xi∥
+ti+1 − ti
+Z t
+ti
+∥Dz Zτ ∥ dτ.
+Integral Gr¨onwall, applied to this displayed inequality with the constant coefficient M1∥xi+1 − xi∥/(ti+1 − ti), yields
+∥Dz Zt∥ ≤ exp
+
+M1
+∥xi+1 − xi∥
+ti+1 − ti
+(t − ti)
+
+,
+∥Dz Φ
+¯X
+ti ,ti+1 (z)∥ ≤ eM1 ∥xi+1 −xi ∥.
+The last estimate also implies a bound linear in the length of the observation interval: since er − 1 = R r 0 es ds ≤ rer for
+r ≥ 0 and ∥xi+1 − xi∥ ≤ L(ti+1 − ti) ≤ LT ,
+∥Dz Φ
+¯X
+ti ,ti+1 (z)∥ ≤ 1 + M1∥xi+1 − xi∥eM1 ∥xi+1 −xi ∥
+≤ 1 + M1eM1 LT ∥xi+1 − xi∥
+≤ 1 + M1eM1 LT L(ti+1 − ti).
+The second derivative must be controlled separately. For arbitrary unit vectors u, v ∈ Rm, differentiating the first variational
+equation once more gives
+d
+dt D2 z Zt[u, v] =
+2X
+j=1
+xj i+1 − xj i
+ti+1 − ti
+× DVj (Zt)D2 z Zt[u, v] +
+2X
+j=1
+xj i+1 − xj i
+ti+1 − ti
+× D2Vj (Zt)[Dz Ztu, Dz Ztv],
+D2 z Zti [u, v] = 0.
+The homogeneous part of this equation is governed by the same coefficient matrix as the first variational equation. Its
+propagator from τ to t has norm at most exp(M1∥xi+1 − xi∥(t − τ )/(ti+1 − ti)). Variation of constants, M2, and the
+18
+The Information Limits of Neural CDEs Under Sparse Observations
+first-derivative estimate give
+∥D2 z Zt∥ ≤ M2 ∥xi+1 − xi∥ ti+1 − ti × Z t ti exp  M1∥xi+1 − xi∥ ti+1 − ti (t − τ )  × ∥Dz Zτ ∥2 dτ
+≤ M2
+∥xi+1 − xi∥
+ti+1 − ti
+×
+Z t
+ti
+exp
+ M1∥xi+1 − xi∥
+ti+1 − ti
+(t − ti + τ − ti)
+
+dτ
+≤ M2∥xi+1 − xi∥ t − ti ti+1 − ti × exp  2M1∥xi+1 − xi∥ t − ti ti+1 − ti  .
+The last inequality uses t − τ + 2(τ − ti) = t − ti + τ − ti ≤ 2(t − ti). In particular,
+∥D2 z Φ ¯X ti ,ti+1 (z)∥ ≤ M2∥xi+1 − xi∥e2M1 ∥xi+1 −xi ∥
+≤ M2e2M1 LT L(ti+1 − ti).
+For every e ∈ Rm, the mean-value and integral Taylor formulas now imply
+Φ
+¯X
+ti ,ti+1 (z + e) − Φ
+¯X
+ti ,ti+1 (z) =
+Z 1
+0
+Dz Φ
+¯X
+ti ,ti+1 (z + θe)e dθ,
+∥Φ
+¯X
+ti ,ti+1 (z + e) − Φ
+¯X
+ti ,ti+1 (z)∥ ≤ eM1 ∥xi+1 −xi ∥∥e∥,
+Φ
+¯X
+ti ,ti+1 (z + e) − Φ
+¯X
+ti ,ti+1 (z) − Dz Φ
+¯X
+ti ,ti+1 (z)e =
+Z 1
+0
+(1 − θ)D2 z Φ ¯X ti ,ti+1 (z + θe)[e, e] dθ,
+Φ ¯X ti ,ti+1 (z + e) − Φ ¯X ti ,ti+1 (z) − Dz Φ ¯X ti ,ti+1 (z)e  ≤ M2e2M1 LT 2 L(ti+1 − ti)∥e∥2.
+At the reference starting state, the definition from Section 4 is Ji = Dz Φ ¯X ti ,ti+1 (¯zi). Thus the transport matrices Pi =
+Jn−1 · · · Ji+1 are products of these derivatives. The first-derivative estimate controls the whole product:
+∥Pi∥ ≤
+n−1Y
+j=i+1
+eM1 ∥xj+1 −xj ∥ = exp
+
+M1
+n−1X
+j=i+1
+∥xj+1 − xj ∥
+
+
+≤ exp
+
+M1L
+n−1X
+j=i+1
+(tj+1 − tj )
+
+
+= eM1 L(T −ti+1 ) ≤ eM1 LT .
+The telescoping sum of time intervals is what makes this estimate uniform in their number.
+B.3. Global expansion and uniform remainder
+Fix any admissible completion X ∈ XL(S) and set ei = Zti (X) − ¯zi. Since the initial state is fixed, e0 = 0. The
+one-interval lemma, applied with initial state Zti (X) = ¯zi + ei, gives
+Zti+1 (X) = Φ
+¯X
+ti ,ti+1 (¯zi + ei) + ai(X)[V1, V2](¯zi + ei) + Rloc i ,
+∥Rloc i ∥ ≤ ClocL3(ti+1 − ti)3.
+Subtracting ¯zi+1 = Φ ¯X ti ,ti+1 (¯zi) yields the exact recurrence
+ei+1 = Φ
+¯X
+ti ,ti+1 (¯zi + ei) − Φ
+¯X
+ti ,ti+1 (¯zi) + ai(X)[V1, V2](¯zi + ei) + Rloc i .
+Before linearizing the recurrence, the field bounds give
+∥[V1, V2](z)∥ = ∥DV2(z)V1(z) − DV1(z)V2(z)∥
+≤ ∥DV2(z)∥ ∥V1(z)∥ + ∥DV1(z)∥ ∥V2(z)∥
+≤ 2M0M1.
+19
+The Information Limits of Neural CDEs Under Sparse Observations
+The Dido maximum, Lemma A.4, implies |ai(X)| ≤ L2(ti+1 − ti)2/(2π). Together with the flow Lipschitz bound, this
+gives
+∥ei+1∥ ≤ eM1 ∥xi+1 −xi ∥∥ei∥ + M0M1 π L2(ti+1 − ti)2 + ClocL3(ti+1 − ti)3
+≤ eM1 ∥xi+1 −xi ∥∥ei∥ +
+ M0M1
+π + ClocLT
+
+× L2(ti+1 − ti)2.
+The last step uses L(ti+1 − ti) ≤ LT and is uniform over all observation gaps. Set
+Cstep := M0M1 π + ClocLT.
+Since e0 = 0, the first two iterations of the recurrence are
+∥e1∥ ≤ CstepL2(t1 − t0)2,
+∥e2∥ ≤ eM1 ∥x2 −x1 ∥CstepL2(t1 − t0)2 + CstepL2(t2 − t1)2.
+Continuing the same substitution to time tk gives
+∥ek∥ ≤ Cstep
+k−1X
+i=0
+L2(ti+1 − ti)2
+k−1Y
+j=i+1
+eM1 ∥xj+1 −xj ∥.
+The product is bounded uniformly because its exponent is controlled by the total elapsed time. Feasibility and telescoping of
+the observation intervals give
+k−1X
+j=i+1
+∥xj+1 − xj ∥ ≤ L
+k−1X
+j=i+1
+(tj+1 − tj ) = L(tk − ti+1) ≤ LT,
+k−1Y
+j=i+1
+eM1 ∥xj+1 −xj ∥ = exp
+
+M1
+k−1X
+j=i+1
+∥xj+1 − xj ∥
+
+ ≤ eM1 L(tk −ti+1 ) ≤ eM1 LT .
+Substituting this estimate into the preceding sum yields
+∥ek∥ ≤ eM1 LT Cstep
+k−1X
+i=0
+L2(ti+1 − ti)2 ≤ eM1 LT CstepS2.
+Set
+E := eM1 LT Cstep, max 0≤i≤n ∥ei∥ ≤ ES2.
+In particular, E depends only on the fields, L, and T , and not on the number or location of observations.
+The derivative of the Lie bracket in a direction v is
+D[V1, V2](z)[v] = D2V2(z)[v, V1(z)] + DV2(z)DV1(z)v − D2V1(z)[v, V2(z)] − DV1(z)DV2(z)v.
+Using M0, M1, M2 on the four terms, then integrating the derivative along the segment between two states, yields
+∥D[V1, V2](z)∥ ≤ 2(M0M2 + M 2 1 ),
+[V1, V2](z) − [V1, V2](z′) =
+Z 1
+0
+D[V1, V2]
+ 
+z′ + θ(z − z′)  [z − z′] dθ,
+∥[V1, V2](z) − [V1, V2](z′)∥ ≤ 2(M0M2 + M 2 1 )∥z − z′∥.
+Taylor-expand the flow at ¯zi and subtract the bracket at the same point from its value at ¯zi + ei. The exact recurrence
+becomes
+ei+1 = Jiei + ai(X)[V1, V2](¯zi) + Ri,
+20
+The Information Limits of Neural CDEs Under Sparse Observations
+where Ri is the sum of exactly three differences:
+Ri = Rloc i|{z}
+local CDE expansion
++ ai(X)
+ 
+[V1, V2](¯zi + ei) − [V1, V2](¯zi)
+
+| {z }
+bracket variation
++ Φ
+¯X
+ti ,ti+1 (¯zi + ei) − Φ
+¯X
+ti ,ti+1 (¯zi) − Jiei | {z }
+flow Taylor remainder
+.
+The three terms satisfy, respectively,
+∥Rloc i ∥ ≤ ClocL3(ti+1 − ti)3,
+|ai(X)| ∥[V1, V2](¯zi + ei) − [V1, V2](¯zi)∥ ≤ M0M2 + M 2 1 π L2(ti+1 − ti)2∥ei∥,
+∥Φ
+¯X
+ti ,ti+1 (¯zi + ei) − Φ
+¯X
+ti ,ti+1 (¯zi) − Jiei∥ ≤ M2e2M1 LT 2 L(ti+1 − ti)∥ei∥2.
+Sum these bounds over all intervals and substitute maxi ∥ei∥ ≤ ES2. Since P i L(ti+1 − ti) = LT , the steps are
+n−1X
+i=0
+∥Ri∥ ≤ ClocS3 + M0M2 + M 2 1 π S2 max i ∥ei∥ + M2e2M1 LT 2 LT   max i ∥ei∥ 2
+≤ ClocS3 + (M0M2 + M 2 1 )E π S2 2 + M2e2M1 LT 2 LT E2S2 2 .
+To unfold the transport, first use e0 = 0 and write the first two steps of the linear recurrence:
+e1 = a0(X)[V1, V2](¯z0) + R0,
+e2 = J1a0(X)[V1, V2](¯z0) + a1(X)[V1, V2](¯z1) + J1R0 + R1.
+The same substitution through the final interval gives
+en =
+n−1X
+i=0
+ai(X)Jn−1 · · · Ji+1[V1, V2](¯zi) +
+n−1X
+i=0
+Jn−1 · · · Ji+1Ri
+=
+n−1X
+i=0
+ai(X)bi +
+n−1X
+i=0
+PiRi.
+Using ∥Pi∥ ≤ eM1 LT from the flow estimates, the difference between the exact terminal state and the leading area sum
+satisfies
+ZT (X) − ¯zT − n−1X i=0 ai(X)bi  ≤ n−1X i=0 ∥Pi∥ ∥Ri∥
+≤ eM1 LT
+n−1X
+i=0
+∥Ri∥
+≤ eM1 LT ClocS3 + eM1 LT (M0M2 + M 2 1 )E π S2 2 + eM1 LT M2e2M1 LT 2 LT E2S2 2 .
+Set
+CZ := eM1 LT
+
+Cloc + (M0M2 + M 2 1 )E π + M2e2M1 LT 2 LT E2  .
+The resulting bound holds uniformly over all records S with XL(S) ̸= ∅ and all paths in these completion classes:
+ZT (X) − ¯zT − n−1X i=0 ai(X)bi  ≤ CZ   S3 + S2 2  . (15)
+The definitions of M0, M1, M2, Cloc, Cstep, E, and CZ show that these bounds depend only on V1, V2, L, T , independently
+of the skeleton, its number of intervals, and the admissible completion.
+21
+The Information Limits of Neural CDEs Under Sparse Observations
+B.4. The two Hausdorff directions and diameter
+The pointwise estimate yields directed distance bounds between ZT (S; XL) and ¯zT + K(S).
+For every X ∈ XL(S), the Dido bound gives |ai(X)| ≤ A⋆ i for all i. By the definition of K(S), the point ¯zT + P i ai(X)bi
+therefore belongs to ¯zT + K(S). Applying (15) and taking the appropriate supremum and infimum gives the first directed
+Hausdorff bound:
+sup
+z∈ZT (S;XL )
+inf
+y∈¯zT +K(S)
+∥z − y∥ ≤ CZ (S3 + S2 2 ).
+For the opposite direction, choose any y ∈ ¯zT + K(S). There exist a0, . . . , an−1 with |ai| ≤ A⋆ i and y = ¯zT + P i aibi.
+The exact Dido fiber, Lemma A.2, provides on each [ti, ti+1] a path with the prescribed endpoints, speed at most L, and
+signed area ai. Concatenating these paths preserves continuity and the speed bound; the class W 1,∞ does not require
+matching derivatives at the observation times. Hence the concatenation is an X ∈ XL(S) satisfying ai(X) = ai for every i.
+By (15),
+∥ZT (X) − y∥ =
+ZT (X) − ¯zT − n−1X i=0 ai(X)bi  ≤ CZ (S3 + S2 2 ).
+Therefore the reverse directed bound is
+sup
+y∈¯zT +K(S)
+inf
+z∈ZT (S;XL )
+∥y − z∥ ≤ CZ (S3 + S2 2 ).
+By definition, dH is the maximum of these two directed distances. Their bounds prove Theorem 4.1.
+We also verify the diameter formula used in Section 4. Since K(S) is centrally symmetric (ai and −ai are both feasible),
+diam K(S) = 2 max
+v∈K(S)
+∥v∥ = 2 max
+∥u∥=1
+max
+|ai |≤A⋆ i
+n−1X
+i=0
+ai u⊤bi = 2 max ∥u∥=1
+n−1X
+i=0
+A⋆ i |u⊤bi|.
+The final equality follows by selecting each ai to have the sign of u⊤bi. To pass from the zonotope diameter to the
+true identified-set diameter, take z, z′ ∈ ZT (S; XL). For any η > 0, the first directed Hausdorff estimate supplies
+y, y′ ∈ ¯zT + K(S) with ∥z − y∥, ∥z′ − y′∥ ≤ CZ (S3 + S2 2 ) + η. Therefore
+∥z − z′∥ ≤ ∥z − y∥ + ∥y − y′∥ + ∥y′ − z′∥ ≤ diam K(S) + 2CZ (S3 + S2 2 ) + 2η.
+Take the supremum over z, z′ and let η ↓ 0. Repeating the same argument with the two sets exchanged gives the reverse
+inequality. Consequently,
+diam ZT (S; XL) − 2 max ∥u∥=1 n−1X i=0 A⋆ i |u⊤bi|  ≤ 2CZ (S3 + S2 2 ).
+Finally, set δ = maxi(ti+1 − ti). The identity P i(ti+1 − ti) = T gives
+S2 = L2
+n−1X
+i=0
+(ti+1 − ti)2 ≤ L2δ
+n−1X
+i=0
+(ti+1 − ti) = L2T δ,
+S3 = L3
+n−1X
+i=0
+(ti+1 − ti)3 ≤ L3δ2
+n−1X
+i=0
+(ti+1 − ti) = L3T δ2.
+Thus the Hausdorff error is bounded by CZ (L3T + L4T 2)δ2, with no dependence on the number of observation intervals.
+This is an upper bound on the approximation error.
+C. Proof of the Target-Specific Certificate
+Fix the observed planar record S and assume that the prescribed speed bound satisfies XL(S) ̸= ∅. Let E, CZ be the
+uniform constants from Appendix B.3. The remaining notation is as in Theorem 4.2.
+22
+The Information Limits of Neural CDEs Under Sparse Observations
+C.1. Scalar expansion and its remainder
+Lemma C.1 (Uniform scalar expansion). Under the assumptions of Theorem 4.2, every X ∈ XL(S) satisfies
+F (X) − F ( ¯X) − n−1X i=0 ciai(X)  ≤ CY (S3 + S2 2 ), (16)
+where the constant can be chosen as
+CY := ∥∇g∥∞CZ + 1 2 ∥D2g∥∞E2.
+It depends only on V1, V2, g, L, T .
+Proof. The global state estimates established in Appendix B.3 hold for every admissible completion and give
+∥ZT (X) − ¯zT ∥ ≤ ES2, ZT (X) − ¯zT − n−1X i=0 ai(X)bi  ≤ CZ (S3 + S2 2 ).
+Taylor’s formula along the segment from ¯zT to ZT (X) gives
+g(ZT (X)) − g(¯zT ) = ∇g(¯zT )⊤(ZT (X) − ¯zT )
++
+Z 1
+0
+(1 − θ) D2g   ¯zT + θ(ZT (X) − ¯zT )  [ZT (X) − ¯zT , ZT (X) − ¯zT ]dθ.
+Because D2g is bounded, the integral remainder satisfies
+g(ZT (X)) − g(¯zT ) − ∇g(¯zT )⊤(ZT (X) − ¯zT )  ≤ Z 1
+0
+(1 − θ) ∥D2g∥∞∥ZT (X) − ¯zT ∥2 dθ
+= 1 2 ∥D2g∥∞∥ZT (X) − ¯zT ∥2
+≤ 1 2 ∥D2g∥∞E2S2 2 .
+The equality uses
+R 1
+0 (1 − θ) dθ = 1/2; the final inequality uses the state-deviation bound above.
+Recall F (X) = g(ZT (X)), F ( ¯X) = g(¯zT ), and ci = ∇g(¯zT )⊤bi. Subtract the proposed leading scalar correction and
+add and subtract the first-order Taylor term. This produces an exact decomposition into the readout remainder and the
+state-approximation remainder:
+F (X) − F ( ¯X) −
+n−1X
+i=0
+ciai(X) =
+
+g(ZT (X)) − g(¯zT ) − ∇g(¯zT )⊤(ZT (X) − ¯zT ) 
++ ∇g(¯zT )⊤
+
+ZT (X) − ¯zT −
+n−1X
+i=0
+ai(X)bi
+
+.
+Bound the first bracket by the preceding Taylor estimate and the second by Cauchy–Schwarz and the state estimate:
+F (X) − F ( ¯X) − n−1X i=0 ciai(X)  ≤ 1 2 ∥D2g∥∞E2S2 2 + ∥∇g(¯zT )∥ ZT (X) − ¯zT − n−1X i=0 ai(X)bi 
+≤ 1 2 ∥D2g∥∞E2S2 2 + ∥∇g∥∞CZ (S3 + S2 2 )
+≤
+
+∥∇g∥∞CZ + 1 2 ∥D2g∥∞E2
+
+(S3 + S2 2 ).
+The last step uses S3 ≥ 0. This is exactly (16) with the stated fixed constant CY .
+23
+The Information Limits of Neural CDEs Under Sparse Observations
+C.2. Scalar projection of the area zonotope
+The projection of K(S) under k 7→ ∇g(¯zT )⊤k is determined by the coefficients ci. From (4),
+
+∇g(¯zT )⊤k : k ∈ K(S) 	 =
+(
+∇g(¯zT )⊤
+n−1X
+i=0
+aibi : |ai| ≤ A⋆ i
+)
+=
+(n−1X
+i=0
+ciai : |ai| ≤ A⋆ i
+)
+.
+For any admissible choice of ai, the triangle inequality gives
+ n−1X i=0 ciai  ≤ n−1X i=0 |ci| |ai| ≤ n−1X i=0 |ci|A⋆ i = R2(S).
+To see that no value in this interval is missing, first suppose R2(S) > 0. For any number s ∈ [−R2(S), R2(S)], choose
+ai = s R2(S) A⋆ i sgn(ci), sgn(0) = 0.
+Every chosen area satisfies |ai| ≤ A⋆ i . Substitution into the scalar sum yields
+n−1X
+i=0
+ciai = s R2(S)
+n−1X
+i=0
+ciA⋆ i sgn(ci) = s R2(S)
+n−1X
+i=0
+|ci|A⋆ i = s.
+If R2(S) = 0, every summand |ci|A⋆ i vanishes, so every admissible scalar sum equals zero. In either case, we have proved
+(n−1X
+i=0
+ciai : |ai| ≤ A⋆ i
+)
+= [−R2(S), R2(S)].
+The Dido fiber in Lemma A.2 realizes each prescribed ai on its observation interval. Corollary A.3 then realizes all these
+areas simultaneously with a single driver X ∈ XL(S). Consequently, every number in the projected interval is the leading
+scalar correction of an admissible completion.
+C.3. Both Hausdorff directions and the diameter
+We compare the actual scalar identified set YT (S; XL) with [F ( ¯X) − R2(S), F ( ¯X) + R2(S)]. The pointwise estimate (16)
+and the exact area projection give both directions of the Hausdorff bound.
+First, let X ∈ XL(S). Since |ai(X)| ≤ A⋆ i , the projection result gives
+F ( ¯X) +
+n−1X
+i=0
+ciai(X) ∈ [F ( ¯X) − R2(S), F ( ¯X) + R2(S)].
+Its distance from the true output F (X) is at most CY (S3 + S2 2 ) by (16). Taking the infimum over the comparison interval
+and then the supremum over all admissible X establishes the first directed bound:
+sup
+y∈YT (S;XL )
+inf
+v∈[F ( ¯X)−R2 (S), F ( ¯X)+R2 (S)]
+|y − v| ≤ CY (S3 + S2 2 ).
+For the reverse direction, choose any v ∈ [F ( ¯X) − R2(S), F ( ¯X) + R2(S)]. By the preceding subsection, there are areas
+ai ∈ [−A⋆ i , A⋆ i ] such that
+v = F ( ¯X) +
+n−1X
+i=0
+ciai.
+By Corollary A.3, one admissible completion X satisfies ai(X) = ai for every interval. Applying (16) to this completion
+gives
+|v − F (X)| =
+F ( ¯X) + n−1X i=0 ciai(X) − F (X)  ≤ CY (S3 + S2 2 ).
+24
+The Information Limits of Neural CDEs Under Sparse Observations
+Taking the corresponding infimum over the actual identified set and supremum over the comparison interval establishes the
+reverse directed bound:
+sup
+v∈[F ( ¯X)−R2 (S), F ( ¯X)+R2 (S)]
+inf
+y∈YT (S;XL )
+|v − y| ≤ CY (S3 + S2 2 ).
+The Hausdorff distance is the maximum of the two directed distances. These estimates prove (7) with the explicit CY from
+Lemma C.1.
+For the diameter, given X, X ′ ∈ XL(S), the first directed estimate supplies points v, v′ in the comparison interval, each
+within CY (S3 + S2 2 ) of its corresponding output. The triangle inequality gives
+|F (X) − F (X ′)| ≤ |F (X) − v| + |v − v′| + |v′ − F (X ′)| ≤ 2R2(S) + 2CY (S3 + S2 2 ).
+Taking the supremum over X, X ′ proves the upper bound on diam YT (S; XL). Conversely, apply the reverse directed
+estimate to the two endpoints F ( ¯X) + R2(S) and F ( ¯X) − R2(S). It provides admissible completions X +, X − satisfying
+|F (X +) − [F ( ¯X) + R2(S)]| ≤ CY (S3 + S2 2 ),
+|F (X −) − [F ( ¯X) − R2(S)]| ≤ CY (S3 + S2 2 ).
+The reverse triangle inequality therefore gives
+|F (X +) − F (X −)| ≥ 2R2(S) − |F (X +) − [F ( ¯X) + R2(S)]| − |F (X −) − [F ( ¯X) − R2(S)]|
+≥ 2R2(S) − 2CY (S3 + S2 2 ).
+The diameter of the actual identified set is at least this separation. Combining upper and lower bounds yields
+|diam YT (S; XL) − 2R2(S)| ≤ 2CY (S3 + S2 2 ).
+No lower bound on R2(S) is assumed; in particular, R2(S) can vanish for a target insensitive to all leading area directions.
+Finally, Appendix B.4 establishes S3 + S2 2 ≤ (L3T + L4T 2)δ2 for δ = maxi(ti+1 − ti). Thus the target-set approximation
+error is O(δ2) with a constant independent of the number of observation intervals.
+C.4. Adjoint computation of the target sensitivities
+The definition ci = ∇g(¯zT )⊤Pi[V1, V2](¯zi) involves the matrix product Pi = Jn−1 · · · Ji+1. The backward adjoint
+computes these products through the recursion in Section 4.2.
+Starting at the final time, set λn = ∇g(¯zT ) and define λi = J ⊤ i λi+1 for i = n − 1, . . . , 0. The first two backward
+substitutions give
+λn−1 = J ⊤ n−1∇g(¯zT ),
+λn−2 = J ⊤ n−2J ⊤ n−1∇g(¯zT ).
+Repeating the same substitution until time ti+1 gives
+λi+1 = J ⊤ i+1 · · · J ⊤ n−1∇g(¯zT ) = (Jn−1 · · · Ji+1)⊤∇g(¯zT ) = P ⊤ i ∇g(¯zT ).
+For i = n − 1, the product is empty and equals the identity, consistently with Pn−1 = I and λn = ∇g(¯zT ). Substitute the
+last identity into ci and transpose the scalar product:
+ci = ∇g(¯zT )⊤Pi[V1, V2](¯zi) = (P ⊤ i ∇g(¯zT ))⊤[V1, V2](¯zi) = λ⊤ i+1[V1, V2](¯zi). (17)
+The index i + 1 is essential: the area of interval i produces its leading state perturbation at the end of that interval, after
+which the perturbation is transported to T .
+To compute the same recursion without explicitly forming Ji, use the reference trajectory ¯zt = Zt( ¯X) already defined in
+Section 4. On each original interval [ti, ti+1], the reference driver has constant derivative
+˙¯X j t = xj i+1 − xj i ti+1 − ti , j = 1, 2.
+25
+The Information Limits of Neural CDEs Under Sparse Observations
+For a perturbation v ∈ Rm of the state at ti, let ξt be the corresponding first variation of the state along this reference
+segment. The variational equation from Appendix B.2 reads
+˙ξt =
+2X
+j=1
+DVj (¯zt)ξt
+xj i+1 − xj i
+ti+1 − ti
+, ξti = v, ξti+1 = Jiv.
+Define the continuous adjoint λt backward from λT = ∇g(¯zT ) by
+˙λt = −
+2X
+j=1
+xj i+1 − xj i
+ti+1 − ti
+DVj (¯zt)⊤λt, t ∈ (ti, ti+1).
+Both equations are interpreted on the original time intervals, with λt continuous at the observation times. Differentiating the
+scalar pairing and substituting the two differential equations gives, almost everywhere on each interval,
+d
+dt (λ⊤ t ξt) = ˙λ⊤ t ξt + λ⊤ t ˙ξt
+= −
+2X
+j=1
+xj i+1 − xj i
+ti+1 − ti
+λ⊤ t DVj (¯zt)ξt +
+2X
+j=1
+xj i+1 − xj i
+ti+1 − ti
+λ⊤ t DVj (¯zt)ξt
+= 0.
+Consequently the pairing is constant from ti to ti+1, and hence
+λ⊤ ti v = λ⊤ ti+1 ξti+1 = λ⊤ ti+1 Jiv = (J ⊤ i λti+1 )⊤v.
+Because v ∈ Rm is arbitrary, λti = J ⊤ i λti+1 . With the node notation λi := λti , the continuous adjoint therefore reproduces
+exactly the discrete recursion λi = J ⊤ i λi+1, while requiring no storage of the full matrices Pi or Ji. Combining it with (17)
+gives the practical formula
+R2(S) =
+n−1X
+i=0
+A⋆ i λ⊤ i+1[V1, V2](¯zi)  .
+The same transport and bracket estimates give a uniform bound needed in the minimax and regularity arguments:
+|ci| ≤ ∥∇g∥∞∥Pi∥ ∥[V1, V2](¯zi)∥ ≤ 2M0M1eM1 LT ∥∇g∥∞ =: Csens.
+The coefficient Csens is independent of the skeleton and the interval index. It bounds the absolute sensitivity.
+For a linear readout g(z) = w⊤z + β, the Hessian term is zero, so the same proof applies with CY = ∥w∥CZ . If ci = 0 on
+every observation interval, the leading radius vanishes, but the theorem yields only diam YT (S; XL) ≤ 2CY (S3 + S2 2 ); it
+does not assert exact identifiability.
+D. Exact Minimax Characterization for the Area CDE
+We prove Proposition 5.3 under the point-observation model of Section 3. In particular, every admissible driver starts at
+X0 = 0, the values at 0 and T are available to the policy, and at most N − 1 additional times may be queried. All policies
+are deterministic, including their stopping decisions.
+D.1. Exact output of the area CDE
+Let Z0 = 0, g(z) = z3, and consider the vector fields
+V1(z) =
+
+
+1
+0
+−z2/2
+
+ , V2(z) =
+
+
+0
+1
+z1/2
+
+ .
+26
+The Information Limits of Neural CDEs Under Sparse Observations
+Lemma D.1 (Exact area representation). For every absolutely continuous planar driver X with X0 = 0, the resulting
+terminal scalar output satisfies
+F (X) = 1 2 Z T 0   X 1 t dX 2 t − X 2 t dX 1 t  . (18)
+The Lie bracket has the constant value [V1, V2] = e3, and ∇g⊤[V1, V2] = 1.
+Proof. Writing out the three components of the CDE gives the exact differential equations
+dZ 1 t = dX 1 t , dZ 2 t = dX 2 t ,
+dZ 3 t = − 1 2 Z 2 t dX 1 t + 1 2 Z 1 t dX 2 t .
+Integrating the first two equations from 0 to t, using Z0 = 0 and X0 = 0, yields Z 1 t = X 1 t and Z 2 t = X 2 t . Substituting both
+equalities into the third equation and integrating from 0 to T gives
+Z 3 T − Z 3 0 =
+Z T
+0
+
+− 1 2 Z 2 t dX 1 t + 1 2 Z 1 t dX 2 t
+
+= 1 2 Z T 0   X 1 t dX 2 t − X 2 t dX 1 t  .
+Since Z 3 0 = 0 and g(ZT ) = Z 3 T , this proves (18). For the bracket, the only nonzero derivatives of the fields are
+∂z2 (V1)3 = −1/2 and ∂z1 (V2)3 = 1/2. Therefore
+DV2(z)V1(z) =
+
+
+0
+0
+1/2
+
+ ,
+DV1(z)V2(z) =
+
+
+0
+0
+−1/2
+
+ ,
+[V1, V2](z) = DV2(z)V1(z) − DV1(z)V2(z) =
+
+
+0
+0
+1
+
+ .
+Finally, ∇g = e3, and hence ∇g⊤[V1, V2] = 1.
+The canonical fields and the linear readout are not globally bounded, unlike the fields assumed in Theorems 5.1 and 5.2.
+The next lemma shows that the exact example is unchanged by imposing bounded smooth coefficients on the admissible
+reachable set.
+Lemma D.2 (Bounded smooth realization). Fix L, T > 0. There exist eV1, eV2 ∈ C ∞ b (R3; R3) and eg ∈ C ∞ b (R3; R) whose
+terminal outputs agree with the area CDE for every X ∈ XL.
+Proof. For every X ∈ XL, the identities proved above give
+q
+(Z 1 t )2 + (Z 2 t )2 = ∥Xt − X0∥ ≤
+Z t
+0
+∥ ˙Xs∥ ds ≤ LT,
+|Z 3 t | ≤ 1 2 Z t 0 ∥Xs − X0∥ ∥ ˙Xs∥ ds ≤ 1 2 (LT ) Z t 0 ∥ ˙Xs∥ ds ≤ 1 2 L2T 2.
+Thus all states reached at all times, by any driver in XL, lie in the fixed compact set
+
+z ∈ R3 :
+q
+z2 1 + z2 2 ≤ LT, |z3| ≤ 1 2 L2T 2
+
+.
+Choose χ ∈ C ∞ c (R3) that equals one on an open neighborhood of this compact set, and set eVj (z) = χ(z)Vj (z) for j = 1, 2
+and eg(z) = χ(z)z3. These functions are smooth, compactly supported, and therefore globally bounded together with all
+derivatives. Along every original admissible trajectory they coincide with Vj and g. Consequently the original trajectory
+also solves the modified CDE; uniqueness of solutions for the smooth bounded fields makes the trajectories coincide, and
+their terminal readouts agree.
+27
+The Information Limits of Neural CDEs Under Sparse Observations
+D.2. The exact output fiber of a fixed skeleton
+Fix the observed planar record S = {(ti, xi)}n i=0 and assume XL(S) ̸= ∅. Let ¯X be its piecewise-linear interpolation, as
+in Section 4. On each gap, the signed area ai(X) and its sharp bound A⋆ i are those of Section 4.1. For this area CDE, the
+output fiber is an exact interval.
+Lemma D.3 (Exact response interval). For every observed record S with XL(S) ̸= ∅, the area CDE satisfies
+YT (S; XL) =
+
+F ( ¯X) −
+n−1X
+i=0
+A⋆ i , F ( ¯X) +
+n−1X
+i=0
+A⋆ i
+
+. (19)
+In particular, rad YT (S; XL) = Pn−1 i=0 A⋆ i .
+Proof. Split the exact integral (18) over the observation intervals. Because X0 = x0 = 0, for each t ∈ [ti, ti+1] we can
+write Xt = (xi − x0) + (Xt − xi). Substituting this identity before integrating gives
+F (X) = 1 2
+n−1X
+i=0
+Z ti+1
+ti
+(Xt − x0) ∧ dXt
+= 1 2
+n−1X
+i=0
+Z ti+1
+ti
+(xi − x0) ∧ dXt + 1 2
+n−1X
+i=0
+Z ti+1
+ti
+(Xt − xi) ∧ dXt
+= 1 2
+n−1X
+i=0
+(xi − x0) ∧ (xi+1 − xi) +
+n−1X
+i=0
+ai(X).
+Here u ∧ v = u1v2 − u2v1, and the last equality uses R ti+1 ti dXt = xi+1 − xi and the definition of ai(X) in Section 4.1.
+For the piecewise-linear path ¯X, every ai( ¯X) = 0, so applying the same identity to ¯X yields
+F ( ¯X) = 1 2
+n−1X
+i=0
+(xi − x0) ∧ (xi+1 − xi),
+F (X) = F ( ¯X) +
+n−1X
+i=0
+ai(X).
+By Lemma A.2, each signed area belongs to the full interval [−A⋆ i , A⋆ i ]. By Corollary A.3, every independent choice of
+these areas is attainable by one speed-bounded completion. Therefore the set of sums in the displayed identity is exactly
+[− P i A⋆ i , P i A⋆ i ]: the bounds follow from the triangle inequality; conversely, if P i A⋆ i > 0, each value y in this interval is
+attained by taking ai(X) = yA⋆ i /(P j A⋆ j ) for every i. If P i A⋆ i = 0, all areas vanish. Adding F ( ¯X) establishes (19). Its
+radius is half the difference of its two endpoints, namely P i A⋆ i .
+D.3. Lower bound for every adaptive policy
+Fix an arbitrary deterministic policy π ∈ ΠN . Choose any unit vector u ∈ R2 and run the policy on the straight reference
+driver
+¯Xt = 2L π t u, 0 ≤ t ≤ T.
+Its speed is 2L/π < L, so ¯X ∈ XL. After the policy stops, sort the distinct times it observed, including the free endpoints,
+as 0 = s0 < s1 < · · · < sk = T , with k ≤ N. The reference chord on each interval [si, si+1] satisfies
+∥ ¯Xsi+1 − ¯Xsi ∥ = 2L π (si+1 − si),
+∥ ¯Xsi+1 − ¯Xsi ∥
+L(si+1 − si) = 2 π .
+The sharp Dido bound, Lemma A.4, is attained at this ratio. Thus every observed gap admits the full signed-area interval
+with radius
+A⋆ i = L2(si+1 − si)2 2π .
+28
+The Information Limits of Neural CDEs Under Sparse Observations
+The extremizing paths can be chosen as the two semicircles with the observed chord as their diameter. Their common radius
+is 1 2 ∥ ¯Xsi+1 − ¯Xsi ∥ = L(si+1 −si ) π . Their lengths are exactly π L(si+1 −si ) π = L(si+1 − si), so traversing either semicircle at
+constant speed on the original interval [si, si+1] gives speed L. Their respective signed areas relative to the chord are
+± π 2  L(si+1 − si) π 2 = ± L2(si+1 − si)2 2π .
+Choose the positive semicircle on every gap and concatenate them to obtain X +; choose all negative semicircles to obtain
+X −. The paths are continuous across the observation times, have speed at most L almost everywhere, and begin at zero.
+Therefore X +, X − ∈ XL, and for each time si observed on the reference run,
+X + si = X − si = ¯Xsi .
+We verify that the paths also produce the same adaptive transcript. Before the first internal query, the policy has received
+the same two endpoint observations from ¯X, X +, and X −. Since its query rule is deterministic, the first queried time is
+the same for all three paths. That time belongs to the set {s0, . . . , sk} produced on the reference run, so all three observed
+values agree. If the first j queried times and values agree, the rule selects the same (j + 1)-st time, and its observed value
+again agrees because this time also occurs in the reference transcript. Induction gives the same entire query sequence. The
+deterministic stopping rule then makes the same decision, proving
+Oπ (X +) = Oπ (X −) = Oπ ( ¯X).
+Consequently, both X + and X − belong to the information fiber Fπ ( ¯X; XL) of Section 3.
+The exact area formula and the choice of opposite signs now give
+F (X +) = F ( ¯X) +
+k−1X
+i=0
+L2(si+1 − si)2
+2π , F (X −) = F ( ¯X) −
+k−1X
+i=0
+L2(si+1 − si)2
+2π .
+The radius of an output set containing these two values is at least half their difference. Hence
+rad F
+ 
+Fπ ( ¯X; XL)  ≥ 1 2 |F (X +) − F (X −)| = L2 2π k−1X i=0 (si+1 − si)2.
+By Cauchy–Schwarz and telescoping of the observation times,
+ k−1X
+i=0
+(si+1 − si)
+!2
+≤ k
+k−1X
+i=0
+(si+1 − si)2,
+k−1X
+i=0
+(si+1 − si) = sk − s0 = T,
+k−1X
+i=0
+(si+1 − si)2 ≥ T 2 k ≥ T 2 N .
+Combining the last two displays proves, for every deterministic policy π ∈ ΠN ,
+sup
+X∈XL
+rad F
+ 
+Fπ (X; XL)
+
+≥ rad F
+ 
+Fπ ( ¯X; XL)  ≥ L2T 2 2πN .
+Taking the infimum over π establishes the lower bound in Proposition 5.3. No part of the argument assumes that the policy
+queries observation times in chronological order.
+29
+The Information Limits of Neural CDEs Under Sparse Observations
+D.4. Matching upper bound and exact optimality
+Consider the nonadaptive policy observing the uniform grid ti = iT /N , i = 0, . . . , N . For an arbitrary X ∈ XL, let
+S = {(ti, Xti )}N i=0 be its observed skeleton. The corresponding information fiber is precisely XL(S), because the policy’s
+query times are fixed and its transcript records all the values at those times.
+By Lemma D.3, the radius left by this skeleton is the sum of its maximal per-gap signed areas. The uniform Dido
+estimate (12) yields, on every gap,
+A⋆ i = A⋆   ∥Xti+1 − Xti ∥, L(ti+1 − ti)  ≤ L2(ti+1 − ti)2 2π = L2T 2 2πN 2 .
+Summing over all N intervals and applying the exact radius formula gives
+rad F
+ 
+Fπ (X; XL)
+
+=
+N −1X
+i=0
+A⋆ i ≤
+N −1X
+i=0
+L2T 2
+2πN 2 = L2T 2 2πN .
+This bound holds for every X ∈ XL, so the worst-case radius of the uniform policy is at most L2T 2/(2πN ). Combined
+with the lower bound for every deterministic adaptive policy, it gives the exact identity (10) and proves that the uniform
+nonadaptive grid is minimax-optimal.
+E. General Bounded-Speed Minimax Bounds
+We prove Theorem 5.1 for the deterministic observation model of Section 3. Throughout, V1, V2 ∈ C 4 b (Rm; Rm) and
+g ∈ C 2 b (Rm; R). The constants M0, M1, M2, E, and CZ retain their definitions in Appendix B; CY is the fixed constant of
+Appendix C. All these constants depend only on the fields, the readout where relevant, L, and T .
+E.1. A uniform-grid upper bound
+A uniform nonadaptive grid gives an O(N −1) upper bound, which also controls the remainders in the lower-bound argument.
+Lemma E.1 (Uniform-grid upper bound). For every integer N ≥ 1,
+RN (F ; XL) ≤ CsensL2T 2 2πN + CY (L3T 3 + L4T 4) N 2 .
+Here Csens is the fixed sensitivity bound of Appendix C.4. In particular, RN (F ; XL) ≤ Cspeed/N , where Cspeed is explicitly
+collected in the proof and is independent of the unknown driver and budget.
+Proof. Fix the nonadaptive times ti = iT /N for i = 0, . . . , N . For any X ∈ XL, let S = {(ti, Xti )}N i=0 be its observed
+skeleton and ¯X the straight interpolation between its observations. Every driver producing the same transcript belongs to
+XL(S), and conversely, because the query times are fixed. Thus the residual output set is YT (S; XL).
+The one-sided scalar expansion (16) gives, for every eX ∈ XL(S),
+|F ( eX) − F ( ¯X)| ≤
+N −1X
+i=0
+|ci| |ai( eX)| + CY (S3 + S2 2 ).
+For the straight reference path, the transport matrices satisfy ∥Pi∥ ≤ eM1 LT by Appendix B.2. Moreover, the definition of
+M0, M1 and the Lie-bracket convention imply
+∥[V1, V2](z)∥ ≤ ∥DV2(z)∥ ∥V1(z)∥ + ∥DV1(z)∥ ∥V2(z)∥ ≤ 2M0M1.
+Substitution in ci = ∇g(¯zT )⊤Pi[V1, V2](¯zi) therefore yields |ci| ≤ 2M0M1∥∇g∥∞eM1 LT = Csens, with exactly the
+coefficient defined in Appendix C.4. The Dido bound (12) gives
+|ai( eX)| ≤ A⋆ i ≤ L2(ti+1 − ti)2 2π = L2T 2 2πN 2 .
+30
+The Information Limits of Neural CDEs Under Sparse Observations
+Finally, the uniform grid has
+S2 =
+N −1X
+i=0
+L2(ti+1 − ti)2 = L2T 2 N ,
+S3 =
+N −1X
+i=0
+L3(ti+1 − ti)3 = L3T 3 N 2 ,
+S2 2 = L4T 4 N 2 .
+Inserting the last three bounds into the scalar expansion, and summing the N area contributions, proves
+|F ( eX) − F ( ¯X)| ≤ CsensN L2T 2 2πN 2 + CY (L3T 3 + L4T 4) N 2
+= CsensL2T 2
+2πN + CY (L3T 3 + L4T 4) N 2
+≤ 1 N  CsensL2T 2 2π + CY (L3T 3 + L4T 4)  .
+The last step uses N ≥ 1. We fix the combined coefficient as
+Cspeed := CsensL2T 2 2π + CY (L3T 3 + L4T 4).
+Any two outputs in YT (S; XL) differ by at most twice the right-hand side, so the radius of this set is at most that right-hand
+side. The bound holds for every observed S; taking the supremum over X and then the infimum over observation policies
+proves the lemma.
+E.2. Localization and the bracket-sensitivity coefficient
+Fix the reference path ¯Xt = vtu and interval I = [a, b] ⊂ (0, T ) from Section 5.1; thus 0 < v < L and βv,u(t) ≥ β0 > 0
+on I. Its state ¯zt and adjoint λt satisfy the equations in Section 5.1. In particular, the reference is the same straight path
+before, during, and after I.
+For any r ∈ [0, T ], the already defined flow Φ ¯X r,T (z) follows the reference driver from state z at time r to time T . If a
+candidate driver agrees with ¯X from time r onward, then its final output is g(Φ ¯X r,T (Zr (X))). This is an exact consequence
+of uniqueness of the CDE solution.
+The first and second variational estimates in Appendix B.2, applied to the reference suffix, give uniformly for 0 ≤ r ≤ T
+and z ∈ Rm,
+∥Dz Φ
+¯X
+r,T (z)∥ ≤ eM1 v(T −r) ≤ eM1 LT ,
+∥D2 z Φ ¯X r,T (z)∥ ≤ M2v(T − r)e2M1 v(T −r) ≤ M2LT e2M1 LT .
+The chain rule, written for an arbitrary pair of unit state-space directions w, w′, gives
+D(g ◦ Φ
+¯X
+r,T )(z)[w] = Dg(Φ
+¯X
+r,T (z))Dz Φ
+¯X
+r,T (z)w,
+D2(g ◦ Φ ¯X r,T )(z)[w, w′] = D2g(Φ ¯X r,T (z))  Dz Φ ¯X r,T (z)w, Dz Φ ¯X r,T (z)w′ + Dg(Φ ¯X r,T (z))D2 z Φ ¯X r,T (z)[w, w′].
+Consequently, the first two derivatives of every effective readout g ◦ Φ ¯X r,T are bounded by
+∥D(g ◦ Φ
+¯X
+r,T )∥∞ ≤ ∥∇g∥∞∥Dz Φ
+¯X
+r,T ∥∞ ≤ eM1 LT ∥∇g∥∞,
+∥D2(g ◦ Φ ¯X r,T )∥∞ ≤ ∥D2g∥∞∥Dz Φ ¯X r,T ∥2 ∞ + ∥∇g∥∞∥D2 z Φ ¯X r,T ∥∞
+≤ e2M1 LT   ∥D2g∥∞ + M2LT ∥∇g∥∞  .
+The following remainder coefficient is uniform over intervals contained in I and their partitions:
+CI := eM1 LT ∥∇g∥∞CZ + 1 2 e2M1 LT   ∥D2g∥∞ + M2LT ∥∇g∥∞  E2.
+31
+The Information Limits of Neural CDEs Under Sparse Observations
+Here E and CZ are the constants already fixed in Appendix B, evaluated with the original horizon T ; the same bounds
+remain valid on any shorter interval. Applying the scalar expansion of Appendix C on [a, b] with readout g ◦ Φ ¯X b,T therefore
+gives, for every driver X equal to ¯X outside I and matching it at the chosen observation times inside I,
+F (X) − F ( ¯X) − n−1X
+i=0
+ciai(X)
+ ≤ CI L3 n−1X
+i=0
+(ti+1 − ti)3 + CI L4
+n−1X
+i=0
+(ti+1 − ti)2
+2
+, (20)
+where a = t0 < t1 < · · · < tn = b is any partition of I, ai(X) is the area relative to the corresponding chord, and ci is the
+target-specific coefficient defined for this localized CDE and its effective readout. The endpoints a, b need not be actual
+policy queries. Since the candidate and reference paths have the same state at a and share the driver after b, the localized
+scalar output is exactly the original F (X).
+To relate ci to the global adjoint, differentiate the reference flow from ti+1 to T :
+Dz Φ
+¯X
+ti+1 ,T (¯zti+1 ) = Dz Φ
+¯X
+b,T (¯zb) Jn−1 · · · Ji+1,
+λti+1 = Dz Φ
+¯X
+ti+1 ,T (¯zti+1 )⊤∇g(¯zT ).
+To verify the second identity, differentiate the flow with respect to its starting time along the reference solution. The flow
+property gives
+d
+dt Dz Φ
+¯X
+t,T (¯zt) = −vDz Φ
+¯X
+t,T (¯zt) × D(u1V1 + u2V2)(¯zt),
+d
+dt
+
+Dz Φ
+¯X
+t,T (¯zt)⊤∇g(¯zT )  = −vD(u1V1 + u2V2)(¯zt)⊤ × Dz Φ ¯X t,T (¯zt)⊤∇g(¯zT ).
+At t = T , the flow derivative is the identity, so the last vector equals ∇g(¯zT ). It therefore solves the same terminal-value
+problem as λt, establishing the identity. Taking transposes in the first displayed formula for the flow and using the definition
+of the localized coefficient now gives
+ci = ∇g(¯zT )⊤Dz Φ ¯X b,T (¯zb) Jn−1 · · · Ji+1[V1, V2](¯zti ) = λ⊤ ti+1 [V1, V2](¯zti ).
+For i = n − 1, the matrix product is empty and equals the identity, as in Section 4.1.
+By the adjoint equation, Gr¨onwall’s inequality from the terminal time yields
+∥λt∥ ≤ ∥∇g∥∞eM1 v(T −t) ≤ ∥∇g∥∞eM1 LT ,
+∥ ˙λt∥ ≤ vM1∥λt∥ ≤ vM1∥∇g∥∞eM1 LT .
+Integrating the second inequality from ti to ti+1, and using ∥[V1, V2]∥∞ ≤ 2M0M1, we obtain
+|ci| − βv,u(ti)  ≤ ci − λ⊤ ti [V1, V2](¯zti ) 
+≤ ∥λti+1 − λti ∥ ∥[V1, V2](¯zti )∥
+≤ 2M0M1
+Z ti+1
+ti
+∥ ˙λt∥ dt
+≤ 2vM0M 2 1 ∥∇g∥∞eM1 LT (ti+1 − ti).
+Set
+H := 2vM0M 2 1 ∥∇g∥∞eM1 LT .
+Neither CI nor H depends on the policy, its observation times, or the number of intervals.
+E.3. Excluding persistent unobserved gaps
+Before applying the localized expansion to a sequence of policies, we must show that the intervals inside I become small. A
+policy is free to concentrate all of its measurements elsewhere; the convergence of the maximal gap inside I does not follow
+merely from the budget N.
+32
+The Information Limits of Neural CDEs Under Sparse Observations
+Lemma E.2 (No persistent coarse gap). Let πN ∈ ΠN be deterministic policies such that supX∈XL rad F (FπN (X; XL)) →
+0. Run each policy on ¯Xt = vtu. After its queries have been made, add a, b to the query times and sort all times lying in I
+as a = t0 < · · · < tn = b. Then
+max
+0≤i<n
+(ti+1 − ti) −→ 0.
+Proof. Suppose the claim is false. Along a subsequence, there is a gap [ti, ti+1] ⊂ I with ti+1 − ti ≥ ε > 0, containing no
+actual query time in its interior. Choose a positive length η < ε/2, fixed along this subsequence and small enough to satisfy
+Hη ≤ β0
+4 , CI (L3η + L4η2) ≤ A⋆(v, L)β0 4 .
+Such a choice is possible because A⋆(v, L) > 0, β0 > 0, and H, CI are fixed. Inside each coarse gap choose a closed
+interval [r, r + η]; its location may depend on the policy, but its length does not.
+The reference displacement on this interval is ¯Xr+η − ¯Xr = vηu. The Dido fiber in Appendix A.2, together with
+the homogeneity of the area bound, supplies two speed-bounded paths joining those endpoints whose signed areas are
++A⋆(v, L)η2 and −A⋆(v, L)η2. Form X + and X − by using these paths on [r, r + η] and retaining ¯X everywhere else.
+Both are in XL. At every time actually queried on the reference run, both alternatives equal ¯X: the only modified interval is
+contained in a query-free gap.
+This agreement persists adaptively. The initial endpoint observations agree. If the first k queried times and their values
+agree with the reference transcript, determinism makes the next queried time identical. That time belongs to the reference
+transcript and lies outside (r, r + η), where the three drivers agree. Induction proves that all later queries and the stopping
+decisions agree, so
+OπN (X +) = OπN (X −) = OπN ( ¯X).
+In particular, both outputs belong to the same information fiber of πN at ¯X.
+Apply the localized expansion (20) on the single original interval [r, r + η], with the unchanged reference path before and
+after it. Let c denote its one-gap coefficient. The expansion gives
+F (X +) = F ( ¯X) + cA⋆(v, L)η2 + R+,
+F (X −) = F ( ¯X) − cA⋆(v, L)η2 + R−,
+|R+|, |R−| ≤ CI (L3η3 + L4η4).
+The adjoint coefficient estimate applies equally to this one-gap interval: since r ∈ I and βv,u(r) ≥ β0, it yields |c| ≥ β0−Hη.
+Consequently, the radius of the information fiber satisfies
+rad F (FπN ( ¯X; XL))
+≥ 1 2 |F (X +) − F (X −)|
+≥ A⋆(v, L)η2|c| − CI (L3η3 + L4η4)
+≥ η2 A⋆(v, L)(β0 − Hη) − CI (L3η + L4η2) 
+≥ 1 2 A⋆(v, L)β0η2 > 0.
+The positive lower bound is independent of N , contradicting the assumed convergence of the worst-case radii to zero.
+Therefore the maximal gap inside I tends to zero.
+E.4. Proof of the general bounded-speed lower bound
+Proof of Theorem 5.1. For each N, choose a deterministic policy πN ∈ ΠN with
+sup
+X∈XL
+rad F (FπN (X; XL)) ≤ RN (F ; XL) + N −2.
+Such a policy exists by the definition of the infimum. Lemma E.1 makes the right-hand side O(N −1), so Lemma E.2
+applies.
+33
+The Information Limits of Neural CDEs Under Sparse Observations
+Run πN on the straight reference ¯Xt = vtu. Include a, b among the observation times for the purpose of constructing
+adversarial paths, whether or not the policy requested them, and sort the local times as a = t0 < t1 < · · · < tn = b. There
+are at most N − 1 internal policy queries on all of [0, T ], and at most two additional times have been inserted. Therefore
+n ≤ N + 2. Write the maximal length of the local intervals as
+δN = max 0≤i<n (ti+1 − ti).
+By Lemma E.2, δN → 0.
+Each chord of the reference path has displacement v(ti+1 − ti)u. The homogeneity of the Dido bound gives
+A⋆ i = A⋆   v(ti+1 − ti), L(ti+1 − ti)  = A⋆(v, L)(ti+1 − ti)2.
+For each i, use the full Dido fiber to choose two admissible segments with this chord and opposite signed areas ±A⋆ i sgn(ci),
+where sgn(0) = 0. The coefficients ci are those of the localized expansion (20). Concatenate the positive-choice segments
+into X + and the negative-choice segments into X −, leaving both drivers equal to ¯X outside I. The paths are continuous,
+piecewise Lipschitz, and have speed at most L almost everywhere; therefore they belong to XL. They agree with ¯X at all
+times queried by πN , as well as at the inserted times a, b.
+The same induction used in the proof of Lemma E.2 shows that the three paths produce exactly the same ordered adaptive
+transcript. Hence X + and X − belong to FπN ( ¯X; XL). Applying (20) to each path and using its chosen areas gives
+F (X +) = F ( ¯X) +
+n−1X
+i=0
+A⋆ i |ci| + R+,
+F (X −) = F ( ¯X) −
+n−1X
+i=0
+A⋆ i |ci| + R−,
+|R+|, |R−| ≤ CI
+
+L3
+n−1X
+i=0
+(ti+1 − ti)3 + L4
+n−1X
+i=0
+(ti+1 − ti)2
+2
+.
+Half the difference of these outputs is a lower bound for the radius of their common information fiber. Using the explicit
+expression for A⋆ i , we obtain
+rad F (FπN ( ¯X; XL)) ≥ A⋆(v, L)
+n−1X
+i=0
+|ci|(ti+1 − ti)2 − CI
+
+L3
+n−1X
+i=0
+(ti+1 − ti)3 + L4
+n−1X
+i=0
+(ti+1 − ti)2
+2
+. (21)
+The preceding coefficient estimate gives |ci| ≥ βv,u(ti) − H(ti+1 − ti) ≥ β0 − H(ti+1 − ti). Substitution into (21) yields
+rad F (FπN ( ¯X; XL)) ≥ A⋆(v, L)β0
+n−1X
+i=0
+(ti+1 − ti)2
+−
+ 
+A⋆(v, L)H + CI L3 n−1X
+i=0
+(ti+1 − ti)3
+− CI L4
+n−1X
+i=0
+(ti+1 − ti)2
+2
+.
+Because every gap is at most δN and the lengths telescope to b − a, we have
+n−1X
+i=0
+(ti+1 − ti)3 ≤ δN
+n−1X
+i=0
+(ti+1 − ti)2,
+n−1X
+i=0
+(ti+1 − ti)2 ≤ δN
+n−1X
+i=0
+(ti+1 − ti) = (b − a)δN .
+34
+The Information Limits of Neural CDEs Under Sparse Observations
+Thus the preceding lower bound can be written without dropping the nonlinear term:
+rad F (FπN ( ¯X; XL)) ≥
+h
+A⋆(v, L)β0 −
+ 
+A⋆(v, L)H + CI L3 + CI L4(b − a)  δN i × n−1X
+i=0
+(ti+1 − ti)2.
+Set
+Cabs := A⋆(v, L)H + CI L3 + CI L4(b − a).
+Since δN → 0, eventually CabsδN ≤ A⋆(v, L)β0/2. The bracket is then at least A⋆(v, L)β0/2, and hence
+A⋆(v, L)β0
+2
+n−1X
+i=0
+(ti+1 − ti)2 ≤ rad F (FπN ( ¯X; XL)).
+The definition of the near-minimax policies and Lemma E.1 bound the right-hand side by Cspeed/N + N −2. Dividing by
+the fixed positive factor gives
+n−1X
+i=0
+(ti+1 − ti)2 ≤ 2 A⋆(v, L)β0
+ Cspeed
+N + 1 N 2
+
+≤ 2(Cspeed + 1) A⋆(v, L)β0 1 N .
+For the remaining error bounds, denote this fixed coefficient by C2,I := 2(Cspeed + 1)/(A⋆(v, L)β0). Thus the squared-gap
+sum is bounded by C2,I /N and is O(N −1), with no dependence of its coefficient on the policy. Return to the two remainder
+terms in (21). They now satisfy, respectively,
+n−1X
+i=0
+(ti+1 − ti)3 ≤ δN
+n−1X
+i=0
+(ti+1 − ti)2 ≤ C2,I δN N = o(N −1),
+n−1X
+i=0
+(ti+1 − ti)2
+2
+≤
+C 2 2,I
+N 2 = O(N −2) = o(N −1).
+The error from replacing |ci| by βv,u(ti) is also at most
+A⋆(v, L)
+n−1X
+i=0
+|ci| − βv,u(ti) (ti+1 − ti)2 ≤ A⋆(v, L)H n−1X
+i=0
+(ti+1 − ti)3 = o(N −1).
+More explicitly, the total subtracted error after replacing |ci| by βv,u(ti) is at most
+(A⋆(v, L)H + CI L3)C2,I δN
+N +
+CI L4C 2 2,I
+N 2 .
+After multiplication by N , both terms tend to zero because their coefficients are fixed and δN → 0. Combining these
+estimates with (21), we have the asymptotic bound
+rad F (FπN ( ¯X; XL)) ≥ A⋆(v, L)
+n−1X
+i=0
+βv,u(ti)(ti+1 − ti)2 − o(N −1).
+Apply Cauchy–Schwarz to the n numbers
+p
+βv,u(ti)(ti+1 − ti):
+n−1X
+i=0
+q
+βv,u(ti)(ti+1 − ti)
+2
+≤ n
+n−1X
+i=0
+βv,u(ti)(ti+1 − ti)2,
+n−1X
+i=0
+βv,u(ti)(ti+1 − ti)2 ≥ 1 n n−1X i=0 q βv,u(ti)(ti+1 − ti) 2 .
+35
+The Information Limits of Neural CDEs Under Sparse Observations
+Since n ≤ N + 2, replacing 1/n by 1/(N + 2) preserves the lower bound. The function
+p
+βv,u is continuous on I, because
+the reference flow, the adjoint, and the bracket are continuous and βv,u ≥ β0 > 0. For each local interval,
+ Z ti+1
+ti
+q
+βv,u(t) dt −
+q
+βv,u(ti)(ti+1 − ti)
+ ≤ Z ti+1
+ti
+ q βv,u(t) − q βv,u(ti)  dt.
+Uniform continuity on I and δN → 0 make the sum of the right-hand sides tend to zero, since their total integration length
+is b − a. Thus
+n−1X
+i=0
+q
+βv,u(ti)(ti+1 − ti) −→
+Z b
+a
+q
+βv,u(t) dt.
+Finally, combine the last three displays with the near-minimax inequality:
+RN (F ; XL) + N −2 ≥ rad F (FπN ( ¯X; XL)) ≥ A⋆(v, L) N + 2 × n−1X i=0 q βv,u(ti)(ti+1 − ti) 2 − o(N −1).
+Multiply by N and take the lower limit. As N/(N + 2) → 1, N · N −2 → 0, and N · o(N −1) → 0, this gives
+lim inf
+N →∞
+N RN (F ; XL) ≥ A⋆(v, L)
+ Z b
+a
+q
+βv,u(t) dt
+!2
+,
+which is exactly (8). The right-hand side is strictly positive because A⋆(v, L) > 0 and βv,u ≥ β0 on an interval of positive
+length. Together with the uniform-grid upper bound from Lemma E.1, this proves RN (F ; XL) = Θ(N −1) and completes
+Theorem 5.1.
+F. Bounded-Acceleration Minimax Bounds
+We prove Theorem 5.2 for the deterministic observation model of Section 3. The driving paths belong to XL,M , with
+T, L, M > 0, and V1, V2 ∈ C 4 b (Rm; Rm) and g ∈ C 3 b (Rm; R). Fix the straight driver ¯Xt = vtu, where ∥u∥ = 1 and
+0 < v < L. Let ¯zt = Zt( ¯X) and λt be its state and terminal adjoint, and suppose that on I = [a, b] ⊂ (0, T ) the sensitivity
+βv,u(t) = |λ⊤ t [V1, V2](¯zt)| satisfies βv,u(t) ≥ β0 > 0. The bounds M0, M1, M2, CY , Csens are as defined above. All
+additional constants below depend only on these bounds and the reference data, not on the sampling partition, perturbation
+signs, policy, or budget N.
+F.1. A clamped perturbation on an observation gap
+The acceleration bound requires the perturbation and its first derivative to agree at neighboring observation times. We
+construct a scalar perturbation that satisfies both endpoint conditions and has the largest possible integral under the prescribed
+bound on its second derivative.
+Lemma F.1 (Optimal clamped scalar perturbation). Fix ti < ti+1 and M > 0. If η ∈ W 2,∞([ti, ti+1]) satisfies
+η(ti) = η(ti+1) = ˙η(ti) = ˙η(ti+1) = 0 and ∥¨η∥L∞ ≤ M, then
+ Z ti+1
+ti
+η(t) dt
+ ≤ M 32 (ti+1 − ti)3. (22)
+The positive maximum is attained by the nonnegative function ηi defined on three consecutive pieces. On the first quarter,
+ti ≤ t ≤ ti + (ti+1 − ti)/4, set
+ηi(t) = M 2 (t − ti)2.
+On the middle half, from ti + (ti+1 − ti)/4 to ti + 3(ti+1 − ti)/4, set
+ηi(t) = M
+
+− 1 2 (t − ti)2 + ti+1 − ti 2 (t − ti) − (ti+1 − ti)2 16  .
+On the final quarter, ti + 3(ti+1 − ti)/4 ≤ t ≤ ti+1, set
+ηi(t) = M 2 (ti+1 − t)2.
+36
+The Information Limits of Neural CDEs Under Sparse Observations
+It also satisfies
+Z ti+1
+ti
+ηi(t) dt = M 32 (ti+1 − ti)3, ∥ ˙ηi∥L∞ = M 4 (ti+1 − ti), Z ti+1 ti | ˙ηi(t)| dt = M 8 (ti+1 − ti)2.
+Proof. Integrate the second derivative twice, using the initial endpoint conditions. For t ∈ [ti, ti+1],
+˙η(t) =
+Z t
+ti
+¨η(s) ds,
+η(t) =
+Z t
+ti
+Z τ
+ti
+¨η(s) ds dτ =
+Z t
+ti
+(t − s)¨η(s) ds.
+The last equality follows by integrating over ti ≤ s ≤ τ ≤ t in the opposite order. Integrating once more and reversing the
+order on ti ≤ s ≤ t ≤ ti+1 yields
+Z ti+1
+ti
+η(t) dt =
+Z ti+1
+ti
+Z t
+ti
+(t − s)¨η(s)ds dt =
+Z ti+1
+ti
+Z ti+1
+s
+(t − s) dt ¨η(s) ds = 1 2 Z ti+1 ti (ti+1 − s)2 ¨η(s) ds.
+The two terminal conditions imply two moment identities. Indeed,
+Z ti+1
+ti
+¨η(s) ds = ˙η(ti+1) − ˙η(ti) = 0,
+Z ti+1
+ti
+(ti+1 − s)¨η(s) ds =
+
+(ti+1 − s) ˙η(s)
+ti+1
+ti +
+Z ti+1
+ti
+˙η(s) ds = η(ti+1) − η(ti) = 0.
+To exploit these constraints, consider the quadratic polynomial
+pi(s) = 1 2  s − ti − ti+1 − ti 4  ×  s − ti − 3(ti+1 − ti) 4  .
+Expanding both products gives the exact identity
+1
+2 (ti+1 − s)2 − pi(s) = − 3(ti+1 − ti)2 32 + ti+1 − ti 2 (ti+1 − s).
+Its right-hand side integrates to zero against ¨η by the two preceding moment identities. Consequently,
+Z ti+1
+ti
+η(t) dt =
+Z ti+1
+ti
+pi(s)¨η(s) ds,
+ Z ti+1
+ti
+η(t) dt
+ ≤ M Z ti+1
+ti
+|pi(s)| ds.
+An antiderivative of pi is
+(s − ti)3
+6 − ti+1 − ti 4 (s − ti)2 + 3(ti+1 − ti)2 32 (s − ti).
+Its values at s = ti, s = ti + (ti+1 − ti)/4, s = ti + 3(ti+1 − ti)/4, and s = ti+1 are, respectively,
+0, (ti+1 − ti)3
+96 , 0, (ti+1 − ti)3 96 .
+The polynomial pi is positive on the first and last quarters and negative on the middle half. Splitting its absolute integral at
+these two roots gives
+Z ti+1
+ti
+|pi(s)| ds = (ti+1 − ti)3 96 + (ti+1 − ti)3 96 + (ti+1 − ti)3 96 = (ti+1 − ti)3 32 .
+37
+The Information Limits of Neural CDEs Under Sparse Observations
+This proves (22).
+Equality is attained when ¨η(s) = M sgn pi(s) almost everywhere. This second derivative equals M on the first quarter, −M
+on the middle half, and M on the last quarter. Integrating twice with η(ti) = ˙η(ti) = 0 yields exactly the three displayed
+pieces of ηi. At the two joining times, direct substitution shows that the values and first derivatives agree. At ti+1, both are
+zero, so ηi ∈ W 2,∞ and satisfies all four clamped endpoint conditions.
+The polynomial ηi increases until the midpoint and decreases afterwards. Its midpoint value, computed from the middle
+piece, is
+ηi
+ ti + ti+1
+2
+
+= M
+
+− (ti+1 − ti)2
+8 + (ti+1 − ti)2 4 − (ti+1 − ti)2 16  = M 16 (ti+1 − ti)2.
+Therefore
+R ti+1
+ti | ˙ηi(t)| dt = 2ηi((ti + ti+1)/2) = M (ti+1 − ti)2/8. Differentiating the three pieces gives ∥ ˙ηi∥L∞ =
+M (ti+1 − ti)/4. Finally, the equality case in the integral estimate gives
+R ti+1
+ti ηi = M (ti+1 − ti)3/32.
+Lemma F.2 (Globally admissible transverse perturbations). Consider a finite partition a = t0 < t1 < · · · < tn = b of I.
+Choose a unit vector ν ⊥ u and signs σi ∈ {−1, 1}. On [ti, ti+1] define qt = σiηi(t)ν, with ηi from Lemma F.1, and set
+qt = 0 outside I. Then q ∈ W 2,∞([0, T ]; R2), vanishes at all partition times, and
+∥ ˙q∥L∞ ≤ M 4 max i (ti+1 − ti), ∥¨q∥L∞ ≤ M, Var(q) = M 8
+n−1X
+i=0
+(ti+1 − ti)2.
+If v2 + (M maxi(ti+1 − ti)/4)2 ≤ L2, then ¯X + q and ¯X − q belong to XL,M . On each interval, their signed areas relative
+to the straight reference chord are equal in magnitude and opposite in sign, with
+|ai( ¯X ± q)| = vM 32 (ti+1 − ti)3.
+Proof. At each partition time both ηi and ˙ηi vanish from the left and the right. Thus the piecewise function q and its first
+derivative are continuous, including at a, b where they are joined to zero. Its second derivative exists almost everywhere and
+is bounded by M . The characterization of W 2,∞ by an absolutely continuous first derivative therefore gives the claimed
+global regularity. Since the intervals are disjoint except at endpoints, taking the maximum of their derivative bounds gives
+∥ ˙q∥L∞ ≤ (M/4) maxi(ti+1 − ti) and ∥¨q∥L∞ ≤ M; adding their variations gives the stated exact formula.
+Because ν ⊥ u, differentiation of ¯Xt ± qt gives the pointwise identity
+∥ ˙¯Xt ± ˙qt∥2 = ∥vu ± ˙qt∥2 = v2 + ∥ ˙qt∥2 ≤ v2 + M 2 16 max i (ti+1 − ti)2.
+Under the stated condition this is at most L2. Also ¨¯Xt = 0, so the acceleration norm is at most M . The endpoints remain
+X0 = 0 and XT = vT u.
+On [ti, ti+1], write qt = σiηi(t)ν. The corresponding perturbed driver obeys Xt − xi = v(t − ti)u + qt and dXt =
+vu dt + ˙qt dt. Expanding the signed-area integral gives
+2ai(X) =
+Z ti+1
+ti
+(Xt − xi) ∧ ˙Xt dt
+=
+Z ti+1
+ti
+
+v(t − ti)u ∧ ˙qt + qt ∧ vu + qt ∧ ˙qt
+
+dt
+= vσi det(u, ν)
+Z ti+1
+ti
+
+(t − ti) ˙ηi(t) − ηi(t)
+
+dt.
+Here qt ∧ ˙qt = 0 since both vectors are multiples of ν. Integration by parts, using ηi(ti) = ηi(ti+1) = 0, gives
+Z ti+1
+ti
+(t − ti) ˙ηi(t) dt =
+
+(t − ti)ηi(t)
+ti+1
+ti −
+Z ti+1
+ti
+ηi(t) dt = −
+Z ti+1
+ti
+ηi(t) dt.
+Substitution and Lemma F.1 yield ai(X) = −vσi det(u, ν)M (ti+1 − ti)3/32. Reversing q reverses this sign. This proves
+the area formula and completes the lemma.
+38
+The Information Limits of Neural CDEs Under Sparse Observations
+F.2. The symmetric CDE variation and its remainder
+A linear expansion of F alone is insufficient here: its quadratic remainder could be as large as the leading N −2 effect.
+Comparing opposite perturbations cancels the quadratic term, leaving a remainder cubic in the variation of the perturbation.
+Lemma F.3 (Uniform symmetric variation). Let q be one of the globally glued perturbations from Lemma F.2 on any
+partition of I = [a, b], allowing q to be zero on any subset of the partition intervals, and set Q = Var(q). There exists an
+explicit constant Csym, depending only on V1, V2, g, v, M, T and I, not on the partition or signs, such that
+F ( ¯X + q) − F ( ¯X − q) − 2DF ¯X [q]  ≤ Csym 3 Q3. (23)
+Proof. For |ε| ≤ 1 write Z ε t := Zt( ¯X + εq) for the same CDE solution evaluated at the perturbed driver, and set
+f (ε) = g(Z ε T ). Lemma F.2 and nonnegativity of the interval lengths give
+Q ≤ M 8
+n−1X
+i=0
+(ti+1 − ti)2 ≤ M 8
+ n−1X
+i=0
+(ti+1 − ti)
+!2
+= M 8 (b − a)2.
+Setting a perturbation to zero on a partition interval preserves the zero value and zero first derivative at both endpoints, so
+global gluing and the derivative bounds remain valid. If no interval is set to zero, the first inequality is an equality; otherwise
+the omitted intervals only decrease the total variation. Thus
+Z T
+0
+∥vu + ε ˙qt∥ dt ≤ vT + Q ≤ vT + M 8 (b − a)2.
+Set B := vT + M (b − a)2/8, which is independent of the partition. For the third-order variation, extend the field bounds of
+Appendix B.1 by setting
+M3 := sup
+z∈Rm
+
+
+2X
+j=1
+∥D3Vj (z)∥2
+
+
+1/2
+,
+which is finite under C 4 b . Differentiation of the parameter-dependent Carath´eodory ODE is legitimate through third order,
+because the fields have bounded derivatives and the total variation is uniformly bounded. For k = 1, 2, 3 let U ε k (t) = ∂k ε Z ε t .
+These derivatives have zero initial conditions. Differentiating the ODE once, twice, and three times gives, respectively,
+˙U ε 1 =
+2X
+j=1
+DVj (Z ε)U ε 1 (vuj + ε ˙qj ) +
+2X
+j=1
+Vj (Z ε) ˙qj ,
+˙U ε 2 =
+2X
+j=1
+DVj (Z ε)U ε 2 (vuj + ε ˙qj ) +
+2X
+j=1
+D2Vj (Z ε)[U ε 1 , U ε 1 ](vuj + ε ˙qj ) + 2
+2X
+j=1
+DVj (Z ε)U ε 1 ˙qj ,
+˙U ε 3 =
+2X
+j=1
+DVj (Z ε)U ε 3 (vuj + ε ˙qj ) + 3
+2X
+j=1
+D2Vj (Z ε)[U ε 1 , U ε 2 ](vuj + ε ˙qj ) +
+2X
+j=1
+D3Vj (Z ε)[U ε 1 , U ε 1 , U ε 1 ](vuj + ε ˙qj )
++ 3
+2X
+j=1
+DVj (Z ε)U ε 2 ˙qj + 3
+2X
+j=1
+D2Vj (Z ε)[U ε 1 , U ε 1 ] ˙qj .
+In all lines the fields and derivatives are evaluated at Z ε t and the input derivatives at t. The homogeneous coefficient has
+norm at most M1∥vu + ε ˙qt∥. Integral Gr¨onwall therefore bounds its propagator between any two times by
+exp
+ 
+M1
+Z T
+0
+∥vu + ε ˙qt∥ dt
+!
+≤ exp
+
+M1
+
+vT + M 8 (b − a)2
+
+= eM1 B .
+This bound is uniform in the partition and in |ε| ≤ 1.
+39
+The Information Limits of Neural CDEs Under Sparse Observations
+For the first variation, variation of constants and the definition of M0 yield
+∥U ε 1 (t)∥ ≤ eM1 B M0
+Z t
+0
+∥ ˙qs∥ ds ≤ M0eM1 B Q.
+Set K1 := M0eM1 B . The second variational equation gives
+∥U ε 2 (t)∥ ≤ eM1 B
+Z t
+0
+h
+M2∥U ε 1 (s)∥2∥vu + ε ˙qs∥ + 2M1∥U ε 1 (s)∥ ∥ ˙qs∥ i ds
+≤ eM1 B
+Z t
+0
+h
+M2K 2 1 Q2∥vu + ε ˙qs∥ + 2M1K1Q∥ ˙qs∥ i ds
+≤ eM1 B   M2BK 2 1 + 2M1K1  Q2.
+Set K2 := eM1 B (M2BK 2 1 + 2M1K1). The four forcing terms in the third variation give
+∥U ε 3 (t)∥ ≤ eM1 B
+Z t
+0
+h
+3M2∥U ε 1 (s)∥ ∥U ε 2 (s)∥ ∥vu + ε ˙qs∥ + M3∥U ε 1 (s)∥3∥vu + ε ˙qs∥
++ 3M1∥U ε 2 (s)∥ ∥ ˙qs∥ + 3M2∥U ε 1 (s)∥2∥ ˙qs∥ i ds
+≤ eM1 B
+Z t
+0
+h
+3M2K1K2Q3∥vu + ε ˙qs∥ + M3K 3 1 Q3∥vu + ε ˙qs∥
++ 3M1K2Q2∥ ˙qs∥ + 3M2K 2 1 Q2∥ ˙qs∥ i ds
+≤ eM1 B   3M2BK1K2 + M3BK 3 1 + 3M1K2 + 3M2K 2 1  Q3.
+Set
+K3 := eM1 B   3M2BK1K2 + M3BK 3 1 + 3M1K2 + 3M2K 2 1  .
+Hence, uniformly in ε, t, the partition, and the choices of active intervals and signs,
+∥U ε 1 (t)∥ ≤ K1Q, ∥U ε 2 (t)∥ ≤ K2Q2, ∥U ε 3 (t)∥ ≤ K3Q3.
+By the chain rule, the third derivative of the scalar output is exactly
+f ′′′(ε) = D3g(Z ε T )[U ε 1 , U ε 1 , U ε 1 ] + 3D2g(Z ε T )[U ε 1 , U ε 2 ] + Dg(Z ε T )U ε 3 .
+The preceding bounds therefore give
+|f ′′′(ε)| ≤ ∥D3g∥∞∥U ε 1 (T )∥3 + 3∥D2g∥∞∥U ε 1 (T )∥ ∥U ε 2 (T )∥ + ∥Dg∥∞∥U ε 3 (T )∥
+≤
+ 
+∥D3g∥∞K 3 1 + 3∥D2g∥∞K1K2 + ∥Dg∥∞K3  Q3 = CsymQ3,
+Set
+Csym := ∥D3g∥∞K 3 1 + 3∥D2g∥∞K1K2 + ∥Dg∥∞K3.
+Taylor’s formula with an integral remainder at ε = 0 gives
+f (1) = f (0) + f ′(0) +
+Z 1
+0
+(1 − s)f ′′(s) ds,
+f (−1) = f (0) − f ′(0) +
+Z 1
+0
+(1 − s)f ′′(−s) ds.
+Subtract the second identity from the first. The remaining second derivatives satisfy f ′′(s) − f ′′(−s) = R s −s f ′′′(r) dr.
+40
+The Information Limits of Neural CDEs Under Sparse Observations
+Consequently,
+|f (1) − f (−1) − 2f ′(0)| ≤
+Z 1
+0
+(1 − s)
+Z s
+−s
+|f ′′′(r)| dr ds
+≤ CsymQ3
+Z 1
+0
+2s(1 − s) ds
+= CsymQ3
+
+s2 − 2s3
+3
+1
+0
+= Csym
+3 Q3.
+Since f (1) = F ( ¯X + q), f (−1) = F ( ¯X − q) and f ′(0) = DF ¯X [q], this is (23).
+F.3. The adjoint and Lie-bracket identity
+Lemma F.4 (First variation along the straight driver). Let qt = η(t)ν for a fixed unit vector ν ⊥ u, where η ∈ W 1,∞ and
+η(0) = η(T ) = 0. With λt defined in Section 5.1,
+DF ¯X [q] = −v det(u, ν)
+Z T
+0
+η(t)λ⊤ t [V1, V2](¯zt) dt. (24)
+Proof. Write Vu = u1V1 + u2V2 and Vν = ν1V1 + ν2V2. The unperturbed state satisfies ˙¯zt = vVu(¯zt) and the adjoint
+satisfies ˙λt = −vDVu(¯zt)⊤λt, with λT = ∇g(¯zT ). Differentiating the state equation for ¯X + εq with respect to ε at zero
+shows that the first state variation ξt obeys
+˙ξt = vDVu(¯zt)ξt + Vν (¯zt) ˙η(t), ξ0 = 0.
+Differentiate the scalar product of the adjoint and first variation, and substitute these two differential equations:
+d
+dt (λ⊤ t ξt) = ˙λ⊤ t ξt + λ⊤ t ˙ξt
+= −vλ⊤ t DVu(¯zt)ξt + vλ⊤ t DVu(¯zt)ξt + λ⊤ t Vν (¯zt) ˙η(t)
+= λ⊤ t Vν (¯zt) ˙η(t).
+Integrate over [0, T ], using ξ0 = 0 and λT = ∇g(¯zT ), to obtain
+DF ¯X [q] = ∇g(¯zT )⊤ξT =
+Z T
+0
+λ⊤ t Vν (¯zt) ˙η(t) dt.
+Integration by parts is valid because t 7→ λ⊤ t Vν (¯zt) is continuously differentiable and η is absolutely continuous. The
+endpoint terms vanish, giving
+DF ¯X [q] =
+
+η(t)λ⊤ t Vν (¯zt) T 0 − Z T 0 η(t) d dt  λ⊤ t Vν (¯zt)  dt = − Z T 0 η(t) d dt  λ⊤ t Vν (¯zt)  dt.
+Using the adjoint and state equations once more, the derivative in the integrand is
+d
+dt
+
+λ⊤ t Vν (¯zt)  = −vλ⊤ t DVu(¯zt)Vν (¯zt) + vλ⊤ t DVν (¯zt)Vu(¯zt) = vλ⊤ t [Vu, Vν ](¯zt).
+By bilinearity and antisymmetry of the bracket in Appendix A,
+[Vu, Vν ] = u1ν2[V1, V2] + u2ν1[V2, V1] = (u1ν2 − u2ν1)[V1, V2] = det(u, ν)[V1, V2].
+Substituting this identity into the integral proves (24).
+41
+The Information Limits of Neural CDEs Under Sparse Observations
+F.4. A uniform upper bound and the absence of large gaps
+Lemma F.5 (Uniform-grid upper bound). For every N ≥ 1, a nonadaptive uniform grid with N gaps satisfies
+RN (F ; XL,M ) ≤ 1 N 2
+
+Csens
+ LM T 3
+12 + M 2T 4 80N  + CY (L3T 3 + L4T 4)  .
+In particular, RN (F ; XL,M ) ≤ CupperN −2 for all N ≥ 1, where the fixed constant is
+Cupper := Csens
+ LM T 3
+12 + M 2T 4 80  + CY (L3T 3 + L4T 4).
+It is independent of the skeleton, driver, policy, and number of intervals.
+Proof. Take ti = iT /N and observe an arbitrary driver X ∈ XL,M at these times. Let S be its skeleton and ¯X its straight
+interpolation. Every driver eX ∈ XL,M (S) also belongs to XL(S), so the scalar expansion of Appendix C.1 gives
+|F ( eX) − F ( ¯X)| ≤
+N −1X
+i=0
+|ci| |ai( eX)| + CY (S3 + S2 2 ).
+The transport estimates in Appendix B.2 and the bracket bound in Appendix B.3 imply, uniformly in i and S,
+|ci| = |∇g(¯zT )⊤Pi[V1, V2](¯zi)|
+≤ ∥∇g∥∞∥Pi∥ ∥[V1, V2](¯zi)∥
+≤ 2M0M1eM1 LT ∥∇g∥∞ = Csens.
+For every gap, the acceleration-aware area bound of Proposition A.6 and ∥xi+1 − xi∥ ≤ L(ti+1 − ti) give
+|ai( eX)| ≤ ∥xi+1 − xi∥M 12 (ti+1 − ti)2 + M 2 80 (ti+1 − ti)4 ≤ LM 12  T N 3 + M 2 80  T N 4 .
+Summing all N intervals gives
+N −1X
+i=0
+|ai( eX)| ≤ LM T 3 12N 2 + M 2T 4 80N 3 .
+Moreover, the quantities defined in Section 4 satisfy, on this grid,
+S3 =
+N −1X
+i=0
+L3(ti+1 − ti)3 = L3T 3 N 2 , S2 2 =  N −1X i=0 L2(ti+1 − ti)2 !2 = L4T 4 N 2 .
+Substituting these expressions into the scalar bound gives
+|F ( eX) − F ( ¯X)| ≤ Csens
+ LM T 3
+12N 2 + M 2T 4 80N 3  + CY (L3T 3 + L4T 4) N 2
+≤ 1 N 2
+
+Csens
+ LM T 3
+12 + M 2T 4 80  + CY (L3T 3 + L4T 4)  = Cupper N 2 .
+The second step uses N ≥ 1 and the fixed coefficient in the lemma. All elements of YT (S; XL,M ) therefore lie within this
+bound of the common number F ( ¯X). Their radius is therefore no larger than that bound. The grid is a valid deterministic
+policy, and the bound is uniform over its observed skeletons, proving the lemma.
+Lemma F.6 (Vanishing gaps on a sensitive interval). Let (πN ) be deterministic policies such that
+supX∈XL,M rad F (FπN (X; XL,M )) → 0. Run each policy on ¯Xt = vtu, add the two analysis points a, b to its
+resulting query set, and sort the points in I = [a, b]. If δN is the largest resulting gap within I, then δN → 0.
+42
+The Information Limits of Neural CDEs Under Sparse Observations
+Proof. Suppose instead that for infinitely many N one of the augmented gaps in I has length at least ε > 0. Choose a length
+h0 > 0 smaller than ε/3 and a closed interval J ⊂ I of length h0 inside such a gap. The interval J contains no actual query
+time in its interior. Apply Lemma F.1 to J, set qt = ηJ (t)ν there and qt = 0 elsewhere, and choose h0 so small that
+v2 + M 2h2 0
+16 ≤ L2, CsymM 3h3 0 3072 ≤ vM β0 64 .
+These requirements are compatible because v < L, Csym is fixed in Lemma F.3, and β0 > 0. The clamped endpoint
+conditions and the gluing argument of Lemma F.2 show that the zero extension of this single bump belongs to W 2,∞. Only
+J carries a perturbation, so its derivative bounds are ∥ ˙q∥L∞ ≤ M h0/4 and ∥¨q∥L∞ ≤ M , regardless of the lengths of the
+other query gaps. Since ν ⊥ u and ¨¯X = 0, the inequalities
+∥ ˙¯Xt ± ˙qt∥2 = v2 + ∥ ˙qt∥2 ≤ v2 + M 2h2 0 16 ≤ L2,
+∥ ¨¯Xt ± ¨qt∥ = ∥¨qt∥ ≤ M
+prove that ¯X ± q are admissible. Since q vanishes at every actual query time of the reference run and at 0, T , determinism
+shows by induction that the policy makes the same sequence of queries, sees the same values, and makes the same stopping
+decision for ¯X, ¯X + q, and ¯X − q.
+Because the continuous function t 7→ λ⊤ t [V1, V2](¯zt) has no zero on I, it has a fixed sign there. The adjoint identity and the
+nonnegativity of ηJ give
+|DF ¯X [q]| = v
+ Z
+J
+ηJ (t)λ⊤ t [V1, V2](¯zt) dt
+ ≥ vβ0 Z
+J
+ηJ (t) dt = vM β0h3 0 32 .
+The symmetric variation bound and Q = M h2 0/8 yield
+1
+2 |F ( ¯X + q) − F ( ¯X − q)| ≥ |DF ¯X [q]| − CsymQ3 6 ≥ vM β0h3 0 32 − CsymM 3h6 0 3072 ≥ vM β0h3 0 64 > 0.
+The two outputs belong to the same information fiber of the reference transcript. Its radius must therefore be at least the last
+positive quantity, independently of N, contradicting the assumed vanishing worst-case radius. Hence δN → 0.
+F.5. Proof of the bounded-acceleration minimax theorem
+Proof of Theorem 5.2. The uniform-grid policy from Lemma F.5 gives RN (F ; XL,M ) ≤ CupperN −2. For every N choose
+a deterministic policy πN within N −3 of the minimax infimum, so that
+sup
+X∈XL,M
+rad F (FπN (X; XL,M )) ≤ RN (F ; XL,M ) + N −3 ≤ Cupper N 2 + 1 N 3 .
+Such a policy exists by the definition of the infimum. Run πN on the straight reference path ¯Xt = vtu. Add a, b only to
+analyze the gaps within I, not as extra measurements available to the policy. Write the sorted, augmented local times as
+a = t0 < t1 < · · · < tn = b. Since the policy uses at most N − 1 internal queries, the augmented partition has n ≤ N + 2
+gaps. By Lemma F.6,
+δN := max 0≤i<n (ti+1 − ti) −→ 0.
+On every local gap choose the nonnegative clamped function ηi of Lemma F.1. Since λ⊤ t [V1, V2](¯zt) has a constant sign on
+I, choose σi ∈ {−1, 1} to make the first-variation contributions have the same sign, and define qt = σiηi(t)ν on [ti, ti+1],
+extending it by zero outside I. The bounds of Lemma F.2 give
+∥ ˙q∥L∞ ≤ M δN 4 , ∥¨q∥L∞ ≤ M, Q := Var(q) = M 8
+n−1X
+i=0
+(ti+1 − ti)2.
+Because v < L and δN → 0, the inequality v2 + (M δN /4)2 ≤ L2 holds for all sufficiently large N . Thus X + = ¯X + q
+and X − = ¯X − q are both in XL,M .
+43
+The Information Limits of Neural CDEs Under Sparse Observations
+Every actual query time of the policy’s reference transcript belongs to the augmented partition or lies outside I, so q vanishes
+there. Initially X +, X −, and ¯X also agree at the two free endpoints. Suppose the first k − 1 queried times and their values
+agree. Determinism then forces the kth query time to be identical; q vanishes at that time, so its observed value also agrees.
+Induction gives equality of the complete ordered transcripts, including the stopping decision:
+OπN (X +) = OπN (X −) = OπN ( ¯X).
+Consequently, the information fiber of the reference transcript contains both paths, and its output radius satisfies
+rad F (FπN ( ¯X; XL,M )) ≥ 1 2 |F ( ¯X + q) − F ( ¯X − q)|.
+The adjoint identity and the positivity of the clamped bumps now give the leading term. Since the sensitivity is continuous
+and bounded away from zero on I, define on each existing local interval βi = mint∈[ti ,ti+1 ] βv,u(t) ≥ β0. Summing the signed contributions over the gaps gives
+|DF ¯X [q]| = v
+ n−1X
+i=0
+σi det(u, ν)
+Z ti+1
+ti
+ηi(t) × λ⊤ t [V1, V2](¯zt) dt
+
+= v
+n−1X
+i=0
+Z ti+1
+ti
+ηi(t)βv,u(t) dt
+≥ v
+n−1X
+i=0
+βi
+Z ti+1
+ti
+ηi(t) dt
+= vM 32
+n−1X
+i=0
+βi(ti+1 − ti)3.
+Here the second equality uses the fixed sign of the bracket sensitivity on I and the chosen signs σi. Apply the symmetric
+variation lemma and the lower bound on the fiber radius. Using the exact expression for Q, we obtain
+rad F (FπN ( ¯X; XL,M )) ≥ vM 32
+n−1X
+i=0
+βi(ti+1 − ti)3 − CsymM 3 3072  n−1X i=0 (ti+1 − ti)2 !3 . (25)
+To compare the remainder with the leading gap sum before establishing its N -rate, apply Cauchy–Schwarz to the powers
+1/2 and 3/2 of each interval length:
+ n−1X
+i=0
+(ti+1 − ti)2
+!2
+≤
+ n−1X
+i=0
+(ti+1 − ti)
+!  n−1X
+i=0
+(ti+1 − ti)3
+!
+= (b − a)
+n−1X
+i=0
+(ti+1 − ti)3.
+Multiplying by the square root of the same bound shows
+ n−1X
+i=0
+(ti+1 − ti)2
+!3
+≤ (b − a)3/2
+ n−1X
+i=0
+(ti+1 − ti)3
+!3/2
+.
+Moreover,
+0 ≤
+n−1X
+i=0
+(ti+1 − ti)3 ≤ δ2 N
+n−1X
+i=0
+(ti+1 − ti) = (b − a)δ2 N −→ 0.
+Divide the cubic remainder bound by the positive sum P i(ti+1 − ti)3 to obtain
+CsymM 3
+3072
+ P
+i(ti+1 − ti)23 P
+i(ti+1 − ti)3 ≤ CsymM 3 3072 (b − a)3/2
+ X
+i
+(ti+1 − ti)3
+!1/2
+≤ CsymM 3
+3072 (b − a)2δN −→ 0.
+44
+The Information Limits of Neural CDEs Under Sparse Observations
+Since βi ≥ β0, eventually the last expression is at most vM β0/64. The remainder is then no more than half the positive lower bound in (25). Explicitly,
+rad F (FπN ( ¯X; XL,M )) ≥ vM β0 64
+n−1X
+i=0
+(ti+1 − ti)3.
+The near-minimax upper bound now implies
+n−1X
+i=0
+(ti+1 − ti)3 ≤ 64 vM β0
+ Cupper
+N 2 + 1 N 3
+
+≤ 64(Cupper + 1) vM β0 1 N 2 .
+Set C3,I := 64(Cupper + 1)/(vM β0). The cubic-gap sum is at most C3,I /N 2. Cauchy–Schwarz then gives
+ n−1X
+i=0
+(ti+1 − ti)2
+!3
+≤
+(b − a)3/2C 3/2 3,I
+N 3 = O(N −3) = o(N −2).
+In particular, the subtracted output remainder is at most CsymM 3(b − a)3/2C 3/2 3,I /(3072N 3); multiplying by N 2 leaves a
+fixed coefficient times N −1, which tends to zero. Substituting this into (25) proves
+rad F (FπN ( ¯X; XL,M )) ≥ vM 32
+n−1X
+i=0
+βi(ti+1 − ti)3 − o(N −2).
+It remains to pass from the weighted gap sum to a continuous lower constant. H¨older’s inequality gives
+n−1X
+i=0
+β1/3 i (ti+1 − ti) ≤
+ n−1X
+i=0
+βi(ti+1 − ti)3
+!1/3  n−1X
+i=0
+1
+!2/3
+= n2/3
+ n−1X
+i=0
+βi(ti+1 − ti)3
+!1/3
+.
+Cubing and rearranging gives
+n−1X
+i=0
+βi(ti+1 − ti)3 ≥ 1 n2
+ n−1X
+i=0
+β1/3 i (ti+1 − ti)
+!3
+.
+The function β1/3 v,u is continuous on the compact interval I. If ω is its modulus of continuity, then for every gap
+0 ≤
+Z ti+1
+ti
+βv,u(t)1/3 dt − β1/3 i (ti+1 − ti) ≤ (ti+1 − ti) ω(δN ).
+Summing and using P i(ti+1 − ti) = b − a gives
+0 ≤
+Z b
+a
+βv,u(t)1/3 dt −
+n−1X
+i=0
+β1/3 i (ti+1 − ti) ≤ (b − a)ω(δN ) −→ 0.
+Since n ≤ N + 2, combining the preceding inequalities with the near-minimax property yields
+RN (F ; XL,M ) + N −3 ≥ vM 32(N + 2)2 ×
+ n−1X
+i=0
+β1/3 i (ti+1 − ti)
+!3
+− o(N −2).
+Multiply by N 2 and take the lower limit. We have N 2/(N + 2)2 → 1, N 2N −3 → 0, and the lower Riemann sums tend toR
+I βv,u(t)1/3 dt. Therefore
+lim inf
+N →∞
+N 2RN (F ; XL,M ) ≥ vM 32 Z I βv,u(t)1/3 dt 3 ,
+which is (9). The right-hand side is strictly positive because v, M, β0 and b − a are positive. Together with the uniform-grid
+upper bound, it proves RN (F ; XL,M ) = Θ(N −2) and completes Theorem 5.2.
+45
+The Information Limits of Neural CDEs Under Sparse Observations
+G. Additional Regularity and Active Sensing Results
+G.1. An outer certificate under bounded acceleration
+Fix the observed record S and suppose the prescribed bounds L, M > 0 are consistent with it, so XL,M (S) ̸= ∅. Every
+path in this class satisfies both the speed-only area bound A⋆ i and the acceleration bound in Proposition A.6. Define
+Ai = min
+(
+A⋆ i , M ∥xi+1 − xi∥(ti+1 − ti)2 12 + M 2(ti+1 − ti)4 80 ) , (26)
+Using the target coefficients ci from Theorem 4.2, define the acceleration-aware leading radius by
+Rout 2,L,M (S) =
+n−1X
+i=0
+Ai|ci|.
+Proposition G.1 (Acceleration-aware outer response bound). Fix the observed record S on [0, T ] and prescribed bounds
+L, M > 0 for which XL,M (S) ̸= ∅. Let V1, V2 ∈ C 4 b (Rm; Rm) and g ∈ C 2(Rm; R) have bounded first two derivatives.
+Then every X ∈ XL,M (S) satisfies
+|F (X) − F ( ¯X)| ≤ Rout 2,L,M (S) + CY (S3 + S2 2 ). (27)
+Here CY is the scalar-remainder coefficient of Lemma C.1, depending only on V1, V2, g, L, T . Thus YT (S; XL,M ) lies in
+the interval centered at F ( ¯X) with radius Rout 2,L,M (S) + CY (S3 + S2 2 ), and its diameter is at most twice this radius. With
+the fixed sensitivity bound Csens from Appendix C.4, the leading radius satisfies
+Rout 2,L,M (S) ≤ Csens
+ LM T
+12 δ2 + M 2T 80 δ3  , δ = max i (ti+1 − ti).
+Proof. The pointwise expansion from Lemma C.1 gives, for each speed-admissible completion,
+F (X) − F ( ¯X) =
+n−1X
+i=0
+ciai(X) + ε(X),
+|ε(X)| ≤ CY (S3 + S2 2 ).
+Every X ∈ XL,M (S) is speed-admissible. Its area on the ith interval satisfies |ai(X)| ≤ A⋆ i by the Dido theorem and
+|ai(X)| ≤ M ∥xi+1 − xi∥(ti+1 − ti)2 12 + M 2(ti+1 − ti)4 80
+by Proposition A.6. Taking the smaller upper bound and applying the triangle inequality yields
+|F (X) − F ( ¯X)| ≤ X
+i
+|ci| |ai(X)| + |ε(X)| ≤
+X
+i
+|ci|Ai + CY (S3 + S2 2 ),
+which proves (27).
+The fixed bound supi |ci| ≤ Csens follows from Appendix C.4. Since ∥xi+1 − xi∥ ≤ L(ti+1 − ti),
+Rout 2,L,M (S) ≤ Csens X
+i
+Ai
+≤ Csens
+"
+LM
+12
+X
+i
+(ti+1 − ti)3 + M 2 80 X i (ti+1 − ti)4
+#
+≤ Csens
+ LM T
+12 δ2 + M 2T 80 δ3  .
+The final inequality uses (ti+1 − ti)3 ≤ δ2(ti+1 − ti), (ti+1 − ti)4 ≤ δ3(ti+1 − ti) and P i(ti+1 − ti) = T .
+The parabolic witness of Proposition A.6 achieves a cubic local area scale when the speed constraint has sufficient slack. For
+globally W 2,∞ paths, adjacent intervals share their velocities at observation times, so their maximal areas cannot generally
+be chosen independently. The remainder S3 + S2 2 can also have order δ2, the order of the leading acceleration-aware sum.
+The bound therefore does not determine the sharp asymptotic coefficient of the nonlinear response diameter.
+46
+The Information Limits of Neural CDEs Under Sparse Observations
+G.2. Conditional area after an additional observation
+In the bounded-speed class, consider an interval [ti, ti+1] and fix an additional observation time τ ∈ (ti, ti+1). If the new
+value is x = Xτ , then the original signed area splits into a known triangle contribution and two still-unobserved areas.
+Lemma G.2 (Conditional area fiber after one observation). Let xi, xi+1 ∈ R2 be the recorded endpoints, and let x = Xτ
+be an additional measurement at τ ∈ (ti, ti+1). Suppose the prescribed speed bound is consistent with the three observed
+values, namely ∥x − xi∥ ≤ L(τ − ti) and ∥xi+1 − x∥ ≤ L(ti+1 − τ ). The signed areas attained by paths matching these
+measurements and satisfying the speed bound form exactly an interval centered at 1 2 (x − xi) ∧ (xi+1 − xi), with radius
+A⋆(∥x − xi∥, L(τ − ti)) + A⋆(∥xi+1 − x∥, L(ti+1 − τ )).
+Proof. Splitting the defining area integral at τ and substituting Xt − xi = (Xt − x) + (x − xi) on the second interval gives
+2ai(X) =
+Z τ
+ti
+(Xt − xi) ∧ dXt +
+Z ti+1
+τ
+(Xt − xi) ∧ dXt
+=
+Z τ
+ti
+(Xt − xi) ∧ dXt +
+Z ti+1
+τ
+(Xt − x) ∧ dXt +
+Z ti+1
+τ
+(x − xi) ∧ dXt
+= 2a[ti ,τ ](X) + 2a[τ,ti+1 ](X) + (x − xi) ∧ (xi+1 − x).
+Since (x − xi) ∧ (x − xi) = 0, the last term equals (x − xi) ∧ (xi+1 − xi). Dividing by two yields
+ai(X) = 1 2 (x − xi) ∧ (xi+1 − xi) + a[ti ,τ ](X) + a[τ,ti+1 ](X).
+The first term is fixed by the new observation. By Lemma A.2, each of the two remaining areas ranges over its full Dido
+interval. Their choices are independent, because absolutely continuous paths with a common intermediate value can be
+concatenated without matching their velocities. The sum of the two centered intervals is the full centered interval with radius
+equal to the sum of their radii.
+G.3. One-step gap selection with frozen sensitivities
+Each candidate observation time is fixed at the midpoint τi = (ti + ti+1)/2. Before measurement, the prescribed speed
+bound restricts the possible value Xτi to the intersection of the disks centered at the recorded endpoints xi and xi+1, each of
+radius L(ti+1 − ti)/2. Every point of this intersection is attained by two straight segments with speed at most L. Lemma G.2
+therefore gives the worst-case residual area radius:
+Bmid i = max ∥x−xi ∥≤L(ti+1 −ti )/2
+∥xi+1 −x∥≤L(ti+1 −ti )/2
+h
+A⋆(∥x − xi∥, L(ti+1 − ti)/2) + A⋆(∥xi+1 − x∥, L(ti+1 − ti)/2)
+i
+. (28)
+The maximum exists because the intersection of the two disks is compact and the Dido area function is continuous. For
+every fixed midpoint value, the conditional area fiber is a subset of the original Dido interval. Therefore 0 ≤ Bmid i ≤ A⋆ i .
+Define Ri = A⋆ i |ci| and Gmid i = |ci|(A⋆ i − Bmid i ). The coefficient ci is computed from the current reference path and held
+fixed when comparing candidate midpoint measurements.
+Proposition G.3 (Optimal gap for the fixed-midpoint surrogate). For the additive leading radius R2(S) = P i Ri, suppose
+that only the selected gap is split, its observation time is fixed at the midpoint, and all coefficients ci are kept unchanged during
+this one-step decision. Among the candidate gaps, the smallest worst-case residual surrogate radius is R2(S) − maxi Gmid i ,
+attained by any choice
+i⋆ ∈ arg max
+i
+Gmid i . (29)
+This proposition concerns gap selection for a fixed observation time; it does not claim that a midpoint is optimal among all
+possible times, or that the chosen gap minimizes the fully recomputed nonlinear Neural CDE certificate.
+Proof. For a candidate gap i, all other terms Rj of the frozen surrogate are unchanged. By Lemma G.2, the selected gap
+contributes at most |ci|Bmid i to the residual radius, and the maximizing midpoint value in (28) attains this worst case. Hence
+R(i) after = X
+j̸=i
+Rj + |ci|Bmid i = R2(S) − |ci|A⋆ i + |ci|Bmid i = R2(S) − Gmid i .
+47
+The Information Limits of Neural CDEs Under Sparse Observations
+The known triangle term in Lemma G.2 shifts the conditional area interval, and hence the frozen scalar surrogate, without
+changing its radius. Since R2(S) is the same for all candidate gaps, minimizing the residual radius is equivalent to
+maximizing Gmid i .
+G.4. Closed-form midpoint-reduction score
+The acquisition policy uses a closed-form midpoint residual score in place of the maximization in (28):
+Bscore i =
+
+
+
+L2(ti+1 − ti)2
+4π , ∥xi+1 − xi∥ L(ti+1 − ti) ≤ 2 π ,
+1
+2 A⋆ i , ∥xi+1 − xi∥ L(ti+1 − ti) > 2 π ,
+The policy ranks gaps by Gscore i = |ci| max{A⋆ i − Bscore i , 0}. This score uses Bscore i , whereas Proposition G.3 establishes
+optimal gap selection for the exact residual Bmid i . In Section 6.3, the full certificate is recomputed after each midpoint
+measurement.
+H. Experimental Setup and Reproducibility
+H.1. Signals, targets, and observation model
+In the certificate, regularity, and sequential-acquisition experiments, the planar drivers on [0, 1] have four Fourier harmonics:
+Xt = t d +
+4X
+k=1
+ 
+ak sin(2πkt) + bk cos(2πkt)
+
+,
+where d, ak, bk ∈ R2. The sine and cosine coefficients are independently Gaussian before frequency-dependent scaling;
+the drift is sampled separately. For the speed-only certificate and acquisition datasets, the harmonic amplitudes decay as
+k−2, the complete path is normalized to maximum speed approximately one, and L = 1.08. For the acceleration dataset,
+amplitudes decay as k−3, the oscillatory part is scaled to prescribed speed and acceleration targets of 0.62 and 1.55, and a
+separate drift is added before any necessary final speed rescaling. This dataset uses L = 1 and M = 4.
+The two path-dependent targets are the signed area of the open curve closed by its endpoint chord and the readout of a fixed
+three-dimensional nonlinear controlled system. For the latter, the initial state is (0.05, −0.03, 0.02)⊤, the final readout is
+z3 + 0.35z2 − 0.12z1, and the vector fields are
+V1(z) =
+
+
+1 + 0.10 tanh(z2)
+0.18 tanh(z3)
+0.25 tanh(z2)
+
+ , V2(z) =
+
+
+0.08z2
+1 + 0.50 tanh(z1)
+0.62z1 + 0.12 sin(z3)
+
+ .
+As a negative control, the endpoint-dependent target is sin(1.2(X 1 T − X 1 0 )) + 0.65(X 2 T − X 2 0 ) + 0.15∥XT − X0∥2. The
+signed-area target is evaluated on a fine polygonal representation; the nonlinear physical-system target uses one fourth-order
+Runge–Kutta step on each consecutive segment of that representation. The certificate dataset uses 257 evaluation points,
+while the acceleration and sequential-acquisition datasets use 513. The principal learned models have two spatial control
+channels, matching the planar certificate.
+For each data seed (7, 19, and 41), each principal dataset contains 360 training, 96 validation, and 96 test paths. The
+certificate and regularity experiments evaluate all three targets with 5, 9, 17, or 33 equally spaced observations, nested
+within the stored 33-point input. The acquisition experiment evaluates the two path-dependent targets. Learned outputs are
+centered and scaled by each dataset’s training-target mean and standard deviation.
+H.2. Learned controlled dynamics and numerical evaluation
+For the certificate, regularity, and acquisition experiments, the regressor has hidden dimension 14, an input-dependent
+initialization network of widths 2 → 14 → 14, a two-hidden-layer vector-field MLP of width 40 with tanh activations, and
+a scalar linear readout. The vector-field network outputs a 14 × 2 matrix at each hidden state.
+During training, the 33-point input is integrated with an explicit trapezoidal/Heun update for each observed increment.
+Training minimizes mean squared error in standardized targets using AdamW (2 × 10−3 initial learning rate, weight decay
+48
+The Information Limits of Neural CDEs Under Sparse Observations
+10−5), gradient clipping at norm 5, and a reduce-on-plateau learning-rate schedule (factor 0.5, patience 5). Training uses
+at most 90 epochs, with validation-based early stopping (patience 14); batch size is 64 in the certificate and acquisition
+experiments and 256 in the acceleration experiment. One model is trained for each task and data seed, then frozen across all
+sparse resolutions.
+For certificate evaluation, straight reference segments are integrated using eight numerical substeps per observation gap.
+The learned bracket [V1, V2] = DV2V1 − DV1V2 is computed with Jacobian-vector products; the target coefficients ci are
+obtained by a backward adjoint sweep, differentiating each reference gap map with respect to its initial hidden state. As the
+readout is linear, its terminal gradient is constant.
+H.3. Circular-arc completions and certificate discrepancy
+For the bounded-speed certificate comparison, the reference curve is the piecewise straight interpolation of the observed
+values. On each gap, we calculate the exact Dido maximal area A⋆ i from the displacement and length budget L(ti+1 − ti).
+We then construct circular arcs with signed areas +A⋆ i and −A⋆ i . The two global paths use the signs sign(ci) and − sign(ci)
+on each interval and therefore share the same sampled values. Each arc is evaluated with 12 subdivisions when propagated
+through the learned CDE. The observed nonlinear spread between these two paths is Darc, and the predicted leading diameter
+is Dcert = 2R2(S).
+The relative discrepancy reported in Section 6.1 is computed separately for each test case as
+|Darc − Dcert|
+max{Darc, Dcert, 10−8} .
+The certificate comparison comprises three seeds, three tasks, four held-out trajectories per seed, and four sampling
+resolutions: 144 cases in total, of which 96 belong to the two path-dependent tasks used for the reported rank correlation.
+For five- and nine-observation skeletons, a coordinate-wise search also explores alternative maximal-arc sign combinations
+within the same witness family.
+Scaling exponents are ordinary least-squares slopes of the logarithm of the median metric at each sampling resolution
+against log δ, where δ = 1/(nobs − 1). In particular, the fit to four aggregated resolutions is a finite-resolution diagnostic
+rather than an independent proof of the asymptotic exponent.
+H.4. Acceleration-constrained completion search
+For smooth inputs, we compare 2R2(S) with the acceleration-aware leading outer approximation 2Rout acc (S), which replaces
+A⋆ i in the sum by
+min
+
+A⋆ i , M ∥xi+1 − xi∥(ti+1 − ti)2 12 + M 2(ti+1 − ti)4 80  .
+The coefficient ci is computed from the same frozen learned CDE and reference path for both quantities. This comparison
+uses the leading area terms, without adding the remainder CY (S3 + S2 2 ) from Proposition G.1.
+The completion search keeps the observed positions xi fixed and jointly optimizes knot velocities. Each gap consists of two
+constant-acceleration halves whose accelerations are determined by the recorded endpoint positions and shared endpoint
+velocities. The resulting paths are globally C 1.
+In this family, maximum speed occurs at a knot or midpoint, and maximum acceleration is the norm of one of the constant
+half-gap accelerations. The search checks these quantities with relative numerical feasibility tolerance 2 × 10−5 and retains
+only passing iterates when computing the maximum-minus-minimum output spread Dadv. It uses 16 parallel restarts, up to
+160 gradient steps, and four integration subdivisions per half-interval.
+The evaluation covers three held-out trajectories per seed, three tasks, and four resolutions (108 cases, including 72 path-
+dependent cases). The reported spread is the largest value found by this search, with the stated numerical feasibility tolerance
+and integration error; it is not a certified continuous-class diameter.
+H.5. Sequential observation design
+The acquisition experiment starts with observations at either (0, 0.25, 0.50, 0.75, 1) or (0, 0.10, 0.31, 0.62, 1). Each policy
+selects a gap and measures the held-out physical path at its midpoint. The seven selection rules are: largest local radius
+49
+The Information Limits of Neural CDEs Under Sparse Observations
+A⋆ i |ci|; midpoint reduction |ci| max{A⋆ i − Bscore i , 0} with frozen sensitivities (Appendix G.4); longest gap; largest Dido
+area budget; largest |ci|; random choice; and a one-step look-ahead oracle.
+The oracle evaluates every candidate true midpoint and chooses the smallest recomputed certificate radius. The midpoint-
+reduction rule uses Bscore i , without solving the exact maximization for Bmid i in Proposition G.3. The oracle has access to
+unobserved midpoint values and minimizes the next radius.
+Each policy makes six acquisitions and recomputes the reference trajectory, target sensitivities and full radius after every
+measurement. The evaluation records the radius R2, the nonlinear circular-arc witness spread, prediction error relative to the
+dense learned-model output, and error relative to the synthetic target. The reported normalized certificate-radius area under
+the six acquisitions is
+1
+R2(S0)
+5X
+k=0
+R2(Sk) + R2(Sk+1)
+2 ,
+where Sk denotes the observation record after k acquisitions. Smaller values indicate faster reduction of the leading
+ambiguity radius at equal measurement budget.
+The evaluation has three seeds, two path-dependent tasks, two held-out trajectories per seed, and two starting designs, giving
+24 initial states under each policy. The random baseline uses one seeded realization per initial state rather than an average
+over possible random acquisition sequences.
+H.6. Admissibility checks for numerical completions
+Circular arcs satisfy the continuous speed constraint analytically, although their CDE outputs are evaluated on numerical
+subdivisions. The piecewise-constant-acceleration completions are checked against the speed and acceleration limits with
+the numerical tolerance stated above. In the supplementary spline-and-bump searches in Appendix I, derivative constraints
+are checked only on finite evaluation grids. All three procedures evaluate selected completion families rather than the full
+identified set.
+I. Additional Experimental Results
+I.1. Certificate accuracy across observation resolutions
+Table 1 gives certificate diameters and circular-arc-pair spreads at each observation count, pooled over two path-dependent
+tasks, three data seeds and four held-out trajectories per seed.
+Table 1. Predicted diameter and feasible circular-arc spread (target SD), with per-case relative discrepancy.
+Observations 2R2(S) Darc Median rel. error
+5 5.775 5.401 5.49%
+9 2.769 2.684 2.55%
+17 1.358 1.334 1.79%
+33 0.678 0.668 1.69%
+The pooled median ratio Darc/(2R2) is 0.981, and the Spearman rank correlation between the certificate and the arc-pair
+spread is 0.9987 on the path-dependent targets. The generating target functional evaluated on the same arc pairs has
+Spearman correlation 0.9907 with the learned-model certificate.
+The two learned path-dependent regressors have an average dense-resolution test R2 of 0.9990. The endpoint-dependent
+negative control has a median leading certificate diameter 0.00070 times that of the path-dependent regressors. Across the
+four resolutions, the fitted log–log slopes are 1.005 for the arc-pair spread, 1.030 for the predicted diameter, and 1.554 for
+their absolute discrepancy.
+I.2. Effect and conservatism of acceleration regularity
+The acceleration-aware leading diameter is smaller than the speed-only leading diameter at every observation count in
+Table 2. Entries are medians over the two path-dependent targets, three data seeds and three held-out trajectories per seed.
+50
+The Information Limits of Neural CDEs Under Sparse Observations
+Table 2. Median leading geometric diameters and numerically screened completion spread (target SD).
+Observations Speed only Acceleration aware Searched spread
+5 1.7844 0.4591 0.09966
+9 0.8547 0.0869 0.00935
+17 0.4174 0.0183 0.00090
+33 0.2061 0.0042 0.00010
+The pooled median acceleration-aware-to-speed-only diameter ratio is 0.0711. The adversarial search yields a median ratio
+Dadv/(2Rout acc ) = 0.0911; the Spearman rank correlation between these two quantities is 0.9748.
+Across the four median resolutions, fitted log–log slopes are 1.038 for the speed-only diameter, 2.261 for the acceleration-
+aware leading diameter, and 3.347 for the searched adversarial spread. The last value describes the restricted optimization
+family and is not an estimate of the minimax exponent for all admissible drivers.
+The dense-resolution learned-model R2 is 0.985 for the nonlinear CDE target and 0.518 for signed area.
+I.3. Acquisition policies and remaining ambiguity
+The certificate-radius AUCs in Table 3 are calculated from 24 paired acquisition trajectories across two path-dependent targets
+and two initial observation designs. The oracle chooses the midpoint giving the smallest next radius after measurement; it
+does not optimize the entire six-step sequence.
+Table 3. Median normalized certificate-radius area under six acquisitions (lower is better), and median final radius relative to its initial
+value.
+Policy Radius AUC Final / initial
+One-step look-ahead oracle 3.626 0.391
+Largest local ambiguity 3.633 0.387
+Predicted midpoint reduction 3.633 0.387
+Area budget only 3.749 0.401
+Longest gap 3.823 0.400
+Random gap 4.544 0.603
+Sensitivity only 4.744 0.747
+Largest-local-ambiguity and predicted-midpoint-reduction select different initial gaps in four of the 24 paired states. On
+those four states, the midpoint-reduction policy achieves the smaller fully recomputed radius once. The one-step oracle
+selects the same first gap as largest-local-ambiguity in 23 of 24 states.
+The oracle minimizes the next recomputed radius for the observation record reached by its own policy. Median final-to-initial
+ratios aggregate different sequential histories, so its median need not be lower than that of every alternative policy.
+I.4. Commutativity as a structural control
+For the commutativity control, the inputs have three Fourier harmonics and irregularly jittered five- or nine-point observation
+times. At each resolution and for each seed (7, 19, 41), we evaluate ten random noncommuting three-dimensional
+CDE systems and two commuting constant-field systems without training. The noncommuting fields are Vj (z) = cj +
+Aj tanh(Bj z + bj ) with five hidden units, Gaussian coefficients and nonlinearity strength drawn log-uniformly between
+0.08 and 1; the commuting fields are constant.
+Candidate completions use the natural cubic spline through the recorded samples plus local smooth bumps that vanish at the
+observation times. For each case, speed and acceleration budgets are set to 1.08 and 1.12 times the larger sampled derivative
+norm of the generating path and baseline spline, respectively. Feasibility is tested on a finite grid. The search uses three
+smooth bump modes per gap, 12 evaluation subdivisions per gap, and a finite population of candidates.
+The output spread is normalized by the maximum of baseline-state path length, terminal-state displacement, and 0.10.
+51
+The Information Limits of Neural CDEs Under Sparse Observations
+The median normalized searched spread is 4.28 × 10−4 for the noncommuting systems and 8.55 × 10−16 for the commuting
+constant-field controls. A leave-one-seed-out regression of searched spread gives R2 = 0.049 with sampling-only features
+and R2 = 0.836 with an analytic sampling-by-bracket proxy. The grid-based derivative checks do not certify admissibility
+over the full continuous intervals.
+I.5. Response ambiguity in independently trained path-sensitive models
+The independently trained models use four-harmonic planar paths stored at 33 time points, with 320 training, 96 validation,
+and 96 test trajectories per seed. Each model has hidden dimension 12, vector-field network width 32, and a three-channel
+control containing time and two spatial coordinates. Training runs for at most 80 epochs with batch size 64 and validation-
+based early stopping (patience 12). Models are trained on either 33 observations or a nested nine-point subset, then evaluated
+on five- and nine-point skeletons from the same held-out trajectories.
+The targets are signed area, a nonlinear CDE response, and an endpoint-dependent functional. Their labels are computed
+from the stored 33-point paths instead of the 257-point paths used in the principal experiment. The nonlinear target has the
+initial state and linear readout from Appendix H.1, with vector fields
+V1(z) =
+
+
+1 + 0.08 tanh(z2)
+0.18 tanh(z3)
+0.22 tanh(z2)
+
+ , V2(z) =
+
+
+0.06z2
+1 + 0.55 tanh(z1)
+0.65z1 + 0.12 sin(z3)
+
+ .
+The endpoint target uses coefficients 1.3, 0.7, and 0.20 in the corresponding expression in Appendix H.1.
+The adversarial completions use natural cubic splines through the recorded samples with compactly supported smooth
+basis perturbations that vanish at the observation times. Speed and acceleration are checked at finitely many points. The
+search maximizes the learned output difference using three restarts, 65 gradient steps, three bump modes per gap, and eight
+discretization subdivisions per gap.
+Table 4 gives output spreads for the models trained on 33 observations and the generating targets evaluated on the same
+selected completion pairs.
+Table 4. Median learned-model spread and true-target spread on the same selected completion pairs, in training-target standard deviations.
+5 observations 9 observations
+Target Model Target Model Target
+Signed area 0.2712 0.2903 0.0686 0.0705
+Nonlinear CDE 0.2034 0.2154 0.0517 0.0557
+Endpoint only 0.0058 0.0000 0.0012 0.0000
+The five-to-nine comparison pairs observations from the same held-out trajectory. The endpoint target is unchanged by any
+path perturbation that fixes the endpoints, whereas the trained model has a small residual output spread.
+For the dense-trained path-sensitive models, leave-one-seed-out regression of searched output spread gives cross-validated
+R2 = 0.687 with sampling-only features and R2 = 0.845 with a sampling-by-bracket indicator.
+52
