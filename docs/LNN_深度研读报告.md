@@ -1794,6 +1794,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-19**：[[docs/daily/2026-11-19_LNN_research_digest.md|每日追踪]]，候选论文 95 篇，仓库 45 个，模型 15 个。
 - **2026-11-18**：[[docs/daily/2026-11-18_LNN_research_digest.md|每日追踪]]，候选论文 95 篇，仓库 45 个，模型 16 个。
   - **研读 3 篇**（**selector top-3 连续第 9 天**全部为已知误命中，已手动改选；**本日 3 篇全部来自独立覆盖度自检捞出的"连续时间谱系"覆盖盲区**，而非 digest 候选池）：[[docs/reports/Neural_Controlled_Differential_Equations_2005.08926_研读报告.md|Neural CDE：把数据路径本身变成 ODE 的驱动源（2005.08926）]]、[[docs/reports/Universal_Approximation_Property_Neural_ODE_2012.02414_研读报告.md|Neural ODE 的 sup-通用逼近：从 L_p 升级到全输入域一致（2012.02414）]]、[[docs/reports/Graph_Neural_Rough_Differential_Equations_2303.10909_研读报告.md|STG-NRDE：log-signature 把时序与空间一起搬进粗糙路径（2303.10909）]]。
   - **selector 输出的 3 个 top 候选全部排除**：`2607.15232v1` (score 10, LFM2 tokenizer 扩展 —— **连续第 9 天**的同一已知误命中)、`2412.17006v1` (score 9, LTC 气候韧性代理建模，eess.SY 纯仿真)、`2309.13499v2` (score 9, 多智能体 STL 闭环控制器的 "closed-form continuous-time" **字面命中**)。**连续第 9 天同一批 top-3 误命中** —— selector 的强关键词打分 + `already_reported` 覆盖检查在这批论文上稳定失灵，必须每日人工复核、不可照抄。
@@ -1922,5 +1923,4 @@ positioning_updated: 2026-09-14
 - **2026-10-20**：[[docs/daily/2026-10-20_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 20 个。
 - **2026-10-19**：[[docs/daily/2026-10-19_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
 - **2026-10-18**：[[docs/daily/2026-10-18_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
-- **2026-10-17**：[[docs/daily/2026-10-17_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 21 个。
 <!-- daily-lnn-index:end -->
