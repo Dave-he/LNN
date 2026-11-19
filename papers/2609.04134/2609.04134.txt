@@ -1,0 +1,1344 @@
+Prospective Coding Improves Learning in Deep
+Continuous-Time Recurrent Networks
+Shivang Rawat1,∗ Mirko Morello1 Flaviano Morone1,2 David J. Heeger1,2
+1 Telepath
+2 New York University
+∗shivang@telepath.com
+Abstract
+Temporal integration gives continuous-time recurrent networks memory, but in
+deep stacks it also delays bottom-up signals and attenuates top-down errors. We
+compensate for this delay by making each layer’s bottom-up input prospective, and
+we develop Recursive Quadrature Filters (RQFs), biologically motivated temporal
+band-pass filters that are a special case of diagonal state-space models (SSMs).
+Starting from an energy model, we derive the RQF dynamics and show that each
+RQF is a band-pass filter whose learnable parameters control its tuning frequency
+and bandwidth. We then make each layer’s bottom-up input prospective using
+a parameter-free two-tap update that leaves the recurrent transition and parallel
+scan unchanged. We extend this correction to general diagonal SSMs and show
+that it mitigates depth-dependent gradient attenuation when temporal gradients
+are truncated, i.e., spatial-only backpropagation. We evaluate the performance
+of RQFs, S5, and ORGaNICs (a nonlinear gated RNN with built-in attentional
+modulation and recurrent normalization) trained using full backpropagation through
+time (BPTT) and spatial-only backpropagation. Under full BPTT, the prospective
+variants of these models match or outperform their non-prospective controls in
+every configuration. A non-residual width-32 six-layer RQF achieves 96.09 ±
+0.23% accuracy on raw-audio Speech Commands with 31.9k parameters; a width-
+64 six-layer RQF achieves 83.36 ± 1.71% on the 16,384-step Path-X task. We
+also introduce selective RQFs (sRQFs), which make each filter’s input gain and,
+optionally, its bandwidth and tuning frequency input-dependent while retaining
+the parallel scan. With the input gain alone, the same six-layer model achieves
+86.31 ± 0.51% on Path-X; with all three input-dependent, a four-layer prospective
+sRQF solves Selective Copying (99.83 ± 0.07%). These results identify RQFs
+as a parameter-efficient recurrent substrate and prospective-input coding as an
+input-side correction for deep continuous-time recurrent networks.
+1 Introduction
+Biological neural circuits face a fundamental trade-off between memory and reactivity. A biological
+neuron is well modeled as a leaky integrator whose membrane time constant τ confers temporal
+context but also delays and attenuates fast input changes [1]. When stacked into an L-layer feedfor-
+ward circuit, this filter cascades, so the effective relaxation time grows roughly as Lτ [2]. The same
+trade-off is built into recurrent theories of cortical function [3], in which slow recurrent dynamics let
+the network settle into a representation that combines feedforward drive with prior expectation. This
+lag also creates a learning problem: when a top-down teaching signal is applied at the output layer,
+the activity it should instruct in early layers is already roughly Lτ out of date. Signals that vary on
+timescales comparable to τ are therefore poorly served by the standard leaky cascade.
+40th Conference on Neural Information Processing Systems (NeurIPS 2026).
+arXiv:2609.04134v2  [cs.LG]  7 Nov 2026
+This paper contributes a recurrent substrate and an input-side correction. The substrate is the Recursive
+Quadrature Filter (RQF), a linear dynamical system inspired by neuroscience that is a special case of
+a diagonal state-space model (SSM), so it trains on sequences of tens of thousands of time steps with
+standard SSM algorithms. The input-side correction drives each layer with a prospective rather than
+an instantaneous bottom-up signal; it adds no parameters and applies to existing diagonal SSMs as
+well as to RQFs.
+The biological motivation for this correction comes from prospective firing: under sinusoidally
+modulated somatic current injection, cortical pyramidal cells can fire at a phase that leads their input,
+and biophysical models explain this as a firing-rate advance relative to membrane voltage [4, 5].
+Apical dendritic stimulation can likewise modulate the soma with little integration lag through
+dendritic resonance [6, 5]. Related prospective responses have been reported in retinal ganglion-cell
+populations, cerebellar Purkinje cells, and human muscle-spindle afferents [7–9]. Such phase leads
+can be modeled by applying the prospective (or look-ahead) operator [2, 10, 11]
+χτ ≡ 1 + τ d dt (1)
+to the underlying voltage or firing rate. For a first-order low-pass filter, χτ is its exact differential
+inverse, so applying it cancels the filter’s lag. When interpreted as a time-advance operator, however,
+it is accurate only to first order: expanding the unit time-shift in τ gives u(t + τ ) = u(t) + τ ˙u(t) +
+O(τ 2) = χτ (u(t)) + O(τ 2). Thus, χτ advances a smooth signal by one membrane time constant
+to first order in τ.
+We apply this prospective operator in networks of RQFs, a class of biologically motivated complex-
+valued temporal band-pass filters [12]. We derive RQFs from an energy-based theory of cortical
+function [3], in which a state parameter tunes a compromise between feedforward sensory drive
+and an internally generated prior. Taking the prior to be the prospective image of the state under a
+phase-rotation model collapses the resulting dynamics into a scalar complex-valued band-pass filter
+with a learnable phase-prior frequency ω and a learnable bandwidth parameter γ (Section 2).
+It has been suggested that the brain relies on a set of canonical neural microcircuits, across brain
+regions and modalities, implementing hierarchies of spatial band-pass filtering, output nonlinearities,
+and spatial pooling that extract and combine features [13–19], much as convolutional neural networks
+do. RQFs extend this paradigm to extract and combine features over time. Temporal band-pass
+RQFs have been used to model temporal-frequency selectivity and direction selectivity of neurons in
+primary visual cortex [12]. The encoding of sound in the cochlea and the auditory nerve can likewise
+be modeled as a bank of band-pass filters [20].
+We prove that scalar RQFs are a special case of single-channel diagonal complex SSMs, so an RQF
+layer is a constrained diagonal SSM with biologically interpretable poles and inherits the parallel-scan
+and FFT-convolutional training algorithms used for SSMs [21, 22]. This distinguishes RQFs from
+recent prospective-coding cortical models: neuronal least-action [10] (NLA) and latent equilibrium [2]
+use prospective signals for local biological learning, while generalized latent equilibrium [11] (GLE)
+uses prospective and retrospective operators for online credit assignment in a feedforward architecture.
+RQFs instead provide recurrent temporal filters compatible with long-sequence SSM training.
+We show, both theoretically and empirically, that deep RQF networks improve when each layer’s
+bottom-up input drive is prospective. Prospective and instantaneous-input RQFs share the same
+prospective phase-rotation prior via recurrence; they differ only in whether the bottom-up drive is
+look-ahead coded. This input-side change is local to each layer, leaves the RQF parameters and state
+transition unchanged, admits a two-tap discretization applicable to diagonal SSMs (Section 3), and
+directly affects credit assignment under spatial-only backpropagation. Spatial-only backpropagation
+treats every earlier recurrent state as a stop-gradient variable, so it computes gradients only across
+layers, not over time. Under this regime, instantaneous inputs introduce an explicit (h/τ )L−ℓ
+attenuation (where h is the discretization time step), while prospective-input coding changes the
+discretization prefactor of each spatial hop from O(h/τ ) to O(1) as h/τ → 0.
+We also introduce selective RQFs (sRQFs), an extension of RQFs with attention-like selection.
+Selective SSMs make the input matrix depend on the current input, so that the model controls which
+inputs enter its state [23]. One way to do this in an RQF layer is to modulate the input with an
+input-dependent gain: each sRQF filter multiplies its bottom-up drive by a positive gain computed
+from the preceding layer’s output, analogous to the input gate of LSTMs and the input modulators of
+ORGaNICs [24, 25]. Akin to Mamba, which also makes its discretization step input-dependent [23],
+2
+an sRQF can additionally make the bandwidth γ and frequency ω parameters input-dependent, so that
+each filter’s pole moves with the input. Because these quantities depend only on the preceding layer’s
+output and not on the layer’s own state, sRQFs remain diagonal linear recurrences, time-varying
+when γ and ω are selective, that can be computed efficiently using a parallel scan [26–28, 23], with
+either prospective or instantaneous input (Appendix F).
+Contributions.
+• Architecture (machine learning). We introduce RQFs, which are motivated by neuroscience but
+developed here for machine-learning applications. We prove that RQFs are a special case of diagonal
+SSMs (Section 2), making RQF layers compatible with the parallel-scan and FFT-convolution
+algorithms used for diagonal SSMs, thereby making RQF stacks capable of learning tasks such as
+the 16,384-step Path-X. We also introduce sRQFs, which make the input gain, bandwidth γ, and
+frequency ω parameters input-dependent while retaining the parallel scan (Appendix F).
+• Prospective input (machine learning). We replace each layer’s instantaneous bottom-up drive with
+a prospective one and derive the corresponding discretization for any diagonal SSM (Section 3).
+The implementation adds no parameters, leaves the state transition and parallel scan untouched,
+and costs only a second input tap; under full BPTT, it yields higher mean test accuracy than the
+matched control in every RQF configuration.
+• Theory (computational neuroscience and machine learning). We prove that under spatial-only
+backpropagation, instantaneous bottom-up inputs incur a geometric discretization-induced depth
+attenuation that prospective-input coding removes (Section 3 and Appendix C).
+• Performance (machine learning). We evaluate prospective input on Speech Commands and Path-X
+with RQF stacks, S5, and the nonlinear ORGaNICs substrate [25], under full BPTT and spatial-only
+backpropagation, and compare RQFs with sRQFs on Path-X and Selective Copying (Section 4).
+Scope of contributions. The RQF substrate and the input-side correction are evaluated as machine-
+learning contributions under standard BPTT; the cortical theory provides their motivation. The third
+contribution concerns spatial-only backpropagation, in which the recurrence is never differentiated
+through time. We adopt that regime because it is the one described by our derivation and isolates the
+effect of the input drive; it is a diagnostic, neither a prerequisite for the machine-learning contribution
+nor a recommended training procedure. Spatial-only backpropagation is temporally local, but exact
+error propagation across layers still uses conjugate-transposed forward weights and therefore retains
+the weight-transport problem [29]. We consequently describe RQFs as a biologically motivated
+circuit abstraction but do not suggest that backpropagation training is biologically plausible.
+2 Recursive Quadrature Filters (RQFs)
+The substrate for RQFs is a leaky integrator whose state relaxes toward a convex mixture of the
+external input and an internally predicted recurrent state:
+τ ˙y = −y + [γ z + (1 − γ) by] , (2)
+where y(t) ∈ C is the filter state; z(t) ∈ C is the input drive; τ > 0 is the base time constant; by is the
+recurrent prediction; and γ ∈ (0, 1) controls the balance between input tracking and recurrence. This
+convex blend mirrors the cortical energy model of Heeger [3]; Appendix A.1 derives Eq. (2) from
+that energy functional, with γ as the state parameter and by as the prior drive.
+The recurrent prediction by in Eq. (2) requires a model of how y evolves locally. We take this model
+to be a phase-rotation prior: the undamped complex oscillator ˙y = ιωy, the minimal generator on
+C of a single phase-prior frequency ω. This choice follows the internal-model principle: a system
+that prospectively tracks a structured signal should contain a model of that signal’s dynamics [30].
+Applying the prospective operator χτ from Eq. (1) to this prior gives
+by ≜ χτ (y)
+
+˙y=ιωy = (1 + ιωτ ) y, (3)
+where χτ (y(t)) is causal because it uses only the instantaneous activity and its local time derivative.
+Substituting Eq. (3) into Eq. (2) yields the Recursive Quadrature Filter (RQF), a scalar complex-
+valued temporal band-pass filter governed by
+τ ˙y = −y + γ z + (1 − γ)(1 + ιωτ ) y, (4)
+3
+a
+d e
+b c
+Figure 1: The Recursive Quadrature Filter (RQF): pole, impulse response, and frequency
+response. An RQF is a scalar complex-valued temporal filter with learnable phase-prior frequency
+ω and bandwidth parameter γ at a fixed base time constant τ , governed by Eq. (4). The derived
+quantities are the decay rate α = γ/τ , resonant frequency ω0 = (1 − γ)ω, effective time constant
+τ0 = τ /γ, and pole λ = −α + ιω0. (a) Free response of y in the complex plane, y(t) = y(0) eλt.
+(b) The pole lies in the stable region Re(λ) < 0 for any γ ∈ (0, 1). (c) Notation used throughout
+the paper. (d) Impulse response y(t) = α eλt to a Dirac drive z(t) = δ(t), a quadrature pair (i.e.,
+with nearly equal amplitude responses and a nearly 90◦ phase shift) oscillating inside the envelope
+|y(t)| = α e−t/τ0 (γ = 0.1, ωτ = 0.65). (e) Frequency response amplitude for several values of γ,
+from sharp resonance to broad passband.
+where ω > 0 is the learnable frequency parameter and γ is the learnable bandwidth parameter. The
+state y is complex-valued even when z is real, with its real and imaginary parts representing the
+outputs of a quadrature pair of causal temporal band-pass filters (i.e., for narrow passbands, nearly
+equal amplitude responses and a nearly 90◦ phase shift). Hence, the modulus of the output |y| follows
+the amplitude envelope of the filter’s band regardless of phase. Defining α ≜ γ/τ , ω0 ≜ (1 − γ)ω,
+and λ ≜ −α + ι ω0 collapses Eq. (4) into the compact scalar recurrence ˙y = λy + αz, so the RQF is
+a stable single-pole complex filter for any γ ∈ (0, 1) (Fig. 1). The prospective factor (1 + ιωτ )y sets
+the local recurrent prediction, whereas the homogeneous state evolves as y(t + ∆) = eλ∆y(t) when
+z = 0. Appendix A.2 derives the transfer function (revealing the band-pass property), quality factor,
+damped-oscillator form, and the effect of cascading RQFs for fine-tuning the bandwidth.
+Multi-layer architecture. A layer of an RQF stack bundles nℓ scalar filters operating in parallel,
+each with its own phase-prior frequency ω(ℓ) i and bandwidth γ(ℓ) i but sharing a common time constant
+τ . Collecting the parameters into vectors ω(ℓ), γ(ℓ) ∈ Rnℓ and writing the layer state as y(ℓ) ∈ Cnℓ ,
+the layer dynamics are the element-wise vectorization of Eq. (4):
+τ ˙y(ℓ) = −y(ℓ) + γ(ℓ) ⊙ z(ℓ) + (1 − γ(ℓ)) ⊙ (1 + ιτ ω(ℓ)) ⊙ y(ℓ), (5)
+where z(ℓ) ∈ Cnℓ is the bottom-up input drive to the layer; ⊙ denotes the element-wise product; and
+1 ∈ Rnℓ is the all-ones vector. Defining α(ℓ) ≜ γ(ℓ)/τ and λ(ℓ) ≜ −α(ℓ) + ι (1 − γ(ℓ)) ⊙ ω(ℓ),
+Eq. (5) collapses to the compact diagonal complex ODE:
+˙y(ℓ) = λ(ℓ) ⊙ y(ℓ) + α(ℓ) ⊙ z(ℓ). (6)
+4
+To build a deep network, we stack L layers. The input drive to layer ℓ is
+z(ℓ) = W(ℓ)x(ℓ), x(ℓ) = ρ  y(ℓ−1)  , (7)
+where ρ : Cnℓ−1 → Cnℓ−1 is an activation function (also called an output nonlinearity); x(ℓ) ∈ Cnℓ−1
+is the layer input to layer ℓ, with the boundary x(1) ≜ rin; W(ℓ) ∈ Cnℓ ×nℓ−1 is a complex-valued
+inter-layer weight matrix; and z(ℓ) ∈ Cnℓ is the post-weight bottom-up input drive. The activation
+function ρ is not required to be holomorphic: nothing in the layer dynamics or in the discretization
+of Section 3 relies on complex differentiability, and Wirtinger calculus supplies gradients for any
+real-differentiable map of (Re(y), Im(y)). The default is the pointwise family [ρ(y)]i = ρ0(yi),
+with the canonical choice being the split-ReLU
+ρ0(y) = max{0, Re(y)} + ι max{0, Im(y)}, (8)
+which applies a real-valued rectifier independently to the real and imaginary components of the
+quadrature pair, and is non-holomorphic by construction.
+Discretization. For the implementation, we discretize the continuous-time layer dynamics in Eq. (6)
+with a zero-order hold (ZOH) on the bottom-up drive z(ℓ). ZOH treats z(ℓ) as piecewise constant
+on each integration interval [tn, tn+1], with the constant value denoted by z(ℓ) n+1, and integrates the
+resulting forced linear ODE in closed form. It is the default discretization for diagonal SSMs, adopted
+by DSS, S4D, S5, and Mamba [22, 21, 28, 23], because it (i) is unconditionally stable for any pole
+in the open left half-plane, meaning that high-Q (narrow passband) filters impose no extra step-size
+constraint; (ii) integrates the linear part exactly, retaining the full eλh response at finite h; and (iii)
+agrees with forward Euler to first order in h/τ , with an O((h/τ )2) difference. ZOH discretization of
+Eq. (6) yields the diagonal complex affine recurrence and coefficients
+y(ℓ) n+1 = ¯A(ℓ) h ⊙ y(ℓ) n + ¯B(ℓ) h ⊙ z(ℓ) n+1, (9)
+¯A(ℓ) h ≜ eλ(ℓ) h, ¯B(ℓ) h ≜ α(ℓ) λ(ℓ) ⊙  ¯A(ℓ) h − 1  , (10)
+where z(ℓ) n+1 = W(ℓ)ρ(y(ℓ−1) n+1 ) samples the bottom-up input drive in Eq. (7) at tn+1. The coefficients
+¯A(ℓ) h and ¯B(ℓ) h depend only on the parameters (γ(ℓ), ω(ℓ)), the base time constant τ , and the step size h, and can be precomputed once per parameter update and reused across all time steps. The full
+derivation is given in Appendix B.1.
+RQFs are a special case of diagonal state-space models. A continuous-time linear state-space
+model (SSM) maps an input signal x(t) ∈ RU through a latent state y(t) ∈ RP to an output
+o(t) ∈ RM via
+˙y(t) = A y(t) + B x(t), o(t) = C y(t) + D x(t), (11)
+with state matrix A ∈ RP ×P , input matrix B ∈ RP ×U , output matrix C ∈ RM ×P , and feedthrough
+D ∈ RM ×U [31, 28]. All SSMs share this template but differ in how the recurrent core is parameter-
+ized and how the feature channels are coupled. S4 applies a bank of single-input single-output (SISO)
+SSMs across feature channels [31]; DSS and S4D replace S4’s structured state matrix with diagonal
+variants [22, 21]; S5 uses one multi-input multi-output (MIMO) SSM whose effective recurrent
+matrix is complex-valued and diagonal [28]; the LRU uses a discrete diagonal linear recurrence with
+dense input and output projections [32]; and Mamba retains a diagonal state transition while making
+the discretized parameters input-dependent [23]. In the fixed-parameter diagonal case, the recurrent
+core can be written directly in a complex diagonal form,
+˙ey(t) = Λ ey(t) + B x(t), o(t) = C ey(t) + D x(t), (12)
+with Λ ∈ CP ×P diagonal, B ∈ CP ×U , and C ∈ CM ×P . ZOH discretization at step h gives
+eyk+1 = ¯Ah eyk + ¯Bh xk+1, with
+¯Ah ≜ eΛh, ¯Bh ≜ Λ−1  ¯Ah − I  B. (13)
+The temporal modes are controlled by the entries of Λ: an eigenvalue λp ∈ C in the open left
+half-plane produces a damped oscillation at angular frequency Im(λp) with decay rate |Re(λp)|.
+The RQF layer is the following constrained special case of Eq. (12), obtained by substituting the
+layer drive from Eq. (7) into Eq. (6):
+˙y(ℓ) = diag(λ(ℓ)) y(ℓ) + diag(α(ℓ)) W(ℓ)x(ℓ). (14)
+5
+a
+b
+Figure 2: Prospective-input coding in multi-layer RQFs. The prospective-input variant replaces
+the bottom-up post-nonlinearity signal entering layer ℓ with its τ -step look-ahead χτ (ρ(y(ℓ−1)))
+defined in Eq. (16); the instantaneous-input baseline feeds ρ(y(ℓ−1)) directly into W(ℓ). (a) The
+state y(ℓ−1) is passed through the activation ρ, advanced by the prospective operator χτ , and mixed
+by the inter-layer weight matrix W(ℓ) to form the bottom-up drive χτ (z(ℓ)). (b) Action of χτ on a
+sinusoidal signal z(t) (black). The look-ahead χτ (z(t)) = z(t) + τ ˙z(t) (pink, dashed) advances z
+by approximately τ by extrapolating along the local tangent.
+Thus, the SSM input x(t) corresponds to the RQF layer input x(ℓ), and the dense input projection is
+the inter-layer weight matrix W(ℓ). In the canonical SSM notation of Eq. (12), the full continuous-
+time input matrix is B = diag(α(ℓ))W(ℓ); the diagonal factor is not an extra SSM parameter but
+the RQF input gain already present in Eq. (6). The RQF-specific constraint is that α(ℓ) = γ(ℓ)/τ
+and λ(ℓ) = −α(ℓ) + ι(1 − γ(ℓ)) ⊙ ω(ℓ), which identifies the channel input gain with the inverse
+decay timescale 1/τ (ℓ) 0 . The inclusion is one-way: a general diagonal SSM need not satisfy this
+pole–input-gain coupling and therefore need not be an RQF. The remaining SSM machinery transfers
+without modification: any output projection C ∈ CM ×nℓ and feedthrough D ∈ CM ×U may be
+appended to read out from y(ℓ), and the per-block residual connections used in S4, S5, and Mamba
+stacks are admissible at the layer level. Unless stated otherwise, we set C = I and D = 0 throughout,
+so each layer’s output is its own complex state y(ℓ) and inter-layer mixing is delegated to W(ℓ+1);
+residual connections are treated as an explicit configuration choice in our experiments (Section 4).
+Selective RQFs (sRQFs). An sRQF multiplies each filter’s bottom-up drive by a positive gain
+κ(ℓ) computed from the preceding layer’s output, so that the input matrix of Eq. (14) becomes
+input-dependent:
+B(ℓ) κ = diag(κ(ℓ)) diag(α(ℓ)) W(ℓ). (15)
+An sRQF can additionally make the bandwidth γ(ℓ) and frequency ω(ℓ) parameters input-dependent,
+so that each filter’s pole, and hence its state transition, varies with the input, as Mamba’s state
+transition does through its input-dependent discretization step [23]. For the results reported below,
+only the input gain was input-dependent for the Path-X benchmark, whereas the gain, bandwidth
+γ, and frequency ω were all input-dependent for the Selective Copying benchmark (Section 4).
+Appendix F gives the parameterization, the discretized updates, and their parallel scan.
+3 Prospective-input coding in multi-layer RQFs
+We use the terms instantaneous-input and prospective-input to refer only to the bottom-up input
+drive from layer ℓ − 1 to layer ℓ. Both variants retain the RQF recurrent prediction by = (1 + ιωτ )y
+from Section 2; the comparison changes the input path, not the RQF dynamics. With the notation
+6
+of Eq. (7), the instantaneous choice uses x(ℓ) = ρ(y(ℓ−1)), while the prospective-input alternative
+applies the look-ahead operator before the inter-layer weights act (Fig. 2):
+ex(ℓ) ≜ χτ
+
+x(ℓ)
+
+= ρ
+
+y(ℓ−1)
+
++ τ ˙ρ
+
+y(ℓ−1)
+
+, z(ℓ) χ = W(ℓ) ex(ℓ), (16)
+where the dot denotes the time derivative. Since W(ℓ) is fixed over the integration interval, applying
+χτ to x(ℓ) and then multiplying by W(ℓ) is equivalent in the forward pass to applying χτ to z(ℓ); the
+discretization below uses this compact input drive notation.
+Discretization. Applying the ZOH update to the prospective input drive χτ
+ 
+z(ℓ) gives the following
+recurrence; Appendix B.2 provides the derivation:
+y(ℓ) n+1 = ¯A(ℓ) h ⊙ y(ℓ) n + h ¯B(ℓ) h + γ(ℓ) ⊙ ¯A(ℓ) h i ⊙ z(ℓ) n+1 − γ(ℓ) ⊙ ¯A(ℓ) h ⊙ z(ℓ) n , (17)
+where z(ℓ) k = W(ℓ)x(ℓ) k and x(ℓ) k = ρ(y(ℓ−1) k ). In standard signal-processing terms, Eq. (17) is a
+first-order IIR filter with a two-tap feedforward path: the recurrence on y(ℓ) has a single feedback
+pole ¯A(ℓ) h , while the compact drive enters through weighted taps at z(ℓ) n+1 and z(ℓ) n .
+Prospective input adds no parameters and leaves the diagonal state transition and associative scan
+unchanged. For a length-T sequence, it adds only O(T nℓ) element-wise work and one lagged read
+of the drive, so the asymptotic cost of inference and full BPTT is unchanged (Appendix B.2).
+Why prospective-input coding improves the spatial gradient path. Spatial-only backpropagation
+freezes the temporal recurrence at the previous time step and leaves only the within-step chain
+through depth. An instantaneous-input Euler step sends each inter-layer error through gnp = (h/τ )γ,
+whereas prospective input uses g+ = (1 + h/τ )γ. As h/τ → 0, therefore, the discretization
+prefactor multiplying each spatial hop changes from O(h/τ ) to O(1) and the explicit (h/τ )L−ℓ
+factor disappears. This statement concerns that prefactor only: the common product of activation
+slopes, weight norms, and damping gains may still attenuate with depth, and the upper bounds in
+Appendix C do not guarantee an O(1) complete gradient. The implemented ZOH update has the
+same small-h leading-order coefficients. Spatial-only backpropagation is local in time but still uses
+W† to propagate exact adjacent-layer errors, so it retains the weight-transport problem and is used
+here only to isolate the analyzed path.
+4 Experiments1
+RQFs are band-pass filters by construction (Appendix A.2), so speech provides a natural first test of
+whether prospective-input coding improves learning through the RQF cascade. We use the 10-class
+subset of Google Speech Commands v0.02 [33], comprising one-second utterances of the keywords
+yes, no, up, down, left, right, on, off, stop, and go. We consider two representations of each utterance:
+the raw waveform, supplied as a sequence of 16,000 scalar samples, and 20 Mel-frequency cepstral
+coefficients (MFCCs), supplied as a sequence of 161 frames. Thus, the two representations pose the
+same classification problem at very different sequence lengths and levels of temporal abstraction.
+We contrast two regimes for assigning gradient credit through the recurrence. Full backpropagation
+through time (BPTT) differentiates through the complete recurrent trajectory. Spatial-only backprop-
+agation instead detaches every previous recurrent state and retains only the within-step chain through
+depth. We use the latter as a mechanistic diagnostic, not as the recommended optimizer, because it
+removes temporal gradient credit and exposes the spatial attenuation analyzed in Section 3.
+The cleanest test is the RQF stack itself. We therefore begin with non-residual RQF models of depth
+L ∈ {2, 4, 6} and width n ∈ {32, 64}, using split-ReLU between layers and no normalization or
+gating. Avoiding residual connections leaves no bypass around the recurrent substrate, so changes in
+spatial credit flow are attributed to the input drive. Within every RQF comparison, the prospective
+and non-prospective variants match in architecture, optimizer, schedule, seeds, and parameter count;
+the look-ahead scale and base time constant are both τ = 5h. All tables report test accuracy as the
+mean ± sample standard deviation over five seeds (for Selective Copying, over the seeds that exceed
+chance performance), and Appendices E and F.1 give the parameterization and training protocol.
+1Code for the experiments is available at https://github.com/Sequel-Institute/prospective-rqf.
+7
+Table 1: RQF on Speech Commands. Test accuracy for non-residual width-64 stacks trained with
+(a) full BPTT and (b) spatial-only backpropagation.
+Raw audio MFCC
+Depth Params Prospective Non-pros. Params Prospective Non-pros.
+(a) Full BPTT
+2 52.3k 94.94±0.10 94.40±0.17 53.5k 96.42±0.26 96.30±0.33
+4 68.9k 96.27±0.16 95.77±0.22 70.2k 96.65±0.24 96.41±0.14
+6 85.6k 96.35±0.20 96.13±0.12 86.8k 96.70±0.19 96.49±0.07
+(b) Spatial-only backpropagation
+2 52.3k 67.76±7.19 78.11±0.71 53.5k 94.89±0.20 94.20±0.28
+4 68.9k 84.70±3.17 81.70±1.96 70.2k 92.63±0.85 89.04±0.83
+6 85.6k 82.92±5.42 75.34±1.18 86.8k 91.55±0.76 76.38±1.57
+Table 2: αP-S5 versus native S5 on Speech Commands, full BPTT. Residual width-64 S5 blocks.
+Raw audio MFCC
+Depth Params αP-S5 Native S5 Params αP-S5 Native S5
+2 48.9k 95.55±0.39 94.94±0.42 50.1k 96.52±0.20 95.89±0.38
+4 74.2k 96.06±0.35 95.96±0.27 75.4k 96.40±0.17 96.31±0.25
+6 99.5k 96.37±0.31 96.21±0.23 100.7k 96.41±0.20 96.36±0.14
+Table 3: Discrete ORGaNICs on MFCC Speech Commands. Residual width-64 models.
+Full BPTT Spatial-only
+Depth Params Prospective Non-pros. Prospective Non-pros.
+2 58.3k 93.28±0.37 92.10±0.21 79.88±1.28 81.49±1.46
+4 124.3k 93.21±0.59 91.91±0.53 82.61±1.21 81.67±0.88
+6 190.3k 91.92±0.19 91.92±0.11 83.43±1.73 80.56±1.41
+Under full BPTT, prospective-input coding raises mean test accuracy in all matched depth, width,
+and feature comparisons (Tables 1 and 6). Adding residual connections between layers leaves these
+results unchanged: prospective input still gives the higher mean in every configuration (Appendix D.2,
+Table 8). The smallest raw-audio models achieve 94.59 ± 0.28%, 95.66 ± 0.23%, and 96.09 ± 0.23%
+at two, four, and six layers, respectively, while using only 23.5k–31.9k parameters (Table 6). The
+spatial-only runs reveal the predicted depth dependence more clearly (Table 1): on MFCC inputs, the
+prospective advantage grows from 0.69 to 3.59 to 15.17 points as depth increases.
+The direct gradient measurements connect this behavioral result to the analysis. Under spatial-only
+backpropagation, prospective inputs produce larger spatial per-hop gains and early-layer weight-
+gradient norms than instantaneous inputs. Thus, the advantage of prospective input is evident when
+learning depends on the spatial path isolated by the theory (Appendix D.3; Tables 9 and 10).
+We next test whether the prospective construction transfers to a conventional residual SSM by
+comparing αP-S5 with native S5 [28]. We define αP-S5 by scaling each row of the learned S5 input
+matrix with the corresponding native-clock pole decay rate αp = −Re(λp), i.e., Bc = diag(α) eB.
+Prospective input uses the shared physical look-ahead horizon τ = 5h, matching the RQF models.
+Appendix E.3 and Eq. (E.11) give the complete architecture and discretization. The mean test accuracy
+of αP-S5 is higher at every tested depth, width, and input type (Tables 2 and 7). These experiments
+place the minimal RQF architecture in context. At width 32, the RQF is more accurate than αP-S5 at
+every raw-audio depth while using fewer parameters; at six layers, it achieves 96.09 ± 0.23% with
+31.9k parameters, versus 95.06 ± 0.99% with 40.9k for αP-S5 (Tables 6 and 7).
+To determine whether the effect depends on a linear RQF or SSM recurrence, we also apply the input
+correction to discrete residual ORGaNICs, a nonlinear recurrent substrate with dynamic, recurrent
+normalization [25, 34]. Prospective-input coding with full BPTT improves performance at two and
+four layers and ties at six layers. Under spatial-only backpropagation, the prospective model improves
+at four and six layers (Table 3). The correction therefore transfers beyond the linear RQF core.
+8
+Table 4: Path-X, full BPTT. Six-layer,
+width-64 models on the 16,384-step task
+(chance: 50%). The sRQF uses only the
+input gain.
+Model Prospective Non-pros.
+RQF 83.36±1.71 81.25±0.91
+sRQF 86.31±0.51 85.13±0.29
+Table 5: Selective Copying, full BPTT. Four-layer, width-
+32 models (chance: 7.1%). The sRQF makes γ, ω, and the
+input gain input-dependent. Parentheses give the number
+of seeds, out of five, that exceed chance performance.
+Model Params Prospective Non-pros.
+RQF 17.8k 69.83±1.78 (4/5) 68.98±2.21 (2/5)
+sRQF 33.0k 99.83±0.07 (5/5) 99.72±0.23 (2/5)
+Speech is well matched to a bank of temporal band-pass filters, but it does not establish whether
+RQFs with prospective input can learn structure that is neither acoustic nor naturally localized in
+frequency. We therefore turn to Path-X from Long Range Arena [35], a binary classification task
+formed by flattening a 128 × 128 image into a 16,384-step sequence whose relevant endpoints can be
+separated across the full input. We retain the forward-only, non-residual RQF model, use six layers
+of width 64, and train with full BPTT using a Path-X-specific optimization schedule (Appendix E.4).
+The prospective and non-prospective models achieve 83.36 ± 1.71% and 81.25 ± 0.91%, respectively
+(Table 4). Therefore, without bidirectionality, normalization, gating, or an expanded state, the minimal
+RQF stack learns a fully non-local 16,384-step task more than 30 points above chance. Prospective
+input yields better performance. When only the input gain is selective (γ and ω fixed), the sRQF
+improves further to 86.31 ± 0.51% with prospective input and 85.13 ± 0.29% without it.
+Finally, we compare RQFs and sRQFs on Selective Copying [23], in which 16 data tokens are placed
+at random positions in a 4,096-step sequence of blank tokens and must be reproduced in order at 16
+final recall positions. The task requires content-aware selection of the tokens to be memorized [23].
+Gu and Dao [23] argue that gating the input cannot affect the random spacing between these tokens;
+on this task, the sRQF therefore makes γ, ω, and the input gain input-dependent (Eq. (15) and
+Appendix F). We train four-layer, width-32 RQFs and sRQFs with both input rules for 600 epochs of
+1,000 updates using full BPTT, supervise only the recall positions, and use five seeds per configuration.
+Unlike the Speech Commands and Path-X models, these models apply divisive normalization across
+filters after the split-ReLU (Appendix F.1). With prospective input, the sRQF solves the task in all
+five seeds, achieving 99.83 ± 0.07% test recall-token accuracy (Table 5). Without prospective input,
+only two seeds exceed chance (99.72 ± 0.23%), and the other three remain at chance. Prospective
+input likewise raises the number of RQF seeds that exceed chance, from two to four of five.
+5 Related work
+Prospective coding in recurrent neural circuits. Prospective coding has been used to address timing
+mismatch and credit assignment in biologically motivated learning rules. Latent equilibrium uses the
+look-ahead variable u + τ ˙u to recover fast feedforward computation and local error propagation [2].
+Neuronal least-action formulates a least-action principle over future-discounted voltages, yielding
+prospective firing rates and prospective somato-dendritic mismatch errors [10]. Generalized latent
+equilibrium separates retrospective membrane integration from prospective output dynamics, yielding
+local spatio-temporal credit assignment [11]. Recent work has also identified cellular mechanisms for
+prospective and retrospective firing [5] and framed prospective neurons as a solution to teaching-signal
+synchronization [36]. Our work complements these circuit theories by showing that prospectivity can
+also serve as an input-side architectural addition for deep recurrent networks.
+Normalization, ORGaNICs, and quadrature dynamics. The RQF construction also belongs to a
+line of recurrent cortical circuit models in which dynamics, prediction, and normalization are coupled.
+Heeger [3] modeled neural activity as a compromise between feedforward drive, feedback drive,
+and prior drive, with prediction over time implemented by recursive quadrature pairs. ORGaNICs
+extend this idea to gated recurrent neural integrator circuits with dynamic normalization [25], a
+canonical neural computation [18]. Most prior ORGaNICs work has focused on stability and
+normalization [34, 37, 38]; RQFs were also combined with ORGaNICs to model temporal-frequency
+selectivity and direction selectivity of neurons in primary visual cortex [12]. The RQF is the
+corresponding single-channel complex primitive, whose complex state carries the quadrature pair.
+Credit assignment and trainability. The trainability problem we study is related to, but distinct from,
+the classical vanishing-gradient problem in RNNs, which arises from products of recurrent Jacobians
+through time [39]. Online alternatives such as RTRL avoid reverse-time unrolling but introduce large
+sensitivity states [40]; recent work makes this more tractable by exploiting independent recurrent
+9
+modules across layers [41]. Equilibrium propagation, Lagrangian extensions, and Hamiltonian
+echo methods instead recover gradient information from the response or time reversal of physical
+dynamical systems [42–45]. Our learning mode of spatial-only backpropagation removes reverse-time
+temporal credit but does not solve the separate weight-transport problem across layers [29].
+State-space models and discretization upgrades. SSMs have made diagonal recurrent substrates
+practical for long sequences. S4 introduced efficient structured state-space layers [31], while DSS
+and S4D showed that complex diagonal state matrices can retain much of this performance with
+simpler implementations [22, 21]. S5 and LRU refine this family through MIMO scans and carefully
+parameterized linear recurrences [28, 32]. Mamba addresses a different limitation by making
+discretized parameters input-dependent [23]. We deliberately keep the RQF parameters input-
+independent so that the prospective-input intervention and its gradient scaling can be isolated; sRQFs
+relax this. Mamba-3 also uses two input taps, but its convex endpoint interpolation is analytically
+distinct from the signed prospective difference (Appendix B.3) [46].
+6 Discussion
+Takeaways for machine learning. Prospective-input coding is a two-tap change to a diagonal SSM’s
+input path that adds no parameters and preserves the parallel scan. Prospective RQFs yield higher
+mean test accuracy than their matched controls in all configurations trained with full BPTT; the
+prospective αP-S5 construction likewise exceeds native S5 in all comparisons. Separately, RQFs are
+a special case of diagonal SSMs with clear advantages: at width 32, a stack of these biologically
+motivated filters, carrying no normalization, no gating, and no residual path, is more accurate than S5
+at every raw-audio depth while using fewer parameters.
+Takeaways for computational neuroscience. Prospective firing has been measured in biological
+neurons, and the look-ahead operator that models it inverts a first-order membrane low-pass filter
+exactly. Our results give that inverse a specific role: carrying a teaching signal through a deep cascade
+of leaky integrators. The evidence is mechanistic rather than only behavioral. Under spatial-only
+backpropagation in a deep recurrent network, we measure the error gain surviving each backward hop
+across layers, and a prospective drive preserves several times more of it than an instantaneous one.
+The consequence is temporally local learning: a six-layer stack that never differentiates its recurrence
+through time achieves 83% on 16,000-step raw audio, far longer than the sequences on which the
+local rules of NLA and GLE have been demonstrated.
+Limitations. The prospective-input correction is not directly applicable to discrete-time gated RNNs
+such as LSTMs and GRUs [24, 47]. The operator χτ = 1 + τ d/dt is defined on a continuous-time
+trajectory and uses τ as an intrinsic integration timescale, whereas standard LSTMs and GRUs
+are specified by per-step algebraic update equations. A discrete architecture can be embedded in
+many possible continuous flows, but without such a substrate, there is no canonical derivative or
+effective time constant to invert. Our proof isolates the linear RQF substrate under spatial-only
+backpropagation. Nonlinear activations, residual connections, normalization layers, input-dependent
+parameters, and imperfect choices of the look-ahead scale can all change the size of the empirical
+gain. Finally, we did not attempt to maximize performance in this paper; future work should learn
+or adapt the effective time constants, use multi-timescale look-ahead operators, optimize the pole
+initialization, and test residual and normalization choices.
+Selective RQFs and future work. The input gain alone raises Path-X accuracy by three to four points
+under both input rules (Table 4). Making γ and ω input-dependent as well enables ceiling performance
+on Selective Copying (Table 5). Associative recall, state tracking, and language modeling would test
+whether prospective input complements selectivity beyond these tasks.
+Spatial-only backpropagation isolates within-step spatial credit assignment but deliberately discards
+credit through recurrent time. Extending the prospective-input mechanism to local learning rules
+that retain useful temporal credit is therefore an open problem. Temporal credit assignment in RNNs
+is difficult because gradients propagated through time can vanish or explode [39]; deriving local
+alternatives has consequently been a long-standing goal [40, 41, 10, 11]. Biological synapses do not
+receive gradients produced by unrolling an entire recurrent computation, yet the brain learns from
+temporally extended experience. The goal is to use neuroscience principles to identify recurrent
+dynamical models whose learning rules use only local information (local errors and activity) while
+retaining useful credit assignment through time.
+10
+Acknowledgments and Disclosure of Funding
+We thank Stefano Martiniani, Jenny Listman, Kyle Stratis, Ruben Coen-Cagli, and Wayne Mackey
+for helpful discussions. This research was funded by Telepath. S.R. and M.M. are employees of
+Telepath. F.M. is a paid consultant for Telepath. D.J.H. is a cofounder of and paid consultant for
+Telepath. The authors declare no other competing interests.
+References
+[1] Wulfram Gerstner, Werner M Kistler, Richard Naud, and Liam Paninski. Neuronal dynamics:
+From single neurons to networks and models of cognition. Cambridge University Press, 2014.
+[2] Paul Haider, Benjamin Ellenberger, Laura Kriener, Jakob Jordan, Walter Senn, and Mihai A
+Petrovici. Latent equilibrium: a unified learning theory for arbitrarily fast computation with
+arbitrarily slow neurons. Advances in Neural Information Processing Systems, 34:17839–17851,
+2021.
+[3] David J Heeger. Theory of cortical function. Proceedings of the National Academy of Sciences,
+114(8):1773–1782, 2017.
+[4] Harold Köndgen, Caroline Geisler, Stefano Fusi, Xiao-Jing Wang, Hans-Rudolf Lüscher, and
+Michele Giugliano. The dynamical response properties of neocortical neurons to temporally
+modulated noisy inputs in vitro. Cerebral Cortex, 18(9):2086–2097, 2008.
+[5] Simon Brandt, Mihai Alexandru Petrovici, Walter Senn, Katharina Anna Wilmes, and Fed-
+erico Benitez. Prospective and retrospective coding in cortical neurons. arXiv preprint
+arXiv:2405.14810, 2024.
+[6] Daniel Ulrich. Dendritic resonance in rat neocortical pyramidal cells. Journal of Neurophysiol-
+ogy, 87(6):2753–2759, 2002.
+[7] Stephanie E Palmer, Olivier Marre, Michael J Berry, and William Bialek. Predictive information
+in a sensory population. Proceedings of the National Academy of Sciences, 112(22):6908–6913,
+2015.
+[8] Srdjan Ostojic, Germán Szapiro, Eric Schwartz, Boris Barbour, Nicolas Brunel, and Vincent
+Hakim. Neuronal morphology generates high-frequency firing resonance. Journal of Neuro-
+science, 35(18):7056–7068, 2015.
+[9] Michael Dimitriou and Benoni B Edin. Human muscle spindles act as forward sensory models.
+Current Biology, 20(19):1763–1767, 2010.
+[10] Walter Senn, Dominik Dold, Akos F Kungl, Benjamin Ellenberger, Jakob Jordan, Yoshua
+Bengio, João Sacramento, and Mihai A Petrovici. A neuronal least-action principle for real-time
+learning in cortical circuits. eLife, 12:RP89674, 2024.
+[11] Benjamin Ellenberger, Paul Haider, Federico Benitez, Jakob Jordan, Kevin Max, Ismael Jaras,
+Laura Kriener, and Mihai A Petrovici. Backpropagation through space, time and the brain.
+Nature Communications, 17(1):66, 2026. doi: 10.1038/s41467-025-66666-z.
+[12] David J Heeger and Klavdia O Zemlianova. A recurrent circuit implements normalization,
+simulating the dynamics of V1 activity. Proceedings of the National Academy of Sciences, 117
+(36):22494–22505, 2020.
+[13] Rodney J Douglas, Christof Koch, Misha Mahowald, Kevan AC Martin, and Humbert H Suarez.
+Recurrent excitation in neocortical circuits. Science, 269(5226):981–985, 1995.
+[14] David J Heeger, Eero P Simoncelli, and J Anthony Movshon. Computational models of cortical
+visual processing. Proceedings of the National Academy of Sciences, 93(2):623–627, 1996.
+[15] Eero P Simoncelli and David J Heeger. A model of neuronal responses in visual area MT.
+Vision Research, 38(5):743–761, 1998.
+11
+[16] Maximilian Riesenhuber and Tomaso Poggio. Hierarchical models of object recognition in
+cortex. Nature Neuroscience, 2(11):1019–1025, 1999.
+[17] Maximilian Riesenhuber and Tomaso Poggio. Neural mechanisms of object recognition. Current
+Opinion in Neurobiology, 12(2):162–168, 2002.
+[18] Matteo Carandini and David J Heeger. Normalization as a canonical neural computation. Nature
+Reviews Neuroscience, 13(1):51–62, 2012.
+[19] Timothy D Oleskiw, Justin D Lieber, Eero P Simoncelli, and J Anthony Movshon. Foundations
+of visual form selectivity for neurons in macaque areas V1 and V2. bioRxiv, 2024. doi:
+10.1101/2024.03.04.583307.
+[20] Georg von Békésy. Experiments in hearing. McGraw Hill, 1960.
+[21] Albert Gu, Karan Goel, Ankit Gupta, and Christopher Ré. On the parameterization and
+initialization of diagonal state space models. Advances in Neural Information Processing
+Systems, 35:35971–35983, 2022.
+[22] Ankit Gupta, Albert Gu, and Jonathan Berant. Diagonal state spaces are as effective as structured
+state spaces. Advances in Neural Information Processing Systems, 35:22982–22994, 2022.
+[23] Albert Gu and Tri Dao. Mamba: Linear-time sequence modeling with selective state spaces.
+arXiv preprint arXiv:2312.00752, 2023.
+[24] Sepp Hochreiter and Jürgen Schmidhuber. Long short-term memory. Neural Computation, 9
+(8):1735–1780, 1997.
+[25] David J Heeger and Wayne E Mackey. Oscillatory recurrent gated neural integrator circuits
+(ORGaNICs), a unifying theoretical framework for neural dynamics. Proceedings of the
+National Academy of Sciences, 116(45):22783–22794, 2019.
+[26] Guy E Blelloch. Prefix sums and their applications. Technical Report CMU-CS-90-190, School
+of Computer Science, Carnegie Mellon University, 1990.
+[27] Eric Martin and Chris Cundy. Parallelizing linear recurrent neural nets over sequence length. In
+International Conference on Learning Representations, 2018.
+[28] Jimmy TH Smith, Andrew Warrington, and Scott W Linderman. Simplified state space layers
+for sequence modeling. In International Conference on Learning Representations, 2023.
+[29] Timothy P Lillicrap, Daniel Cownden, Douglas B Tweed, and Colin J Akerman. Random synap-
+tic feedback weights support error backpropagation for deep learning. Nature Communications,
+7(1):13276, 2016.
+[30] Bruce A Francis and Walter Murray Wonham. The internal model principle of control theory.
+Automatica, 12(5):457–465, 1976.
+[31] Albert Gu, Karan Goel, and Christopher Ré. Efficiently modeling long sequences with structured
+state spaces. In International Conference on Learning Representations, 2022.
+[32] Antonio Orvieto, Samuel L Smith, Albert Gu, Anushan Fernando, Caglar Gulcehre, Razvan
+Pascanu, and Soham De. Resurrecting recurrent neural networks for long sequences. In
+International Conference on Machine Learning, pages 26670–26698. PMLR, 2023.
+[33] Pete Warden. Speech Commands: A dataset for limited-vocabulary speech recognition. arXiv
+preprint arXiv:1804.03209, 2018.
+[34] Shivang Rawat, David J Heeger, and Stefano Martiniani. Unconditional stability of a recurrent
+neural circuit implementing divisive normalization. Advances in Neural Information Processing
+Systems, 37:14712–14750, 2024.
+[35] Yi Tay, Mostafa Dehghani, Samira Abnar, Yikang Shen, Dara Bahri, Philip Pham, Jinfeng Rao,
+Liu Yang, Sebastian Ruder, and Donald Metzler. Long Range Arena: A benchmark for efficient
+transformers. In International Conference on Learning Representations, 2021.
+12
+[36] Nicolas Zucchet, Qianqian Feng, Axel Laborieux, Friedemann Zenke, Walter Senn, and João
+Sacramento. Teaching signal synchronization in deep neural networks with prospective neurons.
+arXiv preprint arXiv:2511.14917, 2025.
+[37] Flaviano Morone, Shivang Rawat, David J Heeger, and Stefano Martiniani. Stabilization of
+recurrent neural networks through divisive normalization. Proceedings of the National Academy
+of Sciences, 123(30):e2601841123, 2026. doi: 10.1073/pnas.2601841123.
+[38] Asit Pal, Shivang Rawat, David J Heeger, and Stefano Martiniani. Hierarchical neural circuit
+theory of normalization and inter-areal communication. eLife, Aug 2026. doi: 10.7554/eLife.
+111297.1.
+[39] Razvan Pascanu, Tomas Mikolov, and Yoshua Bengio. On the difficulty of training recurrent
+neural networks. In International Conference on Machine Learning, pages 1310–1318. PMLR,
+2013.
+[40] Ronald J Williams and David Zipser. A learning algorithm for continually running fully
+recurrent neural networks. Neural Computation, 1(2):270–280, 1989.
+[41] Nicolas Zucchet, Robert Meier, Simon Schug, Asier Mujika, and João Sacramento. Online
+learning of long-range dependencies. Advances in Neural Information Processing Systems, 36:
+10477–10493, 2023.
+[42] Benjamin Scellier and Yoshua Bengio. Equilibrium propagation: Bridging the gap between
+energy-based models and backpropagation. Frontiers in Computational Neuroscience, 11:24,
+2017.
+[43] Serge Massar. Equilibrium propagation for learning in Lagrangian dynamical systems. Physical
+Review E, 112(3):035304, 2025.
+[44] Víctor López-Pastor and Florian Marquardt. Self-learning machines based on Hamiltonian echo
+backpropagation. Physical Review X, 13(3):031020, 2023.
+[45] Guillaume Pourcel and Maxence Ernoult. Learning long range dependencies through time
+reversal symmetry breaking. arXiv preprint arXiv:2506.05259, 2025.
+[46] Aakash Lahoti, Kevin Y Li, Berlin Chen, Caitlin Wang, Aviv Bick, J Zico Kolter, Tri Dao, and
+Albert Gu. Mamba-3: Improved sequence modeling using state space principles. arXiv preprint
+arXiv:2603.15569, 2026.
+[47] Junyoung Chung, Caglar Gulcehre, KyungHyun Cho, and Yoshua Bengio. Empirical evaluation
+of gated recurrent neural networks on sequence modeling. arXiv preprint arXiv:1412.3555,
+2014.
+13
+A Details on Recursive Quadrature Filters (RQFs)
+This appendix collects the technical material supporting the construction in Section 2. We first
+recover the leaky-integrator substrate of Eq. (2) by modeling y as a dynamical process that minimizes
+a single-channel slice of the cortical energy function of Heeger [3] over time, and then collect the
+elementary linear dynamical systems facts that motivate the band-pass interpretation, the special-case
+relationship to SSMs, and the equivalence to a damped harmonic oscillator.
+A.1 Energy-based derivation of RQFs
+The starting point is Eq. 1 of Heeger [3], which includes a feedforward residual and a prior residual
+at every layer:
+EH =
+X
+i
+α(i) H
+
+λ(i) H X
+j
+ 
+y(i) j − z(i) j 2 +   1 − λ(i) H  X
+j
+ 
+y(i) j − by(i) j 2
+
+ . (A.1)
+We select one response coordinate, omit the terms contributed by the next layer, and condition on
+the supplied feedforward target z and prior target by. We extend this scalar compromise to two real
+quadrature coordinates with shared parameters and encode them as y = y1 + ιy2 (and likewise for z
+and by). The sum of the paired real squared residuals is then a squared complex modulus. Although
+Heeger’s αH (t) and λH (t) may vary, the RQF construction holds them fixed during relaxation,
+takes αH to be common to a quadrature pair, and identifies a learned per-channel γ = λH (the
+subscript distinguishes Heeger’s symbols from the RQF decay rate α and pole λ used elsewhere). A
+channel-dependent αH would instead induce channel-dependent effective base time constants.
+Let τH denote Heeger’s relaxation time. Gradient descent on the selected quadrature pair gives
+τH ˙y = −2αH [γ(y − z) + (1 − γ)(y − by)] . (A.2)
+Defining τ ≜ τH /(2αH ) absorbs the common scale. Equivalently, the normalized pair energy is
+E = γ|y − z|2 + (1 − γ)|y − by|2, ∂E ∂y† = γ(y − z) + (1 − γ)(y − by), (A.3)
+and, with z and by held fixed, its Wirtinger-gradient dynamics τ ˙y = −∂E/∂y† are
+τ ˙y = −y + γz + (1 − γ)by. (A.4)
+Along this flow,
+dE
+dt = ∂E ∂y ˙y + ∂E ∂y† ˙y† = − 2 τ  ∂E ∂y†  2 ≤ 0.
+Thus, the energy is nonincreasing and decreases strictly away from stationary points, while the
+dynamics recover Eq. (2).
+The recurrent prior (by) comes from the quadrature predictor in Eq. 3 of Heeger [3]. For angular
+frequency Ω, its real-coordinate form is
+
+by1(t)
+by2(t)
+
+=
+
+cos(Ω∆t) − sin(Ω∆t)
+sin(Ω∆t) cos(Ω∆t)
+ 
+y1(t − ∆t)
+y2(t − ∆t)
+
+, (A.5)
+or by(t) = eιΩ∆ty(t − ∆t): the state sampled ∆t earlier is rotated forward to predict the present.
+The RQF applies the same rotation to the present state to predict one look-ahead horizon ahead,
+by = eιωτ y with ω = Ω and ∆t = τ, and keeps the first-order term
+eιωτ y =  1 + ιωτ + O   (ωτ )2 y, by ≜ χτ (y)| ˙y=ιωy = (1 + ιωτ )y. (A.6)
+Substitution into Eq. (A.4) yields
+τ ˙y = −y + γz + (1 − γ)(1 + ιωτ )y,
+which recovers the RQF in Eq. (4).
+14
+A.2 State-space form, oscillator equivalence, and cascade bandwidth
+Two-dimensional real state-space form. We write the scalar complex-valued equation in Eq. (4)
+as a real two-dimensional coupled dynamical system to show that the RQF is a damped harmonic
+oscillator. Decomposing the complex state y = u + ιv and the input z = zR + ιzI into their real and
+imaginary parts reveals that Eq. (4) is equivalent to the two-dimensional real linear system
+˙u = −αu − ω0v + αzR, ˙v = ω0u − αv + αzI , (A.7)
+or, in matrix form, ˙x = Ax + Bz with x = (u, v)⊤, z = (zR, zI )⊤, A = −αI + ω0J, B = αI, and
+J =
+ 0 −1
+1 0
+
+, the standard planar rotation generator. The matrix A therefore implements an isotropic
+exponential decay at rate α combined with a planar rotation at angular velocity ω0. The eigenvalues
+follow from det(A − λI) = (λ + α)2 + ω2 0 = 0, giving the complex conjugate pair λ1,2 = −α ± ιω0;
+both lie strictly in the open left half-plane for any γ ∈ (0, 1), so the filter is unconditionally stable.
+The free response is x(t) = e−αt R(ω0t) x(0) with R(θ) a planar rotation, and the impulse response
+of the scalar complex form is the damped complex exponential h(t) = α e−αt(cos(ω0t) + ι sin(ω0t))
+for t ≥ 0, the same primitive that diagonal complex SSMs convolve with their input sequence.
+Frequency response and quality factor. The band-pass interpretation follows directly from the
+scalar form ˙y = λy + αz. With a zero initial condition, the transfer function from z to y is
+H(s) = α/(s − λ) = α/(s + α − ιω0), so its magnitude on the imaginary axis is
+|H(ιΩ)| = αp
+α2 + (Ω − ω0)2 , (A.8)
+whose square is a Lorentzian; it peaks at unity gain when Ω = ω0 and has full half-power bandwidth
+∆Ω3dB = 2α. The two learnable parameters set the two axes of this response: ω sets the phase-prior
+frequency and, through ω0 = (1 − γ)ω, the resonance location, while γ sets the bandwidth through
+α = γ/τ. Combining them gives the band-pass quality factor
+Q = ω0
+2α = (1 − γ) ω τ 2γ . (A.9)
+Small γ therefore yields a narrow band-pass filter centered near the phase-prior frequency ω, whereas
+large γ broadens the gain toward first-order low-pass integration.
+Equivalence with a damped harmonic oscillator. A scalar damped harmonic oscillator with natural
+(undamped) frequency ωn and damping ratio ζ obeys the standard second-order equation
+¨x + 2ζωn ˙x + ω2 n x = F (t), (A.10)
+where F (t) is an external forcing; the damping ratio ζ controls the qualitative regime, with the system
+being undamped when ζ = 0, underdamped when 0 < ζ < 1 (the impulse response is a decaying
+sinusoid), critically damped when ζ = 1, and overdamped when ζ > 1. To put the RQF in this
+form, we differentiate the first equation in Eq. (A.7), substitute ˙v from the second, and eliminate the
+residual v using the first equation again. The result is a single second-order ODE in u,
+¨u + 2α ˙u + (α2 + ω2 0 ) u = α   ˙zR + αzR  − αω0 zI , (A.11)
+which has exactly the form of Eq. (A.10) with the external forcing
+F (t) = α
+ 
+˙zR(t) + α zR(t)
+
+− αω0 zI (t), (A.12)
+built from the in-phase and quadrature components of z: a proportional-plus-derivative response
+α( ˙zR + αzR) to the real part, plus a static coupling −αω0zI to the imaginary part. Factoring α out of
+the real-part term and introducing the effective time constant τ0 ≡ 1/α = τ /γ exhibits the in-phase
+drive as a prospective signal on the timescale τ0: α( ˙zR + αzR) = α2(zR + τ0 ˙zR) = α2 χτ0 (zR).
+The forcing can therefore be written compactly as
+F (t) = α2 χτ0 (zR(t)) − αω0 zI (t). (A.13)
+Matching coefficients between Eqs. (A.10) and (A.11) reads off the oscillator parameters as
+ωn =
+q
+α2 + ω2 0 = |λ|, ζ = αp α2 + ω2 0 = α |λ| , (A.14)
+15
+and substituting the RQF parameterization α = γ/τ and ω0 = (1 − γ)ω gives the closed-form map
+from the learnable parameters (ω, γ, τ ) to the oscillator parameters,
+ωn = 1 τ p γ2 + (1 − γ)2 ω2τ 2, ζ = γp γ2 + (1 − γ)2 ω2τ 2 . (A.15)
+For any γ ∈ (0, 1) and ωτ > 0, the inequality ζ < 1 holds strictly, so an RQF is always underdamped:
+its impulse response is a sinusoid at the damped oscillation frequency ω0 = ωn
+p
+1 − ζ 2 contained
+in an e−αt envelope, and its squared magnitude response is the Lorentzian of Eq. (A.8). The standard
+oscillator quality factor Qosc = 1/(2ζ) = ωn/(2α) and the band-pass quality factor Q = ω0/(2α)
+from Eq. (A.9) therefore differ by the factor ωn/ω0 = 1/
+p
+1 − ζ 2, which approaches unity in the
+high-Q (low-ζ) regime, and the two coincide as ζ → 0.
+Cascade bandwidth. Here, we summarize the effect of cascading RQFs, which could be an
+architectural knob for adjusting per-channel selectivity. A single RQF has a Lorentzian squared
+magnitude response with full half-power bandwidth BW1 = 2α set by Eq. (A.8). Sharper per-
+channel selectivity at fixed α can be obtained by cascading N identical RQFs within a layer, i.e., in
+series with no nonlinearity between them. With N identical RQFs in series, the transfer function is
+HN (s) = H(s)N , so by Eq. (A.8) the cascade magnitude squared is
+|HN (ιΩ)|2 = α2N  
+α2 + (Ω − ω0)2N , (A.16)
+which peaks at unity at Ω = ω0 for every N , since stacking unity-gain filters preserves unity gain at
+resonance. Setting |HN (ιΩ)|2 = 1/2 and solving for the frequency offset,
+ 
+α2 + (Ω − ω0)2N = 2 α2N ⇐⇒ (Ω − ω0)2 =   21/N − 1  α2, (A.17)
+gives the full half-power bandwidth BWN = 2α
+√
+21/N − 1 and therefore the cascade bandwidth
+ratio
+BWN
+BW1
+=
+p
+21/N − 1 −−−−→
+N →∞
+r
+ln 2
+N ≈ 0.833√ N , (A.18)
+where the asymptotic form follows from 21/N = 1 + (ln 2)/N + O(1/N 2). A four-fold within-layer
+cascade, for example, would narrow the per-channel bandwidth to
+√
+21/4 − 1 ≈ 0.435 of a single-
+stage filter at fixed α while requiring 4× the computation on the linear path and no extra learnable
+parameters (the cascade shares the channel’s (ω0, α)). We do not exploit this knob in the present
+work; every layer uses N = 1, but it remains an inexpensive design choice.
+B Discretization
+This appendix gives the full derivations of the ZOH discrete update in Eq. (9), stated in Section 2, and
+the impulse-ZOH update for prospective-input coding that produces the two-tap input path referenced
+in Section 3. As in the main text, z(ℓ) denotes the compact post-weight drive used for forward
+discretization; Appendix C expands z(ℓ) = W(ℓ)x(ℓ) when deriving learning rules.
+B.1 Instantaneous input
+Starting from the per-layer ODE ˙y(ℓ) = λ(ℓ) ⊙ y(ℓ) + α(ℓ) ⊙ z(ℓ) in Eq. (6), the element-wise
+decoupling reduces the vector ODE to nℓ independent scalar problems, each admitting the variation-
+of-constants solution over [tn, tn + h]:
+y(ℓ)(tn + h) = eλ(ℓ) h ⊙ y(ℓ)(tn) + α(ℓ) ⊙ Z h
+0
+eλ(ℓ) (h−s) ⊙ z(ℓ)(tn + s) ds, (B.1)
+where the exponential is evaluated element-wise because λ(ℓ) is a vector. The zero-order hold scheme
+replaces z(ℓ)(tn + s) on (0, h] by the right-endpoint sample z(ℓ) n+1 = W(ℓ)ρ(y(ℓ−1) n+1 ), pulls it out of
+the integral, and evaluates the remaining kernel integral via u = h − s:
+Z h
+0
+eλ(ℓ) (h−s) ds = Z h
+0
+eλ(ℓ) u du = eλ(ℓ) h − 1 λ(ℓ) , (B.2)
+16
+with division taken element-wise (well-defined because Re(λ(ℓ) i ) = −α(ℓ) i < 0). Substituting the
+coefficients ¯A(ℓ) h ≜ eλ(ℓ) h and ¯B(ℓ) h ≜ (α(ℓ)/λ(ℓ)) ⊙ ( ¯A(ℓ) h − 1) from Eq. (10) yields the diagonal complex affine recurrence of Eq. (9). Both coefficients depend only on the per-filter parameters
+(γ(ℓ), ω(ℓ)), the base time constant τ , and the step size h, and can therefore be precomputed once per
+parameter update and reused across all time steps. The homogeneous recurrence is unconditionally
+stable, since |eλh| = e−αh < 1 for any α > 0, and the ZOH update differs from forward Euler by
+O((h/τ )2) for h ≪ τ.
+B.2 Prospective input
+For the prospective-input variant, applying χτ to the layer input x(ℓ) before W(ℓ) is equivalent in the
+forward pass to driving Eq. (6) by χτ (z(ℓ)) = z(ℓ) + τ ˙z(ℓ) in place of z(ℓ). The variation-of-constants
+integral of Eq. (B.1) therefore picks up an additional τ ˙z(ℓ) contribution. We model z(ℓ) on [tn, tn +h]
+as a right-continuous piecewise-constant signal that holds the value z(ℓ) n+1 throughout the interval and
+that jumps from z(ℓ) n to z(ℓ) n+1 at the left endpoint s = 0; this is the same hold convention used for
+the instantaneous-input ZOH update of Appendix B.1, made explicit at the boundary because the
+prospective term involves ˙z(ℓ). Under this convention, ˙z(ℓ) is a Dirac impulse at s = 0 of magnitude
+equal to the jump,
+˙z(ℓ)(tn + s) =  z(ℓ) n+1 − z(ℓ) n  δ(s), (B.3)
+and the look-ahead χτ (z(ℓ)) splits additively into a constant part z(ℓ) n+1 on [0, h] and an impulsive
+part τ (z(ℓ) n+1 − z(ℓ) n )δ(s) at s = 0. Each part contributes in closed form to the integral of Eq. (B.1).
+The constant part reproduces the calculation of Appendix B.1 and contributes ¯B(ℓ) h ⊙ z(ℓ) n+1. The
+impulsive part is sampled by the kernel at s = 0, where eλ(ℓ) (h−s) = eλ(ℓ) h = ¯A(ℓ) h (we use the
+standard convention that the boundary impulse at s = 0 is included in
+R h
+0 ). Multiplying the impulse
+strength by this kernel value and by the prefactor α(ℓ) from Eq. (B.1) gives
+α(ℓ) τ ⊙ ¯A(ℓ) h ⊙  z(ℓ) n+1 − z(ℓ) n  = γ(ℓ) ⊙ ¯A(ℓ) h ⊙  z(ℓ) n+1 − z(ℓ) n  , (B.4)
+where the equality uses α(ℓ)τ = γ(ℓ) from α(ℓ) = γ(ℓ)/τ . Summing the two contributions and group-
+ing by input sample yields the impulse-ZOH update of Eq. (17) in the main text. No finite-difference
+approximation has been introduced: the update is exact under the right-continuous piecewise-constant
+model of z(ℓ).
+Computational cost. Prospective input adds no trainable parameters to an RQF layer and leaves its
+diagonal state transition and associative scan unchanged. For a sequence of length T , layer ℓ maps
+nℓ−1 inputs to nℓ RQF channels and computes the dense drive z(ℓ) t = W(ℓ)x(ℓ) t in O(T nℓnℓ−1)
+work under either input rule. Prospective-input coding adds O(T nℓ) element-wise computation
+and one lagged read of the already materialized drive, but no additional full-sequence activation
+storage; streaming execution needs only an O(nℓ) rolling buffer for the previous drive. The diagonal
+RQF scan remains O(T nℓ) with O(log T ) parallel depth. Thus, the asymptotic complexity of both
+inference and full BPTT is unchanged, although the second tap adds a small lower-order operation.
+B.3 Two-tap form for diagonal SSMs
+The preceding derivation does not rely on the RQF parameterization. To transfer the prospective-input
+correction to the diagonal SSM core of Eq. (12), we keep the SSM parameters fixed and replace the
+input signal entering the continuous-time state equation by its look-ahead:
+˙ey(t) = Λ ey(t) + B χτ (x(t)) = Λ ey(t) + B[x(t) + τ ˙x(t)] , o(t) = C ey(t) + D x(t), (B.5)
+where τ is the look-ahead scale in χτ and (Λ, B, C, D) are exactly the SSM parameters from
+Eq. (12). Thus, the intervention is not a reparameterization of the SSM input matrix: B remains the
+continuous-time input matrix, and the only change is that the state receives χτ (x) instead of x. The
+feedthrough path is written with x(t) because the prospective-input correction concerns the recurrent
+state input; applying the same look-ahead to the direct path would be a separate architectural choice.
+17
+Under the same right-continuous hold convention used in Appendix B.2, x(tn + s) takes the value
+xn+1 on [0, h) and has a jump from xn to xn+1 at s = 0. Therefore, ˙x(tn + s) = (xn+1 − xn)δ(s),
+and the variation-of-constants formula gives
+eyn+1 = ¯Ah eyn + ¯Bh xn+1 + τ ¯AhB (xn+1 − xn), (B.6)
+where ¯Ah = eΛh and ¯Bh = Λ−1( ¯Ah − I)B are the standard ZOH coefficients from Eq. (13).
+Grouping terms by input sample yields the two-tap input path
+eyn+1 = ¯Ah eyn + ¯B+ xn+1 + ¯B− xn, ¯B+ ≜ ¯Bh + τ ¯AhB, ¯B− ≜ −τ ¯AhB. (B.7)
+Eq. (B.7) is the direct SSM analogue of Eq. (17). The recurrent dynamics are unchanged: the state is
+advanced by the same diagonal transition ¯Ah, while the input enters through a two-tap feedforward
+path on the current and previous samples. For S4D, this amounts to replacing the one-tap ZOH input
+coefficient ¯Bh by the pair ( ¯B+, ¯B−), whose values are determined by the original continuous-time
+input matrix B, the transition ¯Ah, and the look-ahead scale τ ; the pole parameterization, state
+transition, output projection, and feedthrough term are otherwise unchanged. The same coefficient
+replacement applies to any diagonal state-space model whose continuous-time core has the form of
+Eq. (12).
+Comparison with Mamba-3. This two-tap form permits a concrete comparison with the exponential-
+trapezoidal rule of Mamba-3 [46]. Writing vt = Btxt, that rule uses (in Mamba-3’s notation)
+ht = αt ⊙ ht−1 + (1 − λt)∆t αt ⊙ vt−1 + λt∆t vt, λt ∈ [0, 1], (B.8)
+so its endpoint weights form a convex blend. Prospective coding instead discretizes B[x(t) + τ ˙x(t)]
+and gives the signed previous-input tap ¯B−xn = −τ ¯AhBxn of Eq. (B.7). For a matched scalar real
+LTI system with ∆t = h, matching even this previous-input coefficient in Eq. (B.8) would require
+λt = 1 + τ /h > 1. The constructions therefore share a two-tap form but are not equivalent, and
+prospective input is not a special case of Mamba-3’s admissible interpolation.
+C Spatial-only backpropagation gradient derivation: full proof
+This appendix gives the gradient calculation supporting Section 3. We consider an arbitrary real-
+valued loss local in time,
+Lk+1 = Φk+1
+
+y(L) k+1, y(L)† k+1
+
+, (C.1)
+where Φk+1 may include labels, readouts, or other quantities sampled at the same time step but does
+not backpropagate through earlier recurrent states. Spatial-only backpropagation freezes y(ℓ) k for
+every layer ℓ and differentiates only through the within-step spatial chain y(0) k+1 → · · · → y(L) k+1.
+Unlike the forward-discretization derivation, we expand the compact drive as z(ℓ) = W(ℓ)x(ℓ)
+because the gradients must pass through W(ℓ). We write x(ℓ) k+1 = ρ(y(ℓ−1) k+1 ) and x(ℓ) k = ρ(y(ℓ−1) k ),
+with x(1) supplied by the external input.
+Because ρ may be non-holomorphic, the exact chain rule is most transparent in real coordinates. For
+a complex vector and matrix, respectively, define
+R(v) ≜
+
+Re(v)
+Im(v)
+
+, R(W) ≜
+
+Re(W) −Im(W)
+Im(W) Re(W)
+
+, (C.2)
+so that R(Wv) = R(W)R(v). For a real vector g, let D(g) ≜ R(diag(g)), and define the real
+activation Jacobian and layer error by
+Jρ(y) ≜ ∂R(ρ(y)) ∂R(y) , δ(ℓ) R,k+1 ≜ ∇R(y(ℓ) k+1 )Lk+1. (C.3)
+For split-ReLU, Jρ is diagonal, with the real and imaginary activity masks on its two diagonal
+blocks, and ∥Jρ∥2 ≤ 1 (using any standard subgradient at zero). Moreover, ∥R(W)∥2 = ∥W∥2 and
+∥D(g)∥2 = ∥g∥∞. For clarity, we use forward Euler in the derivation because it exposes the factor of
+h/τ directly. The ZOH implementation has the same leading-order spatial gradient coefficients in the
+small-step limit: ¯A(ℓ) h = 1 + λ(ℓ)h + O(h2) and ¯B(ℓ) h = (h/τ )γ(ℓ) + O(h2), while the impulse-ZOH
+prospective coefficients satisfy ¯B(ℓ) h + γ(ℓ) ⊙ ¯A(ℓ) h = γ(ℓ) + O(h) and −γ(ℓ) ⊙ ¯A(ℓ) h = −γ(ℓ) + O(h). Thus, the Euler calculation below proves the leading-order ZOH scaling as h/τ → 0.
+18
+C.1 Spatial-only backward pass, instantaneous input
+Forward Euler discretization of the instantaneous-input RQF layer is
+y(ℓ) k+1 = A(ℓ) ⊙ y(ℓ) k + g(ℓ) np ⊙  W(ℓ)x(ℓ) k+1  , g(ℓ) np ≜ h τ γ(ℓ), (C.4)
+where A(ℓ) = 1 + hλ(ℓ). Since y(ℓ) k is frozen, the only live path from layer ℓ to layer ℓ + 1 runs
+through x(ℓ+1) k+1 = ρ(y(ℓ) k+1) and then through the matrix W(ℓ+1). Applying the chain rule gives, for ℓ < L,
+δ(ℓ) R,k+1 = Jρ
+
+y(ℓ) k+1
+⊤
+R
+
+W(ℓ+1)
+⊤
+D
+
+g(ℓ+1) np
+⊤
+δ(ℓ+1) R,k+1. (C.5)
+Consequently, in the Euclidean norm,
+δ(ℓ) R,k+1  2 ≤ LY m=ℓ+1 Jρ  y(m−1) k+1  2 W(m)  2 g(m) np  ∞  δ(L) R,k+1  2 . (C.6)
+When the weight norms, activation-Jacobian norms, and entries of γ(m) are O(1), Eq. (C.6) contains
+the explicit factor (h/τ )L−ℓ. This is the discretization-induced depth attenuation: it is separate from
+any ordinary conditioning effects caused by the weights or nonlinearities. To state the parameter
+gradient without ambiguity about Wirtinger factors, let C invert vector realification, C([u⊤, v⊤]⊤) =
+u + ιv, and set δ(ℓ) C,k+1 = C(δ(ℓ) R,k+1). Define the packed complex gradient
+∇pack W L ≜ ∇Re(W)L + ι ∇Im(W)L = 2 ∂L ∂W∗ . (C.7)
+The corresponding local gradient contribution has the outer-product form
+∇pack W(ℓ) Lk+1 =  g(ℓ) np ⊙ δ(ℓ) C,k+1  x(ℓ)† k+1. (C.8)
+C.2 Spatial-only backward pass, prospective input
+For the prospective case, the look-ahead is applied to the layer input x(ℓ) before multiplication by
+W(ℓ). Using a backward difference at tk+1 gives
+ex(ℓ) k+1 = x(ℓ) k+1 + τ x(ℓ) k+1 − x(ℓ) k h = h + τ h x(ℓ) k+1 − τ h x(ℓ) k . (C.9)
+The forward Euler step is therefore
+y(ℓ) k+1 = A(ℓ) ⊙ y(ℓ) k + g(ℓ) + ⊙  W(ℓ)x(ℓ) k+1  + g(ℓ) − ⊙  W(ℓ)x(ℓ) k  , (C.10)
+with
+g(ℓ) + ≜ h + τ τ γ(ℓ), g(ℓ) − ≜ −γ(ℓ). (C.11)
+The previous input x(ℓ) k is frozen as a state variable for spatial error propagation, so it does not create
+a live path from y(ℓ−1) k+1 to y(ℓ) k+1. The current weight matrix multiplying that frozen input is still
+trainable. For the inter-layer error recursion, only the current-input coefficient g(ℓ+1) + appears:
+δ(ℓ) R,k+1 = Jρ
+
+y(ℓ) k+1
+⊤
+R
+
+W(ℓ+1)
+⊤
+D
+
+g(ℓ+1) +
+⊤
+δ(ℓ+1) R,k+1. (C.12)
+The corresponding norm bound is
+δ(ℓ) R,k+1  2 ≤ LY m=ℓ+1 Jρ  y(m−1) k+1  2 W(m)  2 g(m) +  ∞  δ(L) R,k+1  2 . (C.13)
+Since ∥g(m) + ∥∞ = (1 + h/τ )∥γ(m)∥∞, the explicit small factor (h/τ )L−ℓ is absent. More precisely,
+at fixed depth and fixed parameters, the discretization prefactor on each hop is O(1) rather than
+19
+O(h/τ ) as h/τ → 0. The bounds in Eqs. (C.6) and (C.13) are upper bounds and provide no
+lower bound: the remaining product of activation-Jacobian norms, weight norms, and γ can still
+attenuate with depth. We therefore make no claim that the complete prospective gradient is O(1) or
+depth-independent. The local weight gradient contains both input taps:
+∇pack W(ℓ) Lk+1 =  g(ℓ) + ⊙ δ(ℓ) C,k+1  x(ℓ)† k+1 +  g(ℓ) − ⊙ δ(ℓ) C,k+1  x(ℓ)† k . (C.14)
+Eq. (C.14) is local in time up to the one-step input memory introduced by the two-tap path, and local
+in space once the adjacent real-coordinate error δ(ℓ) R,k+1 is available. Exact spatial backpropagation
+supplies that error through R(W(ℓ+1))⊤ and the activation Jacobian in Eqs. (C.5) and (C.12).
+D Experimental results
+D.1 Full BPTT results with 32 filters per layer
+Tables 6 and 7 report the width-32 results for RQF and αP-S5, respectively.
+Table 6: RQF, full BPTT. Non-residual stacks with 32 filters per layer on Speech Commands.
+Raw audio MFCC
+Depth Params Prospective Non-pros. Params Prospective Non-pros.
+2 23.5k 94.59±0.28 93.96±0.28 24.1k 96.38±0.13 96.17±0.22
+4 27.7k 95.66±0.23 95.29±0.22 28.3k 96.33±0.23 96.12±0.31
+6 31.9k 96.09±0.23 95.27±0.22 32.5k 96.35±0.17 95.73±0.27
+Table 7: αP-S5 versus native S5, full BPTT. Residual S5 blocks with 32 units per layer on Speech
+Commands; the complete αP construction changes the continuous-time input gain, adds the second
+tap, and uses the pole clipping described in Appendix E.3.
+Raw audio MFCC
+Depth Params αP-S5 Native S5 Params αP-S5 Native S5
+2 27.9k 93.46±0.93 92.34±0.50 28.6k 96.04±0.32 95.36±0.24
+4 34.4k 94.74±0.59 93.31±1.09 35.1k 96.31±0.32 95.84±0.32
+6 40.9k 95.06±0.99 94.69±0.66 41.5k 96.44±0.28 95.84±0.18
+D.2 Full BPTT results with residual connections
+Table 8 repeats the full BPTT comparison of Table 1(a) with identity residual connections between
+layers. Each of the L square RQF layers adds its input to its output through an identity connection,
+which adds no parameters; all other settings match Table 1(a). Every mean test accuracy is within
+0.28 points of its non-residual counterpart, and prospective input still gives the higher mean in every
+configuration.
+Table 8: Residual RQF, full BPTT. Stacks with 64 filters per layer and identity residual connections
+between layers on Speech Commands; otherwise identical to Table 1(a).
+Raw audio MFCC
+Depth Params Prospective Non-pros. Params Prospective Non-pros.
+2 52.3k 94.84±0.25 94.68±0.07 53.5k 96.42±0.16 96.30±0.27
+4 68.9k 96.08±0.18 95.84±0.25 70.2k 96.55±0.32 96.49±0.23
+6 85.6k 96.27±0.24 96.01±0.14 86.8k 96.69±0.18 96.54±0.11
+20
+D.3 Direct measurements of the spatial gradient path
+These measurements test how much of the error signal survives as it propagates backward through
+the layers. We use a six-layer, 64-channel raw-audio RQF under spatial-only backpropagation at the
+paper’s operating point, h/τ = 0.2. Table 9 reports the weight-gradient norms: the two gradients
+are similar at layer 6, which is closest to the loss, but the instantaneous gradient decays much faster
+toward earlier layers. At layer 1, the prospective gradient is 10,290× larger.
+Table 9: Direct weight-gradient norms. Frobenius norms ∥∇pack W(ℓ) L∥F at h/τ = 0.2.
+Layer ℓ Prospective Instantaneous Ratio
+1 7.69 × 10−7 7.47 × 10−11 10,290×
+2 5.71 × 10−6 6.01 × 10−9 950×
+3 1.03 × 10−5 5.61 × 10−8 185×
+4 1.90 × 10−5 5.62 × 10−7 34×
+5 3.08 × 10−5 5.04 × 10−6 6.1×
+6 5.42 × 10−5 4.87 × 10−5 1.1×
+Table 10 sweeps the step size. We measure the per-hop error gain g as follows: with qℓ the RMS
+norm of ∂L/∂x(ℓ), we fit g = (q2/q6)1/4 over the four hops from layer 6 to layer 2. The table
+compares the ratio gpros/ginst with the exact-ZOH current-tap prediction | ¯Bh + γ ⊙ ¯Ah|/| ¯Bh| for
+the same filter bank. As h/τ decreases, gpros remains between 0.585 and 0.624, whereas ginst falls
+approximately in proportion to h/τ . The measured ratio follows the predicted increase across the
+sweep.
+Table 10: Per-hop error gain versus step size. gpros and ginst are the measured per-hop error
+gains for prospective and instantaneous input; prediction and measurement use the same six-layer,
+64-channel filter bank.
+h/τ Predicted ratio gpros ginst Measured ratio
+1.00 1.96 0.619 0.361 1.72
+0.50 2.95 0.594 0.220 2.70
+0.20 5.93 0.585 0.104 5.65
+0.10 10.91 0.598 0.0565 10.59
+0.05 20.89 0.624 0.0305 20.43
+E Architecture and hyperparameter details
+E.1 RQF architecture
+A bias-free real projection maps the input dimension din ∈ {1, 20} to width n ∈ {32, 64}. This
+is followed by L ∈ {2, 4, 6} square complex RQF layers of width n, with split-ReLU between
+layers and no normalization, gating, dropout, bidirectionality, or residual connections. At every step,
+the classifier concatenates the real and imaginary parts of the final state and applies a real MLP
+2n → 256 → 10 with ReLU. Predictions use logits averaged across time. Parameter counts refer to
+real-valued trainable degrees of freedom, so a complex parameter counts twice. With C = 10 classes,
+the count is
+Nparams = dinn + 2Ln2 + 2Ln + 512n + 2826. (E.1)
+Raw waveforms have shape (16,000, 1) and use h = 1/16,000 with fixed τ = 5h = 3.125 × 10−4.
+MFCC inputs have shape (161, 20) and use their effective 160 Hz frame clock, h = 1/160 and
+τ = 5h = 0.03125. Path-X uses h = 1/16,384 and τ = 5h. No separate look-ahead scale is learned.
+Each RQF channel has complex state si, dimensionless frequency θi = τ ωi, bandwidth parameter γi,
+and continuous-time dynamics
+dsi
+dt = λisi + γi τ ui(t), λi = − γi τ + ι ωi(1 − γi), (E.2)
+21
+where ui(t) is the post-weight drive; si and ui are the per-channel entries of y(ℓ) and z(ℓ) in the
+main text. All runs use the ZOH recurrence in Eq. (E.3); prospective input replaces its single input
+coefficient with the two-tap coefficients in Eq. (E.4), with the delayed input initialized to zero.
+The scalar instantaneous recurrence is
+si,n+1 = ¯Ah,isi,n + ¯Bh,iui,n+1, ¯Ah,i = eλi h, ¯Bh,i = γi τ λi   ¯Ah,i − 1  . (E.3)
+The prospective-input recurrence keeps the same state coefficient and replaces the input contribution
+by the two-tap drive
+si,n+1 = ¯Ah,isi,n +   ¯Bh,i + γi ¯Ah,i  ui,n+1 − γi ¯Ah,iui,n, (E.4)
+with the previous input buffer initialized to zero. This is the scalar-channel version of Eq. (17).
+RQF parameterization and initialization. The learned leaves are log θi and log γi:
+θi = τ ωi = elog θi , γi = elog γi . (E.5)
+For a sequence with model-coordinate duration Tseq, initialization is
+log θi ∼ U (log θmin, log θmax) , θmin = 2πτ Tseq , θmax = 2πF, γi = θi 1 + θi . (E.6)
+All runs use F = 1. Speech Commands uses Tseq = 1 in the model clock for each input representation,
+while Path-X uses Tseq = 2π. After every optimizer step, θi is clamped to [θmin, 2π] and γi to
+[10−6, 1 − 10−6].
+Weight and readout initialization. Let nin be the complex fan-in, Gf = 1/2 the nominal RQF filter
+power gain, and Gρ the input activation’s second-moment gain. Each real and imaginary component
+of a complex weight is sampled independently as follows:
+Re(Wij ), Im(Wij ) ∼ N (0, σ2 W ), σW = (2ninGf Gρ)−1/2 . (E.7)
+Thus, Gρ = 1 for a direct standardized input and Gρ = 1/2 after split-ReLU, giving σW = 1/√nin
+and
+p
+2/nin, respectively. The separate real input projection retains the default PyTorch linear
+initialization, uniform on [−1/√din, 1/√din], and its bias is removed. The first classifier layer
+likewise retains its default initialization, with weights and biases uniform on [−1/
+√
+2n, 1/
+√
+2n].
+The 256 → C logit weights are normal with standard deviation 10−3 and zero bias. The reference
+implementation evaluates the recurrence in complex64 with autocasting disabled; optimized scan
+kernels preserve the same coefficients.
+E.2 ORGaNICs architecture
+The discrete ORGaNICs control follows the sequential model of Rawat et al. [34]. We fix the
+recurrent matrix in every layer to Wr = I, learn the intrinsic time constants, retain the gain and
+normalization dynamics, and stack L ∈ {2, 4, 6} layers of width 64. The reported parameter counts
+include the learned intrinsic time constants. Shape-matched layers use identity residual additions; the
+first 20 → 64 MFCC layer cannot use one. Layer normalization is disabled.
+For layer ℓ, let x(ℓ)(t) ∈ Rdℓ denote its input, with x(1) equal to the 20-dimensional MFCC sequence.
+Each layer has 64-dimensional excitatory state y(ℓ), inhibitory normalization state a(ℓ), input gain
+b(ℓ), and semisaturation gain b(ℓ) 0 . We use the rectified-input variant, defining [u]+ = max(u, 0)
+element-wise and
+z(ℓ)(t) = h W(ℓ) zx x(ℓ)(t) i + , z(ℓ) χ (t) = z(ℓ)(t) + δχ τ (ℓ) y ⊙ ˙z(ℓ)(t). (E.8)
+Here, z(ℓ)(t) is the input drive and z(ℓ) χ (t) is the drive passed to the ORGaNICs input-gain pathway.
+The binary variable δχ selects the input-drive condition: δχ = 0 gives the instantaneous-input
+baseline, whereas δχ = 1 gives the prospective-input variant χτ (ℓ) y (z(ℓ)(t)) with look-ahead scale
+τ (ℓ) y . The gain modulators evolve dynamically toward the following instantaneous targets:
+B(ℓ)(t) = σsig
+
+W(ℓ) xb x(ℓ)(t) + W(ℓ) yb y(ℓ)(t) + W(ℓ) ab a(ℓ)(t)  ,
+B(ℓ) 0 (t) = σsig
+
+W(ℓ) x0 x(ℓ)(t) + W(ℓ) y0 y(ℓ)(t) + W(ℓ) a0 a(ℓ)(t)  , (E.9)
+22
+where σsig is the logistic sigmoid; B(ℓ) is the target for the input gain b(ℓ); and B(ℓ) 0 is the target for
+the semisaturation gain b(ℓ) 0 .
+For the rectified-recurrence variant, define the recurrent prediction by(ℓ) = [Wr y(ℓ)]+ = [y(ℓ)]+.
+The continuous-time ORGaNICs layer is then described by
+τ (ℓ) y ⊙ ˙y(ℓ) = −y(ℓ) + b(ℓ) ⊙ z(ℓ) χ +  1 − q a(ℓ) +  ⊙ by(ℓ),
+τ (ℓ) a ⊙ ˙a(ℓ) = −a(ℓ) + σ2 0
+
+b(ℓ) 0
+2
++ W(ℓ) ay
+h
+y(ℓ)
+i2
++
+⊙
+h
+a(ℓ)
+i
++
+
+,
+τ (ℓ) b ⊙ ˙b(ℓ) = −b(ℓ) + B(ℓ),
+τ (ℓ) b0 ⊙ ˙b(ℓ) 0 = −b(ℓ) 0 + B(ℓ) 0 .
+(E.10)
+All products, powers, divisions by time constants, and square roots in Eq. (E.10) are element-wise
+except for multiplication by learned matrices. In the implementation, Eq. (E.10) is integrated with
+an ordered forward Euler step: the gain states are updated first, and those updated gains enter the
+principal and normalization updates. With ˙z approximated by a backward difference, the Euler step
+multiplies the prospective term b ⊙ τy ⊙ (zt − zt−1)/∆t by ηy = ∆t/τy , so the two-tap prospective
+correction reduces to b ⊙ (zt − zt−1) in addition to the ordinary Euler drive, with the previous
+input-drive buffer initialized as z(ℓ) −1 = 0. The gain dynamics for b0 and b are otherwise identical in
+the prospective and instantaneous variants.
+The normalization matrix W(ℓ) ay is a learned full-rank positive matrix represented in log space; its
+initialization is 50% sparse off-diagonal with unit diagonal. Wzx and the six gain-target matrices in
+Eq. (E.9) use Kaiming-uniform initialization with a =
+√
+5. The semisaturation parameter is fixed
+to σ0 = 1. The four time-constant vectors are learned through bounded positive sigmoid maps;
+their unconstrained leaves are standard normal at initialization, with 0 < ∆t/τy , ∆t/τa < 0.05
+and 0 < ∆t/τb, ∆t/τb0 < 0.1. The principal state y(ℓ)(0) is a normalized random positive vector;
+a(ℓ)(0) ∼ U (0, 1) is not normalized, b(ℓ) 0 (0) = 1, and b(ℓ)(0) ∼ U (0, 1). A learned linear 64 → 10
+readout produces per-step logits, which are averaged for evaluation. The input correction is the only
+difference between the members of each prospective/non-prospective pair.
+E.3 αP-S5 architecture and parameterization
+The S5 controls use the native forward-only residual S5 architecture [28]. A real input projection
+maps din ∈ {1, 20} to n ∈ {32, 64} units per layer. The L ∈ {2, 4, 6} pre-normalized residual
+blocks use this value of n, conjugate symmetry, eight HiPPO blocks, ZOH discretization, and a
+half-GLU pointwise map. The readout normalizes the final n-dimensional block state and projects
+it to 64 dimensions; that representation is mean-pooled and classified by a 64 → 256 → 10 GELU
+MLP with dropout 0.1. The reported runs use batch pre-normalization and are unidirectional.
+Let λ collect the diagonal poles in S5’s native clock, let Λ = diag(λ), and let ∆ collect the
+learned per-mode steps. For a physical input interval h, mode p has effective continuous-time pole
+λeff,p = (∆p/h)λp. We define αp = −Re(λp) > 0 and set Bc = diag(α) eB in the native clock.
+The corresponding physical input row is Beff,p: = (∆p/h)Bc,p: = −Re(λeff,p) eBp:, so the α gain
+remains tied to the physical pole decay rate and is not learned separately.
+Prospective input uses the same shared physical horizon as the RQF experiments, τ = 5h. Sub-
+stituting Beff,p: = (∆p/h)Bc,p: into the impulse-ZOH correction of Eq. (B.6) gives τ ¯ApBeff,p: =
+5∆p ¯ApBc,p:. Thus, the factor h cancels when the update is expressed in S5’s native clock, and the
+implementation computes the following coefficients:
+¯A = diag   eλ⊙∆ ,
+¯B = Λ−1( ¯A − I)Bc,
+¯B+ = ¯B + 5 diag(∆) ¯ABc,
+¯B− = −5 diag(∆) ¯ABc.
+(E.11)
+It then advances ht+1 = ¯Aht + ¯B+xt+1 + ¯B−xt. The two taps span adjacent input samples; 5∆p
+is the native-clock impulse coefficient produced by the shared 5h horizon, not a learned or mode-
+23
+dependent physical look-ahead. The delayed input starts at zero, and the direct D ⊙ xt feedthrough
+remains instantaneous. Within αP-S5, the two-tap operation adds no trainable parameters and leaves
+the recurrent transition, residual path, output projection, and scan structure unchanged.
+The poles and basis transformation use the standard HiPPO-DPLR initialization. Before transforma-
+tion, entries of eB and eC are LeCun-normal with standard deviation 1/√Plocal, and Di ∼ N (0, 1).
+Log steps are initialized uniformly so that ∆p ∈ [10−3, 10−1]. In the reference αP-S5 configuration,
+real pole parts are clipped to at most −10−4 before forming α, whereas the native one-tap S5
+configuration does not apply this clipping and uses the unscaled learned input matrix. Tables 2 and 7
+therefore compare the complete αP-S5 construction with native S5; they do not isolate the second tap
+while holding the continuous-time input map and pole clipping fixed.
+E.4 Optimizer and training
+All Speech Commands runs use the 10-word subset of v0.02 with a stratified 70/15/15 split (split seed
+0) and feature-wise standardization from the training split. MFCC extraction uses 20 coefficients, a
+200-sample FFT window, 64 mel bands, and a 100-sample hop, producing 161 frames. A checkpoint
+is saved each epoch, and test accuracy is read from the checkpoint with the highest validation
+accuracy. Prospective/non-prospective pairs use identical training settings and seeds. Neither Speech
+Commands nor Path-X uses data augmentation. The Speech Commands v0.02 archive includes a
+CC BY 4.0 license. Path-X was obtained from the official LRA release; the accompanying code
+repository is Apache 2.0, but the downloaded data archive does not include separate dataset-license
+terms.
+RQF. RQF Speech Commands models use AdamW with a batch size of 32; the reported runs use
+seeds 42–46. Complex mixing weights, the input projection, and the readout use a learning rate of
+10−3 and weight decay 10−4; RQF pole parameters use a learning rate of 10−4 and zero weight
+decay. The global gradient norm is clipped at 1.0. Training runs for at most 300 epochs with cosine
+annealing to 10−6 and stops after 20 epochs without improved validation accuracy. Full BPTT retains
+the complete temporal graph and applies cross entropy with label smoothing 0.1 to the mean-pooled
+logits. Spatial-only backpropagation detaches the recurrent state after every step and applies the same
+smoothed cross entropy per time step; validation and test predictions average logits across time.
+ORGaNICs. ORGaNICs models use AdamW with a learning rate of 10−3 and weight decay 10−4,
+cross entropy with label smoothing 0.1, and gradient clipping at 1.0. The learning rate follows cosine
+annealing to 10−6 over a maximum of 300 epochs, with early stopping after 20 epochs without
+improved validation accuracy. Full BPTT runs use the mean-pooled prediction loss; spatial-only
+backpropagation detaches every recurrent state after each step and applies the loss at each time step.
+αP-S5. S5 uses the same AdamW optimizer, base batch size, label smoothing, clipping, cosine
+schedule, early stopping, and checkpoint selection as the RQF Speech Commands runs; the reported
+runs use seeds 0–4. All S5 parameters, including Λ, eB, eC, and the log steps, use the base 10−3
+learning rate and 10−4 weight decay. The native-clock gain α = −Re(diag(Λ)) introduces no
+optimizer state because it is derived from the poles.
+Path-X. We use the 200,000-example pathfinder128/curv_contour_length_14 task with a
+seeded 80/10/10 split (split seed 42). Pixels are divided by 255 and standardized by the training-split
+scalar mean and standard deviation. The six-layer, width-64 RQFs and sRQFs use Adam with
+ϵ = 10−4, zero weight decay, a learning rate of 3 × 10−3 for all parameter groups, a batch size
+of 64, cross entropy at each time step, and gradient clipping at 1.0. Training runs for 300 epochs
+with cosine annealing to zero; evaluation averages logits over time and reports the test result at
+the best-validation epoch. The five runs use seeds 0–4 for initialization and data-shuffling order
+while retaining the same data split. Path-X uses the same recurrence, log-space parameterization,
+split-ReLU, and real–imaginary MLP readout as the Speech Commands models. The optimizer
+schedule and the initialization duration Tseq were chosen for Path-X rather than carried over from the
+Speech Commands runs. The sRQFs differ from the RQFs only by the input gain of Appendix F;
+their γ and ω are not input-dependent.
+24
+F Selective RQFs (sRQFs)
+An sRQF layer (Eq. (15)) has the same drive z(ℓ) n = W(ℓ)x(ℓ) n as an RQF layer and adds one
+input-dependent gain per filter, sampled at each step as
+κ(ℓ) n = ϕ
+ 
+W(ℓ) κ
+"
+Re(y(ℓ−1) n )
+Im(y(ℓ−1) n )
+#!
+, (F.1)
+where W(ℓ) κ ∈ Rnℓ ×2nℓ−1 is a learned, bias-free matrix and ϕ is a positive function applied element-
+wise. Our experiments use the example ϕ(u) = 2 sigmoid(u), which lies in (0, 2) and equals 1 at
+u = 0. The gain reads the preceding layer’s output before the activation ρ, so it retains the sign
+information that the rectified layer input x(ℓ) n = ρ(y(ℓ−1) n ) discards; at the first layer, it reads the
+network input. Because the gain matrix is initialized at zero and this ϕ satisfies ϕ(0) = 1, κ(ℓ) n = 1
+at initialization and each sRQF starts as the corresponding RQF.
+When γ and ω are also selective, they are computed from the same features at each step:
+γ(ℓ) n = γmin + (γmax − γmin) sigmoid
+ 
+β(ℓ) + W(ℓ) γ
+"
+Re(y(ℓ−1) n )
+Im(y(ℓ−1) n )
+#!
+,
+ω(ℓ) n = ω(ℓ) ⊙ exp
+ 
+c tanh
+ 
+W(ℓ) ω
+"
+Re(y(ℓ−1) n )
+Im(y(ℓ−1) n )
+#!!
+,
+(F.2)
+where W(ℓ) γ , W(ℓ) ω ∈ Rnℓ ×2nℓ−1 are initialized at zero and β(ℓ) is the element-wise logit of (γ(ℓ) −
+γmin)/(γmax − γmin), so that each sRQF starts as the corresponding RQF; c > 0 bounds each
+frequency multiplier to [e−c, ec]. The Selective Copying sRQFs use γmin = 10−6, γmax = 1 − 10−6,
+and c = ln 4, and split the filters of each layer by initial frequency into four equal groups that share
+one frequency multiplier, so W(ℓ) ω has four distinct rows.
+The selective quantities are held at κ(ℓ) n+1, γ(ℓ) n+1, and ω(ℓ) n+1 over each interval [tn, tn+1], the same
+right-endpoint convention as the ZOH drive. The gain then scales the input matrix of Eq. (14) to
+diag(κ(ℓ) n+1) diag(α(ℓ) n+1)W(ℓ), and each interval is a fixed-parameter problem, so the derivations
+of Appendices B.1 and B.2 apply with the pole λn+1 = −αn+1 + ι(1 − γn+1) ⊙ ωn+1 and
+αn+1 = γn+1/τ . Suppressing the layer index, the instantaneous and prospective ZOH updates of
+Eqs. (9) and (17) become
+yn+1 = ¯An+1 ⊙ yn + κn+1 ⊙ ¯Bn+1 ⊙ zn+1, (F.3)
+yn+1 = ¯An+1 ⊙ yn + κn+1 ⊙   ¯Bn+1 + γn+1 ⊙ ¯An+1  ⊙ zn+1 − γn+1 ⊙ ¯An+1 ⊙ zn  ,
+(F.4)
+respectively, where ¯An+1 = eλn+1 h and ¯Bn+1 = (αn+1/λn+1) ⊙ ( ¯An+1 − 1). With input-
+independent γ and ω, as on Path-X, ¯An+1 = ¯Ah and ¯Bn+1 = ¯Bh; setting κn = 1 as well recovers
+Eqs. (9) and (17). The current gain multiplies both prospective taps: the look-ahead acts on the
+drive, and the gain scales the resulting input contribution, so the lagged drive zn is not multiplied by
+κn; likewise, both taps use the current γn+1 and ¯An+1. The gain alone changes how strongly each
+input is written into the state but not the pole, so a gain-only sRQF keeps the tuning frequency and
+bandwidth analyzed in Appendix A.2; selective γ and ω instead move the pole at every step.
+Parallel scan. The selective quantities depend only on the preceding layer’s output and not on the
+layer’s own state, so once that output is available, the transitions an+1 = ¯An+1 and the input terms
+dn+1 of Eqs. (F.3) and (F.4) can be computed for all samples in parallel. Both updates then take the
+form yn+1 = an+1 ⊙ yn + dn+1, a diagonal linear recurrence whose coefficients may vary with n.
+Pairs (a, d) compose associatively as (a2, d2) ◦ (a1, d1) = (a2 ⊙ a1, d2 + a2 ⊙ d1) whether or not
+a varies with n, so the parallel scan for diagonal linear recurrences applies, with O(T nℓ) work and
+O(log T ) parallel depth [26–28]. This is the same property that lets Mamba compute its time-varying
+selective SSMs with a parallel scan [23]. As in Mamba, however, the time-varying transition removes
+the equivalence to a convolution [23]: FFT convolution remains available only for gain-only sRQFs,
+whose fixed ¯Ah makes y a fixed-kernel causal convolution of d. Each selective projection adds at
+most O(T nℓnℓ−1) work, the same order as the dense drive; W(ℓ) κ and W(ℓ) γ each add 2nℓnℓ−1 real
+25
+parameters per layer, and the grouped W(ℓ) ω adds 8nℓ−1. All sRQF results use full BPTT, which
+differentiates through the selective quantities; the spatial-only analysis of Appendix C does not cover
+them.
+F.1 Selective Copying protocol
+The sRQFs make γ, ω, and the input gain input-dependent (Appendix F). Each sequence has 4,096
+one-hot inputs over a vocabulary of 16 symbols: blank token 0, data tokens 1–14, and recall marker
+15. Sixteen distinct positions among the first 4,080 are drawn uniformly and sorted, and each receives
+an independent uniformly drawn data token, so token values can repeat; all other context positions
+are blank. The final 16 inputs are recall markers, and their targets are the data tokens in input order.
+This follows the sequence length, vocabulary size, and number of data tokens of Gu and Dao [23].
+Each epoch draws 64,000 fresh training sequences; validation and test use separate fixed sets of 1,024
+sequences. The loss is the cross entropy averaged over the 16 recall positions, and the reported metric
+is recall-token accuracy, the fraction of recall tokens predicted correctly.
+The RQFs and sRQFs both have four layers of 32 complex filters and no input projection: the first
+complex matrix maps the one-hot input directly to the filter bank. Between layers, the activation
+applies split-ReLU followed by divisive normalization across the filters of the layer:
+[ρ(y)]i = ρ0(yi)q
+σ2 + 1 n Pn j=1 |ρ0(yj )|2 ,
+where ρ0 is the split-ReLU of Eq. (8); n = 32 is the layer width; and σ = 0.3. There are no residual
+connections or dropout. At each recall position, the readout concatenates the real and imaginary
+parts of the last layer’s state and applies a 64 → 128 → 16 MLP with a ReLU hidden layer. The
+RQF parameterization and initialization follow Eqs. (E.5)–(E.7) with h = 1, τ = 5h, Tseq = 4,096h,
+F = 1, and Gρ = 1 both for the one-hot input and after divisive normalization. The readout’s hidden
+layer is He-normal with zero bias, and its logit layer is normal with standard deviation 10−3 and
+zero bias. With complex parameters counted twice, the RQF and sRQF have 17,808 and 33,040
+parameters, respectively.
+All models are trained with full BPTT using Adam with a learning rate of 10−3 for all parameters,
+ϵ = 10−4, and no weight decay; a batch size of 64; global gradient-norm clipping at 1.0; and no label
+smoothing, learning-rate schedule, or early stopping. Training runs for 600 epochs of 1,000 updates.
+Validation accuracy is computed after every epoch, and test accuracy is read from the checkpoint with
+the highest validation accuracy. Each configuration is trained with five seeds, and the seed sets both
+the initialization and the data generation. Matched runs differ only in the input rule and in whether
+the gain, γ, and ω are input-dependent.
+26
