@@ -1834,6 +1834,7 @@ positioning_updated: 2026-09-14
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-20**：[[docs/daily/2026-11-20_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 8 个。
 - **2026-11-19**：[[docs/daily/2026-11-19_LNN_research_digest.md|每日追踪]]，候选论文 95 篇，仓库 45 个，模型 15 个。
   - **研读 4 篇**（**selector top-3 连续第 10 天**全部为已知误命中，已手动改选；**本日 4 篇全部来自独立覆盖度自检捞出的"连续时间机制层"覆盖盲区**，而非 digest 候选池）：[[docs/reports/Log_Neural_Controlled_Differential_Equations_2402.18512_研读报告.md|Log-NCDE：用 Lie 括号把路径几何接回神经向量场 (2402.18512)]]、[[docs/reports/LogSig_SSM_MultiScale_Log_Signature_2610.05051_研读报告.md|LogSig-SSM：路径几何当 token 喂给 Mamba (2610.05051)]]、[[docs/reports/Information_Limits_Neural_CDE_Sparse_Observations_2611.03887_研读报告.md|Neural CDE 的信息论上限：稀疏观测下的部分识别 (2611.03887)]]、[[docs/reports/Advances_in_Neural_CDE_DPhil_Thesis_2607.05280_研读报告.md|Advances in Neural CDEs：线性化让 ODE 求解器彻底消失 (2607.05280)]]。
   - **selector 输出的 3 个 top 候选全部排除**：`2607.15232v1` (score 10, LFM2 tokenizer 扩展 —— **连续第 10 天**的同一已知误命中)、`2412.17006v1` (score 9, LTC 气候韧性代理建模，eess.SY 纯仿真，**自 10-29 起已被连续 10 轮明确排除**)、`2309.13499v2` (score 9, 多智能体 STL 闭环控制器的 "closed-form continuous-time" **字面命中**)。**连续第 10 天同一批 top-3 误命中** —— selector 的强关键词打分 + `already_reported` 覆盖检查在这批论文上稳定失灵，必须每日人工复核、不可照抄。**建议尽快给 selector 增加"标题级强关键词"过滤与"作者+参数指纹"去重。**
@@ -1975,5 +1976,4 @@ positioning_updated: 2026-09-14
 - **2026-10-21**：[[docs/daily/2026-10-21_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 17 个。
 - **2026-10-20**：[[docs/daily/2026-10-20_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 20 个。
 - **2026-10-19**：[[docs/daily/2026-10-19_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
-- **2026-10-18**：[[docs/daily/2026-10-18_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 17 个。
 <!-- daily-lnn-index:end -->
