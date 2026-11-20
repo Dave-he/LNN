@@ -1,0 +1,955 @@
+
+
+===== PAGE 1 =====
+The Shape of a Program: Path Signatures for
+Trace-to-Program Induction
+Mohamed Ghanem1 Bernd Finkbeiner1,2
+1CISPA Helmholtz Center for Information Security
+2Technical University of Munich
+mohamed.ghanem@cispa.de, finkbeiner@cispa.de
+Abstract
+Synthesizing programs from execution traces is a fundamental challenge in al-
+gorithmic interpretability and the reverse engineering of complex systems. We
+bring a rough-path-theoretic perspective to program induction, treating execution
+traces as high-dimensional rough paths and encoding them with the path signature
+transform, a tool from stochastic analysis whose expectation provably characterizes
+the distribution of traces a program induces. On three program-induction domains,
+Karel, List, and RASP, our log-signature trace encoder outperforms LSTM, Trans-
+former, and Fourier baselines in almost every setting, with its largest margins when
+training data is scarce. We further observe that the trace-to-program pipeline is
+naturally contractive: it often produces valid programs that are shorter than the
+ground truth. We turn this into a bootstrapping procedure that exposes redundancy
+in the ground-truth supervision without any external oracle, which we demonstrate
+on redundancy-injected versions of our datasets. Finally, the log-signature encoder
+induces a markedly more interpretable latent geometry than the baselines, in which
+the nearest neighbors of every state lie on its own execution trace.
+/gl⌢be https://oschart.github.io/program-signature
+1 Introduction
+Program synthesis, the task of automatically generating code that satisfies a given specification,
+stands as one of the central challenges in modern artificial intelligence. While much of the recent
+progress has focused on synthesizing programs from functional specifications, typically provided
+as input-output (I/O) pairs [8, 1, 2, 4], this represents only one facet of the problem. A distinct but
+equally important challenge is synthesizing programs from behavioral specifications in the form
+of execution traces. This task is commonly referred to as program induction. Unlike I/O pairs,
+which treat the program as a black box, execution traces reveal the how of the computation, offering
+a granular view of the algorithmic decision-making process. Mastering this form of synthesis is
+essential for real-world applications such as reverse-engineering legacy systems, malware analysis,
+and algorithmic interpretability, where the goal is not just to replicate an output, but to recover the
+underlying logic that produced a specific sequence of states.
+This direction is essential for algorithmic interpretability, as it allows us to distill opaque agents
+into human-readable code [30]. By synthesizing programs that faithfully reproduce the trace of a
+policy rather than just its final output, we gain verifiable insights into agent behavior, revealing safety
+constraints and logic gaps that are otherwise hidden in high-dimensional weight matrices. Towards
+this end, it is compelling to find more optimal methodologies for encoding behavioral traces. Unlike
+static I/O pairs, behavioral traces possess intrinsic temporal and geometric structure that characterizes
+how a task is solved, not just what the solution is. Consequently, the success of the synthesis process
+hinges on the representation’s ability to capture these dynamics robustly.
+40th Conference on Neural Information Processing Systems (NeurIPS 2026).
+arXiv:2611.13005v1  [cs.LG]  8 Nov 2026
+
+===== PAGE 2 =====
+To tackle this task, the dominant paradigm has been to treat execution traces as discrete sequences,
+processing them with standard sequence models like LSTMs [13] or Transformers [29]. In this work,
+we propose a fundamental shift in perspective. Rather than viewing traces merely as sequences of
+tokens, we conceptualize them as high-dimensional rough paths and encode them using the path
+signature transform, a tool from stochastic analysis and rough path theory [3] that has been of growing
+interest in machine learning for time-series forecasting and reinforcement learning [5, 15]. Under
+this lens, a program is a generator of rough paths: each execution traces out a curve in the latent state
+space whose geometric shape reflects the underlying control flow. The signature transform turns
+that geometry into a fixed-size, length-invariant embedding with a principled algebraic structure,
+providing a representation that is naturally aligned with how programs structure execution.
+Several properties of the signature reinforce this perspective. First, the expected signature charac-
+terizes the trace distribution a program induces [6], so aggregating signatures across executions
+of the same program can, in principle, identify it. Second, signatures factor under any temporal
+decomposition of the path: by Chen’s identity, S(X ∗ Y ) = S(X) ⊗ S(Y ), so the signature of a
+trace is the product of the signatures of its parts (Section 4.2). Third, the signature captures the shape
+of the path in a fixed-size representation regardless of path length. Fourth, its runtime is linear in the
+path length, making it much more practical for processing long traces than Transformers with their
+quadratic attention complexity (Appendix A.5). Beyond these four points, the signature is a universal
+nonlinearity: any continuous functional of the path can be linearly approximated from its signature,
+so no expressive power is sacrificed for these structural advantages. This last property notably does
+not hold for classical operators like the Fourier transform.
+Contributions. We make the following key contributions:
+(i) We explore the use of path signature methods for learning programmatic behavior, bringing a
+rough-path-theoretic perspective into program induction. On three program-induction domains,
+our log-signature trace encoder outperforms LSTM, Transformer, and Fourier baselines in
+almost every setting, with its largest margins when training data is scarce.
+(ii) We show that our trace-to-program pipeline is naturally contractive: it produces shorter valid
+programs than the ground-truth program in a sizable fraction of cases. We turn this property
+into a bootstrapping procedure that progressively replaces ground-truth training programs
+with model-generated ones whenever they are valid and shorter, and use it as a measurement
+instrument that exposes redundancy in the supervision without any external oracle.
+(iii) We show that the log-signature encoder induces a markedly more interpretable latent geometry
+than the baselines: the states of each execution trace form a separate chain, and the nearest
+neighbors of every state lie on its own trace.
+2 Related work
+Path signature in deep learning. Early applications utilized the truncated signature as a static
+feature vector for standard supervised learning tasks, such as handwriting analysis and financial
+time-series classification [17, 11]. It has also been used to summarize trajectories in non-Markovian
+reinforcement learning as an agent memory [15]. More recently, Neural Rough Differential Equations
+[21] have used the log-signature transform as the driving control of a continuous-time architecture for
+long time series, embedding signature theory directly into the model’s dynamics rather than treating
+it as a fixed feature map. A common thread between these methods is that they aim to extract some
+information from the signature features. In contrast, we use the signature of a behavioral trace not
+only to summarize it but also to characterize and reconstruct the generating process, i.e., the program.
+Neural program induction. This paradigm leverages the insight that traces provide a denser
+supervisory signal than I/O pairs, reducing the search space for complex algorithms. Many existing
+works learn the programs in the latent weights of the model [22, 10, 32]. This has the downside of
+losing interpretability over the learned programs. Reed and de Freitas [25] introduced the Neural
+Programmer-Interpreter (NPI), which learned to execute programs by composing sub-programs,
+trained to imitate full execution traces, though it required expensive step-by-step supervision. To
+relax this requirement, Shin et al. [26] proposed a two-stage trace-inference framework, where a
+model first predicts a latent execution trace from I/O pairs and subsequently decodes the program
+2
+
+===== PAGE 3 =====
+code from that predicted trace, significantly improving performance on DSL tasks like Karel. Closest
+to our setting, Sun et al. [27] synthesize Karel programs from multiple demonstrations, i.e., sequences
+of environment states, which they encode with recurrent networks. In this paper, we take a simpler
+and more focused approach that employs an encoder-decoder architecture with the ultimate goal of
+evaluating the efficacy of different trace encoders.
+3 Preliminaries
+Let X : [0, T ] → Rd be a path. The signature of X, denoted by S(X), is an infinite graded sequence
+of iterated integrals that provides a faithful representation of the path’s geometric shape.
+Formally, the signature is an element of the extended tensor algebra T ((Rd)) = Q∞ ℓ=0(Rd)⊗ℓ. It is defined as the collection of all iterated integrals of the path coordinates:
+S(X)0,T =
+
+1, X(1) 0,T , X(2) 0,T , . . . , X(ℓ) 0,T , . . .  , (1)
+where the ℓ-th level term X(ℓ) is a tensor in (Rd)⊗ℓ with components given by:
+X(ℓ) 0,T =
+Z
+0<t1 <···<tℓ <T
+dXt1 ⊗ · · · ⊗ dXtℓ . (2)
+The term at level ℓ = 0 is conventionally 1.
+In the context of discrete data analysis, we typically observe a discrete time series x =
+(x1, x2, . . . , xN ) where xi ∈ Rd. To compute the signature, we treat x as a continuous path
+by applying a piecewise linear interpolation. Let X be the continuous path obtained by linearly
+interpolating between the points in x.
+Utilizing Chen’s identity [3], which states that S(X ∗ Y ) = S(X) ⊗ S(Y ) where X ∗ Y denotes their
+concatenation, the signature of the discrete path can be computed efficiently as the tensor product of
+the signatures of its linear segments:
+S(x) =
+N −1O
+i=1
+exp (xi+1 − xi) , (3)
+where the exponential map is defined within the tensor algebra.
+Key properties and invariances. The path signature possesses several algebraic and geometric
+properties [5] that make it a highly desirable feature map for machine learning tasks. Firstly, the
+signature map is injective for paths up to tree-like equivalence [12]. Essentially, S(X) uniquely
+determines the path X (up to “backtracking”), ensuring that no information regarding the shape of
+the trajectory is lost during the transformation. Secondly, the signature is a universal nonlinearity:
+linear functionals on the signature can approximate any continuous function of the path arbitrarily
+well. This allows linear models (like linear regression) trained on signature features to learn complex,
+nonlinear relationships in the original data space.
+Truncation and log-signature. The full signature is an infinite-dimensional object. For compu-
+tational feasibility, we compute the truncated signature up to level M , denoted as SM (X). The
+dimension of the feature vector for a path in Rd truncated at level M is PM ℓ=1 dℓ, which grows geometrically with M.
+To mitigate this dimensionality explosion, we utilize the log-signature log(S(X)). The logarithm
+of the signature maps the elements from the tensor algebra into the underlying Lie algebra. The
+log-signature is a more compact representation that retains the same information as the signature (up
+to tree-like equivalence) but removes the redundant terms generated by the shuffle product.
+The dimension of the log-signature at level ℓ is given by Witt’s formula, which is significantly smaller
+than dℓ. For example, while the signature of a path in R2 truncated at M = 4 has 30 terms, the
+log-signature has only 8.
+3
+
+===== PAGE 4 =====
+×Kdef run():
+while not markersPresent():
+move()
+pickMarker()
+ρ
+exec move() move() pickMarker()
+Log-signature
+trace encoder
+Rd − +
+ϕ
+PE(0)
+ϕ
+PE(1)
+ϕ
+PE(2)
+ϕ
+PE(3)
+Log-signatureProjection
+Decoder
+hk
+def run():
+while not markersPresent():
+move()
+putMarker()
+ˆρ
+Cross-entropy
+target
+prediction
+Figure 1: Overall trace-to-program architecture.
+4 Approach
+We propose an encoder-decoder architecture for synthesizing programs from execution traces. Our
+pipeline consists of three key networks: (1) a state encoder ϕ that embeds the semantic state of the
+environment, where each state embedding is a d-dimensional point on the latent trace. Next, we use
+(2) a trace encoder that embeds state sequences into a single representation that gets passed to (3) a
+Transformer-based program decoder to synthesize the trace-generating program. Our trace encoder
+is based on the path log-signature transform, which captures the geometric properties of the state
+sequence. An overview of our architecture is shown in Figure 1. Note that Karel grids are just one
+example of a domain to which our approach applies; the same architecture and training procedure are
+used for the List and RASP domains.
+4.1 Problem formulation
+We consider the general task of trace-to-program synthesis: given a set of execution traces produced by
+an unknown program, recover a program in a target domain-specific language (DSL) that reproduces
+them. Formally, fix a DSL P and a runtime environment E that endows P with a state space S and an
+execution semantics: running a program ρ ∈ P from an initial state s0 ∈ S produces a trace
+τ = E(ρ, s0) = (s1, s2, . . . , sT ), st ∈ S, (4)
+where T is the (program- and state-dependent) execution length. Given a set of traces T =
+{τ1, . . . , τK } produced by a hidden program ρ∗ from initial states {sk,0}K k=1, the goal is to learn
+a mapping T 7→ ˆρ such that E(ˆρ, sk,0) = τk for every k. Different choices of (P, E) instantiate
+different program-induction domains. Throughout, we use τk = (sk,1, . . . , sk,Tk ) to denote the k-th
+trace and Tk its length.
+We illustrate the formulation with the Karel [24] and List DSLs (Figure 2), which share an iden-
+tical control-flow skeleton (sequencing, conditionals, bounded repetition, unbounded loops over a
+perception predicate) and differ in their state-dependent perceptions and primitive actions. RASP
+programs (Figure 2c) have no intermediate states, so there s0 = (x, p) is an input x and a position p,
+and st = (x(t), ρ(x(t))), with x(t) the input x with its p-th token set to t.
+Each state sk,t is mapped to a dense embedding vk,t ∈ Rd by a domain-specific encoder ϕ. For
+grid-based domains such as Karel, ϕ is a Convolutional Neural Network applied to the visual grid;
+for symbolic domains such as list manipulation, ϕ is a small elementwise embedder; for RASP, it is a
+linear map followed by a residual MLP. In all cases, each trace τk is transformed into a sequence of
+latent vectors Vk = (vk,1, . . . , vk,Tk ).
+4.2 Why signatures match programs
+Encoding each trace by its (log-)signature, rather than by a learned recurrent or attention-based
+summary, is the central design choice of our approach. Two foundational results from rough path
+theory ground this choice.
+4
+
+===== PAGE 5 =====
+Prog ::= DEF run m( Stmt m)
+Stmt ::= Action | Stmt Stmt
+| If | IfElse | While | Repeat
+If ::= IF c( Cond c) i( Stmt i)
+IfElse ::= IFELSE c( Cond c)
+i( Stmt i) ELSE e( Stmt e)
+While ::= WHILE c( Cond c) w( Stmt w)
+Repeat ::= REPEAT N r( Stmt r)
+(N ∈ [0, 19])
+Cond ::= Perc | not c( Perc c)
+Perc ::= frontIsClear | leftIsClear
+| rightIsClear
+| markersPresent
+Action ::= move | turnLeft | turnRight
+| pickMarker | putMarker
+(a) Karel DSL.
+Prog ::= DEF run m( Stmt m)
+Stmt ::= Action | Stmt Stmt
+| If | IfElse | While | Repeat
+If ::= IF c( Cond c) i( Stmt i)
+IfElse ::= IFELSE c( Cond c)
+i( Stmt i) ELSE e( Stmt e)
+While ::= WHILE c( Cond c) w( Stmt w)
+Repeat ::= REPEAT N r( Stmt r)
+(N ∈ [0, 19])
+Cond ::= Perc | not c( Perc c)
+Perc ::= cursorAtStart
+| cursorAtEnd | listEmpty
+| elemIsZero | elemLtNext
+Action ::= cursorLeft | cursorRight
+| pushZero | pop | swapNext
+| incElem | decElem
+(b) List DSL.
+Prog ::= DEF Body m)
+Body ::= Op | COMBINE CF OpCat OpCat
+Op ::= MAP FN | SHIFT OFF | HIST
+| CMPC CMP C | COUNT CMP
+(COUNT: CMP ̸= EQ)
+OpCat ::= MAP FN | SHIFT OFF
+| CMPC CMP C | TOK
+FN ::= FN_inc | FN_dec | FN_dbl
+| FN_mod2 | FN_mod3
+OFF ::= OFF_1 | OFF_2 | OFF_3
+| OFF_m1 | OFF_m2 | OFF_m3
+CMP ::= EQ | LT | LEQ
+| GT | GEQ | NEQ
+C ::= C1 | C2 | · · · | C18
+CF ::= CF_add | CF_sub | CF_max
+| CF_min | CF_gt | CF_eq
+(c) RASP DSL.
+Figure 2: The Karel, List, and RASP domain-specific languages used in our experiments. Karel and
+List support classical control flow (sequencing, conditionals, bounded repetition, unbounded loops
+over a perception predicate) and differ in their state-dependent perceptions and primitive actions. A
+RASP program is a single sequence operation (Op) or a COMBINE of two categorical ones (OpCat);
+DEF and m) are the start/end tokens.
+First, a program ρ is determined, up to behavioral equivalence, by the distribution µρ it induces over
+execution traces, with the randomness coming from the choice of initial state. Chevyrev and Lyons
+[6] show that the expected signature EX∼µρ [S(X)] uniquely characterizes µρ whenever it has an
+infinite radius of convergence, which holds automatically for bounded-length traces such as ours.
+Aggregating per-trace signatures across multiple executions of the same program therefore estimates
+an object that, in principle, suffices to identify the generating program.
+Second, by Chen’s identity [3], the signature is multiplicative under any temporal split of a path:
+S(X[0,T ]) = S(X[0,t]) ⊗ S(X[t,T ]) for any t ∈ [0, T ]. (5)
+This is an algebraic property of paths, not of program syntax: traces whose embedded paths share
+a contiguous sub-segment (e.g., the same loop body iterated, the same inner subroutine called)
+share a corresponding signature factor, so structurally similar executions land in structurally similar
+regions of the embedding space. As such, signatures respect the temporal structure of any single
+execution, equipping the embedding manifold with closed-form algebraic structure under temporal
+sub-decomposition.
+By contrast, none of the baseline encoders has a closed-form law relating the embedding of a trace
+to those of its parts: an LSTM’s embedding depends on state order through a fixed recurrence, a
+Transformer encoder recovers order only because its positional encoding breaks the permutation
+equivariance of self-attention, and the truncated Fourier spectrum of a concatenation cannot be
+recovered from the spectra of its parts.
+4.3 Trace encoding via signature-based transforms
+Embedding a sequence given the embeddings of its elements (states in our case) typically involves
+a choice of an aggregation scheme, such as recurrence in LSTMs and pooling as well as [CLS]
+tokens for Transformers. In practice, this choice is nontrivial and depends on the task at hand. For
+example, recurrent aggregation famously suffers from forgetting and vanishing gradients in long
+sequences. The signature is a natural aggregator: it outputs a fixed-size embedding regardless of the
+sequence length, and its runtime and memory complexities are linear in the sequence length rather
+than quadratic as in Transformers.
+A more fundamental difference that sets the signature apart from LSTM and Transformer encoders is
+that it operates on geometry while the latter operate on content. The signature captures the geometric
+shape of the path traced out by the sequence of state embeddings, while LSTMs and Transformers
+learn a content-based summary. We argue that programmatic behavior is fundamentally geometric:
+the control flow of a program structures the execution into subroutines, loops, and conditionals that
+5
+
+===== PAGE 6 =====
+manifest as geometric features in the trace. By encoding geometry directly, the signature is naturally
+aligned with the underlying structure of program execution and bypasses content-level noise.
+Positional augmentation. Standard path signatures satisfy tree-like equivalence, meaning they
+are invariant to backtracking (e.g., a sequence of actions like turnRight, turnLeft that returns to
+the original state might be nullified). To resolve this and preserve the distinct execution history, we
+augment the state embeddings with positional encodings. We define a time-augmented path sequence
+˜Vk where:
+˜vk,t = vk,t + PE(t) (6)
+Here, PE(t) ∈ Rd is a fixed sinusoidal positional encoding. Because PE(t) differs at every step, an
+action sequence that returns to an earlier state reaches a different point of the augmented path, so
+it no longer forms a backtracking segment that the signature ignores. In many standard signature
+applications, time is instead added as an extra channel, which rules out tree-like equivalence altogether.
+In our setting, we found that additive positional encodings work better on Karel and List domains.
+On RASP, where step t of every trace sets the swept token to t, the log-signature encoder instead
+appends a one-hot encoding of t.
+Log-signature encoder. We treat the sequence ˜Vk as a discrete approximation of a continuous path
+Xk : [0, Tk] → Rd. To handle variable-length traces within the batch, we pad ˜vk by repeating the
+embedding of the last state in the trace: ˜vk,t = ˜vk,Tk , ∀t > Tk. Each repeated point adds a zero
+increment, whose signature is the identity exp(0) = 1, so by Chen’s identity the padding leaves the
+signature unchanged; this is an instance of the invariance of the signature to reparameterization, as
+stalling at a point does not change the shape of the path. This is preferable to zero-padding, which
+introduces an artifact in the form of a false increment at the end of the path.
+Before adding the positional encoding, we normalize every step of the embedded trace to unit
+length while keeping its direction: with ∆k,t = vk,t+1 − vk,t, we set ˆvk,1 = vk,1 and ˆvk,t+1 =
+ˆvk,t + ∆k,t/
+p
+∥∆k,t∥2 + ϵ2, where the small constant ϵ keeps zero-length steps at zero, and use ˆvk,t
+in place of vk,t when forming ˜vk,t. We apply this normalization because the signature has no weights
+of its own to rebalance steps of different sizes: its level-ℓ terms are sums of products of ℓ increments,
+so a few long steps dominate it. In List, for example, pushZero and pop shift several elements at
+once, and their steps in the embedded path are over ten times longer than those of incElem and
+decElem, so the in-place edits contribute little to the log-signature. With unit steps, every state
+change contributes equally, and the log-signature records which changes occurred and in what order
+rather than how far each one moved the embedding.
+We then compute the truncated log-signature of this padded path up to level M = 2, denoted
+log(SM ( ˜Vk)). We choose M = 2 as the smallest truncation level that retains pairwise interaction
+terms between coordinates of the embedded path; an ablation over M ∈ {1, 2, 3} in Appendix A.1
+shows that going beyond M = 2 yields no consistent benefit, at a substantial dimensional cost. The
+log-signature creates a fixed-size representation of the path regardless of the trace length Tk. Since the
+dimension of the log-signature Dlogsig(d, M ) grows rapidly with the truncation level M , we project it
+back to a compact representation space via a learnable linear map Wproj ∈ Rd×Dlogsig(d,M ) with bias
+bproj ∈ Rd:
+hk = Wproj · log(SM ( ˜Vk)) + bproj ∈ Rd. (7)
+The projection is the only trainable component of this encoder, so the underlying signature represen-
+tation remains parameter-free.
+4.4 Program decoding
+To generate the program tokens, we employ a Transformer decoder. The decoder conditions on the
+set of trace embeddings H = {h1, . . . , hK } through a cross-attention mechanism.
+P (ˆρ|H) =
+| ˆρ|Y
+j=1
+Pθ (yj |y<j , H) (8)
+where yj is the j-th token of the predicted program ˆρ. The decoder queries the trace memory H,
+allowing the model to attend to specific features of the execution traces (captured by the signatures)
+6
+
+===== PAGE 7 =====
+that correspond to specific program subroutines. Similar to Bunel et al. [2], we mask out syntactically
+invalid tokens as they are easy to recognize. In doing so, we ensure that the decoder always outputs
+syntactically valid programs.
+4.5 Optimization
+The model is trained end-to-end by minimizing the cross-entropy loss between the predicted program
+distribution and the ground-truth program ρ∗ = (y∗ 1 , . . . , y∗ L):
+L(θ) = −
+LX
+j=1
+log Pθ (y∗ j |y∗ <j , H) (9)
+Contractivity and bootstrapping. We empirically observe that our trace-to-program pipeline is
+naturally contractive: in a sizable fraction of cases, the model produces a program ˆρ that is shorter
+than the ground-truth program ρ∗ but still reproduces every supervising trace. We exploit this property
+as a way to expose redundancy in the ground-truth labels without external supervision. Starting from
+the original training set D0 = {(Ti, ρ∗ i )}, we interleave training with relabeling passes, one every
+five epochs after a five-epoch warm-up: at pass t, the current model generates a prediction ˆρi for each
+training instance, and we form Dt+1 from Dt by replacing each label whenever the prediction is both
+valid (executing ˆρi on each initial state in Ti reproduces the corresponding trace) and shorter than
+the current label:
+ρ(t+1) i =
+(
+ˆρi if ˆρi valid on Ti and |ˆρi| < |ρ(t) i |,
+ρ(t) i otherwise. (10)
+Training then continues on Dt+1, and the total training-program length decreases monotonically. The
+cumulative length reduction and the fraction of training samples whose labels are ever shortened
+give a direct, encoder-derived lower bound on how much shorter the supervision could have been,
+with no external oracle required. We quantify this on redundancy-injected versions of our datasets
+(Section 5.1) in Section 5.4.
+5 Experiments
+5.1 Datasets
+We evaluate trace-to-program synthesis on three complementary program-induction domains: Karel,
+a 2D grid-world programming language with visual state, List, a symbolic list-manipulation language,
+and RASP, a language for expressing Transformer computations as sequence operations. Together
+they cover a broad slice of the program-induction problem space: Karel is representative of visual
+and spatial-reasoning domains (robotics control, tile-based puzzles, agent navigation), List is repre-
+sentative of symbolic array- and string-manipulation domains (sorting, searching, counting, sequence
+transformations), and RASP is representative of functional sequence-to-sequence programs. For
+Karel and List we adopt a similar data generation process to that of Trivedi et al. [28], with 100K
+training and 2500 test samples. To mitigate overfitting during training, we randomly sample 5 out of
+6 traces for each program, and use all 6 traces during testing. An output program is marked as correct
+if it reproduces all input traces when executed on their respective initial states.
+RASP. RASP [31] composes elementwise maps (MAP), positional shifts (SHIFT), thresholds (CMPC),
+and selector-width counts (HIST, COUNT) over a token sequence. RASP programs can be compiled
+into Transformer weights [18], and Transformers can be trained so that they convert into human-
+readable programs [9]. We use programs of nesting depth at most two (Figure 2c) on length-16
+sequences of tokens in {1, . . . , 18}, one per distinct non-constant behavior: 5,816 for training and
+2,500 for testing, so every test program computes an unseen function. A trace is a sweep: from a
+random input, the token at one position is set to 1, . . . , 18 in turn, and each step is the pair of input
+and output sequences, a point in R32. Each program has K=8 sweeps at distinct positions, of which
+we sample 4 during training and use all 8 for testing; redrawing the sweeps of the training programs
+gives 32K training samples. A decoded program is correct if it reproduces every output of every
+sweep.
+7
+
+===== PAGE 8 =====
+Redundancy-injected datasets. Bootstrapping (Section 4.5) can only shorten a label if a shorter
+program reproduces the same traces, and our datasets contain little such redundancy: on the Karel
+and List test splits, a greedy search over trace-preserving local edits shortens about a quarter of the
+programs but removes only 4.5% and 5.2% of their tokens. To highlight the contractive effect of
+our pipeline, we therefore build redundancy-injected versions of the three datasets, denoted Karel+,
+List+, and RASP+, by rewriting the ground-truth programs. In each split, half of the programs are
+rewritten with extra structure that leaves their actions (Karel, List) or outputs (RASP) unchanged on
+every input, so injected tokens make up about 20% of the total. For Karel and List, the rewrites invert
+standard simplification rules, e.g. S → REPEAT 1 (S) or S → IFELSE c (S) ELSE (S). For RASP, we
+rewrite one categorical operation into an equivalent COMBINE of two, e.g. CMPC EQ c into COMBINE
+min (CMPC GEQ c) (CMPC LEQ c), allowing COMBINEs to nest. The traces are unchanged, and
+we use these datasets only for the bootstrapping experiment (Finding #2).
+5.2 Baselines
+We compare our log-signature trace encoder against three classical baselines that differ from it only
+in the trace encoder, up to one minior exception for Fourier (Appendix A.7).
+LSTM. We pass the state embeddings as the input sequence to an LSTM [13], and the last hidden
+state is taken as the trace embedding. Although the temporal order is implicit in LSTM recurrence, we
+found that adding sinusoidal positional encoding to the input state sequence improved its performance.
+Transformer. We use a 2-layer Transformer encoder [29] with 8 self-attention heads and sinusoidal
+positional encoding added to the input sequence. We found that adding more layers did not signifi-
+cantly improve performance, and resulted in a collapse in the case of 8 or more layers. We obtain the
+trace embeddings by mean-pooling over the output state embeddings.
+Fourier transform. We compute the truncated orthonormal real-to-complex DFT [7] of the (posi-
+tionally augmented) state sequence, retaining the m=9 lowest-frequency modes and stacking their
+real and imaginary parts into the trace embedding. Full equations are given in Appendix A.6.
+5.3 Hyperparameters
+All models are trained for 100 epochs with a batch size of 32 and an embedding size of 256 (d=32
+for the RASP log-signature encoder). We use the Adam optimizer [16] with a learning rate of 10−4
+(details in Appendix A.7). We clip the global gradient norm at 0.5 [23]. The training pipeline is
+implemented using PYTORCH, including a PYTORCH-native reimplementation of SIGNATORY [14]
+for differentiable log-signature computations, and runs on a single NVIDIA A100 GPU.
+5.4 Results
+We organize our findings around three claims, each stated up front and then supported by the
+corresponding evidence. We report semantic accuracy: the fraction of test programs whose decoded
+program is correct in the sense of Section 5.1, i.e., it reproduces every given trace (Karel, List) or
+output (RASP), whether or not it matches the ground-truth program token for token.
+Finding #1: The log-signature encoder outperforms the LSTM, Transformer, and Fourier
+baselines in almost every setting, with its largest margins when training data is scarce. Figure 3
+reports test semantic accuracy across training data volumes for each encoder on the Karel, List, and
+RASP domains. The log-signature encoder is the most accurate encoder at 11 of the 12 (domain,
+volume) settings. The exception is Karel at full volume, where the Transformer and the LSTM lead it
+by more than the spread across seeds. The advantage is largest in the low-data regime: with a quarter
+of the training data, the log-signature encoder nearly triples the accuracy of the strongest baseline on
+Karel and clearly leads it on List and RASP, where the margin narrows at full volume. The parametric
+encoders need the most data: with a quarter of the training data, the LSTM and Transformer barely
+learn Karel, and on RASP they stay far behind the log-signature encoder at every volume. The Fourier
+encoder beats the LSTM and Transformer at low volumes on Karel and at every volume on RASP, but
+trails them on Karel at full volume and is the weakest encoder on List at every volume. We further
+find that the log-signature encoder reaches 90% of its best accuracy in fewer epochs than the LSTM
+8
+
+===== PAGE 9 =====
+10 25 50 100
+0.0
+0.2
+0.4
+0.6
+Semantic Accuracy
+Karel
+10 25 50 100
+Training Data Volume (% of full set)
+List
+12.5 25 50 100
+RASP
+Logsig LSTM Transformer Fourier
+Figure 3: Generalization performance across training data volumes for each trace encoder on the
+Karel, List, and RASP domains. Training data volume is a percentage of each domain’s full training
+set, on a log scale. Each point is the highest test semantic accuracy over the 100 training epochs,
+averaged over 3 random seeds. The test set (2500 samples) is the same for all volumes.
+–50 0 50
+–50
+0
+50
+Logsig
+–50 0 50
+–50
+0
+50
+LSTM
+–100 0 100
+–100
+0
+100
+Transformer
+–100 0 100
+–100
+0
+100
+Fourier
+Program 1 Program 2 Program 3 Program 4 Program 5
+Figure 4: t-SNE projections of the embedded traces that each trace encoder reads on Karel, for five
+test programs with six traces each. Each line is one trace, its points are the trace’s states in temporal
+order, and the traces of a program share a color. For a common view, the state embeddings of all four
+encoders are normalized to unit-length steps as in Section 4.3 before the positional encoding is added.
+Each panel is a separate t-SNE fit.
+and Transformer at every volume where these learn, and the Fourier encoder does so in most settings.
+Two ablations indicate that the advantage of the log-signature encoder does not stem from the size
+of its representation. When we vary the width d of the state embeddings at 50% of the training data
+volume, even the narrowest log-signature encoder is more accurate than every baseline at any width
+on List and RASP, and on Karel it leads from d=64 onwards (Figure 7, Appendix A.3). Furthermore,
+the log-signature encoder performs nearly identically to its full-signature counterpart on all three
+domains, while using half as many features and, on Karel and List, about a third fewer parameters
+(Figure 6, Appendix A.2).
+Finding #2: Bootstrapping exposes substantial redundancy in the ground-truth supervision,
+with no external oracle required. We run the bootstrapping procedure of Section 4.5 on each
+(encoder, task) configuration, using the redundancy-injected datasets Karel+, List+, and RASP+
+(Section 5.1), and report two quantities: Tokens removed, the cumulative percent reduction in total
+training-program token count from the labels of the redundancy-injected dataset to the final labels;
+and Programs shortened, the percent of training programs whose label was shortened at least once
+during the procedure. We frame this as a measurement rather than a self-improvement claim: the
+procedure replaces each ground-truth label only when the model has produced a strictly shorter
+program that is verified to reproduce every supervising trace, so both quantities are encoder-derived
+lower bounds on how compressible the supervision was. Stronger encoders expose more of this
+redundancy because they recover more valid alternatives; the absolute numbers therefore vary across
+the rows of Table 1, but every cell is a lower bound on the same underlying quantity. Notably, every
+9
+
+===== PAGE 10 =====
+encoder, including the parametric LSTM and Transformer baselines and the spectral Fourier baseline,
+produces nontrivial values of both quantities, so contractivity is better understood as a property of the
+trace-to-program pipeline than as a property unique to any one encoder.
+Table 1: Reduction statistics in the ground-truth supervision of the redundancy-injected datasets
+(Section 5.1), uncovered by bootstrapping.
+Karel+ List+ RASP+
+Encoder Tokens Programs Tokens Programs Tokens Programs
+removed (%) shortened (%) removed (%) shortened (%) removed (%) shortened (%)
+LSTM 21.11 58.66 22.37 59.42 13.41 32.33
+Transformer 20.92 57.81 22.58 59.82 18.26 44.08
+Fourier 18.43 52.89 18.19 49.62 18.64 44.98
+Log-Signature 21.07 58.59 22.70 59.88 19.84 47.92
+Finding #3: The log-signature encoder induces a more interpretable latent geometry. We
+investigate the geometry of the learned representations using t-SNE [20]. Figure 4 shows the
+projection of high-dimensional latent state embeddings (the state embeddings each trace encoder
+reads, after the unit-step normalization and positional encoding) into a reduced two-dimensional
+space. This is essentially a visualization of our main thesis: that programs have an inherent shape that
+manifests in their traces. As shown in Figure 4, the embeddings of the log-signature-based model
+are much more spatially structured and interpretable: states from the same execution trace remain
+clustered and form separate chains of nearby points within the embedding manifold, without crossing
+into each other as is the case with the baselines. This geometry reveals that the model preserves
+the sequential nature of the data. Figure 8 in Appendix A.4 extends this view to the List and RASP
+domains.
+6 Conclusion
+Summary. In this paper, we brought a rough-path-theoretic perspective to program induction,
+exploring the path log-signature transform as a trace encoder for trace-to-program synthesis. Our
+results have shown an inherent advantage of the log-signature encoder over traditional sequence
+models. However, this is not to say the signature transform should necessarily be treated as a
+complete replacement for other sequence encoders, but rather to establish grounds for future research
+in employing geometric methods for program learning. The essence of this work is demonstrating
+that geometry potentially reveals more about programmatic structure than content. Furthermore,
+we have empirically shown that the trace-to-program pipeline is naturally contractive, which, as
+our experiments on redundancy-injected datasets show, serves as a convenient tool for exposing
+redundancy without any external oracle. Finally, we have shown that the log-signature encoder
+induces a markedly more interpretable latent geometry than classical sequence models.
+Limitations. The truncated log-signature provides a compact representation for moderately complex
+traces, but the dimensionality of the feature space Dlogsig still grows exponentially with the truncation
+level M . We keep M small in practice (Appendix A.1), but very-long-horizon programs that require
+fine-grained higher-order interactions across the full trace remain a challenging case for the approach.
+Acknowledgments and Disclosure of Funding
+This work was partially supported by the European Union with ERC Grant HYPER (No. 101055412).
+Views and opinions expressed are however those of the authors only and do not necessarily reflect
+those of the European Union or the European Research Council Executive Agency. Neither the
+European Union nor the granting authority can be held responsible for them.
+10
+
+===== PAGE 11 =====
+References
+[1] Matej Balog, Alexander L Gaunt, Marc Brockschmidt, Sebastian Nowozin, and Daniel Tar-
+low. DeepCoder: Learning to write programs. In International Conference on Learning
+Representations, 2017.
+[2] Rudy Bunel, Matthew Hausknecht, Jacob Devlin, Rishabh Singh, and Pushmeet Kohli. Lever-
+aging grammar and reinforcement learning for neural program synthesis. In International
+Conference on Learning Representations, 2018.
+[3] Kuo-Tsai Chen. Integration of paths, geometric invariants and a generalized Baker-Hausdorff
+formula. Annals of Mathematics, 65(1):163–178, 1957.
+[4] Xinyun Chen, Chang Liu, and Dawn Song. Execution-guided neural program synthesis. In
+International Conference on Learning Representations, 2019.
+[5] Ilya Chevyrev and Andrey Kormilitzin. A primer on the signature method in machine learning.
+In Signature Methods in Finance: An Introduction with Computational Applications, pages
+3–64. Springer Nature Switzerland Cham, 2025.
+[6] Ilya Chevyrev and Terry Lyons. Characteristic functions of measures on geometric rough paths.
+2016.
+[7] James W Cooley and John W Tukey. An algorithm for the machine calculation of complex
+Fourier series. Mathematics of Computation, 19(90):297–301, 1965.
+[8] Jacob Devlin, Jonathan Uesato, Surya Bhupatiraju, Rishabh Singh, Abdel-rahman Mohamed,
+and Pushmeet Kohli. RobustFill: Neural program learning under noisy I/O. In International
+Conference on Machine Learning, pages 990–998. PMLR, 2017.
+[9] Dan Friedman, Alexander Wettig, and Danqi Chen. Learning transformer programs. Advances
+in Neural Information Processing Systems, 36, 2023.
+[10] Alex Graves, Greg Wayne, and Ivo Danihelka. Neural Turing machines. arXiv preprint
+arXiv:1410.5401, 2014.
+[11] Lajos Gergely Gyurkó, Terry Lyons, Mark Kontkowski, and Jonathan Field. Extracting in-
+formation from the signature of a financial data stream. arXiv preprint arXiv:1307.7244,
+2013.
+[12] Ben Hambly and Terry Lyons. Uniqueness for the signature of a path of bounded variation and
+the reduced path group. Annals of Mathematics, 171(1):109–167, 2010.
+[13] Sepp Hochreiter and Jürgen Schmidhuber. Long short-term memory. Neural Computation, 9
+(8):1735–1780, 1997.
+[14] Patrick Kidger and Terry Lyons. Signatory: differentiable computations of the signature and
+logsignature transforms, on both CPU and GPU. In International Conference on Learning
+Representations, 2021. https://github.com/patrick-kidger/signatory.
+[15] Patrick Kidger, Patric Bonnier, Imanol Perez Arribas, Cristopher Salvi, and Terry Lyons. Deep
+signature transforms. Advances in Neural Information Processing Systems, 32, 2019.
+[16] Diederik P Kingma and Jimmy Ba. Adam: A method for stochastic optimization. In Interna-
+tional Conference on Learning Representations, 2015.
+[17] Songxuan Lai and Lianwen Jin. Offline writer identification based on the path signature feature.
+In 2019 International Conference on Document Analysis and Recognition (ICDAR), pages
+1137–1142. IEEE, 2019.
+[18] David Lindner, János Kramár, Sebastian Farquhar, Matthew Rahtz, Tom McGrath, and Vladimir
+Mikulik. Tracr: Compiled transformers as a laboratory for interpretability. Advances in Neural
+Information Processing Systems, 36, 2023.
+11
+
+===== PAGE 12 =====
+[19] Ilya Loshchilov and Frank Hutter. Decoupled weight decay regularization. In International
+Conference on Learning Representations, 2019.
+[20] Laurens van der Maaten and Geoffrey Hinton. Visualizing data using t-SNE. Journal of Machine
+Learning Research, 9(Nov):2579–2605, 2008.
+[21] James Morrill, Cristopher Salvi, Patrick Kidger, and James Foster. Neural rough differential
+equations for long time series. In International Conference on Machine Learning, pages
+7829–7838. PMLR, 2021.
+[22] Arvind Neelakantan, Quoc V Le, and Ilya Sutskever. Neural programmer: Inducing latent
+programs with gradient descent. In International Conference on Learning Representations,
+2016.
+[23] Razvan Pascanu, Tomas Mikolov, and Yoshua Bengio. On the difficulty of training recurrent
+neural networks. In International Conference on Machine Learning, pages 1310–1318. PMLR,
+2013.
+[24] Richard E Pattis. Karel the robot: a gentle introduction to the art of programming. John Wiley
+& Sons, 1994.
+[25] Scott Reed and Nando de Freitas. Neural programmer-interpreters. In International Conference
+on Learning Representations, 2016.
+[26] Eui Chul Shin, Illia Polosukhin, and Dawn Song. Improving neural program synthesis with
+inferred execution traces. Advances in Neural Information Processing Systems, 31, 2018.
+[27] Shao-Hua Sun, Hyeonwoo Noh, Sriram Somasundaram, and Joseph Lim. Neural program
+synthesis from diverse demonstration videos. In International Conference on Machine Learning,
+pages 4790–4799. PMLR, 2018.
+[28] Dweep Trivedi, Jesse Zhang, Shao-Hua Sun, and Joseph J Lim. Learning to synthesize programs
+as interpretable and generalizable policies. Advances in Neural Information Processing Systems,
+34:25146–25163, 2021.
+[29] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez,
+Łukasz Kaiser, and Illia Polosukhin. Attention is all you need. Advances in Neural Information
+Processing Systems, 30, 2017.
+[30] Abhinav Verma, Vijayaraghavan Murali, Rishabh Singh, Pushmeet Kohli, and Swarat Chaudhuri.
+Programmatically interpretable reinforcement learning. In International Conference on Machine
+Learning, pages 5045–5054. PMLR, 2018.
+[31] Gail Weiss, Yoav Goldberg, and Eran Yahav. Thinking like transformers. In International
+Conference on Machine Learning, pages 11080–11090. PMLR, 2021.
+[32] Yujun Yan, Kevin Swersky, Danai Koutra, Parthasarathy Ranganathan, and Milad Hashemi.
+Neural execution engines: Learning to execute subroutines. Advances in Neural Information
+Processing Systems, 33:17298–17308, 2020.
+12
+
+===== PAGE 13 =====
+A Appendix
+This appendix collects probe experiments that complement the three main findings in Section 5. Each
+subsection is self-contained and may be read independently of the others.
+A.1 Signature truncation depth ablation
+The truncation level M controls the maximum interaction order captured by the log-signature: M =1
+retains only the displacement of the path, M =2 adds pairwise interactions (Lévy areas), and higher
+M captures progressively higher-order shape statistics at exponential dimensional cost. We jointly
+sweep M ∈ {1, 2, 3} and the underlying state embedding dimension d ∈ {16, 32, 64} at half of each
+domain’s training data volume, and report semantic accuracy on the standard 2500-sample test set.
+Figure 5 shows that M =1 falls far short of M =2 on every domain and dimension, and stays near
+zero on Karel and RASP, confirming that pairwise interactions are the load-bearing component of the
+representation. Going further to M =3 does not help on List and RASP, where it matches M =2 at
+d=16 and is at or below it at larger d. On Karel, M =3 improves on M =2 at d=16 and d=64, but
+not at d=32. Since M =3 multiplies the number of log-signature features by more than 40 at d=64
+for a gain on one domain only, we use M =2 in the main experiments.
+16 32 64
+State embedding width d
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6Semantic Accuracy
+0.07 0.06 0.05
+0.39 0.39
+0.48
+0.43
+0.37
+0.54
+Karel, 50K
+16 32 64
+State embedding width d
+0.29 0.30 0.30
+0.55
+0.57 0.560.55
+0.50
+0.54
+List, 50K
+16 32 64
+State embedding width d
+0.03 0.03 0.03
+0.59 0.60 0.590.59 0.59 0.58
+RASP, 16K
+Truncation depth
+M = 1 M = 2 M = 3
+Figure 5: Truncation depth ablation at half the training data volume (50K samples for Karel and List,
+16K for RASP). Semantic accuracy (the highest over the 100 training epochs) on the 2500-sample
+test set as a function of the log-signature truncation level M and the underlying state embedding
+dimension d.
+A.2 Signature versus log-signature
+The log-signature is the compact alternative to the full signature: it removes the redundant terms
+generated by the shuffle product. At M =2 these redundant terms make up half of the signature.
+For a path with D channels, the signature has D + D2 = D(D+1) non-constant coordinates and
+the log-signature D(D+1)/2. The extra coordinates are the symmetric part of the second level,
+which by the shuffle identity equals 1 2 X(1) 0,T ⊗ X(1) 0,T , i.e. products of first-level coordinates, while its
+antisymmetric part is the Lévy area that the log-signature keeps. To test whether these redundant
+coordinates help the learned projection, we replace the log-signature with the signature at M =2,
+keep every other setting of the main experiments, and train on each domain’s full training set (100K
+samples for Karel and List, 32K for RASP). Figure 6 shows that doubling the number of features
+leaves semantic accuracy essentially unchanged: the two encoders differ by at most 0.011 on any
+domain, in either direction. Since the input of the projection doubles, the signature model is also
+larger, with about 50% more parameters on Karel and List. The log-signature thus matches the
+signature at half the representation size, which is why we use it throughout.
+A.3 State embedding width
+At M =2, the log-signature of a d-dimensional path has O(d2) coordinates, so the advantage of
+the log-signature encoder in Finding #1 could come from this large representation rather than from
+the structure of the signature. To test this, we vary the width d ∈ {16, 32, 64, 128, 256} of the
+state embeddings fed to every trace encoder, at 50% of each domain’s training data volume and
+13
+
+===== PAGE 14 =====
+Accuracy Features
+0.655
+32,896
+0.666 65,792
+0.8
+0
+75K
+0
+Karel (D = 256)
+Accuracy Features
+0.718
+32,896
+0.729
+65,792
+0.8
+0
+75K
+0
+List (D = 256)
+Accuracy Features
+0.598
+1,275
+0.595
+2,550
+0.8
+0
+3K
+0
+RASP (D = 50)
+Log-signature Signature
+Figure 6: Signature versus log-signature encoder at truncation level M =2, trained on each domain’s
+full training set.
+with all other settings as in the main experiments. For the LSTM only the input width changes,
+the Transformer operates at width d throughout, and the number of Fourier features grows linearly
+with d. Figure 7 shows that the log-signature encoder is the least sensitive to this choice. On List
+and RASP its accuracy is nearly flat across the whole range, and even its narrowest variant is more
+accurate than every baseline at any width. Karel is the exception: there the log-signature encoder
+gains substantially from wider embeddings, and the LSTM matches or exceeds it at the two smallest
+widths. The baselines respond to width in different ways. The Transformer is the most width-hungry
+encoder: it improves markedly as d grows on List and RASP but trails far behind at small widths,
+and it stays low at every width on Karel. The Fourier encoder shows the opposite trend, being most
+accurate at the smallest width and degrading as d grows on all three domains. The LSTM peaks at an
+intermediate width and remains far behind on RASP throughout. Overall, the ranking of the main
+experiments does not hinge on the chosen width: the log-signature encoder leads at every width on
+List and RASP and from d=64 onwards on Karel, and on two of the three domains a narrow state
+embedding, and hence a small log-signature, suffices.
+16 32 64 128 256
+0.0
+0.2
+0.4
+0.6
+Semantic Accuracy
+Karel
+16 32 64 128 256
+State embedding width d
+List
+16 32 64 128 256
+RASP
+Logsig LSTM Transformer Fourier
+Figure 7: Semantic accuracy of each trace encoder as a function of the state embedding width d, at
+50% of each domain’s training data. Each point is the highest test semantic accuracy over the 100
+training epochs on the 2500-sample test set.
+A.4 State-level latent geometry on all domains
+Figure 8 extends the state-level view of Finding #3 (Figure 4) from Karel to the List and RASP
+domains, with the same projection and the same unit-step normalization of every encoder’s state
+embeddings. To quantify how well the traces stay apart, we take, for every state, its five nearest
+14
+
+===== PAGE 15 =====
+states in the full embedding space (over 20 test programs, before the t-SNE projection) and count the
+share that belongs to the same trace. The log-signature encoder scores 1.00 on all three domains: the
+nearest neighbors of every state lie on its own trace. On Karel, all three baselines fall far short of this,
+with most of a state’s neighbors coming from other traces. On RASP, they range from about half for
+the LSTM to nearly perfect for the Fourier encoder, and on List all four encoders keep most traces
+apart.
+–50 0 50
+–50
+0
+50
+Karel
+Logsig
+–50 0 50
+–50
+0
+50
+LSTM
+–100 0 100
+–100
+0
+100
+Transformer
+–100 0 100
+–100
+0
+100
+Fourier
+–50 0 50
+–50
+0
+50
+List
+–50 0 50
+–50
+0
+50
+–50 0 50
+–50
+0
+50
+–50 0 50
+–50
+0
+50
+–50 0 50
+–50
+0
+50
+RASP
+–50 0 50
+–50
+0
+50
+–50 0 50
+–50
+0
+50
+–50 0 50
+–50
+0
+50
+Program 1 Program 2 Program 3 Program 4 Program 5
+Figure 8: State-level t-SNE projections as in Figure 4, for each trace encoder (columns) on the Karel,
+List, and RASP domains (rows), five test programs per domain with six traces each on Karel and List
+and eight on RASP. Each line is one trace, the traces of a program share a color, and each panel is a
+separate t-SNE fit.
+A.5 Encoder forward-pass wall-clock scaling
+To check the linear-time claim empirically, we time the forward pass of each trace encoder on a single
+trace of length T , up to T =105, on one NVIDIA A100 GPU. Each encoder has its configuration
+from the Karel and List experiments, with state embeddings of width 256, and only the trace encoder
+itself is timed, not the state encoder, the set encoder (Appendix A.7) or the program decoder around
+it. Figure 9 shows that the log-signature and LSTM encoders grow linearly with T , while the
+Transformer grows quadratically, as its attention compares every pair of steps. The Transformer
+overtakes the LSTM at around 45,000 steps, and at T =105 it is about 18 times slower than the
+log-signature encoder, which is in turn about 8 times faster than the LSTM. The Fourier encoder,
+whose FFT is cheap at these lengths, is the fastest throughout.
+A.6 Fourier encoder: full definition
+For a single trace, we drop the trace index k: let v1, . . . , vT ∈ Rd be its state embeddings and
+ut = vt + PE(t) their positionally augmented version, with the additive sinusoidal positional
+encoding PE of Section 4.3. The Fourier encoder applies the orthonormal DFT to each of the d
+coordinates of (ut)T t=1, keeps the m = 9 lowest-frequency modes, and stacks their real and imaginary
+15
+
+===== PAGE 16 =====
+0 20000 40000 60000 80000 100000
+Trace length T
+0
+250
+500
+750
+1000
+1250
+1500
+1750
+Forward time (ms)
+Logsig
+LSTM
+Transformer
+Fourier
+Figure 9: Forward-pass wall-clock time of each trace encoder as a function of the trace length T , on
+one trace of width-256 state embeddings on one NVIDIA A100 GPU, with each encoder configured
+as in the Karel and List experiments. Only the trace encoder is timed. Each point is the mean of 5
+timed passes after 3 warm-up passes; the standard deviations are below 2 ms.
+parts into the trace embedding Y ∈ Rm×2d:
+ˆuf = 1√ T
+TX
+t=1
+ut e−2πif (t−1)/T ∈ Cd, f = 0, . . . , m − 1,
+yf =
+
+Re(ˆuf )
+Im(ˆuf )
+
+∈ R2d,
+Y =
+
+y0, y1, . . . , ym−1
+⊤
+.
+A.7 Further optimization details
+Set encoder. Before decoding, the K trace embeddings h1, . . . , hK of a program pass through a
+set encoder, a 2-layer Transformer encoder with 8 heads and no positional encoding, which lets each
+trace embedding attend to the others. We treat it as part of the program decoder, whose cross-attention
+reads the K outputs of the set encoder rather than H itself. The Fourier encoder is the one exception
+and is trained without the set encoder on all three domains, since with it the Fourier model did not
+learn on Karel at any training data volume.
+Weight decay. All models are trained with Adam and without weight decay, except the LSTM on
+RASP, which we train with AdamW [19] and a weight decay of 1.0 on its weight matrices. Without
+weight decay, the RASP LSTM does not learn: its semantic accuracy stays at about 0.03 or below at
+every state embedding width and training data volume we tried, and weight decay rescues it partly.
+A.8 Compute resources
+Every run uses a single NVIDIA A100 GPU. At half the training data volume, a training run takes
+about 4 h on Karel, 1–2 h on List, and 0.5 h on RASP, and the time grows roughly in proportion to the
+volume. A bootstrapping run takes about 10 h on Karel+, 5 h on List+ (with two runs sharing one
+GPU), and 1–2 h on RASP+. The experiments reported in this paper total roughly 500 GPU-hours;
+the full project, including preliminary and discarded configurations, used more.
+16
