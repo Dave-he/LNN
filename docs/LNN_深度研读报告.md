@@ -1873,6 +1873,7 @@ tags: [LNN, index, research]
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-21**：[[docs/daily/2026-11-21_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 12 个。
 - **2026-11-20**：[[docs/daily/2026-11-20_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 8 个。
   - **研读 3 篇**（**selector top-3 连续第 11 天**全部为已知误命中，已手动改选；**本日 3 篇全部来自独立覆盖度自检捞出的"连续时间机制层"覆盖盲区**，而非 digest 候选池）：[[docs/reports/Stochastic_Continuous_Time_System_Identification_Adaptive_Stabilization_2611.02340_研读报告.md|连续时间系统辨识与自适应镇定：激励强度只以对数方式改善失败概率 (2611.02340)]]、[[docs/reports/Prospective_Coding_Deep_Continuous_Time_Recurrent_Networks_2609.04134_研读报告.md|Prospective Coding：把每层底层输入预支一个时间常数 (2609.04134)]]、[[docs/reports/Efficient_Neural_CDE_Attentive_Kernel_Smoothing_2602.02157_研读报告.md|MVC-CDE：驱动路径多尺度平滑 + 注意力重建，NFE 降一个数量级 (2602.02157)]]。
   - **selector 输出的 3 个 top 候选全部排除**：`2607.15232v1` (score 10, LFM2 tokenizer 扩展 —— **连续第 11 天**的同一已知误命中)、`2412.17006v1` (score 9, LTC 气候韧性代理建模，**自 10-29 起已被连续 11 轮明确排除**)、`2309.13499v2` (score 9, 多智能体 STL 闭环控制器的 "closed-form continuous-time" **字面命中**)。**连续第 11 天同一批 top-3 误命中** —— selector 的强关键词打分 + `already_reported` 覆盖检查在这批论文上稳定失灵，必须每日人工复核、不可照抄。**建议尽快给 selector 增加"标题级强关键词"过滤与"作者+参数指纹"去重。**
@@ -2023,5 +2024,4 @@ tags: [LNN, index, research]
 - **2026-10-22**：[[docs/daily/2026-10-22_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 20 个。
 - **2026-10-21**：[[docs/daily/2026-10-21_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 17 个。
 - **2026-10-20**：[[docs/daily/2026-10-20_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 20 个。
-- **2026-10-19**：[[docs/daily/2026-10-19_LNN_research_digest.md|每日追踪]]，候选论文 24 篇，仓库 42 个，模型 18 个。
 <!-- daily-lnn-index:end -->
