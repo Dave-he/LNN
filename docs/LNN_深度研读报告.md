@@ -1911,6 +1911,7 @@ tags: [LNN, index, research]
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-22**：[[docs/daily/2026-11-22_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 12 个。
 - **2026-11-21**：[[docs/daily/2026-11-21_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 12 个。
 - **研读 3 篇**（**selector top-3 连续第 12 天**全部为已知误命中，已手动改选；**本日 3 篇全部来自独立覆盖度自检捞出的"连续时间机制层"覆盖盲区**，而非 digest 候选池）：[[docs/reports/Faithful_Embeddings_Irregular_Asynchronous_Log_NCDE_2605.30213_研读报告.md|Log-NCDE 的输入侧革命：不插值，直接把离散观测做成 log-signature (2605.30213)]]、[[docs/reports/Branched_Neural_Rough_Differential_Equations_2606.05272_研读报告.md|B-NRDE：当"连续时间"必须换成 Itô 语义时，shuffle 代数就不够用了 (2606.05272)]]、[[docs/reports/Path_Signatures_Trace_to_Program_Induction_2611.13005_研读报告.md|路径签名做程序归纳："程序有形状"，而 log-signature 能把形状读出来 (2611.13005)]]。
   - **selector 输出的 3 个 top 候选全部排除**：`2611.23615v2` (score 11, **LFM2-VL-450M 权重修复论文 —— 首次出现的"新面孔"误命中**，仅因摘要提到 LFM2-VL)、`2607.15232v1` (score 10, LFM2 tokenizer 扩展 —— **连续第 12 天**的同一已知误命中)、`2412.17006v1` (score 9, LTC 气候韧性代理建模，**自 10-29 起已被连续 12 轮明确排除**)。**连续第 12 天同一批 top-3 误命中（今日第 1 名换人）** —— selector 的强关键词打分 + `already_reported` 覆盖检查在这批论文上稳定失灵，必须每日人工复核、不可照抄。**建议尽快给 selector 增加"标题级强关键词"过滤与"作者+参数指纹"去重。**
@@ -2073,5 +2074,4 @@ tags: [LNN, index, research]
 - **2026-10-23**：[[docs/daily/2026-10-23_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 17 个。
 - **2026-10-22**：[[docs/daily/2026-10-22_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 20 个。
 - **2026-10-21**：[[docs/daily/2026-10-21_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 17 个。
-- **2026-10-20**：[[docs/daily/2026-10-20_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 20 个。
 <!-- daily-lnn-index:end -->
