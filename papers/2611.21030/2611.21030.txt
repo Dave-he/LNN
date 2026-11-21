@@ -1,0 +1,612 @@
+
+
+===== PAGE 1 =====
+
+Proceedings of Machine Learning Research vol vvv:1–13, 2027
+Learning Morse Lyapunov functions through invertible neural
+networks
+Wouter Jongeneel WOUTERJO@KTH.SE
+KTH Royal Institute of Technology and Digital Futures
+Abstract
+Towards data-driven stability certificates of dynamical systems, we are witnessing renewed interest
+in studying and exploiting the structure of Lyapunov functions. Especially Lyapunov functions
+that are locally quadratic (i.e., Morse) gained popularity ever since it was understood that they
+can be written as the norm squared of a diffeomorphism. This topological representation alludes
+to parametrizations using invertible neural networks. In this note we discuss when and how such
+functions can be learned. In particular, using neural ODEs (NODEs), we characterize Sobolev
+approximation of these diffeomorphisms on compact sets and show how this naturally relates to
+stability. We also connect our results to PLNets and supply numerical experiments for illustration.
+Keywords: Invertible Neural Network (INN), Lyapunov function, Morse theory, PLNet, stability
+1. Introduction
+After pioneering work by Massera (1956), Kurzweil (1963) and Wilson (1969), there is now an
+extensive theory describing when the existence of a continuous or smooth Lyapunov function V is
+equivalent to the existence of an asymptotically stable attractor under some dynamical system, e.g.,
+see Hahn (1967); Bhatia and Szeg¨o (1970); Bacciotti and Rosier (2005); Fathi and Pageault (2019).
+Towards a data-driven stability analysis, however, one hopes to say more beyond regularity of
+those Lyapunov functions, e.g., to work with suitable parametric function spaces when searching
+for a Lyapunov function, see Manchester et al. (2026) for a recent overview and Kolter and Manek
+(2019) for work that propelled this field of study. In this article we focus solely on, structure of the
+Lyapunov function, but note that a lot of work aims to study or identify some unknown dynamical
+system together with such a stability certificate, e.g., see Harting et al. (2026).
+In a companion note (Jongeneel, 2026b), we discuss how the structure of Lyapunov functions
+helps in uncovering topological features of dynamical systems. We exploit those results below.
+1.1. Setting
+In this note we work with Cr-smooth dynamical systems of the form
+˙x = f (x), x ∈ Rn, (1)
+for some r ∈ N≥1 ∪ {∞}, and such that some equilibrium point x∗ ∈ Rn is globally asymptotically
+stable (GAS). To aid the reader, we briefly recall global asymptotic stability, (e.g., see (Bacciotti
+and Rosier, 2005, p. 28)). Consider (1), and let the corresponding semiflow be denoted by ϕ, i.e.,
+d
+dτ ϕτ (x)|τ =t = f (ϕt(x)) for all (t, x) ∈ R≥0 × Rn. We will not be concerned with existence of
+solutions. A point x∗ ∈ Rn is an equilibrium point of f when f (x∗) = 0 or equivalently, x∗ is a
+fixed point of the time-t map: ϕt(x∗) = x∗ for any t ≥ 0. Then, the equilibrium point x∗ is said to
+© 2027 W. Jongeneel.
+arXiv:2611.21030v1  [math.OC]  16 Nov 2026
+
+===== PAGE 2 =====
+
+JONGENEEL
+be globally asymptotically stable (GAS) (under f) when: (i) x∗ is Lyapunov stable, that is, for any
+open neighbourhood Uε ∋ x∗ there is an open set Uδ ⊆ Uε such that ϕt(Uδ ) ⊆ Uε ∀t ≥ 0; and (ii)
+x∗ is globally attractive, that is, limt→+∞ ϕt(x0) = x∗ for all x0 ∈ Rn.
+It is hard to work directly with the definition of GAS. Luckily, x∗ being GAS is equivalent to
+the existence of a smooth (i.e., C∞-smooth) function V : Rn → R≥0 that is: (i) coercive (i.e., all
+sublevel sets {x ∈ Rn : V (x) ≤ c} are compact); (ii) such that {x∗} = V −1(0); and (iii) away
+from x∗, decreasing strictly under solutions of (1), i.e., Lf V (x) := ⟨∇V (x), f (x)⟩ < 0 for all
+x ∈ Rn \ {x∗}, e.g., see (Bacciotti and Rosier, 2005, Thm 2.4). Functions V satisfying properties
+(i), (ii) and (iii) will be simply called smooth Lyapunov functions (this instead of smooth, strict,
+proper Lyapunov functions with respect to equilibria). Without loss of generality, in the remainder
+of this note we focus on x∗ = 0. We also remark that we work on Rn for simplicity.
+Regarding further notation and structure, following Kvalheim (2025), let S r 0 (Rn) be the set of
+Cr-smooth vector fields on Rn, for some r ∈ N≥1 ∪ {∞}, such that x∗ = 0 is GAS.
+Suppose now that we have a family of Lyapunov function candidates, parametrized through
+θ ∈ Θ ⊆ Rd via some neural network: {Vθ ∈ C∞(Rn; R≥0) : θ ∈ Θ}. With the aforementioned
+terminology in place, the central question of this note is to understand precisely when and how these
+functions can be selected to be Morse. Better yet, we discuss why this is interesting.
+We recall that a function v ∈ C 2(Rn; R) is a Morse function when all its critical points (i.e.,
+x∗ ∈ Rn such that ∇v(x∗) = 0) are non-degenerate, that is, the Hessian ∇2v(x∗) is non-singular.
+Inspired by a rich set of topological results from Morse theory (e.g., see Milnor (1963)), one may
+motivate the study, globally, of Lyapunov functions that are Morse, i.e., ⟨q, ∇2V (x∗)q⟩ > 0 for all
+q ∈ Rn \ {0} and some equilibrium x∗. The fact that the Hessian is symmetric positive definite is
+written as ∇2V (x∗) ≻ 0. Such a Lyapunov function will be called a Morse Lyapunov function.
+Contribution: In our companion note, inspired by Boumal et al. (2026), we studied topological
+ramifications of working with Lyapunov functions that are Morse (Jongeneel, 2026b). In this work,
+being inspired by advances in invertible neural networks (e.g., Ishikawa et al. (2023)) we detail ef-
+fectiveness of employing invertible neural networks to learn Morse Lyapunov functions as stability
+certificates. In particular, we provide (i) an obstruction for the existence of Morse Lyapunov func-
+tions (Proposition 1); (ii) as the obstruction is mild, we can provide theory for when NODE-based
+INNs yield Morse Lyapunov functions on compact sets (Theorem 5, Corollary 7); and (iii) we link
+these results to PŁ Lyapunov functions, providing context for the distortion parameter τ (Remark 8).
+1.2. Simple Lyapunov functions do not suffice, in general
+First, when (1) is linear, V can be chosen to be quadratic (e.g., x 7→ ⟨x, P x⟩ for P ≻ 0), globally,
+e.g., see (Sontag, 1998, Thm. 18). Under hyperbolicity, some arguments survive, locally, for non-
+linear systems, e.g., see (La Salle and Lefschetz, 1961, §9) and (Hahn, 1967, §28) for early results
+or Barreau and Bastianello (2024) and Harting et al. (2026) for recent learning-oriented results.
+Globally, one may hope that more can be said beyond Cr-smoothness of V , e.g., one may hope
+that any Lyapunov function can be chosen to be a polynomial. This hope was refuted by Ahmadi
+et al. (2011). In a similar vein, there are vector fields that render the origin GAS, but provably fail
+to admit a convex Lyapunov function (Jongeneel and Schwan, 2024, Ex. III.3). Moreover, one can
+find examples where a smooth Lyapunov function exists, but not one that is locally real-analytic,
+see (Bacciotti and Rosier, 2005, Prop. 5.2 (b)) and Ahmadi and El Khadir (2018).
+2
+
+===== PAGE 3 =====
+
+LEARNING MORSE LYAPUNOV FUNCTIONS
+One may continue and hope that Lyapunov functions can always be chosen such that they are
+Morse, for instance. With the proposition below we illustrate that in general, not much more can be
+said beyond simple Cr-regularity. The example to have in mind is a planar ODE of the form:
+˙x1 = − εx3 1 + x2
+˙x2 = − x3 1 − x3 2, (2)
+for some ε > 0. One can use the Lyapunov function R2 ∋ (x1, x2) 7→ V (x1, x2) := x4 1/4 + x2 2/2
+to check that x∗ = 0 is indeed GAS. However, one can show that V is not Morse, and in fact,
+no Morse Lyapunov function exists for (2) (Jongeneel, 2026b, Prop. 3.5). It seems reasonable
+that hyperbolicity plays a role here, however, the real problem is having a linearization where the
+imaginary part cannot be diagonalized (Jongeneel, 2026b, Cor. 3.9). We generalize this observation
+below, that is, not only does a locally quadratic Lyapunov function fail for (2), even a Lyapunov
+function that is sandwiched between positively homogeneous polynomials, in ∥x∥, of equal degree
+(e.g., quadratic forms), fails to exist cf. the quadratic bounds in Kolter and Manek (2019).
+Proposition 1 (An obstruction to local homogeneity) Let f ∈ S r 0 (Rn), for some r ∈ N≥1 ∪{∞}
+and n ∈ N≥1. Suppose that Df (0) has eigenvalues on the imaginary axis that are not semisimple.
+Suppose that we pick some C0 function V : Rn → R≥0 such that
+a1∥x∥p ≤ V (x) ≤ a2∥x∥p ∀x ∈ U, (3)
+for some 0 < a1 ≤ a2, p ∈ N≥1 and U being some neighbourhood of 0. Then, V cannot be a
+Lyapunov function for x∗ = 0 under f.
+Proof Since Df (0) has an eigenvalue that is not semisimple, there is some x0 ∈ U such that
+limt→+∞ ∥etDf (0)x0∥ = +∞. This implies in particular that there is some T > 0 such that
+a1∥eT Df (0)x0∥p > a2∥x0∥p. However, then for a sufficiently small δ > 0 (i.e., to stay within U)
+one has
+V (ϕT (δx0)) ≥ a1∥ϕT (δx0)∥p = a1∥δeT Df (0)x0 + r(δ)∥p,
+where δ 7→ r(δ) is a remainder term such that limδ→0+ r(δ)/δ = 0. Continuing, after a further
+decrease in δ > 0, if necessary, one obtains:
+a1δp∥eT Df (0)x0 + r(δ)/δ∥p > a2δp∥x0∥p ≥ V (δx0).
+Hence, V is increasing along a solution and so it cannot be a valid Lyapunov function.
+Note, one may continue this line of arguments and generalize (3) to a subset of K∞ functions. We
+leave this, and in fact a complete characterization, for future work.
+A typical non-hyperbolic example that does admit a Morse Lyapunov function is of the form
+˙x1 =x2 − x1(x2 1 + x2 2),
+˙x2 = − x1 − x2(x2 1 + x2 2), (4)
+e.g., see (Sastry, 1999, §7.6) and (Jongeneel, 2026b, Ex. 3.7). One can check that (x1, x2) 7→
+V (x1, x2) := x2 1 + x2 2 is a Morse Lyapunov function indeed. In particular, ˙V (x) = −2∥x∥4 2.
+3
+
+===== PAGE 4 =====
+
+JONGENEEL
+2. Morse Lyapunov functions
+Inspired by genericity results (e.g., see Peixoto (1967), (Hirsch, 1976, p. 147) or (Palis and De Melo,
+1982, p. 153)), one might expect that Morse Lyapunov functions still provide for a sufficiently rich
+class of functions. To that end, let HS r 0(Rn) ⊂ S r 0 (Rn) be the subset of vector fields such that
+0 ∈ Rn is a hyperbolic equilibrium point (i.e., ℜ{λi(Df (0))} ̸= 0 for i ∈ [n]). In our companion
+paper we have provided the following converse result, confirming part of what one might expect.
+Theorem 2 (On the existence of Morse Lyapunov functions (Jongeneel, 2026b, Thm. 3.1)) Let
+f ∈ HS r 0(Rn), for some r ∈ N≥1 ∪ {∞} and n ∈ N≥1, then, there is a smooth Morse Lyapunov
+function certifying that 0 is GAS.
+A generalization of the Morse Lemma (Milnor, 1963, Lem. 2.2) makes Theorem 2 interesting,
+that is, through Boumal et al. (2026) it follows that Morse Lyapunov functions are elements of
+V :=
+
+V ∈ C∞(Rn; R≥0) | ∃ φ ∈ Diff ∞(Rn; Rn) : V (φ−1(y)) = inf y′∈Rn V (y′) + ∥y∥2 2 	 ,
+where Diff r(Rn; Rn) denotes the group of Cr-smooth diffeomorphisms from Rn to itself (Cr-
+smooth bijective maps with a Cr-smooth inverse). In fact, one may pick φ ∈ Diff ∞,+(Rn; Rn)
+thanks to symmetry in y 7→ ∥y∥2 2 (e.g., see (Jongeneel, 2026b, Prop. 2.1)), that is, the diffeomor-
+phism can be selected to be orientation preserving (like time-t maps x 7→ ϕt(x), for ϕ a flow). One
+may spot that results of this form are closely related to the study of linearizing nonlinear dynami-
+cal systems. In general, a diffeomorphism does not suffice, one needs to sacrifice regularity at the
+equilibrium, see Gr¨une et al. (1999); Jongeneel (2026a); Kvalheim and Sontag (2025).
+Remark 3 (Regions of attraction that are not Rn) We have focussed on global asymptotic sta-
+bility on Rn to keep the exposition simple. However, consider some smooth n-dimensional manifold
+M and let p∗ ∈ M be asymptotically stable under some smooth vector field f on M, with B∗ being
+the corresponding region (basin) of attraction. A topological fact is that B∗ is diffeomorphic to
+Rn (Wilson Jr, 1967, Thm. 2.2). Hence, effectively anything we discuss carries over.
+Then, inspired by Wilson Jr (1967), Cheng et al. (2024) proposed to use a function gθ, parametrized
+via BiLipNet (or PLNet for that matter) e.g., see Wang et al. (2024), and study Lyapunov functions
+of the form x 7→ Vθ(x) = ∥gθ(x)∥2 2, which we understand as a predecessor of using V (as global
+smooth PŁ (Lyapunov) functions, i.e., ∥∇Vθ(x)∥2 2 ≥ µVθ(x), for some µ > 0 and all x ∈ Rn,
+are a subset of V (Boumal et al., 2026, Thm. 1.1)). They identified that such a parametrization
+directly aids in enforcing structure relevant for Lyapunov functions. Since gθ is bi-Lipschitz, the
+map is invertible, and in contrast to other work, Vθ is not enforced to be convex. Convexity may
+be restrictive (Jongeneel and Schwan, 2024). Then, motivated by finding neural architectures that
+guarantee ∇Vθ(x) ̸= 0 for all x ̸= x∗, Zhong et al. (2026) proposed PolarNet in a recent preprint.
+They effectively recover a subset of the results from Boumal et al. (2026), cf. (Zhong et al., 2026,
+Thm. 1). They work with x 7→ Vθ(x) = ∥ψθ(x)∥2 2 for an appropriate map ψθ : Rn → Rn and
+claim that if ψθ is an affine coupling flow architecture, then any C2 diffeomorphism can be approx-
+imated, up to arbitrary precision. The authors appeal to Teshima et al. (2020) to substantiate this
+claim. However, that work provides a universal approximation property with respect to the Lp or
+sup-norm; and these norms are not of use in the context of Lyapunov inequalities. Then, somewhat
+paraphrasing, Zhong et al. (2026) write that asymptotic stability implies that a Lyapunov function
+exists that can be accurately modelled using PolarNet. Below we formalize and sharpen this claim.
+4
+
+===== PAGE 5 =====
+
+LEARNING MORSE LYAPUNOV FUNCTIONS
+3. Topologies to certify stability
+Merely universal approximation in some norm does not readily suffice in the context of Lyapunov
+functions. Suppose that V is an unknown Lyapunov function with respect to some dynamical system
+(1), then any eV that is close, in the sup-norm, to V is by no means a valid Lyapunov function. To
+get a grip on regularity, define the Ck-norm of a Ck-smooth map h : Rd → Rn, on some (bounded)
+domain Ω ⊆ Rd, for simplicity, through
+∥h∥Ck (Ω) := sup
+i∈N[0,k]
+sup
+x∈Ω
+∥Dih(x)∥.
+The standard example to have in mind is as follows, given a function h ∈ C 1(R; R), then a
+perturbation of the form R ∋ x 7→ e(x) := ϵ sin(x/ϵ2) results in ∥h + e∥C0([0,1]) ≤ ∥h∥C0([0,1]) + ϵ.
+However, ∥h+e∥C1([0,1]) ≥ h′(0)+1/ϵ. In the context of Lyapunov functions, merely C 0 control is
+futile, e.g., ∥V − Vθ∥C0(K) < ϵ, for a small ϵ > 0, does not imply that Lf Vθ < 0, despite Lf V < 0.
+Without going into measure theory, the Lp-norm of such a function h is defined through ∥h∥Lp(Ω) :=
+(
+R
+Ω ∥h∥pdµ)1/p for p ∈ N≥1. The sup-norm, on the other hand, is simply defined as ∥h∥Ω,∞ :=
+supx∈Ω ∥h(x)∥. It is now important to note that both the Lp-norm and the sup-norm do not control
+the Ck-norm for k > 0. Hence, they are of little use in the context of learning Lyapunov functions.
+This is known, Harting et al. (2026) consider C1-control as well, although not directly by con-
+struction, but by appealing to standard universal approximation results.
+4. Universal approximation properties of invertible neural networks
+Zhong et al. (2026) appeal to Teshima et al. (2020) and claim that Lp or sup-norm control suffices to
+learn Lyapunov functions. We will appeal to more recent results by Ishikawa et al. (2023) regarding
+invertible neural networks (INNs) and control of a Sobolev norm. To follow Ishikawa et al. (2023),
+we need to work with n ≥ 2. We return to this in Remark 6.
+Let G ⊆ Lipr(Rn; Rn) (i.e., some C r-smooth globally Lipschitz maps) and let ϕg be the flow
+corresponding to ˙y = g(y) for any g ∈ G. Then define the set of diffeomorphisms Φ(G) := {x 7→
+ϕ1 g(x) : g ∈ G}. Now we may define a set of invertible neural networks (INNs) through
+INNΦ(G) := {W1 ◦ φ1 ◦ · · · ◦ Wk ◦ φk : k ∈ N≥1, φi ∈ Φ(G), Wi ∈ Aff(Rn)},
+where Aff(Rn) denotes the affine group, i.e., x 7→ Wi(x) = Aix + bi for some Ai ∈ GL(Rn) and
+bi ∈ Rn. Importantly, INNΦ(G) ⊆ Diff r(Rn; Rn). Moreover, by composing with some appropriate
+W0 ∈ Aff(Rn), one can always force the resulting diffeomorphism to be such that 0 maps to itself.
+Then, we say that a set of maps bG ⊆ C r(Rn; Rn) is a W r,∞-universal approximator for G ⊆
+Cr(Rn; Rn) if for any compact set K ⊆ Rn, any ϵ > 0 and any g ∈ G there is a bg ∈ bG such that
+∥g − bg∥K,r,∞ :=
+X
+|α|≤r
+sup
+x∈K
+∥Dαg(x) − Dαbg(x)∥ < ϵ.
+The next theorem characterizes W r,∞-universality of neural ODEs (NODEs), that is, using
+NODEs, one has control over a Sobolev norm.
+Theorem 4 (Ishikawa et al., 2023, Thm. 44) Let r ∈ N≥0 and suppose that bG ⊆ Lipr(Rn; Rn) is a
+W r,∞-universal approximator for Lipr(Rn; Rn), then INNΦ( bG) is a W r,∞-universal approximator
+for Diff max{r,1}(Rn; Rn).
+5
+
+===== PAGE 6 =====
+
+JONGENEEL
+Concretely, what Theorem 4 means is that if we fix some r ≥ 0, then for some appropriate set of
+globally Lipschitz vector fields bG, one may hand us any diffeomorphism φ ∈ Diff max{r,1}(Rn; Rn),
+a compact set K ⊆ Rn and some ϵ > 0, then we know that there is some k ∈ N≥1 such that
+∥φ − W1 ◦ φ1 ◦ · · · ◦ Wk ◦ φk∥K,r,∞ < ϵ (5)
+for φ1, . . . , φk ∈ Φ( bG) and W1, . . . , Wk ∈ Aff(Rn). Appropriate choices of bG are discussed in
+(Ishikawa et al., 2023, p. 19), e.g., MLPs with finite weights and tanh activation functions (since
+we typically consider r > 0).
+As mentioned before, one can always find an INNΦ( bG)-generated diffeomorphism φθ that maps
+0 to 0. Regarding control, let K be a compact neighbourhood of 0 and let φθ := W1 ◦ φ1 ◦ · · · ◦
+Wk ◦ φk be such that (5) holds for φ generating some V ∈ V . Let x 7→ W0(x) := x − b0 for
+b0 := φθ(0), then W0 ◦ φθ (e.g., adjust W1) is a diffeomorphism and such that
+∥φ − W0 ◦ φθ∥K,r,∞ = ∥φ − W1 ◦ φ1 ◦ · · · ◦ Wk ◦ φk + b0∥K,r,∞ < ϵ + ∥b0∥K,r,∞ < 2ϵ
+as (5) implies that ∥φ(0) − φθ(0)∥ < ϵ and φ(0) = 0 as φ generates some V ∈ V .
+5. Approximation of stability certificates
+Combining Theorem 2 and Theorem 4, we can detail approximation quality of NODE-based INNs
+(i.e., INNΦ(G)) to construct Lyapunov functions. Regarding notation, we recall that ∥g∥K,∞ :=
+∥g∥K,0,∞ = supx∈K ∥g(x)∥. Regarding the power of INNs, one should observe that below we
+effectively only need to be concerned with Lf Vθ < 0, other properties are direct, globally.
+Theorem 5 (Universal approximation of Morse Lyapunov functions for hyperbolic equilibria)
+Let f ∈ HS r 0(Rn), for some r ∈ N≥1 ∪ {∞} and n ∈ N≥2, then
+(i) there is a Lyapunov function V ∈ V (i.e., V = ∥φ∥2 2 for φ ∈ Diff ∞(Rn; Rn)) such that
+P A + ATP ≺ 0 for A := Df (0), P := ∇2V (0), certifying that x∗ = 0 is GAS;
+(ii) for any compact neighbourhood K of 0 there is an ϵK > 0 such that if some diffeomorphism
+φθ ∈ Diff 1(Rn; Rn) satisfies ∥φθ − φ∥K,1,∞ < ϵK , then x 7→ Vθ(x) := ∥φθ(x) − φθ(0)∥2 2
+is a Lyapunov function satisfying Lf Vθ < 0 on K \ {x∗}, thus certifying global asymptotic
+stability on {x ∈ K : Vθ(x) ≤ minx∈∂K Vθ(x)}; and
+(iii) such a φθ can be generated through an invertible neural network INNΦ( bG), where bG ⊆
+Lip1(Rn; Rn) is a W 1,∞-universal approximator of Lip1(Rn; Rn).
+Proof (i) Since f ∈ HS r 0(Rn), by Theorem 2 there is a Lyapunov function V ∈ V certifying that
+x∗ = 0 is GAS, i.e., there is a φ ∈ Diff ∞,+(Rn; Rn) such that x 7→ V (x) = ∥φ(x)∥2 2. The fact that
+V can be chosen to satisfy a Lyapunov equation (or inequality P A + ATP ≺ 0 for that matter),
+locally, follows from the proof of (Jongeneel, 2026b, Thm. 3.1).
+(iii) By Theorem 4, we can find a φθ ∈ Diff 1(Rn; Rn), generated by some invertible neural
+network INNΦ( bG), such that ∥φ − φθ∥K,1,∞ < ϵK .
+(ii) We claim that there is a choice of ϵK such that x 7→ ∥φθ(x)∥2 2 =: Vθ(x) is a Lyapunov
+function on K. As discussed in Section 4, if needed, one can redefine the map φθ to be x 7→
+6
+
+===== PAGE 7 =====
+
+LEARNING MORSE LYAPUNOV FUNCTIONS
+φθ(x) − φθ(0), i.e., via composition with some W0 ∈ Aff(Rn). Hence Vθ(x) = 0 ⇐⇒ x = 0. We
+remark, with some abuse of notation, that if ∥φ − φθ∥K,1,∞ < 1 2 ϵK , then the shifted map satisfies
+∥φ − φθ∥K,1,∞ < ϵK .
+Secondly, we see that Vθ(x) > 0, for all x ∈ K \ {0} and in fact, all sublevel sets {x ∈
+Rn : Vθ(x) ≤ c}, for c > 0, are compact as those sets are diffeomorphisms of the compact balls
+B√c(0) = {x ∈ Rn : ∥x∥2 2 ≤ c}.
+The remaining property to check is that Lf Vθ < 0 on K \ {0}. We know that Lf V < 0 on
+K \ {0}, plus that x 7→ Lf Vθ(x) = Lf ∥φθ(x)∥2 2 = 2⟨φθ(x), Dφθ(x)f (x)⟩. Consider now some
+compact ball Bϱ(0) ⊆ int(K), for some ϱ > 0 that we select later, and study Lf Vθ on the compact
+set W := K \ Bϱ(0). Let −2β := maxx∈W Lf V (x) < 0. Then, as Lf Vθ = Lf V + (Lf Vθ − Lf V ).
+We have that Lf Vθ < 0 on W if (Lf Vθ − Lf V ) ≤ β on W . Now, as DφTφ − DφT θ φθ =
+(Dφ − Dφθ)Tφ + DφT θ (φ − φθ) and ∥Dφθ∥W,∞ ≤ ∥Dφ∥W,∞ + ∥Dφθ − Dφ∥W,∞ see that
+|Lf Vθ − Lf V | = |Lf (V − Vθ)| ≤ ∥f ∥W,∞∥DV − DVθ∥W,∞
+≤ 2∥f ∥W,∞∥DφTφ − DφT θ φθ∥W,∞
+≤ 2∥f ∥W,∞∥Dφ − Dφθ∥W,∞∥φ∥W,∞
++ 2∥f ∥W,∞∥φ − φθ∥W,∞ (∥Dφ∥W,∞ + ∥Dφθ − Dφ∥W,∞) .
+Let κ1 := ∥f ∥W,∞, κ2 := ∥φ∥W,∞ and κ3 := ∥Dφ∥W,∞. If ∥φ − φθ∥W,1,∞ ≤ ϵ holds for
+0 < ϵ ≤ −(κ2 + κ3) +
+p
+(κ2 + κ3)2 + 2β/κ1
+2 ,
+then |Lf Vθ − Lf V | ≤ β. Hence, maxx∈W Lf Vθ ≤ −β < 0.
+Now we discuss what happens within Bϱ(0), better yet, how to select ϱ > 0. Observe that
+P = ∇2V (x∗) = 2Dφ(0)TDφ(0), and this P satisfies P Df (0) + Df (0)TP ≺ 0. Following a
+standard argument (e.g., see the proof of (Khalil, 2002, Thm. 4.7)), it can be shown that there is a
+ϱ > 0 and κϱ > 0 such that Lf V (x) < −2κϱ∥x∥2 2 on Bϱ(0). Indeed, the reason that such a V
+exists follows since f ∈ HS r 0(Rn), see (Jongeneel, 2026b, Thm. 3.1).
+Then, as above, a useful decomposition is as follows:
+1
+2 Lf (Vθ − V ) = ⟨φθ − φ, Dφf ⟩ + ⟨φ, D(φθ − φ)f ⟩ + ⟨φθ − φ, D(φθ − φ)f ⟩.
+Akin to κϱ, one can set κf := supx∈Bϱ(0)\{0} ∥f (x)∥2/∥x∥2, where one may shrink ϱ > 0 if
+needed. In addition, set κ4 := ∥Dφ∥Bϱ(0),∞. Now, if the Sobolev bound ∥φ − φθ∥Bϱ(0),1,∞ ≤ ϵ′
+holds, one obtains, via the mean value theorem and convexity of Bϱ(0) (e.g., ∥φθ(x) − φ(x)∥2 ≤
+ϵ′∥x∥2), that |Lf (Vθ − V )(x)| ≤ 2κf ϵ′(2κ4 + ϵ′)∥x∥2 2. Hence, if ϵ′ > 0 is such that
+0 < ϵ′ ≤ −2κ4 +
+q
+4κ2 4 + 2κϱ/κf
+2 ,
+then |Lf Vθ(x) − Lf V (x)| ≤ κϱ∥x∥2 2. In its turn, this implies that Lf Vθ(x) < −κϱ∥x∥2 2 on Bϱ(0).
+At last, we conclude by selecting ϵK = 1 2 min{ϵ, ϵ′}.
+Theorem 5 can only handle n ≥ 2 (as item (iii) relies on Ishikawa et al. (2023)), however, we
+mention the following fact. As such, the case n = 1 is irrelevant from the learning perspective.
+7
+
+===== PAGE 8 =====
+
+JONGENEEL
+Remark 6 (The case n = 1) Let f ∈ S r 0 (Rn), for some r ∈ N≥1 ∪ {∞} and suppose that n = 1.
+In this case, the trivial Morse Lyapunov function, i.e., x 7→ V (x) = x2, always works as xf (x) < 0
+on R \ {0}. See Sontag and Sussmann (1980) for further remarks.
+The proof of Theorem 5 reveals that as long as asymptotic stability can be certified using a Morse
+Lyapunov function, one can still characterize a form of universality. However, on an annulus/shell.
+Corollary 7 (Universal approximation of Morse Lyapunov functions) Let f ∈ S r 0 (Rn), for some
+r ∈ N≥1 ∪ {∞} and n ∈ N≥2. Suppose, there is a Lyapunov function V ∈ V (i.e., V = ∥φ∥2 2 for
+φ ∈ Diff ∞(Rn; Rn)), certifying that x∗ = 0 is GAS. Then,
+(i) for any compact neighbourhood K of 0 and radius ϱ > 0 such that Bϱ(0) ⊆ int(K), there is
+an ϵK,ϱ > 0 such that if some diffeomorphism φθ ∈ Diff 1(Rn; Rn) satisfies ∥φθ − φ∥K,1,∞ <
+ϵK,ϱ, then x 7→ Vθ(x) := ∥φθ(x) − φθ(0)∥2 2 is a Lyapunov function satisfying Lf Vθ < 0 on
+K \ Bϱ(0); and
+(ii) such a φθ can be generated through an invertible neural network INNΦ( bG), where bG ⊆
+Lip1(Rn; Rn) is a W 1,∞-universal approximator of Lip1(Rn; Rn).
+We interpret Corollary 7 as showing that one can learn a Morse Lyapunov function that certifies
+practical asymptotic stability, cf. (La Salle and Lefschetz, 1961, §25). Arguably the most powerful
+ramification follows when f ∈ HS r 0(Rn), as in that case, there is always a Lyapunov function
+V ∈ V . To include Bϱ(0), one needs to handle that Lf Vθ vanishes at x∗ = 0. To that end,
+Theorem 5 (i) requires more control of V , locally. Such a V always exists (Jongeneel, 2026b, Thm.
+3.1), but we do not enforce this structure through INNΦ( bG). Hence, Corollary 7 provides at the
+moment the most practically relevant guarantees when using vanilla NODEs and INNΦ( bG). We are
+not aware of similar results for other contemporary architectures. However, the following remark
+illustrates that the above extends to PŁ-functions. Exploiting this is future work.
+Remark 8 (Equivalence of Morse and PŁ Lyapunov functions on compact sets) It turns out
+that on compact sets, using smooth PŁ Lyapunov functions is equivalent to using Morse Lyapunov
+functions. First, C2-smooth PŁ-functions, with a unique critical point, are Morse by (Rebjock and
+Boumal, 2025, Cor. 2.17) and (Boumal et al., 2026, Thm. 1.1). The other direction also works,
+on compact sets. The local argument follows from (Rebjock and Boumal, 2025, Cor. 2.11) and
+continuity allows for an extension to arbitrary compact neighbourhoods. To be somewhat complete,
+suppose V is Morse. Then, around x∗ = 0 we have V (x) = 1 2 ⟨x, P x⟩ + o(∥x∥2 2) for P ≻ 0
+and ∇V (x) = P x + o(∥x∥2), but then there is a ϱ > 0 such that on Bϱ(0) we have V (x) ≤
+2λmax(P )∥x∥2 2 and ∥∇V (x)∥2 ≥ 1 2 λmin(P )∥x∥2. Putting it together yields ∥∇V (x)∥2 2 ≥ µϱV (x)
+for µϱ := (1/8)λmin(P )2/λmax(P ) > 0. Now, if we work on a compact neighbourhood K of 0,
+we can define µ1 := maxx∈K\Bϱ(0) V (x) > 0 and µ2 := minx∈K\Bϱ(0) ∥∇V (x)∥2 2 > 0 to obtain
+∥∇V (x)∥2 2 ≥ (µ2/µ1)V (x) on K \ Bϱ(0). We can conclude by setting µ := min{µϱ, µ2/µ1} > 0.
+6. Numerical experiments
+The purpose of this section is to provide an illustration of the above, hence we consider systems that
+can be visualized (i.e., planar dynamical systems).
+8
+
+===== PAGE 9 =====
+
+LEARNING MORSE LYAPUNOV FUNCTIONS
+1
+ 0 1
+x1
+1
+0
+1
+x2
+NODE-INN
+1
+ 0 1
+x1
+Coupling INN
+1
+ 0 1
+x1
+PLNet (BiLipNet)
+1
+ 0 1
+x1
+MLP
+0 250 500
+iteration
+10 7
+10 6
+10 5
+10 4
+10 3
+10 2
+10 1
+training loss
+Figure 1: Experiment A. NODE-INN generates φθ via INNΦ(G) with 3 layers and tanh activa-
+tion functions generating Lipschitz vector fields. Numerical integration is done via RK4.
+Coupling-INN is effectively the same but uses affine coupling flows instead. The PLNet
+is implemented with ν1 = 1/2 and ν2 = 2, whereas MLP is a standard tanh network
+(2 hidden layers with 20 neurons). We train using 512 samples, m = 10−3 and learning
+rate 10−2. The purple levelsets correspond to a Lyapunov function for (4) and the thinner
+colour-coded curves are some levelsets of Vθ found after 500 iterations of Adam. We
+show the outcomes of 100 independent runs. The thick curves visualize the first run. The
+training loss displays the mean and the 25th-75th percentile.
+We designed the experiments such that all architectures have roughly the same number of param-
+eters. We compare the NODE-INN (e.g., Ishikawa et al. (2023) and this work) against Coupling-
+INN (e.g., Teshima et al. (2020); Zhong et al. (2026)), PLNet (via BiLipNet) (e.g., Wang et al.
+(2024)) and a standard MLP (e.g. using a tanh activation). The learning is implemented via Py-
+Torch, using a scale-free loss function of the form
+θ 7→ ℓ(θ) := 1 N NX i=1 max  0, Lf Vθ(xi) Vθ(xi) + m 
+for some margin m > 0, samples {xi}N i=1 and θ 7→ Vθ(x) := ∥φθ(x) − φθ(0)∥2 2, where the precise
+form of φθ depends on the architecture. We remark that for any Vθ generated through NODE-INN,
+positive definiteness, properness and the absence of spurious critical points hold by construction.
+Only the condition Lf Vθ < 0 needs to generalize beyond the samples. In contrast, for MLP, all
+defining properties of a Lyapunov function need to generalize.
+6.1. Experiment A
+We start with learning a Lyapunov function for (4). We present some experimental results in Fig-
+ure 1. One observes similar behaviour when comparing NODE-INN and PLNet, although PLNet
+is faster, both per iteration and with respect to convergence as a function of total iterations.
+6.2. Experiment B
+In the second experiment we consider a nonlinear system that is smoothly conjugate to a linear
+hyperbolic system. In particular, let ˙x = Ax and the matrix J be defined through
+A :=
+−1 k
+0 −1
+
+, for some k ≥ 0, and J :=
+0 −1
+1 0
+
+.
+9
+
+===== PAGE 10 =====
+
+JONGENEEL
+1
+ 0 1
+x1
+1
+0
+1
+x2
+NODE-INN
+1
+ 0 1
+x1
+Coupling INN
+1
+ 0 1
+x1
+PLNet (BiLipNet)
+1
+ 0 1
+x1
+MLP
+0 500 1000
+iteration
+10 9
+10 7
+10 5
+10 3
+10 1
+101training loss
+Figure 2: Experiment B. NODE-INN, Coupling-INN, PLNet and MLP generate their respective
+map φθ as in Experiment A. The purple levelsets correspond to a Lyapunov function for
+the nonlinear system from Section 6.2, for k = 6 and β = 1/4, and the thinner colour-
+coded curves are some levelsets of Vθ found after 1000 iterations of Adam. We show the
+outcomes of 30 independent runs. Visualization is as in Figure 1.
+1
+ 0 1
+x1
+1
+0
+1
+x2
+PLNet, = 2
+1
+ 0 1
+x1
+PLNet, = 16
+1
+ 0 1
+x1
+PLNet, = 256
+1
+ 0 1
+x1
+PLNet, = 4096
+0 500 1000
+iteration
+10 6
+10 5
+10 4
+10 3
+10 2
+10 1
+100training loss
+Figure 3: Experiment B, where the distortion τ with respect to Vθ is adapted.
+Now define y := h(x) as the time-1 map of the flow under ˙x = β∥x∥2 2J x, for some β > 0. Let
+x 7→ V (x) = ∥x∥2 2 and see that ⟨x, β∥x∥2 2J x⟩ = 0. Hence, h is a twist (as the angular velocity
+is variable). Now, as A is Hurwitz, there is a quadratic form x 7→ VP (x) := ⟨x, P x⟩ that certi-
+fies that x∗ = 0 is GAS under ˙x = Ax, but then VP ◦ h−1 certifies that y∗ = 0 is GAS under
+˙y = Dh(h−1(y))Ah−1(y). This setting fits well to NODE-INN, and under appropriate choices of
+β and k, the nonlinearities can be significant. We present some numerical experiments in Figure 2.
+NODE-INN seems to perform well, whereas other architectures appear to resist convergence. How-
+ever, we recall that with respect to BiLipNet, one employs (ν1, ν2)-Lipschitz maps F : Rn → Rn,
+that is, ν1∥x − y∥ ≤ ∥F (x) − F (y)∥ ≤ ν2∥x − y∥ for all x, y ∈ Rn. To train the corresponding
+networks, one sets ν1 and ν2, with the distortion τ := ν2/ν1 (or (ν2/ν1)2 for Vθ) controlling the
+conditioning, e.g., the condition number of ∇2Vθ(0) is bounded from above by τ 2. The results in
+Figure 2 are for some particular τ, adapting this parameter may improve performance, as shown in
+Figure 3. This is interesting in the light of Remark 8; to work with PLNet, one needs to find an ap-
+propriate τ, and this number may be large, cf. µϱ from Remark 8. At the same time, this restriction
+of the search space may aid convergence. A precise characterization is left for future work.
+7. Conclusion
+We have shown that Morse Lyapunov functions are a class of Lyapunov functions with a rich struc-
+ture that can be exploited both theoretically and algorithmically. Completing the converse theory,
+also for the other architectures, and providing a rigorous numerical analysis are left for future work.
+10
+
+===== PAGE 11 =====
+
+LEARNING MORSE LYAPUNOV FUNCTIONS
+Generative AI Use
+Generative AI tools (Claude Fable 5.2) aided in comprehending some results in the neural networks
+literature and those tools were used for code and experimental implementation. The author reviewed
+and verified all AI-assisted content and takes responsibility for the final content of the paper.
+References
+Amir Ali Ahmadi and Bachir El Khadir. A globally asymptotically stable polynomial vector field
+with rational coefficients and no local polynomial Lyapunov function. Syst. Control Lett., 121:
+50–53, 2018.
+Amir Ali Ahmadi, Miroslav Krstic, and Pablo A Parrilo. A globally asymptotically stable polyno-
+mial vector field with no polynomial Lyapunov function. In Proc. IEEE CDC, pages 7579–7580,
+2011.
+Andrea Bacciotti and Lionel Rosier. Liapunov Functions and Stability in Control Theory. Springer
+Science & Business Media, Berlin, 2005.
+Matthieu Barreau and Nicola Bastianello. Learning maximal regions of attraction on compact sets
+using Taylor Lyapunov networks. arXiv preprint arXiv:2408.17246v3, 2024.
+Nam Parshad Bhatia and Giorgio P Szeg¨o. Stability Theory of Dynamical Systems. Springer, Berlin,
+1970.
+Nicolas Boumal, Christopher Criscitiello, and Quentin Rebjock. Smooth, globally Polyak-
+Łojasiewicz functions are nonlinear least-squares. arXiv preprint arXiv:2604.07972, 2026.
+Jing Cheng, Ruigang Wang, and Ian R Manchester. Learning stable and passive neural differential
+equations. In Proc. IEEE CDC, pages 7859–7864, 2024.
+Albert Fathi and Pierre Pageault. Smoothing Lyapunov functions. T. Am. Math. Soc., 371(3):1677–
+1700, 2019.
+Lars Gr¨une, Eduardo D Sontag, and Fabian R Wirth. Asymptotic stability equals exponential stabil-
+ity, and ISS equals finite energy gain—if you twist your eyes. Syst. Control Lett., 38(2):127–134,
+1999.
+Wolfgang Hahn. Stability of Motion. Springer, Berlin, 1967.
+Alice Harting, Karl Henrik Johansson, Sophie Tarbouriech, and Matthieu Barreau. Locally stable
+neural ODEs with characterized region of attraction. arXiv preprint arXiv:2606.19109, 2026.
+Morris W Hirsch. Differential Topology. Springer, New York, 1976.
+Isao Ishikawa, Takeshi Teshima, Koichi Tojo, Kenta Oono, Masahiro Ikeda, and Masashi Sugiyama.
+Universal approximation property of invertible neural networks. J. Mach. Learn. Res., 24(287):
+1–68, 2023.
+Wouter Jongeneel. Asymptotic stability equals exponential stability—while you twist your eyes.
+Syst. Control Lett., 208:106324, 2026a.
+11
+
+===== PAGE 12 =====
+
+JONGENEEL
+Wouter Jongeneel. On global Lyapunov functions being Morse. arXiv preprint arXiv:2610.05626,
+2026b.
+Wouter Jongeneel and Roland Schwan. On continuation and convex Lyapunov functions. IEEE
+Trans. Automat. Contr., 69(10):6895–6906, 2024.
+Hassan K Khalil. Nonlinear Systems. Prentice Hall, Upper Saddle River, 2002.
+J Zico Kolter and Gaurav Manek. Learning stable deep dynamics models. In Proc. NeurIPS,
+volume 32, pages 11128–11136, 2019.
+Jaroslav Kurzweil. On the inversion of Ljapunov’s second theorem on stability of motion. AMS
+Transl. Ser. 2, 24:19–77, 1963.
+Matthew D Kvalheim. Differential topology of the spaces of asymptotically stable vector fields and
+Lyapunov functions. arXiv preprint arXiv:2503.10828, 2025.
+Matthew D Kvalheim and Eduardo D Sontag. Global linearization of asymptotically stable systems
+without hyperbolicity. Syst. Control Lett., 203:106163, 2025.
+Joseph La Salle and Solomon Lefschetz. Stability by Liapunov’s Direct Method with Applications.
+Academic Press, New York, 1961.
+Ian R Manchester, Ruigang Wang, and Nicholas H Barbara. Neural networks in the loop: Learning
+with stability and robustness guarantees. Annu. Rev. Control Robot. Auton. Syst., 9, 2026.
+Jose L Massera. Contributions to stability theory. Ann. Math., 64(1):182–206, 1956.
+John Milnor. Morse Theory. Princeton University Press, Princeton, 1963.
+Jacob Jr Palis and Welington De Melo. Geometric Theory of Dynamical systems: an Introduction.
+Springer, New York, 1982.
+Mauricio M Peixoto. On an approximation theorem of Kupka and Smale. J. Differ. Equ., 3(2):
+214–227, 1967.
+Quentin Rebjock and Nicolas Boumal. Fast convergence to non-isolated minima: four equivalent
+conditions for C2 functions. Mathematical Programming, 213(1):151–199, 2025.
+Shankar Sastry. Nonlinear Systems. Springer, New York, 1999.
+Eduardo Sontag and Hector Sussmann. Remarks on continuous feedback. In Proc. IEEE CDC,
+pages 916–921, 1980.
+Eduardo D Sontag. Mathematical Control Theory: Deterministic Finite Dimensional Systems.
+Springer, New York, 1998.
+Takeshi Teshima, Isao Ishikawa, Koichi Tojo, Kenta Oono, Masahiro Ikeda, and Masashi Sugiyama.
+Coupling-based invertible neural networks are universal diffeomorphism approximators. In Proc.
+NeurIPS, pages 3362–3373, 2020.
+12
+
+===== PAGE 13 =====
+
+LEARNING MORSE LYAPUNOV FUNCTIONS
+Ruigang Wang, Krishnamurthy Dj Dvijotham, and Ian Manchester. Monotone, bi-Lipschitz, and
+Polyak-Łojasiewicz networks. In Proc. ICML, pages 50379–50399. PMLR, 2024.
+F Wesley Wilson. Smoothing derivatives of functions and applications. T. Am. Math. Soc., 139:
+413–428, 1969.
+F Wesley Wilson Jr. The structure of the level surfaces of a Lyapunov function. J. Differ. Equ., 3
+(3):323–329, 1967.
+Yuan Zhong, Jiaxin Cheng, Hefu Ye, and Yicong Zhou. Polarnet: Single-minima neural network
+for modeling Lyapunov functions. arXiv preprint arXiv:2605.09546, 2026.
+13

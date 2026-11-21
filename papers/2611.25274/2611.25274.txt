@@ -1,0 +1,503 @@
+
+
+===== PAGE 1 =====
+
+DS3M: Deep structured state space models for nonlinear system
+identification on modern hardware* † ‡
+Marco Roschkowski Hannes Gernandt
+University of Wuppertal, Wuppertal, Germany
+(e-mail: {roschkowski,gernandt}@uni-wuppertal.de).
+Abstract
+Neural state-space identification learns dynamical models from measured inputs and outputs.
+SUBNET combines this task with an encoder that estimates initial states from short measurement
+histories. Its continuous-time version requires many successive neural-network evaluations during
+numerical integration, resulting in slow training speed which is a major limitation for practical use
+cases. We propose deep structured state space models (DS3M), which combine compact nonlinear
+dynamical components in parallel and in series. Custom GPU kernels implemented with Triton reduce
+the launch and memory overhead of their sequential evaluation. We explain this construction, describe
+a port-Hamiltonian variant, and present various benchmark comparisons of accuracy and training time.
+Keywords: system identification, SUBNET, neural networks, GPU computing, structured state space
+models, port-Hamiltonian systems
+1 Introduction
+System identification constructs a dynamical model from measured inputs and outputs. Such a model
+describes how a system responds to new inputs and provides a basis for simulation, monitoring and
+controller design (Schoukens and Ljung, 2019). This is useful when a model derived from physical laws is
+unavailable, too expensive to evaluate, or contains unknown constitutive relations. For example, friction,
+saturation and other nonlinear effects may be difficult to describe accurately from first principles but are
+visible in measured trajectories.
+We consider control systems of the typical form
+˙x(t) = f (x(t), u(t)),
+y(t) = g(x(t), u(t)). (1)
+Here the input u(t) ∈ Rm and output are measured, whereas the state x(t) ∈ Rn is generally unobserved.
+The identification problem is to determine a model of (1) from sampled input–output data. Besides
+classical identification approaches Nelles (2020), neural networks provide flexible parameterizations of
+the unknown functions f and g in (1). However, learning a state equation also requires initial states for the
+simulated trajectories. SUBNET addresses this problem by learning an encoder from a short measurement
+history to a model state (Beintema et al., 2021, 2023b). The same encoder and state equation are trained
+on many short subsequences. This approach was extended to continuous-time models in Beintema et al.
+(2023a) and to port-Hamiltonian models in Moradi et al. (2026). Recently, a variant to obtain symbolic
+representations of port-Hamiltonian systems was presented in Messaoudi et al. (2026).
+*This work was funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – Project-ID
+531152215 – CRC 1701.
+†The authors would like to thank Karim Cherifi for his valuable comments.
+‡This work has been submitted to IFAC for possible publication.
+1
+arXiv:2611.25274v1  [cs.LG]  18 Nov 2026
+
+===== PAGE 2 =====
+
+Accurate models can nevertheless be expensive to train. Each trajectory requires successive state
+updates, and a numerical integration step can itself require several evaluations of a neural network. Small
+state equations therefore generate many small, dependent computations. A graphics processing unit (GPU)
+can process different trajectories in parallel, but the repeated overhead to move data between different
+memory locations in the GPU can significantly slow down the computation.
+Our starting point is the comparison of training workloads between training CT-SUBNET on the
+Wiener-Hammerstein dataset and training ResNet50 on Imagenet, see He et al. (2016); Russakovsky et al.
+(2015). This comparison is depicted in Figure 1. We can see that the latter task, a standard machine
+learning task, requires significantly fewer serial model evaluations and benefits from substantially higher
+batch parallelism while requiring a higher training arithmetic. In particular, training ResNet50 on Imagenet
+benefits significantly more from modern hardware accelerators such as GPUs. The most important reason
+for this are the sequential model evaluations during the rollout of CT-SUBNET which often requires
+hundreds of serial evaluations for a single training step. The present work aims to speed up the training
+time of CT-SUBNET on modern accelerator hardware. To do this, we implemented custom GPU kernels
+using Triton Tillet et al. (2019). This allows to drastically reduce the number of kernel launches and thus
+accelerate the training speed on GPUs by a significant margin. However, since this forces the dynamics to
+be executed in a single program instance, it requires that the weights have a relatively small size to fit into
+the relevant SRAM and that the neural network architecture is known in advance. Although this suffices
+to match state of the art results on standard benchmark datasets Schoukens et al. (2026) and in some cases
+even allows us to supersede them by additional hyperparameter tuning, this represents a limitation for
+future applications on identifying larger systems. Although we do not analyze the neural scaling laws of
+our method as in Roschkowski et al. (2026), our method does in principle allow to be scaled to arbitrary
+model capacities while already having favorable properties on conventional benchmark datasets as shown
+below.
+10−4
+10−2
+1
+102
+Serial model
+evaluations
+Work per serial
+evaluation
+Useful batch
+parallelism
+Training
+arithmetic
+Dataset
+size
+Model
+size
+Optimizer
+updates
+400 ×
+1.6×10−7
+1.6×10−2
+6.4×10−5
+8.3×10−7
+2.8×10−5
+1 ×
+ResNet-50 / ImageNet CT-SUBNET / WH
+Figure 1: A comparison of relevant training parameters for the standard machine learning task of training
+ResNet50 He et al. (2016) on Imagenet Russakovsky et al. (2015) and SUBNET Beintema et al. (2023b)
+on the Wiener-Hammerstein benchmark from Schoukens et al. (2009, 2026).
+Our approach combines two choices. First, custom GPU kernels fuse the repeated evaluation of
+compact state equations and their integration steps. Each of the blocks uses a deep neural network to
+encode the dynamics, hence the name deep structured state space models (DS3M). The second choice is
+to connect several of these blocks in a serial interconnection.
+2
+
+===== PAGE 3 =====
+
+2 Proposed method
+In this section, we describe the interconnection of CT-SUBNET components, its implementation with
+Triton, and the port-Hamiltonian parametrisation.
+(A) Overall model pipeline
+Past measurements
+Window length W
+u−W +1, . . . , u0
+y−W +1, . . . , y0
+Subspace
+encoder Eφ
+RW (M +O) → RN ×(nH)
+Initial states for all N H components
+x(1) 0,1, . . . , x(H) 0,1 x(1) 0,2, . . . , x(H) 0,2 · · · x(1) 0,N , . . . , x(H) 0,N
+H parallel components per block
+N DS3M blocks in series
+N H components in total
+N nH total state dimension
+u0, . . . , uT −1
+Embedding Pψ
+RM → RD Bϑ1 Bϑ2 · · · BϑN
+Readout Yϕ
+RD → RO
+ˆy0, . . . , ˆyT −1
+ˆyk = Yϕ((zN )k )
+z0 z1 z2 zN
+(z0)k = Pψ (uk ) N DS3M blocks connected in series
+(B) Representative DS3M block Bϑ
+Initial states x(1) 0 , . . . , x(H) 0
+zk
+h(1) ϑ
+h(2) ϑ
+h(H) ϑ
+...
+CT-SUBNET f (1) ϑ
+x(1) k+1 = I(f (1) ϑ , x(1) k , u(1) k )
+CT-SUBNET f (2) ϑ
+x(2) k+1 = I(f (2) ϑ , x(2) k , u(2) k )
+CT-SUBNET f (H) ϑ
+x(H) k+1 = I(f (H) ϑ , x(H) k , u(H) k )
+...
+State mixer
+kϑ
++
+Feature map
+gϑ
++
+Block output
+z+ k
+u(1) k
+u(2) k
+u(H) k
+x(1) k
+x(H) k
+x(2) k
+vk
+identity: zk
+identity: vk
+vk = kϑ
+(
+x(1) k , . . . , x(H) k
+)
++ zk
+z+ k = gϑ(vk ) + vk
+Figure 2: DS3M architecture. Panel (A) shows the overall model pipeline. Here the encoder supplies
+initial states for all N H components. Each block propagates H CT-SUBNETS in parallel, mixes their
+states, and adds the result to its input features. The N blocks are connected in series.
+2.1 Recap of SUBNET and CT-SUBNET
+First, we recall how SUBNET learns initial states and dynamics jointly, and where the sequential
+computational cost originates.
+In the output-error setting considered here, the measured output is modelled as the output of a
+deterministic state equation plus measurement noise. For each training subsequence, an encoder receives
+a finite history of inputs and outputs and estimates the state at the start of a simulation. The estimated
+state is then propagated using the recorded inputs, and the simulated outputs are compared with the
+measurements. The encoder, state equation and output map are optimised jointly. This avoids measuring
+the state or treating the initial state of every subsequence as an independent optimisation variable.
+The typically nonlinear encoder approximates a state reconstruction map. It compresses the informa-
+tion about the past that is needed to predict subsequent behaviour. The term subspace encoder connects
+this construction to state reconstruction in subspace identification, see Verhaegen and Dewilde (1992);
+Van Overschee and De Moor (1994).
+Training uses short, possibly overlapping, subsequences sampled from the available records. Their
+simulation errors are averaged over a batch. Different subsequences can be evaluated in parallel, and
+truncation reduces the length of the simulations through which derivatives must be propagated. Thus,
+SUBNET already provides parallelism across training windows. Within each window, however, the next
+state still depends on the current state.
+In CT-SUBNET, a neural network parametrises the state derivative, and a numerical integrator
+3
+
+===== PAGE 4 =====
+
+produces the sampled state transition (Beintema et al., 2023a). For sampling interval ∆t > 0, we write
+xk+1 = I(fϑ, xk, uk), ˙x = τ −1fϑ(x, u), (2)
+where τ > 0 scales the state derivative. The map I integrates over one sampling interval and discretizes
+the differential equation on the right in (2). We refer to Linares et al. (2026) for a more detailed discussion
+of discretization methods. Under a zero-order hold, uk is kept constant on that interval. For example,
+explicit Euler gives xk+1 = xk + (∆t/τ )fϑ(xk, uk). The ratio ∆t/τ therefore affects the size of the state
+update and the numerical conditioning of training. For more general explicit methods with s stages we
+require s vector-field evaluations per integration step. With one step per sample, advancing a window of
+T samples takes approximately sT such evaluations.
+Kernel fusion combines several operations, such as neural network evaluations and numerical inte-
+gration steps, into a single GPU kernel. This reduces the overhead associated with repeatedly launching
+kernels and transferring intermediate results between GPU memory locations. The state updates remain
+sequential, since the computation of xk+1 depends on xk. We will now describe how we use kernel fusion
+to obtain an architecture which is able to utilize the high level of parallelization of modern GPUs better.
+2.2 DS3M blocks
+Our starting point is to use a single kernel implemented in Triton to speed up the SUBNET rollout. Here we
+use an implementation which keeps the weights inside the registers throughout the entire kernel execution,
+but other designs are also possible. Since the registers can only store a fixed amount of parameters, the
+size of the SUBNET parameters is limited by this approach. This issue limits future applications to larger
+systems. To address it, we propose to execute the forward of H SUBNETs in parallel in a single block,
+paralleling the multi-head construction in transformers, Vaswani et al. (2017). Secondly, we use a serial
+interconnection of N such blocks with appropriate MLP blocks that mix the dynamics of each component.
+We first define one DS3M block as shown in Figure 2 and then explain how the encoder and readout
+complete the model.
+Let z = (z0, . . . , zT −1) be a sequence of features with zk ∈ RD. A block contains H dynamical
+components, each with state x(j) k ∈ Rn and internal input u(j) k ∈ Rm. Its neural networks have dimensions
+h(j) ϑ : RD → Rm, f (j) ϑ : Rn+m → Rn,
+kϑ : RnH → RD, gϑ : RD → RD,
+where ϑ collects the trainable weights of each DS3M block and j = 1, . . . , H. Its operations are
+u(j) k = h(j) ϑ (zk),
+x(j) k+1 = I(f (j) ϑ , x(j) k , u(j) k ), (3)
+vk = kϑ
+
+x(1) k , . . . , x(H) k  + zk
+z+ k = gϑ(vk) + vk.
+The map h(j) ϑ selects a learned input for each CT-SUBNETS. Their states are then combined by kϑ and
+gϑ. We use skip connections in the last two equations of (3), see He et al. (2016).
+We write z+ = Bϑ(z, x0), x0 = (x(1) 0 , . . . , x(H) 0 ) ∈ RnH and z, z+ ∈ RT ×D. The full model uses
+N blocks of the form (3). The measured inputs satisfy uk ∈ RM and the outputs satisfy yk ∈ RO. An
+embedding Pψ : RM → RD produces the initial features, and a readout Yϕ : RD → RO produces the pre-
+dictions. The subspace encoder Eφ : RW (M +O) → RN ×nH receives (u−W +1, . . . , u0, y−W +1, . . . , y0).
+Writing its ith output row as x⊤ 0,i, the complete model is
+(z0)k = Pψ(uk),
+zi = Bϑi (zi−1, x0,i), i = 1, . . . , N,
+ˆyk = Yϕ((zN )k).
+4
+
+===== PAGE 5 =====
+
+The resulting latent state dimension is N nH. The loss function for one subsequence is the mean squared
+error
+L(ˆy, y) = 1 T O TX k=0 ∥ˆyk − yk∥2,
+where ∥ · ∥ is the Euclidean norm. Training averages this loss over the sampled subsequences and updates
+all maps that are shown in Fig. 2 jointly.
+2.3 Efficient evaluation with Triton
+We explain how the numerical recurrence can be evaluated with fewer GPU launches and memory
+transfers.
+A GPU kernel is a function executed on the graphics processor. One kernel launch starts a collection of
+program instances, each performing the specified operations on part of the data, typically on different batch
+instances. Triton is a programming language and compiler for writing such functions using operations
+on blocks of arrays (Tillet et al., 2019). In a conventional PyTorch implementation, matrix products,
+activation functions and integration stages can result in many small kernel launches at every sample. Their
+launch and memory overheads can become significant when the state equation is small.
+Our custom kernels combine evaluations of the neural state equation and the integration steps. A time
+loop can execute inside a program instance, while independent training windows and the H components
+supply parallel work. Intermediate quantities can be reused in registers or other fast on-chip memory. The
+benefit comes from reducing dispatch overhead and unnecessary transfers to the GPU’s main memory.
+For the chosen fused implementation, efficiency depends on the size of the data that must remain
+available during the computation. Large state equations increase register and shared-memory use and
+may reduce the number of program instances that run concurrently. This motivates compact components.
+There is a major alternative design option using the more general CUDA language Nickolls et al. (2008).
+This amounts to implementing a larger kernel in which different program instances are allowed to produce
+parts of the data and to communicate with each other. This design has, for example, already been used in
+persistent RNNs Diamos et al. (2016).
+We use a residual multilayer perceptron (MLP) layout for the component dynamics, as illustrated in
+Fig. 3. A realisation with the state and internal input concatenated into v = ( xu ) ∈ Rn+m has the form
+a = σ(L1v), f (j) ϑ (x, u) = L3   a + σ(L2a)  .
+Here L1, L2, L3 are trainable affine maps of dimensions n + m → h, h → h and h → n, respectively, and
+the activation function σ acts componentwise. The addition of a to σ(L2a), often called skip connection,
+is in the hidden layer which typically has the most parameters and tends to stabilize training.
+(x, u) L1 σ L2 σ + L3 f (j) ϑ (u, x)
+identity skip
+m + n
+m + n → h h → h h → n
+n
+a z
+Figure 3: Architecture for MLP that are used to parametrize f (j) θ in the DS3M blocks.
+Stacking dynamical layers is also used in structured state space models (Gu et al., 2022; Gu and Dao,
+2024), including applications to dynamical systems (Hu et al., 2026). Mamba employs updates of the
+form xk+1 = A(uk)xk + B(uk), with coefficients available from the inputs. Closedness of affine-linear
+transformations under composition are used to substantially improve the computational efficiency. DS3M
+instead retains nonlinear dependence on the state and reduces the cost of sequential integration through
+5
+
+===== PAGE 6 =====
+
+fusion. Since the dynamics of DS3M are significantly more expressive, this allows to identify systems
+with significantly fewer states than used conventional SSMs with linear dynamics in x.
+2.4 Port-Hamiltonian dynamics
+As an alternative to the standard DS3M block we also can impose a physics-based structure on each
+component to incorporate dissipation into the learned state equation Cherifi et al. (2026); Moradi et al.
+(2026). This is done by assuming a port-Hamiltonian structure for f (j) ϑ variant of our method. In this case,
+f (j) ϑ (x, u) =   J (j) ϑ (x) − R(j) ϑ (x)  ∇H(j) ϑ (x) + B(j) ϑ (x)u,
+where J (j) ϑ (x), R(j) ϑ (x) ∈ Rn×n, B(j) ϑ (x) ∈ Rn×m and H(j) ϑ : Rn → [0, ∞). Here J (j) ϑ (x) is skew-
+symmetric and R(j) ϑ (x) is positive semidefinite. For a compact kernel we use
+H(j) ϑ (x) = 1 2 ∥x∥2, R(j) ϑ (x) = diag(r(j) ϑ,1(x), . . . , r(j) ϑ,n(x)),
+where softplus, σ(a) = log(1 + ea) ≥ 0, enforces nonnegative diagonal entries in the output layer of
+r(j) ϑ,i . The restriction H(j) ϑ (x) = 1 2 ∥x∥2 substantially simplifies the Triton kernel implementation since
+no backward through a neural network is needed in the forward implementation. On the other hand, the
+choice that R(j) ϑ is diagonal instead of parameterizing it via a Cholesky factorization as in Cherifi et al.
+(2026) as another simplification which we choose to further stabilize training. Suppressing indices, the
+continuous-time component satisfies
+τ d dt H(x) = −∇H(x)⊤R(x)∇H(x) + u⊤B(x)⊤∇H(x).
+which implies that for zero input, i.e. u = 0 the energy t 7→ H(x(t)) is nonincreasing.
+3 Comparison with benchmark results
+Table 1: Runtime comparison of PyTorch baselines and the fused Triton kernel of a single CT-SUBNET
+forward with n = 6, m = 3, h = 32, batch size 128, σ = SiLU and RK4 integrator. Timings include
+forward and backward passes. Here ’compliled’ means that the torch.compile functionality is used.
+T Baseline Base [ms] Triton [ms] Speedup
+100 CPU eager 154.651 1.850 83.61×
+100 CPU compiled 52.854 1.850 28.58×
+100 CUDA eager 280.963 1.850 151.91×
+100 CUDA compiled 79.145 1.850 42.79×
+200 CPU eager 370.954 3.779 98.16×
+200 CPU compiled 117.881 3.779 31.19×
+200 CUDA eager 603.999 3.779 159.82×
+200 CUDA compiled 153.942 3.779 40.73×
+In this section, we explain the outcomes of our experiments. Each experiment is conducted on an
+Nvida RTX 3090 card with PyTorch 2.11.0 + cu126 and Triton 3.6.0. We use float32 as the numerical
+accuracy to implement the kernels. We compare the reported simulation errors and training times on some
+standard nonlinear system identification benchmarks Schoukens et al. (2026).
+Throughout the experiments, we keep the following parameters constant. Each kϑ, h(j) θ and Pψ
+consists of a single linear layer. Moreover, gϑ, Yϕ are always MLPs with two hidden layers and 64
+hidden units. Outside of f (j) ϑ , we always use the SiLU activation function, see Elfwing et al. (2018).
+6
+
+===== PAGE 7 =====
+
+The embedding dimension is D = 16 and each layer has only one head which means H = 1. For the
+subspace encoder, we use an MLP with two hidden layers and hidden dimension 64. We follow the
+standard practice of standard-scaling the inputs and outputs before training. The Adam optimizer, see
+Kingma and Ba (2014), with initial learning rate 0.001, weight decay 0, gradient clipping 0.001 which is
+applied separately to the model and encoder parameter groups and cosine annealing learning rate schedule,
+see Loshchilov and Hutter (2016). A random seed is used for reproducibility. We evaluate the models at a
+given frequency, keep an exponential moving average (EMA) with warm start after 2000 steps and decay
+0.999. We apply validation-based checkpoint selection and choose the model with the best validation
+score, including EMA and non-EMA snapshots. The parameters that are varied for different experiments
+are shown in Table 2.
+For each block, the weight matrices W1, W2, and W3 of f (j) ϑ are initialized using Kaiming-uniform
+initialization (with a =
+√
+5) and subsequently scaled by factors of 0.5, 0.5, and 0.1, respectively.
+The corresponding biases are initialized uniformly in [−1/√din, 1/√din], where din denotes the input
+dimension of the respective layer, and are not rescaled. All other parameters are initialized using the
+PyTorch default initializations.
+Table 2: Parameters that change throughout the experiments.
+Dataset N n m h σ I T training iterations ∆t/τ batch size validation frequency history length
+Silverbox 2 2 2 32 SiLU RK4 150 200, 000 0.5 128 500 50
+EMPS 1 3 2 64 tanh Heun 2500 15, 000 0.25 256 50 20
+WH 2 4 4 32 SiLU RK4 200 500, 000 1 128 500 50
+WH (port-Hamiltonian) 2 4 4 32 SiLU RK4 200 200, 000 0.3 128 500 50
+ParWH 2 8 8 32 SiLU RK4 250 800, 000 0.5 128 500 50
+The comparison of the RMSEs and the training times for the considered methods are shown in
+Tables 3–6. SUBNET and CT-SUBNET provide direct comparisons with the underlying encoder ap-
+proach. Additionally we consider methods with the best scores in the benchmark, which are polynomial
+nonlinear state-space models (PNLSS), polynomial nonlinear autoregressive models with exogenous
+inputs (PNARX), dynoNet, and nonlinear linear-fractional-representation models (NL-LFR) (Paduart
+et al., 2012; Forgione and Piga, 2021; Floren et al., 2025; Schoukens et al., 2026). We also include the
+training times in the table which are numbers reported in the literature on non-identical hardware.
+Table 3: Wiener–Hammerstein benchmark.
+Method Training time RMSE [mV]
+SUBNET > 200 h 0.24
+PNLSS n.a. 0.42
+DS3M 1.5 h 0.24
+DS3M (port-Hamiltonian) 2.4 h 0.28
+Table 4: EMPS benchmark. The dynoNet record uses a different historical data split.
+Method Training time RMSE [mm]
+CT-SUBNET 1–24 h 4.6
+dynoNet (original) n.a. 2.6
+PNARX 1–60 min 2.6
+DS3M 0.5 h 1.8
+In Table 3, we can see that the proposed method reaches the test error of 0.24 mV with significantly
+less training time than the SUBNET baseline on the Wiener-Hammerstein benchmark. Here we also
+consider the port-Hamiltonian variant which yields slightly worse results with 200, 000 instead of 500, 000
+training steps which we have chosen for use since its training steps take longer. Moreover, we can see
+7
+
+===== PAGE 8 =====
+
+Table 5: Parallel Wiener-Hammerstein benchmark.
+.
+Method Training time RMSE
+NL-LFR 1–60 min [0.20, 0.40, 0.41, 0.47, 0.83]
+DS3M 2.7 h [0.20, 0.38, 0.26, 0.30, 0.49]
+Table 6: Silverbox
+Method Training time RMSE [mV]
+NL-LFR 1–60 s [0.29, 0.33, 0.26]
+SUBNET 1–4 d [0.36, 1.4, 0.32]
+DS3M 0.5 h [0.23, 0.74, 0.23]
+in Table 4 that the proposed method is able to reach a significantly better performance on the EMPS
+benchmark. We used the higher training sequence length of T = 2500 This became practically possible
+because of the training time speedup we achieved. Table 5 shows that our method is able to achieve
+favorable performance on the parallel Wiener-Hammerstein benchmark. In Table 6 we can see that our
+method allows to decrease the training time and improve the performance relative to the SUBNET baseline
+on the Silverbox benchmark. This also allows to close a significant part of the gap to methods that perform
+better on this benchmark such as NL-LFR. However, we still see that our method tends to perform well
+on the first and third test trajectory but less so on the second test trajectory which leaves the training
+distribution more. This phenomenon is discussed in more detail in Beintema et al. (2021) and our method
+does not seem to resolve this limitation of SUBNET-type methods.
+Declaration of generative AI and AI-assisted technologies in the writing
+process
+During the preparation of this work the authors used GPT-6 Astra pro in order to generate the multi head
+implementation and the port-Hamiltonian variant of DS3M based on an implementation of DS3M with
+a single head provided by the authors. Furthermore, a compact Jupyter notebook was generated using
+the same tool to evaluate the idea on the benchmark data based on established evaluation protocols. The
+tool was also used to assist with revising the manuscript text and creating the figures. After using this
+tool/service, the authors reviewed and edited the content as needed and take full responsibility for the
+content of the publication.
+References
+G. Beintema, R. T´oth, and M. Schoukens. Nonlinear state-space identification using deep encoder
+networks. In Proceedings of the 3rd Conference on Learning for Dynamics and Control, volume
+144 of Proceedings of Machine Learning Research, pages 241–250. PMLR, 2021. URL https:
+//proceedings.mlr.press/v144/beintema21a.html.
+G. I. Beintema, M. Schoukens, and R. T´oth. Continuous-time identification of dynamic state-space models
+by deep subspace encoding. In The Eleventh International Conference on Learning Representations
+(ICLR), pages 1–15, 2023a. URL https://arxiv.org/abs/2204.09405.
+G. I. Beintema, M. Schoukens, and R. T´oth. Deep subspace encoders for nonlinear system identification.
+Automatica, 156:111210, 2023b. doi: 10.1016/j.automatica.2023.111210.
+K. Cherifi, A. El Messaoudi, H. Gernandt, and M. Roschkowski. Nonlinear port-Hamiltonian system
+identification from input-state-output data (ISO-pHNN). Physica D: Nonlinear Phenomena, 497:
+8
+
+===== PAGE 9 =====
+
+135368, 2026. ISSN 0167-2789. doi: https://doi.org/10.1016/j.physd.2026.135368. URL https:
+//www.sciencedirect.com/science/article/pii/S0167278926002642.
+G. Diamos, S. Sengupta, B. Catanzaro, M. Chrzanowski, A. Coates, E. Elsen, J. Engel, A. Hannun,
+and S. Satheesh. Persistent RNNs: Stashing recurrent weights on-chip. In Proceedings of the 33rd
+International Conference on Machine Learning, volume 48 of Proceedings of Machine Learning
+Research, pages 2024–2033. PMLR, 2016. URL https://proceedings.mlr.press/v48/
+diamos16.html.
+S. Elfwing, E. Uchibe, and K. Doya. Sigmoid-weighted linear units for neural network function approxi-
+mation in reinforcement learning. Neural networks, 107:3–11, 2018.
+M. Floren, J.-P. No¨el, and J. Swevers. Inference and learning of nonlinear LFR state-space models. IEEE
+Control Systems Letters, 9:1345–1350, 2025. doi: 10.1109/LCSYS.2025.3580354.
+M. Forgione and D. Piga. dynoNet: A neural network architecture for learning dynamical systems.
+International Journal of Adaptive Control and Signal Processing, 35(4):612–626, 2021. doi: 10.1002/
+acs.3216.
+A. Gu and T. Dao. Mamba: Linear-time sequence modeling with selective state spaces. In Conference on
+Language Modeling (COLM), 2024. URL https://arxiv.org/abs/2312.00752.
+A. Gu, K. Goel, and C. R´e. Efficiently modeling long sequences with structured state spaces. In
+International Conference on Learning Representations (ICLR), 2022. URL https://arxiv.org/
+abs/2111.00396.
+K. He, X. Zhang, S. Ren, and J. Sun. Deep residual learning for image recognition. In Proceedings of the
+IEEE Conference on Computer Vision and Pattern Recognition (CVPR), pages 770–778, 2016. doi:
+10.1109/CVPR.2016.90.
+Z. Hu, N. A. Daryakenari, Q. Shen, K. Kawaguchi, and G. E. Karniadakis. State-space models are
+accurate and efficient neural operators for dynamical systems. Neural Networks, 197:108496, 2026.
+doi: 10.1016/j.neunet.2025.108496.
+D. P. Kingma and J. Ba. Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980,
+2014.
+M. Linares, G. Doras, T. H´elie, and A. Roebel. Controlled oscillation modeling using port-Hamiltonian
+neural networks. Physica D: Nonlinear Phenomena, page 135341, 2026.
+I. Loshchilov and F. Hutter. Sgdr: Stochastic gradient descent with warm restarts. arXiv preprint
+arXiv:1608.03983, 2016.
+A. E. Messaoudi, K. Cherifi, Y. L. Gorrec, and Y. Wu. PH-Symb: Sparse symbolic identification of nonlin-
+ear port-Hamiltonian systems using Kolmogorov-Arnold networks. arXiv preprint arXiv:2611.09334,
+2026.
+S. Moradi, G. I. Beintema, N. O. Jaensson, R. T´oth, and M. Schoukens. Port-Hamiltonian neural networks
+with output error noise models. Automatica, 187:112892, 2026. doi: 10.1016/j.automatica.2026.112892.
+O. Nelles. Nonlinear System Identification: From Classical Approaches to Neural Networks, Fuzzy
+Models, and Gaussian Processes. Springer, 2020.
+J. Nickolls, I. Buck, M. Garland, and K. Skadron. Scalable parallel programming with CUDA. ACM
+Queue, 6(2):40–53, 2008. doi: 10.1145/1365490.1365500.
+9
+
+===== PAGE 10 =====
+
+J. Paduart, L. Lauwers, R. Pintelon, and J. Schoukens. Identification of a Wiener-Hammerstein system
+using the polynomial nonlinear state space approach. Control Engineering Practice, 20(11):1133–1139,
+2012. doi: 10.1016/j.conengprac.2012.06.006.
+M. Roschkowski, K. Cherifi, and H. Gernandt. Neural scaling laws for learning-based identification of
+nonlinear systems. IEEE Open Journal of Control Systems, 2026.
+O. Russakovsky, J. Deng, H. Su, J. Krause, S. Satheesh, S. Ma, Z. Huang, A. Karpathy, A. Khosla, M. Bern-
+stein, A. C. Berg, and L. Fei-Fei. ImageNet large scale visual recognition challenge. International
+Journal of Computer Vision, 115(3):211–252, 2015. doi: 10.1007/s11263-015-0816-y.
+J. Schoukens and L. Ljung. Nonlinear system identification: A user-oriented road map. IEEE Control
+Systems Magazine, 39(6):28–99, 2019. doi: 10.1109/MCS.2019.2938121.
+J. Schoukens, J. Suykens, and L. Ljung. Wiener-Hammerstein Benchmark. In 15th IFAC Symposium on
+System Identification (SYSID 2009), July 2009.
+M. Schoukens, M. Champneys, G. I. Beintema, and T. J. Rogers. Benchmarking for nonlinear system
+identification: Submission platform and baseline results. Data-Centric Engineering, 7:e40, 2026. doi:
+10.1017/dce.2026.10067.
+P. Tillet, H. T. Kung, and D. Cox. Triton: An intermediate language and compiler for tiled neural network
+computations. In Proceedings of the 3rd ACM SIGPLAN International Workshop on Machine Learning
+and Programming Languages (MAPL ’19), pages 10–19. Association for Computing Machinery, 2019.
+doi: 10.1145/3315508.3329973. URL https://doi.org/10.1145/3315508.3329973.
+P. Van Overschee and B. De Moor. N4SID: Subspace algorithms for the identification of combined
+deterministic-stochastic systems. Automatica, 30(1):75–93, 1994. doi: 10.1016/0005-1098(94)90230-5.
+A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, and I. Polosukhin.
+Attention is all you need. Advances in neural information processing systems, 30, 2017.
+M. Verhaegen and P. Dewilde. Subspace model identification part 1: The output-error state-space model
+identification class of algorithms. International Journal of Control, 56(5):1187–1210, 1992. doi:
+10.1080/00207179208934363.
+10
