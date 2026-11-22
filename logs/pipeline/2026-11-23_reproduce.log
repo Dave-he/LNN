@@ -1,0 +1,139 @@
+[2026-11-23 06:43:43] digest 2026-11-23 无命中复现规则的论文, 跳过
+
+=== 2026-11-23 06:44:24 manual full-pool reproduce: natural_gas (2604.24788) ===
+cmd   : /Users/hyx/workspace/LNN/.venv312/bin/python scripts/replicate_paper_experiment.py --output_dir analysis/replication/natural_gas
+usage: replicate_paper_experiment.py [-h] [--run_replication]
+                                     [--run_optimization]
+                                     [--bootstrap_reps BOOTSTRAP_REPS]
+                                     [--device DEVICE]
+replicate_paper_experiment.py: error: unrecognized arguments: --output_dir analysis/replication/natural_gas
+[exit] 2
+
+=== 2026-11-23 06:44:29 manual full-pool reproduce: temporal_dropout (2606.28827) ===
+cmd   : /Users/hyx/workspace/LNN/.venv312/bin/python scripts/replicate_temporal_dropout.py --output_dir analysis/replication/temporal_dropout
+======================================================================
+ PAPER REPLICATION: LNN VS LSTM TEMPORAL DROPOUT STRESS TESTING 
+======================================================================
+Device: cpu | Epochs: 60 | Hidden Size: 16
+Conda Env Python: /Users/hyx/workspace/LNN/.venv312/bin/python
+NCPS Library Installed: True
+----------------------------------------------------------------------
+Generating non-stationary irregular dataset splits...
+Split sizes: Train=840 | Val=180 | Test=180
+----------------------------------------------------------------------
+Training LSTM+dt (Params: 1,297)...
+  Epoch 15 | Train MSE: 0.08319 | Val MSE: 0.08313
+  Epoch 30 | Train MSE: 0.06984 | Val MSE: 0.06972
+  Epoch 45 | Train MSE: 0.06107 | Val MSE: 0.06092
+  Epoch 60 | Train MSE: 0.05400 | Val MSE: 0.05516
+  -> Best Val MSE: 0.055159 | Throughput: 3552388 steps/s
+
+Training GRU+dt (Params: 977)...
+  Epoch 15 | Train MSE: 0.08736 | Val MSE: 0.08682
+  Epoch 30 | Train MSE: 0.07282 | Val MSE: 0.07334
+  Epoch 45 | Train MSE: 0.06024 | Val MSE: 0.06046
+  Epoch 60 | Train MSE: 0.05464 | Val MSE: 0.05563
+  -> Best Val MSE: 0.055629 | Throughput: 1946922 steps/s
+
+Training CfC-DT (Ours) (Params: 1,169)...
+  Epoch 15 | Train MSE: 0.08245 | Val MSE: 0.08330
+  Epoch 30 | Train MSE: 0.06044 | Val MSE: 0.06091
+  Epoch 45 | Train MSE: 0.05015 | Val MSE: 0.04995
+  Epoch 60 | Train MSE: 0.04415 | Val MSE: 0.04375
+  -> Best Val MSE: 0.043751 | Throughput: 861274 steps/s
+
+Training Euler-LTC-DT (Ours) (Params: 625)...
+  Epoch 15 | Train MSE: 0.10811 | Val MSE: 0.11337
+  Epoch 30 | Train MSE: 0.09379 | Val MSE: 0.09817
+  Epoch 45 | Train MSE: 0.08272 | Val MSE: 0.08691
+  Epoch 60 | Train MSE: 0.07381 | Val MSE: 0.07690
+  -> Best Val MSE: 0.076901 | Throughput: 1356479 steps/s
+
+Training NCPS-CfC (Official) (Params: 848)...
+  Epoch 15 | Train MSE: 0.12679 | Val MSE: 0.12889
+  Epoch 30 | Train MSE: 0.11896 | Val MSE: 0.12192
+  Epoch 45 | Train MSE: 0.11429 | Val MSE: 0.11773
+  Epoch 60 | Train MSE: 0.11004 | Val MSE: 0.11284
+  -> Best Val MSE: 0.112842 | Throughput: 468275 steps/s
+
+Training NCPS-LTC (Official) (Params: 1,206)...
+  Epoch 15 | Train MSE: 0.18416 | Val MSE: 0.18094
+  Epoch 30 | Train MSE: 0.13150 | Val MSE: 0.12998
+  Epoch 45 | Train MSE: 0.11716 | Val MSE: 0.11445
+  Epoch 60 | Train MSE: 0.10643 | Val MSE: 0.10631
+  -> Best Val MSE: 0.103865 | Throughput: 133080 steps/s
+
+----------------------------------------------------------------------
+RUNNING TEMPORAL DROPOUT STRESS TEST...
+----------------------------------------------------------------------
+Evaluating temporal dropout rate: 0.0 (0% element loss)
+  LSTM+dt                   | Test MSE: 0.058073
+  GRU+dt                    | Test MSE: 0.058551
+  CfC-DT (Ours)             | Test MSE: 0.047990
+  Euler-LTC-DT (Ours)       | Test MSE: 0.081676
+  NCPS-CfC (Official)       | Test MSE: 0.105520
+  NCPS-LTC (Official)       | Test MSE: 0.105952
+
+Evaluating temporal dropout rate: 0.1 (10% element loss)
+  LSTM+dt                   | Test MSE: 0.110576
+  GRU+dt                    | Test MSE: 0.143472
+  CfC-DT (Ours)             | Test MSE: 0.122978
+  Euler-LTC-DT (Ours)       | Test MSE: 0.594125
+  NCPS-CfC (Official)       | Test MSE: 0.140214
+  NCPS-LTC (Official)       | Test MSE: 0.121983
+
+Evaluating temporal dropout rate: 0.2 (20% element loss)
+  LSTM+dt                   | Test MSE: 0.168780
+  GRU+dt                    | Test MSE: 0.215297
+  CfC-DT (Ours)             | Test MSE: 0.189810
+  Euler-LTC-DT (Ours)       | Test MSE: 0.941476
+  NCPS-CfC (Official)       | Test MSE: 0.167939
+  NCPS-LTC (Official)       | Test MSE: 0.132730
+
+Evaluating temporal dropout rate: 0.3 (30% element loss)
+  LSTM+dt                   | Test MSE: 0.204712
+  GRU+dt                    | Test MSE: 0.274402
+  CfC-DT (Ours)             | Test MSE: 0.243969
+  Euler-LTC-DT (Ours)       | Test MSE: 1.865474
+  NCPS-CfC (Official)       | Test MSE: 0.182724
+  NCPS-LTC (Official)       | Test MSE: 0.139330
+
+Evaluating temporal dropout rate: 0.4 (40% element loss)
+  LSTM+dt                   | Test MSE: 0.259494
+  GRU+dt                    | Test MSE: 0.301488
+  CfC-DT (Ours)             | Test MSE: 0.288490
+  Euler-LTC-DT (Ours)       | Test MSE: 2.500826
+  NCPS-CfC (Official)       | Test MSE: 0.204119
+  NCPS-LTC (Official)       | Test MSE: 0.151381
+
+Evaluating temporal dropout rate: 0.5 (50% element loss)
+  LSTM+dt                   | Test MSE: 0.318399
+  GRU+dt                    | Test MSE: 0.402796
+  CfC-DT (Ours)             | Test MSE: 0.393830
+  Euler-LTC-DT (Ours)       | Test MSE: 36.900284
+  NCPS-CfC (Official)       | Test MSE: 0.243822
+  NCPS-LTC (Official)       | Test MSE: 0.193190
+
+JSON metrics written to: analysis/replication/temporal_dropout/temporal_dropout_results.json
+Comparative visualization saved to: analysis/replication/temporal_dropout/temporal_dropout_robustness.png
+Markdown academic report written to: analysis/replication/temporal_dropout/temporal_dropout_report.md
+
+======================================================================
+ REPLICATION COMPLETED SUCCESSFULLY 
+======================================================================
+[exit] 0
+
+=== 2026-11-23 06:48:12 manual full-pool reproduce: imitation (2603.27058) ===
+cmd   : /Users/hyx/workspace/LNN/.venv312/bin/python scripts/experiment_imitation_lnn.py
+=== LNN Imitation Learning Experiment ===
+Model: cfc + mdn | Device: cpu | Samples: 1000
+Parameters: 18,025
+Epoch   1 | Train 1.7603 | Val loss 1.6650 | Val MSE 0.0054
+Epoch   5 | Train -0.4195 | Val loss -1.2315 | Val MSE 0.0013
+Epoch  10 | Train -3.7059 | Val loss -3.8218 | Val MSE 0.0010
+Epoch  12 | Train -3.7994 | Val loss -3.8676 | Val MSE 0.0010
+Test loss: -3.733517 | Test MSE: 0.001116
+JSON written: analysis/control/2026-11-23_064817_imitation_lnn.json
+Report written: analysis/control/2026-11-23_064817_imitation_lnn.md
+[exit] 0
+=== manual full-pool reproduce done ===
