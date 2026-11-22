@@ -1,0 +1,1454 @@
+U-Former ODE: Fast Probabilistic Forecasting
+of Irregular Time Series
+Ilya Kuleshov∗
+Applied AI Institute
+Moscow, Russia
+Alexander Marusov
+Applied AI Institute
+Moscow, Russia
+Alexey Zaytsev
+Applied AI Institute
+Moscow, Russia
+Abstract
+Probabilistic forecasting of irregularly sampled time series is crucial
+in domains such as healthcare and finance, yet it remains a formi-
+dable challenge. Existing Neural Controlled Differential Equation
+(Neural CDE) approaches, while effective at modelling continu-
+ous dynamics, suffer from slow, inherently sequential computation,
+which restricts scalability and limits access to global context. We
+introduce UFO (U-Former ODE), a novel architecture that seam-
+lessly integrates the parallelizable, multiscale feature extraction of
+U-Nets, the powerful global modelling of Transformers, and the
+continuous-time dynamics of Neural CDEs. By constructing a fully
+causal, parallelizable model, UFO achieves a global receptive field
+while retaining strong sensitivity to local temporal dynamics. Ex-
+tensive experiments on five standard benchmarks—covering both
+regularly and irregularly sampled time series—demonstrate that
+UFO consistently outperforms ten state-of-the-art neural baselines
+in predictive accuracy. Moreover, UFO delivers up to 15× faster in-
+ference compared to conventional Neural CDEs, with consistently
+strong performance on long and highly multivariate sequences1.
+1 Introduction
+The task of Probabilistic Multivariate Time Series Forecasting (PMTSF)
+is ubiquitous in industry and research alike, serving as the critical
+backbone for decision-making under uncertainty across countless
+domains. From optimizing smart energy grids [51] and forecasting
+financial market risks [19] to anticipating patient health trajecto-
+ries in healthcare [27], this discipline moves beyond simple point
+estimates to model the full joint probability distribution of future
+events.
+The majority of time series analysis methods focus on regular
+data, i.e. such that all observations lie on a grid with no gaps [6, 36].
+However, such is rarely the case: physical sensors are prone to
+errors, shutdowns, breakdowns, etc. To add, a subtle point which
+we would like to highlight in our work is: there are many different
+types of irregular data. Most recent works for irregular time series
+focus on the scenario, where the missing points are uniformly
+spread throughout the sequence [15, 18]. On the other hand, in
+the real world, missing data usually comes in blocks. More often
+than not, a sensor malfunctions for extended periods of time until
+it is fixed, instead of skipping time steps randomly and uniformly.
+Consequently, the missing points come in groups. Such a scenario
+presents even more of a challenge to non-specialized methods, since
+the data is significantly harder to impute via simple algorithms such
+as forward filling [14]. The above highlights the need for specialized,
+irregular-capable methods.
+∗Corresponding author: i.kuleshov@applied-ai.ru
+1The code and datasets can be found in our anonymized GitHub: https://anonymous.
+4open.science/r/ufo_kdd2026-64BB/README.md.
+Neural Controlled Differential Equations (CDEs) are a very promi-
+nent branch of methods, designed specifically for irregular time
+series [15]. The idea is to integrate a differential equation with a
+Neural Network as its dynamics function, which continuously takes
+the current data interpolation as input. Formally, a most general
+Neural CDE is described as follows:
+𝑑z
+𝑑𝑡 = z(0)+
+∫ 𝑇
+0
+f𝜃(z(𝑡), ˆx(𝑡))𝑑𝑡. (1)
+Here, z(𝑡) : [0,𝑇] → R𝑑 is the hidden trajectory of the CDE,
+f𝜃(z, ˆx) : R𝑑 × R𝑑 𝑥 → R𝑑 is the Neural Network, which defines
+the dynamics, and ˆx) : [0,𝑇]→ R𝑑𝑥 is the interpolation of the
+input time series, where 𝑑 is the hidden dimension and 𝑑𝑥 is the
+input dimension. Given the initial hidden state z(0) and a hidden
+state interpolation function ˆx(𝑡), a dedicated solver evaluates the
+hidden trajectory z(𝑡) at all the necessary timestamps by integrat-
+ing (1). This way, Neural CDEs effectively mimic the dynamics of
+the observed process, which makes them a prime choice for the
+temporal domain. Unfortunately, CDE integration is often prohibi-
+tively expensive. Due to their recurrent nature, it is very difficult
+to parallelize them over time. Moreover, since they store a single
+hidden state during integration, these models may experience infor-
+mation loss [18], something RNNs are well-known for [12]. Finally,
+the dependence of traditional Neural CDEs on smooth interpolation
+routines makes them poorly adapted for time series forecasting [23],
+where the sequence is not known beforehand.
+At the same time, the modern Deep Learning (DL) research land-
+scape is lately becoming increasingly focused on Transformers [36],
+mostly due to their wide success in Natural Language Processing
+(NLP). The core idea behind Transformers, the Attention mecha-
+nism, has found its way into almost all domains, including Com-
+puter Vision [7], graphs [46], recommendation systems [50], and
+many more.
+The task of time series forecasting is no exception, with new
+highly influential transformer-based methods introduced every
+year [20, 25, 41, 51]. However, recent work shows, that Transform-
+ers may not be well-suited for time series forecasting due to the
+permutation-invariant nature of Attention [47]. Originating from
+the field of NLP, Transformers are designed to work with highly
+informative tokens, with small correlations between neighbouring
+values. Time series usually have high neighbour correlations, and
+a single observation carries very little meaning, so Attention may
+struggle with local patterns. Prior work introduces patching [25]
+and various patching structures, similar to the fully-convolutional
+U-Net architecture [28], to help Transformers overcome this obsta-
+cle [22, 45]. On the other hand, U-Nets, like most other fully convo-
+lutional networks, often suffer from limited receptive field [21], so
+the U-Net-Transformer hybrid is highly beneficial for both sides.
+However, the U-Net Transformer branch of methods is currently
+arXiv:2602.11738v1  [cs.LG]  12 Feb 2026
+Kuleshov et al.
+Neural CDE
+U-Net
+T-former
+long term
+causal
+temporal
+parallel
+local 
+patterns
+global 
+rec. ﬁeld
+UFO
+N
+e
+u
+r
+a
+l
+ 
+R
+D
+E
+L
+o
+g
+-
+C
+D
+E
+I
+n
+f
+o
+r
+m
+e
+r
+Y
+-
+F
+o
+r
+m
+e
+r
+P
+a
+t
+c
+h
+ 
+T
+S
+T
+C
+o
+n
+t
+i
+F
+o
+r
+m
+e
+r
+A
+N
+C
+D
+E
+Figure 1: Our UFO method combines three leading time se-
+ries architectures, each bringing its own strengths and com-
+pensating for the others’ weaknesses (as illustrated by the
+arrows). Gray ellipses show the existing works, closest to the
+intersection, however, none match perfectly, see Section 6
+for details.
+under-researched, and is not yet properly adapted to irregular time
+series forecasting.
+We propose a solution to the problems listed above. Our novel
+U-Former ODE (UFO) combines three highly influential architec-
+tures, bringing out their strong points and compensating for their
+drawbacks, as illustrated by Figure 1. It takes its efficiency and long-
+term memory from Transformers, while escaping the permutation-
+invariance of attention through ODE methods. It has the temporal,
+data-mimicking properties of Neural ODEs, can handle irregular
+data, but has the execution time of a non-ODE method, since it can
+be parallelized over time via a U-Net-like hierarchical structure.
+It can process features at multiple scales like a U-Net, but does
+not suffer from a limited receptive field due to the Transformer
+counterpart.
+The most important and novel contributions of our paper are as
+follows:
+• Time-Parallel Continuous Model. UFO is the first time-
+parallel Neural CDE method for time series forecasting. It
+achieves a 15-fold reduction in inference time in compari-
+son to classic Neural CDEs, outperforming other modern
+differential alternatives (Section 5.3).
+• Global-Attention Neural CDE. Transformers allow us to
+solve the information bottleneck present in Neural CDEs
+and Recurrent Neural Networks. Instead of forcing the net-
+work to store all past information in a single hidden state,
+Attention gathers knowledge from the entire sequence. The
+receptive field regularity of UFO is confirmed in a separate
+sensitivity analysis study (Section 5.4).
+• Efficient Irregular Transformers. The Neural CDE-based
+patching algorithm acts as a temporal encoding for the
+Transformer architecture, levelling out the sequence irregu-
+larity and embedding it into the corresponding vectors. We
+prove that the observation grid becomes more regular with
+patching (Section 4.2) and demonstrate that irregularity
+encoding works in a separate experiment (Section 5.6).
+Downsample Upsample
+mean
+stdev}
+Input Series Forecast Sample
+Reﬁne
+Downsample
+Reﬁne
+Downsample
+Reﬁne
+Input Injection
+Input Injection
+Upsample
+Upsample
+Reﬁne
+sample
+Encoder Decoder
+Time Covariates
+FFN
+Figure 2: The proposed UFO hierarchical architecture.
+• SOTA Performance. UFO achieves state-of-the-art metrics
+on 5 popular probabilistic forecasting benchmarks, outper-
+forming 10 baselines, on both regular and irregular data
+(Section 5.2).
+2 Problem Statement
+We study probabilistic time series forecasting. Given 𝑇 ∈ N past
+observations
+x =(x1,..., x𝑇), x𝑖 =(𝑥𝑖,1,...,𝑥𝑖,𝑑)⊤∈ R𝑑,
+the goal is to predict𝐿∈ N future values
+y =(y1,..., y𝐿), y𝑖 =(𝑦𝑖,1,...,𝑦𝑖,𝑑)⊤∈ R𝑑.
+As the task is probabilistic, we expect the models to output F :
+R𝑑 →[0, 1]𝑑, the predictive Cumulative Density Function, CDF.
+Alongside observations, we also pass the timestamps 𝑡1,...,𝑡𝑇+𝐿
+to the models for both context and forecast horizon, to handle data
+irregularity. We further augment inputs with cyclic time-of-day fea-
+tures 𝜏1,...,𝜏𝑇+𝐿 ∈ R𝑐, encoding fractional progress through natu-
+ral cycles (e.g., day, week, month, year). These fractions are mapped
+to sine–cosine pairs to ensure continuity across cycle boundaries,
+following standard practice in modern forecasting libraries [1].
+Concatenating these features with x, we obtain the inputs used
+to produce CDF forecasts F that we aim to make close to the true
+values y.
+3 Method
+This section describes the proposed U-Former ODE method (UFO).
+To improve the reading experience, we first outline the general
+structure of UFO in Section 3.1, and then describe each component
+of the proposed method in detail in Section 3.2.
+3.1 Method Structure
+Let x(0) := x ∈ R𝑇0 ×𝑑 denote the input time series, where 𝑇0 :=𝑇 is
+the input length and 𝑑 the model dimension (inputs are projected
+to 𝑑 via a linear layer). The model follows an encoder–decoder
+architecture organized into 𝑀+ 1 hierarchical levels indexed by
+𝑚 = 0,...,𝑀. At level 𝑚, the encoder representation is denoted by
+U-Former ODE
+x(𝑚) ∈ R𝑇𝑚 ×𝑑 and the decoder representation by y(𝑚) ∈ R𝑇𝑚 ×𝑑,
+with𝑇𝑚+1 <𝑇𝑚. Level𝑚 = 0 corresponds to the original temporal
+resolution: x(0) is the input sequence and y(0) the output forecast.
+The resulting architecture is schematically presented in Figure 2.
+Layer types. We introduce the neural network layer types used
+in the UFO architecture: downsampling, upsampling, and refining
+layers. The specific resampling architectures are described in Sec-
+tion 3.2.1, while the refining procedure is detailed in Section 3.2.2.
+Downsampling layers reduce sequence resolution in the encoder
+by partitioning the input into equal-length patches with a fixed
+stride and aggregating each patch. Because patches are processed
+independently, downsampling is fully parallelisable over the time
+dimension. Upsampling layers perform the inverse operation in
+the decoder, expanding embeddings into patches to increase se-
+quence resolution, and are likewise parallelisable. Refining layers
+enrich embeddings by mixing information across the sequence to
+maximise the receptive field. In the decoder, they also integrate
+intermediate encoder embeddings via U-Net-style skip connections.
+Each level of the architecture consists of a resampling layer (down-
+sampling in the encoder, upsampling in the decoder) followed by a
+refining layer.
+Encoder. The encoder maps the input sequence to a hierarchy of
+increasingly abstract representations by alternating refining and
+downsampling layers. For 𝑚 = 0,...,𝑀− 1, the encoder transition
+from level𝑚 to𝑚+ 1 is defined as
+x(𝑚+1) = DS(𝑚)
+
+R(𝑚) enc (x(𝑚))  , (2)
+where R(𝑚) enc : R𝑇𝑚 ×𝑑 → R𝑇𝑚 ×𝑑 is a refiner, and DS(𝑚) : R𝑇𝑚 ×𝑑 →
+R𝑇𝑚+1 ×𝑑 is a downsampling operator. Refining is omitted at the
+bottom level since the input sequence may be highly irregular.
+At higher levels the sequence irregularity drops, as we prove in
+Section 4.2. As 𝑚 increases, encoder representations capture pro-
+gressively higher-level temporal structure.
+At the top level, the encoder output x(𝑀) is mapped to the pa-
+rameters of a diagonal Gaussian latent distribution:
+𝜇 =𝑓𝜇(x(𝑀)), 𝜎 =𝑓𝜎(x(𝑀)), (3)
+where 𝑓𝜇 and 𝑓𝜎 are learnable projections. A latent variable is then
+sampled as
+y(𝑀) ∼N(𝜇,𝜎). (4)
+Decoder. The decoder generates a forecast by progressively re-
+constructing representations at finer temporal resolutions. For
+𝑚 =𝑀− 1,..., 0, the decoder transition is given by
+y(𝑚) = R(𝑚) dec
+
+US(𝑚)(y(𝑚+1)), x(𝑚)
+
+, (5)
+where US(𝑚) : R𝑇𝑚+1 ×𝑑 → R𝑇𝑚 ×𝑑 is an upsampling operator, and
+R(𝑚) dec is a decoder refiner block. As mentioned above, each decoder
+refiner also injects the corresponding encoder representation x(𝑚),
+conditioning the decoder on varying-resolution features from the
+input sequence. At the bottom Decoder level, refining is also omitted
+(similar to the Encoder).
+Although the top-level latent variable y(𝑀) is modelled using
+a diagonal Gaussian distribution, this choice does not restrict the
+expressiveness of the predictive distribution. The Gaussian serves
+Input
+Patching
+Neural CDE
+Integration
+Output
+with possible overlaps
+Input
+Unpatching
+Neural CDE
+Integration
+Output
+overlaps are averaged
+Figure 3: The Neural CDE Downsampling (left) and Upsam-
+pling (right) procedures. Half-transparent domes represent
+the (un)patching procedure, the wavy arrows represent Neu-
+ral CDE integration (1), which corresponds to (6) for down-
+sampling, and to (7) for upsampling.
+only as a latent prior at the coarsest temporal scale. After sam-
+pling, y(𝑀) is transformed by a sequence of expressive non-linear
+upsampling and refining layers that inject multi-scale encoder rep-
+resentations via U-Net skip connections. Consequently, the final
+output distribution is shaped primarily by the decoder network and
+can be highly non-Gaussian and multi-modal, despite the Gaussian
+assumption at the top level.
+3.2 Architecture Details
+This section provides a detailed description of the specific architec-
+tures of the Resampling and Refining components of UFO.
+3.2.1 Neural CDE Resampling. One of our main contributions is the
+choice of the family of downsampling and upsampling architectures.
+To better align with the nature of time-series data, we utilise Neural
+Controlled Differential Equations for both. Scaling time in these
+models allows us to tune the resolution at which the resampling
+layer interprets the sequence [18], ensuring that higher levels only
+attend to global features.
+During downsampling, we integrate over each patch, and the
+trajectory value at the final timestamp of that patch is the corre-
+sponding embedding. The Neural CDE downsampling procedure
+is illustrated by Figure 3, left. The initial state is determined via
+a feed-forward network, applied to the first observation, as rec-
+ommended by [15]. For simplicity, we write out both resampling
+procedures for a single patch. Let’s assume that [𝑡𝑠,𝑡𝑒]⊂ R denotes
+the interval in time of the specific patch we wish to aggregate on
+level 𝑚, ˆx(𝑚−1) is the interpolation of the prior level output, and
+ˆ𝜏(𝑡)(𝑚) is the interpolation of the time covariates, corresponding
+to the current level2. Then, the formal Cauchy problem is given by:
+z(𝑚) ds (𝑡𝑠) = NN(𝑚) 0 ( ˆx(𝑚−1)(𝑡𝑠));
+𝑑
+𝑑𝑡 z(𝑚) ds (𝑡) = VF(𝑚) ds ( ˆ𝜏(𝑚)(𝑡), ˆx(𝑚−1)(𝑡), z(𝑚) ds (𝑡));
+x(𝑚)
+𝑡𝑒
+𝑤
+
+:= z(𝑚) ds (𝑡𝑒).
+(6)
+Here, z(𝑚) ds is the hidden trajectory, NN0 is a Neural Network, used
+to produce the initial hidden state from the first observation, and
+VF(𝑚) ds represents some Neural Network-based vector field3. Note
+2Time covariates are the same between levels, but levels have different time scales.
+3We use the "ds" and "us" subscripts to indicate downsampling and upsampling corre-
+spondingly, and the(𝑚) superscript to show the level number.
+Kuleshov et al.
+that the resulting representation x(𝑚) is now known at the final time
+of the patch 𝑡𝑒, divided by patch length 𝑤. The division by length is
+done to keep mean patch duration constant between levels, which is
+important since it directly influences Neural CDE performance [18].
+For upsampling, we reverse this procedure: using the initial hid-
+den state from the higher level as the starting value, we interpolate
+the time-based features, and use them as input to a "decoder" Neural
+CDE. This is illustrated in Figure 3, right (note the similarity to
+downsampling). Again, let’s assume that [𝑡𝑠,𝑡𝑒]⊂ R denotes the
+target interval in time on level 𝑚, where the resulting upsampled
+patch would be, and ˆ𝜏(𝑚) is the interpolation of the corresponding
+time covariates. The upsampling routine is given by:
+z(𝑚) us (𝑡𝑠) = y(𝑚+1)(𝑡𝑠);
+𝑑
+𝑑𝑡 z(𝑚) us (𝑡) = VF(𝑚) us ([ ˆ𝜏(𝑚)(𝑡), z(𝑚) us (𝑡)]);
+y(𝑚)(𝑡·𝑤) = z(𝑚) us (𝑡), 𝑡∈[𝑡𝑠,𝑡𝑒].
+(7)
+Similar to (6), z(𝑚) us is the hidden trajectory and VF(𝑚) us represents
+some Neural Network-based vector field. The function y(𝑚) is then
+calculated on a grid, corresponding to the current level and the
+current patch, with the time upscaled by 𝑤 (to match the Encoder
+timescale), and the resulting sequence is used for subsequent refin-
+ing and upsampling layers.
+Interpolation. To integrate (6) and (7), we need to define interpo-
+lation routines for ˆx(𝑚) and ˆ𝜏(𝑚). Following the most recent work
+on efficient Neural CDEs, we replace the traditional cubic spline
+interpolation routine [15] with kernel smoothing [31]. However,
+we go one step further. Standard kernel regression relies on suf-
+ficient local data density. In regions where the design is sparse
+(i.e., observations are far apart), kernel estimators can exhibit high
+variance and poor finite-sample behavior, motivating the use of
+regularization techniques [5]. Following this line of work, we regu-
+larize the Nadaraya–Watson estimator by introducing a prior in the
+form of an additive constant 𝜆 > 0 in the denominator. This modifi-
+cation prevents the effective local sample size from collapsing in
+low-density regions and shrinks the estimate toward zero when the
+data are uninformative. Irrespective of the above notation, given
+the observations 𝑥𝑖 and the times 𝑡𝑖, the final interpolation routine
+is as follows:
+ˆ𝑥(𝑡) =
+˝
+𝑖𝑥𝑖𝐾(𝑡𝑖,𝑡)
+𝜆+ ˝ 𝑖 𝐾(𝑡𝑖,𝑡),
+where 𝐾(𝑎,𝑏) =𝑒|𝑎−𝑏| is a simple exponential kernel. In practice,
+we set 𝜆 := 𝐾(𝑡− 3,𝑡)4. For multivariate time series (and on all
+intermediate levels), the procedure described above is identically
+and independently repeated for each channel.
+Vector Field. We also employ a non-standard vector field. The
+matrix-based Neural CDE dynamics function from [15] is inappli-
+cable at the intermediate layers of our model, since it relies on the
+low-dimensional nature of the input signal. In our case, both the
+input and output signals are vectors of dimension 𝑑 (the model’s
+hidden dimension), so a vanilla Neural CDE would require O(𝑑 3)
+4Equivalently, the procedure can be interpreted as introducing a globally present
+pseudo-observation with fixed weight and value zero, acting as a weak prior rather
+than a geometrically localized data point.
+parameters per layer. Instead, we adopt a SwiGLU -based vector
+field [33]. This choice is motivated by several factors:
+• SwiGLU has become the industry standard activation in
+modern Transformer architectures [35, 44]. It offers excel-
+lent computational speed, strong representational capacity,
+and a modest memory footprint.
+• SwiGLU is an advanced gated activation that is far less
+susceptible to saturation or dying gradient issues, which are
+a significant concern to Neural CDE models, as highlighted
+by recent analyses [18].
+• While the unbounded nature of SwiGLU could, in princi-
+ple, harm model stability, UFO applies Neural CDEs only
+over short intervals, so these concerns remain minor. Be-
+sides, our use of kernel smoothing alleviates stiffness in the
+dynamics, further enhancing overall model stability.
+3.2.2 Transformer Refining. As mentioned in the Introduction, we
+use Encoder-Decoder Transformers 5 as the refining layers. Specifi-
+cally, the encoder refiners consist of self-attention layers followed
+by feed-forward SwiGLU layers. For the decoder, a cross-attention
+layer is inserted between the self-attention and the feed-forward
+layers. The cross-attention takes features from the corresponding
+encoder layer.
+4 Theory
+4.1 CDE Rescaling Lipschitzness
+An important consideration when using CDE rescaling is the regu-
+larity of the newly generated higher-level trajectories. These trajec-
+tories serve as input to subsequent CDE layers, so their smoothness
+and Lipschitz properties are critical.
+We consider the following simplified setting, abstracting away
+from the full model notation. Let x(𝑡) : R→ R𝑑 be a continuous
+input signal that is𝐿𝑥-Lipschitz continuous, i.e.,
+∥x(𝑡)− x(𝑠)∥≤𝐿𝑥|𝑡−𝑠| ∀𝑡,𝑠∈ R.
+Let f (x, z) : R𝑑 × R𝑑 → R𝑑 be the CDE vector field, assumed to
+be globally Lipschitz with respect to both arguments with constant
+𝐿𝑓 :
+∥f(x1, z1)− f(x2, z2)∥≤𝐿𝑓
+ ∥x1 − x2 ∥+∥z1 − z2 ∥ ∀ x1, x2, z1, z2.
+For a fixed patch duration 𝑤 > 0 and any starting time 𝑡∈ R, we
+define the local solution z(𝑡)(𝜏) : R→ R𝑑 on the interval 𝜏∈[0,𝑤]
+by
+z(𝑡)(0) = 0, 𝑑 𝑑𝜏 z(𝑡)(𝜏) = f  x(𝑡+𝜏), z(𝑡)(𝜏), 𝜏∈[0,𝑤].
+The higher-level (rescaled) trajectory is then obtained by evalu-
+ating at the end of each patch and rescaling time:
+𝚽(𝑡·𝑤) := z(𝑡)(𝑤).
+We prove the following result on the Lipschitz regularity of 𝚽.
+5Recent work has increasingly focused on decoder-only Transformers [26]. However,
+for our purposes, the classic Transformer encoder–decoder architecture from [36] is
+better suited to our U-Net design. The cross-attention decoder is more computationally
+efficient, as it functions primarily for mixing in encoder representations: it injects
+encoder information into the decoder while processing only the decoder embeddings
+separately, rather than processing them jointly with the encoder ones.
+U-Former ODE
+Theorem 4.1. The map 𝑡↦→ 𝚽(𝑡·𝑤) is Lipschitz continuous with
+constant
+𝐿Φ =𝐿𝑥 · 𝑒𝐿𝑓 𝑤 − 1 𝐿𝑓𝑤 ,
+i.e., the effective Lipschitz constant per unit of the new (coarser) time.
+The proof is provided in Appendix B.1.
+The following corollary trivially follows from the above theorem:
+Corollary 4.2. The Lipschitz constant 𝐿Φ tends to 𝐿𝑥 as 𝑤→ 0.
+Consequently, for a small enough 𝑤, the Encoder trajectories
+share the same Lipschitz constants on all levels.
+4.2 Patching Regularization
+When extracting patches from the input sequence for UFO, we
+skip all missing observations and construct patches of equal length
+rather than equal duration. This design ensures that all higher-
+level embeddings carry comparable information content, while
+also shortening the resulting patch sequences, thereby improving
+the efficiency and effectiveness of the method compared to an
+equal-duration approach. In principle, however, defining patches by
+length rather than time span implies that the resulting higher-level
+representation sequences remain irregular. Since we subsequently
+apply a standard Transformer architecture to the patch embedding
+sequence, such irregularity could pose a challenge. Fortunately, the
+patching procedure progressively regularizes the observation grid
+as depth increases, mitigating this concern. We prove the "patching
+regularization" effect following a simple theoretical fact:
+Lemma 4.3 (Patching Regularization). Consider an irregular
+sequence, with observations at times T =𝑡1,𝑡2 ...,𝑡𝑛, such that the
+inter-observation gaps are i.i.d. random variables: Δ𝑡𝑖 = 𝑡𝑖+1 −𝑡𝑖 ,
+with a coefficient of variation6 (standard deviation over mean) of
+𝛼∈ R. Also consider another sequence T′ =𝑡′ 1,𝑡′ 2,...,𝑡′ 𝑚, which is
+created from T through our patched agregation procedure, i.e. by
+taking every 𝑠-th time, where 𝑠∈ N. Then, the inter-observation gaps
+of T′, denoted by Δ𝑡′ 𝑖 =𝑡𝑖+1 −𝑡𝑖 will have a coefficient of variation
+𝛼′ = 𝛼√𝑠 , i.e. √𝑠 times smaller.
+The proof is provided in Appendix B.2. In simpler terms, each
+higher level is more regular than the previous one. Consequently,
+we may use Transformers on the higher levels, treating the sequence
+as if the observations were uniformly spaced.
+5 Results
+In this section, we will present our main experimental results. Ad-
+ditional results can be found in Appendix C. More details on the
+datasets, baselines, and preprocessing steps used are provided in
+Appendix D.
+5.1 Experiment Setup
+Metrics. In practice, we approximate the predictive distributions
+using multiple independent samples (typically 100 per test sequence).
+We evaluate distributional accuracy using the Continuous Ranked
+6Note that we use the coefficient of variation here instead of variance. Since the raw
+inter-observation gap variance depends on the scale of time, which is arbitrary, it
+makes sense to normalize the variance w.r.t. time scale, which is precisely what the
+coefficient of variation does.
+Probability Score (CRPS) [8, 48], a strictly proper "lower-is-better"
+scoring rule. To average CRPS over heterogenous channels, we first
+normalize each channel independently, and then take the mean
+(in contrast to [42]); we call the resulting metric Normalized CRPS
+(NCRPS). For further details, see D.3
+Datasets & Baselines. We conducted experiments on two bench-
+marks: regular and irregular. Each consists of the same 5 widely
+used time series forecasting datasets: ETTm1, ETTm2, Electricity,
+Weather, and Traffic. We compare with 10 modern baselines, includ-
+ing five modern non-differential ones: DeepAR [30], PatchTST [25],
+LaST [40], 𝐾 2VAE [42], TSDiff [17], and five Neural ODE-based
+ones: Latent ODE [29], Neural CDE [15], Trajectory Flow Matching
+(TFM) [49], Structured Linear CDEs (SLiCE) [38], and an advanced
+Neural CDE version with kernel interpolation [31] (NCDE++).
+Implementation Details. Neural CDE is unable to handle highly
+multivariate datasets, such as Electricity (∼ 300 variates) and Traffic
+(∼ 800 variates), due to overflow in the matrix-defined vector field
+and an overly-stiff interpolation regime. To enrich our benchmark,
+we replace the matrix vector field with SwiGLU, and use kernel-
+based interpolation both in NCDE++ and in LatentODE, while
+keeping the Neural CDE model as-is for comparison. Since NCRPS
+is strictly proper, we also use it as the loss for non-autoregressive
+methods, including the proposed UFO, by sampling several predic-
+tions per training example.
+In our experiments, the context length (number of visible past
+observations) is equal to the horizon length (number of future obser-
+vations to predict) with 𝑇 =𝐿 = 720. Consequently, our benchmark
+is focused on the difficult task of long-term forecasting [48]. We
+also include a short-term forecasting study that compares UFO with
+the runner-up,𝐾 2VAE on𝑇 =𝐿 = 24, in Appendix C.2.
+5.2 Qualitative Results
+The qualitative results, comparing UFO performance to that of all
+the considered baselines in terms of NCRPS, are given in Table 1.
+Regular Benchmark. On the regular benchmark, we used the
+datasets as-is. Our UFO method consistently wins, outperform-
+ing or performing on-par with other baselines. No other baselines
+achieve first place in all the considered setups. However, we ob-
+serve that both 𝐾 2VAE and Neural CDE achieve competitive quality,
+catching up to UFO on 2 datasets. TSDiff is also a strong competitor,
+performing on-par with the winners on Weather.
+Irregular Benchmark. To make our data irregular, we randomly
+remove 30% of days from the data, replacing them with NaNs for
+irregular-compatible methods or forward-filling them for uniform-
+only ones, following [15]. Removing whole days instead of singular
+observations follows our blockwise irregularity design, mentioned
+in the introduction. UFO’s lead is more significant in this case, with
+K2VAE and other methods lagging behind.
+5.3 Efficiency Evaluation
+To validate our efficiency claims, we compare the inference time
+of our method against a range of baselines. Inference efficiency is
+particularly critical in long-horizon probabilistic forecasting, where
+models are often queried repeatedly or deployed within real-time
+Kuleshov et al.
+Table 1: Main results of our experiments on regular and irregular benchmarks. Each run is performed on three different seeds,
+and the results are averaged. In each expression 𝑎+−𝑏, the first number 𝑎 represents the average NCRPS (↓), and the second
+𝑏 is the corresponding standard deviation. The best results are highlighted in bold, the second-best are underlined. Results
+may share a 1st or 2nd place, if they are statistically indistinguishable with the p-value of a one-sided t-test being > 0.05. The
+datasets on which Neural CDE was unable to learn due to instability are marked by a cross (✗).
+Method ETTm1 ETTm2 Electricity Weather Traffic
+Regular Benchmarks
+DeepAR 0.584 +- 0.074 1.286 +- 0.386 0.138 +- 0.013 0.72 +- 0.094 0.268 +- 0.038
+PatchTST 0.439 +- 0.04 1.233 +- 0.108 0.148 +- 0.006 0.67 +- 0.107 0.246 +- 0.004
+LaST 0.401 +- 0.008 1.838 +- 0.389 0.171 +- 0.01 0.646 +- 0.031 0.278 +- 0.009
+𝐾 2VAE 0.274 +- 0.001 0.595 +- 0.04 0.1 +- 0.002 0.564 +- 0.019 0.185 +- 0.004
+TSDiff 0.549 +- 0.03 1.516 +- 0.387 0.125 +- 0.003 0.363 +- 0.012 0.247 +- 0.012
+Latent ODE 0.533 +- 0.018 2.211 +- 0.08 0.247 +- 0.02 0.446 +- 0.027 0.45 +- 0.02
+NCDE 0.261 +- 0.003 0.447 +- 0.013 ✗ 0.381 +- 0.006 ✗
+TFM 0.604 +- 0.045 2.297 +- 0.15 0.302 +- 0.024 0.912 +- 0.143 0.556 +- 0.039
+SLiCE 0.539 +- 0.003 1.959 +- 0.117 0.239 +- 0.004 1.24 +- 0.024 0.442 +- 0.0
+NCDE++ 0.299 +- 0.001 0.434 +- 0.015 0.214 +- 0.0 0.42 +- 0.0 0.432 +- 0.009
+UFO (ours) 0.271 +- 0.012 0.429 +- 0.009 0.102 +- 0.005 0.36 +- 0.006 0.184 +- 0.002
+Irregular Benchmarks
+DeepAR 0.619 +- 0.135 3.168 +- 0.579 0.14 +- 0.004 0.625 +- 0.065 0.239 +- 0.016
+PatchTST 0.457 +- 0.046 1.344 +- 0.114 0.207 +- 0.001 0.665 +- 0.098 0.339 +- 0.002
+LaST 0.404 +- 0.003 2.325 +- 0.292 0.25 +- 0.071 0.673 +- 0.028 0.332 +- 0.011
+𝐾 2VAE 0.31 +- 0.005 0.854 +- 0.126 0.134 +- 0.001 0.631 +- 0.01 0.252 +- 0.015
+TSDiff 0.46 +- 0.052 1.432 +- 0.646 0.152 +- 0.018 0.442 +- 0.028 0.338 +- 0.027
+Latent ODE 0.522 +- 0.015 2.078 +- 0.114 0.231 +- 0.001 0.533 +- 0.071 0.451 +- 0.007
+NCDE 0.29 +- 0.003 0.477 +- 0.008 ✗ 0.427 +- 0.01 ✗
+TFM 0.578 +- 0.042 2.821 +- 0.159 0.278 +- 0.006 0.749 +- 0.112 0.476 +- 0.028
+SLiCE 0.529 +- 0.008 2.053 +- 0.085 0.242 +- 0.003 1.273 +- 0.123 0.438 +- 0.002
+NCDE++ 0.326 +- 0.004 0.46 +- 0.01 0.22 +- 0.002 0.469 +- 0.008 0.436 +- 0.012
+UFO (ours) 0.294 +- 0.003 0.43 +- 0.001 0.104 +- 0.0 0.412 +- 0.009 0.188 +- 0.002
+decision-making pipelines. It also reflects training efficiency7 for
+most NCDE-based models (including UFO), since inference is es-
+sentially a forward pass in this case.
+The results are presented in Figure 4, and align with our claims
+and prior knowledge. LaST achieves first place due to a time-parallel
+design with a very lightweight backbone, followed by PatchTST,
+which is slightly heavier due to Attention, but still very effective.
+UFO achieves the best running time across all Neural CDE models,
+performing on-par with the fast 𝐾 2VAE model. This concludes the
+list of fully time-parallel models. The kernel-based Neural CDEs
+(NCDE++, Latent ODE) follow close by, but they have lower predic-
+tion accuracy. Then comes the autoregressive DeepAR. Trajectory
+Flow Matching shows poor performance because of a non-end-
+to-end integration routine, coupled with autoregressive sampling;
+however, it is still rather fast since it uses the "target prediction" op-
+timization proposed by the authors, skipping the costly integration
+phase. SLiCE comes even further: it consists of multiple stacked
+7While training time is also an important consideration, direct comparison across the
+considered methods is not well-defined, as it is heavily influenced by factors orthogo-
+nal to model architecture, including early stopping criteria, learning rate schedules,
+solver tolerances, and fundamentally different training–inference asymmetries (e.g.,
+TFM). Inference time, by contrast, more directly reflects architectural parallelism and
+scalability, which are the primary efficiency claims of this work.
+blocks, forced to do inference sequentially. The initially proposed
+associative scan parallelization works only for encoding the input
+sequence, and cannot be used for autoregressive sampling. SLiCE
+is matched by the diffusion-based TSDiff architecture: indeed, dif-
+fusion models are known to be computationally-intensive during
+inference. Neural CDE concludes the list, being the least effective
+model.
+5.4 Sensitivity Analysis
+To validate whether our UFO model indeed maintains a global re-
+ceptive field, paying attention to all input tokens irrespective of
+their position, we perform a sensitivity analysis. We measure the
+average norm of gradients of outputs w.r.t. each input position. The
+sensitivity is measured for 4 trained models: Deep AR, PatchTST,
+Neural CDE, and UFO. Additionally, we measure the correlation
+between the input observation number and the log-norm of gra-
+dients, to determine whether a model uniformly accounts for all
+observations, or is more sensitive to older/newer ones. The results
+are presented in Figure 5.
+Deep AR results are to be expected and follow from the nature of
+recurrent neural networks. Indeed, these networks are well known
+U-Former ODE
+LaST
+PatchTSTUFO (ours)
+K2 VAE
+NCDE++
+Latent ODE
+DeepAR
+TFM SLiCE TSDiffNCDE
+10 1
+100
+101
+Time/sample, sec.
+0.07
+0.16
+0.34 0.35
+0.47 0.47
+0.74
+0.92
+1.77 1.79
+4.90
+Figure 4: Inference time for all considered models (log scale),
+performed for a single sample on 6 batches of 32, and then
+averaged to obtain the time per single-batch sample. Classic
+models are in blue, Neural CDE models are in orange. We
+specify the corresponding time in seconds in a gray rectangle
+above each bar.
+for their "forgetting" effect, with older observations receiving expo-
+nentially smaller gradients [12]. The corresponding 𝑅2 correlation
+coefficient between log-gradient norm and observation number is
+exactly 1. The sensitivity graph of PatchTST is also unsurprising,
+with gradients spread more or less evenly across the sequence, with
+𝑅2 = 0.12. Transformers uniformly attend to all inputs by design.
+The results are surprising for the Neural CDE model. The sensi-
+tivity decreases with observation number: the model is sensitive to
+older observations, with 𝑅2 = 0.51. Although unintuitive at first, we
+argue that the finding aligns with prior theoretical contributions.
+Specifically, we recite an informal version of Theorem 3.1 from [18]:
+Theorem (Informal version, from [18]). The Lipschitz constant
+of Neural CDE w.r.t. the input signal on an interval of length 𝜏 is
+proportional to𝑒𝜏 .
+Consequently, any observation may only influence the hidden
+state by no more than ∼𝑒𝜏, where 𝜏 represents time until the end of
+the sequence. For the most recent observations, 𝜏 is smaller, so they
+have less effect on the final hidden state. The paper [18] success-
+fully addresses this effect by scaling time, but this also increases
+computational cost. As demonstrated in Figure 5, our approach
+does not adhere to the above rule, with 𝑅2 = 0. UFO adopts the
+Transformer architecture to evenly spread the gradients throughout
+the sequence, while performing several times faster than Neural
+CDE due to a time-parallel architecture.
+5.5 Resamplers Ablation
+To demonstrate the utility of our main contribution, we compare
+different Up- and Downsampling approaches within the U-Net
+Transformer, namely RNNs, convolutions, and Neural CDEs, in both
+regular and irregular data settings. We evaluate on the ETT datasets,
+which naturally contain whole-day gaps and therefore provide a
+suitable testbed for assessing robustness to data irregularity.
+Table 2: Kernel ablation on the ETT datasets, regular and
+irregular. As with Table 1, the resulting NCPRS (↓) are aver-
+aged over three runs, presented as "mean +- std“. For irregular
+data, we also report the increase in NCRPS relative to the
+performance of regular data.
+Method ETTm1 ETTm2
+Regular data
+UF-RNN 0.269 +- 0.003 0.427 +- 0.001
+UF-Conv 0.266 +- 0.005 0.432 +- 0.004
+UFO 0.271 +- 0.012 0.429 +- 0.009
+Irregular data
+UF-RNN 0.317 +- 0.013 (+0.048) 0.444 +- 0.001 (+0.015)
+UF-Conv 0.315 +- 0.004 (+0.049) 0.5 +- 0.008 (+0.068)
+UFO 0.294 +- 0.003 (+0.023) 0.43 +- 0.001 (+0.001)
+Table 3: The patch irregularity classification study. The met-
+ric (F1 score, ↑) is averaged over three runs, each cell presents
+"mean± std".
+Method ETTm1 ETTm2
+UF-RNN 0.182± 0.006 0.097± 0.01
+UF-Conv 0.205± 0.024 0.093± 0.024
+UFO 0.781± 0.144 0.363± 0.147
+The results are summarized in Table 2. On regular data, we ob-
+serve no statistically significant differences between RNN-, convolution-
+, and CDE-based resampling techniques, which is consistent with
+our claims. In contrast, on the irregular benchmark, UFO clearly
+outperforms the alternatives. To facilitate comparison, we addition-
+ally report the performance change when moving from regular to
+irregular data. On ETTm1, the degradation in NCRPS for UFO is
+approximately half that of UF-RNN and UF-Conv, while on ETTm2,
+it is negligible and within one standard deviation. These results
+indicate that using Neural CDEs as up/down-sampling kernels sub-
+stantially improves the ability of the U-Net Transformer to handle
+irregular time series.
+5.6 Irregularity Encoding
+We further hypothesize that Neural CDEs encode observation ir-
+regularity into patch embeddings. To evaluate this hypothesis, we
+conduct the following study. Using pre-trained UFO, UF-RNN, and
+UF-Conv models on the irregular variants of ETTm1 and ETTm2,
+we extract patch embeddings produced by the bottom Neural CDE
+downsampling layer. Based solely on these embeddings, we then
+formulate a binary classification task that distinguishes between
+patches with and without missing observations. Classification is
+performed using a logistic regression model with balanced class
+weights to account for class imbalance. Prediction quality is mea-
+sured using the F1 score.
+The results are reported in Table 3. They clearly demonstrate
+that the Neural CDE-based UFO model learns embeddings that
+Kuleshov et al.
+400 600
+Observation No.
+10 38
+10 28
+10 18
+10 8
+Grad. Norm
+Deep AR
+R2=1.00
+0 200 400 600
+Observation No.
+10 5
+10 4
+PatchTST
+R2=0.11
+0 200 400 600
+Observation No.
+10 4
+10 2
+100
+NCDE
+R2=0.54
+0 200 400 600
+Observation No.
+10 3
+10 2
+10 1
+100
+UFO
+R2=0.03
+Figure 5: Sensitivity analysis w.r.t. input observation number. Due to limited precision, Deep AR gradients are exactly zero at
+earlier positions, so we cannot visualize them in log-scale.
+capture observation irregularity, whereas UF-RNN and UF-Conv
+fail to do so.
+6 Related Works
+We separate the review of regular and irregular data models, focus-
+ing on the most relevant architectures: U-Nets, Transformers and
+various versions of Neural CDEs. We provide only a brief recollec-
+tion of prior works in the main text, an extended version of this
+review can be found in Appendix A.
+6.1 Classic models (Regular Data)
+U-Net. Adapting U-Net [28] to time series poses challenges, as
+standard convolutions and pooling may be suboptimal. Kernel U-
+Net [45] introduces flexible temporal downscaling (kernels) like
+RNNs and linear projections, but retains one-to-one skip connec-
+tions, limiting context. Our approach generalizes this via cross-
+attention.
+Transformers. There is plenty of work on Transformers for time
+series [20, 22, 41, 51]; most of these methods were later outper-
+formed by simpler patching-based models like PatchTST [25]. How-
+ever, vanilla attention is permutation-invariant [47], so architec-
+tures encoding temporal dynamics can help. Neural ODE-based
+models complement attention, handling irregular and gapped data-a
+capability prior U-Net-like Transformers generally lack.
+6.2 Neural CDEs (Irregular Data)
+Neural CDE. The original Neural ODEs [3, 29] integrate dynam-
+ics only between observations. Neural CDEs [15] interpolate inputs
+for continuous-time integration, but standard CDEs scale cubically
+in parameter count and are inherently sequential. Structured Linear
+CDE (SLiCE) [39] reduces the number of parameters and allows par-
+allelization, yet its performance remains suboptimal compared to
+our method: associative scans are poorly suited for autoregressive
+forecasting.
+Neural RDE and patching. Neural RDEs [24] and the later Neural
+Log-ODEs [37] apply log-signature transforms to input patches,
+reducing sequence length. However, the dimensionality of the re-
+sulting patches grows exponentially with the number of input
+variates, limiting scalability.
+Neural CDE Transformers. Hybrid CDE-attention models [4, 13]
+often offer good representation capabilities, but incur higher com-
+putational costs than traditional NCDEs. CDEs for temporal point
+processes [2, 34, 43] assume weak correlations and are memory-
+intensive. UFO balances these extremes: it is fully parallelizable,
+memory-efficient, and captures long-range dependencies, making
+it highly effective for irregular, long-horizon, multivariate forecast-
+ing.
+7 Conclusion
+We introduced UFO (U-Former ODE), a novel architecture for prob-
+abilistic multivariate time series forecasting, particularly suited for
+irregularly sampled data. UFO integrates the strengths of three pow-
+erful paradigms: the parallelizable hierarchical structure of U-Nets,
+the global receptive field of Transformers, and the continuous-time
+modeling capability of Neural ODEs. This combination allows UFO
+to overcome key limitations of existing methods, such as the sequen-
+tial bottleneck of Neural CDEs, the limited receptive field of pure
+convolutional models, and the permutation invariance of standard
+attention mechanisms in time series.
+Our experimental results across five standard benchmarks—on
+both regular and irregular time series—demonstrate that UFO con-
+sistently outperforms nine state-of-the-art baselines in predictive
+quality, while also being 15 times faster than classical Neural CDEs.
+Notably, UFO maintains stable performance on long, high-dimensional
+sequences and shows strong robustness to irregular sampling pat-
+terns, including challenging block-wise missing data — again mak-
+ing a step forward over existing Neural CDE models.
+In summary, UFO sets a new standard for fast, accurate, and
+scalable irregular time series forecasting, bridging the gap between
+continuous-time dynamics and modern deep learning architectures.
+References
+[1] Alexander Alexandrov, Konstantinos Benidis, Michael Bohlke-Schneider,
+Valentin Flunkert, Jan Gasthaus, Tim Januschowski, Danielle C. Maddix, Syama
+Rangapuram, David Salinas, Jasper Schulz, Lorenzo Stella, Ali Caner Türkmen,
+and Yuyang Wang. 2020. GluonTS: Probabilistic and Neural Time Series Mod-
+eling in Python. Journal of Machine Learning Research 21, 116 (2020), 1–6.
+http://jmlr.org/papers/v21/19-820.html
+[2] Ricky TQ Chen, Brandon Amos, and Maximilian Nickel. 2020. Neural spatio-
+temporal point processes. arXiv preprint arXiv:2011.04583 (2020).
+[3] Ricky TQ Chen, Yulia Rubanova, Jesse Bettencourt, and David K Duvenaud. 2018.
+Neural ordinary differential equations. Advances in neural information processing
+systems 31 (2018).
+U-Former ODE
+[4] Yuqi Chen, Kan Ren, Yansen Wang, Yuchen Fang, Weiwei Sun, and Dongsheng
+Li. 2023. Contiformer: Continuous-time transformer for irregular time series
+modeling. Advances in Neural Information Processing Systems 36 (2023), 47143–
+47175.
+[5] CK Chu and Wen-Shuenn Deng. 2003. An interpolation method for adapting
+to sparse design in multivariate nonparametric regression. Journal of statistical
+planning and inference 116, 1 (2003), 91–111.
+[6] Junyoung Chung, Caglar Gulcehre, KyungHyun Cho, and Yoshua Bengio. 2014.
+Empirical evaluation of gated recurrent neural networks on sequence modeling.
+arXiv preprint arXiv:1412.3555 (2014).
+[7] Alexey Dosovitskiy. 2020. An image is worth 16x16 words: Transformers for
+image recognition at scale. arXiv preprint arXiv:2010.11929 (2020).
+[8] Tilmann Gneiting and Adrian E Raftery. 2007. Strictly proper scoring rules,
+prediction, and estimation. Journal of the American statistical Association 102,
+477 (2007), 359–378.
+[9] Tilmann Gneiting, Adrian E Raftery, Anton H Westveld III, and Tom Goldman.
+2005. Calibrated probabilistic forecasting using ensemble model output statistics
+and minimum CRPS estimation. Monthly weather review 133, 5 (2005), 1098–1118.
+[10] Albert Gu and Tri Dao. 2024. Mamba: Linear-time sequence modeling with
+selective state spaces. In First conference on language modeling.
+[11] Ali Hatamizadeh, Yucheng Tang, Vishwesh Nath, Dong Yang, Andriy Myronenko,
+Bennett Landman, Holger R Roth, and Daguang Xu. 2022. Unetr: Transformers for
+3d medical image segmentation. In Proceedings of the IEEE/CVF winter conference
+on applications of computer vision. 574–584.
+[12] Sepp Hochreiter and Jürgen Schmidhuber. 1997. Long short-term memory. Neural
+computation 9, 8 (1997), 1735–1780.
+[13] Sheo Yon Jhin, Heejoo Shin, Sujie Kim, Seoyoung Hong, Minju Jo, Solhee Park,
+Noseong Park, Seungbeom Lee, Hwiyoung Maeng, and Seungmin Jeon. 2024.
+Attentive neural controlled differential equations for time-series classification
+and forecasting. Knowledge and Information Systems 66, 3 (2024), 1885–1915.
+[14] Mourad Khayati, Alberto Lerner, Zakhar Tymchenko, and Philippe Cudré-
+Mauroux. 2020. Mind the gap. Proceedings of the VLDB Endowment 13 (2020),
+768–782.
+[15] Patrick Kidger, James Morrill, James Foster, and Terry Lyons. 2020. Neural
+controlled differential equations for irregular time series. Advances in neural
+information processing systems 33 (2020), 6696–6707.
+[16] Taesung Kim, Jinhee Kim, Yunwon Tae, Cheonbok Park, Jang-Ho Choi, and
+Jaegul Choo. 2021. Reversible instance normalization for accurate time-series
+forecasting against distribution shift. In International conference on learning
+representations.
+[17] Marcel Kollovieh, Abdul Fatir Ansari, Michael Bohlke-Schneider, Jasper Zschieg-
+ner, Hao Wang, and Yuyang Bernie Wang. 2023. Predict, refine, synthesize:
+Self-guiding diffusion models for probabilistic time series forecasting. Advances
+in Neural Information Processing Systems 36 (2023), 28341–28364.
+[18] Ilya Kuleshov, Evgenia Romanenkova, Vladislav Zhuzhel, Galina Boeva, Evgeni
+Vorsin, and Alexey Zaytsev. 2024. DeNOTS: Stable Deep Neural ODEs for Time
+Series. arXiv preprint arXiv:2408.08055 (2024).
+[19] Guokun Lai, Wei-Cheng Chang, Yiming Yang, and Hanxiao Liu. 2018. Modeling
+long-and short-term temporal patterns with deep neural networks. In The 41st
+international ACM SIGIR conference on research & development in information
+retrieval. 95–104.
+[20] Shiyang Li, Xiaoyong Jin, Yao Xuan, Xiyou Zhou, Wenhu Chen, Yu-Xiang Wang,
+and Xifeng Yan. 2019. Enhancing the locality and breaking the memory bottle-
+neck of transformer on time series forecasting. Advances in neural information
+processing systems 32 (2019).
+[21] Wenjie Luo, Yujia Li, Raquel Urtasun, and Richard Zemel. 2016. Understanding
+the effective receptive field in deep convolutional neural networks. Advances in
+neural information processing systems 29 (2016).
+[22] Kiran Madhusudhanan, Johannes Burchert, Nghia Duong-Trung, Stefan Born,
+and Lars Schmidt-Thieme. 2021. Yformer: U-net inspired transformer architecture
+for far horizon time series forecasting. arXiv preprint arXiv:2110.08255 (2021).
+[23] James Morrill, Patrick Kidger, Lingyi Yang, and Terry Lyons. 2021. Neural
+controlled differential equations for online prediction tasks. arXiv preprint
+arXiv:2106.11028 (2021).
+[24] James Morrill, Cristopher Salvi, Patrick Kidger, and James Foster. 2021. Neural
+rough differential equations for long time series. In International Conference on
+Machine Learning. PMLR, 7829–7838.
+[25] Y Nie. 2022. A Time Series is Worth 64Words: Long-term Forecasting with
+Transformers. arXiv preprint arXiv:2211.14730 (2022).
+[26] Alec Radford, Karthik Narasimhan, Tim Salimans, Ilya Sutskever, et al. 2018.
+Improving language understanding by generative pre-training. (2018).
+[27] Matthew Reyna, Chris Josef, Russell Jeter, Supreeth Shashikumar, Benjamin
+Moody, M. Brandon Westover, Ashish Sharma, Shamim Nemati, and Gari D.
+Clifford. 2019. Early Prediction of Sepsis from Clinical Data: The Phys-
+ioNet/Computing in Cardiology Challenge 2019. PhysioNet (Aug. 2019). doi:10.
+13026/v64v-d857 Version 1.0.0.
+[28] Olaf Ronneberger, Philipp Fischer, and Thomas Brox. 2015. U-net: Convolutional
+networks for biomedical image segmentation. In International Conference on
+Medical image computing and computer-assisted intervention. Springer, 234–241.
+[29] Yulia Rubanova, Ricky TQ Chen, and David K Duvenaud. 2019. Latent ordinary
+differential equations for irregularly-sampled time series. Advances in neural
+information processing systems 32 (2019).
+[30] David Salinas, Valentin Flunkert, Jan Gasthaus, and Tim Januschowski. 2020.
+DeepAR: Probabilistic forecasting with autoregressive recurrent networks. Inter-
+national journal of forecasting 36, 3 (2020), 1181–1191.
+[31] Egor Serov, Ilya Kuleshov, and Alexey Zaytsev. 2026. Efficient Neural Controlled
+Differential Equations via Attentive Kernel Smoothing. arXiv:2602.02157 [cs.LG]
+https://arxiv.org/abs/2602.02157
+[32] Abdelrahman Shaker, Muhammad Maaz, Hanoona Rasheed, Salman Khan, Ming-
+Hsuan Yang, and Fahad Shahbaz Khan. 2024. UNETR++: delving into efficient
+and accurate 3D medical image segmentation. IEEE Transactions on Medical
+Imaging 43, 9 (2024), 3377–3390.
+[33] Noam Shazeer. 2020. GLU variants improve transformer. arXiv preprint
+arXiv:2002.05202 (2020).
+[34] Yujee Song, Donghyun Lee, Rui Meng, and Won Hwa Kim. 2024. Decoupled
+marked temporal point process using neural ordinary differential equations.
+arXiv preprint arXiv:2406.06149 (2024).
+[35] Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne
+Lachaux, Timothée Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal
+Azhar, et al. 2023. Llama: Open and efficient foundation language models. arXiv
+preprint arXiv:2302.13971 (2023).
+[36] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. 2017. Attention is all
+you need. Advances in neural information processing systems 30 (2017).
+[37] Benjamin Walker, Andrew D McLeod, Tiexin Qin, Yichuan Cheng, Haoliang
+Li, and Terry Lyons. 2024. Log neural controlled differential equations: The lie
+brackets make a difference. arXiv preprint arXiv:2402.18512 (2024).
+[38] Benjamin Walker, Lingyi Yang, Nicola Muca Cirone, Cristopher Salvi, and Terry
+Lyons. 2025. Structured Linear CDEs: Maximally Expressive and Parallel-in-Time
+Sequence Models. arXiv preprint arXiv:2505.17761 (2025).
+[39] Benjamin Walker, Lingyi Yang, Nicola Muca Cirone, Cristopher Salvi, and Terry
+Lyons. 2025. Structured Linear CDEs: Maximally Expressive and Parallel-in-Time
+Sequence Models. https://arxiv.org/abs/2505.17761
+[40] Zhiyuan Wang, Xovee Xu, Weifeng Zhang, Goce Trajcevski, Ting Zhong, and
+Fan Zhou. 2022. Learning latent seasonal-trend representations for time series
+forecasting. Advances in Neural Information Processing Systems 35 (2022), 38775–
+38787.
+[41] Haixu Wu, Jiehui Xu, Jianmin Wang, and Mingsheng Long. 2021. Autoformer: De-
+composition transformers with auto-correlation for long-term series forecasting.
+Advances in neural information processing systems 34 (2021), 22419–22430.
+[42] Xingjian Wu, Xiangfei Qiu, Hongfan Gao, Jilin Hu, Bin Yang, and Chenjuan
+Guo. 2025. 𝐾 2VAE: A Koopman-Kalman Enhanced Variational AutoEncoder for
+Probabilistic Time Series Forecasting. arXiv preprint arXiv:2505.23017 (2025).
+[43] Jingge Xiao, Leonie Basso, Wolfgang Nejdl, Niloy Ganguly, and Sandipan Sikdar.
+2024. IVP-VAE: modeling EHR time series with initial value problem solvers. In
+Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 38. 16023–16031.
+[44] An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng,
+Bowen Yu, Chang Gao, Chengen Huang, Chenxu Lv, et al. 2025. Qwen3 technical
+report. arXiv preprint arXiv:2505.09388 (2025).
+[45] Jiang You, Arben Cela, René Natowicz, Jacob Ouanounou, and Patrick Siarry. 2024.
+Kernel-U-net: Multivariate time series forecasting using custom kernels. In 2024
+International Conference on INnovations in Intelligent SysTems and Applications
+(INISTA). IEEE, 1–8.
+[46] Seongjun Yun, Minbyul Jeong, Raehyun Kim, Jaewoo Kang, and Hyunwoo J Kim.
+2019. Graph transformer networks. Advances in neural information processing
+systems 32 (2019).
+[47] Ailing Zeng, Muxi Chen, Lei Zhang, and Qiang Xu. 2023. Are transformers
+effective for time series forecasting?. In Proceedings of the AAAI conference on
+artificial intelligence, Vol. 37. 11121–11128.
+[48] Jiawen Zhang, Xumeng Wen, Zhenwei Zhang, Shun Zheng, Jia Li, and Jiang
+Bian. 2024. ProbTS: Benchmarking point and distributional forecasting across
+diverse prediction horizons. Advances in Neural Information Processing Systems
+37 (2024), 48045–48082.
+[49] Xi Nicole Zhang, Yuan Pu, Yuki Kawamura, Andrew Loza, Yoshua Bengio, Dennis
+Shung, and Alexander Tong. 2024. Trajectory flow matching with applications to
+clinical time series modelling. Advances in Neural Information Processing Systems
+37 (2024), 107198–107224.
+[50] Zihuai Zhao, Wenqi Fan, Jiatong Li, Yunqing Liu, Xiaowei Mei, Yiqi Wang, Zhen
+Wen, Fei Wang, Xiangyu Zhao, Jiliang Tang, et al. 2024. Recommender systems
+in the era of large language models (llms). IEEE Transactions on Knowledge and
+Data Engineering 36, 11 (2024), 6889–6907.
+[51] Haoyi Zhou, Shanghang Zhang, Jieqi Peng, Shuai Zhang, Jianxin Li, Hui Xiong,
+and Wancai Zhang. 2021. Informer: Beyond efficient transformer for long se-
+quence time-series forecasting. In Proceedings of the AAAI conference on artificial
+intelligence, Vol. 35. 11106–11115.
+Kuleshov et al.
+A Related Works (Extended)
+A.1 Classic models (Regular Data)
+U-Net. U-Net was originally introduced as a hierarchical fully
+convolutional architecture for biomedical image segmentation [28].
+Subsequent work extended this paradigm by incorporating Trans-
+former components. UNETR [11] proposed a hybrid Transformer–
+U-Net architecture, and UNETR++ [32] further refined this design
+with architectural and training improvements. However, these
+methods remain firmly rooted in the computer vision domain,
+where convolutional inductive biases and fixed-resolution down-
+sampling/upsampling operations are natural and effective.
+In contrast, adapting U-Net-style architectures to time series
+raises different challenges. Kernel U-Net [45] argues that standard
+convolutions and pooling operations are suboptimal for temporal
+data and proposes more flexible temporal downscaling mechanisms
+(termed kernels), including RNNs and linear projections. While
+this approach broadens the design space, Kernel U-Net retains
+one-to-one skip connections, such that each decoder patch only
+accesses information from a single encoder patch. This limits the
+model’s ability to aggregate long-range temporal context. Instead,
+our approach follows a more general paradigm, inspired by Informer
+and PatchTST (described below), in which the decoder employs
+attention mechanisms to integrate information from all encoder
+patches, enabling richer temporal interactions.
+Transformers. Transformer models for time series forecasting
+have been studied extensively. LogTrans [20] integrates convo-
+lutional operations into attention to capture local patterns. In-
+former [51] employs encoder downsampling and sparse attention
+for efficiency and accuracy. Y-Former [22] adopts a U-Net-like hier-
+archical design in encoder and decoder. Autoformer [41] introduces
+autocorrelation-based attention to model periodicity explicitly.
+Despite these advances, many of these approaches were later out-
+performed by PatchTST [25], which shows that a simpler patching-
+based Transformer is highly competitive. However, recent studies
+question the suitability of vanilla attention for time series model-
+ing. Attention is permutation-invariant and uses positional encod-
+ings, yet empirical evidence indicates that attention-based mod-
+els may still struggle to capture temporal order fully. In partic-
+ular, [47] demonstrates that Transformers can underemphasize
+sequential dependencies, potentially weakening the representation
+of causal structure fundamental to time-domain data. Consequently,
+Transformer-based models often benefit from being combined with
+architectures that explicitly encode temporal dynamics.
+Neural ODE-based models are closely aligned with the continuous-
+time nature of time series and explicitly model temporal evolution,
+making them a natural complement to attention mechanisms. UFO
+inherits these properties and can naturally handle irregularly sam-
+pled and gapped data, a capability that prior U-Net-like Transformer
+architectures generally lack.
+A.2 Neural CDEs (Irregular Data)
+Neural CDE. Neural Ordinary Differential Equations (Neural
+ODEs) were introduced in [3], including early applications to time
+series modeling. The core idea is to define the derivative of a hidden
+state using a neural network and integrate it over time. This frame-
+work was extended in [29] to latent-variable models via a Neural
+ODE-based variational autoencoder. However, both approaches
+integrate the dynamics only between discrete observations and rely
+on RNN-style updates at observation times.
+Neural Controlled Differential Equations (Neural CDEs) [15] re-
+solve this limitation by interpolating the input signal (e.g., using
+cubic splines) and integrating the dynamics end-to-end in contin-
+uous time. While theoretically elegant, the original Neural CDE
+formulation requires the vector field to output a matrix, leading
+to cubic parameter growth in the final layer. This makes deep or
+stacked Neural CDE architectures impractical. Moreover, standard
+Neural CDEs are inherently sequential and cannot be parallelized
+along the temporal dimension.
+Recent work introduces structural constraints to address these
+issues. SLiCE [39] proposes a structured linear control matrix that
+significantly reduces parameter count and enables parallel execu-
+tion via associative scans, drawing inspiration from state-space
+models such as Mamba [10]. We include SLiCE in our benchmark
+comparison and find that, despite these optimizations, it delivers
+suboptimal predictive performance relative to our approach.
+Neural RDE and patching. Neural Rough Differential Equations
+(Neural RDEs) [24] address long-horizon time series by applying
+signature transforms to patches of the input sequence, thereby re-
+ducing the effective sequence length. However, the dimensionality
+of signature features grows exponentially with the input dimension,
+as acknowledged by the authors, rendering the approach infeasible
+for highly multivariate time series (e.g., more than 10–20 variables).
+Subsequent work [37] improves the efficiency of signature compu-
+tation, but scalability remains a limiting factor.
+Neural CDE Transformers. Several recent works explore hybrid
+architectures that combine differential equation models with atten-
+tion mechanisms. Attentive Neural CDE (ANCDE) [13] employs two
+coupled Neural CDEs, where one generates attention weights that
+modulate the input path processed by the second. ContiFormer [4]
+proposes a continuous-time reformulation of the attention mech-
+anism, but at a prohibitive computational cost, exceeding that of
+standard Neural CDEs.
+Other approaches apply Neural CDEs to temporal point pro-
+cesses (TPPs). For example, [2] integrates each event independently
+while using attention to aggregate information from past events.
+Similar decoupled integration strategies appear in [34, 43]. While
+effective for event-based data, such methods are ill-suited for time
+series forecasting for two reasons. First, they implicitly assume
+weak correlations between observations, which rarely holds in
+continuous-valued time series. Second, they incur prohibitive mem-
+ory and computation costs for long sequences: the number of ODEs
+they need to solve is proportinal to sequence length. In a way, the
+patching approach of UFO is a compromise between the end-to-
+end integration of Neural CDE, which takes too much time and
+forgets past observations, and the per-observation integration of
+TPP methods, which discard neighbourhood correlations and are
+very memory-intensive.
+More broadly, most Neural CDE- and RDE-based methods pri-
+marily target time series classification rather than forecasting. In
+U-Former ODE
+contrast, UFO is explicitly designed for forecasting and offers sev-
+eral practical advantages: (a) it is fully parallelizable along the
+temporal dimension, achieving runtimes comparable to non-ODE
+models; (b) its memory footprint matches that of a single feed-
+forward layer; and (c) it provides Transformer-like long-range de-
+pendency modeling. Together, these properties make UFO particu-
+larly well-suited for irregular, long-horizon, multivariate time series
+forecasting, where it substantially outperforms prior methods in
+both efficiency and accuracy.
+B Proofs
+B.1 Lipschitzness Theorem
+Theorem (4.1). The map 𝑡↦→ Φ(𝑡·𝑤) is Lipschitz continuous
+with constant
+𝐿Φ =𝐿𝑥 · 𝑒𝐿𝑓 𝑤 − 1 𝐿𝑓𝑤 .
+i.e. the effective Lipschitz constant per unit of the new (coarser) time.
+Proof. Fix arbitrary𝑡,𝑡′∈ R and let
+z(𝜏) := z(𝑡)(𝜏), ˜z(𝜏) := z(𝑡′)(𝜏), 𝜏∈[0,𝑤].
+Then, for almost every𝜏∈[0,𝑤],
+𝑑
+𝑑𝜏∥z(𝜏)− ˜z(𝜏)∥≤
+f(x(𝑡+𝜏), z(𝜏))− f(x(𝑡′+𝜏), ˜z(𝜏)) 
+≤𝐿𝑓
+ ∥z(𝜏)− ˜z(𝜏)∥+∥x(𝑡+𝜏)− x(𝑡′+𝜏)∥.
+Since x is𝐿𝑥-Lipschitz,
+∥x(𝑡+𝜏)− x(𝑡′+𝜏)∥≤𝐿𝑥|𝑡−𝑡′|.
+Substituting gives the differential inequality
+𝑑
+𝑑𝜏∥z(𝜏)− ˜z(𝜏)∥≤𝐿𝑓 ∥z(𝜏)− ˜z(𝜏)∥+𝐿𝑓𝐿𝑥|𝑡−𝑡′|.
+Applying Grönwall’s inequality (integral form) with initial con-
+dition z(0) = ˜z(0) = 0 yields
+∥z(𝑤)− ˜z(𝑤)∥≤𝐿𝑓𝐿𝑥|𝑡−𝑡′|
+∫ 𝑤
+0
+𝑒𝐿𝑓 (𝑤−𝜎)𝑑𝜎
+=𝐿𝑓𝐿𝑥|𝑡−𝑡′|· 𝑒𝐿𝑓 𝑤 − 1 𝐿𝑓
+=𝐿𝑥
+𝑒𝐿𝑓 𝑤 − 1
+𝐿𝑓
+|𝑡−𝑡′|.
+Since 𝚽(𝑡·𝑤) = z(𝑤) and 𝚽(𝑡′·𝑤) = ˜z(𝑤), we obtain
+∥𝚽(𝑡·𝑤)− 𝚽(𝑡′·𝑤)∥≤𝐿𝑥 𝑒𝐿𝑓 𝑤 − 1 𝐿𝑓 |𝑡−𝑡′|.
+Dividing both sides by𝑤 > 0 gives the claimed Lipschitz constant
+for the rescaled time variable:
+∥𝚽(𝑠)− 𝚽(𝑠′)∥≤  𝐿𝑥 𝑒𝐿𝑓 𝑤 − 1 𝐿𝑓𝑤  |𝑠−𝑠′|,
+where𝑠 =𝑡·𝑤 and𝑠′ =𝑡′·𝑤. This completes the proof. □
+0 1 2 3 4
+Level No.
+0
+2
+4
+6Var. Coef.
+Figure 6: Coefficient of Variation of inter-observation gaps
+vs Number of Patching Levels, on the irregular ETTm1.
+B.2 Irregularity Lemma
+Lemma (4.3). Consider an irregular sequence, with observations
+at times T =𝑡1,𝑡2 ...,𝑡𝑛, such that the inter-observation gaps are
+i.i.d. random variables: Δ𝑡𝑖 =𝑡𝑖+1 −𝑡𝑖 , with a coefficient of variation
+(standard deviation over mean) of 𝛼 ∈ R. Also consider another
+sequence T′ = 𝑡′ 1,𝑡′ 2,...,𝑡′ 𝑚, which is created from T through our
+patched aggregation procedure, i.e. by taking every 𝑠-th time, where
+𝑠 ∈ N. Then, the inter-observation gaps of T′, denoted by Δ𝑡′ 𝑖 =
+𝑡𝑖+1 −𝑡𝑖 will have a coefficient of variation 𝛼′ = 𝛼√𝑠 , i.e. √𝑠 times
+smaller.
+Proof. Since the step is 𝑠, each new inter-observation gap will
+be a sum of𝑠 old inter-observation gaps:
+Δ𝑡′ 𝑖 = ∑︁
+𝑗∈S𝑖
+Δ𝑡𝑗 ;|S𝑖| =𝑠.
+Here, we denote all the old times between 𝑡′ 𝑖+1 and 𝑡′ 𝑖 by S𝑖 for
+convenience.
+Next, let’s assume that we know the moments of the old inter-
+observation gaps:
+𝜇 := EΔ𝑡𝑖 ; 𝜎 2 := Var(Δ𝑡𝑖).
+Then, the old variance coefficient is 𝜎 𝜇 . Now we may calculate the
+new variance coefficient, using the fact that the sum of i.i.d. random
+variables has mean equal to the sum of means, and variance equal
+to the sum of variances:
+𝜇′ := EΔ𝑡′ 𝑖 =𝑠𝜇; 𝜎′2 := Var(Δ𝑡′ 𝑖) =𝑠𝜎 2.
+Now we may directly calculate the new variation coefficient:
+𝜎′
+𝜇′ =
+√𝑠𝜎
+𝑠𝜇 = 1√𝑠 𝜎 𝜇,
+which concludes our proof □
+We complement Lemma 4.3 with Figure 6, which plots the coef-
+ficient of variation of time intervals against level number on our
+irregular benchmark, ETTm1 with 30% of days discarded. The result
+precisely aligns with our reasoning, with the coefficient of variation
+decreasing exponentially as we go deeper.
+Kuleshov et al.
+C Additional Results
+C.1 Attention Visualization
+To explore the learned attention patterns, we visualize several
+patches, which correspond to maximum attention weights.
+10
+ 0 10 20 30
+3
+2
+1
+0
+Source
+Target
+10
+ 0 10 20 30
+4
+3
+2
+1
+0
+Source
+Target
+Figure 7: Two examples of visually similar patches, corre-
+sponding to locations with top attention weights for the en-
+coder self-attention.
+10
+ 0 10 20 30
+2
+0
+Source
+Target
+10
+ 0 10 20 30
+0
+1
+2
+Source
+Target
+Figure 8
+Figure 9: Two examples of visually similar patches, corre-
+sponding to locations with top attention weights for the de-
+coder cross-attention.
+For testing the encoder self-attention patterns, we visualize
+the corresponding query and key patches from 𝑥, aligning them
+for easier cognition. The results are presented in Figure 7. We find
+that the patches, although often dissimilar themselves, are often
+located in similar neighbourhoods. We also note, that encoder patch
+similarity is not critical, as the encoder self-attention is directed
+at feature extraction and propagating information throughout the
+sequence.
+To investigate the decoder cross-attention patterns, we fix the
+generation seed to 0 (since attention maps may vary sample-to-
+sample), and visualize the patches from 𝑥 and 𝑦, corresponding
+to maximum attention weights. The results are in Figure 9. Note,
+that the model does not see the target patch, and is forced to guess,
+what kind of patch that will be. Nevertheless, the similarities of top
+patches found by the model are often striking, indicating that the
+model can predict the general patch type rather well.
+C.2 Short term forecasting
+Although our method, by design, is better suited for longer horizons,
+we also test it on the short-term forecasting task, comparing its
+performance to one of the runner-ups, 𝐾 2VAE, on the regular ETTm
+datasets. Both the horizon and the history lengths are 24 here, so
+we make the UFO model smaller so that it can process such short
+sequences.
+The results are presented in Table 4. As you can see, not only
+does our method still outperform 𝐾 2𝑉𝐴𝐸, the gap seems to get
+bigger.
+Table 4: Results on the short-term forecasting task: length of
+history and length of horizon are both 24, on the ETT regular
+dataset.
+Method ETTm1 ETTm2
+𝐾 2VAE 0.267 +- 0.002 0.363 +- 0.015
+UFO-tiny 0.246 +- 0.006 0.234 +- 0.002
+D Experiment Details
+Most of our benchmark follows the setup in 𝐾 2VAE [42], and the
+preceding ProbTS benchmark [48]. Below, we explain the datasets
+used, and the methods we compare to in greater detail.
+D.1 Data description
+As mentioned in the main text, we use 5 popular multivariate time
+series datasets: ETTm1, ETTm2, Weather, Electricity, Traffic. The
+respective statistics are presented in Table 5.
+ETT (Electricity Transformer Temperature). The ETT datasets con-
+sist of multivariate time series collected from electricity transform-
+ers in two different counties in China, denoted as ETTm1/ETTh1
+and ETTm2/ETTh2 (or collectively ETT1 and ETT2). They record
+7 variables, including transformer oil temperature (the main tar-
+get) and six load-related features. Measurements are taken at 15-
+minute intervals in the minute-level versions (ETTm1, ETTm2)
+over roughly two years, yielding 69,680 timesteps, and at hourly
+intervals in the hour-level versions (ETTh1, ETTh2), yielding 17,420
+timesteps. ETT1 (typically ETTh1/ETTm1) exhibits relatively cleaner
+patterns and is considered easier, with many prior methods achiev-
+ing strong performance. ETT2 (ETTh2/ETTm2) is noticeably noisier
+and more challenging, often revealing limitations in existing fore-
+casting approaches. We opt for the "m" versions of these datasets to
+maximize the amount of data. To maximize dataset diversity, while
+staying within our compute constraints, we skip the "h" versions,
+opting for other datasets instead (described below).
+Weather. The Weather dataset comprises multivariate local me-
+teorological observations, including temperature, humidity, wind
+speed, atmospheric pressure, and other climatological variables (21
+variables in total). Recorded at 10-minute intervals, it spans over
+52,000 timesteps (approximately 52,696 in the standard benchmark
+version). Thanks to its pronounced daily and yearly seasonal cycles,
+clear trends, and gradual shifts, it serves as a widely adopted bench-
+mark for evaluating both short-term and long-term forecasting
+models, particularly those designed to capture periodic meteoro-
+logical dynamics.
+Electricity. The Electricity dataset records hourly electricity con-
+sumption (in kW) across 320 clients over several years, resulting
+in 26,304 timesteps in the standard benchmark version. It exhibits
+strong daily, weekly, and seasonal periodicity driven by human
+activity, time-of-day patterns, weekdays/weekends, and broader
+demand fluctuations. As one of the most established multivariate
+forecasting benchmarks, it is routinely used in short-term and long-
+term settings to test a model’s ability to handle cross-consumer
+patterns, recurring cycles, and external influencing factors.
+U-Former ODE
+Traffic. The Traffic dataset contains hourly road occupancy rates
+(normalized to [0, 1]) measured by 862 sensors across freeways in
+the San Francisco Bay Area, spanning 17,544 timesteps in the stan-
+dard version. The data display prominent hourly and daily periodic
+patterns with relatively stable long-term levels and minimal overall
+trends. Widely employed in intelligent transportation system re-
+search, it provides a challenging yet clean multivariate benchmark
+for assessing how effectively models capture strong seasonality
+and recurring traffic flow behaviours in real-world urban mobility
+scenarios.
+Table 5: Dataset statistics.
+Name Variates Total Days Observations Frequency
+ETTm1 7 725 69680 15m
+ETTm2 7 725 69680 15m
+Weather 21 365 52695 10m
+Electricity 320 1095 26304 1h
+Traffic 862 730 17544 1h
+D.2 Additional UFO details
+Loss function. As we mentioned in Section 5.1, we use NCRPS
+as the loss function for UFO. It is differentiable, so we can pass
+gradients through. Additionally, as we mentioned above, CRPS is
+strictly proper, so it may be used for training without fear that the
+model may end up overfitting to some local optima of this metric.
+We sample 16 randomized predictions per example in-parallel, cal-
+culate NCRPS, and backpropagate through the model, using the
+reparametrization trick to pass gradients through the top level of
+UFO.
+Normalization. In our experiments, we found that the normaliza-
+tion strategy plays a critical role in training stability. The optimal
+configuration used in all our presented UFO results is as follows:
+• Input/Output: Reversible Instance Normalization [16].
+• Pre-up/downsampling: Instance Normalization.
+• Transformers: Instance Normalization.
+• Top layer: Layer Normalization.
+D.3 CRPS Calculation
+Per-channel procedure. For a univariate target 𝑦 and predictive
+CDF𝐹 ,
+CRPS(𝐹,𝑦) =
+∫ ∞
+−∞
+ 𝐹(𝑧)− 1{𝑦≤𝑧}  2 𝑑𝑧. (8)
+Calculating the integral from (8) using sample predictions is non-
+trivial. Instead, we use an equivalent CRPS expression [9], which is
+simple to evaluate over samples:
+CRPS(𝐹,𝑥) = E𝑋∼𝐹 [|𝑋−𝑥|]− 1 2 E𝑋,𝑋∗∼𝐹 [|𝑋−𝑋∗|].
+The first term is simply the mean absolute error. The second term
+can be efficiently calculated in O(𝑃 log𝑃) (where 𝑃 is the number of
+samples), by sorting the samples and calculating the coefficient for
+each sample. For a sorted sequence, starting from the smallest one,
+the coefficients are: −𝑃+1,−𝑃+3,...,𝑃−3,𝑃−1 :=[−𝑃+1 : 𝑃−1 : 2]
+(where we use the brackets notation to denote [start:stop:step], with
+start and stop inclusive). Consequently, the formula for CRPS from
+samples looks like:
+CRPS(𝑋,𝑥) = MAE(𝑋,𝑥)+
+∑︁
+𝑘∈[−𝑃+1:𝑃−1:2]
+𝑘𝑋[𝑘].
+Here,𝑋[𝑘] denotes the𝑘−𝑡ℎ smallest sample.
+Averaging, Normalization. While CRPS can be averaged over
+time, multivariate series often have channels with heterogeneous
+scales, making naive averaging (as done in [42]) across dimensions
+undesirable. We therefore normalize each channel independently
+and define the Normalized CRPS (NCRPS) as
+NCRPS(F, y) = 1 𝑑 𝑑∑︁ 𝑗 =1 ˝𝐿 𝑖=1 CRPS(𝐹𝑖,𝑗,𝑦𝑖,𝑗) ˝𝐿 𝑖=1 |𝑦𝑖,𝑗| . (9)
+The first index 𝑖 denotes the observation number, the second 𝑗 is
+responsible for channel number. The ℓ1 normalization yields an
+interpretable, relative error–like metric across channels, which we
+seek to minimise.
+D.4 Additional Baseline Details
+Non-ODE Baselines. Most non-ODE baselines were taken from
+the 𝐾 2VAE repository8, along with the corresponding (tuned) hy-
+perparameters, otherwise we selected reasonable hyperparameters
+empirically.
+ODE Baselines. For all ODE baselines, we chose model-specific
+hyperparameters according to the original repositories. Other more
+general hyperparameters (e.g. hidden size) were chosen empirically,
+in accordance with other models included in the comparison. In
+all ODE baselines (where applicable) we set tolerance to 0.001 to
+speed up execution. For Latent ODE (reconstruction term), NCDE,
+NCDE++ and UFO we used the NCRPS metric as the loss function,
+sampling 16 times per training example. For SLiCE, since it acts
+autoregressively, we chose the DeepAR-like autoregressive sam-
+pling procedure, along with the corresponding log-likelihood loss
+function. NCDE and NCDE++ were implemented in an encoder-
+decoder like design, similar to UFO, where the input embedding
+is used to produce a diagonal Gaussian distribution, which is then
+used to sample the initial state for the decoder.
+8https://github.com/decisionintelligence/K2VAE

@@ -1,0 +1,1544 @@
+Neural CDEs as Correctors for Learned Time Series
+Models
+Muhammad Bilal Shahid
+Department of Mechanical Engineering
+Iowa State University
+belal@iastate.edu
+Zhanhong Jiang
+Department of Mechanical Engineering
+Iowa State University
+zhjiang@iastate.edu
+Prajwal Koirala
+Sibley School of Mechanical and Aerospace Engineering
+Cornell University
+pk596@cornell.edu
+Soumik Sarkar
+Department of Mechanical Engineering
+Iowa State University
+soumiks@iastate.edu
+Cody Fleming
+Department of Mechanical Engineering
+Iowa State University
+flemingc@iastate.edu
+Abstract
+Learned time-series models, whether continuous or discrete, are widely used for
+forecasting the states of dynamical systems but suffer from error accumulation in
+multi-step forecasts. To address this issue, we propose a Predictor–Corrector frame-
+work in which the Predictor is a learned time-series model that generates multi-step
+forecasts and the Corrector is a neural controlled differential equation that corrects
+the forecast errors. The Corrector works with irregular sampled time series and
+is compatible with both continuous- and discrete-time Predictors. We further in-
+troduce two regularization strategies that improve the Corrector’s extrapolation
+performance and accelerate its training. We also provide theoretical guarantees
+on the stability and convergence of the proposed framework. Experiments on syn-
+thetic, physics-based, and real-world datasets show that the proposed framework
+consistently improves forecasting performance across diverse Predictors, including
+neural ordinary differential equations, ContiFormer, and DLinear, demonstrating
+its predictor-agnostic nature.
+1 Introduction
+Learned time-series models generate multi-step forecasts either autoregressively, feeding back their
+own predictions at each step, or non-autoregressively over the full horizon at once [Chen et al., 2019,
+Zeng et al., 2022]. In both cases, forecast errors accumulate with horizon length, causing predicted
+trajectories to diverge from ground truth [Janner et al., 2021, Zhou et al., 2022]. The key question is
+whether these errors contain structure that can be learned to mitigate error accumulation.
+Fig. 1 motivates our approach: a learned time-series model NODE1 [Chen et al., 2019] on the
+FitzHugh-Nagumo (FHN) system [Izhikevich and FitzHugh, 2006b] produces structured forecast
+errors (Fig. 1b) that vary with the forecast trajectory. This structure suggests that residuals should
+remain conditioned on the evolving forecast path, rather than be treated as unstructured noise. We
+1Henceforth, Predictor refers to any learned time-series model.
+Preprint.
+arXiv:2512.12116v3  [cs.LG]  8 May 2026
+employ a Neural CDE Corrector [Kidger et al., 2020] that takes Predictor forecasts as a control
+path and learns path-conditioned residual dynamics (ˆew, ˆev ). Adding these to the forecasts yields
+improved trajectories ( ˆwc, ˆvc) shown in Fig. 1(a). We propose a Predictor-Corrector framework
+and instantiate it with NODE, ContiFormer [Chen et al., 2024], and DLinear [Zeng et al., 2022] as
+Predictors and Neural CDE as Corrector. Our contributions are:
+• A Predictor–Corrector framework where the Corrector is a Neural CDE modeling residual
+error dynamics, with two control-path regularization strategies to improve extrapolation
+and accelerate training, and stability/convergence guarantees.
+• Our framework is Predictor-agnostic: it requires no architectural modifications to the
+Predictor, is compatible with continuous- and discrete-time Predictors, and works with
+regularly or irregularly sampled time series.
+• Consistent improvement in forecast performance across synthetic, physics simulation, and
+LTSF datasets, demonstrating broad applicability of our proposed framework.
+2 Related works
+Ground Truth (𝑤) Predictor (𝑤") 
+Predictor-Corrector (𝑤"!) 
+𝑤
+time
+Ground Truth (𝑒") Corrector (𝑒̂") 
+𝑒!
+time
+Figure 1: NODE forecasting on FHN.
+(a) Top: Forecasts with and without
+Corrector. (b) Bottom: Predicted vs.
+true error.
+Predictor-Corrector Framework We review three uses
+of Predictor–Corrector ideas in time-series modeling. In
+forecasting, hybrid models often learn residuals of a base
+forecaster: ARIMA–MLP [Zhang, 2003] and ARIMA–
+LSTM drought models [Xu et al., 2022] are early examples,
+and related forecast-correction ideas appear in recent hy-
+brid forecasting work [Chen et al., 2022, Slater et al., 2023,
+Liu and Meng, 2025, Zhang et al., 2022]. These methods
+motivate residual correction but usually do not formalize a
+predictor-agnostic framework for multi-step forecast trajec-
+tories.
+Data-assimilation-style approaches also combine prediction
+and correction [Law et al., 2015], but their correction uses
+observations or measurements unavailable at forecast time.
+PhyDNet corrects learned PDE dynamics using observations
+[Guen and Thome, 2020]; KalmanNet learns Kalman-style
+gains with GRUs [Cho et al., 2014, Revach et al., 2022]; and
+NODA extends correction to neural operators with sparse
+noisy measurements [Singh et al., 2024]. Numerical Predictor–Corrector methods instead use explicit
+and implicit steps to solve differential equations [Diethelm et al., 2002], with recent extensions
+to Transformers [Vaswani et al., 2017, Li et al., 2024] and diffusion sampling [Zhao et al., 2023].
+Our setting is distinct: the Corrector operates only on the Predictor’s future forecast path, without
+future observations, and is compatible with continuous- and discrete-time Predictors under regular or
+irregular sampling.
+Continuous-Time Models Standard RNNs have undefined hidden states between observations,
+making them poorly suited for irregular sampling. Several approaches model continuous dynamics
+with exponential decay [Che et al., 2018, Rajkomar et al., 2018] or neural ODEs between observations
+[Rubanova et al., 2019, Lechner and Hasani, 2020, Brouwer et al., 2019]. These approaches update
+continuously between observations after receiving discrete inputs. Neural CDE instead models
+continuous dynamics across observations through a continuously evolving control path, so the
+hidden state remains coupled to the whole forecast trajectory. This distinction is central for residual
+correction, where the error dynamics depends on how the Predictor forecast evolves over the horizon.
+3 Problem description
+Consider a D-dimensional dynamical system with unknown vector field f , whose trajectory satisfies:
+x(t) = x0 +
+Z t
+0
+f (x(τ ))dτ. (1)
+2
+We observe N time series of T irregularly sampled observations {xi}T −1 i=0 at times t0 < · · · <
+tT −1, xi ∈ RD . A Predictor learned from data (e.g., NODE) generates T -step forecasts {ˆxi}T −1 i=0 ,
+autoregressively or non-autoregressively. The residual error trajectory is {ei}T −1 i=0 = {xi − ˆxi}T −1 i=0 .
+We hypothesize that a learned vector field fθ driven by a control path X built from {ˆxi} can predict
+these error dynamics {ˆei}T −1 i=0 , yielding corrected forecasts {ˆxi + ˆei}T −1 i=0 . This turns residual
+forecasting into a controlled-dynamics problem, instantiated next with a Neural CDE.
+4 Methodology
+Corrector Design. We model the path-conditioned residual process with a Neural CDE [Kidger
+et al., 2020]. The Neural CDE is analogous to a continuous-time RNN whose hidden state z :
+[t0, tT −1] → RC evolves continuously under the forecast-derived control path X : [t0, tT −1] →
+RD+1. Mathematically,
+z(t) = z(t0) +
+Z t
+t0
+fθ (z(s))dX(s) for t ∈ (t0, tT −1], (2)
+The integral is Riemann-Stieltjes. The control path X(s) is a cubic Hermite spline with backward
+differences [Morrill et al., 2022] interpolating {(ti, ˆxi)}T −1 i=0 (Appendix I.3), with X(ti) = (ˆxi, ti) ∈
+RD+1. Thus, the Corrector is conditioned not only on sampled forecasts but also on local increments
+of the interpolated forecast path. The vector field fθ : RC → RC×(D+1) and encoder ζϕ : RD+1 →
+RC (with z(t0) = ζϕ(ˆx0, t0)) are feedforward networks; “fθ (z(s))dX(s)” is a matrix-vector product.
+A decoder ξφ maps z(ti) to predicted error ˆei (Appendix I.5).
+Forecasts 𝒙"!
+𝒙""
+𝒙"#𝒙"$ 𝒙"%𝒙"&
+𝒙"’("
+𝒛(𝒕𝟏)
+𝒛(𝒕𝟐)
+𝒆$𝟏
+𝒆$𝟐𝒆$𝟑 𝒆$𝟒 𝒆$𝟓 𝒆$𝑻(𝟏
+𝒛(𝑡/)
+Control Path X
+Hidden State 𝒛(𝑡)
+decoder(𝒛!)
+NeuralCDE
+Time (t)
+𝑡"𝑡#𝑡$ 𝑡% 𝑡& 𝑡’("
+Corrector generates errors 
+for 𝑇-step forecasts {𝒆(#}#$% &’(
+Predictor generates 
+𝑇-step forecasts 
+{𝒙,!}!"# $%&
+Errors 𝒆$!
+𝒛(𝒕𝟑) 𝒛(𝒕𝟒)
+𝒛(𝒕𝟓)
+𝒛(𝒕𝑻’𝟏)
+Figure 2: At inference time, Predictor forecasts define a continuous control path that drives the Neural
+CDE Corrector, whose decoded hidden states provide residual corrections over the forecast horizon.
+Algorithm 1 details training. The Corrector parameters θ, ϕ, φ are learned via adjoint-based back-
+propagation by minimizing:
+L = 1 N T
+N −1X
+j=0
+T −1X
+i=0
+||ˆei,j − ei,j ||2 2 (3)
+using diffrax [Kidger, 2022] in JAX [Bradbury et al., 2018]; further details are in Appendix D.4. At
+inference, the Predictor forecast path drives the Corrector, which decodes hidden states into residuals
+and adds them to the original forecasts (Fig. 2).
+3
+Algorithm 1 Training the Neural CDE as a Corrector
+Input: Errors {ei}, forecasts {ˆxi}, times {ti} (i = 0, . . . , T −1) for N trajectories
+Output: Trained parameters (θ, ϕ, φ) of Corrector
+1: Initialize θ, ϕ, φ
+2: for epoch = 1, . . . , E do
+3: X(s) ← CubicSpline({(ti, ˆxi)}T −1 i=0 ) // Control path
+4: z(t0) ← ζϕ(ˆx0, t0)
+5: z(t) ← NeuralCDE(z(t0), X(s), fθ )
+6: {ˆei}T −1 i=1 ← {ξφ(z(ti))}T −1 i=1 // Evaluate z(t) at {ti}T −1 i=1
+7: Minimize MSE(ei, ˆei) // mean squared error
+8: end for
+9: return θ, ϕ, φ
+4.1 Control paths regularization
+We regularize the control path so the Corrector does not overfit to a single training horizon or sampling
+density, improving extrapolation performance (see Section 6.1).
+4.1.1 Variable-length control paths ¯X(s)
+During training, the last k ∼ Uniform{0, . . . , η} forecasts are dropped, constructing a variable-length
+path ¯X(s) : [t0, tT −k] → RD+1 and varying the integration limits in (2):
+z(t) = z(t0) +
+Z t
+t0
+fθ (z(s))d ¯X(s) for t ∈ (t0, tT −k], (4)
+4.1.2 Sparse control paths ˆX(s)
+For synthetic and physics datasets, we simulate irregularly sampled time series at four sparsity levels
+(20%, 50%, 80%, 100%) [Rubanova et al., 2019]. A second stage retains a fraction κ ∈ (0, 1]
+of the already-sparse points to construct a sparse path ˆX(s), reducing overfitting and improving
+extrapolation. For LTSF, only κ-regularization is applied.
+5 Theoretical analysis
+To provide theoretical insight into the proposed Predictor-Corrector framework, we analyze the
+stability and convergence of the Neural CDE Corrector. All proofs are deferred to Appendix A. Given
+the problem formulation in Section 3, we start with the assumptions as follows.
+Assumption 5.1. The control path X has bounded total variation on any finite interval:
+∥X∥T V,[0,T ] < ∞, ∀T < ∞.
+Assumption 5.2. There exists Lζ > 0 such that ∥ζϕ(ˆx1) − ζϕ(ˆx2)∥ ≤ Lζ ∥ˆx1 − ˆx2∥, ∀ˆx1, ˆx2
+Assumption 5.3. There exists Lf > 0 such that ∥fθ (z1) − fθ (z2)∥ ≤ Lf ∥z1 − z2∥, ∀z1, z2.
+Assumption 5.4. There exists Lξ > 0 such that ∥ξφ(z1) − ξφ(z2)∥ ≤ Lξ ∥z1 − z2∥, ∀z1, z2.
+The Lipschitz continuity assumptions are standard and mild in neural dynamical systems. In practice,
+the encoder, Neural CDE vector field, and decoder are implemented as finite-depth neural networks
+with continuous activations, for which Lipschitz continuity holds under bounded weights and can
+be enforced via weight decay or spectral normalization. These assumptions ensure well-posedness
+and robustness of the Neural CDE, and provide the minimal regularity needed to establish stability
+and convergence guarantees. To analyze stability and convergence, we consider two Corrector
+trajectories driven by the same Predictor trajectory. Let z1(t0) = ζϕ(ˆx0), z2(t0) = ζϕ(ˆx′ 0) and
+∆z(t) := z1(t) − z2(t), ∆ˆe(t) := ˆe1(t) − ˆe2(t), ∆ˆx0 = ˆx0 − ˆx′ 0. With these in hand, we now first
+establish the stability as follows.
+Theorem 5.5. Let all assumptions hold. For all t ≥ t0 ≥ 0, we have ∥∆z(t)∥ ≤
+Lζ ∥∆ˆx0∥exp(Lf ∥X∥T V,[0,t]).
+4
+Analogously, we have the similar conclusion for the decoder.
+Corollary 5.6. Let all assumptions hold. For all t ≥ 0, we have ∥∆ˆe(t)∥ ≤
+Lξ Lζ ∥∆ˆx0∥exp(Lf ∥X∥T V,[0,t]).
+The above theoretical results imply that the Corrector is incrementally stable. Additionally, differences
+in initialization never blow up faster than exponentially. The stability of the full framework follows
+immediately since the Predictor cancels in differences, which is stated in the following result. We
+denote by xc,1(t) = ˆx(t) + ˆe1(t) and xc,2(t) = ˆx(t) + ˆe2(t) any two predictions. Hence, the stability
+of the corrected trajectories is described in the following.
+Corollary 5.7. Let all assumptions hold. For any t ≥ 0, it holds true that ∥xc,1(t) − xc,2(t)∥ =
+∥∆ˆe(t)∥ ≤ Lξ Lζ ∥∆ˆx0∥exp(Lf ∥X∥T V,[0,t]).
+We now turn to the convergence of the error dynamics as stability alone does not imply convergence.
+We first introduce a standard contraction condition.
+Assumption 5.8. There exists λ ≥ 0 such that ⟨z1 − z2, fθ (z1) − fθ (z2)⟩ ≤ −λ∥z1 − z2∥2, ∀z1, z2.
+The above assumption imposes a global strong monotonicity (one-sided contraction) condition on
+the latent vector field fθ , ensuring that latent trajectories are driven toward each other and enabling
+convergence. Without such a condition, one can only guarantee incremental stability (bounded
+growth), while convergence is generally impossible for nonlinear systems. This assumption is
+standard in contraction and incremental stability theory and is well aligned with the role of the
+Corrector, which is designed to damp residual prediction errors. Moreover, it can be satisfied or
+approximated by common Neural CDE parameterizations, such as linear damping terms or residual
+architectures with spectral normalization. We next present the exponential convergence of the latent
+Corrector.
+Theorem 5.9. Let all assumptions hold. Also, suppose that ∥X∥T V,[0,∞) = ∞. Then we have the
+following: ∥∆z(t)∥ ≤ Lζ ∥∆ˆx0∥exp(−λ∥X∥T V,[0,t]), and limt→∞∥∆z(t)∥ = 0.
+We then similarly can get the convergence of the decoded error.
+Corollary 5.10. Given the condition in Theorem 5.9, we have the relationships: ∥∆ˆe(t)∥ ≤
+Lξ Lζ ∥∆ˆx0∥exp(−λ∥X∥T V,[0,t]), and limt→∞∥∆ˆe(t)∥ = 0.
+Hence, we can obtain the convergence of the full framework in the following statement.
+Corollary 5.11. Let all assumptions hold. For any t ≥ 0, it holds true that limt→∞∥xc,1(t) −
+xc,2(t)∥ = 0.
+From the above results, we can see that the convergence rate depends on ∥X∥T V rather than the
+physical time. Therefore, smoother predictor trajectories lead to faster and more robust convergence.
+Also, the encoder errors affect only initialization, whereas the decoder smoothness directly scales
+stability and convergence rates. Our theoretical results also justify the two regularization techniques
+we adopt in this work. The Neural CDE Corrector with encoder–decoder parameterization is
+incrementally stable under mild Lipschitz assumptions, guaranteeing bounded corrected trajectories.
+Moreover, if the latent vector field is contractive, the Corrector converges exponentially with respect
+to the total variation of the Predictor-induced control path, yielding a stable and convergent Predictor–
+Corrector forecasting framework.
+6 Results
+We now evaluate whether path-conditioned residual dynamics improve both interpolation and long-
+horizon extrapolation across diverse Predictors (Appendix J.2). The Neural CDE Corrector is paired
+with NODE [Chen et al., 2019], ContiFormer [Chen et al., 2024], and DLinear [Zeng et al., 2022] on
+synthetic, physics simulation, and LTSF datasets, respectively.
+6.1 Interpolation & extrapolation
+Interpolation evaluates correction within the training horizon (first 50 steps); extrapolation reports the
+maximum timestep t∗ at which the Corrector still achieves ≥ 3% MSE reduction over the Predictor.
+5
+Table 1: MSE without (w/o) and with (w/) corrector for FHN and GLYCOLYTIC (NODE predictor),
+combining interpolation (0–50) and extrapolation (0–t∗) regimes. w/ values show mean±std over 3
+runs; w/o is deterministic (single Predictor).
+Dataset Corrector Interpolation (0–50) Extrapolation (0–t∗ ) 20% 50% 80% 100% 20% 50% 80% 100%
+FHN
+SLCDE
+w/o 0.2257 0.1611 0.1508 0.1372 0.2465 0.1748 0.1884 0.1501
+w/ 0.2006±.012 0.1505±.008 0.1409±.005 0.1325±.004 0.2381±.017 0.1665±.010 0.1814±.009 0.1453±.006
+0–t|% 0–50|11% 0–50|7% 0–50|7% 0–50|3% 0–60|3% 0–55|5% 0–150|4% 0–55|3%
+Latent ODE
+w/o 0.2257 0.1611 0.1508 0.1372 0.2184 0.1470 0.1845 0.2102
+w/ 0.2227±.015 0.1644±.009 0.1534±.006 0.1401±.005 0.2115±.018 0.1417±.011 0.1783±.008 0.2014±.013
+0–t|% 0–50|1% 0–50|−2% 0–50|−2% 0–50|−2% 0–45|3% 0–40|4% 0–130|3% 0–5|4%
+NRDE
+w/o 0.2257 0.1611 0.1508 0.1372 0.2902 0.1829 0.1796 0.1500
+w/ 0.0947±.005 0.0694±.002 0.0670±.003 0.0630±.001 0.2741±.022 0.1739±.009 0.1714±.007 0.1263±.008
+0–t|% 0–50|58% 0–50|57% 0–50|56% 0–50|54% 0–140|6% 0–100|5% 0–85|5% 0–70|16%
+Neural CDE
+w/o 0.2257 0.1611 0.1508 0.1372 0.2420 0.1779 0.1709 0.1667
+w/ 0.1647±.010 0.1289±.007 0.1041±.003 0.0979±.004 0.2309±.019 0.1722±.006 0.1624±.011 0.1585±.005
+0–t|% 0–50|27% 0–50|20% 0–50|31% 0–50|29% 0–75|5% 0–155|3% 0–75|5% 0–150|5%
+GLYCOLYTIC
+SLCDE
+w/o 0.0131 0.0100 0.0098 0.0098 0.0353 0.0177 0.0116 0.0115
+w/ 0.0094±.0007 0.0098±.0004 0.0080±.0005 0.0080±.0002 0.0338±.0021 0.0171±.0008 0.0111±.0006 0.0111±.0004
+0–t|% 0–50|29% 0–50|1% 0–50|19% 0–50|18% 0–195|4% 0–15|3% 0–95|4% 0–95|4%
+Latent ODE
+w/o 0.0131 0.0100 0.0098 0.0098 0.0213 0.0177 0.0352 0.0102
+w/ 0.0077±.0006 0.0098±.0003 0.0075±.0003 0.0078±.0002 0.0201±.0014 0.0171±.0009 0.0341±.0027 0.0097±.0005
+0–t|% 0–50|41% 0–50|1% 0–50|24% 0–50|20% 0–110|6% 0–15|3% 0–145|3% 0–85|5%
+NRDE
+w/o 0.0131 0.0100 0.0098 0.0098 0.0356 0.0180 0.0356 0.0347
+w/ 0.0075±.0004 0.0064±.0002 0.0062±.0002 0.0063±.0001 0.0345±.0026 0.0170±.0010 0.0344±.0022 0.0334±.0019
+0–t|% 0–50|43% 0–50|35% 0–50|37% 0–50|36% 0–155|3% 0–110|5% 0–150|3% 0–115|4%
+Neural CDE
+w/o 0.0131 0.0100 0.0098 0.0098 0.0159 0.0204 0.0135 0.0160
+w/ 0.0079±.0006 0.0073±.0002 0.0072±.0003 0.0068±.0001 0.0146±.0011 0.0197±.0013 0.0128±.0007 0.0154±.0009
+0–t|% 0–50|40% 0–50|27% 0–50|26% 0–50|30% 0–100|8% 0–115|3% 0–100|5% 0–125|4%
+6.2 Synthetic datasets
+We evaluate four continuous-time Corrector architectures on synthetic data generated from four
+multivariate ODE systems: LORENZ, LVOLT, FHN, and GLYCOLYTIC. Table 1 reports FHN and
+GLYCOLYTIC, while Appendix F reports LORENZ and LVOLT. NODE [Chen et al., 2019] is used
+as the Predictor and trained on the first 50 timesteps. Each Corrector is trained on the first 50
+timesteps (interpolation regime) on the same splits; all four levels of sparsity from Section 4.1.2 are
+applied during training. Dataset details are given in Table 10 and ODE equations in Appendix E.
+Hyperparameters κ and η for all settings are in Table 4. Further training details are in Appendices D.1
+and D.4.
+Ground Truth 
+Predictor (MSE: 0.100)
+Predictor-Corrector (MSE: 0.056)
+Figure 3: NODE on an FHN test tra-
+jectory with and without the Corrector.
+Corrector baselines. We compare our Neural CDE Cor-
+rector against three architectures that differ in how they use
+the predictor trajectory ˆx0:T . A high-level comparison of
+these continuous-time baselines with Neural CDE is given
+in Appendix D.5. Latent ODE [Rubanova et al., 2019]
+encodes ˆx0:T into an initial latent state via an ODE-RNN
+and evolves it with NODE ( ˙z = fθ (z)) without explicit path-
+conditioning; the forecast trajectory no longer influences the
+residual dynamics after encoding. Structured Linear CDE
+(SLCDE) [Walker et al., 2025] uses a linear controlled dif-
+ferential equation where the vector field is a linear function
+of the control path, providing path-driven dynamics under
+structural constraints. Neural RDE (NRDE) [Morrill et al.,
+2021] uses depth-2 log-signatures of the control path to cap-
+ture higher-order path interactions. At the finest partition,
+these features reduce to per-step forecast increments, the
+same local information Neural CDE exploits continuously, making NRDE a strong but structurally
+closest baseline. All four Correctors share the same decoder, hidden dimension, data pipeline, loss,
+and optimiser; only the encoder/dynamics module differs.
+Results. Table 1 reports FHN and GLYCOLYTIC; LORENZ and LVOLT are in Appendix F. Without
+explicit path-conditioning, the Latent ODE Corrector is unreliable, yielding negligible or negative
+gains on FHN (≤ 1%) and increasing NODE’s MSE on LVOLT by 95–429% (Appendix F). In
+6
+Table 2: MSE without (w/o) and with (w/) corrector for WALKER2D and PEN, combining inter-
+polation (0–50) and extrapolation (0–t∗) regimes. t∗ is the maximum timestep sustaining ≥ 3%
+cumulative MSE reduction. w/ values show mean±std over 3 runs; w/o is deterministic (single
+Predictor). Best w/ per column in bold (interpolation); longest t∗ per column in bold (extrapolation).
+Dataset Corrector Interpolation (0–50) Extrapolation (0–t∗ ) 20% 50% 80% 100% 20% 50% 80% 100%
+WALKER2D
+SLCDE
+w/o 1.827 0.573 0.408 0.165 2.467 0.897 0.470 0.275
+w/ 0.856±.071 0.399±.024 0.261±.018 0.139±.007 2.369±.189 0.868±.052 0.451±.031 0.265±.009
+0–t∗ |% 0–50|53% 0–50|30% 0–50|36% 0–50|16% 0–150|4% 0–125|3% 0–115|4% 0–85|4%
+Latent ODE
+w/o 1.827 0.573 0.408 0.165 1.774 0.665 0.450 0.275
+w/ 0.211±.017 0.288±.023 0.161±.009 0.075±.003 1.718±.137 0.645±.038 0.431±.024 0.256±.011
+0–t∗ |% 0–50|88% 0–50|50% 0–50|61% 0–50|54% 0–125|3% 0–90|3% 0–110|4% 0–85|7%
+NRDE
+w/o 1.827 0.573 0.408 0.165 1.868 0.577 0.451 0.245
+w/ 0.234±.019 0.123±.007 0.086±.004 0.047±.002 1.806±.144 0.408±.029 0.371±.021 0.233±.008
+0–t∗ |% 0–50|87% 0–50|79% 0–50|79% 0–50|72% 0–130|3% 0–70|29% 0–75|18% 0–70|5%
+Neural CDE
+w/o 1.827 0.573 0.408 0.165 2.890 1.700 0.778 0.869
+w/ 0.721±.058 0.285±.019 0.149±.008 0.053±.003 2.680±.214 1.630±.098 0.750±.042 0.838±.056
+0–t∗ |% 0–50|61% 0–50|50% 0–50|64% 0–50|68% 0–190|7% 0–180|4% 0–130|4% 0–140|4%
+PEN
+SLCDE
+w/o 0.349 0.142 0.128 0.124 0.213 0.102 0.103 0.099
+w/ 0.147±.011 0.105±.005 0.093±.004 0.088±.003 0.205±.016 0.094±.005 0.093±.006 0.090±.003
+0–t∗ |% 0–50|58% 0–50|26% 0–50|28% 0–50|29% 0–90|4% 0–80|8% 0–70|10% 0–70|10%
+Latent ODE
+w/o 0.349 0.142 0.128 0.124 0.182 0.081 0.083 0.078
+w/ 0.101±.008 0.078±.004 0.074±.003 0.072±.002 0.159±.013 0.076±.004 0.076±.005 0.071±.003
+0–t∗ |% 0–50|71% 0–50|45% 0–50|43% 0–50|42% 0–110|13% 0–120|6% 0–95|8% 0–100|9%
+NRDE
+w/o 0.349 0.142 0.128 0.124 0.130 0.069 0.070 0.071
+w/ 0.081±.006 0.060±.002 0.055±.003 0.057±.002 0.126±.009 0.066±.004 0.067±.003 0.068±.004
+0–t∗ |% 0–50|77% 0–50|58% 0–50|57% 0–50|54% 0–175|3% 0–165|4% 0–140|5% 0–130|4%
+Neural CDE
+w/o 0.349 0.142 0.128 0.124 0.117 0.061 0.057 0.056
+w/ 0.150±.012 0.072±.004 0.050±.002 0.055±.003 0.110±.008 0.059±.003 0.054±.004 0.054±.002
+0–t∗ |% 0–50|57% 0–50|49% 0–50|61% 0–50|55% 0–250|6% 0–190|3% 0–205|4% 0–220|4%
+contrast, the path-driven Correctors, SLCDE, NRDE, and Neural CDE, consistently reduce NODE’s
+interpolation error on all four systems, showing that the forecast path contains useful information
+about the residual dynamics. This supports the main modeling premise that residual dynamics are
+trajectory-dependent and cannot be captured without explicit conditioning on the Predictor forecast.
+Among path-driven models, NRDE is the strongest interpolation baseline on several systems, but
+Neural CDE provides the best interpolation–extrapolation balance: it gives substantial interpolation
+reductions across all four systems while reaching the longest extrapolation horizons in key LORENZ
+and FHN settings. Fig. 3 illustrates per-trajectory correction; stress tests confirming bounded error
+growth are in Appendix I.8.
+6.3 Physics simulation
+We next test whether the same path-conditioned correction transfers from low-dimensional ODE
+systems to higher-dimensional simulated control trajectories. We evaluate the four Corrector archi-
+tectures from Section 6.2 on four MuJoCo environments [Todorov et al., 2012, Towers et al., 2024]:
+WALKER2D (17D), PEN (45D), HOPPER (11D), and HAMMER (46D). Appendix D.5 summarizes
+how these continuous-time Corrector baselines differ in their conditioning on the Predictor forecast
+path. ContiFormer [Chen et al., 2024], a continuous-time transformer, is used as the Predictor and
+trained to predict 100 timesteps. Each dataset consists of 2,000 trajectories of 300 regularly sampled
+timesteps. We apply an 80/20 train/test split; all four sparsity levels from Section 4.1.2 are simulated
+during training. Each Corrector is trained on the first 50 timesteps (interpolation regime) on the same
+splits using the shared decoder, hidden dimension, and training configuration described in Section 6.2.
+Data generation and training details are in Appendices G, D.2, and D.4.
+Results. Table 2 reports WALKER2D and PEN results; HOPPER and HAMMER are in Appendix H.
+Across these simulated control tasks, NRDE often provides the strongest interpolation, while Neural
+CDE is more reliable for long-horizon correction. This setting is deliberately harder than the synthetic
+systems: state dimensions are larger, and forecast errors can couple across coordinates. The recurring
+advantage of path-driven correction therefore suggests that continuous conditioning is not an artifact
+of low-dimensional ODE benchmarks. On high-dimensional PEN, for example, Neural CDE sustains
+7
+improvement substantially farther than NRDE, and this extrapolation advantage persists across
+sparsity levels. Appendix H shows the same interpolation–extrapolation tradeoff on HOPPER and
+HAMMER; qualitative PEN trajectories are in Appendix M. The hyperparameters η and κ used for
+each setting in Table 2 are reported in Table 5.
+Sparse control paths. To isolate the effect of Sparse Control Paths, we study WALKER2D with
+100% observed time points. With κ = 0.7 and η = 0, the Corrector reduces MSE by 68% over
+timesteps 0–50 and by 4% over 0–140 (Table 2). Figure 4(a) shows the tradeoff: no regularization
+(κ = 1.0) gives stronger interpolation (78% over 0–50) but fails beyond 175 timesteps, whereas
+κ = 0.7 maintains positive correction to 200 timesteps. Figure 4(b) shows the efficiency benefit:
+smaller κ increases path sparsity and reduces NFEs, with κ = 0.7 stabilizing near 80 NFEs after
+early epochs compared with over 90 for κ = 1.0. Thus, Sparse Control Paths improve extrapolation
+and reduce computation, but κ remains a tuned hyperparameter.
+Figure 4: Control-path regularization on WALKER2D. (a) Upper left: MSE reduction (%) vs.
+timestep for varying κ, η=0. (b) Lower left: NFEs vs. epoch for varying κ, η=0. (c) Upper
+right: MSE reduction (%) vs. timestep for varying η, κ=1.0. (d) Lower right: NFEs vs. epoch for
+varying η, κ=1.0. Both strategies extend the extrapolation horizon and reduce NFEs at the cost of
+interpolation fidelity.
+Variable-length control paths. For WALKER2D at 20% observations (κ = 1.0, η = 10), Fig. 4(c)
+shows that η = 0 yields poor extrapolation (drops below zero near t = 140), while η = 10 maintains
+positive correction to t = 200. Like κ, η must be tuned. Fig. 4(d) shows that larger η reduces NFEs
+by exposing the integrator to shorter paths on average, yielding faster training alongside improved
+extrapolation.
+Sparse control paths are most effective at high observation rates (50–100%), whereas variable-length
+paths improve sparsely observed regimes. Appendix I.6 quantifies the NFE–extrapolation trade-off
+via Pareto curves and Appendix I.7 confirms the wall-clock speedup.
+6.4 Time series forecasting
+Finally, we evaluate whether the same path-conditioned Corrector can improve a purely discrete-time
+Predictor. We apply the Corrector to frozen DLinear [Zeng et al., 2022] forecasts on five LTSF
+datasets (Appendix L): Exchange, ETTm2, ETTh2, ILI, and Weather. For ILI, forecast horizons are
+8
+Table 3: Multivariate long-term forecasting errors (MSE/MAE; lower is better) for five LTSF datasets,
+averaged over all forecast horizons per dataset. All Correctors use the same frozen DLinear Predictor
+and are parameter-matched (≈530 K). Best value per row is highlighted in bold. Per-horizon results
+are in Appendix Table 8.
+Dataset DLinear (w/o) +MLP +GRU +Transformer +Neural CDE
+Metric MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE
+Exchange 0.370 0.419 0.944 0.709 0.646 0.619 0.549 0.536 0.242 0.355
+ETTm2 0.284 0.346 1.090 0.672 0.985 0.610 1.106 0.712 0.271 0.338
+ETTh2 0.470 0.465 3.324 1.363 2.182 1.091 2.339 1.228 0.458 0.458
+ILI 2.403 1.110 2.548 1.095 2.298 1.062 2.450 1.109 2.350 1.080
+Weather 0.248 0.301 0.245 0.307 0.240 0.301 0.253 0.323 0.238 0.286
+T ∈ {24, 36, 48, 60}; for other datasets, T ∈ {96, 192, 336, 720} with the Corrector trained on the
+first {50, 100, 150, 300} timesteps (Appendix I.1). Hyperparameters κ and η are in Tables 6 and 7.
+Results. Table 3 compares four parameter-matched Correctors (≈530 K; Appendix D.6) against
+frozen DLinear, averaged over all horizons. Neural CDE is the only Corrector that consistently
+improves DLinear across all five datasets, including the largest MSE reduction on Exchange and the
+only joint MSE/MAE reductions on ETTm2 and ETTh2; GRU is strongest only on ILI. The MLP and
+Transformer Correctors degrade DLinear performance on all five datasets despite matching the Neural
+CDE parameter budget, indicating that continuous path conditioning provides more reliable residual
+correction than discrete alternatives. The discrete baselines receive the same forecast sequence, but
+operate on sampled forecast values rather than on an interpolated path. Neural CDE instead conditions
+on the continuous forecast path, so its residual dynamics can respond to local increments and slopes
+between sampled time points. Full per-horizon results are in Appendix Table 8; transformer baseline
+comparisons in Appendix C.1; FEDformer results in Appendix J.1.
+Discrete versus continuous correction. Among the discrete Corrector baselines, GRU is the
+closest analogue to Neural CDE because it also carries a hidden state forward while conditioning on
+the Predictor forecast sequence. However, GRU updates its hidden state hi as hi = GRU(hi−1, ˆxi),
+whereas Neural CDE evolves its hidden state zt according to dzt = fθ (zt)dXt, equivalently dzt dt =
+fθ (zt) dXt dt . Thus, Neural CDE is driven by the local slope of the interpolated forecast path, while GRU and Transformer rely on the discrete forecast sequence unless time-gap or derivative features
+are explicitly added. The same distinction also applies to the Transformer Corrector. Although it
+can attend globally over the forecast horizon, residual correction may depend more on local error
+evolution, such as gradual drift, phase mismatch, and trend changes, than on global sequence mixing.
+Together, these comparisons suggest that Neural CDE’s advantage comes from its path-evolution
+inductive bias, not merely from conditioning on the same forecast sequence.
+7 Conclusion
+We introduced a Predictor-Corrector framework where a Neural CDE Corrector models forecast
+residuals as path-conditioned dynamics rather than unstructured noise. The key design choice is
+to keep the residual model continuously coupled to the Predictor forecast path, so correction can
+depend on how the forecast trajectory evolves over the horizon. This differs from autonomous latent
+correction, where the trajectory influences the hidden state only through an initial encoding, and from
+discrete Correctors that update only at sampled forecast values. Because the Corrector is driven by
+the forecast path, it can be attached to continuous- or discrete-time Predictors without modifying their
+architectures. Two control-path regularization strategies improve extrapolation and reduce training
+cost. Supported by stability and convergence guarantees, the framework consistently improves NODE
+and ContiFormer on synthetic and physics simulation datasets, and DLinear on real-world LTSF
+benchmarks, demonstrating predictor-agnostic applicability. Empirically, the advantage appears when
+correction must remain coupled to the forecast trajectory beyond the training horizon.
+9
+8 Limitations
+The framework adds a second training stage after the Predictor is learned, and Neural CDE inference
+requires solving a controlled differential equation. Its benefit also depends on residual errors being
+structured and related to the forecast path; when Predictor errors are weakly path-dependent, correc-
+tion may be limited. Finally, although the experiments cover synthetic dynamics, physics simulation,
+and LTSF benchmarks, they do not exhaust all forecasting domains, data scales, or deployment
+constraints.
+References
+James Bradbury, Roy Frostig, Peter Hawkins, Matthew James Johnson, Chris Leary, Dougal
+Maclaurin, George Necula, Adam Paszke, Jake VanderPlas, Skye Wanderman-Milne, and
+Qiao Zhang. JAX: composable transformations of Python+NumPy programs, 2018. URL
+http://github.com/jax-ml/jax.
+Edward De Brouwer, Jaak Simm, Adam Arany, and Yves Moreau. Gru-ode-bayes: Continuous
+modeling of sporadically-observed time series, 2019. URL https://arxiv.org/abs/1905.
+12374.
+Steven L Brunton, Joshua L Proctor, and J Nathan Kutz. Discovering governing equations from data
+by sparse identification of nonlinear dynamical systems. Proceedings of the national academy of
+sciences, 113(15):3932–3937, 2016.
+Zhengping Che, Sanjay Purushotham, Kyunghyun Cho, David Sontag, and Yan Liu. Recurrent neural
+networks for multivariate time series with missing values. Scientific reports, 8(1):6085, 2018.
+Hao Chen, Qixia Zhang, and Yngve Birkelund. Machine learning forecasts of scandinavian numerical
+weather prediction wind model residuals with control theory for wind energy. Energy Reports, 8:
+661–668, 2022.
+Ricky T. Q. Chen. torchdiffeq, 2018. URL https://github.com/rtqichen/torchdiffeq.
+Ricky T. Q. Chen, Yulia Rubanova, Jesse Bettencourt, and David Duvenaud. Neural ordinary
+differential equations, 2019. URL https://arxiv.org/abs/1806.07366.
+Yuqi Chen, Kan Ren, Yansen Wang, Yuchen Fang, Weiwei Sun, and Dongsheng Li. Contiformer:
+Continuous-time transformer for irregular time series modeling, 2024. URL https://arxiv.
+org/abs/2402.10635.
+Kyunghyun Cho, Bart Van Merriënboer, Dzmitry Bahdanau, and Yoshua Bengio. On the properties of
+neural machine translation: Encoder-decoder approaches. arXiv preprint arXiv:1409.1259, 2014.
+Bryan C Daniels and Ilya Nemenman. Efficient inference of parsimonious phenomenological models
+of cellular dynamics using s-systems and alternating regression. PloS one, 10(3):e0119821, 2015.
+Kai Diethelm, Neville J Ford, and Alan D Freed. A predictor-corrector approach for the numerical
+solution of fractional differential equations. Nonlinear Dynamics, 29(1):3–22, 2002.
+Vincent Le Guen and Nicolas Thome. Disentangling physical dynamics from unknown factors for
+unsupervised video prediction. In Proceedings of the IEEE/CVF conference on computer vision
+and pattern recognition, pages 11474–11484, 2020.
+E. M. Izhikevich and R. FitzHugh. FitzHugh-Nagumo model. Scholarpedia, 1(9):1349, 2006a. doi:
+10.4249/scholarpedia.1349. revision #123664.
+Eugene M Izhikevich and Richard FitzHugh. Fitzhugh-nagumo model. Scholarpedia, 1(9):1349,
+2006b.
+Michael Janner, Qiyang Li, and Sergey Levine. Offline reinforcement learning as one big sequence
+modeling problem, 2021. URL https://arxiv.org/abs/2106.02039.
+Patrick Kidger. On neural differential equations, 2022. URL https://arxiv.org/abs/2202.
+02435.
+10
+Patrick Kidger, James Morrill, James Foster, and Terry Lyons. Neural controlled differential equations
+for irregular time series, 2020. URL https://arxiv.org/abs/2005.08926.
+Kody Law, Andrew Stuart, and Kostas Zygalakis. Data assimilation. Cham, Switzerland: Springer,
+214:52, 2015.
+Mathias Lechner and Ramin Hasani. Learning long-term dependencies in irregularly-sampled time
+series, 2020. URL https://arxiv.org/abs/2006.04418.
+Bei Li, Tong Zheng, Rui Wang, Jiahao Liu, Qingyan Guo, Junliang Guo, Xu Tan, Tong Xiao, Jingbo
+Zhu, Jingang Wang, and Xunliang Cai. Predictor-corrector enhanced transformers with exponential
+moving average coefficient learning, 2024. URL https://arxiv.org/abs/2411.03042.
+Hongbo Liu and Xiangzhao Meng. Explainable ensemble learning model for residual strength
+forecasting of defective pipelines. Applied Sciences, 15(7):4031, 2025.
+James Morrill, Cristopher Salvi, Patrick Kidger, James Foster, and Terry Lyons. Neural rough
+differential equations for long time series. In Proceedings of the 38th International Conference on
+Machine Learning, volume 139, pages 7829–7838. PMLR, 2021.
+James Morrill, Patrick Kidger, Lingyi Yang, and Terry Lyons. On the choice of interpolation scheme
+for neural cdes. Transactions on Machine Learning Research, 2022(9), 2022.
+Alvin Rajkomar, Eyal Oren, Kai Chen, Andrew M Dai, Nissan Hajaj, Michaela Hardt, Peter J Liu,
+Xiaobing Liu, Jake Marcus, Mimi Sun, et al. Scalable and accurate deep learning with electronic
+health records. NPJ digital medicine, 1(1):18, 2018.
+Guy Revach, Nir Shlezinger, Xiaoyong Ni, Adria Lopez Escoriza, Ruud JG Van Sloun, and Yonina C
+Eldar. Kalmannet: Neural network aided kalman filtering for partially known dynamics. IEEE
+Transactions on Signal Processing, 70:1532–1547, 2022.
+Yulia Rubanova, Ricky T. Q. Chen, and David Duvenaud. Latent odes for irregularly-sampled time
+series, 2019. URL https://arxiv.org/abs/1907.03907.
+Muhammad Bilal Shahid and Cody Fleming. Hopcast: Calibration of autoregressive dynamics
+models. Transactions on Machine Learning Research, 2025. ISSN 2835-8856. URL https:
+//openreview.net/forum?id=wsO6nxvGof.
+Ashutosh Singh, Ricardo Augusto Borsoi, Deniz Erdogmus, and Tales Imbiriba. Learning semilinear
+neural operators : A unified recursive framework for prediction and data assimilation, 2024. URL
+https://arxiv.org/abs/2402.15656.
+Louise J Slater, Louise Arnal, Marie-Amélie Boucher, Annie Y-Y Chang, Simon Moulds, Conor
+Murphy, Grey Nearing, Guy Shalev, Chaopeng Shen, Linda Speight, et al. Hybrid forecasting:
+blending climate predictions with ai models. Hydrology and earth system sciences, 27(9):1865–
+1889, 2023.
+Emanuel Todorov, Tom Erez, and Yuval Tassa. Mujoco: A physics engine for model-based control.
+In 2012 IEEE/RSJ International Conference on Intelligent Robots and Systems, pages 5026–5033.
+IEEE, 2012. doi: 10.1109/IROS.2012.6386109.
+Mark Towers, Ariel Kwiatkowski, Jordan Terry, John U. Balis, Gianluca De Cola, Tristan Deleu,
+Manuel Goulão, Andreas Kallinteris, Markus Krimmel, Arjun KG, Rodrigo Perez-Vicente, Andrea
+Pierré, Sander Schulhoff, Jun Jet Tai, Hannah Tan, and Omar G. Younis. Gymnasium: A standard
+interface for reinforcement learning environments, 2024. URL https://arxiv.org/abs/2407.
+17032.
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz
+Kaiser, and Illia Polosukhin. Attention is all you need. Advances in neural information processing
+systems, 30, 2017.
+Benjamin Walker, Lingyi Yang, Nicola Muca Cirone, Christopher Salvi, and Terry Lyons. Structured
+linear CDEs: Maximally expressive and parallel-in-time sequence models. In Advances in Neural
+Information Processing Systems, 2025.
+11
+Peter J Wangersky. Lotka-volterra population models. Annual Review of Ecology and Systematics, 9:
+189–218, 1978.
+Dehe Xu, Qi Zhang, Yan Ding, and De Zhang. Application of a hybrid arima-lstm model based on
+the spei for drought forecasting. Environmental Science and Pollution Research, 29(3):4128–4144,
+2022.
+Ailing Zeng, Muxi Chen, Lei Zhang, and Qiang Xu. Are transformers effective for time series
+forecasting?, 2022. URL https://arxiv.org/abs/2205.13504.
+G Peter Zhang. Time series forecasting using a hybrid arima and neural network model. Neurocom-
+puting, 50:159–175, 2003.
+Rongquan Zhang, Gangqiang Li, Siqi Bu, Guowen Kuang, Wei He, Yuxiang Zhu, and Saddam Aziz.
+A hybrid deep learning model with error correction for photovoltaic power forecasting. Frontiers
+in Energy Research, 10:948308, 2022.
+Wenliang Zhao, Lujia Bai, Yongming Rao, Jie Zhou, and Jiwen Lu. Unipc: A unified predictor-
+corrector framework for fast sampling of diffusion models, 2023. URL https://arxiv.org/
+abs/2302.04867.
+Tian Zhou, Ziqing Ma, Qingsong Wen, Xue Wang, Liang Sun, and Rong Jin. Fedformer: Frequency
+enhanced decomposed transformer for long-term series forecasting, 2022. URL https://arxiv.
+org/abs/2201.12740.
+12
+A Auxiliary technical lemmas and missing proof
+In this section, we present the auxiliary technical lemmas that characterize the analysis of our main
+result. Additionally, we also give the complete proof for all lemmas and main results of the stability
+and convergence.
+Lemma A.1. The latent difference satisfies
+∆z(t) = ∆z(t0) +
+Z t
+t0
+(fθ (z1(s)) − fθ (z2(s)))dX(s). (5)
+Proof. Subtracting the two neural CDEs in Eq. 4 initialized at z1(t0) and z2(t0) completes the
+proof.
+Lemma A.2. Let Assumption 5.3 hold. For all t ≥ t0 ≥ 0, we have
+∥∆z(t)∥ ≤ ∥∆z(t0)∥ +
+Z t
+t0
+Lg ∥∆z(s)∥d∥X∥(s). (6)
+Proof. Taking norms in Eq. 5 and applying Assumption 5.3 leads to the result.
+We next present the proof for Theorem 5.5.
+Proof. Define the scalar function u(t) := ∥∆z(t)∥. Recalling the conclusion from Lemma A.2, it
+becomes
+u(t) ≤ u(t0) +
+Z t
+t0
+Lf u(s)dµ(s), (7)
+where we define the nondecreasing function µ(t) := ∥X∥T V,[0,t]. Note that µ(0) = 0 and µ(t)
+is finite and nondecreasing. We apply the Grönwall inequality, which states that if a nonnegative
+function u(t) satisfies u(t) ≤ a +
+R t
+t0 bu(s)dµ(s), with constants a, b ≥ 0 and nondecreasing µ, then
+u(t) ≤ aexp(bµ(t)). (8)
+In our case, a = u(t0) = ∥∆z(t0)∥, b = Lf , and µ(t) = ∥X∥T V,[0,t]. Applying Eq. 8 to Eq. 7, we
+obtain
+u(t) ≤ ∥∆z(t0)∥exp(Lf ∥X∥T V,[0,t]). (9)
+Recalling u(t) = ∥∆z(t)∥ and using the fact that ∥∆z(t0)∥ = ∥ζϕ(ˆx0) − ζϕ(ˆx′ 0)∥ with Assump-
+tion 5.2, we get the desirable result.
+We next provide the proof for Corollary 5.6 and Corollary 5.7.
+Proof. Applying Assumption 5.4 to the conclusion from Theorem 5.5 yields the conclusion.
+Proof. The Predictor cancels exactly. We apply Corollary 5.6 to complete the proof.
+Lemma A.3. Let Assumption 5.8 hold. The squared latent difference satisfies
+d∥∆z(t)∥2 ≤ −2λ∥∆z(t)∥2d∥X∥(t). (10)
+Proof. From Lemma A.1, we obtain that
+d∆z(t) = (fθ (z1) − fθ (z2))dX. (11)
+Then
+d∥∆z(t)∥2 = 2⟨∆z, fθ (z1) − fθ (z2⟩dX. (12)
+Applying Assumption 5.8 and replacing dX by d∥X∥ yields the desirable result.
+We next present the proof for Theorem 5.9.
+13
+Proof. Integrating Eq. 10:
+∥∆z(t)∥2 ≤ ∥∆z(t0)∥2exp(−2λ∥X∥T V,[0,t]). (13)
+Taking square roots and applying Assumption 5.2 to ∥∆z(t0)∥ = ∥ζϕ(ˆx0) − ζϕ(ˆx′ 0)∥ yields the first
+part of the conclusion. Since ∥X∥T V,[0,t] → ∞ when t → ∞, the limit is zero.
+The proof of Corollary 5.10 and Corollary 5.11 are presented as follows.
+Proof. Applying encoder and decoder Lipschitz continuities to Theorem 5.9 completes the proof.
+Proof. Applying the second conclusion of Corollary 5.10 yields the desirable result.
+B Variable length (η) and sparse (κ) control paths hyperparameters
+We discussed two regularization methods in section 4.1 and used those for synthetic, physics sim-
+ulation, and forecasting datasets. This section contains the values of the hyperparameters for both
+regularization for all datasets. Table 4 shows κ & η for synthetic datasets. Only Sparse Control Paths
+regularization was used for all settings. Table 5 shows κ & η for physics simulation datasets. As
+discussed in the section 6.3, we used Variable Length Control Paths (η) regularization for the settings
+when the observed points are very few, like 20%, or when Sparse Control Paths (κ) were not enough
+to provide generalization, e.g., HOPPER.
+Table 4: Hyperparameters κ and η for synthetic datasets in Table 1
+% Observed Pts 20% 50% 80% 100%
+Hyperparameters κ η κ η κ η κ η
+Lorenz 1.0 0 0.8 0 1.0 0 1.0 0
+Lotka Volterra 1.0 0 0.5 0 1.0 0 0.6 0
+FHN 1.0 0 0.4 0 0.7 0 0.6 0
+Glycolytic Oscillator 1.0 0 1.0 0 0.5 0 0.5 0
+Table 5: Hyperparameters κ and η for MuJoCo datasets in Table 2
+Dynamical System 20% 50% 80% 100% κ η κ η κ η κ η
+Hopper 1.0 10 1.0 10 0.2 10 0.2 10
+Walker2D 1.0 10 0.6 0 0.6 0 0.7 0
+Pen 1.0 0 0.6 0 0.6 0 0.8 0
+Hammer 1.0 15 0.6 0 0.6 0 0.7 0
+For long-term series forecasting (LTSF) problems, the hyperparameters are shown in Table 6 & 7.
+For most cases, we keep the values of κ = 0.7 & η = 10 fixed except for Weather.
+Table 6: Hyperparameters κ and η for LTSF datasets in Table 3
+Forecast Horizon (T ) 96 192 336 720
+Hyperparameters κ η κ η κ η κ η
+Exchange 0.7 10 0.7 10 0.7 10 0.7 10
+ETTm2 0.7 10 0.7 10 0.7 10 0.7 10
+ETTh2 0.7 10 0.7 10 0.7 10 0.7 10
+Weather 1.0 0 0.7 50 1.0 50 1.0 0
+14
+Table 7: Hyperparameters κ and η for LTSF datasets in Table 3
+Forecast Horizon (T ) 24 36 48 60
+Hyperparameters κ η κ η κ η κ η
+ILI 0.7 10 0.7 10 0.7 10 0.7 10
+C Time series forecasting
+Table 3 in the main text reports LTSF results averaged over all forecast horizons, comparing four
+parameter-matched Correctors (MLP, GRU, Transformer, Neural CDE) against the frozen DLinear
+Predictor. Table 8 below provides the full per-horizon breakdown across all five datasets and all four
+forecast horizons. The Neural CDE Corrector consistently improves DLinear across datasets and
+horizons except Weather T =720, where MLP achieves the lowest MSE/MAE.
+Table 8: Multivariate long-term forecasting errors (MSE/MAE; lower is better) for all forecast
+horizons across five LTSF datasets. All Correctors use the same frozen DLinear Predictor and are
+parameter-matched (≈530 K); architecture details are in Appendices D.6 and D.4. Best value per row
+is highlighted in bold.
+Methods DLinear (w/o) +MLP +GRU +Transformer +Neural CDE
+Metric MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE
+Exchange
+96 0.086 0.211 0.345 0.462 0.325 0.451 0.188 0.335 0.083 0.207
+192 0.163 0.297 0.526 0.554 0.499 0.558 0.395 0.464 0.159 0.295
+336 0.334 0.443 0.975 0.780 0.721 0.673 0.564 0.571 0.243 0.370
+720 0.899 0.726 1.931 1.041 1.040 0.796 1.051 0.775 0.482 0.548
+Avg 0.370 0.419 0.944 0.709 0.646 0.619 0.549 0.536 0.242 0.355
+ETTm2
+96 0.173 0.269 0.225 0.339 0.176 0.278 0.229 0.363 0.171 0.266
+192 0.239 0.315 0.365 0.441 0.276 0.353 0.273 0.360 0.235 0.311
+336 0.296 0.360 0.815 0.661 0.671 0.609 1.064 0.811 0.288 0.300
+720 0.427 0.440 2.956 1.247 2.817 1.200 2.859 1.313 0.389 0.422
+Avg 0.284 0.346 1.090 0.672 0.985 0.610 1.106 0.712 0.271 0.338
+ETTh2
+96 0.293 0.355 1.200 0.745 0.505 0.543 0.895 0.748 0.290 0.353
+192 0.390 0.424 2.567 1.179 1.215 0.807 2.393 1.293 0.380 0.418
+336 0.464 0.474 4.230 1.701 2.813 1.205 2.521 1.352 0.458 0.470
+720 0.734 0.606 5.300 1.829 4.196 1.807 3.546 1.519 0.705 0.592
+Avg 0.470 0.465 3.324 1.363 2.182 1.091 2.339 1.228 0.458 0.458
+ILI
+24 2.368 1.094 2.339 1.061 2.196 1.018 2.145 1.013 2.300 1.070
+36 2.291 1.080 2.474 1.072 2.190 1.032 2.237 1.047 2.250 1.040
+48 2.341 1.095 2.545 1.085 2.240 1.055 2.453 1.100 2.250 1.060
+60 2.611 1.170 2.833 1.164 2.566 1.142 2.965 1.274 2.590 1.150
+Avg 2.403 1.110 2.548 1.095 2.298 1.062 2.450 1.109 2.350 1.080
+Weather
+96 0.176 0.235 0.181 0.261 0.172 0.242 0.175 0.268 0.159 0.219
+192 0.219 0.279 0.214 0.286 0.206 0.278 0.219 0.299 0.205 0.250
+336 0.263 0.315 0.271 0.325 0.264 0.325 0.276 0.339 0.251 0.300
+720 0.333 0.374 0.315 0.357 0.316 0.360 0.341 0.385 0.338 0.378
+Avg 0.248 0.301 0.245 0.307 0.240 0.301 0.253 0.323 0.238 0.286
+C.1 Full DLinear vs. transformer baselines
+The results for DLinear with Neural CDE Corrector against transformer-based forecasting baselines
+(TimesNet, FEDformer, Autoformer, Informer, Pyraformer, LogTrans) across all forecast horizons
+are listed in Table 9.
+15
+Table 9: Multivariate long-term forecasting errors (MSE/MAE; lower is better). Best value in each
+row is highlighted in bold.
+Methods DLinear (w/) DLinear (w/o) TimesNet FEDformer Autoformer Informer Pyraformer LogTrans
+Metric MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE
+Exchange
+96 0.083 0.207 0.085 0.210 0.107 0.234 0.148 0.278 0.197 0.323 0.847 0.752 0.376 1.105 0.968 0.812
+192 0.159 0.295 0.162 0.297 0.226 0.344 0.271 0.380 0.300 0.369 1.204 0.895 1.748 1.151 1.040 0.851
+336 0.243 0.370 0.333 0.442 0.367 0.448 0.460 0.500 0.509 0.524 1.672 1.036 1.874 1.172 1.659 1.081
+720 0.482 0.548 0.896 0.724 0.964 0.746 1.195 0.841 1.447 0.941 2.478 1.310 1.943 1.206 1.941 1.127
+Avg. 0.242 0.355 0.369 0.418 0.416 0.443 0.518 0.500 0.613 0.539 1.550 0.998 1.485 1.159 1.402 0.968
+ETTm2
+96 0.171 0.266 0.173 0.268 0.187 0.267 0.203 0.287 0.255 0.339 0.365 0.453 0.435 0.507 0.768 0.642
+192 0.235 0.311 0.239 0.315 0.249 0.309 0.269 0.328 0.281 0.340 0.533 0.563 0.730 0.673 0.989 0.757
+336 0.288 0.354 0.295 0.359 0.321 0.351 0.325 0.366 0.339 0.372 1.363 0.887 1.201 0.845 1.334 0.872
+720 0.389 0.422 0.426 0.439 0.408 0.403 0.421 0.415 0.433 0.432 3.379 1.338 3.625 1.451 3.048 1.328
+Avg. 0.271 0.338 0.283 0.345 0.291 0.333 0.304 0.349 0.327 0.371 1.410 0.810 1.498 0.869 1.535 0.900
+ETTh2
+96 0.290 0.353 0.292 0.354 0.340 0.374 0.346 0.388 0.358 0.397 3.755 1.525 0.645 0.597 2.116 1.197
+192 0.380 0.418 0.388 0.422 0.402 0.414 0.429 0.439 0.456 0.452 5.602 1.931 0.788 0.683 4.315 1.635
+336 0.458 0.470 0.466 0.475 0.452 0.452 0.496 0.487 0.482 0.486 4.721 1.835 0.907 0.747 1.124 1.604
+720 0.705 0.592 0.729 0.604 0.462 0.468 0.463 0.474 0.515 0.511 3.647 1.625 0.963 0.783 3.188 1.540
+Avg. 0.458 0.458 0.469 0.464 0.414 0.427 0.433 0.447 0.453 0.462 4.431 1.729 0.826 0.703 2.686 1.494
+ILI
+24 2.30 1.07 2.36 1.09 2.317 0.934 3.228 1.260 3.483 1.287 5.764 1.677 1.420 2.012 4.480 1.444
+36 2.25 1.04 2.28 1.07 1.972 0.920 2.679 1.080 3.103 1.148 4.755 1.467 7.394 2.031 4.799 1.467
+48 2.25 1.06 2.35 1.09 2.238 0.940 2.622 1.078 2.669 1.085 4.763 1.469 7.551 2.057 4.800 1.468
+60 2.59 1.15 2.61 1.17 2.027 0.928 2.857 1.157 2.770 1.125 5.264 1.564 7.662 2.100 5.278 1.560
+Avg. 2.35 1.08 2.40 1.10 2.139 0.931 2.846 1.144 3.006 1.161 5.136 1.544 6.007 2.050 4.839 1.485
+Weather
+96 0.159 0.219 0.175 0.235 0.172 0.220 0.217 0.296 0.266 0.336 0.300 0.384 0.896 0.556 0.458 0.490
+192 0.205 0.250 0.218 0.278 0.219 0.261 0.276 0.336 0.307 0.367 0.598 0.544 0.622 0.624 0.658 0.589
+336 0.251 0.300 0.263 0.314 0.280 0.306 0.339 0.380 0.359 0.395 0.578 0.523 0.739 0.753 0.797 0.652
+720 0.338 0.378 0.332 0.374 0.365 0.359 0.403 0.428 0.419 0.428 1.059 0.741 1.004 0.934 0.869 0.675
+Avg. 0.238 0.286 0.247 0.300 0.259 0.287 0.309 0.360 0.338 0.382 0.634 0.548 0.815 0.717 0.696 0.601
+D Implementation details
+This section discusses the training details of different Predictors, e.g., NODE, Contiformer, and
+DLinear, and the Corrector (Neural CDE).
+D.1 NODE
+The NODE was used as a Predictor for synthetic datasets. The vector field f (equation 1) is
+approximated with a fully connected feedforward neural network. The hyperparameters are given
+below:
+• Batch size: 16
+• Learning rate: 0.001
+• Vector field f: FC(100)2
+• Optimizer: Adam
+where FC(100)2 denotes a fully connected feedforward neural network with 2 hidden layers each
+with 100 neurons.
+D.2 Contiformer
+The Contiformer uses NODE to build a continuous-time transformer. A full connected feedforward
+neural network is used as an Encoder to learn the vector field. For integration, we used odeint from
+torchdiffeq [Chen, 2018] with Dormand-Prince 5(4) (Dopri5), an adaptive explicit Runge-Kutta
+method, using relative/absolute tolerances (rtol = 10−3, atol = 10−6). The Contiformer has the
+following hyperparameters:
+• Batch size: 64
+• Learning rate: 0.001
+• Encoder: FC(100)2
+• Optimizer: Adam
+• Heads (H): 4
+• Dimension of Key (dk), Query (dq ), & Value (dv ) per head = 4
+16
+D.3 DLinear
+DLinear was proposed first in Zeng et al. [2022] to challenge transformer-based solutions for LTSF
+datasets. We used the official implementation of DLinear from Github 2 without changing any
+hyperparameters. This repository also includes LTSF datasets, which we used in our experiments.
+D.4 Neural CDE
+The Neural CDE was used as a Corrector for all Predictors. We used the following hyperparameters
+for synthetic, physics simulation, and forecasting datasets.
+• Batch size: 256 except ILI where 32 was used
+• Learning rate: 0.001
+• Neural CDE vector field fθ : FC(400)4
+• Neural CDE Decoder ξφ (Appendix I.5): FC(400)4
+• Neural CDE initial hidden state network ζϕ: FC(50)1
+• Neural CDE hidden state dimension C: 11
+• Optimizer: Adam
+The early stopping was used to stop the training of NODE, Contiformer, DLinear, and Neural CDE.
+The MSE loss function is used to train all Predictors. The solver settings for NODE and Neural CDE
+are the following. The diffrax implementation of diffeqsolve is used. For integration, we used
+Tsit5 solver (Appendix I.4), a 5th-order explicit Runge-Kutta method with an embedded 4th-order
+method for adaptive step sizing. The PID controller, with relative/absolute tolerances (rtol = 10−3,
+atol = 10−6), is used to control the next step size based on the error estimate. The initial step size
+is 0.001. Experiments were run on machines with 32 GB RAM and NVIDIA A100 GPUs.
+D.5 Continuous-time Corrector baselines
+Latent ODE, SLCDE, and NRDE are natural continuous-time baselines for our Corrector because
+each models trajectories with differential-equation structure. They differ, however, in how directly
+the Predictor forecast path controls the residual dynamics. This distinction is important in the
+Predictor-Corrector setting: the target is not to model the data trajectory from scratch, but to model
+the residual trajectory induced by a fixed Predictor. We therefore want the Corrector hidden state to
+remain sensitive to local changes in the Predictor forecast path throughout the correction horizon.
+Let Xt denote the interpolated Predictor forecast path constructed from ˆx0:T , and let zt denote the
+Corrector hidden state. Neural CDE uses
+dzt = fθ (zt) dXt, ˆet = ξφ(zt), (14)
+so the hidden dynamics are continuously driven by local increments of the Predictor path. The
+baselines differ mainly in how they replace this controlled dynamics.
+Latent ODE first encodes the observed forecast sequence into an initial latent state and then evolves
+NODE, e.g., ˙zt = fθ (zt). This makes it suitable for latent trajectory modeling and irregularly
+sampled observations, but less aligned with residual correction because the Predictor path no longer
+drives the hidden dynamics after the initial encoding. If the Predictor error depends on local features
+of the forecast path, such as slope, phase drift, or curvature, an autonomous latent evolution must
+compress this information into the initial state rather than using it continuously. Formally, it has the
+structure
+zt0 = Encoderϕ(ˆx0:T ), ˙zt = fθ (zt), ˆet = ξφ(zt), (15)
+where Xt affects the dynamics only through the initial state.
+• Encoder: GRUCell with hidden state dimension C = 11
+• Vector field fθ : FC(400)4 (softplus activation)
+• Decoder ξφ: FC(400)4 (identical to Neural CDE)
+2https://github.com/cure-lab/LTSF-Linear
+17
+• Batch size: 256
+• Learning rate: 0.001
+• Optimizer: Adam
+• Solver: Tsit5
+• Total parameters (D = 17, C = 11): ≈932K (dynamics ≈430K + encoder ≈10K + decoder
+≈492K)
+SLCDE is path-driven like Neural CDE, but uses a structured linear controlled dynamics model. It is
+therefore closer to our Corrector than Latent ODE because the hidden state is continuously driven by
+the control path. The main difference is expressivity: SLCDE imposes linear or structured dynamics,
+which can improve stability and efficiency, whereas our Neural CDE uses a nonlinear vector field
+to learn forecast-dependent residual dynamics. Thus, SLCDE is a useful constrained CDE-style
+baseline, while Neural CDE is the more flexible path-conditioned Corrector. At a high level, SLCDE
+replaces the nonlinear vector field in Neural CDE with a structured linear controlled vector field,
+dzt = Aθ (zt) dXt, ˆet = ξφ(zt), (16)
+where Aθ is constrained by the structured linear parameterization.
+• Vector field Aθ : Linear(D + 1, C × C), non-diagonal
+• Decoder ξφ: FC(400)4 (identical to Neural CDE)
+• Hidden state dimension C: 11
+• Batch size: 256
+• Learning rate: 0.001
+• Optimizer: Adam
+• Total parameters (D = 17, C = 11): ≈495K (vector field (D + 1)×C 2 = 2,178 + decoder
+≈492K); exact matching to Neural CDE (≈1,057K) would require C ≈ 177
+NRDE augments the control path using rough-path features, such as log-signatures, to capture higher-
+order path interactions. This makes NRDE a strong path-driven baseline, especially when residuals
+depend on iterated or higher-order effects of the forecast path. In our experiments, NRDE was
+competitive only when log-signatures were computed on the finest available partition (implemented
+as stride 1); coarser partitions degraded performance. This fine-partition setting makes NRDE
+closest to Neural CDE’s use of local path increments, but with a different path representation and
+computational profile. Using a rough-path lift Xt of the Predictor path, NRDE can be viewed
+abstractly as
+dzt = gθ (zt) dXt, ˆet = ξφ(zt), (17)
+where Xt contains higher-order path information rather than only the original interpolated forecast
+path.
+• Log-signature depth: 2
+• Partition: finest available (stride = 1)
+• Vector field gθ : FC(11)1
+• Decoder ξφ: FC(400)4 (identical to Neural CDE)
+• Hidden state dimension C: 11
+• Batch size: 256
+• Learning rate: 0.001
+• Optimizer: Adam
+• Solver: rk4
+• Total parameters (D = 17, C = 11): ≈515K (vector field ≈23K + decoder ≈492K); exact
+matching to Neural CDE (≈1,057K) is impractical because the log-signature dimension ℓsig
+grows as O(D2), making the vector field output C × ℓsig grow rapidly with D and producing
+degenerate architectures at higher dimensions
+18
+Overall, these baselines form a useful hierarchy. Latent ODE tests whether a continuous autonomous
+latent model is sufficient after encoding the forecast path. SLCDE tests whether a constrained
+path-driven CDE is sufficient. NRDE tests whether a rough-path representation of the forecast path
+improves correction. Neural CDE sits between these alternatives: it remains continuously conditioned
+on the Predictor path like SLCDE and NRDE, but uses a nonlinear learned vector field without
+requiring the same rough-path feature construction as NRDE.
+D.6 Discrete-time Corrector baselines
+For the LTSF experiments, DLinear is fixed as the Predictor and each Corrector receives the same
+forecast trajectory ˆx1:T , where T is the forecast horizon and ˆxt ∈ RD is the D-dimensional DLinear
+forecast at horizon step t. Let xt ∈ RD denote the corresponding ground-truth value. The residual
+target is
+et = xt − ˆxt, t = 1, . . . , T, (18)
+and each Corrector Cθ maps the full forecast sequence to predicted residuals, ˆe1:T = Cθ (ˆx1:T ). The
+corrected forecast is then
+ˆxcorr t = ˆxt + ˆet. (19)
+All discrete-time baselines are trained with the same residual loss and are parameter-matched to
+Neural CDE (≈530 K). Let qt = [ˆxt, τt] ∈ RD+1 denote the forecast value concatenated with the
+normalized horizon index τt = t/T .
+D.6.1 MLP Corrector
+The MLP Corrector applies the same pointwise network gθ : RD+1 → RD independently at each
+horizon step:
+ˆet = gθ (qt). (20)
+This baseline tests whether local nonlinear correction of each forecast value is sufficient. It has no
+temporal memory and no interaction across horizon steps.
+• Hidden dimension: 512
+• Layers: 3
+• Optimizer: Adam
+D.6.2 GRU Corrector
+The GRU Corrector introduces discrete sequential memory over the forecast horizon:
+h1:T = GRUθ (q1:T ), ˆet = gϕ(ht). (21)
+Here ht is the GRU hidden state after processing the forecast inputs up to step t, and gϕ is a decoder
+that maps this hidden state to a D-dimensional residual estimate. It is the closest discrete-time
+analogue to Neural CDE because both maintain a hidden state conditioned on the Predictor trajectory.
+The key difference is that GRU updates only at sampled forecast indices, while Neural CDE evolves
+continuously along the interpolated forecast path and is driven by its local increments.
+• Hidden dimension (dh): 240
+• Layers: 2
+• Decoder: FC(20)1
+• Optimizer: Adam
+D.6.3 Transformer Corrector
+The Transformer Corrector uses global self-attention over the full forecast sequence:
+H1:T = Transformerθ (q1:T ), ˆet = WoutHt + bout. (22)
+We implement this baseline as an encoder-only Transformer. This choice matches the residual-
+correction setting: the DLinear Predictor has already produced the full forecast horizon before the
+Corrector is applied, so the Corrector can attend to the entire sequence q1:T at once rather than
+19
+generating residuals autoregressively. The encoder produces one contextual representation Ht for
+each horizon step, and Wout, bout define the linear readout from this representation to the predicted
+residual.
+• Token embedding dimension (dmodel): 128
+• Attention heads (h): 4
+• Feed-forward network (FFN) hidden dimension: 768
+• Encoder layers: 2
+• Optimizer: Adam
+Discrete versus continuous path conditioning. The three baselines isolate different discrete
+correction mechanisms: MLP tests pointwise residual calibration, GRU tests sequential discrete
+memory, and Transformer tests global discrete attention. Although GRU and Transformer are also
+conditioned on the Predictor forecasts, they use the forecasts as a discrete input sequence. Neural
+CDE instead treats the Predictor forecast as a continuous control path: its hidden state evolves
+between sampled forecast points and changes according to local path increments dXt. This gives the
+Corrector a continuous-time notion of how forecast geometry, such as slope and curvature, drives
+residual dynamics. This inductive bias may be especially useful for residual correction, which can
+differ from primary forecasting: the residual often reflects local error evolution, such as gradual drift,
+phase mismatch, or changes in trend, rather than a new long-horizon forecast to be generated from
+scratch. A Transformer can mix information globally across the forecast horizon, but global sequence
+mixing does not explicitly model how the residual state evolves along the path between neighboring
+forecast times. Under a matched parameter budget, Neural CDE may therefore allocate capacity more
+directly to the local evolution of forecast errors.
+E Synthetic datasets
+We train NODE on four synthetic datasets, shown in Table 1. The closed-form expressions of
+multivariate ODEs are provided in this section. The parameters and initial conditions are adopted
+from Shahid and Fleming [2025].
+E.1 Lotka-Volterra [Wangersky, 1978]
+dx
+dt = αx − βxy (23)
+dy
+dt = δxy − γy (24)
+Initial Condition Ranges: x ∈ [5, 20]; y ∈ [5, 10]
+Parameters: α = 1.1; β = 0.4; γ = 0.4; δ = 0.1
+E.2 LORENZ [Brunton et al., 2016]
+dx
+dt = σ(y − x) (25)
+dy
+dt = x(ρ − z) − y (26)
+dz
+dt = xy − βz (27)
+Initial Condition Ranges: x ∈ [−20, 20]; y ∈ [−20, 20]; z ∈ [0, 50]
+Parameters: σ = 10; ρ = 28; β = 8 3
+20
+E.3 FitzHugh-Nagumo (FHN) [Izhikevich and FitzHugh, 2006a]
+dv
+dt = v − v3 3 − w + I (28)
+dw
+dt = ϵ(v + a − bw) (29)
+Initial Condition Ranges: v ∈ [−1.5, 1.5];w ∈ [−1.5, 1.5]
+Parameters: a = 0.7;b = 0.8;ϵ = 0.08;I = 0.5
+E.4 GLYCOLYTIC Oscillator [Daniels and Nemenman, 2015]
+dS1
+dt = J0 − k1S1S6 1 + (S6/K1)q (30)
+dS2
+dt = 2 k1S1S6 1 + (S6/K1)q − k2S2(N − S5) − k6S2S5 (31)
+dS3
+dt = k2S2(N − S5) − k3S3(A − S6) (32)
+dS4
+dt = k3S3(A − S6) − k4S4S5 − κ(S4 − S7) (33)
+dS5
+dt = k2S2(N − S5) − k4S4S5 − k6S2S5 (34)
+dS6
+dt = −2 k1S1S6 1 + (S6/K1)q + 2k3S3(A − S6) − k5S6 (35)
+dS7
+dt = ψκ(S4 − S7) − kS7 (36)
+Initial Condition Ranges: S1 ∈ [0.15, 1.60]; S2 ∈ [0.19, 2.16]; S3 ∈ [0.04, 0.20]; S4 ∈
+[0.10, 0.35]; S5 ∈ [0.08, 0.30]; S6 ∈ [0.14, 2.67]; S7 ∈ [0.05, 0.10]
+Parameters: J0 = 2.5; k1 = 100; k2 = 6; k3 = 16; k4 = 100; k5 = 1.28; k6 = 12;
+k = 1.8; κ = 13; q = 4; K1 = 0.52; ψ = 0.1; N = 1; A = 4
+E.5 Data generation details
+Table 10: Details about data generation
+Model ∆t Timesteps Trajectories
+LOTKA VOLTERRA 0.1 300 500
+LORENZ 0.01 300 1000
+FHN 0.5 400 350
+GLYCOLYTIC 0.01 400 750
+F Additional corrector results on LORENZ and LVOLT
+Table 11 extends the synthetic dataset evaluation from Table 1 of the main text to LORENZ and
+LVOLT, reporting interpolation and extrapolation MSE for all four correctors across all sparsity
+levels.
+G Physics simulation datasets
+To collect the MuJoCo dataset, we trained expert policies for each environment and used them
+to generate trajectory rollouts. The policies were deterministic because the focus of this study is
+21
+Table 11: MSE without (w/o) and with (w/) corrector for LORENZ and LVOLT (NODE predictor),
+combining interpolation (0–50) and extrapolation (0–t∗) regimes. t∗ is the maximum timestep
+sustaining ≥ 3% cumulative MSE reduction. Best w/ per column in bold (interpolation); longest t∗
+per column in bold (extrapolation). w/ values show mean±std over 3 runs; w/o is deterministic (single
+Predictor).
+Dataset Corrector Interpolation (0–50) Extrapolation (0–t∗ ) 20% 50% 80% 100% 20% 50% 80% 100%
+LORENZ
+SLCDE
+w/o 2.308 1.061 1.062 0.8877 3.040 4.402 3.585 2.661
+w/ 1.989±.13 0.7812±.04 0.8049±.05 0.6495±.02 2.918±.24 4.256±.19 3.457±.21 2.561±.08
+0–t|% 0–50|14% 0–50|26% 0–50|24% 0–50|27% 0–75|4% 0–80|3% 0–75|4% 0–90|4%
+Latent ODE
+w/o 2.308 1.061 1.062 0.8877 3.040 4.002 2.923 1.159
+w/ 2.246±.17 0.9088±.06 0.8082±.04 0.7363±.03 2.930±.22 3.876±.25 2.777±.13 1.078±.06
+0–t|% 0–50|3% 0–50|14% 0–50|24% 0–50|17% 0–75|4% 0–75|3% 0–70|5% 0–70|7%
+NRDE
+w/o 2.308 1.061 1.062 0.8877 10.12 8.526 9.224 11.40
+w/ 0.4748±.03 0.3236±.01 0.3165±.02 0.2358±.008 9.798±.81 8.235±.46 8.915±.53 11.02±.92
+0–t|% 0–50|79% 0–50|70% 0–50|70% 0–50|73% 0–175|3% 0–140|3% 0–160|3% 0–180|3%
+Neural CDE
+w/o 2.308 1.061 1.062 0.8877 12.13 10.25 8.652 7.878
+w/ 0.8948±.07 0.3717±.03 0.2890±.01 0.4669±.04 11.50±1.02 9.939±.58 8.382±.31 7.638±.45
+0–t|% 0–50|61% 0–50|65% 0–50|73% 0–50|47% 0–195|5% 0–165|3% 0–155|3% 0–160|3%
+LVOLT
+SLCDE
+w/o 0.1018 0.0357 0.0279 0.0253 0.2357 4.280 4.129 4.045
+w/ 0.0815±.006 0.0277±.002 0.0215±.001 0.0203±.001 0.2275±.018 4.119±.31 3.997±.27 3.905±.22
+0–t|% 0–50|20% 0–50|22% 0–50|23% 0–50|20% 0–80|3% 0–105|4% 0–105|3% 0–105|3%
+Latent ODE
+w/o 0.1018 0.0357 0.0279 0.0253 — — — —
+w/ 0.1989±.019 0.1538±.008 0.1359±.011 0.1338±.005 — — — —
+0–t|% 0–50|−95% 0–50|−331% 0–50|−388% 0–50|−429% ≤ 50 ≤ 50 ≤ 50 ≤ 50
+NRDE
+w/o 0.1018 0.0357 0.0279 0.0253 0.7636 0.0500 0.0587 0.0931
+w/ 0.0629±.005 0.0274±.001 0.0220±.002 0.0206±.001 0.7401±.058 0.0464±.003 0.0551±.004 0.0894±.007
+0–t|% 0–50|38% 0–50|23% 0–50|21% 0–50|19% 0–90|3% 0–65|7% 0–70|6% 0–75|4%
+Neural CDE
+w/o 0.1018 0.0357 0.0279 0.0253 0.1531 0.2063 0.0318 0.0549
+w/ 0.0571±.004 0.0241±.001 0.0215±.001 0.0193±.001 0.1396±.012 0.1990±.016 0.0281±.002 0.0505±.004
+0–t|% 0–50|44% 0–50|32% 0–50|23% 0–50|24% 0–75|9% 0–80|4% 0–60|12% 0–70|8%
+on learning the evolution of states in the system. Deterministic controllers ensure consistent state
+transitions across rollouts, whereas stochastic controllers could produce different trajectories from the
+same initial condition, which would complicate modeling when only the states are used as inputs. An
+extension to action-conditioned dynamics models is natural and would involve learning a mapping of
+the form x(t + 1) = gθ (x(t), a(t)) instead of x(t + 1) = gθ (x(t)), where x(t + 1) denotes the next
+state transitioned from x(t) by applying action a(t). Such a formulation would allow the use of data
+from arbitrary policies, including stochastic ones, and will be considered in future work. For each
+environment, we generated 2000 trajectories of 300 regularly-sampled time points each. There are
+four MuJoCo environments in Table.2. Fig. 5 shows the four environments within the simulator.
+H Additional corrector results on HOPPER and HAMMER
+Table 12 extends the physics simulation evaluation from Table 3 of the main text to HOPPER and
+HAMMER, reporting interpolation and extrapolation MSE for all four correctors across all sparsity
+levels.
+I Ablation studies
+I.1 Training horizon for LTSF
+In section 6.4, we discussed that the Corrector is trained on the first 50, 100, 150, and 300 timesteps
+for forecast horizons 96, 192, 336, and 720, respectively. Here, we chose forecast horizon 336 for
+Exchange, ETTm2, ETTh2, & Weather to demonstrate the impact of training Corrector on the first
+50, 100, 150, 200, 250, 300, and 336 timesteps. Table 13 shows that the Corrector shows a relatively
+poor performance, i.e., an increase in MSE/MAE, when trained on very short (e.g., 50 timesteps)
+or very long horizons (e.g., 336 timesteps). This motivates our choice of training the Corrector on
+intermediate-length horizons (e.g., 50 for T =96, 100 for T =192, etc.) to report results in Table 3 and
+9.
+22
+Figure 5: The MuJoCo environments inside the simulator (a) Upper left: HOPPER (11D) (b) Upper
+right: WALKER2D (17D) (c) Lower left: PEN (45D) (d) Lower right: HAMMER (46D)
+Table 13: Multivariate LTSF errors (MSE/MAE) for forecast horizon 336 of Exchange, ETTm2,
+ETTh2, & Weather, where the Corrector is trained on the first 50, 100, 150, 200, 250, 300, & 336
+timesteps for each setting. The %↓ shows the reduction in MSE in percentage.
+Train Horizon 50 100 150 200 250 300 336
+Metrics MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE MSE MAE
+Exchange 0.304 0.413 0.278 0.394 0.243 0.370 0.305 0.434 0.353 0.470 0.340 0.460 0.360 0.472 8.71%↓ 6.56%↓ 16.51%↓ 10.86%↓ 27.03%↓ 16.29%↓ 8.41%↓ 1.81%↓ -6.01%↓ -6.3%↓ -2.10%↓ -4.07%↓ -8.11%↓ -6.79%↓
+ETTh2 0.463 0.473 0.459 0.470 0.458 0.470 0.456 0.469 0.459 0.470 0.460 0.471 0.471 0.480 0.64%↓ 0.42%↓ 1.50%↓ 1.05%↓ 1.72%↓ 1.05%↓ 2.15%↓ 1.26%↓ 1.50%↓ 1.05%↓ 1.29%↓ 0.84%↓ -1.07%↓ -1.05%↓
+ETTm2 0.288 0.353 0.287 0.352 0.288 0.354 0.290 0.356 0.293 0.358 0.291 0.355 0.292 0.357 2.37%↓ 1.67%↓ 2.71%↓ 1.95%↓ 2.37%↓ 1.39%↓ 1.69%↓ 0.84%↓ 0.68%↓ 0.28%↓ 0.68%↓ 0.28%↓ 1.02%↓ 0.56%↓
+Weather 0.264 0.320 0.253 0.306 0.251 0.300 0.253 0.305 0.254 0.303 0.256 0.306 0.251 0.300 -0.38%↓ -1.91%↓ 3.80%↓ 2.55%↓ 4.56%↓ 3.82%↓ 3.80%↓ 2.87%↓ 3.42%↓ 4.08%↓ 3.42%↓ 2.55%↓ 4.56%↓ 4.46%↓
+I.2 Order of ODE
+To show the robustness of Predictor-Corrector to different orders of ODEs. We generated synthetic
+data from second, third, and fourth-order ODEs.
+Second-order system. We simulate the damped oscillator
+x′′(t) + 0.3 x′(t) + 1.0 x(t) = 0. (37)
+23
+Table 12: MSE without (w/o) and with (w/) corrector for HOPPER and HAMMER combining in-
+terpolation (0–50) and extrapolation (0–t∗) regimes. w/ values show mean±std over 3 runs; w/o is
+deterministic (single Predictor).
+Dataset Corrector Interpolation (0–50) Extrapolation (0–t∗ ) 20% 50% 80% 100% 20% 50% 80% 100%
+HOPPER
+SLCDE
+w/o 0.167 0.138 0.094 0.084 0.204 0.182 0.134 0.123
+w/ 0.063±.005 0.044±.003 0.031±.002 0.019±.001 0.140±.012 0.112±.008 0.109±.007 0.119±.009
+0–t∗ |% 0–50|62% 0–50|68% 0–50|68% 0–50|78% 0–55|32% 0–55|38% 0–55|19% 0–55|3%
+Latent ODE
+w/o 0.167 0.138 0.094 0.084 0.204 0.182 0.134 0.123
+w/ 0.013±.001 0.012±.0008 0.013±.001 0.008±.0004 0.118±.011 0.088±.005 0.097±.008 0.109±.006
+0–t∗ |% 0–50|92% 0–50|92% 0–50|86% 0–50|91% 0–55|43% 0–55|52% 0–55|28% 0–55|12%
+NRDE
+w/o 0.167 0.138 0.094 0.084 0.204 0.182 0.134 0.123
+w/ 0.014±.001 0.006±.0004 0.006±.0003 0.005±.0002 0.107±.009 0.112±.010 0.084±.006 0.094±.007
+0–t∗ |% 0–50|92% 0–50|96% 0–50|94% 0–50|95% 0–55|48% 0–55|38% 0–55|38% 0–55|23%
+Neural CDE
+w/o 0.167 0.138 0.094 0.084 0.385 0.172 0.142 0.136
+w/ 0.061±.005 0.018±.002 0.035±.003 0.028±.001 0.372±.031 0.149±.009 0.120±.013 0.132±.007
+0–t∗ |% 0–50|63% 0–50|86% 0–50|63% 0–50|67% 0–110|4% 0–65|13% 0–70|15% 0–60|3%
+HAMMER
+SLCDE
+w/o 0.020 0.014 0.011 0.009 0.0204 0.0131 0.0096 0.0080
+w/ 0.009±.0007 0.009±.0005 0.007±.0003 0.007±.0002 0.0181±.0016 0.0125±.0007 0.0092±.0006 0.0077±.0003
+0–t∗ |% 0–50|57% 0–50|38% 0–50|32% 0–50|22% 0–65|11% 0–75|5% 0–85|3% 0–75|4%
+Latent ODE
+w/o 0.020 0.014 0.011 0.009 0.0208 0.0133 0.0104 0.0082
+w/ 0.007±.0006 0.007±.0004 0.008±.0005 0.006±.0002 0.0137±.0011 0.0121±.0009 0.0096±.0006 0.0075±.0004
+0–t∗ |% 0–50|63% 0–50|47% 0–50|30% 0–50|31% 0–60|34% 0–60|10% 0–60|8% 0–60|9%
+NRDE
+w/o 0.020 0.014 0.011 0.009 0.0205 0.0076 0.0065 0.0053
+w/ 0.003±.0003 0.003±.0001 0.003±.0001 0.003±.0001 0.0167±.0014 0.0073±.0004 0.0062±.0005 0.0050±.0003
+0–t∗ |% 0–50|84% 0–50|78% 0–50|73% 0–50|70% 0–70|19% 0–145|4% 0–135|4% 0–130|5%
+Neural CDE
+w/o 0.020 0.014 0.011 0.009 0.0158 0.0073 0.0049 0.0046
+w/ 0.012±.0009 0.006±.0004 0.004±.0002 0.003±.0001 0.0152±.0013 0.0070±.0004 0.0047±.0004 0.0043±.0003
+0–t∗ |% 0–50|37% 0–50|56% 0–50|64% 0–50|63% 0–100|4% 0–150|4% 0–180|4% 0–150|6%
+Its first-order state-space representation is
+z1 = x,
+z2 = x′,
+˙z1 = z2,
+˙z2 = −1.0 z1 − 0.3 z2.
+(38)
+Third-order system. We simulate the third-order linear ODE
+x(3)(t) + 0.4 x′′(t) + 0.3 x′(t) + 1.0 x(t) = 0. (39)
+Its first-order state-space form is
+z1 = x,
+z2 = x′,
+z3 = x′′,
+˙z1 = z2,
+˙z2 = z3,
+˙z3 = −1.0 z1 − 0.3 z2 − 0.4 z3.
+(40)
+Fourth-order system. We simulate the fourth-order ODE
+x(4)(t) + 0.3 x(3)(t) + 0.5 x′′(t) + 0.3 x′(t) + 1.0 x(t) = 0. (41)
+The corresponding first-order state-space form is
+z1 = x,
+z2 = x′,
+z3 = x′′,
+z4 = x(3),
+˙z1 = z2,
+˙z2 = z3,
+˙z3 = z4,
+˙z4 = −1.0 z1 − 0.3 z2 − 0.5 z3 − 0.3 z4.
+(42)
+24
+Table 14: Test MSE of NODE as a Predictor on ODEs of different orders with (w/) and without (w/o)
+Corrector. The % ↓ shows the percentage reduction in MSE of NODE with our proposed Corrector.
+For both interpolation and extrapolation, reported MSE values are computed from timestep 0 up to
+the specified timestep (t) for each setting (0-t).
+Dynamical
+System Model Interpolation (% Pts w/ missing features) Extrapolation (% Pts w/ missing features) 0% 30% 60% 0% 30% 60%
+2nd Order ODE w/o 0.0142 0.0452 0.0728 0.0413 0.0952 0.109 w/ 0.0039 0.0152 0.0252 0.0397 0.0922 0.097
+0 – t | %↓ 0–50 | 72% 0–50 | 66% 0–50 | 65% 0–170 | 4% 0–180 | 3% 0–165 | 10%
+3rd Order ODE w/o 0.0101 0.0359 0.0934 7.3 8.1 9.4 w/ 0.0019 0.0039 0.0543 6.9 7.9 9.0
+0 – t | %↓ 0–50 | 81% 0–50 | 89% 0–50 | 41% 0–180 | 5% 0–170 | 4% 0–190 | 4%
+4th Order ODE w/o 1.27 2.3 4.1 10.36 12.45 14.56 w/ 1.15 2.1 3.8 10.02 11.9 14.10
+0 – t | %↓ 0–50 | 9% 0–50 | 8% 0–50 | 7% 0–90 | 3% 0–80 | 4% 0–100 | 3%
+Table 15: MSE of ContiFormer as a Predictor on various dynamical systems’ datasets from MuJoCo
+[Todorov et al., 2012] with (w/) and without (w/o) Corrector under different interpolation schemes
+for control paths of Neural CDE. For interpolation and extrapolation, the reported MSE values are
+computed from timestep 0 up to the specified timestep (t) for each setting (0-t).
+Dynamical System
+(Interpolation) Model Interpolation (% Observed Pts) Extrapolation (% Observed Pts) 20% 50% 80% 100% 20% 50% 80% 100%
+Walker2D (Linear) w/o 1.826 0.572 0.408 0.164 2.72 0.577 0.778 0.869 w/ 1.029 0.435 0.228 0.073 2.62 0.532 0.758 0.839
+0–t | %↓ 0–50 | 43% 0–50 | 23% 0–50 | 43% 0–50 | 55% 0–180 | 4% 0–100 | 7% 0–130 | 3% 0–140 | 3%
+Walker2D (Cubic) w/o 1.826 0.572 0.408 0.164 2.89 1.70 0.778 0.869 w/ 0.721 0.285 0.149 0.053 2.68 1.63 0.750 0.838
+0–t | %↓ 0–50 | 61% 0–50 | 50% 0–50 | 63% 0–50 | 68% 0–190 | 7% 0–180 | 4% 0–130 | 4% 0–140 | 4%
+Hammer (Linear) w/o 0.020 0.0137 0.0106 0.0085 0.0115 0.0083 0.0049 0.0046 w/ 0.0122 0.0058 0.0038 0.0039 0.0110 0.0080 0.0047 0.0045
+0–t | %↓ 0–50 | 39% 0–50 | 57% 0–50 | 63% 0–50 | 54% 0–140 | 4% 0–140 | 3% 0–180 | 4% 0–150 | 6%
+Hammer (Cubic) w/o 0.020 0.0137 0.0106 0.0085 0.0158 0.0073 0.0049 0.0046 w/ 0.012 0.0059 0.0037 0.0032 0.0150 0.0070 0.0047 0.0044
+0–t | %↓ 0–50 | 37% 0–50 | 56% 0–50 | 64% 0–50 | 63% 0–100 | 4% 0–150 | 4% 0–180 | 4% 0–150 | 6%
+We train NODE as a Predictor for these examples with the same architectural details given in
+D.1. Both states and derivatives are modeled with NODE. The Corrector is trained with the same
+architectural details given in D.4. To simulate time-varying partial observability, we randomly mask
+half of the observed features for 0%, 50%, and 80% of the observed time points. The results are
+shown in the Table. 14. The interpolation shows the performance of the Corrector for the first 50
+timesteps, which corresponds to its training horizon. The extrapolation columns lists the timesteps
+for every setting up to which the Corrector brings at least a 3% reduction in MSE of NODE. The
+corrector consistently brings a reduction in the MSE of the Predictor irrespective of the levels of
+partial observability. However, the order of the ODE does impact the performance of the Corrector.
+The Corrector brings less than 10% reduction in MSE within the interpolation region for the 4th order
+system compared to the 2nd and 3rd order systems, where the reduction in MSEs is significantly
+higher. Within the extrapolation region, the horizons up to which the Corrector brings at least 3%
+reduction in MSE are much smaller for 4th order systems compared to 2nd and 3rd order systems.
+This demonstrates that the order of the system impacts the performance of the Corrector.
+I.3 Sensitivity to interpolation schemes
+The diffrax Kidger [2022] contains different interpolation schemes for control paths of Neural CDE.
+Here, we present the sensitivity of Corrector performance to those interpolation schemes. The results
+with Cubic interpolation for WALKER2D and HAMMER are copied from the Table 2. The Linear
+interpolation brings a slightly smaller reduction in MSE (%) compared to the Cubic interpolation in
+almost every setting in Table 15. This observation is in line with the results reported by Morrill et al.
+[2022].
+25
+I.4 Sensitivity to ODE solvers
+The diffrax package has different explicit Runga-Kutta (RK) methods. We used Tsit5 to report
+results in the paper everywhere else. Here, we analyze the sensitivity of Walker2D results to other
+solvers from the explicit RK family. The results are reported in Table 16. The Tsit5 performed better
+both in interpolation and extrapolation regions compared to other solvers, followed by Dopri5. The
+adaptive-step size solvers, such as Heun, Dopri5, & Tsit5, performed better than Euler method.
+Table 16: MSE of ContiFormer as a Predictor on Walker2D dataset from MuJoCo [Todorov et al.,
+2012] with (w/) and without (w/o) Corrector under different solvers for Neural CDE. For interpolation
+and extrapolation, the reported MSE values are computed from timestep 0 up to the specified timestep
+(t) for each setting (0-t).
+ODE Solver Model Interpolation (% Observed Pts) Extrapolation (% Observed Pts) 20% 50% 80% 100% 20% 50% 80% 100%
+Euler w/o 1.826 0.572 0.408 0.164 2.72 0.639 0.778 0.245 w/ 1.375 0.437 0.292 0.105 2.62 0.620 0.743 0.234
+0–t | %↓ 0–50 | 24% 0–50 | 23% 0–50 | 28% 0–50 | 36% 0–180 | 4% 0–100 | 3% 0–130 | 4% 0–80 | 4%
+Heun w/o 1.826 0.572 0.408 0.164 1.86 0.969 0.778 0.413 w/ 0.901 0.359 0.328 0.078 1.67 0.925 0.752 0.394
+0–t | %↓ 0–50 | 50% 0–50 | 37% 0–50 | 19% 0–50 | 52% 0–130 | 9% 0–130 | 4% 0–130 | 4% 0–120 | 4%
+Dopri5 w/o 1.826 0.572 0.408 0.164 1.86 0.969 0.778 0.869 w/ 0.819 0.361 0.329 0.064 1.81 0.929 0.760 0.841
+0–t | %↓ 0–50 | 55% 0–50 | 36% 0–50 | 19% 0–50 | 60% 0–130 | 3% 0–130 | 4% 0–130 | 3% 0–140 | 4%
+Tsit5 w/o 1.826 0.572 0.408 0.164 2.89 1.70 0.778 0.869 w/ 0.721 0.285 0.149 0.053 2.68 1.63 0.750 0.838
+0–t | %↓ 0–50 | 61% 0–50 | 50% 0–50 | 63% 0–50 | 68% 0–190 | 7% 0–180 | 4% 0–130 | 4% 0–140 | 4%
+I.5 Decoder (ξφ) size
+The decoder (ξφ) for Neural CDE corrector maps the hidden state dynamics z(t) to error dynamics
+ˆe(t) as shown in Fig. 2. Here, we show the results of FHN with varying decoder sizes in the Table.
+17. The results elsewhere are reported using a four-layer fully connected neural network with 400
+neurons in each layer, denoted as FC(400)4. With FC(20)1, we observe a performance degradation
+within the interpolation region, but the extrapolation performance is better. This indicates that a small
+decoder mitigates overfitting and facilitates generalization, while the hidden state z(t) models error
+dynamics.
+Table 17: MSE of NODE as a Predictor on FHN dataset with (w/) and without (w/o) Corrector under
+different decoder sizes for Neural CDE (Corrector). For interpolation and extrapolation, the reported
+MSE values are computed from timestep 0 up to the specified timestep (t) for each setting (0-t).
+Decoder Size Model Interpolation (% Observed Pts) Extrapolation (% Observed Pts) 20% 50% 80% 100% 20% 50% 80% 100%
+FC(20)1
+w/o 0.225 0.161 0.150 0.137 0.264 0.183 0.200 0.180
+w/ 0.187 0.139 0.122 0.114 0.248 0.177 0.191 0.171
+0 – t | %↓ 0–50 | 17% 0–50 | 14% 0–50 | 18% 0–50 | 17% 0–90 | 5% 0–190 | 4% 0–220 | 5% 0–200 | 5%
+FC(100)1
+w/o 0.225 0.161 0.150 0.137 0.274 0.178 0.192 0.179
+w/ 0.181 0.137 0.123 0.107 0.263 0.169 0.168 0.173
+0 – t | %↓ 0–50 | 18% 0–50 | 12% 0–50 | 18% 0–50 | 22% 0–100 | 4% 0–150 | 4% 0–200 | 4% 0–180 | 4%
+FC(400)4
+w/o 0.225 0.161 0.150 0.137 0.242 0.178 0.192 0.166
+w/ 0.164 0.128 0.093 0.097 0.231 0.171 0.183 0.158
+0 – t | %↓ 0–50 | 27% 0–50 | 20% 0–50 | 38% 0–50 | 29% 0–75 | 5% 0–150 | 4% 0–140 | 4% 0–150 | 5%
+I.6 Efficiency–extrapolation Pareto curves for κ and η regularization
+The κ (Sparse Control Paths) and η (Variable Length Control Paths) regularization strategies are two
+proposed approaches to enhance the extrapolation performance and computational efficiency (i.e.,
+NFE) of the Neural CDE corrector. Both approaches offer a trade-off between the efficiency, i.e.,
+26
+number of function evaluations (NFEs), and the extrapolation horizon. The extrapolation horizon is
+the timestep up to which the corrector brings at least 3% reduction in MSE. We plot Pareto curves for
+both κ and η to show the trade-off between NFE and extrapolation horizon in Fig. 6. Pareto curves
+for κ & η show the value of κ & η right next to each data point, while the x and y axes show the
+NFE and extrapolation horizon, respectively. The curves show that reducing NFE and extending the
+extrapolation horizon are competing objectives, so the preferred setting is the point that best balances
+both quantities.
+Figure 6: Pareto curves showing the trade-offs between extrapolation and efficiency via the proposed
+regularization strategies.
+I.7 Wall-clock time of κ & η
+We report the average wall-clock time it takes to complete one epoch during training, varying the
+levels of κ & η, as shown in Fig. 7. It can be seen that smaller values of κ and larger values of η
+result in faster training, corroborating the results shown in Fig. 4 of the paper.
+Figure 7: Average wall-clock time (in seconds) of an epoch with varying values of κ & η.
+I.8 Long-horizon stress tests
+We empirically show that the MSE of corrected forecasts of Predictor over long horizons (400
+timesteps) remains well-bounded. The results are shown for LORENZ, FHN, LVOLT, and GLY-
+COLYTIC in the Fig. 8. Each data point shows the log(MSE) from timestep 0 to timestep T on the
+x-axis.
+27
+Figure 8: The long-horizon tests demonstrating the well-boundedness of the error of the corrected
+forecasts of the Predictor (NODE) on LORENZ, LVOLT, FHN, & GLYCOLYTIC.
+J Additional LTSF results
+J.1 Performance of Neural CDE Corrector on FEDformer
+To demonstrate the effectiveness of Neural CDE corrector on a transformer-based model for LTSF,
+we test Neural CDE to improve the performance of FEDformer on the ETTm2 dataset. The results
+are shown in the Table. 18.
+Table 18: Multivariate long-term forecasting errors (MSE/MAE; lower is better). The results of
+FEDformer with (w/) and without (w/o) our Corrector on ETTm2 are shown.
+Methods FEDformer (w/) FEDformer (w/o)
+Metric MSE MAE MSE MAE
+ETTm2
+96 0.189 0.265 0.203 0.287
+192 0.250 0.311 0.269 0.328
+336 0.315 0.356 0.325 0.366
+720 0.415 0.405 0.421 0.415
+Avg. 0.292 0.334 0.304 0.349
+J.2 Predictor diversity
+To bolster our claim that the proposed Predictor-Corrector framework is agnostic to the underlying
+Predictor, we evaluate our Corrector on two additional Predictors, i.e., RNN and TCN. The datasets
+are LORENZ and FHN. The extrapolation columns list the horizon up to which the Corrector brings
+at least 3% reduction in MSE of Predictor. The results are shown in the Table. 19.
+Table 19: Test MSE of RNN & TCN as Predictors on Lorenz & FHN dataset with (w/) and without
+(w/o) Corrector. The % ↓ shows the percentage reduction in MSE of RNN & TCN with our proposed
+Corrector. For both interpolation and extrapolation, reported MSE values are computed from timestep
+0 up to the specified timestep (t) for each setting (0-t).
+Dynamical
+System Model Interpolation Extrapolation RNN TCN RNN TCN
+Lorenz w/o 1.102 0.725 5.705 3.908 w/ 0.901 0.635 5.504 3.709
+0 – t | %↓ 0–50 | 18% 0–50 | 13% 0–80 | 3% 0–100 | 5%
+Glycolytic
+Oscillator
+w/o 0.190 0.140 0.187 0.160
+w/ 0.140 0.110 0.180 0.150
+0 – t | %↓ 0–50 | 26% 0–50 | 21% 0–90 | 4% 0–110 | 6%
+28
+K Performance of Predictor-Corrector on Exchange (8D)
+Table 3 shows the performance of DLinear without Corrector (w/o) and with Corrector (w/). Fig. 9
+shows the performance of Predictor-Corrector compared to Predictor alone on one of the trajectories
+from the Exchange test dataset. The trajectory shows a drop in MSE with Corrector.
+0
+2Dim. 1
+1
+0
+Dim. 2
+0
+1
+2Dim. 3
+0
+2
+4Dim. 4
+0
+2
+4Dim. 5
+1
+0
+1
+Dim. 6
+0
+2Dim. 7
+0 100 200 300 400 500 600 700
+Timestep
+1
+2
+3Dim. 8
+Ground Truth Predictor-Corrector (MSE:0.342) Predictor (MSE:1.051)
+Figure 9: The performance of Corrector on one of the trajectories of the Exchange test dataset. Dim.
+is used as a shorthand for dimension in the plots.
+L LTSF dataset statistics
+Table 20 lists the statistics of the five LTSF datasets used in Section 6.4, including the number of
+variates, total timesteps, and sampling granularity.
+29
+Table 20: The statistics of five datasets from Table 3
+Datasets Exchange ETTm2 ETTh2 ILI Weather
+Variates 8 7 7 7 21
+Timesteps 7,588 69,680 17,420 966 52,696
+Granularity 1 day 15 min 1 hour 1 week 10 min
+M Performance of Predictor-Corrector on PEN (45D)
+The performance of the ContiFormer without Corrector (w/o) and with Corrector (w/) on PEN is
+shown in Table 2. Here, we show the performance of Corrector on one of the trajectories from the
+test dataset for a 20% observed points setting. The first 24 dimensions are shown in Fig. 10 and the
+rest of the 21 dimensions in Fig. 11. The visualizations demonstrate that the Corrector (trained on the
+first 50 timesteps) can correct the Predictor up to 200 timesteps, well beyond the training horizon, for
+such a high-dimensional dynamical system.
+0.4
+0.2
+0.0
+Dim. 1 0.4
+0.2
+0.0
+Dim. 2
+0.2
+0.0
+0.2
+Dim. 3
+0.0
+0.5
+1.0Dim. 4
+0.0
+0.5
+1.0Dim. 5
+0.0
+0.5
+1.0Dim. 6
+0.4
+0.2
+0.0
+0.2
+Dim. 7
+0.0
+0.5
+1.0Dim. 8
+0.0
+0.5Dim. 9
+0.0
+0.5
+1.0Dim. 10 0.4
+0.2
+0.0
+Dim. 11
+0.2
+0.4Dim. 12
+0.0
+0.5
+1.0
+1.5Dim. 13
+0.0
+0.5
+1.0
+1.5Dim. 14
+0.0
+0.2
+0.4Dim. 15
+0.2
+0.0
+0.2
+0.4
+Dim. 16
+0.0
+0.5
+1.0
+1.5Dim. 17
+0.0
+0.5
+1.0
+1.5Dim. 18
+0.0
+0.5
+1.0
+1.5Dim. 19 0.5
+0.0
+0.5
+Dim. 20
+0.0
+0.5
+1.0Dim. 21
+0.2
+0.1
+0.0
+Dim. 22 0.0
+0.2
+0.4Dim. 23
+0.05
+0.00
+Dim. 24
+0.00
+0.01
+0.02Dim. 25
+0.24
+0.22
+0.20
+Dim. 26 0.22
+0.24
+0.26Dim. 27
+0 50 100 150 200
+Timestep
+0.0
+0.5Dim. 28
+0 50 100 150 200
+Timestep
+0.2
+0.0
+Dim. 29
+0 50 100 150 200
+Timestep
+0.2
+0.0
+0.2
+0.4
+Dim. 30
+Ground Truth Predictor-Corrector (MSE:0.126) Predictor (MSE:0.402)
+Figure 10: The performance of Corrector on one of the trajectories of PEN for a 20% observed points
+setting. The first 30 dimensions of the PEN trajectory are shown here. Dim. stands for dimension.
+30
+0
+5
+10Dim. 31
+7.5
+5.0
+2.5
+0.0
+Dim. 32 0
+5Dim. 33
+0
+1Dim. 34 0.50
+0.25
+0.00
+Dim. 35
+0.00
+0.25
+0.50
+0.75Dim. 36
+0.8
+0.6
+0.4
+0.2
+Dim. 37
+0.1
+0.0
+Dim. 38
+0.60
+0.65Dim. 39
+0.00
+0.01
+0.02Dim. 40
+0.04
+0.02
+0.00
+Dim. 41
+0.02
+0.00
+Dim. 42
+0 50 100 150 200
+Timestep
+0.0
+0.5
+1.0
+1.5Dim. 43
+0 50 100 150 200
+Timestep
+0.6
+0.4
+0.2
+0.0
+Dim. 44
+0 50 100 150 200
+Timestep
+0.50
+0.25
+0.00
+Dim. 45
+Ground Truth Predictor-Corrector (MSE:0.126) Predictor (MSE:0.402)
+Figure 11: The performance of Corrector on one of the trajectories of PEN for a 20% observed points
+setting. The last 15 dimensions of the PEN trajectory are shown here. Dim. stands for dimension.
+31

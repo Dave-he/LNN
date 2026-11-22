@@ -1,0 +1,695 @@
+Interpretable Diagnostics and Adaptive Data Assimilation for Neural ODEs
+via Discrete Empirical Interpolation
+Hojin Kima, Romit Maulika,b
+aSchool of Mechanical Engineering, Purdue University, West Lafayette, 47907, IN, USA
+bMathematics and Computer Science Division, Argonne National Laboratory, Lemont, 60439, IL, USA
+Abstract
+We present a framework that leverages the Discrete Empirical Interpolation Method (DEIM) for interpretable deep
+learning and dynamical system analysis. Although DEIM efficiently approximates nonlinear terms in projection-
+based reduced-order models (POD-ROM), its fixed interpolation points are repurposed for identifying dynami-
+cally representative spatial structures in learned models. We apply DEIM as an interpretability tool to examine
+the learned dynamics of a pre-trained Neural Ordinary Differential Equation (NODE) for two-dimensional vortex-
+merging and backward-facing step flows. DEIM trajectories reveal physically meaningful structures in NODE pre-
+dictions and expose failure modes when extrapolating to unseen flow configurations. Building on this diagnostic
+capability, we further introduce a DEIM-guided data assimilation strategy that injects sparse, dynamically repre-
+sentative corrections into the NODE rollout. By allocating a limited nudging budget to DEIM-identified sampling
+locations, the framework significantly improves long-term stability and predictive accuracy in out-of-distribution
+scenarios for the two-dimensional vortex-merging flow. Additional experiments for a flow over a backward-facing
+step reveal regime-dependent gains, with alternative sampling strategies performing competitively as well. These
+results demonstrate that DEIM can serve as an interpretable diagnostic and control framework for understanding
+and enhancing neural differential equation models.
+Keywords: Machine Learning, Interpretability, Reduced Order Modeling, Neural Ordinary Differential Equation
+1. Introduction
+Machine learning has recently emerged as a powerful paradigm for modeling high-dimensional nonlinear dynam-
+ical systems. In particular, neural differential equation models such as Neural Ordinary Differential Equations
+(NODEs) provide a continuous-time formulation for learning the evolution of physical systems directly from data
+[1]. More broadly, scientific machine learning has developed a rich class of surrogate models for PDE-governed
+dynamics, including operator-learning architectures such as DeepONet, neural operators, and Fourier neural op-
+erators, as well as geometry-aware and graph-based simulators for unstructured meshes [2, 3, 4, 5, 6]. These
+approaches have substantially expanded the range of flows and transport phenomena that can be approximated
+from data, often with impressive short-term predictive accuracy. However, they still often operate as black boxes,
+offering limited interpretability and uncertain generalization when applied to unseen physical regimes. In addi-
+tion, long-horizon rollouts can be highly sensitive to small modeling errors; recent studies on stabilized NODEs
+and refinement-based neural PDE surrogates continue to highlight the difficulty of maintaining phase accuracy,
+stability, and coherent structure over extended prediction horizons [7, 8]. Developing interpretable frameworks
+that can diagnose, analyze, and improve learned dynamical models is therefore essential for trustworthy scientific
+machine learning.
+A common line of work toward trustworthy surrogate modeling is to incorporate physical structure—such as
+invariances, conservation laws, or stability-promoting inductive biases—and to design post hoc diagnostics that
+expose learned failure modes. In parallel, recent work on interpretable scientific machine learning has emphasized
+that surrogate models should not only be accurate, but also diagnostically informative, so that one can identify
+which spatial regions or latent mechanisms are most responsible for prediction and out-of-distribution degrada-
+tion [9, 10, 11]. These developments suggest that interpretability is not merely an explanatory add-on; it can also
+serve as a mechanism for localizing model deficiencies and guiding corrective interventions.
+arXiv:2510.21852v2  [cs.LG]  2 Apr 2026
+Projection-based reduced-order modeling (ROM) methods, such as Proper Orthogonal Decomposition (POD),
+have long provided physically interpretable low-dimensional descriptions of complex flows [12]. Within this liter-
+ature, the Discrete Empirical Interpolation Method (DEIM) identifies sparse interpolation points for efficiently
+approximating nonlinear terms, thereby linking reduced-order dynamics to spatially localized physical struc-
+tures [13, 14]. Subsequent variants, such as Q-DEIM, further refined the point-selection procedure, while related
+sparse-sensing and sensor-placement studies showed that low-rank libraries and DEIM-type nonlinear libraries
+can be exploited for state reconstruction, regime identification, and optimized measurement allocation [15, 16, 17].
+Although DEIM is traditionally introduced as a hyper-reduction tool for ROMs, these developments suggest a
+broader interpretation: DEIM can also be viewed as an interpretable sparse sampling operator that highlights
+dynamically representative spatial locations.
+This perspective naturally connects DEIM to data assimilation (DA), where sparse observations are used to sta-
+bilize and correct imperfect models. Classical DA approaches range from nudging and relaxation methods to
+ensemble- and Kalman-filter-based updates [18, 19]. More recently, learning-based filtering and prediction-correction
+frameworks, such as KalmanNet and neural-operator-based DA, have shown that data-driven surrogates can also
+benefit substantially from online observational feedback [20, 21, 22]. In practical fluid settings, however, the num-
+ber of available observations is often severely limited, and the effectiveness of DA depends critically on where
+those observations are placed. Under a fixed observation budget, spatial allocation can be as important as the
+assimilation rule itself, particularly in regimes with coherent vortical structures, moving interfaces, or localized
+separation zones [23, 24, 25, 26, 27].
+In this work, we revisit DEIM from this broader diagnostic and control-oriented perspective, and apply it to the
+analysis of learned NODE dynamics in two-dimensional vortex-merging and backward-facing step flows. Our
+starting hypothesis is that dynamically identified DEIM points correspond to physically important locations in the
+flow field and can therefore be used to probe the internal behavior of a learned surrogate. To test this idea, we apply
+DEIM to time-windowed snapshots of the NODE-predicted right-hand side and extract trajectories of representative
+sampling points. We then compare these trajectories with those obtained from ground-truth dynamics, using
+their agreement or divergence as an interpretable signature of the NODE’s capacity to generalize to unseen flow
+conditions.
+Leveraging this diagnostic signal, we further introduce a DEIM-guided nudging-based DA strategy. Rather than
+distributing sparse corrections uniformly across the domain, we allocate the nudging budget to dynamically rep-
+resentative locations identified by DEIM and enrich these locations through kernel density estimation (KDE). This
+yields a structure-aware observation policy that improves long-term stability and predictive accuracy while re-
+maining physically interpretable. Our experiments also reveal regime-dependent behavior: sampling guided by
+coherent DEIM trajectories is particularly effective for vortex interaction dynamics, whereas advection-dominated
+separated flows may favor more instantaneous or spatially distributed observation policies.
+Taken together, these components position DEIM not only as a model reduction method, but also as a bridge
+between interpretable diagnostics, sparse sensing, and observation placement for the online correction of learned
+dynamical systems.
+The main contributions of this work are as follows:
+• We propose a time-windowed DEIM procedure to extract trajectories of representative sampling points from
+learned NODE dynamics and compare them with trajectories derived from ground-truth dynamics.
+• We show that DEIM trajectories provide an interpretable diagnostic signal that correlates with NODE roll-
+out failure modes in extrapolative flow configurations, including vortex-merging and backward-facing step
+flows.
+• We introduce a DEIM-guided nudging-based DA strategy, in which a limited nudging budget is allocated to
+DEIM-selected and KDE-enriched locations, improving stability and accuracy under sparse observations.
+• We perform controlled comparisons against alternative sparse nudging strategies (random, uniform, and
+Top-RHS selection) and analyze regime-dependent behavior across vortex-merging and backward-facing
+step flows.
+2
+2. Background
+2.1. Projection-based Reduced-order Models
+Proper Orthogonal Decomposition (POD) is a data-driven method to construct low-dimensional subspaces that
+optimally capture the dynamics of high-dimensional systems. This process includes two steps: snapshot collec-
+tion and basis construction. Snapshot collection extracts solutions u(ti) ∈ Rn from full-order simulations or ex-
+periments at time instances ti(i = 1, ..., N ). Then, a basis is identified via the singular value decomposition (SVD)
+on the snapshot matrix U = [u(t1), ..., u(tN )] ∈ Rn×N to obtain orthogonal POD modes Ψ = [Ψ1, ..., Ψm] ∈ Rn×m,
+where m is the number of truncated POD modes and n >> m. Ψi(i = 1, ..., m) is ranked by each mode’s energy
+content. The number of truncated POD modes is typically determined by setting an energy threshold, such that
+the retained modes collectively capture a predetermined percentage (e.g., 99%) of the total variance (energy) in
+the dataset. This is achieved by computing the cumulative sum of the eigenvalues (or singular values) and select-
+ing the smallest number of modes for which the cumulative energy exceeds the chosen threshold. In some cases,
+additional dynamical or physical considerations may influence the final selection of modes.
+Using the orthonormal property of these POD modes, Galerkin projection projects governing equations (e.g. non-
+linear PDEs) onto a reduced subspace spanned by these modes. A nonlinear PDE in Eq. 1,
+∂u
+∂t = Lf [u] + Nf [u] (1)
+, where Lf and Nf are linear and nonlinear operators in the full-order space, respectively, can be approximated
+using the POD modes as follows:
+∂Ψa
+∂t = Lf [Ψa] + Nf [Ψa] (2)
+, where a = [a1, ..., am] ∈ Rm is temporal POD coefficients, and u is approximated as u ≈ Ψa = Pm i=1 ψiai
+Then, by using the orthonormality of the POD modes, the final reduced system becomes as follows:
+∂a
+∂t = Lr [a] + ΨT Nf [Ψa] (3)
+, where Lr is a linear operator in the reduced-order space. This approach preserves system dynamics while reduc-
+ing computational cost, because the dimension of a in the reduced system, m, is orders of magnitude smaller than
+that of u, n in the original full-order system. However, since the POD modes do not commute with the nonlinear
+operator, unlike the linear operator, Nf remains expensive to evaluate in high dimensional systems.
+2.2. Discrete empirical interpolation method (DEIM)
+In order to address the complexity of calculating the nonlinear term in Eq. 3, Discrete Empirical Interpolation
+Method (DEIM) [13] approximates Nf [u] using a sparse subset of interpolation points. This method starts by
+constructing a separate POD basis Φ ∈ Rn×l from nonlinear snapshots, Unl = [unl(t1), ..., unl(tN )] ∈ Rn×N . Here,
+l is the number of truncated POD modes for nonlinear snapshots, and n >> l. Then, the DEIM sampling matrix,
+P = [ep1 , ..., epl ], where P ∈ Rn×l and epk (k = 1, ..., l) is a one-hot vector with a 1 at the pk-th entry and zeros
+elsewhere, is constructed using a greedy algorithm to select l interpolation points that minimize the approximation
+error. Then, Nf [u] can be approximated as follows:
+Nf [u] ≈ Φ(PT Φ)−1PT Nf [u] (4)
+Eq. 4 reduces the cost of evaluating Nf [u] from O(n) to O(l), because the nonlinear terms Nf [u] are only calculated
+at xpk (k = 1, ..., l). The sampling matrix P is pre-computed and fixed during the online stage of the ROM. Eq. 4 is
+substituted into Eq. 3 to get the final form of the PDE in the reduced order space as follows:
+∂a
+∂t = Lr [a] + ΨT Φ(PT Φ)−1PT Nf [u] (5)
+3
+Figure 1: Final solutions of the two-dimensional vortex-merging problem for Re = 1, 000 with different initial conditions: (a)
+horizontally symmetric vortices, (b) horizontally asymmetric vortices, and (c) vertically symmetric vortices
+DEIM can reduce the computational cost of POD-Galerkin frameworks by maintaining a low computational com-
+plexity for the calculation of the nonlinear term. For details on the DEIM algorithm, the reader is referred to the
+previous work [13].
+2.3. Neural Ordinary Differential Equations
+A neural ordinary differential equation (NODE) [1] can be formulated as:
+du(t)
+dt = f (u(t), t; θ) (6)
+, where u(t) ∈ RN is the state at each time step, and f (u(t), t, θ) represents the hidden dynamics parameterized
+by a neural network with parameters θ. The solution is then obtained by integrating this dynamics with an ODE
+solver. For a nonlinear PDE as in Eq. 1, learning f (u(t), t, θ) using u(t) implies that one learns the entirety of the
+right-hand side of the PDE including the linear operator Lf and the nonlinear operator Nf , which is evaluated at
+each time step. This can be expressed as:
+du(t)
+dt = Lf [u(t)] + Nf [u(t)] ≈ f (u(t), t; θ) (7)
+3. DEIM for Analysis of Trained Neural ODEs
+In this section, we perform an interpretability analysis of the pre-trained NODEs. Specifically, windowed-DEIM is
+applied to the learned dynamics of the PDEs, f (u(t), t; θ) in Eq. 7, to identify representative sampling points and
+examine their dynamic behavior.
+3.1. Problem Setup
+3.1.1. Two-Dimensional Vortex-Merging
+The first test case is the two-dimensional vortex-merging problem [28]. The incompressible two-dimensional
+Navier–Stokes equations, expressed in terms of the vorticity and stream function, can be written as follows:
+∂ω
+∂t = −J (ω, ψ) + 1 Re ∇2ω (8)
+∇2ψ = −ω (9)
+J (ω, ψ) = ∂ω ∂x ∂ψ ∂y − ∂ω ∂y ∂ψ ∂x , (10)
+where ω and ψ are vorticity and stream function, respectively, and J (ω, ψ) is the Jacobian operator, which de-
+termines the nonlinear advection of vorticity. The NODE is trained to learn the right-hand side of Eq. 8, which
+includes both the nonlinear Jacobian operator and the linear viscous dissipation term.
+The computational domain is set to [0, 2π] × [0, 2π], discretized on a uniform Cartesian grid with Nx = Ny = 128
+points. The timestep size is dt = 1 × 10−2, with a total of 2000 timesteps, and the SSP-RK3 scheme is used for
+time integration. We use the first 1500 snapshots from the solution initialized with horizontal vortices, as shown
+in Fig. 1(a), for training, and apply the trained model to the remaining initial conditions. Fig. 1 presents the final
+solutions of Eq. 8 for different initial conditions at Re = 1, 000.
+4
+Figure 2: (a) Schematic of the backward-facing step domain with inlet, outlet, and dimensions labeled. (b) A subsection of the
+computational mesh, where a higher density of elements is placed downstream of the step.
+Neural ODE Architecture. Because the vortex-merging problem is defined on a uniform Cartesian grid, we employ
+a convolutional neural network (CNN) as the backbone of the Neural ODE. The state variable is the scalar vorticity
+field ω(t) ∈ R128×128, and the CNN maps this field to the predicted temporal derivative ˙ω(t). The architecture con-
+sists of four convolutional layers with 3 × 3 kernels, 32 feature channels, and ReLU activations, each followed by a
+residual connection that propagates low-level spatial information through the network. A final 1 × 1 convolutional
+layer projects the 32 intermediate feature channels back to a single scalar field. This design allows the NODE to
+efficiently capture local nonlinear interactions and spatial correlations in the vortex dynamics.
+Training Details. The CNN-based NODE is trained by minimizing a multi-step rollout loss on trajectory segments
+of length L = 60. Given a start time index t0, the initial condition is set to ω(t0), and the Neural ODE is integrated
+forward using the SSP-RK3 scheme over L rollout steps to obtain predictions ˆω(t0 + k) for k = 1, 2, . . . , L. The
+training objective is the mean-squared error over the rollout segment,
+L(θ) = 1 L
+LX
+k=1
+∥ˆω(t0 + k) − ω(t0 + k)∥2 2 , (11)
+where the norm is evaluated over all grid points. At each training iteration, a batch of five initial conditions is
+randomly sampled from the training interval. The dataset is split along the temporal axis, using the first 1500
+snapshots for training and the remaining 500 for validation. Training was performed using the Adam optimizer
+[29] with a learning rate of 10−3 on a single NVIDIA A100 GPU on Penn State ICDS Roar Collab for 550 epochs,
+requiring approximately 10 hours in total.
+3.1.2. Two-Dimensional Backward-Facing Step
+The second test case is the flow over a two-dimensional backward-facing step (BFS), a common benchmark prob-
+lem in fluid dynamics that has been widely studied in both experimental [30] and computational [31] settings. BFS
+flow is characterized by flow separation at the step and a subsequent reattachment region further downstream,
+which introduces a recirculation region near the step and transient vortex shedding. The governing equations are
+the incompressible Navier–Stokes equations as follows:
+∂u
+∂t + ∇ · (u ⊗ u) = 1 Re ∇2u − 1 ρ ∇p + f (12)
+∇ · u = 0. (13)
+The NODE is trained to learn the right-hand side of the momentum equation, capturing the combined effects of
+advection, viscous diffusion, and the pressure gradient.
+For generating this dataset, we use the finite element method (FEM)-based solver FEniCS [32] with the implicit
+pressure correction scheme (IPCS) [33]. A schematic of the BFS configuration and its computational domain is
+presented in Fig. 2. A total of 5,253 unstructured triangular cells are used for the computational mesh, with Taylor–
+Hood finite elements. As shown in Fig. 2(b), a higher density of elements is placed downstream of the step in order
+to effectively capture flow separation and the trajectories of shed vortices. The timestep size is dt = 1 × 10−4, and
+the simulation data from t = 0.01 to t = 0.05 are used for model development. We split the time series along the
+temporal axis, using the first 80% of the snapshots for training and the remaining 20% for validation.
+5
+Figure 3: (a) Streamwise velocity contours around the BFS at different timesteps. Here, the plots commence from the 100th
+snapshot after starting the simulation; (b) Pointwise streamwise velocity at the location (x, y) = (hstep, hstep)
+Figure 3(a) presents contours of the streamwise velocity around the BFS at different time instants. The flow ex-
+hibits periodic vortex formation induced by separation at the step edge, with the vortices subsequently convected
+downstream toward the channel outlet and gradually dissipated due to viscous effects. Figure 3(b) shows the tem-
+poral evolution of the pointwise streamwise velocity at (x, y) = (hstep, hstep), revealing a clear periodic fluctuation
+associated with the passage of shed vortices.
+Neural ODE Architecture. Because the BFS problem is defined on a highly nonuniform unstructured mesh, CNNs,
+which are naturally designed for uniform Cartesian grids, are not well suited. We therefore employ a graph
+neural network (GNN) as the backbone of the Neural ODE. GNNs have demonstrated their ability to model
+spatiotemporal data for fluid-flow prediction tasks on unstructured meshes [6, 34, 35, 10]. The unstructured mesh
+is represented as a graph G = (V, E), where each node i ∈ V corresponds to a vertex of the finite-element mesh,
+and edges (i, j) ∈ E encode local connectivity between adjacent mesh vertices. The state variable is the vertex-wise
+velocity vector ui(t) = [ui(t), vi(t)]⊤ ∈ R2, and the GNN maps the graph-valued state to the predicted temporal
+derivative ˙u(t). The temporal evolution of the flow field is modeled using a Neural ODE of the form
+du(t)
+dt = fθ
+ 
+u(t), G
+
+, (14)
+where fθ is parameterized by a message-passing GNN and implemented as the right-hand side function within
+the torchdiffeq framework.
+For each directed edge (i, j), we construct geometric edge features
+eij =
+
+∆xij , ∆yij , ∥∆rij ∥
+
+∈ R3, (15)
+where ∆rij = pj − pi denotes the relative position between neighboring mesh vertices. These geometric edge
+attributes are embedded through an edge encoder multilayer perceptron (MLP), while the node features are em-
+bedded through a node encoder MLP into a latent space of dimension H = 128. Message passing is performed
+using a mean aggregation operator. Specifically, at each propagation step, edge-wise messages are computed as
+mij = ϕθ ([hj , g(eij )]) , mi = 1 |N (i)| X j∈N (i) mij , (16)
+followed by a node update
+hi ← ψθ ([hi, mi]) , (17)
+where g(·) denotes the edge encoder, and ϕθ (·) and ψθ (·) correspond to the message and update MLPs, respec-
+tively. Two consecutive message-passing layers are applied, and a residual connection from the raw node inputs
+is introduced via a linear projection. Finally, a decoder MLP maps the latent node representations to the time
+derivative ˙u(t). This design allows the NODE to capture nonlinear interactions and spatial correlations on the
+unstructured mesh topology.
+Training Details. The GNN-based NODE is trained by minimizing a multi-step rollout loss on trajectory segments
+of length L = 3. Given a start time index t0, the initial condition is set to u(t0), and the Neural ODE is integrated
+forward using the explicit fourth-order Runge–Kutta (RK4) method over L rollout steps to obtain predictions
+ˆu(t0 + k) for k = 1, 2, . . . , L. The training objective is the mean-squared error over the rollout segment,
+L(θ) = 1 L
+LX
+k=1
+∥ˆu(t0 + k) − u(t0 + k)∥2 2 , (18)
+6
+where the norm is evaluated over all mesh vertices and both velocity components. At each training epoch, 80
+random segments are sampled from the training interval. The dataset is normalized prior to training: the node
+features are standardized using the global mean and standard deviation computed over all timesteps and vertices,
+and the geometric edge attributes eij are similarly standardized using precomputed edge-wise statistics. Training
+was performed using the Adam optimizer with a learning rate of 10−3 on a single NVIDIA A100 GPU on ALCF
+Polaris for 2700 epochs, requiring approximately 3 hours in total.
+3.2. Applying DEIM to Learned Dynamics
+When applying DEIM to the trained NODE models, we employ a time-windowed DEIM approach. In this method,
+the right-hand side of each PDE is collected over a fixed time interval to form a snapshot matrix. The sampling
+matrix P is then computed from these snapshots, after which the window is shifted forward by a stride s to
+construct consecutive snapshot matrices. This procedure enables us to track the trajectories of representative
+sampling points during simulations and to evaluate the learned dynamics of the NODE models by comparing
+them with the trajectories obtained from the ground-truth data. For the two-dimensional vortex-merging problem,
+the window size and the number of DEIM sampling points are both set to 32.
+Formally, let f (t) ∈ Rn denote the RHS snapshot used for DEIM, where we set f (t) = R(u(t)) for the ground-
+truth solver, and f (t) = fNODE(u(t); θ) for the NODE rollout. Given a window size W and stride s, we define the
+windowed snapshot matrix
+Fk = [f (tk), f (tk + 1), . . . , f (tk + W − 1)] ∈ Rn×W , tk = t0 + ks. (19)
+We compute a rank-l basis Φk ∈ Rn×l from Fk via SVD and apply the standard greedy DEIM procedure to obtain
+interpolation indices Sk = {pk,1, . . . , pk,l}. We refer to the sequence {Sk}k≥0 as the DEIM trajectory.
+Figure 4(b) shows the trajectories of sampling points obtained by the DEIM from the ground truth and the NODE
+prediction for the case with initially symmetric horizontal vortices shown in Fig. 1(a). The color bar indicates
+time progression, with lighter (near-white) colors corresponding to earlier time steps and darker red colors in-
+dicating later times. As the two vortices rotate counterclockwise and merge, the DEIM-selected sampling points
+exhibit a corresponding counterclockwise rotation. Due to the symmetry of the vortex pair, the sampling points
+predominantly circulate around the two vortex cores. During the first half of the simulation, the sampling-point
+trajectories extracted from the NODE prediction closely follow those from the ground truth. However, at later
+times, the NODE-based trajectories deviate from the circular motion, repeatedly revisiting specific points. This
+deviation is consistent with the evolution of the relative L2-norm error shown in Fig. 4(a), where the error begins
+to grow after approximately t = 10.0. This behavior suggests that the NODE fails to capture the long-term vortex
+interaction dynamics, leading to a collapse of the effective sampling manifold.
+Figure 5 follows the same layout as Fig. 4, but corresponds to the case of initially asymmetric horizontal vortices
+shown in Fig. 1(b). This configuration represents an extrapolation scenario, as the model was not exposed to such
+snapshots during training. As shown in Fig. 5(b), the trajectories of the DEIM-selected sampling points initially
+exhibit a partially circular pattern during the early stages of the simulation. However, this regular structure rapidly
+breaks down, and the trajectories begin to oscillate irregularly. This behavior is consistent with the evolution of
+the relative L2-norm error in Fig. 5(a), where the error increases sharply shortly after the start of the simulation.
+Figure 6 corresponds to the case with initially vertical vortices shown in Fig. 1(c). In this configuration, the
+trajectories of the DEIM-based sampling points extracted from the NODE prediction do not exhibit any coherent
+circular structure, even at the early stages of the simulation. Instead of maintaining rotational motion, the sampling
+points rapidly collapse into a limited set of spatial regions. Compared to the previously considered case with
+initially asymmetric vortices, this concentration of sampling points occurs significantly earlier, indicating a faster
+breakdown of the learned dynamical structure. This behavior is also reflected in the relative L2-norm evolution in
+Fig. 6(a), where the prediction error for the initially vertical vortex configuration increases more rapidly than in
+the asymmetric vortex case.
+For the two-dimensional BFS case, a window size of 24 is used to extract sampling points via DEIM. When apply-
+ing DEIM to the windowed snapshots, the streamwise and wall-normal velocity components are treated as sepa-
+rate state variables. Specifically, instead of forming a snapshot matrix of size [N, T ] for a scalar field, we construct
+an augmented snapshot matrix of size [2N, T ] by stacking the two velocity components. This formulation allows
+DEIM to identify dynamically important sampling locations independently for each velocity component. Figure
+8 compares the trajectories of DEIM-sampled points extracted from the ground-truth solution and the NODE pre-
+diction for the two-dimensional backward-facing step (BFS) case, using a DEIM window size of 24. As shown
+7
+Figure 4: For the case with initial horizontal vortices: (a) Relative L2-norm error at each timestep during rollout; (b) trajectories
+of sampling points from the ground truth and the NODE prediction.
+Figure 5: For the case with initial asymmetric horizontal vortices: (a) Relative L2-norm error at each timestep during rollout;
+(b) trajectories of sampling points from the ground truth and the NODE prediction.
+Figure 6: For the case with initial vertical vortices: (a) Relative L2-norm error at each timestep during rollout; (b) trajectories of
+sampling points from the ground truth and the NODE prediction.
+8
+Figure 7: For the two-dimensional BFS case: (a) the relative L2 error from the NODE prediction during rollout; (b) the compar-
+ison of contours of streamwise velocity from the ground truth and NODE prediction at different timesteps
+in Fig. 8(a), most DEIM-sampled points from the ground truth are concentrated downstream of the step, where
+vortices shed from the step edge are convected. Specifically, the sampling points are initially located near the step
+edge, where vortices form due to flow separation, and subsequently move along with the evolving vortex struc-
+tures. Once a vortex dissipates due to viscous effects, new sampling points emerge near newly formed vortices
+at the step edge and again follow their trajectories. In contrast, Fig. 8(b) shows that the DEIM-sampled points
+obtained from the NODE prediction initially remain near the step edge and exhibit trajectories similar to those of
+the ground truth during the early stages of the rollout. However, as prediction errors accumulate over time, the
+sampling points gradually drift away from the vortex trajectories and instead concentrate near the channel inlet.
+This behavior is consistent with the relative L2-norm error evolution shown in Fig. 7, indicating that the collapse
+of DEIM-sampled point trajectories serves as a diagnostic indicator of NODE prediction failure.
+3.3. DEIM-based Data Assimilation for Neural ODE
+In this section, we leverage diagnostic information extracted from trained NODEs via DEIM-based sampling
+within a data assimilation framework to improve predictive performance. In particular, we adopt a nudging-based
+data assimilation approach. Nudging stabilizes dynamical system predictions by gently relaxing the model state
+toward available observations [36, 37]. For a standard PDE system, this is achieved by introducing a correction
+term proportional to the discrepancy between the observed field and the model state.
+∂u
+∂t = R(u) + γ(uobs − u) (20)
+where u and uobs denote the predicted and observed states, respectively, R represents the PDE operator, and γ
+is the nudging parameter. The discrepancy between the observed and predicted states acts as a source term that
+continuously steers the system toward the observations. We extend this nudging formulation to our pre-trained
+Neural ODE model. In particular, nudging source terms are applied only at the DEIM-selected spatial locations
+identified in the previous section.
+∂u
+∂t = fNODE(u; θ) + γ P⊤ S   yobs − PS u  , yobs = PS uobs. (21)
+, where fNODE(u; θ) denotes the NODE approximation of the underlying PDE operator, and PS is a projection
+(selection) operator that extracts the state variables at the DEIM-selected spatial locations S. The selection set S is
+constructed online using the same windowed-DEIM procedure described in Sec. 3.2, applied to a sliding window
+of the NODE RHS snapshots. P⊤ S injects the nudging corrections back into the full state space, resulting in a sparse
+forcing term that acts only at the DEIM-selected degrees of freedom.
+However, nudging exclusively at DEIM-selected points may be insufficient, as these points typically constitute
+only a small fraction of the full computational domain. For instance, in the two-dimensional vortex-merging
+problem considered in the previous section, DEIM sampling based on 32 prior snapshots selects approximately
+0.2% of the total spatial points. With such sparse coverage, the resulting nudging signal is often too localized to
+9
+Figure 8: For the two-dimensional BFS case: (a) trajectory of DEIM-sampling points from the ground truth; (b) trajectory of
+DEIM-sampling points from the NODE prediction.
+effectively steer the global dynamics toward the ground-truth trajectory. To address this limitation, we enrich the
+nudging locations by expanding the DEIM-sampled point set using kernel density estimation (KDE). Specifically,
+we treat the DEIM-selected locations as samples from an underlying spatial importance distribution and construct
+a continuous density estimate via KDE. Additional nudging points are then drawn from high-density regions
+of this estimated distribution, thereby preserving the spatial structure identified by DEIM while increasing the
+overall nudging coverage. In practice, when 32 snapshots are used to identify DEIM points, this KDE-based
+expansion increases the number of nudging locations to 256 points, corresponding to approximately 1.5% of the
+total grid points in the vortex-merging problem. This enriched nudging set provides a more effective balance
+between sparsity and global stabilization.
+Concretely, given DEIM-selected coordinates {xi}M i=1, we form a KDE
+ˆp(x) = 1 M hd
+MX
+i=1
+K
+ ∥x − xi∥
+h
+
+, (22)
+where d is the spatial dimension, h is the bandwidth, and K(·) is a Gaussian kernel. We then select additional
+nudging locations by sampling (or ranking grid points) according to ˆp(x) and taking the top Madd locations, pro-
+ducing an enriched set SKDE.
+Figure 9(a) compares the relative L2-norm error at each timestep during rollouts from the NODE prediction before
+and after applying DEIM-based nudging with KDE enrichment. While nudging using only the DEIM-selected
+points yields only marginal improvements in prediction accuracy and stability, incorporating additional nudging
+locations populated via KDE leads to a substantial reduction in error and a marked stabilization of the dynamics.
+By applying nudging at both the DEIM-selected points and the KDE-enriched locations—where the system dy-
+namics are most strongly represented—the NODE prediction more accurately follows the underlying evolution of
+the flow. This improvement is further illustrated in Fig. 9(b), which compares the trajectories of the DEIM-selected
+points for the ground-truth solution, the unnudged NODE prediction, and the NODE prediction with DEIM-
+based nudging and KDE enrichment. The nudged NODE trajectory exhibits a significantly more coherent and
+stable circular structure, closely resembling the ground-truth behavior. These results demonstrate that nudging at
+10
+Figure 9: For the case with initially horizontal vortices: (a) Relative L2 error during rollout for the raw NODE prediction,
+nudging at DEIM-selected locations only (32 points), and nudging at DEIM locations enriched via KDE (32 DEIM points
+expanded to a total of 256 locations); (b) DEIM sampling-point trajectories for the ground truth, the raw NODE rollout, and the
+post-nudging rollout (DEIM+KDE), shown with color indicating time progression.
+Figure 10: For the case with initially horizontal vortices: Comparison of relative L2 errors for DEIM-based nudging under
+different settings: (a) nudging gain values and (b) number of sampling points
+dynamically representative sampling locations enables the NODE to more faithfully capture the vortex interaction
+dynamics.
+Figure 10 summarizes a parameter sweep of the proposed DEIM-based nudging strategy for the case with initially
+horizontal vortices. In Fig. 10(a), we fix the KDE-enriched DEIM nudging set to 256 locations and vary the nudging
+gain γ. While the raw NODE rollout exhibits rapid error growth in the late-time regime, increasing γ consistently
+suppresses this growth and yields a markedly lower final relative L2 error, indicating that stronger relaxation
+toward sparse observations improves long-horizon stability. In Fig. 10(b), we instead hold the nudging gain fixed
+and vary the number of nudging locations generated by KDE (64–512 points). As the nudging budget increases, the
+rollout becomes progressively more stable and accurate, highlighting that sufficient spatial coverage is necessary
+for sparse corrections to influence the global vortex interaction dynamics. At the same time, the improvement
+begins to saturate for larger budgets, suggesting a practical trade-off between accuracy and the cost of increasing
+the number of observation updates. Collectively, these sweeps motivate the choice of γ and the nudging budget
+used in the subsequent vortex-merging experiments.
+Figure 11 compares the relative L2 errors of NODE rollouts under different sparse nudging strategies, includ-
+ing random sampling, uniformly distributed sampling, ensemble Kalman filter (EnKF) with uniform sampling,
+top-RHS sampling, and the proposed KDE-enriched DEIM sampling. To ensure a fair comparison, the total num-
+ber of nudging locations is held fixed across all strategies. In addition to injecting pointwise corrections only
+at the selected locations, we also consider an optional spatial extension operator based on radial basis function
+(RBF) interpolation, which reconstructs a smooth correction field from the sparse discrepancies and distributes the
+nudging signal over the full domain. This allows us to isolate how the effectiveness of a sampling policy changes
+when sparse observation errors are propagated beyond the directly nudged degrees of freedom. When nudg-
+ing is applied at every timestep without RBF interpolation (Fig. 11(a)), the DEIM+KDE strategy yields the most
+pronounced long-term stabilization, producing the smallest error growth among all methods, while random and
+uniform sampling provide only modest improvements over the unnudged rollout. In this setting, the top-RHS
+heuristic and the EnKF baseline reduce the error relative to random/uniform nudging, but remain less effective
+11
+Figure 11: Comparison of relative L2 errors from NODE predictions under different sparse data assimilation baselines and
+sampling policies: (a) without RBF interpolation, (b) without RBF interpolation and nudging every 10 timesteps, and (c) with
+RBF interpolation.
+Figure 12: For the case with initial asymmetric horizontal vortices: (a) Relative L2-norm error at each timestep during rollout
+for the baseline NODE prediction and the nudged NODE prediction; (b) trajectories of DEIM sampling points comparing the
+ground truth, the baseline NODE prediction, and the nudged NODE prediction.
+than allocating the nudging budget to DEIM-identified, dynamically representative regions. When the nudging
+frequency is reduced to every 10 timesteps (Fig. 11(b)), the overall benefit of sparse nudging decreases—most no-
+tably for random and uniform sampling—and the performance gap between strategies narrows, indicating that
+temporally sparse corrections are insufficient unless the update mechanism is sufficiently informative. Finally,
+introducing RBF interpolation (Fig. 11(c)) substantially improves stability across all sampling strategies by spa-
+tially spreading the sparse discrepancy information, and the ranking becomes more sensitive to spatial coverage
+rather than purely structure-aware point selection. Overall, these results highlight that the effectiveness of sparse
+data assimilation depends jointly on (i) where observations are placed (sampling policy), (ii) how often corrections
+are injected (nudging frequency), and (iii) how localized discrepancies are propagated to the full state (interpola-
+tion/extension operator).
+The relative L2-norm error plot in Fig. 12(a) demonstrates that DEIM-based nudging significantly improves both
+the stability and accuracy of NODE predictions in the extrapolation case with initially asymmetric vortices. Figure
+12(b) shows that the trajectories of DEIM-sampled points from the nudged NODE prediction more consistently
+follow the circular motion of the two vortices, whereas the trajectories from the raw NODE prediction deviate from
+this coherent structure. This improved structural consistency indicates enhanced predictability of the underlying
+system dynamics and aligns with the observed reduction in relative L2 error. A similar trend is observed in the
+more challenging extrapolation case with initially vertical vortices. The raw NODE prediction rapidly loses the
+coherent rotational structure and exhibits collapsing sampling trajectories. In contrast, the DEIM-nudged predic-
+tion (Fig. 13(b)) maintains dynamically consistent sampling paths that track the two rotating vortices. Notably,
+even in this test case—where the unnudged NODE performs poorly—DEIM-based nudging markedly improves
+both predictive stability and accuracy.
+For the two-dimensional BFS case, we reduce the DEIM window size from 24 in the diagnostic analysis (Sec. 3.2)
+to 12 in the data-assimilation experiments, with 12 DEIM sampling points selected accordingly. This shorter win-
+dow better captures the rapidly convecting and intermittently forming structures near the step, as discussed later
+in this section and illustrated in Fig. 16. These points are then expanded to 64 locations (approximately 2.0%
+of the total grid points) using KDE. In practice, however, the BFS flow exhibits strong advection and unsteady
+separation dynamics, and long-horizon NODE rollouts can be highly sensitive to small perturbations. In our
+framework, such perturbations arise naturally because the nudging operator is constructed from a hard (discrete)
+point-selection pipeline—including the greedy DEIM index selection and a KDE-based enrichment step imple-
+12
+Figure 13: For the case with initial vertical vortices: (a) Relative L2-norm error at each timestep during rollout for the baseline
+NODE prediction and the nudged NODE prediction; (b) trajectories of DEIM sampling points comparing the ground truth, the
+baseline NODE prediction, and the nudged NODE prediction.
+mented via density ranking/top-k selection—which induces a non-smooth dependence of the selected set on the
+snapshot window/state (so that small numerical changes can switch the selected indices). As a result, even when
+the nudging budget and all other hyperparameters are fixed (and the NODE parameters are kept unchanged),
+repeated runs can yield noticeably different late-time rollout trajectories due to cumulative error amplification (of-
+ten manifesting as phase drift in the shed-vortex dynamics). To account for this sampling-induced sensitivity, we
+repeat the DEIM+KDE nudging rollout over multiple runs and report the ensemble mean of the relative L2 error
+together with ± one standard deviation, as shown by the shaded band in Fig. 14(a).
+Figure 14(b) visualizes streamwise-velocity contours from the ground truth (left column), the raw, unnudged
+NODE prediction (middle column), and the DEIM+KDE-nudged NODE prediction (right column) at selected
+time instances using a representative ensemble member. At early times, all three fields remain close, but as the
+rollout proceeds the raw NODE prediction exhibits increasingly apparent phase and amplitude errors in the shed-
+vortex dynamics and downstream convection patterns. In contrast, the DEIM+KDE-nudged rollout better pre-
+serves the dominant downstream structures associated with separation, vortex shedding, and convective trans-
+port, delaying the onset of large-scale drift relative to the raw NODE. The remaining differences at later times are
+primarily associated with small phase offsets and localized amplitude mismatches, which are strongly amplified
+by the advection-dominated, unsteady nature of the BFS flow and contribute to the ensemble spread observed in
+Fig. 14(a). This improvement is also reflected in the sampling trajectories shown in Fig. 15. While the sampling
+points from the raw NODE prediction collapse and concentrate near the channel inlet in the full-domain view
+(and consequently lose alignment with the downstream separated structures in the zoomed view), the nudged
+NODE prediction maintains sampling locations primarily downstream of the step, where vortices are shed and
+convected. This indicates improved tracking of the dominant flow dynamics.
+Interestingly, we observe that the run-to-run variability induced by the discretely selected nudging operator is
+strongly case-dependent: for the vortex-merging case, we found negligible spread across repeated runs under the
+same hard-selection and KDE enrichment pipeline, whereas the BFS case exhibits a pronounced late-time ensemble
+spread. This suggests that the sensitivity of long-horizon NODE rollouts to sparse, discretely selected nudging
+configurations can depend substantially on the underlying dynamics, with advection-dominated separated flows
+being more prone to cumulative error amplification and phase drift than coherent vortex-merging dynamics.
+Figure 16 further summarizes a parameter sweep of the DEIM+KDE nudging configuration for the BFS case under
+the same ensemble protocol. Here, we denote by k the total number of nudging locations after KDE enrichment,
+by w the DEIM window size used to construct the sampling operator, and by γ the nudging gain (with the KDE
+bandwidth fixed in this sweep). In Fig. 16(a), increasing the nudging budget does not lead to a strictly monotonic
+improvement: a moderate budget (e.g., k = 64) yields the most consistent late-time error reduction, whereas larger
+budgets (k ≥ 128) can provide diminishing returns or even degrade performance, suggesting that overly dense
+sparse forcing may interfere with the advection-dominated dynamics. In Fig. 16(b), increasing the nudging gain
+from γ = 1.0 to γ = 2.0 increases both the mean late-time error and the ensemble spread, indicating that overly
+aggressive relaxation can amplify phase errors in the separated shear-layer dynamics. Finally, Fig. 16(c) shows
+that shorter DEIM windows (e.g., w = 12) outperform longer windows (w ≥ 24), consistent with the fact that in
+BFS the most informative sampling locations are tied to rapidly convecting and intermittently forming structures,
+which can be blurred by longer time windows. Guided by these sweeps, we use the best-performing configuration
+as the default setting in the subsequent BFS comparisons across different sampling strategies (Fig. 17).
+13
+Figure 14: For the two-dimensional BFS case: (a) relative L2 error during rollout. For DEIM+KDE nudging, the solid red curve
+denotes the ensemble mean over 10 repeated runs (run-to-run variability induced by the non-smooth DEIM/top-k point-
+selection operator), and the shaded region indicates ± one standard deviation. The dashed vertical line marks the end of the
+training horizon. (b) Comparison of streamwise-velocity contours at selected time instances for the ground truth (left), raw
+NODE rollout without nudging (middle), and DEIM+KDE-nudged NODE rollout (right), shown for a representative ensemble
+member.
+14
+Figure 15: For the two-dimensional BFS case: trajectories of DEIM-sampling points, with color indicating time progression. For
+each case, the top panel shows the full domain and the bottom panel shows a zoomed view near the step/separation region:
+(a) ground truth, (b) raw NODE prediction, and (c) NODE prediction with DEIM+KDE-based nudging.
+Figure 16: Comparison of relative L2 errors for DEIM-based nudging under different settings: (a) number of sampling points,
+(b) nudging gain values, and (c) DEIM window sizes. Solid curves denote ensemble means and shaded regions indicate ± one
+standard deviation over 10 realizations.
+15
+Figure 17(a) compares long-horizon rollout errors for the BFS Neural ODE under a fixed nudging budget using
+four different strategies for selecting nudging locations—(i) DEIM points enriched by KDE sampling (DEIM+KDE),
+(ii) points selected from the largest instantaneous RHS magnitude (Top-RHS), (iii) uniformly distributed points
+(Uniform), and (iv) randomly selected points (Random)—together with the unnudged baseline. Similar to the
+KDE-enriched DEIM sampling, the observation operator of the Top-RHS sampling is constructed through a dis-
+crete, non-smooth point-selection pipeline. As a result, small numerical differences can change the selected indices
+and lead to differences in the late-time trajectory. Moreover, for Random sampling the point set is explicitly re-
+sampled across realizations. We therefore report the ensemble mean of the relative L2 error together with ± one
+standard deviation across multiple realizations (shaded bands), with the dashed vertical line indicating the end
+of the training horizon. Overall, all nudging strategies suppress post-training error growth relative to the raw
+NODE rollout, but their effectiveness differs markedly. Random nudging achieves the lowest mean error over
+most of the extrapolative regime, while Top-RHS provides strong early improvements immediately after the train-
+ing cutoff and remains competitive at later times. Notably, Top-RHS can outperform DEIM+KDE in this BFS
+configuration because it selects nudging locations based on the instantaneous magnitude of the NODE-predicted
+RHS, thereby adapting to the current (rapidly convecting) shear-layer and shed-vortex structures that dominate
+the error growth. In contrast, windowed-DEIM is constructed from a time window of prior RHS snapshots, and
+thus can emphasize lagged or recurrent structures near the separation region rather than tracking the instanta-
+neous downstream advection, reducing its effectiveness in strongly advection-dominated regimes. This regime
+dependence is consistent with our vortex-merging results, where the dominant dynamics are organized around a
+small number of coherent, slowly evolving structures and the windowed-DEIM sampling more reliably captures
+dynamically representative regions, making DEIM+KDE comparatively more effective. Interestingly, Uniform
+sampling performs substantially worse than Random and remains close to the unnudged baseline. A plausible
+explanation is that the BFS dataset is defined on a strongly nonuniform unstructured mesh (with refined resolu-
+tion near the step and in the downstream recirculation/shear-layer region): Random sampling on mesh vertices
+naturally allocates a larger fraction of the nudging budget to these dynamically active, highly resolved regions,
+whereas a uniformly distributed selection in physical space spreads points more evenly across dynamically less
+informative areas, reducing the effective correction strength where it matters most.
+Figure 17(b) repeats the comparison when nudging is applied every four timesteps. As expected, reducing the
+update frequency weakens the stabilizing effect of sparse corrections: mean errors increase for all strategies and
+the separation between methods becomes smaller, with uncertainty bands overlapping more substantially in the
+extrapolative portion of the rollout. This indicates that, for the BFS flow, model errors can accumulate rapidly be-
+tween correction events, so less frequent nudging provides limited opportunity to suppress the phase/amplitude
+drift associated with vortex shedding and convective transport. Nevertheless, even at this reduced update rate,
+nudging remains beneficial compared with the unnudged baseline, highlighting a practical trade-off between as-
+similation cost (frequency of observation injection) and long-horizon accuracy/stability.
+Finally, Figure 17(c) shows the corresponding results when nudging is applied at every timestep and the sparse
+discrepancy is extended to the full state using RBF interpolation. Relative to the no-interpolation case in (a),
+RBF interpolation substantially improves performance for sampling policies whose observations are either highly
+localized or do not directly cover the downstream convective evolution (most notably Top-RHS and Random), by
+spatially propagating sparse corrections to neighboring regions and effectively increasing the “influence radius”
+of each observation. In contrast, DEIM+KDE shows a more moderate change, suggesting that its KDE-enriched
+set already provides some spatial coverage around dynamically active regions, so additional smoothing yields a
+smaller marginal gain in this particular BFS setup. Uniform sampling remains the least effective even with RBF
+interpolation, reinforcing that, for this problem, where observations are placed can be at least as important as how
+the sparse corrections are spatially extended.
+4. Conclusion
+We presented a DEIM-based framework for interpretable diagnostics and targeted data assimilation of pre-trained
+Neural Ordinary Differential Equations (NODEs). By applying a time-windowed DEIM procedure to RHS snap-
+shots, we extract trajectories of dynamically representative sampling locations and use them as an interpretable
+lens to analyze when and how NODE rollouts fail under extrapolative flow configurations. Building on this
+diagnostic signal, we introduced a DEIM-guided nudging strategy that allocates a limited assimilation budget
+to DEIM-identified locations enriched via kernel density estimation (KDE), enabling sparse yet dynamically in-
+formed corrections during NODE rollouts.
+16
+Figure 17: Comparison of relative L2 errors from the BFS NODE rollout under different sparse nudging strategies, report-
+ing ensemble mean (solid) and ± one standard deviation (shaded) across multiple realizations of the sampling-point set: (a)
+Nudging applied at every timestep without RBF interpolation (the dashed vertical line marks the end of the training hori-
+zon). (b) Nudging applied every four timesteps without RBF interpolation. (c) Nudging applied at every timestep with RBF
+interpolation
+Through systematic experiments on two-dimensional vortex-merging and backward-facing step (BFS) flows, we
+demonstrated that DEIM trajectory analysis provides a physically interpretable diagnostic for extrapolation ro-
+bustness. In vortex-merging extrapolation cases, the DEIM sampling trajectories extracted from the NODE RHS
+exhibit rapid structural collapse and irregular evolution, accompanied by accelerated growth of relative L2 errors.
+These behaviors provide interpretable evidence that the trained NODE perceives such configurations as more ex-
+trapolative, revealing a direct connection between learned dynamics and underlying flow regimes. In the BFS flow,
+DEIM sampling points reveal a distinct failure mode associated with advection-dominated separated dynamics:
+while the ground-truth DEIM sampling points track vortices shed from the step and convected downstream, the
+trajectories extracted from the NODE prediction drift away from these coherent structures and collapse toward
+the inlet region as rollout errors accumulate, highlighting difficulties in preserving convective transport over long
+horizons.
+Beyond interpretability, we showed that DEIM analysis can be leveraged to improve predictive performance
+through DEIM-guided nudging-based data assimilation. In vortex-merging experiments, nudging at DEIM+KDE
+locations substantially improves long-horizon stability and accuracy under sparse observations and helps restore
+the structural coherence of DEIM trajectories, indicating improved alignment between learned and true dynam-
+ics. In BFS, however, we found that the effectiveness of sparse nudging is strongly regime dependent: because
+windowed-DEIM reflects a lagged summary of recent dynamics, it can under-emphasize rapidly convecting,
+intermittently forming structures in advection-dominated separated flows, making instantaneous criteria (e.g.,
+Top-RHS) or more spatially distributed policies (e.g., Random) competitive or even preferable under the same
+nudging budget. Moreover, due to the non-smooth hard-selection pipeline used to construct the nudging opera-
+tor (greedy DEIM indices and density/top-k enrichment), BFS rollouts exhibit pronounced late-time sensitivity to
+small changes in the selected point set; reporting ensemble mean and variance therefore provides a more faithful
+characterization of performance in this regime.
+Overall, this work positions DEIM as a unified framework for interpretable diagnostics and targeted correction
+of neural differential equation models, while also highlighting that optimal sparse assimilation policies can be
+flow-regime dependent. Future directions include designing smoother (or differentiable) selection operators to
+reduce sampling-induced sensitivity, developing hybrid sampling strategies that combine structure-aware and
+instantaneous criteria for advection-dominated flows, and extending the framework to more complex turbulent
+configurations and realistic observation models.
+5. Acknowledgment
+This research used resources of the Argonne Leadership Computing Facility, which is a U.S. Department of En-
+ergy Office of Science User Facility operated under contract DE-AC02-06CH11357. HK and RM also acknowledge
+the support of computing resources through an AI For Science allocation at the National Energy Research Scien-
+tific Computing Center (NERSC) and from Penn State Institute for Computational and Data Sciences (ICDS). RM
+acknowledges the support of a YIP from ARO Modeling of Complex Systems (PM: Robert Martin).
+References
+[1] R. T. Chen, Y. Rubanova, J. Bettencourt, D. K. Duvenaud, Neural ordinary differential equations, Advances
+in neural information processing systems 31 (2018).
+17
+[2] L. Lu, P. Jin, G. Pang, Z. Zhang, G. E. Karniadakis, Learning nonlinear operators via deeponet based on the
+universal approximation theorem of operators, Nature machine intelligence 3 (3) (2021) 218–229.
+[3] N. Kovachki, Z. Li, B. Liu, K. Azizzadenesheli, K. Bhattacharya, A. Stuart, A. Anandkumar, Neural operator:
+Learning maps between function spaces with applications to pdes, Journal of Machine Learning Research
+24 (89) (2023) 1–97.
+[4] Z. Li, N. Kovachki, K. Azizzadenesheli, B. Liu, K. Bhattacharya, A. Stuart, A. Anandkumar, Fourier neural
+operator for parametric partial differential equations, arXiv preprint arXiv:2010.08895 (2020).
+[5] Z. Li, D. Z. Huang, B. Liu, A. Anandkumar, Fourier neural operator with learned deformations for pdes on
+general geometries, Journal of Machine Learning Research 24 (388) (2023) 1–26.
+[6] T. Pfaff, M. Fortunato, A. Sanchez-Gonzalez, P. W. Battaglia, Learning mesh-based simulation with graph
+networks (2021). arXiv:2010.03409.
+[7] A. J. Linot, J. W. Burby, Q. Tang, P. Balaprakash, M. D. Graham, R. Maulik, Stabilized neural ordinary differ-
+ential equations for long-time forecasting of dynamical systems, Journal of Computational Physics 474 (2023)
+111838.
+[8] P. Lippe, B. Veeling, P. Perdikaris, R. Turner, J. Brandstetter, Pde-refiner: Achieving accurate long rollouts with
+neural pde solvers, Advances in Neural Information Processing Systems 36 (2023) 67398–67433.
+[9] A. Arzani, L. Yuan, P. Newell, B. Wang, Interpreting and generalizing deep learning in physics-based prob-
+lems with functional linear models, Engineering with Computers 41 (1) (2025) 135–157.
+[10] S. Barwey, H. Kim, R. Maulik, Interpretable a-posteriori error indication for graph neural network surrogate
+models, Computer Methods in Applied Mechanics and Engineering 433 (2025) 117509.
+[11] R. Raut, R. Maulik, S. Barwey, Fignn: Feature-specific interpretability for graph neural network surrogate
+models, arXiv preprint arXiv:2506.11398 (2025).
+[12] C. W. Rowley, S. T. Dawson, Model reduction for flow analysis and control, Annual Review of Fluid Mechan-
+ics 49 (2017) 387–417.
+[13] S. Chaturantabut, D. C. Sorensen, Nonlinear model reduction via discrete empirical interpolation, SIAM Jour-
+nal on Scientific Computing 32 (5) (2010) 2737–2764.
+[14] R. ¸Stef˘anescu, A. Sandu, I. M. Navon, Pod/deim reduced-order strategies for efficient four dimensional vari-
+ational data assimilation, Journal of Computational Physics 295 (2015) 569–595.
+[15] Z. Drmac, S. Gugercin, A new selection operator for the discrete empirical interpolation method—improved
+a priori error bound and extensions, SIAM Journal on Scientific Computing 38 (2) (2016) A631–A648.
+[16] K. Manohar, B. W. Brunton, J. N. Kutz, S. L. Brunton, Data-driven sparse sensor placement for reconstruction:
+Demonstrating the benefits of exploiting known patterns, IEEE Control Systems Magazine 38 (3) (2018) 63–86.
+[17] S. Sargsyan, S. L. Brunton, J. N. Kutz, Nonlinear model reduction for complex systems using sparse optimal
+sensor locations from learned nonlinear libraries, arXiv preprint arXiv:1501.04590 (2015).
+[18] A. Azouani, E. Olson, E. S. Titi, Continuous data assimilation using general interpolant observables, Journal
+of Nonlinear Science 24 (2) (2014) 277–304.
+[19] G. Evensen, The ensemble kalman filter: Theoretical formulation and practical implementation, Ocean dy-
+namics 53 (4) (2003) 343–367.
+[20] G. Revach, N. Shlezinger, X. Ni, A. L. Escoriza, R. J. Van Sloun, Y. C. Eldar, Kalmannet: Neural network aided
+kalman filtering for partially known dynamics, IEEE Transactions on Signal Processing 70 (2022) 1532–1547.
+[21] A. Singh, R. A. Borsoi, D. Erdogmus, T. Imbiriba, Learning semilinear neural operators: A unified recursive
+framework for prediction and data assimilation, arXiv preprint arXiv:2402.15656 (2024).
+[22] S. Cheng, C. Liu, Y. Guo, R. Arcucci, Efficient deep data assimilation with sparse observations and time-
+varying sensors, Journal of Computational Physics 496 (2024) 112581.
+18
+[23] V. Mons, J.-C. Chassaing, P. Sagaut, Optimal sensor placement for variational data assimilation of unsteady
+flows past a rotationally oscillating cylinder, Journal of Fluid Mechanics 823 (2017) 230–277.
+[24] Z. Deng, C. He, Y. Liu, Deep neural network-based strategy for optimal sensor placement in data assimilation
+of turbulent flow, Physics of Fluids 33 (2) (2021).
+[25] Z. Xu, S. Wang, X.-L. Zhang, G. He, Optimal sensor placement for ensemble-based data assimilation using
+gradient-weighted class activation mapping, Journal of Computational Physics 514 (2024) 113224.
+[26] P. Sashittal, D. J. Bodony, Data-driven sensor placement for fluid flows, Theoretical and Computational Fluid
+Dynamics 35 (5) (2021) 709–729.
+[27] V. Mons, O. Marquet, Linear and nonlinear sensor placement strategies for mean-flow reconstruction via data
+assimilation, Journal of Fluid Mechanics 923 (2021) A1.
+[28] S. E. Ahmed, O. San, A. Rasheed, T. Iliescu, A. Veneziani, Physics guided machine learning for variational
+multiscale reduced order modeling, SIAM Journal on Scientific Computing 45 (3) (2023) B283–B313.
+[29] D. P. Kingma, Adam: A method for stochastic optimization, arXiv preprint arXiv:1412.6980 (2014).
+[30] B. F. Armaly, F. Durst, J. Pereira, B. Schönung, Experimental and theoretical investigation of backward-facing
+step flow, Journal of fluid Mechanics 127 (1983) 473–496.
+[31] D. Wee, T. Yi, A. Annaswamy, A. F. Ghoniem, Self-sustained oscillations and vortex shedding in backward-
+facing step flows: Simulation and linear instability analysis, Physics of Fluids 16 (9) (2004) 3361–3373.
+[32] M. Alnæs, J. Blechta, J. Hake, A. Johansson, B. Kehlet, A. Logg, C. Richardson, J. Ring, M. E. Rognes, G. N.
+Wells, The FEniCS project version 1.5, Archive of Numerical Software Vol 3 (2015).
+[33] K. Goda, A multistep technique with implicit difference schemes for calculating two-or three-dimensional
+cavity flows, Journal of computational physics 30 (1) (1979) 76–95.
+[34] S. Barwey, V. Shankar, V. Viswanathan, R. Maulik, Multiscale graph neural network autoencoders for inter-
+pretable scientific machine learning, Journal of Computational Physics 495 (2023) 112537.
+[35] H. Kim, V. Shankar, V. Viswanathan, R. Maulik, Generalizable data-driven turbulence closure modeling on
+unstructured grids with differentiable physics, arXiv preprint arXiv:2307.13533 (2024).
+[36] T. Wu, H. Godinez, V. Gyrya, J. M. Hyman, Interpolated discrepancy data assimilation for pdes with sparse
+observations, arXiv preprint arXiv:2510.24944 (2025).
+[37] J. Plogmann, O. Brenner, P. Jenny, Sparse data assimilation for under-resolved large-eddy simulations, Com-
+puter Methods in Applied Mechanics and Engineering 448 (2026) 118421.
+19
