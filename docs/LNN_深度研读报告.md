@@ -1993,6 +1993,7 @@ angle$ 的符号，统计"违反 $L_fV<0$ 的时间点比例"（只需一次前�
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-25**：[[docs/daily/2026-11-25_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 46 个，模型 4 个。
 - **2026-11-24**：[[docs/daily/2026-11-24_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 12 个。
 - **2026-11-23**：[[docs/daily/2026-11-23_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 13 个。
 - **2026-11-22**：[[docs/daily/2026-11-22_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 12 个。
@@ -2169,5 +2170,4 @@ angle$ 的符号，统计"违反 $L_fV<0$ 的时间点比例"（一次前向 + `
   - **Jetson benchmark 首次产出真实 GPU 数据**：`status=ok` / `device=cuda`（此前 16 天全是 CPU 数据），含 tegrastats 功耗与温度（VDD_IN mean 7046 mW、GPU 峰值 53.4 °C），推理步/秒 PDNAPulse 12276 / CfCStyle 11065 / LTC 2378 / GRU 204976。**注意这是 smoke benchmark（合成数据、单种子），不是论文级复现。**
 - **2026-10-25**：[[docs/daily/2026-10-25_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 18 个。
 - **2026-10-24**：[[docs/daily/2026-10-24_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 21 个。
-- **2026-10-23**：[[docs/daily/2026-10-23_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 17 个。
 <!-- daily-lnn-index:end -->
