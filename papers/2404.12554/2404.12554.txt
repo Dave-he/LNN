@@ -1,0 +1,523 @@
+Learning Stable and Passive Neural Differential Equations
+Jing Cheng, Ruigang Wang and Ian R. Manchester
+Abstract— In this paper, we introduce a novel class of
+neural differential equation, which are intrinsically Lyapunov
+stable, exponentially stable or passive. We take a recently
+proposed Polyak Lojasiewicz network (PLNet) as an Lyapunov
+function and then parameterize the vector field as the descent
+directions of the Lyapunov function. The resulting models have
+a same structure as the general Hamiltonian dynamics, where
+the Hamiltonian is lower- and upper-bounded by quadratic
+functions. Moreover, it is also positive definite w.r.t. either a
+known or learnable equilibrium. We illustrate the effectiveness
+of the proposed model on a damped double pendulum system.
+I. INTRODUCTION
+Neural networks have demonstrated great power in ma-
+chine learning and control, particularly on learning the
+dynamics and forecasting the behavior of dynamical sys-
+tems [1], [2]. When approximating the dynamic behaviour,
+preserving some essential properties especially stability and
+passivity, is favored by learning and control community.
+Enforcing stability can benefit the learnt models especially
+in terms of generalization.
+For nonlinear systems, enforcing stability during learning
+has been studied with Gaussian mixture models and polyno-
+mial models in [3], [4], [5] and even in the case of linear
+systems it is non-trivial [6]. For nonlinear systems, there are
+various of stability notions with different implications. In
+the context of learning, a strong stability notion called con-
+traction [7] (any pair of trajectories converge to each other)
+has recently received much attention due to its equilibrium-
+independent stability nature. For discrete-time setup, [8], [9],
+[10] have developed contracting, incrementally passive and
+dissipative neural dynamics. A continuous-time counterpart
+can be found in [11]. A benefit of [9], [11] is their direct
+(i.e. unconstrainted & surjective) parameterization of stable
+models, making training easy. However a limitation is that
+they enforce contraction with respect to a state-independent
+quadratic metric, limiting flexibility.
+For learning dynamical systems with weak stability prop-
+erties (e.g., Lyapunov stability w.r.t. a particular equilibrium),
+it is often desired to apply models that preserve the similar
+stability property. A key component for stable neural differ-
+ential equations is the neural Lyapunov function. From [12]
+and the resolution of the Poincare Conjecture by Perelman
+[13], all Lyapunov functions have level sets homeomorphic to
+the unit ball. This suggests searching for candidate Lyapunov
+*This work was supported in part by the Australian Research Council,
+and the NSW Defence Innovation Network.
+The authors are with the Australian Centre for Robotics (ACFR),
+and the School of Aerospace, Mechanical and Mechatronic Engi-
+neering, The University of Sydney, Sydney, NSW 2006, Australia
+ruigang.wang@sydney.edu.au
+functions of the form V (x) = g(x)⊤g(x) where g is a
+neural network, e.g. multi-layer perception (MLP). But for
+general MLP, V (x) may not be positive definite or radially
+unbounded. In [14], a special parameterization for g (i.e.,
+each layer has a larger dimension than the previous layer)
+is proposed in [14] such that V (x) is positive definite. The
+drawback is that it may restrict the model flexibility. The
+work [15] proposed several neural Lyapunov functions built
+on the input convex neural network (ICNN) [16]. To be
+specific, given an ICNN ϕ(x) where ϕ is a scalar-output
+network which is convex w.r.t. the input x, the Lyapunov
+function is constructed as V (x) = ϕ(x) or V (x) = ϕ(x) +
+ϵ|x|2. Although it can guarantee a lower quadratic bound, it
+is still unknown how to impose an upper quadratic bound.
+A more recent survey on neural Lyapunov functions can be
+found in [17].
+Given an Lyapunov function V (x), one needs to con-
+struct a vector field f (x) such that the Lyapunov inequal-
+ity ∇⊤V (x)f (x) < 0 holds for nonzero x. An intuitive
+approach is the gradient flow, i.e., f (x) = −α(x)∇V (x)
+with α(x) > 0. However, it is often restrictive as there are
+infinitely many of descent directions. In [15], a projection
+method is applied to resolve the case where Lyapunov
+inequality is infeasible.
+In this work, we take a recently developed bi-Lipschitz
+network g from [18] to construct a Lyapunov function
+H(x) = 0.5|g(x)|2. Since g is bi-Lipschitz, then it is also
+invertible, implying that the level set of H is homeomorphic
+to a unit ball. Unlike the ICNN-based Lyapunov function,
+the level sets of H can be non-convex. Thanks to the bi-
+Lipschitz property of g, both quadratic lower and upper
+bounds are guaranteed automatically. We then construct the
+vector field as f (x) = [J(x) − R(x)]∇H(x) where J is
+skew symmetric and R is positive definite. The above f is a
+smooth field of the descent vectors of H. By parameterizing
+J and R using neural networks, one can learn flexible stable
+dynamics. Moreover, this structure can also be realized as
+the Hamiltonian form that widely exists in physical systems
+[19], [20].
+Contribution. In this paper, we propose a new class of
+stable neural differential equations, called stable Hamiltonian
+neural dynamics (SHND).
+• It has certified global Lyapunov stability and exponen-
+tial stability by the parameterized Lyapunov function,
+with respect to an equilibrium point. The equilibrium
+point can either be imposed as a prior knowledge or
+learned by the data.
+• We further extend it to passive port-Hamiltonian system,
+which has potential applications in learning passivity-
+arXiv:2404.12554v2  [eess.SY]  10 Dec 2024
+
+===PAGE===
+
+based controllers.
+• Empirical results show that it outperforms existing
+methods in terms of fitting error, simulation error and
+robustness.
+Paper organization. In section II we give a problem defi-
+nition and review some preliminaries results. We present our
+main result in section III. Section IV illustrates our approach
+on a damped double pendulum, followed by conclusions in
+Section V.
+Notation. Given a x ∈ Rn, we denote a ball around x with
+radium ϵ by Bϵ(x) := {y ∈ Rn | |y −x| ≤ ϵ} where |·| is the
+Euclidean norm. We denote A ⪰ B if and only if the matrix
+(A − B) is positive semi-definite. We define the gradient
+transpose operator as ∇x := (∂/∂x)⊤. The subscript will be
+omitted when it is clear from the context.
+II. PROBLEM FORMULATION AND PRELIMINARIES
+A. Problem setup
+Given a dataset D = {(xi, vi) | xi, vi ∈ Rn}, we consider
+the problem of learning a neural vector field v = f (x) from
+D such that the following differential equation
+˙x = f (x) (1)
+is guaranteed to be stable in the following senses.
+Definition 1. Let x⋆ be an equilibrium of (1), i.e., f (x⋆) = 0.
+1) System (1) is said to be stable at x⋆ if, for each ϵ > 0,
+there is δ = δ(ϵ) > 0 such that
+x(0) ∈ Bδ (x⋆) ⇒ x(t) ∈ Bϵ(x⋆), ∀t ≥ 0. (2)
+2) It is said to be exponentially stable if there exist
+δ, λ, κ > 0 such that
+x(0) ∈ Bδ (x⋆) ⇒ |x(t)−x⋆| ≤ κe−λt|x(0)−x⋆| (3)
+for all t ≥ 0. It is said to be globally exponentially
+stable if (3) holds for all δ > 0.
+We also consider learning v = f (x, u) and y = h(x) from
+a dataset D = {(xi, vi, ui, yi) | xi, vi ∈ Rn, ui, yi ∈ Rm}
+such that the following controlled system in the input-state-
+output form
+˙x = f (x, u), y = h(x) (4)
+is internally stable and passive.
+Definition 2 ([21]). System (4) is said to be passive if
+there exists a continuously differentiable positive semidef-
+inite function S(x) (storage function) such that
+∂S
+∂x f (x, u) ≤ u⊤y, ∀(x, u) ∈ Rn × Rm. (5)
+B. Preliminaries
+We review two types of neural networks which will be
+applied in our stable model construction.
+Definition 3. A neural network g : Rn → Rn is said to be
+bi-Lipschitz if there exist ν ≥ µ > 0 such that
+µ|x − x′| ≤ |g(x) − g(x′)| ≤ ν|x − x′|, ∀x, x′ ∈ Rn. (6)
+We call such g a (µ, ν)-Lipschitz network. It is worth to
+point out that g is also invertible and g−1 is a bi-Lipschitz
+network with bound of (1/ν, 1/µ). In literature, there are
+some existing approaches [22], [23], [24], [25] to learn bi-
+Lipschitz neural networks with certified bounds.
+The following definition from [18] was motivated by
+Polyak-Łojasiewicz condition [26], [27]
+Definition 4. A scalar-output neural network H : Rn → R is
+called a Polyak-Łojasiewicz network (PLNet) if there exists
+a m > 0 such that
+|∇xH|2 ≥ 2m   H(x) − H ⋆ , ∀x ∈ Rn, (7)
+where H ⋆ := miny∈Rn H(y).
+One main result of [18] is that given any (µ, ν)-Lipschitz
+network g, we can obtain a PLNet as follows:
+H(x) = 0.5|g(x)|2 + c, c ∈ R, (8)
+i.e., (7) holds with m = µ2. Since our model construction
+will only use the gradient ∇H, we assume c = 0 throughout
+this paper. Some nice properties of PLNet include:
+1) H could be non-convex but always has one minimum
+x⋆ = g−1(0), i.e.,
+∇H(x⋆) = 0, ∇H(x) ̸= 0, ∀x ∈ Rn\{x⋆}. (9)
+2) H is upper- and lower-bounded by quadratic functions:
+0.5µ2|x − x⋆|2 ≤ H(x) ≤ 0.5ν2|x − x⋆|2. (10)
+3) If g is a smooth mapping, then the level set Lα = {x ∈
+Rn | H(x) ≤ α} is homeomorphic to a unit ball in
+Rn, for any α > 0.
+These features make the PLNet a promising candidate for
+learning Lyapunov functions, e.g. using the methods of [28],
+[17]. In this paper we focus on learning stable dynamics
+by parameterising flows that are descent directions for such
+a Lyapunov function, and consider further extensions to
+passive dynamics.
+III. STABLE HAMILTONIAN NEURAL DYNAMICS
+In this section, we first present a class of stable neural
+dynamics in the form of Hamiltonian system, and then extend
+it to passive dynamical models.
+A. Stable Hamiltonian models
+Our proposed model has the form of general Hamiltonian
+dynamics as follows:
+˙x = [J(x) − R(x)]∇H(x) (11)
+where x(t) ∈ Rn is the state, H(x) ∈ R is the Hamiltonian,
+and J(x) = −J ⊤(x), R(x) = R⊤(x) are the interconnection
+and damping matrices, respectively, which will be parame-
+terized by neural networks. We now state our main result.
+Theorem 1. Suppose that H is a PLNet (8) with g as a
+(µ, ν)-Lipschitz network. Let x⋆ be the global minimum of
+H. We have the following results:
+
+===PAGE===
+
+a) If R(x) ⪰ 0, ∀x ∈ Rn, then (11) is stable at x⋆, i.e.,
+(2) holds with δ(ϵ) = ϵµ/ν.
+b) If there exist ϵ > 0 such that R(x) ⪰ ϵI, ∀x ∈ Rn,
+then (11) is globally exponentially stable at x⋆, i.e.,
+(3) holds with κ = ν/µ and λ = ϵ.
+Proof. a) As shown in Section II-B, H(x) is a positive
+semidefinite function and its derivative satisfies
+˙H = ∇⊤H(x)[J(x) − R(x)]∇H(x)
+= −∇⊤H(x)R(x)∇H(x) ≤ 0, ∀x ∈ Rn (12)
+implying H(x(t)) ≤ H(x(0)). From (10), we have
+|x(t) − x⋆| ≤
+p
+2H(x(t))
+µ ≤
+p
+2H(x(0))
+µ ≤ ν µ |x(0) − x⋆|,
+implying |x(0)−x⋆| ≤ µϵ/ν ⇒ |x(t)−x⋆| ≤ ϵ for all t ≥ 0.
+b) Since R(x) ⪰ ϵI, then (12) implies
+˙H ≤ −ϵ|∇H|2 ≤ −2ϵµ2(H(x) − H(x⋆)) = −2ϵµ2H(x),
+(13)
+Furthermore, we have
+|x(t) − x⋆| ≤
+p
+2H(x(t))
+ν ≤
+p
+2e−2λtH(x(0))
+ν
+≤ ν µ e−λt|x(0) − x⋆|, (14)
+where λ = ϵµ2, i.e., (11) is globally exponentially stable
+with rate ϵµ2 and overshoot ν/µ.
+Remark 1. The hyper-parameters µ, ν and ϵ offer us the
+flexibility to control model’s minimum convergence rate and
+overshoot.
+Remark 2. The Hamiltonian H(x) is a Lyapunov function
+V (x) of system (11).
+If the equilibrium x⋆ is unknown, we simply take the
+PLNet (8) as the learnable Hamiltonian. Otherwise, we
+can impose the prior knowledge of x⋆ into our model by
+choosing the Hamiltonian H(x) = 0.5|g(x)−g(x⋆)|2, which
+also is a PLNet as ˜g(x) := g(x) − g(x⋆) is a bi-Lipschitz
+model with the same bound as g. In this work we will use the
+bi-Lipschitz network recently proposed in [18]. Specifically,
+y = gθ (x) has the form of
+zk = σ(Wkzk−1 + Ukx + bk), z0 = 0
+y = µx +
+LX
+k=1
+Ykzk + by
+(15)
+where zk is the kth layer hidden unit, and x, y are the input
+and output of this network. The learnable parameters of g
+are θ = {Uk, Yk, Wk, bk, by }. One main result of [18] is a
+model parameterization M : ϕ → θ with ϕ ∈ RN as a
+free variable such that for any ϕ ∈ RN , the model gM(ϕ)
+is bi-Lipschitz for some prescribed bound of (µ, ν). Then,
+the off-shelf optimization algorithm (e.g., stochastic gradient
+decent) can be directly applied to train bi-Lipschitz models.
+We now parameterize the matrix functions J(x) and R(x).
+Let S(x) and L(x) be two learnable multi-layer perceptions
+(MLPs), which are mappings from Rn to Rn×n. We then
+construct
+J(x) = S(x) − S⊤(x), R(x) = L⊤(x)L(x) + ϵI (16)
+where ϵ ≥ 0 is a user-specified constant.
+B. Passive port-Hamiltonian models
+We further extend (11) to port-Hamiltonian system of the
+form
+˙x = (J(x) − R(x))∇H(x) + B(x)u
+y = B(x)⊤∇H(x) (17)
+where u(t), y(t) ∈ Rm are the input-output variables, respec-
+tively, and B(x) ∈ Rn×m is a learnable matrix function. The
+following theorem shows that (17) is passive with respect to
+the storage function H(x).
+Theorem 2. Suppose that H is a PLNet and the matrix
+function R satisfies R(x) ⪰ 0 for all x. Then, (17) is passive.
+Proof. We take H(x) as the storage function and then check
+the dissipation inequality as follows:
+˙H − u⊤y = −∇⊤HR∇H + ∇⊤HBu − u⊤B⊤∇H
+= −∇⊤HR∇H ≤ 0. (18)
+Remark 3. An potential application of the above model class
+is learning stabilizing controllers for unknown but passive
+systems [29].
+IV. EXPERIMENTS
+We illustrate the proposed approach on learning the dy-
+namics of a damped double pendulum system. The pendulum
+state is x = [ θ1 θ2 ˙θ1 ˙θ2 ]⊤ where θ1, θ2 are the pendulum
+joint angles and ˙θ1, ˙θ2 are the angular velocities. The dynam-
+ics of the damped pendulum is ˙x = fp(x) where the vector
+filed fp : R4 → R4 can be found in [15]. Due to damping
+on each joint, the above system has a stable equilibrium
+x⋆ = 0, i.e., fp(0) = 0. Code is available at https:
+//github.com/ruigangwang7/StableNODE.
+The main objective is to learn a vector field f : R4 → R4
+based on a set of samples (xi, vi) where vi = fp(xi). To be
+specific, we randomly generate 2000 samples as the train data
+set Dtrain := {(xi, vi)}1≤i≤2000, where each xi is uniformly
+drawn from the region where |θi| ≤ π rad and | ˙θi| ≤ π rad/s
+with i = 1, 2. The test data set Dtest consists of 500 samples
+with the same distribution. Given a learnable model f , the
+train/test loss are defined as the mean square ℓ2 loss:
+ℓ(f ) = 1 nD
+nDX
+i=1
+vi − f (xi) 2 . (19)
+with nD as the number of elements in D, where D is either
+Dtrain or Dtest.
+Beside loss minimization, we also want to learn a model f
+such that the associated dynamics is globally exponentially
+stable at x⋆. The main purpose of such requirement is that
+when simulating the model f , a small fitting loss (19) can
+
+===PAGE===
+
+Fig. 1. Training and test loss (19) versus epochs. The proposed SHND
+model achieves better performance than SD-ICNN and SD-MLP.
+lead to a small error between the trajectories generated by
+˙x = fp(x) and ˙x = f (x).
+A. Model architecture and training details
+We will compare our model with the Lyapunov projection
+based stable models from [15], which learn a pair of vector
+field ˆf : Rn → Rn and an Lyapunov function V : Rn → R.
+The dynamical model is defined by
+˙x = f (x) = ˆf (x) − ∇V (x) ReLU(∇V (x)T ˆf (x) + αV (x)) |∇V (x)|2
+(20)
+where ReLU(x) = max(0, x). For the vector field ˆf , we
+choose a 4-100-100-4 multi-layer perception (MLP), i.e., a
+network with input and output dimension of 4 and two hidden
+layer with each has 100 neurons. For the Lyapunov function
+V , we consider the following two cases extracted from [15]:
+• SD-MLP: We take a 4-64-64 MLP g and then construct
+V (x) = |g(x)|2. And the resulting model in (20) is
+referred as SD-MLP. Note that such choice of Lyapunov
+function generally does not satisfy (9) and (10). Thus,
+(20) only ensures that V (x(t)) is bounded. The simu-
+lation trajectory may contain oscillations.
+• SD-ICNN: We take a 4-64-64-1 ICNN [16] as the Lya-
+punov function V (x). Although V (x) is convex, it may
+have multiple global minimum. By adding a quadratic
+term ϵ|x|2 to V , one can ensure that the resulting
+Lyapunov function has a quadratic lower bound. But
+it is still not clear how to enforce the quadratic upper
+bound. Moreover, when the prior knowledge about the
+equilibrium x⋆ is available, it is unclear how to enforce
+the constraint V (x⋆) = 0 to the ICNN. Therefore, the
+resulting dynamics (20) may converge to an undesired
+equilibrium.
+In summary, since the existing approaches for constructing
+neural Lyapunov function do not guarantee
+c1|x|2 ≤ V (x) ≤ c2|x|2
+with 0 < c1 ≤ c2, then the dynamics (20) does not provide
+exponentially guarantees for the equilibrium x⋆.
+For the proposed SHND model, we use the bi-Lipschitz
+network (15) from [18] with architecture 4-32-32-4 and Lip-
+schitz bound (µ, ν) = (0.1, 2) to construct the Hamiltonian
+H(x). For the matrix functions J(x) and R(x), we first take
+Fig. 2. Batch averaged (solid) and maximum (dashed) simulation error
+between the trajectories generated by the learned model and the original
+pendulum dynamics w.r.t. a batch of initial conditions. Our model has much
+smaller simulation error and converges to 0 as time increases. This is mainly
+due to the stability guarantee w.r.t. the known equilibrium x⋆. The SD-ICCN
+has a steady error due to the fact that it converges to another equilibrium
+for some initial conditions. The SD-MLP produces oscillating trajectories.
+a 4-90-90-32 MLP, then partition the output into two 4 × 4
+matrices L and S, and finally compute J, R via (16) with
+ϵ = 0.01. As shown in Thm 1, the SHND model can provide
+global exponential stability guarantee for the equilibrium
+x⋆. We will illustrate this point in the next section. For a
+fair comparison, our SHND model has a similar amount of
+learnable model parameters (around 15K) as the SD-MLP
+and SD-ICNN.
+We use Adam [30] to train each model with mean square
+loss for 1000 epochs. The batch size is 200 and the learning
+rate starts from 0.01 and decays to 0 according to the
+cosine rate scheduler.
+B. Results and discussions
+We first show the training and test loss over the epochs
+in Fig. 1. Our proposed SHND model outperforms SD-
+MLP and SD-ICNN. To test the model stability, we simulate
+the learned dynamics ˙x = f (x) as well as the pendulum
+dynamics ˙x = fp(x) and then compare the error between
+those trajectories. To be specific, we take a batch of 100
+samples |θi| ≤ π/2 and ˙θi = 0 as initial conditions, then
+simulate the dynamics using Runge-Kutta method with step
+size of 0.01s. We plot the batch averaged and maximum
+simulation errors in Fig. 2, as well as the trajectories w.r.t.
+two initial conditions in Fig. 5.
+We can observe that our model has much smaller simu-
+lation errors compared to SD-ICNN and SD-MLP. In par-
+ticular, the simulation error of SHND converges to 0 as the
+simulation time increases, demonstrating that our model can
+provide stability guarantee for the known equilibrium x⋆. For
+SD-ICNN model, as shown in Fig. 5, with slight changes in
+the initial condition, it converges to a different equilibrium.
+The SD-MLP produces oscillating behaviors as its Lyapunov
+function is not positive definite. Also, its simulation error is
+much larger than the other two approaches.
+We also perform additional model training with respect
+to different data sizes. From Fig. 3 we can see that our
+model has a constant performance improvement as the data
+
+===PAGE===
+
+Fig. 3. Training and test loss (19) versus training data size. We use the same
+test data set with 500 samples. For our model, the performance improves
+as the size increases while the other two have some variations.
+Fig. 4. Effect of the ratio ν/µ on the train/test loss (19). We set µ = 0.1
+and trained the SHND models with different ν. The ratio ν/µ can be serve
+as a regularizer for the proposed SHND model.
+size increases while the other two approaches have some
+variation.
+Different hyper-parameter ν/µ in our model is also tested.
+The result in Fig. 4 shows that ν/µ has a regularization effect
+on our model.
+V. CONCLUSION
+In this paper, we have proposed a new class of neural
+differential equations called stable Hamiltonian neural dy-
+namics (SHND), which has built-in stability w.r.t. an equi-
+librium. Empirical results on a vector field fitting problem
+demonstrate its effectiveness. For future directions, we will
+consider to learn stable models from time-series data and also
+explore applications in learning passivity-based controllers.
+REFERENCES
+[1] K. Hornik, M. Stinchcombe, and H. White, “Multilayer feedforward
+networks are universal approximators,” Neural networks, vol. 2, no. 5,
+pp. 359–366, 1989.
+[2] R. T. Chen, Y. Rubanova, J. Bettencourt, and D. K. Duvenaud, “Neu-
+ral ordinary differential equations,” Advances in neural information
+processing systems, vol. 31, 2018.
+[3] M. M. Tobenkin, I. R. Manchester, J. Wang, A. Megretski, and
+R. Tedrake, “Convex optimization in identification of stable non-linear
+state space models,” in 49th IEEE Conference on Decision and Control
+(CDC), pp. 7232–7237, IEEE, 2010.
+[4] S. M. Khansari-Zadeh and A. Billard, “Learning stable nonlinear
+dynamical systems with gaussian mixture models,” IEEE Transactions
+on Robotics, vol. 27, no. 5, pp. 943–957, 2011.
+[5] M. M. Tobenkin, I. R. Manchester, and A. Megretski, “Convex
+parameterizations and fidelity bounds for nonlinear identification and
+reduced-order modelling,” IEEE Transactions on Automatic Control,
+vol. 62, no. 7, pp. 3679–3686, 2017.
+[6] J. Umenberger, J. W˚agberg, I. R. Manchester, and T. B. Sch¨on, “Max-
+imum likelihood identification of stable linear dynamical systems,”
+Automatica, vol. 96, pp. 280–292, 2018.
+[7] W. Lohmiller and J.-J. E. Slotine, “On contraction analysis for non-
+linear systems,” Automatica, vol. 34, no. 6, pp. 683–696, 1998.
+[8] M. Revay and I. Manchester, “Contracting implicit recurrent neural
+networks: Stable models with improved trainability,” in Learning for
+Dynamics and Control, pp. 393–403, PMLR, 2020.
+[9] M. Revay, R. Wang, and I. R. Manchester, “Recurrent equilibrium
+networks: Flexible dynamic models with guaranteed stability and
+robustness,” IEEE Transactions on Automatic Control, 2023.
+[10] F. Fan, B. Yi, D. Rye, G. Shi, and I. R. Manchester, “Learning stable
+koopman embeddings for identification and control,” arXiv preprint
+arXiv:2401.08153, 2024.
+[11] D. Martinelli, C. L. Galimberti, I. R. Manchester, L. Furieri, and
+G. Ferrari-Trecate, “Unconstrained parametrization of dissipative and
+contracting neural ordinary differential equations,” in 2023 62nd IEEE
+Conference on Decision and Control (CDC), pp. 3043–3048, IEEE,
+2023.
+[12] F. Wilson Jr, “The structure of the level surfaces of a lyapunov
+function,” 1967.
+[13] M. T. Anderson, “Geometrization of 3-manifolds via the ricci flow,”
+Notices AMS, vol. 51, pp. 184–193, 2004.
+[14] S. M. Richards, F. Berkenkamp, and A. Krause, “The lyapunov neural
+network: Adaptive stability certification for safe learning of dynamical
+systems,” in Conference on Robot Learning, pp. 466–476, PMLR,
+2018.
+[15] J. Z. Kolter and G. Manek, “Learning stable deep dynamics models,”
+Advances in neural information processing systems, vol. 32, 2019.
+[16] B. Amos, L. Xu, and J. Z. Kolter, “Input convex neural networks,” in
+International Conference on Machine Learning (ICML), pp. 146–155,
+PMLR, 2017.
+[17] C. Dawson, S. Gao, and C. Fan, “Safe control with learned certificates:
+A survey of neural lyapunov, barrier, and contraction methods for
+robotics and control,” IEEE Transactions on Robotics, 2023.
+[18] R. Wang, K. D. Dvijotham, and I. Manchester, “Monotone, bi-
+lipschitz, and polyak-Łojasiewicz networks,” in Proceedings of the
+41st International Conference on Machine Learning, pp. 50379–
+50399, 2024.
+[19] A. Van Der Schaft, D. Jeltsema, et al., “Port-hamiltonian systems the-
+ory: An introductory overview,” Foundations and Trends® in Systems
+and Control, vol. 1, no. 2-3, pp. 173–378, 2014.
+[20] V. Duindam, A. Macchelli, S. Stramigioli, and H. Bruyninckx, Mod-
+eling and control of complex physical systems: the port-Hamiltonian
+approach. Springer Science & Business Media, 2009.
+[21] H. K. Khalil, Nonlinear systems. Prentice Hall, New York, NY, 2002.
+[22] R. T. Chen, J. Behrmann, D. K. Duvenaud, and J.-H. Jacobsen,
+“Residual flows for invertible generative modeling,” Advances in
+Neural Information Processing Systems, vol. 32, 2019.
+[23] J. Behrmann, W. Grathwohl, R. T. Chen, D. Duvenaud, and J.-H.
+Jacobsen, “Invertible residual networks,” in International conference
+on machine learning (ICML), pp. 573–582, PMLR, 2019.
+[24] C. Lu, J. Chen, C. Li, Q. Wang, and J. Zhu, “Implicit normaliz-
+ing flows,” in International Conference on Learning Representations
+(ICLR), 2021.
+[25] B. Ahn, C. Kim, Y. Hong, and H. J. Kim, “Invertible monotone
+operators for normalizing flows,” Advances in Neural Information
+Processing Systems, vol. 35, pp. 16836–16848, 2022.
+[26] B. Polyak, “Gradient methods for minimizing functionals (in russian),”
+USSR Computational Mathematics and Mathematical Physics, vol. 3,
+no. 4, pp. 643–653, 1963.
+[27] S. Lojasiewicz, “A topological property of real analytic subsets,” Coll.
+du CNRS, Les ´equations aux d´eriv´ees partielles, vol. 117, no. 87-89,
+p. 2, 1963.
+[28] N. Boffi, S. Tu, N. Matni, J.-J. Slotine, and V. Sindhwani, “Learning
+stability certificates from data,” in Proceedings of the 2020 Conference
+on Robot Learning (J. Kober, F. Ramos, and C. Tomlin, eds.),
+vol. 155 of Proceedings of Machine Learning Research, pp. 1341–
+1350, PMLR, 16–18 Nov 2021.
+[29] C. Secchi, S. Stramigioli, and C. Fantuzzi, Control of interactive
+robotic interfaces: A port-Hamiltonian approach, vol. 29. Springer
+Science & Business Media, 2007.
+[30] D. P. Kingma and J. Ba, “Adam: A method for stochastic opti-
+mization,” in International Conference on Learning Representations
+(ICLR), 2015.
+
+===PAGE===
+
+Fig. 5. Simulation trajectories of different models with two initial states. The SD-MLP model generates oscillating behaviors. Both SD-ICNN and the
+proposed SHND converge. But the SD-ICNN converges to a non-zero equilibrium point despite a small change in the initial condition.

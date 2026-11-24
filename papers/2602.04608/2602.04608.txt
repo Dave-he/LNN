@@ -1,0 +1,1049 @@
+Jacobian Regularization Stabilizes Long-Term Integration
+of Neural Differential Equations
+Maya Janvier 1 Julien Salomon 2 3 Etienne Meunier 1 2
+Abstract
+Hybrid models and Neural Differential Equations
+(NDE) are getting increasingly important for the
+modeling of physical systems, however they of-
+ten encounter stability and accuracy issues during
+long-term integration. Training on unrolled tra-
+jectories is known to limit these divergences but
+quickly becomes too expensive due to the need
+for computing gradients over an iterative process.
+In this paper, we demonstrate that regularizing
+the Jacobian of the NDE model via its directional
+derivatives during training stabilizes long-term in-
+tegration in the challenging context of short train-
+ing rollouts. We design two regularizations, one
+for the case of known dynamics where we can
+directly derive the directional derivatives of the
+dynamic and one for the case of unknown dynam-
+ics where they are approximated using finite dif-
+ferences. Both methods, while having a far lower
+cost compared to long rollouts during training, are
+successful in improving the stability of long-term
+simulations for several ordinary and partial differ-
+ential equations, opening up the door to training
+NDE methods for long-term integration of large
+scale systems.
+1. Introduction
+In Neural Ordinary Differential Equations (Neural ODE),
+a neural network (NN) is used as the dynamical function
+or right-hand side of an ODE and is integrated through a
+numerical solver to produce the next step of the trajectory
+of a physical system (Chen et al., 2019). This extension
+of ResNets to other solvers has gained in popularity across
+different deep learning tasks: not only the modeling of phys-
+ical systems (Lippe et al., 2023; White et al., 2024; Yin
+et al., 2021; Linot et al., 2023; Pal et al., 2025), but also for
+1LOCEAN, Sorbonne University, Paris, France 2ANGE
+team, INRIA, Paris, France 3LJLL, Sorbonne Univer-
+sity, Paris, France. Correspondence to: Maya Janvier
+<maya.janvier@locean.ipsl.fr>.
+Preprint. February 5, 2026.
+classification tasks (Yan et al., 2022; Kang et al., 2021) and
+generative tasks (Finlay et al., 2020; Song et al., 2021). For
+all of these tasks, the robustness and generalization ability
+of the models are very important to ensure stable and accu-
+rate long-term predictions in the case of physical modeling,
+and resilience to adversarial attacks in general. The Jaco-
+bian is a crucial mathematical concept in stability analysis
+(Margazoglou & Magri, 2023) and has been leveraged in
+many different ways for deep learning applications.
+In the context of adversarial attacks, the upper bound on the
+norm of the Jacobian, the Lipschitz constant, has sparked
+a lot of interest: a small Lipschitz constant guaranties that
+similar inputs in terms of a norm produce similar outputs
+for the same norm (for example, similar class labels). Un-
+fortunately, estimating computationally efficient Lipschitz
+constant for training is not an easy task. Scaman & Virmaux
+(2019) showed that its exact computation is NP-hard even
+for 2-layer networks and developed AutoLip and SeqLip to
+accelerate its estimation. Another issue they mention is the
+difficulty not to overestimate the Lipschitz constant: Pintore
+& Despr´es (2024) build accurate upper bounds of it but they
+remain expensive compute.
+We see that there is a strong balance between accuracy
+and efficiency in this task, that authors tackle differently:
+some compute a generalized jacobian via means of the chain
+rule to estimate the Lipschitz constant (Jordan & Dimakis,
+2021) while others leverage semi-definite relaxations and
+Integral Quadratic Constraints (IQC) (Raghunathan et al.,
+2018; Fazlyab et al., 2023). All these methods regularize the
+NN with their estimation of the Lipschitz constant with fixed
+penalization or more complex optimization of it (Pauli et al.,
+2022). Others directly modify the architecture of the NN
+by building Lipschitz layers (Meunier et al., 2022; Wang
+& Manchester, 2023) or new networks to satisfy IQC for
+system identification problems (Revay et al., 2023). TisODE
+(Yan et al., 2022) leverages both approaches by removing
+the time dependence of the dynamics and enforcing the
+convergence to a steady state for robustness.
+Other works focused on the eigenvalues of the Jacobian to
+enforce different stability properties: Kang et al. (2021)
+forced the Jacobian of the ODE in the Neural ODE layer to
+have eigenvalues with negative real parts at the Lyapunov-
+1
+arXiv:2602.04608v1  [cs.LG]  4 Feb 2026
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+stable equilibrium points, while Westny et al. (2024) showed
+that ensuring that the Jacobian eigenvalues were within the
+stability region of the integration scheme (Euler, Runge-
+Kutta schemes) was beneficial for the training of model.
+Jacobian regularization as an analog to gradient regulariza-
+tion (Novak et al., 2018) has been demonstrated to accelerate
+training for Neural ODE based generative models (Finlay
+et al., 2020).
+Neural ODE instabilities are often encountered when do-
+ing long-rollouts of physical systems (Frezat et al., 2021;
+List et al., 2024), which are crucial for systems such as
+climate models. The issue was mainly approached from
+an energetic point of view until now: Linot et al. (2023)
+introduced dissipation in the Neural ODE formulation with
+a linear term. As solutions to the equations sometimes lay
+in certain known manifolds (in the form of conservation
+laws for example), several works regularize (White et al.,
+2024) or project the Neural ODE onto this manifold during
+training (Pal et al., 2025). Both methods leverage products
+of the Jacobian in order to achieve their stabilization. The
+PDE Refiner method combines denoising models and Neu-
+ral ODE to iteratively refine the solution in order to learn
+across all frequencies and not only the dominant one (Lippe
+et al., 2023).
+In our work, we tackle long-term instabilities in Neural
+ODE with Jacobian regularizations involving directional
+derivative estimations, in the spirit of adversarial attack
+works. This is, to the best of our knowledge, the first attempt
+of this kind in the modeling of physical systems. We first
+present the challenges of accurate long rollouts for Neural
+ODEs and their particular link with the Jacobian 2, then
+present our methods for estimating Jacobian norms at a
+reasonable cost (3). We validate our method on autonomous
+systems (two ODE and one PDE) (4) and finally discuss the
+results and next challenges (5).
+2. Challenges of Accurate Long Rollouts for
+Neural Differential Equations
+Let us consider a general Partial Differential Equation (or
+PDE) in the form of
+∂x
+∂t = F (t, x, ∇x, ∇2x, ...) (1)
+with x the prognostic variables evolving temporally through
+the dynamic function F . To simulate trajectories of x, we
+numerically integrate the PDE forward in time using a tem-
+poral integration scheme or solver (e.g. Euler forward,
+Runge-Kutta 4) with a time-step ∆t. However, we usu-
+ally have an incomplete knowledge of F and still want to be
+able to simulate trajectories. The concept of Neural ODE
+(Chen et al., 2019) is to train a neural network Fθ from
+ground truth trajectories to play the role of F . The length of
+those trajectories we feed to the neural network, measured
+in number of integration steps performed through the solver,
+is called the training rollout N . In this section, we present
+our approach in the framework of Neural ODE.
+2.1. Learning through solvers: the influence of rollout
+Neural ODE models (Chen et al., 2019) are trained through
+numerical solvers. Consider a neural network Fθ repre-
+senting the right-hand side or dynamics of an (here au-
+tonomous) ODE of the form dxθ (t) dt = Fθ (xθ (t)), asso-
+ciated with an integration scheme (or solver) and a step-
+size ∆t, that aims to produce the same trajectories as the
+true ODE dx(t) dt = F (x(t)), namely X ∈ TF = {xi =
+x0 +
+R ti
+t0 F (x(s))ds, 0 ≤ i ≤ N }. The training is carried out by minimizing the trajectory loss (Chen et al., 2019; Yin
+et al., 2021; Linot et al., 2023):
+LN traj(θ) = X
+X∈TF
+NX
+i=0
+∥x(ti) − ˜xθ (ti)∥2 2, ti = i∆t (2)
+with ˜xθ (ti) obtained by numerically integrating the ODE
+forward in time for 0 ≤ i ≤ N steps.
+In offline training, the Neural ODE is tasked to mini-
+mize ∥F (x) − Fθ (x)∥2 2, so that learning F is consequently
+achieved in a direct way, without using the solver. However,
+this method needs access to the true F which can be un-
+known, and may lead to diverging trajectories for long-term
+integration at inference in most cases (Frezat et al., 2021;
+List et al., 2024).
+On the other hand, performing the training with N > 1
+(or online training), i.e., through the solver, only requires
+access to trajectory points (and no longer to F ) and results
+in much more stable rollouts (Frezat et al., 2021; List et al.,
+2024). However, this enhancement comes at the heavy cost
+of computing the gradient through the solver for each time-
+step which quickly becomes a bottleneck for long training
+rollouts N . The interest of long rollouts is also limited in
+practice as errors in gradient estimation accumulate and
+result in unstable training (List et al., 2024).
+Experimentally, Neural ODE trained on small N are not
+stable during inference. There is thus a need to produce
+stable long-term Neural ODE simulations based on short
+training rollouts, especially as long rollouts would simply
+become too costly for more complex and high-dimensional
+problems.
+2.2. Jacobian and long-term stability
+The Jacobian of a function F : Rn → Rm is defined as
+the matrix JF of all its first-order partial derivatives, and is
+involved in stability results through its Lipschitz constant.
+Definition 2.1. A function F is Lipschitz continuous if
+2
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+there exists L ∈ R+ such that ∀x, y ∈ Rn × Rn:
+∥F (x) − F (y)∥2 ≤ L∥x − y∥2.
+L is called a Lipschitz constant of F and when it is differen-
+tiable, the optimal (smallest) Lipschitz constant is defined
+as LF = supx∈Rn ∥JF (x)∥2.
+This Lipschitz constant is directly related to the long-term
+stability of Neural ODEs. Let us consider the true con-
+tinuous trajectory of x from the true dynamics F and the
+predicted xθ from the learned continuous dynamics Fθ , with
+the same initial conditions, i.e., x(t = 0) = xθ (t = 0). The
+offline error between F and Fθ is denoted ϵθ = Fθ − F .
+Using Gr¨onwall’s lemma we get for the trajectory error:
+Proposition 2.2. Trajectory error bound
+For t > 0,
+∥x(t) − xθ (t)∥2 ≤ ∥ϵθ ∥∞ LFθ (exp(LFθ t) − 1) (3)
+with LFθ the Lipschitz constant of Fθ .
+Proof. See appendix A.
+Thus, a model with a low ϵθ but a large LFθ can lead to
+diverging trajectories as t grows, driven by the exponential
+term in the upper bound as already documented in the litera-
+ture (Yin et al., 2021; Yan et al., 2022). On the other hand,
+a small Lipschitz constant LFθ limits the rate of divergence
+from the true trajectory, but if it becomes too small it will
+harm the ability of the model to correctly learn the dynamics.
+As noted in several works (Huang et al., 2021; Wang et al.,
+2022; Fazlyab et al., 2023), there exists a trade-off between
+the smoothness of a neural network and its expressiveness,
+i.e., between ϵθ and LFθ . Finding an appropriate balance
+between the two is still an open research question.
+In this paper, we propose a method to tackle this challenge
+by minimizing ∥JF (x) − JFθ (x)∥2. Not only will we better
+learn the dynamic, but we demonstrate below that it allows
+us to obtain physically informed bounds on the Lipschitz
+constant of Fθ :
+Proposition 2.3. If there is ϵ > 0 such that
+∀x ∈ Rn, ∥JF (x) − JFθ (x)∥2 ≤ ϵ,
+then we have
+LF − ϵ ≤ LFθ ≤ LF + ϵ.
+Proof. Using the triangular inequality
+∥∥a∥2 − ∥b∥2∥2 ≤ ∥a − b∥2,
+we have
+∥∥JF (x)∥2 − ∥JFθ (x)∥2∥2 ≤ ∥JF (x) − JFθ (x)∥2 ≤ ϵ,
+which is equivalent to
+∥JF (x)∥2 − ϵ ≤ ∥JFθ (x)∥2 ≤ ∥JF (x)∥2 + ϵ.
+Since these inequalities hold all x ∈ Rn, we finally have
+sup
+x
+∥JF (x)∥2 − ϵ ≤ sup
+x
+∥JFθ (x)∥2 ≤ sup x ∥JF (x)∥2 + ϵ,
+i.e.,
+LF − ϵ ≤ LFθ ≤ LF + ϵ.
+Proposition 2.3 shows that if JF and JFθ are close, then
+their Lipschitz constant will also be close, in particular the
+Lipschitz constant of Fθ will be bounded. Since correctly
+estimating Lipschitz constants of neural networks is an open
+research question (Jordan & Dimakis, 2021; Fazlyab et al.,
+2023; Pintore & Despr´es, 2024), this method offers an al-
+ternative to constrain LFθ while staying close to the true
+dynamic of the system.
+This method is further motivated by the result of a numeri-
+cal experiment presented in Table 1: compared to models
+trained on short rollouts, those trained on longer rollouts
+sacrifice some precision on the offline error ϵθ for better
+generalization on Ltraj and better learning of the Jacobian.
+We argue that this is an explanation to the huge gap in per-
+formance between offline and online training reported in
+several works (Frezat et al., 2021; List et al., 2024).
+3. Methods
+We have seen that the Jacobian represents a fundamental
+tool for controlling long-term stability. Our goal is to pro-
+duce stable integrations in the challenging context of short
+training rollouts N.
+In what follows, we present a regularization strategy that im-
+proves the stability of Neural Differential Equations trained
+on short rollouts, based on a regularization term that in-
+cludes the L2 distance between the Jacobian JFθ of the
+Neural ODE and JF the one of the real system, on true
+trajectories points:
+L(θ) = LN traj(θ) + λ X
+X∈TF
+NX
+i=0
+∥JF (x(ti)) − JFθ (x(ti))∥2 2.
+(4)
+The constraint on the Jacobian we are trying to enforce
+here is precisely the term introduced in Proposition 2.3: we
+exploit the link between the Jacobian and the Lipschitz con-
+stant of the system to constrain them both in a physically
+3
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+informed manner. We adopt a regularization (or penaliza-
+tion) strategy by weighting the Jacobian constraint with a
+fixed hyperparameter λ, as done in Yan et al..
+3.1. Estimating the norm of Jacobians efficiently
+Such strategy will require computing the Jacobians of JFθ
+and JF . As any neural network is differentiable through
+forward-mode Automatic Differentiation (AD), these Jaco-
+bian and their Fr¨obenius norms can be computed directly
+in practice. However, it remains very expensive and ineffi-
+cient to evaluate this quantity during training as we have to
+compute many matrices only to use their norms.
+We can reduce the dimensionality of the estimation by lever-
+aging the relationship between the Jacobian and the direc-
+tional derivative. Indeed, using the Hutchinson estimator of
+the trace of a matrix (Hutchinson, 1989), we have:
+∥JF (x) − JFθ (x)∥2 2 = ∥JF −Fθ (x)∥2 2
+= ∥Jϵθ (x)∥2 2
+= T r(Jϵθ (x)T Jϵθ (x))
+≈ Ev∼P (v)[vT · (Jϵθ (x)T Jϵθ (x)) · v]
+≈ Ev∼P (v)[(Jϵθ (x) · v)T (Jϵθ (x) · v)]
+≈ Ev∼P (v)[∥Jϵθ (x) · v∥2 2]
+(5)
+where Jϵθ denotes the Jacobian of the error ϵθ .
+The choice for P (v) is usually the standard normal distri-
+bution, but any distribution following Ev∼P (v)[vT v] = I is
+suitable (e.g., Rademecher for minimal variance (Hu et al.,
+2024)), and the Jacobian norms can be estimated by Monte-
+Carlo using vi i.i.d sampled from P (v). The Hutchinson
+trace estimator succeeds in reducing the dimension of the
+norms we are computing as we do not need to evaluate the
+full Jacobian anymore but only Jacobian-vector products
+(JVP).
+Proposition 3.1. Let v be a vector in Rn and h a positive
+real number, we have
+Jϵθ (x) · v = Dv ϵθ (x) := lim h→0
+ϵθ (x + hv) − ϵθ (x)
+h ,
+where Dv ϵθ (x) is the directional derivative of ϵθ in the
+direction v ∈ Rn.
+Because JVP correspond exactly to directional derivatives
+(see Proposition 3.1), they can be computed using the for-
+ward mode AD where we propagate both the intermediate
+states variables zi of the computational graph (chain rule)
+and the partial derivatives ∂zi+1 ∂zi , similarly to Hessian-vector product (HVP) approaches (Dagr´eou et al., 2024; Hu et al.,
+2024).
+3.2. A family of Jacobian derived regularizations
+This efficient way of computing Jacobian norms can now be
+used to define a variety of constraints (or losses) to enforce
+during training. We define two distinct cases of experimen-
+tation which correspond to real cases scenarios. The first
+is when the true dynamic F is known, for example in the
+case of known equations discretized into a numerical model.
+The goal of the Neural ODE is then to avoid certain biases
+or errors coming from this discretization. The second case
+is when the dynamic is totally unknown, that is to say we
+only have access to trajectory points but not to F , which is
+much more challenging for the model.
+Known dynamics If we have access to the true dynam-
+ics function F (for example known equations, numerical
+model), we can directly minimize the difference between the
+directional derivatives ∥JFθ −F (x) · vi∥2 2 estimated through
+Monte-Carlo based on the Hutchinson estimator presented
+before:
+LAD(θ, vi, x) = ∥ ˆDAD vi (Fθ − F )(x)∥2 2 (6)
+and
+LAD(θ, {vi}V i=1) = 1 V X x∈Ω VX i=1 LAD(θ, vi, x). (7)
+by computing the JVP (or directional derivative) ˆDAD using
+Automatic Differentiation, in the directions {vi}V i=1 i.i.d.
+sampled from N (0, I). In practice when we have to choose
+the training points x, we can assume that enforcing the loss
+on the trajectory points xt ∈ Ω = TF (observed or obtained
+by integrating the true dynamics F ) is enough to produce
+accurate or robust trajectories at inference. Although the
+estimation of the JVP is exact here, we need access to the
+true dynamics F which can be unknown or relatively heavy
+to compute (especially for PDEs).
+Unknown dynamics In the case of unknown dynamics,
+we leverage Finite Differences (FD) approximations of the
+directional derivatives to compute an unsupervised loss. We
+first write a first order approximation of the directional
+derivatives on trajectory points:
+LFD(θ, xti ) = ∥(Fθ − F )(xti +∆t) − (Fθ − F )(xti )∥2 2 ∥xti +∆t − xti ∥2 2
+(8)
+and
+LFD(θ) = 1 N X X∈TF NX i=0 LFD(θ, xti ). (9)
+This is an approximation of the directional derivative in
+the directions of the trajectory. Indeed, if we compute the
+4
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+derivative F (x(ti)) using finite differences, we can write
+xti +∆t = xti + F (xti )∆t and we get:
+∥(Fθ − F )(xti + F (xti )∆t) − (Fθ − F )(xti )∥2 2
+∥F (xti )∥2 2∆t2
+→∆t→0 ∥D F (xti )
+∥F (xti )∥2
+(Fθ − F )(xti )∥2 2
+(10)
+where vi =
+F (xti )
+∥F (xti )∥2 =
+xti +∆t −xti
+∥xti +∆t −xti ∥2 are the normalized
+directions of the trajectories and h = ∥F (xti )∥2∆t, see
+notation in equation 5.
+Combined with the finite differences approximation
+F (xti +∆t) − F (xti ) =
+xti +2∆t −2xti +∆t +xti
+∆t , we reach a
+fully unsupervised version of LFD. No evaluation of the true
+dynamics is required to approximate the same quantity as
+LAD.
+4. Results
+We test our regularizations on common one-dimensional
+ODE and PDE cases treated in other papers that cover a
+variety of dynamics: a first and a second order non-chaotic
+autonomous systems (White et al., 2024) as well as a chaotic
+fourth-order partial derivative equation (Linot et al., 2023;
+Lippe et al., 2023). All present either conservation laws
+or holonomic constraints that should be preserved during
+integration.
+In our experiments, we first diagnose the difference between
+a Neural ODE trained on very short rollouts (producing
+exploding trajectories in the long-term) and one trained on
+longer rollouts (stable), with the classical trajectory loss
+(4). We then apply our Jacobian regularizations during
+training in the unstable setting (short rollouts), in order to
+show the improvement that our losses provide on the long-
+term stability of the system at inference. All methods share
+the same integration method and time-step ∆t in order to
+facilitate their comparison
+As in White (2024), we are interested in the relative error
+between the predicted state xθ (t) and the ground truth x(t)
+over time, averaged over many trajectories with various ini-
+tial conditions, referred as Re(θ, t). In addition, we analyze
+the impact of our regularizations on the learned Fθ and its
+Jacobian JFθ by comparing them to the true F and JF . We
+focus on the trajectory error (MSE) as well as the offline
+error ϵθ = F − Fθ and jacobian error Je(θ) = JF − JFθ .
+As our losses are not only comparing trajectories but also
+penalizing the difference between the learned Jacobian and
+the one of the system, we expect our models to recover the
+jacobian properties of the Neural ODE trained on longer
+rollouts.
+More implementation details on the architecture and training
+setup are available in appendix B, as well as additional
+results on conservation laws in C.
+4.1. Two-Body Problem
+The Two-Body (TB) Problem describes the motion of two
+bodies attracting each other with a force inversely propor-
+tional to their squared distance, such as the gravitational
+force (Hairer et al., 2006). It is described by the following
+system of equations:
+U =
+
+
+x
+y
+˙x
+˙y
+
+ , ˙U =
+
+
+˙x
+˙y
+−x
+(x2 +y2 )3/2
+−y
+(x2 +y2 )3/2
+
+ (11)
+with a body fixed at the origin and (x, y) the Cartesian
+coordinates of the other body in the orbit plane (White
+et al., 2024). The angular momentum L0 is conserved here:
+x ˙y − ˙xy = L0 for (x, y) ∈ T 2 F .
+As in White (2024) experiments, we train on 40 trajecto-
+ries with initial conditions X0 = (1 − e, 0, 0,
+q
+1+e
+1−e ) with
+the eccentricity e sampled from U (0.5, 0.7). To reach a
+challenging context for the Neural ODE, we use data from
+trajectories of Ttrain = 8s which is less than a full period,
+integrated from FTB with a time-step ∆t = 0.01s. We then
+divide the training trajectories into non-overlapping chunks
+of N = 2∆t length. The ground truth and the models both
+use fourth order Runge-Kutta (RK4) with the same time-step
+∆t as integration scheme to produce their trajectories.
+We then evaluate the long-term stability of our models on
+100 test trajectories of duration Ttest = 100s. In the first
+row of Figure 1, we see that in the case of known dynam-
+ics (green curves), the loss LAD allows the model to reach
+similar performances to those of the Neural ODE trained
+with a longer rollout N = 5∆t (orange curves) in terms of
+relative error Re(θ) and final error too. In the case of un-
+known dynamics, the loss LFD also succeeds in stabilizing
+the trajectories until approximately 7000 steps (red curves),
+compared to less than 4000 steps without the regularization
+(blue curves). As expected, this loss is less effective (be-
+cause the directional derivatives are only approximated here
+whereas they are exactly computed for LAD), although it
+still contains most of the divergence observed in the base-
+line, only a few trajectories being responsible for the final
+divergence as observed in the right panel. The conclusions
+are similar for the relative conservation error, available in
+Figure 3 in appendix C.
+4.2. Rigid Body Problem
+The Rigid Body (RB) equations describe the evolution of the
+angular momentum vector X of a rigid body under Euler’s
+5
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+Figure 1. From the left to the right we have for each row: an example of a trajectory, the evolution of the relative error of the state over
+time and the distribution final values of Re(θ, Ttest). Top row: Two-Body Problem. Middle row: Rigid Body Problem. N = 5∆t and
+N = 10∆t trajectories are cut at 2000 steps for visualization purposes as they drift further away in time. Bottom row: Kuramoto-
+Sivashinksy.
+motion laws (Hairer et al., 2006):
+U =
+
+
+y1
+y2
+y3
+
+ , ˙U =
+
+
+0 −y3 y2
+y3 0 −y1
+−y2 y1 0
+
+
+
+
+y1/I1
+y2/I2
+y3/I3
+
+ (12)
+with I1, I2, I3 the principal moments of inertia, where the
+coordinate axes are the principal axes of the body and
+the origin of the coordinates fixed at the center of mass
+of the body (White et al., 2024). The Casimir function
+C(U ) = 1 2 (y2 1 + y2 2 + y2 3 ) is conserved along the trajectory
+and constitutes a holonomic constraint.
+Similarly to White (2024), we train on 40 trajectories with
+initial conditions X0 = (cos ϕ, 0, sin ϕ) with ϕ sampled
+from U (0.5, 1.5). We use data from trajectories of Ttrain =
+15s integrated from FRB with a time-step ∆t = 0.01s. We
+then divide these trajectories into non-overlapping chunks of
+N = 5∆t length. The ground truth and the models both use
+RK4 but with different time-steps: ∆tmodel = 10∆t = 0.1s
+for faster training.
+We then evaluate the long-term stability of our models on
+100 test trajectories of duration Ttest = 800s. Looking at
+the second row of Figure 1, we see that even the training
+with a longer rollout N = 10∆t (orange curves) produces
+simulations that start diverging after 4000 steps, due to a few
+exploding trajectories (right panel). In the case of known
+dynamics (LAD), we manage to stabilize all trajectories
+(green curves) and even outperform the N = 10∆t model.
+For the case of unknown dynamics (red curves), LFD also
+6
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+manages to prevent divergence, however when looking at
+individual trajectories we observe that the learned dynamic
+is faulty and sometimes produces collapsing trajectories.
+The conclusions are the same for the Casimir constraint (see
+Figure 3), with indeed a less good conservation for the LFD
+regularization.
+4.3. Kuramoto-Sivashinsky
+The 1D Kuramoto-Sivashinsky (KS) equation is a fourth
+order chaotic PDE describing the instabilities of a laminar
+flame front:
+Ut + Uxx + Uxxxx + U Ux = 0 (13)
+Apart from being non linear, the biharmonic term is par-
+ticularly difficult to model. Along a trajectory, we haveR L
+0 U (x, t) = 0, L being the length of the spatial domain
+with periodic boundary conditions.
+To generate ground truth data, we follow the setups of
+Brandstetter et al. (2022) and Lippe et al. (2023), using a
+uniform discretization of the domain into 256 points. We
+do not sample across different L and ∆t but keep them
+fixed at L = 64, ∆t = 0.2, and generate 512 training tra-
+jectories of duration Ttrain = 140∆t. As in Lippe et al.
+(2023), the first 360 steps are truncated and considered
+as a warmup for the solver (i.e., t0 = 360∆t). The ini-
+tial conditions are sampled from a distribution over trun-
+cated Fourier series with random coefficients {Am, lm, ϕm}
+as U0(x) = P10 m=1 Am sin(2πlmx/L + ϕm). The inte-
+gration of the ground truth data is done with an implicit
+Runge-Kutta integration method of the Radau IIA family
+(order 5) (Brandstetter et al., 2022), and our models use
+the RK4 solver with the same ∆t. Finally, as for our pre-
+vious experiments, we divide the training trajectories into
+non-overlapping chunks of N = 2∆t steps and evaluate
+the long-term stability on 128 test trajectories of duration
+Ttest = 640∆t.
+In the bottom row of Figure 1, we observe that both methods
+also succeeds in limiting (LAD) or totally preventing (LFD)
+diverging trajectories. Surprinsingly, the LAD regularization
+which was the best for the previous experiments, is now
+outperformed by the LFD one. This behavior is a sign of
+the loss being hard to tune, for reasons that we explain in
+the next section 4.4. Nevertheless, it succeeds in delaying
+the divergence time as well as reducing the intensity of it.
+Similar results for mass conservation are found in the ap-
+pendix C. The artifacts (lines) observed in all simulations
+are expected when using MLP on this task and could be
+removed with a better adapted architecture such as a Convo-
+lutional Neural Network (Linot et al., 2023), although it is
+not what is evaluated here, but rather the explosion of errors
+over time.
+4.4. Impact on learned Fθ and JFθ
+Table 1 summarizes the evaluation metrics values of the
+different experiments and methods. For ϵθ and Je(θ), we
+report their differences with the metrics ϵB θ and J B e (θ) of
+the short rollout Neural ODE baseline (blue) to highlight the
+effect induced by each method on them. Their raw values
+are available in Table 3 in the annexes.
+Table 1. Characteristics of the learned Fθ and JFθ compared to
+the true ones. Lower is best, with best and second best results
+respectively in bold and underlined.
+EXP Fθ LTRAJ (θ) ϵθ − ϵB θ Je(θ) − J B e (θ)
+TB
+N=2∆t 4.9E15 0 0
+N=5∆t 1.7E-2 +3.4E-6 -0.15
+N=2∆t, LAD 1.0E-2 -2.8E-7 -0.03
+N=2∆t, LFD 2.64E2 -3.1E-7 -0.02
+RB
+N=5∆t 1.41E4 0 0
+N=10∆t 1.62E0 +0.79E-7 -0.55E-3
+N=5∆t, LAD 1.79E-1 -0.13E-7 -7.39E-3
+N=5∆t, LFD 1.52E-1 +4.73E-6 -1.96E-3
+KS
+N=2∆t 4.77E14 0 0
+N=10∆t 2.91E0 +5.49E-3 -2.15E-2
+N=2∆t, LAD 8.50E5 -0.04E-3 -0.01E-2
+N=2∆t, LFD 3.59E0 -0.08E-3 -0.05E-2
+When first comparing the Neural ODE trained only with the
+trajectory loss, we observe that the ones trained on shorter
+rollouts (blue) perform badly in terms of trajectory loss
+despite having a smaller offline error ϵθ , whereas the ones
+trained on longer rollouts (orange) have a smaller trajectory
+loss although having a bigger offline error, as expected. Our
+novel diagnosis on the Jacobians reveals that, consistenly
+across all experiments, the model trained on longer rollouts
+has a lower Jacobian error Je(θ) than the one trained on
+shorter rollouts. This highlights the importance of correctly
+learning the Jacobian for long-term integration, which seems
+to be naturally improved when training on longer rollouts.
+While being trained on short rollouts, our regularized Neu-
+ral ODEs reproduce this same trend on the Jacobian errors:
+all are smaller than J B e (θ), although usually with smaller
+magnitudes than the Neural ODE trained on longer rollouts.
+This can be explained by the different effect our regular-
+izations have on the offline error, which is almost always
+improved (except for the LFD experiment on Rigid Body
+where the learned dynamic sometimes produces collapsing
+trajectories as seen in section 4.2). This shows that the bal-
+ance between ϵθ and Je(θ) changes with the training rollout,
+with shorter rollouts also needing a smaller offline to pro-
+duce stable long-term inferences when longer rollouts only
+need a smaller Je(θ).
+Both of our regularizations succeed in finding this balance
+on short rollouts and prevent diverging trajectories. The
+7
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+LAD loss is the most successful for the Two-Body and Rigid
+Body experiments, with best or second best metrics in Table
+1, and also comparable or even better than the longer-rollout
+baselines. The LFD regularization also obtains good re-
+sults but can be too restrictive (RB experiment). This was
+expected as LAD is a far more informative regularization,
+having access to the true JF .
+However this loss also has its limitations, as shown with the
+KS experiment where it fails in preventing all divergence.
+This can be explained by the Jacobian JF (involving Fourier
+Transforms) becoming very large compared to the Jacobian
+of a Neural Network, making our loss LAD harder to tune.
+On the contrary, since LFD compares similar quantities (fi-
+nite differences), the loss is easier to tune, less costly to
+compute and yields better results, performing almost as well
+as the N = 10∆t model in terms of trajectory loss.
+5. Conclusion
+In this paper, we successfully stabilized the long-term inte-
+gration of Neural ODEs trained on short rollouts by regular-
+izing the Jacobian of the learned dynamic. We proved the
+efficiency of our regularizations in both cases of known and
+unknown dynamics and across ODE and PDEs of various
+dimensions. In particular the LFD loss has a low computa-
+tional cost and can be easily scaled to higher dimensional
+problems, although it usually does not produce as accurate
+trajectories as the LAD regularization.
+We showed that our Jacobian loss is key in the success
+of online training and can be used to reduce the length of
+the training rollout without losing stability. This study is
+a step forward in understanding the balance between the
+error between the dynamic functions, the error between their
+Jacobians and the training rollout, which could be of interest
+when the solver we use is only partially differentiable (List
+et al., 2024) as in current climate models. Finally, our
+methods could be directly applied to hybrid settings where
+the Neural ODE only replaces a part of the dynamic.
+Impact Statement
+This paper presents work whose goal is to advance the field
+of Machine Learning. There are many potential societal
+consequences of our work, none which we feel must be
+specifically highlighted here.
+References
+Brandstetter, J., Welling, M., and Worrall, D. E. Lie Point
+Symmetry Data Augmentation for Neural PDE Solvers,
+2022.
+Chen, R. T. Q., Rubanova, Y., Bettencourt, J., and Duvenaud,
+D. Neural Ordinary Differential Equations, 2019.
+Dagr´eou, M., Ablin, P., Vaiter, S., and Moreau, T. How to
+compute Hessian-vector products? ICLR blogpost, 2024.
+Fazlyab, M., Robey, A., Hassani, H., Morari, M., and Pap-
+pas, G. J. Efficient and Accurate Estimation of Lipschitz
+Constants for Deep Neural Networks, 2023.
+Finlay, C., Jacobsen, J.-H., Nurbekyan, L., and Oberman,
+A. M. How to train your neural ODE: the world of Jaco-
+bian and kinetic regularization, 2020.
+Frezat, H., Sommer, J. L., Fablet, R., Balarac, G., and Lguen-
+sat, R. A posteriori learning of quasi-geostrophic turbu-
+lence parametrization: an experiment on integration steps,
+2021.
+Hairer, E., Lubich, C., , and Wanner, G. Geometric numer-
+ical integration. Springer-Verlag, Berlin, 2nd edition,,
+2006.
+Hu, Z., Shi, Z., Karniadakis, G. E., and Kawaguchi, K.
+Hutchinson Trace Estimation for high-dimensional and
+high-order Physics-Informed Neural Networks. Com-
+puter Methods in Applied Mechanics and Engineering,
+424:116883, May 2024.
+Huang, Y., Zhang, H., Shi, Y., Kolter, J. Z., and Anandku-
+mar, A. Training Certifiably Robust Neural Networks
+with Efficient Local Lipschitz Bounds, 2021.
+Hutchinson, M. A Stochastic Estimator of the Trace of the
+Influence Matrix for Laplacian Smoothing Splines. Com-
+munications in Statistics - Simulation and Computation,
+18(3):1059–1076, 1989.
+Jordan, M. and Dimakis, A. G. Exactly Computing the
+Local Lipschitz Constant of ReLU Networks, 2021.
+Kang, Q., Song, Y., Ding, Q., and Tay, W. P. Stable Neu-
+ral ODE with Lyapunov-Stable Equilibrium Points for
+Defending Against Adversarial Attacks, 2021.
+Kingma, D. P. and Ba, J. Adam: A Method for Stochastic
+Optimization, 2017.
+Linot, A. J., Burby, J. W., Tang, Q., Balaprakash, P., Gra-
+ham, M. D., and Maulik, R. Stabilized neural ordinary
+differential equations for long-time forecasting of dynam-
+ical systems. Journal of Computational Physics, 474:
+111838, February 2023.
+Lippe, P., Veeling, B. S., Perdikaris, P., Turner, R. E., and
+Brandstetter, J. PDE-Refiner: Achieving Accurate Long
+Rollouts with Neural PDE Solvers, 2023.
+List, B., Chen, L.-W., Bali, K., and Thuerey, N. Differentia-
+bility in Unrolled Training of Neural Physics Simulators
+on Transient Dynamics, 2024.
+8
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+Margazoglou, G. and Magri, L. Stability analysis of
+chaotic systems from data. Nonlinear Dynamics, 111
+(9):8799–8819, February 2023.
+Meunier, L., Delattre, B., Araujo, A., and Allauzen, A.
+A Dynamical System Perspective for Lipschitz Neural
+Networks, 2022.
+Novak, R., Bahri, Y., Abolafia, D. A., Pennington, J., and
+Sohl-Dickstein, J. Sensitivity and generalization in neural
+networks: an empirical study, 2018.
+Pal, A., Edelman, A., and Rackauckas, C. Semi-Explicit
+Neural DAEs: Learning Long-Horizon Dynamical Sys-
+tems with Algebraic constraints, 2025.
+Pauli, P., Koch, A., Berberich, J., Kohler, P., and Allgower,
+F. Training Robust Neural Networks Using Lipschitz
+Bounds. IEEE Control Systems Letters, 6:121–126, 2022.
+Pintore, M. and Despr´es, B. Computable Lipschitz Bounds
+for Deep Neural Networks, 2024.
+Raghunathan, A., Steinhardt, J., and Liang, P. Semidefi-
+nite relaxations for certifying robustness to adversarial
+examples, 2018.
+Revay, M., Wang, R., and Manchester, I. R. Recurrent
+Equilibrium Networks: Flexible Dynamic Models with
+Guaranteed Stability and Robustness, 2023.
+Scaman, K. and Virmaux, A. Lipschitz regularity of deep
+neural networks: analysis and efficient estimation, 2019.
+Song, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Er-
+mon, S., and Poole, B. Score-Based Generative Modeling
+through Stochastic Differential Equations, 2021.
+Wang, R. and Manchester, I. R. Direct Parameterization of
+Lipschitz-Bounded Deep Networks, 2023.
+Wang, Z., Prakriya, G., and Jha, S. A Quantitative Geomet-
+ric Approach to Neural-Network Smoothness, 2022.
+Westny, T., Mohammadi, A., Jung, D., and Frisk, E.
+Stability-Informed Initialization of Neural Ordinary Dif-
+ferential Equations, 2024.
+White, A., Kilbertus, N., Gelbrecht, M., and Boers, N. Sta-
+bilized Neural Differential Equations for Learning Dy-
+namics with Explicit Constraints, 2024.
+Yan, H., Du, J., Tan, V. Y. F., and Feng, J. On Robustness
+of Neural Ordinary Differential Equations, 2022.
+Yin, Y., Le Guen, V., Dona, J., de B´ezenac, E., Ayed, I.,
+Thome, N., and Gallinari, P. Augmenting physical models
+with deep networks for complex dynamics forecasting.
+Journal of Statistical Mechanics: Theory and Experiment,
+2021(12):124012, December 2021.
+9
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+A. Lipschitz constant and trajectory error
+In this section, we denote ∥ · ∥2 as ∥ · ∥ and LFθ as Lθ for lighter notations.
+Let us suppose we have two dynamics, the true equation with exact resolution x and dynamics F , the other xθ from the
+learned dynamic Fθ :  ˙x(t) = F (x(t))
+x(t = 0) = x0
+and
+ ˙xθ (t) = Fθ (xθ (t))
+y(t = 0) = x0
+(14)
+We make the assumption that F and Fθ are, respectively, L and Lθ -Lipschitz. We define ϵθ (x(t)) = F (x(t)) − Fθ (x(t))
+the offline error. We prove the following inequalities:
+Proposition A.1.
+∀t ≥ 0, ∥x(t) − xθ (t)∥ ≤ exp(Lθ t)
+Z t
+0
+∥ϵθ (x(s))∥ exp(−Lθ s)ds, (15)
+and if ϵθ is bounded by ∥ϵθ ∥∞:
+∥x(t) − xθ (t)∥ ≤ ∥ϵθ ∥∞ exp(Lθ t)
+Z t
+0
+exp(−Lθ s)ds
+≤ ∥ϵθ ∥∞ exp(Lθ t) 1 Lθ (1 − exp (−Lθ t))
+≤ ∥ϵθ ∥∞
+Lθ
+(exp (Lθ t) − 1).
+Proof. The second inequality comes from the first one by integrating the exponential. The first one uses Gr¨onwall’s lemma:
+Lemma A.2. Gr¨onwall’s inequality:
+Let ψ ≥ 0, ϕ, K be continuous functions.
+If
+∀t ≥ t0, ϕ(t) ≤ K(t) +
+Z t
+t0
+ψ(s)ϕ(s)ds,
+then
+∀t ≥ t0, ϕ(t) ≤ K(t) +
+Z t
+t0
+K(s)ψ(s) exp
+Z t
+s
+ψ(u)du
+
+ds.
+As x and xθ are continuous, with the Fundamental theorem of calculus we can write:
+∥x(t) − xθ (t)∥ = ∥x0 +
+Z t
+0
+˙x(s)ds − x0 −
+Z t
+0
+˙xθ (s)ds∥
+= ∥
+Z t
+0
+F (x(s)) − Fθ (xθ (s))ds∥ using 14
+= ∥
+Z t
+0
+F (x(s)) − Fθ (x(s)) + Fθ (x(s)) − Fθ (xθ (s))ds∥
+≤
+Z t
+0
+∥ϵθ (x(s))∥ds +
+Z t
+0
+∥Fθ (x(s)) − Fθ (xθ (s))∥ds (triangular inequality)
+∥x(t) − xθ (t)∥ ≤
+Z t
+0
+∥ϵθ (x(s))∥ds + Lθ
+Z t
+0
+∥x(s) − xθ (s)∥ds as Fθ is Lθ -Lipschitz.
+We can apply Gr¨onwall’s inequality with ϕ(t) = ∥x(t) − xθ (t)∥, ψ(t) = Lθ ≥ 0 and K(t) =
+R t
+0 ∥ϵθ (x(s))∥ds:
+10
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+∥x(t) − xθ (t)∥ ≤
+Z t
+0
+∥ϵθ (x(s))∥ds +
+Z t
+0
+Lθ
+Z s
+0
+∥ϵθ (x(u))∥du
+
+exp
+Z t
+s
+Lθ du
+
+ds
+≤ K(t) + Lθ exp (Lθ t)
+Z t
+0
+Z s
+0
+∥ϵθ (x(u)∥du
+
+exp (−Lθ s)ds.
+For the integral, we can use integration by parts (IPP), with
+ h(s) = R s 0 ∥ϵθ (x(u))∥du = K(s) ˙h(s) = ∥ϵθ (x(s))∥ and  g(s) = − 1 Lθ exp(−Lθ s) ˙g(s) = exp (−Lθ s)
+We have: Z t
+0
+h(s) ˙g(s)ds = [h(s)g(s)]t 0 −
+Z t
+0
+˙h(s)g(s)ds
+=
+
+K(s) −1 Lθ exp(−Lθ s) t 0 − Z t 0 −1 Lθ exp(−Lθ s)∥ϵθ (x(s))∥ds Z t
+0
+h(s) ˙g(s)ds = −1 Lθ exp(−Lθ t)K(t) + 1 Lθ
+Z t
+0
+∥ϵθ (x(s))∥ exp(−Lθ s)ds
+Plugging it back to the main inequality,
+|x(t) − y(t)| ≤ K(t) + Lθ exp (Lθ t)
+Z t
+0
+Z s
+0
+∥ϵθ (x(u))∥du
+
+exp (−Lθ s)ds
+
+≤ K(t) + Lθ exp(Lθ t)
+ −1
+Lθ
+exp(−Lθ t)K(t) + 1 Lθ
+Z t
+0
+∥ϵθ (x(s))∥ exp(−Lθ s)ds
+
+≤ K(t) − K(t) + exp(Lθ t)
+Z t
+0
+∥ϵθ (x(s))∥ exp(−Lθ s)ds
+≤ exp(Lθ t)
+Z t
+0
+∥ϵθ (x(s))∥ exp(−Lθ s)ds.
+11
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+B. Implementation details
+This section presents the different parameters and protocols to reproduce our experiments. All of our experiments are
+realized in jax, with code available on GitHub.
+B.1. Data generation
+For Two-Body and Rigid Body experiments, the ground truth trajectories are integrated using fourth order Runge Kutta (RK4)
+with time-step ∆t = 0.01s. For the Rigid Body Problem, we use the same parameter values (I1, I2, I3) = (1.6, 1.0, 2/3) as
+in White (2024).
+For Kuramoto-Sivashinsky, we follow the protocol from Lippe et al., using Brandstetter et al. implementation. We only alter
+the generation script by fixing ∆t = 0.2s and L = 64, instead of varying them. The code can then be used to produce our
+data with the following arguments:
+• Training set: --train samples=512 --nt=500
+• Validation set: --valid samples=128 --nt=500
+• Test set: --test samples=128 --nt=1000 --nt effective=640 --end time=200
+Finally, the training and validation trajectories are chunked into non-overlapping segments of N length as in White (2024), in
+order for all the models to use the exact same points independently of their training rollout. This setup makes the validation
+particularly challenging, with no information on the long-term performances of the model given at this step.
+B.2. Experimental setting
+We use the MLP architecture from Yin et al. for the Neural ODE models (i.e., for Fθ ). It is composed of three linear layers
+with activation ReLU and hidden size 200. All Neural ODEs use RK4 as integration scheme as well, and are trained using
+Adam optimizer (Kingma & Ba, 2017) with learning rate lr = 0.001, β1 = 0.9 and β2 = 0.999. For the LAD loss, we
+sample V = 10 directions {vi}V i=1 from N (0, I) for each experiment. Table 2 summarizes the parameters of the different
+models and experiments.
+Table 2. Summary of model and experiment parameters
+PARAMETERS TWO-BODY RIGID BODY KURAMOTO-SIVASHINSKY
+U DIMENSION 4 3 256
+∆t/∆tMODEL (S) 0.01 / 0.01 0.01 / 0.1 0.2 / 0.2
+TTRAIN /TVAL /TTEST (S) 8 / 8 / 100 15 / 15 / 800 28 / 28 / 128
+NTRAIN /NVAL /NTEST (S) 2 / 2 / 10000 5 / 5 / 8000 2 / 2 / 640
+NB TRAJ TRAIN/VAL / TEST 40 / 40 / 100 40 / 40 / 100 512 / 128 / 128
+NB EPOCHS 4500 4500 1000
+λAD INTERVAL 1E-11, 5E-12, 1E-12, 5E-13, 1E-13 1E-2, 1E-3, 1E-4, 1E-5 1E-6 5E-12, 1E-12, 5E-13, 1E-13
+λAD OPTIMAL 5E-13 1E-6 5E-13
+λFD INTERVAL 1E-11, 5E-12, 1E-12, 5E-13, 1E-13 1E-2, 1E-3, 1E-4, 1E-5 1E-6 1E-4, 1E-5, 1E-6, 1E-7, 1E-8
+λFD OPTIMAL 5E-13 1E-2 1E-7
+The best model is determined based on the mean trajectory loss on a validation set of chunked trajectories. The optimal
+regularization coefficient λ is determined by grid-search for each experiment, also based on the same metric. Figure 2 shows
+its evolution across the tested hyperparameters λ. As the validation is done on very short rollouts, the mean validation MSEs
+are quite similar. The LAD regularization was particularly difficult to tune for the KS experiment, with unstable training
+when λ ≥ 1E-10, and could benefit from finer grid-search exploration.
+B.3. Evaluation
+We derive all evaluation metrics reported in Table 3 on the ground truth test trajectories points x ∈ T test F .
+For the Je(θ) metric, we use the true jacobians obtained by forward-mode AD, column-by-column (jax.jacfwd), except
+12
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+Figure 2. Mean MSE on validation set for the optimization of the λ parameter, for the Two-Body Problem (left) and the Rigid Body
+Problem (right). The best outcome is circled.
+for the Kuramoto-Sivashinsky (KS) experiment where it is too costly to compute and is estimated using the Hutchinson
+Monte-Carlo described in equation 5, with V = 4 directions sampled from N (0, I).
+C. Additional results
+Table 3. Characteristics of the learned Fθ and JFθ compared to the true ones. Lower is best, with best and second best results respectively
+in bold and underlined. As the values of Je(θ) for KS are very high, we report up to a constant C = 265560.9 to highlight their
+differences.
+EXP Fθ LTRAJ (θ) ϵθ Je(θ)
+TB
+N=2∆t 4.9E15 1.42E-6 5.74
+N=5∆t 1.7E-2 4.82E-6 5.59
+N=2∆t, LAD 1.0E-2 1.14E-6 5.71
+N=2∆t, LFD 2.64E2 1.11E-6 5.72
+RB
+N=5∆t 1.41E4 4.22E-7 7.84E-3
+N=10∆t 1.62E0 5.01E-7 7.29E-3
+N=5∆t, LAD 1.79E-1 4.09E-7 4.51E-4
+N=5∆t, LFD 1.52E-1 5.16E-6 5.88E-3
+KS
+N=2∆t 4.77E14 2.51E-3 C+5.63E-2
+N=10∆t 2.91E0 8.00E-3 C+3.48E-2
+N=2∆t, LAD 8.50E5 2.47E-3 C+5.62E-2
+N=2∆t, LFD 3.59E0 2.43E-3 C+5.58E-2
+13
+
+===PAGE===
+
+Jacobian Regularization Stabilizes Long-Term Integration of Neural Differential Equations
+Figure 3. Mean Relative Error of the conserved properties over time (left) and distribution of final values (right). Top row: Two-Body
+Problem. Middle row: Rigid Body Problem. Bottom row: Kuramoto-Sivashinsky
+14

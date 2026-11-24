@@ -1,0 +1,1887 @@
+Continuum Dropout for Neural Differential Equations
+Jonghun Lee1*, YongKyung Oh2*, Sungil Kim1,3†, Dong-Young Lim1,3†
+1Artificial Intelligence Graduate School, Ulsan National Institute of Science and Technology (UNIST), Republic of Korea
+2Medical & Imaging Informatics (MII) Group, University of California, Los Angeles (UCLA), CA, USA
+3Department of Industrial Engineering, Ulsan National Institute of Science and Technology (UNIST), Republic of Korea
+jh.lee@unist.ac.kr, yongkyungoh@mednet.ucla.edu, {sungil.kim, dlim}@unist.ac.kr
+Abstract
+Neural Differential Equations (NDEs) excel at modeling
+continuous-time dynamics, effectively handling challenges
+such as irregular observations, missing values, and noise. De-
+spite their advantages, NDEs face a fundamental challenge
+in adopting dropout, a cornerstone of deep learning regular-
+ization, making them susceptible to overfitting. To address
+this research gap, we introduce Continuum Dropout, a uni-
+versally applicable regularization technique for NDEs built
+upon the theory of alternating renewal processes. Continuum
+Dropout formulates the on-off mechanism of dropout as a
+stochastic process that alternates between active (evolution)
+and inactive (paused) states in continuous time. This provides
+a principled approach to prevent overfitting and enhance the
+generalization capabilities of NDEs. Moreover, Continuum
+Dropout offers a structured framework to quantify predictive
+uncertainty via Monte Carlo sampling at test time. Through ex-
+tensive experiments, we demonstrate that Continuum Dropout
+outperforms existing regularization methods for NDEs, achiev-
+ing superior performance on various time series and image
+classification tasks. It also yields better-calibrated and more
+trustworthy probability estimates, highlighting its effective-
+ness for uncertainty-aware modeling.
+Code —
+https://github.com/jonghun-lee0/Continuum-Dropout
+1 Introduction
+Neural Differential Equations (NDEs) have emerged as a
+powerful framework for modeling continuous-time dynam-
+ics by integrating differential equations with neural net-
+works (Chen et al. 2018; Rubanova, Chen, and Duvenaud
+2019; Oh et al. 2025a). This framework has demonstrated
+superior performance in handling irregular sampling, missing
+data, and noisy observations across diverse domains such
+as physics (Greydanus, Dzamba, and Yosinski 2019), fi-
+nance (Yang et al. 2023), and others (Rubanova, Chen, and
+Duvenaud 2019; Kidger et al. 2020; Oh, Lim, and Kim 2024,
+2025; Oh et al. 2025b).
+Despite these advantages, NDEs are particularly prone
+to overfitting, especially when trained on limited data or
+*Equal contribution.
+†Corresponding authors.
+Copyright © 2026, Association for the Advancement of Artificial
+Intelligence (www.aaai.org). All rights reserved.
+equipped with complex architectures (Oh, Lim, and Kim
+2024). To address this issue, various regularization techniques
+for NDEs have been explored, including Neural Stochastic
+Differential Equations (Neural SDEs) (Tzen and Raginsky
+2019; Kong, Sun, and Zhang 2020; Oganesyan, Volokhova,
+and Vetrov 2020), Neural Jump Diffusion model (Liu et al.
+2020), STEER (Ghosh et al. 2020), Temporal Adaptive Batch
+Normalization (TA-BN) (Zheng et al. 2024), and kinetic en-
+ergy regularization for Neural ODE-based generative mod-
+els (Finlay et al. 2020). However, these methods are often
+tailored to specific architectures or fail to offer principled
+uncertainty quantification. Critically, NDEs face a fundamen-
+tal challenge in adopting dropout (Srivastava et al. 2014),
+the cornerstone of regularization in discrete neural networks.
+For instance, na¨ıvely applying dropout to the drift function
+results in an ad-hoc solution that fails to capture the under-
+lying continuous-time structure. While the jump diffusion
+process has been explored for modeling a continuous-time
+analogue of dropout (Liu et al. 2020), the approach is neither
+a theoretically faithful analogue nor architecturally general,
+being applicable only to specific types of NDEs. A summary
+of the limitations of these existing regularization techniques
+is provided in Table 1.
+Table 1: Comprehensive methodological comparison of
+proposed method with key regularization methods for NDEs
+Na¨ıve
+Dropout
+Jump
+Diffusion STEER TA-BN Continuum Dropout
+Tailored for
+NDEs × ✓ ✓ ✓ ✓
+Discrete
+Analogue − △ × × ✓
+Quantifying
+Uncertainty ✓ △ × × ✓
+Architectural
+Generality ✓ × ✓ ✓ ✓
+To address this research gap, we introduce Continuum
+Dropout, a universally applicable regularization technique
+for NDEs built upon the theory of alternating renewal pro-
+cesses. The key idea is to formulate the on-off mechanism
+of dropout as a stochastic process that alternates between
+active (evolution) and inactive (paused) states in continu-
+ous time. This naturally leads to a modified NDE where
+arXiv:2511.10446v2  [stat.ML]  18 Nov 2025
+
+===PAGE===
+
+(a) Neural network
+ (b) Neural network w/ dropout
+ (c) NDE, z0(t)
+ (d) NDE w/ Continuum Dropout, z(t)
+Figure 1: Illustration of dropout in discrete neural networks and continuous-time latent processes:
+(a) discrete neural network, (b) neural network with dropout, (c) NDE, (d) NDE with Continuum Dropout.
+the latent dynamics are randomly turned on and off during
+training. Moreover, in the spirit of Bayesian dropout (Gal
+and Ghahramani 2016) for discrete networks, Continuum
+Dropout offers a structured framework to quantify predictive
+uncertainty via Monte Carlo sampling at test time, enabling
+more trustworthy and uncertainty-aware modeling. Through
+extensive experiments, we demonstrate that our method not
+only outperforms existing regularization techniques but also
+produces better-calibrated probability estimates, highlighting
+its practical effectiveness.
+2 Preliminaries
+Notations. For a Rd-valued vector x, denote the i-th com-
+ponent of x by x(i) for i = 1, . . . , d. For two matrices A and
+B of the same size, A ◦ B represents a matrix obtained by
+element-wise (Hadamard) product of A and B.
+2.1 Problem Statement
+Let {z0(t)}0≤t≤T be a dz -dimensional continuous-time dy-
+namical (stochastic) process. In particular, we consider z0(t)
+as a latent process used for various tasks such as predic-
+tion, classification, and regression. Let x denote the dx-
+dimensional input data, and ζ : Rdx → Rdz is an affine
+function with parameter θζ .
+To represent the underlying process z0(t), Chen et al.
+(2018) proposed a Neural ODE as the solution of the fol-
+lowing ordinary differential equation
+dz0(t)
+dt = γ(t, z0(t); θγ ) with z0(0) = ζ(x; θζ ), (1)
+where 0 ≤ t ≤ T , γ(·; ·; θγ ) is a neural network parame-
+terized by θγ , which is inspired by the following residual
+connections in ResNet (He et al. 2016):
+Z0(k + 1) = Z0(k) + γ(Z0(k); θk), (2)
+where Z0(k) represents the hidden state of ResNet at the
+k-th layer. See Sander, Ablin, and Peyr´e (2022) for a detailed
+discussion of the relationship between ResNets and Neural
+ODEs.
+On the other hand, when it comes to preventing neural
+networks from overfitting, the most successful and powerful
+regularization technique in deep learning models is dropout,
+which randomly deactivates certain neurons during train-
+ing (Srivastava et al. 2014). Therefore, to further improve the
+performance of Neural Differential Equations (NDEs), one
+naturally pose the following question:
+Q. How can we incorporate the mechanism of dropout
+into the NDE framework?
+The answer to this question lies in developing a continuous-
+time analogue of a ResNet with dropout:
+Z(k + 1) = Z(k) + Ik ◦ γ(Z(k); θk), (3)
+where Z(k) represents the hidden state of ResNet with
+dropout at the k-th layer and P(I (i) k = 0) = 1 − P(I (i) k =
+1) = p, with Ik ∈ Rdz . Compared to Equation 2, Equation 3
+introduces the Bernoulli variable Ik, which controls the up-
+date of the hidden state at step k + 1. Specifically, when
+I (i) k = 1, the hidden state evolves as in the standard ResNet,
+whereas when I (i) k = 0, its evolution is paused. Figure 1 provides a visual comparison of a standard dis-
+crete network, a discrete network with dropout, and their
+continuous-time counterparts. Consider a standard neural net-
+work without dropout, as shown in Figure 1a. When dropout
+is applied, some neurons are temporarily removed from the
+network, as shown in Figure 1b. Now, consider the solution
+z0(t) of an NDE, which represents the continuous counter-
+part of the discrete network shown in Figure 1c. Our method
+constructs a new continuous-time process z(t) that emu-
+lates dropout by switching between an active state, where it
+evolves like z0(t), and an inactive state, where its evolution is
+temporarily paused (see Figure 1d). This construction serves
+as the continuous analogue of the ResNet with dropout in
+Equation 3, effectively incorporating the dropout mechanism
+into the NDE framework.
+Our key insight is that the behavior of dropout in neural
+networks in continuous-time can be interpreted as a stochas-
+tic process where the system alternates between periods of
+active (evolution) and inactive (paused) states over random
+time intervals. This type of stochastic behavior is naturally
+described by alternating renewal processes. Based on this
+insight, we provide a more robust and theoretically sound
+regularization technique for NDEs. In addition, we address
+important follow-up questions: i) what is the proper defini-
+tion of the dropout rate in continuous-time settings? and ii)
+how can the dropout rate be controlled throughout training?
+2.2 Alternating Renewal Process
+We briefly review the alternating renewal process, which is a
+key concept in our methodology. This class of regenerative
+stochastic processes is commonly used to model systems that
+alternate between two states over time. It has found wide
+applications in fields such as operations research, queueing
+
+===PAGE===
+
+Figure 2: Illustration of i-th component of the latent process z(t) with Continuum Dropout
+theory, and reliability engineering (Stanford 1979; Heath,
+Resnick, and Samorodnitsky 1998; Pham-Gia and Turkkan
+1999; Birolini 1974). For a more detailed explanation, we
+refer to Appendix A.
+Consider a dynamical system that alternates between two
+(active and inactive) states. Let {Xn}n≥1 be the sequence
+of i.i.d. random variables with a distribution G representing
+the lengths of time that the system is in active state, and let
+{Yn}n≥1 be the sequence of i.i.d. random variables with a dis-
+tribution H representing the lengths of time that the system is
+in inactive state. Assume that Xn and Ym are independent for
+any n ̸= m. However, Xn and Yn (for the same index n) are
+not necessarily independent. Moreover, a renewal is defined
+as the alternation between active and inactive states where
+the length of each renewal, {Xn + Yn}n≥1, has a common
+distribution F . Then, the renewal process associated with
+{Xn, Yn}n≥1 is called an alternating renewal process. In
+particular, we focus on an exponential alternating renewal
+process where G and H are exponentially distributed. This
+choice is principled because the memoryless property of the
+exponential distribution ensures that the state transition prob-
+ability is independent of the elapsed time, which is consistent
+with how dropout is applied independently of layer depth in
+discrete networks.
+With S0 = 0, define Sn by for each n ≥ 1,
+Sn =
+nX
+k=1
+Tk, (4)
+where T2k−1 := Xk and T2k := Yk. For t ≥ 0, let N (t)
+denote the number of renewals in the interval [0, t], i.e.,
+N (t) =
+∞X
+n=1
+1{S2n ≤t}. (5)
+So, {N (t)}t≥0 is the counting process associated with S2n.
+Here, S2n indicates the arrival time of the n-th renewal,
+while S2n−1 denotes the start time of the n-th inactive state,
+which lasts for a duration of Yn until it alternates to the next
+active state. Moreover, at time t, the system is in the active
+state if S2n−2 ≤ t < S2n−1, and in the inactive state if
+S2n−1 ≤ t < S2n.
+3 The Proposed Dropout Method for NDEs
+This section introduces Continuum Dropout. First, we present
+its mathematical formulation based on alternating renewal
+processes. Then, we explain its practical application, covering
+the definition of the dropout rate, hyperparameter tuning, and
+its use for uncertainty quantification.
+3.1 Continuum Dropout
+Let z0(t) ∈ Rdz , be the solution of an Neural ODE given in
+Equation 1. While we use a Neural ODE for illustrative pur-
+poses throughout this section, our framework is universally
+applicable to any variant of NDEs. For each i = 1, 2, . . . , dz ,
+let {X (i) n }n≥1 and {Y (i) n }n≥1be sequences of i.i.d. exponen-
+tial random variables with rates λ1 and λ2, representing the
+lengths of active and inactive periods for the i-th component
+of the latent process, respectively. These time periods define
+an dropout indicator function Iλ1 ,λ2 (t) ∈ Rdz , whose com-
+ponents switch between 1 (active) and 0 (inactive) according
+to the alternating renewal process defined in Equation 5 and
+Equation 4. That is, the i-th component of Iλ1 ,λ2 (t) ∈ Rdz
+is given by
+I (i) λ1 ,λ2 (t) =
+(
+1 if S(i) 2n ≤ t < S(i) 2n+1,
+0 if S(i) 2n+1 ≤ t < S(i) 2n+2, for all n ≥ 0.
+Then, the dynamics of a latent process z(t) with Continuum
+Dropout are governed by the following differential equation:
+dz(t)
+dt = Iλ1 ,λ2 (t) ◦ γ(t, z(t); θγ ), (6)
+with z(0) = z0(0). The solution to Equation 6 can be un-
+derstood through its integral form. During an active period,
+for S(i) 2n ≤ t < S(i) 2n+1, the trajectory z(i) shares the same
+differential equation as the original latent process z(i) 0 . That
+is, its solution evolves over this interval as follows:
+z(i)(t) = z(i)(S(i) 2n ) +
+Z t
+S(i) 2n
+γ(i)(s, z(s); θγ ) ds.
+In contrast, during an inactive period, for S(i) 2n+1 ≤ t <
+S(i) 2n+2, its evolution is paused and the state remains at the
+fixed value z(i)(S(i) 2n+1), i.e., z(i)(t) = z(i)(S(i) 2n+1). Figure
+2 provides a visual example of a trajectory z(i)(t).
+3.2 Dropout Rate
+In discrete neural networks, the dropout technique has a hy-
+perparameter called the dropout rate p. Specifically, if the
+dropout rate is p, then each neuron has a probability of being
+deactivated for each training iteration. However, in the contin-
+uous setting of NDEs, the traditional concept of the dropout
+rate cannot be directly applicable because each neuron in
+NDEs represents the value of a continuous-time process at
+a specific time rather than a countable entity. Therefore, the
+
+===PAGE===
+
+concept of the dropout rate needs to be redefined to fit the
+continuous version.
+To this end, we define the continuous-time dropout rate
+by drawing a direct analogy to its discrete counterpart. In a
+discrete network, the final prediction is based on the state
+of the final layer, where each neuron is deactivated with
+probability p. In an NDE, the final prediction is similarly
+calculated based on the latent state at the terminal time
+T . A natural and consistent definition for the dropout rate
+p is therefore the probability that a component of the la-
+tent process is in the inactive state at this terminal time T .
+This concept is formally known as instantaneous availabil-
+ity in renewal theory, which is both theoretically grounded
+and analytically tractable. Thus, in Continuum Dropout,
+the dropout rate p is defined as p = 1 − A(T ) where
+A(T ) := P({z(i)(T ) is in the active state}).
+This probability A(T ) is closely associated with the inten-
+sity parameters (λ1, λ2) of the alternating renewal process,
+which determine the expected lengths of the active and inac-
+tive periods, respectively. Consequently, the dropout rate p
+can be expressed in terms of (λ1, λ2) in the following theo-
+rem.
+Theorem 3.1. For fixed T > 0, let {z(t)}0≤t≤T be the
+latent process with Continuum Dropout where the active
+and inactive period lengths, {X (i) n }n≥1 and {Y (i) n }n≥1, are
+i.i.d. exponential random variables with rates λ1 and λ2,
+respectively. Then, the dropout rate p ∈ (0, 1) is given by
+p = λ1
+λ1 + λ2
+
+1 − e−(λ1 +λ2 )T
+
+. (7)
+The proof for Theorem 3.1 can be found in Appendix B.
+Given the desired level of dropout rate p, there are infinitely
+many possible pairs (λ1, λ2) that satisfy Equation 7. To
+uniquely determine (λ1, λ2), we impose a second condition
+on the expected number of renewals of z(t) in the interval
+[0, T ], denoted as m := E[N (i)(T )]1. In other words, m rep-
+resents the average number of repetitions of the active and
+inactive states in the interval [0, T ]. Consequently, the user-
+specified pair (p, m) of Continuum Dropout provides two
+constraints to uniquely determine the intensity parameters
+(λ1, λ2), as stated in the following Corollary.
+Corollary 3.2. Let p be the dropout rate and m be the ex-
+pected number of renewals of z(t) in the interval [0, T ]. Given
+p ∈ (0, 1) and m > 0, the hyperparameters λ1 and λ2 of
+Continuum Dropout can be determined by solving the follow-
+ing system of nonlinear equations:
+
+
+p = λ1
+λ1 + λ2
+
+1 − e−(λ1 +λ2 )T
+
+,
+m = λ1λ2
+λ1 + λ2
+T − λ1λ2
+(λ1 + λ2)2
+
+1 − e−(λ1 +λ2 )T
+
+.
+(8)
+In particular, for large T , λ1 and λ2 can be approximated by
+λ1 ≈ m (1 − p) T , λ2 ≈ m p T .
+1Note that E[N (1)(T )] = E[N (2)(T )] = · · · = E[N (dz )(T )]
+since {X (i) n }n≥1 and {Y (i) n }n≥1 have common distributions
+Exp(λ1) and Exp(λ2), respectively, for all i.
+Algorithm 1: Training and Testing with Continuum Dropout
+Input: training data {xi, yi}Ntrain i=1 , testing data {x† i }Ntest i=1 , time
+interval [0, T ], hyperparameters (p, m) ∈ [0, 1) × R+, number of
+epochs Nepochs, number of MC simulations NMC
+Compute: (λ1, λ2) from (p, m) according to Equation 8
+Initialize: Network parameters θ = [θζ , θγ , θσ , θMLP]
+Training Phase
+1: for epoch = 1 to Nepochs do
+2: for each (x, y) ∈ {xi, yi}Ntrain i=1 do
+3: z(0) ← ζ(x; θζ )
+4: z(T ) ← ODE Solve
+
+Iλ1 ,λ2 ◦ γθ , z(0), [0, T ]
+
+2
+5: ypred ← MLP(z(T ); θMLP)
+6: Compute loss L(ypred, y)
+7: end for
+8: Compute gradients ∇θ L and update θ using optimizer
+9: end for
+Test Phase
+1: for each x† ∈ {x† i }Ntest i=1 do
+2: z(0) ← ζ(x†; θζ )
+3: Initialize zsum ← 0
+4: for j = 1 to NMC do ▷ MC Simulation
+5: zj (T ) ← ODE Solve
+
+Iλ1 ,λ2 ◦ γθ , z(0), [0, T ]
+
+6: zsum ← zsum + zj (T )
+7: end for
+8: ¯z(T ) ← zsum/NMC
+9: ypred ← MLP(¯z(T ); θMLP)
+10: end for
+11: return {ypred}Ntest i=1
+The proof for Corollary 3.2 can be found in Appendix B.
+While standard dropout has a single hyperparameter, the
+dropout rate p, the proposed Continuum Dropout intrdocues
+two hyperparameters, p and m. Nevertheless, our sensitivity
+analysis summarized in Appendix F.1 indicates that the per-
+formance of Continuum Dropout is not highly sensitive to
+the choice of m, which reduces the time and effort required
+for hyperparameter tuning. Moreover, a detailed explanation
+of the parameters (p, m) for the trajectories with Continuum
+Dropout is provided in Figure 10 of Appendix F.1.
+3.3 Uncertainty Quantification in Continuum
+Dropout
+A key strength of our framework is its natural capacity to
+quantify predictive uncertainty, particularly epistemic uncer-
+tainty, driven by the stochasticity of Continuum Dropout.
+While many NDEs such as Neural ODE (Chen et al. 2018)
+and Neural CDE (Kidger et al. 2020) generate a single and
+deterministic latent trajectory for a given input, applying
+Continuum Droput transforms the dynamics into a stochastic
+process. This inherent stochasticity, which can be also re-
+tained at test time, allows for uncertainty quantification in the
+spirit of Monte Carlo Dropout (Gal and Ghahramani 2016).
+The procedure involves performing NM C stochastic for-
+ward passes for a single input. In each pass, a new realization
+of the dropout indicator function Iλ1 ,λ2 (t) is sampled from
+the alternating renewal process. Since this indicator function
+2For brevity, we denote γ(·, ·; θγ ) simply as γθ .
+
+===PAGE===
+
+directly modifies the NDE’s dynamics, each sample yields a
+distinct latent trajectory {zj (T )}NMC j=1 . This collection forms
+an empirical distribution over the model’s prediction for the
+given input. Then, we use the predictive mean as the point
+estimator for the prediction:
+¯z(T ) = 1 NMC
+NMCX
+j=1
+zj (T ),
+and use the sample covariance as a proxy for the model’s
+uncertainty:
+dVar  z(T )  = 1 NMC − 1 NMCX j=1   zj (T )−¯z(T )   zj (T )−¯z(T ) ⊤ .
+The point estimate ¯z(T ) is then passed through the output
+MLP to obtain the final prediction.
+As we demonstrate in Section 4.4, we empirically observe
+that as few as NMC ≥ 5 simulations are sufficient to obtain
+stable performance. The complete procedure is summarized
+in Algorithm 1.
+3.4 Comparison of Alternating Renewal Processes
+and Jump Diffusion Processes in Dropout
+Modeling
+While the use of a jump diffusion process to model dropout
+for NDEs is an interesting direction (Liu et al. 2020), we
+argue that it does not serve as a faithful continuous-time ana-
+logue. As discussed in Appendix G.1, the key issue lies in
+its discretization: the discrete-time version of their proposed
+process does not recover the standard dropout formula for
+ResNets with dropout in Equation 3. This theoretical mis-
+match suggests a fundamental inconsistency in its modeling
+of the dropout mechanism. In contrast, the discretization of
+Continuum Dropout, by construction, aligns with Equation 3,
+providing a more precise representation of the dropout mech-
+anism.
+Beyond theoretical misalignment, alternating renewal pro-
+cesses offer significant practical advantages over the jump
+diffusion model. First, the jump diffusion approach is highly
+sensitive to the dropout rate, improving performance only for
+very small values (p < 0.1), which deviates from standard
+practice and requires extensive tuning (see Appendix G.2).
+On the other hand, Continuum Dropout provides robust
+performance improvements across a wide range of typical
+dropout rates. Second, Continuum Dropout consistently out-
+performs the jump diffusion model in various settings. Lastly,
+Continuum Dropout is universally applicable to any variant
+of NDEs. However, the jump diffusion model is limited to
+specific NDE structures, as detailed in Appendix G.3.
+4 Experiments
+We perform numerical experiments using real-world datasets
+to evaluate the effectiveness of the proposed method (Con-
+tinuum Dropout) in NDEs. First, we compare the proposed
+method with several regularization methods in Section 4.1.
+Then, we assess the performance of the proposed method
+across various NDEs in Section 4.2. In Section 4.3, we
+examine Continuum Dropout’s calibration results to verify
+its uncertainty-aware modeling capability. Finally, Section
+4.4 analyzes how the number of Monte Carlo samples af-
+fects both accuracy and computational cost. For Continuum
+Dropout, we search for optimal hyperparameters among the
+dropout rate p ∈ [0.1, 0.2, 0.3, 0.4, 0.5] and the expected
+number of renewals m ∈ [5, 10, 50, 100]. Throughout our
+experiments, we use five Monte Carlo samples at test time. A
+detailed analysis of the impact of MC sample size during the
+test phase of Continuum Dropout is presented in Section 4.4.
+Further details of datasets and experimental settings are sum-
+marized in Appendix C and Appendix D, respectively.
+4.1 Superior Performance Over Existing
+Regularization Methods
+We compare the proposed method (Continuum Dropout) with
+existing regularization methods for NDEs, using Neural ODE
+as the baseline. Specifically, we consider Na¨ıve Dropout for
+Drift Network and Na¨ıve Dropout for MLP Classifier,
+where na¨ıve dropout (Srivastava et al. 2014) is applied to
+the drift network and the MLP classifier, respectively. Addi-
+tionally, we also consider Jump Diffusion model (Liu et al.
+2020), STEER (Ghosh et al. 2020), and Temporal Adap-
+tive Batch Normalization (TA-BN) (Zheng et al. 2024). We
+compute the performance of both with and without dropout
+noise during the test phase for Jump Diffusion model, fol-
+lowing their experimental setup. TTN refers to the use of
+dropout noise not only during training but also during the
+test phase. Table 2 and 3 show the classification performance
+of various regularization methods on time series and image
+datasets, respectively. We follow the image dataset selec-
+tion used in previous studies on regularization methods. The
+performance of each method is evaluated in terms of top-5
+accuracy for CIFAR-100 and top-1 accuracy for the other
+datasets. Continuum Dropout consistently demonstrates supe-
+rior performance over existing regularization methods across
+various datasets.
+4.2 Broad Applicability in NDEs
+We investigate whether the proposed method (Continuum
+Dropout) can demonstrate consistent improvements across
+various NDEs. To evaluate this, we conduct experiments
+on both time series and image classification tasks. Notably,
+the time series classification tasks considered here involve
+challenges such as irregular observations, label imbalance,
+and missing values where na¨ıve Neural ODE and Neural SDE
+tend to struggle.
+For time series classification tasks, we consider the fol-
+lowing NDEs: Neural ODEs (GRU-ODE (De Brouwer et al.
+2019), and ODE-RNN (Rubanova, Chen, and Duvenaud
+2019)), Neural CDEs (Neural CDE (Kidger et al. 2020) and
+ANCDE (Jhin et al. 2023)), Neural SDEs (Neural LSDE,
+Neural LNSDE, and Neural GSDE (Oh, Lim, and Kim
+2024)). Note that Neural LSDE, Neural LNSDE, and Neu-
+ral GSDE are state-of-the-art models for the time series
+classification tasks under consideration. We apply the pro-
+posed method to NDEs and evaluate its performance. Table 4
+shows classification accuracy of Neural CDE, ANCDE, Neu-
+ral LSDE, Neural LSDE, Neural LNSDE, Neural GSDE,
+
+===PAGE===
+
+Table 2: Performance of various regularization methods on time series classification
+Regularization Methods SmoothSubspace ArticularyWordRecognition ERing RacketSports
+Baseline (Neural ODE) 0.569 (0.040) 0.859 (0.005) 0.839 (0.018) 0.565 (0.065)
+Na¨ıve Dropout for Drift Network 0.594 (0.016) 0.862 (0.014) 0.844 (0.031) 0.598 (0.045)
+Na¨ıve Dropout for MLP Classifier 0.600 (0.067) 0.860 (0.006) 0.856 (0.078) 0.554 (0.076)
+Jump Diffusion (Liu et al. 2020) 0.617 (0.043) 0.871 (0.054) 0.861 (0.064) 0.609 (0.031)
+Jump Diffusion + TTN (Liu et al. 2020) 0.606 (0.018) 0.876 (0.025) 0.878 (0.025) 0.598 (0.076)
+STEER (Ghosh et al. 2020) 0.578 (0.056) 0.871 (0.036) 0.850 (0.029) 0.592 (0.054)
+TA-BN (Zheng et al. 2024) 0.578 (0.035) 0.873 (0.023) 0.859 (0.023) 0.587 (0.035)
+Continuum Dropout (ours) 0.629 (0.022) 0.884 (0.012) 0.881 (0.023) 0.619 (0.033)
+Table 3: Performance of various regularization methods on image classification
+Regularization Methods CIFAR-100 CIFAR-10 STL-10 SVHN
+Baseline (Neural ODE) 0.745 (0.012) 0.739 (0.008) 0.707 (0.007) 0.913 (0.004)
+Na¨ıve Dropout for Drift Network 0.759 (0.004) 0.749 (0.017) 0.708 (0.002) 0.917 (0.004)
+Na¨ıve Dropout for MLP Classifier 0.750 (0.006) 0.751 (0.007) 0.707 (0.004) 0.923 (0.001)
+Jump Diffusion (Liu et al. 2020) 0.761 (0.005) 0.750 (0.004) 0.711 (0.002) 0.916 (0.004)
+Jump Diffusion + TTN (Liu et al. 2020) 0.760 (0.003) 0.750 (0.005) 0.709 (0.003) 0.917 (0.005)
+STEER (Ghosh et al. 2020) 0.756 (0.006) 0.747 (0.008) 0.710 (0.003) 0.915 (0.003)
+TA-BN (Zheng et al. 2024) 0.758 (0.003) 0.762 (0.007) 0.701 (0.007) 0.915 (0.004)
+Continuum Dropout (ours) 0.762 (0.002) 0.765 (0.007) 0.719 (0.005) 0.925 (0.004)
+with and without Continuum Dropout, on Speech Commands.
+GRU-ODE and ODE-RNN are excluded due to their failure
+in training (Kidger et al. 2020). For PhysioNet Sepsis, Table 5
+presents the AUROC of various NDEs, with and without Con-
+tinuum Dropout, under different Observation Intensity (OI)
+settings. Moreover, we mark “∗” and “∗∗” to represent the
+statistical significance of the differences between NDEs with
+and without Continuum Dropout using two-sample t-tests,
+where p-values are less than 0.05 and 0.01, respectively. As
+shown in Table 4 and Table 5, the proposed method improves
+the performance of all NDEs, and most of these improve-
+ments are statistically significant. In particular, we emphasize
+that the performance of the current state-of-the-art models,
+Neural LSDE, Neural LNSDE, and Neural GSDE, can be
+further improved with proposed method.
+Table 4: Accuracy on Speech Commands
+Models Continuum Dropout Test Accuracy
+Neural CDE X 0.910 (0.005) O 0.940 (0.001)∗∗
+ANCDE X 0.760 (0.003) O 0.794 (0.003)∗∗
+Neural LSDE X 0.927 (0.004) O 0.932 (0.000)∗
+Neural LNSDE X 0.923 (0.001) O 0.932 (0.001)∗∗
+Neural GSDE X 0.913 (0.001) O 0.927 (0.001)∗∗
+For image classification tasks, we consider Neural
+ODE (Chen et al. 2018) and Neural SDEs (Tzen and Ra-
+ginsky 2019; Liu et al. 2020; Kong, Sun, and Zhang 2020)
+(Neural SDE with additive noise and Neural SDE with multi-
+plicative noise). Other variants of NDEs are not suitable for
+image classification since the concept of a controlled path is
+designed for handling time series data.
+Table 5: AUROC on PhysioNet Sepsis
+Models Continuum Dropout Test AUROC OI No OI
+GRU-ODE X 0.852 (0.010) 0.771 (0.024) O 0.875 (0.006)∗∗ 0.808 (0.010)∗
+ODE-RNN X 0.874 (0.016) 0.833 (0.020) O 0.893 (0.004)∗ 0.851 (0.013)
+Neural CDE X 0.909 (0.006) 0.841 (0.007) O 0.918 (0.001)∗ 0.860 (0.003)∗∗
+ANCDE X 0.900 (0.002) 0.823 (0.003) O 0.910 (0.001)∗∗ 0.840 (0.005)∗∗
+Neural LSDE X 0.909 (0.004) 0.879 (0.008) O 0.927 (0.002)∗∗ 0.892 (0.003)∗∗
+Neural LNSDE X 0.911 (0.002) 0.881 (0.002) O 0.930 (0.001)∗∗ 0.891 (0.003)∗∗
+Neural GSDE X 0.909 (0.001) 0.884 (0.002) O 0.929 (0.003)∗∗ 0.890 (0.002)∗∗
+Table 6 presents the performance of Neural ODE, Neu-
+ral SDE (additive), and Neural SDE (multiplicative) with
+and without Continuum Dropout on the four image datasets.
+The experimental results suggest that proposed method con-
+sistently enhances the performance of all NDEs across all
+datasets with statistical significance.
+4.3 Capability for Uncertainty-Aware Modeling
+While the primary motivation for Continuum Dropout is reg-
+ularization, its design provides a computationally efficient
+framework for uncertainty quantification (UQ). As explained
+in Section 3.3, we can obtain an empirical predictive distri-
+bution via Monte Carlo sampling by retaining the stochastic
+mechanism during inference. Our goal here is not to claim
+state-of-the-art performance against specialized Bayesian
+methods in UQ tasks, but rather to demonstrate that our ap-
+proach yields a crucial UQ benefit, improved calibration, as
+a natural byproduct.
+To this end, we assess model calibration, where a model’s
+
+===PAGE===
+
+Table 6: Performance on four image datasets using Neural ODE and Neural SDEs
+Model Continuum Dropout CIFAR-100 CIFAR-10 STL-10 SVHN
+Neural ODE X 0.745 (0.006) 0.739 (0.008) 0.707 (0.007) 0.913 (0.004) O 0.762 (0.002)∗∗ 0.765 (0.007)∗∗ 0.719 (0.005)∗∗ 0.925 (0.004)∗∗
+Neural SDE
+(additive)
+X 0.749 (0.003) 0.745 (0.009) 0.707 (0.004) 0.918 (0.003)
+O 0.770 (0.004)∗∗ 0.771 (0.006)∗∗ 0.718 (0.002)∗∗ 0.925 (0.003)∗∗
+Neural SDE
+(multiplicative)
+X 0.753 (0.003) 0.747 (0.009) 0.705 (0.005) 0.914 (0.006)
+O 0.768 (0.004)∗∗ 0.768 (0.005)∗∗ 0.715 (0.005)∗∗ 0.924 (0.003)∗
+0.0 0.2 0.4 0.6 0.8 1.0
+Confidence
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Outputs
+Gap
+(a) CIFAR-100 without Contin-
+uum Dropout
+0.0 0.2 0.4 0.6 0.8 1.0
+Confidence
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Outputs
+Gap
+(b) CIFAR-100 with Continuum
+Dropout
+0.0 0.2 0.4 0.6 0.8 1.0
+Confidence
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Outputs
+Gap
+(c) Speech Commands without
+Continuum Dropout
+0.0 0.2 0.4 0.6 0.8 1.0
+Confidence
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Outputs
+Gap
+(d) Speech Commands with Con-
+tinuum Dropout
+Figure 3: Reliability diagrams illustrating calibration perfor-
+mance on CIFAR-100 and Speech Commands datasets.
+predictive confidence should align with its empirical accuracy.
+We use reliability diagrams to visualize this alignment; curves
+that lie close to the identity line indicate well-calibrated and
+thus more trustworthy uncertainty estimates. As shown in
+Figure 3, models with Continuum Dropout produce curves
+that more closely track the diagonal than their deterministic
+counterparts. This demonstrates that the injected stochastic-
+ity effectively regularizes overconfident predictions, leading
+to probability estimates that better reflect the model’s true
+predictive uncertainty.
+4.4 MC Sample Size vs. Performance and Cost
+We conduct experiments to analyze the effect of Monte
+Carlo (MC) sample size during the test phase of Continuum
+Dropout, in terms of both model performance and computa-
+tional cost. First, we apply the proposed method to models
+such as Neural CDE, ANCDE, Neural LSDE, Neural LNSDE,
+and Neural GSDE on the Speech Commands dataset, varying
+the number of MC samples to evaluate performance sensi-
+tivity. As shown in Figure 4, the accuracy of the models
+stabilizes once the number of MC samples exceeds 5. A sim-
+ilar trend is observed on the CIFAR-100 image dataset, and
+detailed results are provided in Appendix F.2.
+Next, Table 7 reports the computation time in two settings:
+with and without Continuum Dropout. Although the number
+of MC sample increases the computational load of the pro-
+posed method, the overhead remains within an acceptable
+range, as MC simulations are performed only during the test
+phase and require inference on the trained model.
+Figure 4: Performance with Different Numbers of MC
+Simulation Samples on Speech Commands
+Table 7: Computation time comparison on Speech
+Commands (time in seconds per epoch)
+Continuum
+Dropout
+Neural
+CDE ANCDE Neural LSDE Neural LNSDE Neural GSDE
+X 25.6 (0.3) 53.3 (0.2) 19.4 (0.1) 19.5 (0.1) 19.8 (0.1)
+O 27.1 (0.3) 58.9 (0.3) 21.6 (0.2) 21.7 (0.2) 22.5 (0.2)
+5 Conclusion
+This paper introduced Continuum Dropout, a principled and
+universally applicable dropout framework for NDEs to en-
+hance their generalization capabilities. Our core contribution
+is to formulate dropout for NDEs as an alternating renewal
+process, which provides a faithful continuous-time analogue
+of the discrete mechanism. We developed a novel, continuous-
+time definition for the dropout rate and a practical method to
+control it with intuitive hyperparameters. A key advantage of
+our framework is that it naturally enables uncertainty quan-
+tification via Monte Carlo sampling at test time. Extensive
+experiments demonstrated that Continuum Dropout consis-
+tently outperforms existing regularization methods and is
+universally applicable across a wide range of NDE architec-
+tures, achieving superior results on challenging time-series
+classification tasks. Furthermore, its ability to enhance model
+calibration highlights the effectiveness for uncertainty-aware
+modeling.
+
+===PAGE===
+
+Acknowledgments
+This research was supported by the Institute of Information
+& communications Technology Planning & Evaluation(IITP)
+grant funded by the Korea government(MSIT)(No.RS-
+2020-II201336, Artificial Intelligence graduate school sup-
+port(UNIST)); the Institute of Information & Communica-
+tions Technology Planning & Evaluation(IITP) grant funded
+by the Korea government(MSIT) (No. RS-2025-25442824,
+AI STAR Fellowship); the National Research Foundation of
+Korea(NRF) grant funded by the Korea government(MSIT)
+(No. RS-2025-02216640); the Basic Science Research Pro-
+gram through the National Research Foundation of Ko-
+rea (NRF) funded by the Ministry of Education (RS-2024-
+00407852); the 2025 Research Fund (1.250006.01) of UNIST
+(Ulsan National Institute of Science & Technology).
+References
+Bagnall, A.; Dau, H. A.; Lines, J.; Flynn, M.; Large, J.;
+Bostrom, A.; Southam, P.; and Keogh, E. 2018. The UEA
+multivariate time series classification archive, 2018. arXiv
+preprint arXiv:1811.00075.
+Birolini, A. 1974. Some Applications of Regenerative
+Stochastic Processes to Reliability Theory - Part One: Tuto-
+rial Introduction. IEEE Transactions on Reliability, R-23(3):
+186–194.
+Chen, R. T. Q.; Rubanova, Y.; Bettencourt, J.; and Duvenaud,
+D. 2018. Neural Ordinary Differential Equations. Advances
+in Neural Information Processing Systems, 31.
+Coates, A.; Ng, A.; and Lee, H. 2011. An Analysis of Single-
+Layer Networks in Unsupervised Feature Learning. In Pro-
+ceedings of the fourteenth international conference on artifi-
+cial intelligence and statistics, 215–223.
+Cox, D. R. 1962. Renewal Theory. Methuen.
+Dau, H. A.; Bagnall, A.; Kamgar, K.; Yeh, C.-C. M.; Zhu,
+Y.; Gharghabi, S.; Ratanamahatana, C. A.; and Keogh, E.
+2019. The UCR time series archive. IEEE/CAA Journal of
+Automatica Sinica, 6(6): 1293–1305.
+De Brouwer, E.; Simm, J.; Arany, A.; and Moreau, Y. 2019.
+GRU-ODE-Bayes: Continuous modeling of sporadically-
+observed time series. In Advances in neural information
+processing systems, volume 32.
+Finlay, C.; Jacobsen, J.-H.; Nurbekyan, L.; and Oberman,
+A. M. 2020. How to Train Your Neural ODE: the World
+of Jacobian and Kinetic Regularization. In International
+conference on machine learning, 3154–3164. PMLR.
+Gal, Y.; and Ghahramani, Z. 2016. Dropout as a Bayesian
+Approximation: Representing Model Uncertainty in Deep
+Learning. In International Conference on Machine Learning,
+volume 48, 1050–1059. PMLR.
+Ghosh, A.; Behl, H. S.; Dupont, E.; Torr, P. H. S.; and Nam-
+boodiri, V. 2020. STEER: Simple Temporal Regularization
+For Neural ODEs. Advances in Neural Information Process-
+ing Systems, 33: 6696–6707.
+Greydanus, S.; Dzamba, M.; and Yosinski, J. 2019. Hamil-
+tonian Neural Networks. Advances in Neural Information
+Processing Systems, 32.
+He, K.; Zhang, X.; Ren, S.; and Sun, J. 2016. Deep residual
+learning for image recognition. In Proceedings of the IEEE
+conference on computer vision and pattern recognition, 770–
+778.
+Heath, D.; Resnick, S.; and Samorodnitsky, G. 1998. Heavy
+Tails and Long Range Dependence in On/Off Processes and
+Associated Fluid Models. Mathematics of Operations Re-
+search, 23(1): 145–165.
+Huang, X.; Ye, Y.; Xiong, L.; Lau, R. Y.; Jiang, N.; and
+Wang, S. 2016. Time series k-means: A new k-means type
+smooth subspace clustering for time series data. Information
+Sciences, 367: 1–13.
+Jhin, S. Y.; Shin, H.; Kim, S.; Hong, S.; Jo, M.; Park, S.;
+Park, N.; Lee, S.; Maeng, H.; and Jeon, S. 2023. Attentive
+Neural Controlled Differential Equations for Time-series
+Classification and Forecasting. Knowledge and Information
+Systems, 1–31.
+Kidger, P.; Morrill, J.; Foster, J.; and Lyons, T. 2020. Neu-
+ral Controlled Differential Equations for Irregular Time Se-
+ries. Advances in Neural Information Processing Systems,
+33: 6696–6707.
+Kong, L.; Sun, J.; and Zhang, C. 2020. SDE-Net: Equip-
+ping Deep Neural Networks with Uncertainty Estimates. In
+International Conference on Machine Learning, volume 37.
+Krizhevsky, A.; and Hinton, G. 2009. Learning Multiple
+Layers of Features from Tiny Images.
+Liaw, R.; Liang, E.; Nishihara, R.; Moritz, P.; Gonzalez,
+J. E.; and Stoica, I. 2018. Tune: A Research Platform for
+Distributed Model Selection and Training. arXiv preprint
+arXiv:1807.05118.
+Liu, X.; Xiao, T.; Si, S.; Cao, Q.; Kumar, S.; and Hsieh, C.-J.
+2020. How Does Noise Help Robustness? Explanation and
+Exploration under the Neural SDE Framework. In IEEE/CVF
+Conference on Computer Vision and Pattern Recognition
+(CVPR), 279–287.
+L¨oning, M.; Bagnall, A.; Ganesh, S.; Kazakov, V.; Lines, J.;
+and Kir´aly, F. J. 2019. sktime: A unified interface for machine
+learning with time series. arXiv preprint arXiv:1909.07872.
+Moritz, P.; Nishihara, R.; Wang, S.; Tumanov, A.; Liaw, R.;
+Liang, E.; Elibol, M.; Yang, Z.; Paul, W.; Jordan, M. I.; et al.
+2018. Ray: A distributed framework for emerging AI appli-
+cations. In 13th USENIX Symposium on Operating Systems
+Design and Implementation OSDI 18, 561–577.
+Netzer, Y.; Wang, T.; Coates, A.; Bissacco, A.; Wu, B.; and
+Ng, A. Y. 2011. Reading Digits in Natural Images with
+Unsupervised Feature Learning. NIPS workshop on deep
+learning and unsupervised feature learning, 2011(5): 7.
+Oganesyan, V.; Volokhova, A.; and Vetrov, D. 2020. Stochas-
+ticity in Neural ODEs: An Empirical Study. arXiv preprint
+arXiv:2002.09779.
+Oh, Y.; Kam, S.; Lee, J.; Lim, D.-Y.; Kim, S.; and Bui, A.
+A. T. 2025a. Comprehensive Review of Neural Differential
+Equations for Time Series Analysis. In Proceedings of the
+Thirty-Fourth International Joint Conference on Artificial
+Intelligence, 10621–10631.
+
+===PAGE===
+
+Oh, Y.; Lim, D.; and Kim, S. 2024. Stable Neural Stochastic
+Differential Equations in Analyzing Irregular Time Series
+Data. In The Twelfth International Conference on Learning
+Representations.
+Oh, Y.; Lim, D.-Y.; and Kim, S. 2025. DualDynamics: Syn-
+ergizing Implicit and Explicit Methods for Robust Irregular
+Time Series Analysis. Proceedings of the AAAI Conference
+on Artificial Intelligence, 39(18): 19730–19739.
+Oh, Y.; Lim, D.-Y.; Kim, S.; and Bui, A. A. T. 2025b. TAN-
+DEM: Temporal Attention-guided Neural Differential Equa-
+tions for Missingness in Time Series Classification. In Pro-
+ceedings of the 34th ACM International Conference on Infor-
+mation and Knowledge Management, 1–11.
+Pham-Gia, T.; and Turkkan, N. 1999. System Availability
+in a Gamma Alternating Renewal Process. Naval Research
+Logistics (NRL), 46(7): 822–844.
+Reyna, M. A.; Josef, C.; Seyedi, S.; Jeter, R.; Shashikumar,
+S.; Moody, B.; Westover, M. B.; Sharma, A.; Nemati, S.; and
+Clifford, G. D. 2019. Early Prediction of Sepsis from Clinical
+Data: The PhysioNet/Computing in Cardiology Challenge
+2019. In 2019 Computing in Cardiology (CinC), 1–4. IEEE.
+Ross, S. M. 1995. Stochastic Processes. Wiley.
+Rubanova, Y.; Chen, R. T. Q.; and Duvenaud, D. 2019. Latent
+ODEs for Irregularly-Sampled Time Series. Advances in
+Neural Information Processing Systems, 32.
+Sander, M.; Ablin, P.; and Peyr´e, G. 2022. Do Residual Neu-
+ral Networks Discretize Neural Ordinary Differential Equa-
+tions? Advances in Neural Information Processing Systems,
+35: 36520–36532.
+Srivastava, N.; Hinton, G.; Krizhevsky, A.; Sutskever, I.; and
+Salakhutdinov, R. 2014. Dropout: A Simple Way to Prevent
+Neural Networks from Overfitting. The Journal of Machine
+Learning Research, 15: 1929–1958.
+Stanford, R. E. 1979. Reneging Phenomena in Single Chan-
+nel Queues. Mathematics of Operations Research, 4(2): 162–
+178.
+Tzen, B.; and Raginsky, M. 2019. Neural Stochastic Differen-
+tial Equations: Deep Latent Gaussian Models in the Diffusion
+Limit. arXiv preprint arXiv:1905.09883.
+Wang, J.; Balasubramanian, A.; de la Vega, L. G. M.; Green,
+J. R.; Samal, A.; and Prabhakaran, B. 2013. Word Recogni-
+tion from Continuous Articulatory Movement Time-Series
+Data using Symbolic Representations. In Proceedings of the
+Fourth Workshop on Speech and Language Processing for
+Assistive Technologies, 119–127.
+Warden, P. 2018. Speech Commands: A Dataset for
+Limited-Vocabulary Speech Recognition. arXiv preprint
+arXiv:1804.03209.
+Whitt, W. 2013. IEOR 3106: Alternating Renewal Processes
+and the Renewal Equation. Lecture notes, Department of
+Industrial Engineering and Operations Research, Columbia
+University.
+Wilhelm, M.; Krakowczyk, D.; Trollmann, F.; and Albayrak,
+S. 2015. eRing: Multiple Finger Gesture Recognition with
+one Ring Using an Electric Field. In Proceedings of the 2nd
+international Workshop on Sensor-based Activity Recognition
+and Interaction, 1–6.
+Yang, L.; Gao, T.; Lu, Y.; Duan, J.; and Liu, T. 2023. Neural
+network stochastic differential equation models with appli-
+cations to financial data forecasting. Applied Mathematical
+Modelling, 115: 279–299.
+Zheng, S.; Gao, Z.; Sun, F.-K.; Boning, D. S.; Yu, B.; and
+Wong, M. 2024. Improving Neural ODE Training with Tem-
+poral Adaptive Batch Normalization. In The Thirty-eighth
+Annual Conference on Neural Information Processing Sys-
+tems.
+
+===PAGE===
+
+A Overview of Alternating Renewal Process
+The renewal process is a concept generalized from the Poisson process, where interarrival times follow not only the exponential
+distribution but also more general distributions. This process is commonly used for analyzing purchase cycles, replacement
+times, and similar phenomena and has been extensively studied under the name renewal theory. Among these, we focus on the
+alternating renewal process, which is a renewal process where a system alternates between two states, ‘on’ and ‘off’. In this
+appendix, we provide a brief overview of renewal theory. For more details, we refer to (Ross 1995; Cox 1962; Pham-Gia and
+Turkkan 1999).
+Let F denote the common distribution of the independent interarrival times {Tn}n≥1,
+F (t) = P(T1 ≤ t), t ∈ [0, ∞).
+And let µ be the mean time of T1, i.e.,
+µ = E[T1] =
+Z ∞
+0
+t dF (t).
+Define Sn as the time of the n-th arrival, given by
+S0 = 0, Sn =
+nX
+k=1
+Tk, n ≥ 1.
+For n ∈ N, let Fn denote the distribution of Sn,
+Fn(t) = P(Sn ≤ t), t ∈ [0, ∞).
+Let N (t) denote the number of arrivals in time [0, t],
+N (t) =
+∞X
+n=1
+1{Sn ≤t} = sup
+n≥0
+{Sn ≤ t}
+Definition A.1. The counting process {N (t)}t≥0 is called a renewal process.
+The distribution of N (t) can be obtained as
+P(N (t) = n) = P(N (t) ≥ n) − P(N (t) ≥ n + 1)
+= P(Sn ≤ t) − P(Sn+1 ≤ t)
+= Fn(t) − Fn+1(t).
+The renewal function m(t) is defined as the expected value of N (t), i.e., m(t) = E[N (t)], is closely related to most renewal
+theory and determines the properties of the renewal process.
+Theorem A.2. Let m(t) be the renewal function of N (t), defined as m(t) = E[N (t)]. Then, m(t) is given in terms of the arrival
+distribution function by
+m(t) =
+∞X
+n=1
+Fn(t).
+We summarize some important theorems related to the renewal function m(t).
+Theorem A.3. (The Renewal Equation (Ross 1995)) Let the distribution F has the density f, then
+m(t) = F (t) +
+Z t
+0
+f (t − τ )m(τ ) dτ,
+Theorem A.4. (The Elementary Renewal Theorem (Ross 1995)) For finite µ,
+m(t)
+t → 1 µ as t → ∞.
+Theorem A.5. (The Key Renewal Theorem (Ross 1995)) Suppose that the renewal process is aperiodic and g : [0, ∞) → [0, ∞)
+is directly Riemann integrable, then
+Z t
+0
+g(t − τ ) dm(τ ) → 1 µ Z ∞ 0 g(τ ) dτ as t → ∞.
+
+===PAGE===
+
+Now, we define an alternating renewal process. Consider a system that alternates two states, ‘on’ and ‘off’. It starts with
+the state ‘on’ for a time X1, and then transitions to the state ‘off’ for a time Y1. This pattern continues with X2 in the ‘on’
+state, followed by Y2 in the ‘off’ state, and so forth. Suppose that (Xn, Yn) for n ≥ 1 are independent random vectors with
+identically distributed. Let, {Xn}n≥1 have a common distribution G, {Yn}n≥1 have a common distribution H and the cycle
+lengths {Xn + Yn}n≥1 have a common distribution F . Notice that Xn and Ym are independent for any n ̸= m, but Xn and Yn
+can be dependent for n ≥ 1. In this setting, interarrival times {Tn}n≥1 can be expressed as:
+Tn =
+(
+X n+1
+2
+if n is odd,
+Y n 2 if n is even.
+Thus, it can be seen that an alternating renewal process is a type of renewal process. Note that in a renewal process, events,
+arrivals, and renewals are used interchangeably. However, in alternating renewal processes, a renewal is defined as the alternation
+between an active phase and an inactive phase. To avoid confusion, we distinguish and use S2n to denote the time of the n-th
+renewal and the (2n)-th event and arrival. Furthermore, the focus is more on renewals, thus N (t) represents the number of
+renewals in the interval [0, t].
+Define instantaneous availability A(t) as
+A(t) = P ({system is on at time t}) .
+Then, we have the following asymptotic formula for A(t).
+Theorem A.6. (Ross 1995) If E[Xn + Yn] < ∞ and the alternating renewal process is aperiodic then
+lim
+t→∞
+A(t) = E[Xn] E[Xn] + E[Yn] .
+Theorem A.6 describes the ratio of ‘on’ and ‘off’ states in the limit for a system that follows an alternating renewal process.
+We called this limit the steady-state availability, which is generally more useful than instantaneous availability for analytical
+analysis in alternating renewal processes.
+B Proofs
+For a function u, we denote the Laplace transform of u(t) by
+L{u}(s) =
+Z ∞
+0
+e−stu(t) dt.
+Proof of Theorem 3.1. From the definition of the dropout rate in continuous-time, we have p = 1 − A(T ) for given p ∈ (0, 1)
+where A(T ) := P({z(i)(T ) is in the active state})3.
+Recall that {X (i) n }n≥1 have a common distribution Exp(λ1), {Y (i) n }n≥1 have a common distribution Exp(λ2) and the cycle
+lengths {X (i) n + Y (i) n }n≥1 have a common distribution F . Denote the density of F as f . Then, using the convolution theorem,
+the Laplace transform of f is given by
+L{f }(s) =
+Z ∞
+0
+e−st   λ1e−λ1 t dt Z ∞
+0
+e−st   λ2e−λ2 t dt
+= λ1
+s + λ1
+λ2
+s + λ2
+. (9)
+Moreover, following the computation in Whitt (2013), A(t) can be further expressed by conditioning on the value of
+S(i) 2 = X (i) 1 + Y (i) 1
+A(t) = P({z(i)(t) is in the active state})
+= P({z(i)(t) is in the active state}, S(i) 2 > t) + P({z(i)(t) is in the active state}, S(i) 2 ≤ t)
+= P
+
+S(i) 1 > t  + Z t
+0
+P
+
+{z(i)(t) is in the active state} | S(i) 2 = τ  f (τ ) dτ
+= P
+
+X (i) 1 > t  + Z t
+0
+P({z(i)(t − τ ) is in the active state})f (τ ) dτ
+= e−λ1 t +
+Z t
+0
+A(t − τ )f (τ ) dτ. (10)
+3As each z(i)(t) has common distributions for {X (i) n }n≥1 and {Y (i) n }n≥1, we have P({z(1)(T ) is in the active state}) = · · · =
+P({z(dz )(T ) is in the active state}).
+
+===PAGE===
+
+Taking the Laplace transform on both sides of Equation 10 yields,
+L{A}(s) = 1 s + λ1 + L{A}(s) L{f }(s).
+Thus, we have using Equation 9
+L{A}(s) = 1 (1 − L{f }(s))(s + λ1)
+= s + λ2
+s(s + λ1 + λ2)
+= λ2
+λ1 + λ2
+1
+s + λ1 λ1 + λ2 1 s + λ1 + λ2 .
+Then, A(t) is uniquely determined as
+A(t) = λ2
+λ1 + λ2
++ λ1
+λ1 + λ2
+e−(λ1 +λ2 )t.
+Thus, we have the desired result:
+p = 1 − A(T )
+= λ1
+λ1 + λ2
+
+1 − e−(λ1 +λ2 )T
+
+.
+Proof of Corollary 3.2. Let m(i)(t) = E[N (i)(t)]. Then, by the Renewal equation in Theorem A.3,
+m(i)(t) = F (t) +
+Z t
+0
+f (t − τ )m(i)(τ ) dτ. (11)
+By taking the Laplace transform on both sides of Equation 11, we obtain
+L{m(i)}(s) = L{F }(s) + L{f }(s) L {m(i)}(s).
+where F and f are distribution and density functions of {X (i) n + Y (i) n }n≥1, which yields
+L{m(i)}(s) = L{F }(s) 1 − L{f }(s)
+= λ1λ2
+s2(s + λ1 + λ2)
+= λ1λ2
+λ1 + λ2
+1
+s2 − λ1λ2 (λ1 + λ2)2
+ 1
+s − 1 s + λ1 + λ2
+
+.
+Therefore, m(i)(t) is given by
+m(i)(t) = λ1λ2
+λ1 + λ2
+t − λ1λ2
+(λ1 + λ2)2
+
+1 − e−(λ1 +λ2 )t
+
+.
+From the definition of m = E[N (i)(T )] = m(i)(T ) and Theorem 3.1, we have for given p ∈ (0, 1) and m > 0
+p = λ1
+λ1 + λ2
+
+1 − e−(λ1 +λ2 )T
+
+,
+m = λ1λ2
+λ1 + λ2
+T − λ1λ2
+(λ1 + λ2)2
+
+1 − e−(λ1 +λ2 )T
+
+.
+Furthermore, from Theorem A.6, limT →∞ A(T ) can be easily computed as follows:
+lim
+T →∞
+A(T ) = E[X (i) n ]
+E[X (i) n ] + E[Y (i) n ] = 1/λ1 1/λ1 + 1/λ2 = λ2 λ1 + λ2 .
+
+===PAGE===
+
+In other words, we have the following asymptotic relation: for sufficiently large T ,
+p = 1 − A(T )
+≈ 1 − λ2
+λ1 + λ2
+. (12)
+Furthermore, using Theorem A.4, we get for sufficiently large T
+m
+T = m(i)(T ) T
+≈ λ1λ2
+λ1 + λ2
+. (13)
+From Equation 12 and Equation 13, λ1 and λ2 can be approximated by for large T
+λ1 ≈ m (1 − p) T , λ2 ≈ m p T .
+C Description of Datasets
+SmoothSubspace. The SmoothSubspace dataset (Huang et al. 2016) is designed to test algorithms’ ability to identify and
+classify smooth trajectories in a high-dimensional space. This dataset consists of 150 simulated univariate time series, each
+represented in a 15-dimensional space. The time series are generated such that they lie on or near a smooth subspace within
+this higher-dimensional space. Each series can belong to one of three classes, with the class indicating the particular subspace
+configuration that the series aligns with.
+ArticularyWordRecognition. The ArticularyWordRecognition dataset (Wang et al. 2013) uses an Electromagnetic Articu-
+lograph (EMA) to measure tongue and lip movements during speech. It includes data from multiple native English speakers
+producing 25 words. The dataset features recordings from twelve sensors capturing x, y, and z positions at a 200 Hz sampling
+rate. Sensors are positioned on the forehead, tongue (T1 to T4), lips, and jaw. Out of 36 possible dimensions, this dataset includes
+9.
+ERing. The ERing dataset (Wilhelm et al. 2015) is collected using a prototype finger ring known as eRing, which detects hand
+and finger gestures through electric field sensing. The dataset includes six classes of finger postures involving the thumb, index
+finger, and middle finger. Each data series is four-dimensional with 65 observations, representing measurements from electrodes
+sensitive to the distance from the hand.
+RacketSports. The RacketSports dataset consists of data collected from university students playing badminton or squash
+while wearing a Smart Watch. The watch recorded x, y, and z coordinates from both the accelerometer and gyroscope, which
+were transmitted to a phone and stored in an Attribute-Relation File Format (ARFF) file. The dataset includes accelerometer and
+gyroscope measurements in the order: accelerometer x, y, z, followed by gyroscope x, y, z. The data was collected at 10 Hz
+over 3 seconds during either forehand/backhand strokes in squash or clear/smash strokes in badminton.
+Speech Commands. The Speech Commands dataset (Warden 2018) features a comprehensive set of one-second long audio
+clips that include spoken words and ambient sounds. This dataset contains 34,975 time-series entries, each corresponding to one
+of 35 different words. The audio clips are pre-processed by computing the Mel-frequency cepstral coefficients, which serve as
+features to capture the audio characteristics more effectively, thereby enhancing the accuracy of the applied machine learning
+models. Each audio sample is represented by a time series of 161 frames, with each frame consisting of 20 feature dimensions.
+PhysioNet Sepsis. The 2019 PhysioNet Sepsis challenge (Reyna et al. 2019) focuses on predicting sepsis, a critical condition
+caused by blood infections leading to numerous fatalities. This challenge uses a dataset with 40,335 ICU patient records, featuring
+34 time-dependent indicators like heart rate and body temperature. Researchers aim to determine the presence of sepsis in
+patients based on the sepsis-3 criteria. This dataset presents challenges due to its irregular time-series nature—only 10% of
+data points are timestamped for each patient. To tackle this, we employ two strategies for time-series classification: (i) using
+observation intensity (OI), which gauges the severity of the patient’s condition, and (ii) without using OI.
+CIFAR-100 and CIFAR-10. These datasets, introduced by Krizhevsky and Hinton (2009), contain 60,000 32x32 pixel RGB
+images that are split into two groups: CIFAR-100, with 100 different fine-grained classes, and CIFAR-10, with 10 broader
+categories. Each dataset is evenly divided, with 50,000 images allocated for training and 10,000 for testing. The images depict a
+wide variety of objects, including animals, vehicles, and everyday scenes.
+STL-10. The STL-10 dataset (Coates, Ng, and Lee 2011) consists of 13,000 color images, each with a resolution of 96x96
+pixels, categorized into 10 classes. The images primarily capture animals, objects, and outdoor scenes.
+
+===PAGE===
+
+SVHN. The Street View House Numbers (SVHN) dataset (Netzer et al. 2011) consists of over 600,000 digit images extracted
+from real-world scenes, specifically house numbers captured by Google’s Street View. The images typically have a resolution of
+around 32x32 pixels and contain digits from ‘0’ to ‘9’. Each image often includes multiple digits, but the dataset focuses on
+identifying individual digits.
+D Details of Experimental Settings
+We followed the recommended pipelines for each dataset and model. We conducted experiments repeated for five iterations
+to ensure robustness in all settings. For time series classification experiments, we adhered to experimental protocols provided
+in the GitHub repositories of each model. For image classification experiments, as there were no publicly available protocols
+for NDEs, we established our own. Our experiments were performed using a server on Ubuntu 20.04.6 LTS, equipped with
+an Intel(R) Core(TM) i9-10980XE CPU and four NVIDIA GeForce RTX 4090 GPUs. The source code can be accessed at
+https://github.com/jonghun-lee0/Continuum-Dropout.
+D.1 Various Regularization Methods
+In ‘Na¨ıve Dropout for Drift Network’ and ’Na¨ıve Dropout for MLP Classifier’ (Srivastava et al. 2014), we used p =
+[0.1, 0.2, 0.3, 0.4, 0.5] for tuning the dropout rate. For ‘Jump Diffusion model’ (Liu et al. 2020), since they did not provide a
+reproducible code implementation, we referred to their Github repository4 to devise our own pipeline for the experiments. We
+employed tuning methods for typical dropout rates; however, since we could not observe significant performance improvements,
+we utilized a broader tuning grid of p = [10−5, 10−4, 10−3, 10−2, 0.1, 0.2, 0.3, 0.4, 0.5]. For ‘STEER’, we followed the pipeline
+outlined by Ghosh et al. (2020) and the GitHub repository5. For ‘Temporal Adaptive Batch Normalization (TA-BN)’, we followed
+the pipeline outlined by Zheng et al. (2024) and the GitHub repository6. For further details, please refer to the original papers.
+D.2 Time Series Classification
+In ‘SmoothSubspace’, ‘ArticularyWordRecognition’, ‘ERing’ and ‘RacketSports’, we adhered to the experimental protocol using
+the pipeline outlined by Oh, Lim, and Kim (2024) and Github repository7. We utilized a 70%:15%:15% split for train, validation,
+and test due to the unconventional split ratios in the original datasets, as recommended by Oh, Lim, and Kim (2024). Regarding
+hyperparameter tuning, we employed the Python library ray8 (Moritz et al. 2018; Liaw et al. 2018), as suggested by Oh, Lim,
+and Kim (2024). For further details, please refer to the original paper.
+In ‘Speech Commands’ and ‘PhysioNet Sepsis’, we followed the experimental protocol using publicly available pipelines for
+each model. For ANCDE, we used the pipeline outlined by Jhin et al. (2023) and the Github repository9. For the other models, we
+followed the pipeline outlined by Oh, Lim, and Kim (2024) and the Github repository7. However, for the ANCDE model using
+the ‘Speech Commands’ dataset, the hyperparameter settings for the architecture were not disclosed. Therefore, we conducted
+experiments using the number of layers nl = 4, the hidden vector dimensions nh = 128, and the hidden vector dimensions
+for attention nattention = 20, and we reported the performance based on these settings. We performed Continuum Dropout
+hyperparameter tuning for two architecture (optimal and complex) for Neural CDE, Neural LSDE, Neural LNSDE, and Neural
+GSDE. For Neural CDE, contrary to previous approaches, we utilized grid search to optimize the model hyperparameters because
+the prior settings failed to replicate the reported results. We evaluated test performance using nl from the set {1, 2, 3, 4} and nh
+from {16, 32, 64, 128}, selecting both the optimal architecture and the most complex architecture. Note that in certain models,
+optimal hyperparameters might be the same as complex hyperparameters. For Neural LSDE, Neural LNSDE, and Neural GSDE,
+we used the optimal architecture hyperparameters reported by Oh, Lim, and Kim (2024). The following are the definitions of
+each model:
+GRU-ODE. De Brouwer et al. (2019) introduced GRU-ODE, a concept of combination of Neural ODE and GRU as the
+solution of the following ordinary differential equation:
+dz0(t)
+dt = (1 − ugate(t)) ◦ (uvector (t) − z0(t)).
+Here, ugate(t) and uvector (t) represent the update gate and update vector of the GRU, respectively. They control how much of
+the new state information should be retained and how much of the previous state should be forgotten.
+The reset gate ureset(t) and update gate ugate(t) are defined as:
+ureset(t) = sigmoid(Wr x(t) + Vr z0(t) + br ),
+ugate(t) = sigmoid(Wg x(t) + Vg z0(t) + bg ),
+4https://github.com/xuanqing94/NeuralSDE
+5https://github.com/arnabgho/steer
+6https://github.com/shelljane/tabn-neuralode
+7https://github.com/yongkyung-oh/Stable-Neural-SDEs
+8https://github.com/ray-project/ray
+9https://github.com/sheoyon-jhin/ANCDE
+
+===PAGE===
+
+where Wr , Vr , Wg and Vg are weight matrices, br and bg are bias vectors, and x(t) is the input data at time t.
+The update vector uvector (t) is given by:
+uvector (t) = tanh(Wv x(t) + Vv (ureset(t) ◦ z0(t)) + bv ),
+where Wv and Vv are weight matrices, and bv is a bias vector.
+ODE-RNN. The ODE-RNN, proposed by Rubanova, Chen, and Duvenaud (2019), combines Neural ODEs and RNNs. The
+latent process z0(t) is obtained by numerically solving the ODE and then undergoing a standard RNN update process:
+¯z0(ti) = ODE Solver(γ(·; ·; θγ ), z0(ti−1), [ti−1, ti]),
+z0(ti) = RNNCell(¯z0(ti), x(i)) with z0(t0) = 0,
+where the drift function γ(·; ·; θγ ) is a neural network with parameter θγ .
+Neural CDE. Kidger et al. (2020) proposed Neural Controlled Differential Equation (Neural CDE), an extension of RNN to a
+continuous-time setting. It addresses the limitation of the initial condition determining the solution in the existing Neural ODE
+by introducing the concept of a controlled path X(t), which incorporates data arriving later. The model is formulated as follows:
+z0(t) = z0(0) +
+Z t
+0
+γ(s, z0(s); θγ ) dX(s) with z0(0) = ζ(x(1); θζ ),
+where the drift function γ(·; ·; θγ ) is a neural network with parameter θγ and the integral is the Riemann-Stieltjes integral. A
+controlled path X(t) can be any continuous function of bounded variation, but we have chosen natural cubic spline of x in our
+experiments.
+ANCDE. Jhin et al. (2023) proposed the Attentive Neural Controlled Differential Equation (ANCDE), where they adopt two
+Neural CDEs: the bottom Neural CDE for attention zattention(t) and the top Neural CDE for latent process z0(t):
+zattention(t) = zattention(0) +
+Z t
+0
+γ1(s, zattention(s); θγ1 ) dX(s),
+z0(t) = z0(0) +
+Z t
+0
+γ2(s, z0(s); θγ2 ) dY(s),
+where Y(t) = sigmoid(zattention(t)) ◦ X(t) and the drift functions γ1(·; ·; θγ1 ) and γ2(·; ·; θγ2 ) are neural networks with
+parameter θγ1 and θγ2 , respectively.
+Oh, Lim, and Kim (2024) proposed three classes of Neural SDEs: Neural Langevin-type SDE (LSDE), Neural Linear Noise
+SDE (LNSDE), and Neural Geometric SDE (GSDE). These models incorporate controlled paths into well-established SDEs,
+effectively capturing sequential observations like time series data and achieving recent state-of-the-art performance.
+Neural LSDE. Neural LSDE is a class of Langevin SDE, defined as follows:
+z0(t) = z0(0) +
+Z t
+0
+γ(z0(s); θγ ) ds +
+Z t
+0
+σ(s; θσ ) dW(s) with z0(0) = ζ(x; θζ ),
+where the drift function γ(·; θγ ) is a neural network with parameter θγ and the diffusion function σ(·; θσ ) is a neural network
+with parameter θσ .
+Neural LNSDE. Neural LNSDE is an SDE with linear multiplicative noise, defined as follows:
+z0(t) = z0(0) +
+Z t
+0
+γ(s, z0(s); θγ ) ds +
+Z t
+0
+σ(s; θσ )z0(s) dW(s) with z0(0) = ζ(x; θζ ),
+where the drift function γ(·; ·; θγ ) is a neural network with parameter θγ and the diffusion function σ(·; θσ ) is a neural network
+with parameter θσ .
+Neural GSDE. Neural GSDE is motivated by Geometric Brownian motion (GBM) and is defined as follows:
+z0(t) = z0(0) +
+Z t
+0
+γ(s, z0(s); θγ )z0(s) ds +
+Z t
+0
+σ(s; θσ )z0(s) dW(s) with z0(0) = ζ(x; θζ ),
+where the drift function γ(·; ·; θγ ) is a neural network with parameter θγ and the diffusion function σ(·; θσ ) is a neural network
+with parameter θσ .
+
+===PAGE===
+
+D.3 Image Classification
+For the dataset preprocessing, we adhered to the original train-test split provided with the datasets. From the training set, 20%
+was reserved for validation purposes. For data augmentation in the training set, we employed random resizing, cropping, and
+flipping techniques. Image normalization was carried out using the original mean and standard deviation values from each
+dataset, and the images were used at their default sizes without any resizing. This approach helped maintain the integrity of the
+original data while enhancing the model’s ability to generalize from augmented variations.
+In our experiments, the batch size was set to 128 for the CIFAR-100, CIFAR-10, and SVHN datasets. For the STL-10 dataset,
+a smaller batch size of 64 was utilized due to its limited number of samples. The models were optimized using stochastic gradient
+descent (SGD) with an initial learning rate of 0.1 over a course of 100 epochs. To address potential stalls in training progress,
+the learning rate was halved if there was no change in the loss over two consecutive epochs. Additionally, an early-stopping
+mechanism was implemented, terminating the training process if there was no improvement in the loss for ten consecutive
+epochs. This strategy helps in preventing overfitting and ensures efficient training by curtailing unnecessary computation once
+performance plateaus.
+Specifically, the model architecture consists of the following components:
+• The input layer of the image classification model is similar to conventional CNN models, where multiple convolutional
+operations are applied to the input image to extract basic features. An average pooling layer is used to extract the input feature
+as a vector z, with a vector size of 1024 obtained through convolutional layers.
+• The feature vector z is fed into the neural differential equation module, which estimates the hidden state z(T ) from the initial
+input feature z, where T represents the depth. The last value of z(T ) is estimated by solving neural differential equations.
+• The differential equation module consists of a vector field that can be learned through backpropagation. In the case of Neural
+SDE, the drift term and diffusion term are represented by neural networks. The complexity of the vector field is controlled to
+ensure that the total number of parameters is similar to ResNet18.
+• The last value z(T ) obtained from the neural differential equation module is fed into the classifier to identify the class of
+the input. The parameters for all three modules (feature extractor, neural differential equation module, and classifier) are
+optimized simultaneously using backpropagation and the adjoint-sensitive algorithm.
+We defined the complexity of the model to have a number of parameters comparable to that of ResNet18. Precisely, ResNet18
+has 11.18 million parameters for 10 classes and 11.23 million for 100 classes. Our Neural ODE models possess 10.49 million
+and 10.59 million parameters for 10 and 100 classes, respectively. Meanwhile, the Neural SDE models, both additive and
+multiplicative, contain 12.59 million and 12.69 million parameters for 10 and 100 classes, respectively. We used depth T = 10 in
+the experiments. We employed the Euler method (Euler-Maruyama method in the case of SDEs) for the numerical solving of the
+differential equations, using a time step size of ∆t = 0.1.
+Neural SDE with additive and Neural SDE with multiplicative noise are defined as follows:
+Neural SDE with Additive Noise.
+z0(t) = z0(0) +
+Z t
+0
+γ(s, z0(s); θγ ) ds +
+Z t
+0
+σ(s; θσ ) dW(s) with z0(0) = ζ(x; θζ ),
+where the noise term does not depend on the latent process z0(t) and only depends on time t.
+Neural SDE with Multiplicative Noise.
+z0(t) = z0(0) +
+Z t
+0
+γ(s, z0(s); θγ ) ds +
+Z t
+0
+σ(s; θσ ) z0(s) dW(s) with z0(0) = ζ(x; θζ ),
+where the noise term indicates an interaction between the diffusion function and the latent process z0(t).
+D.4 Calibration Experiments
+We designed experiments to evaluate the uncertainty quantification capability of the proposed method (Continuum Dropout),
+particularly its ability to produce uncertainty-aware predictions. We assessed calibration performance on CIFAR-100 with Neural
+ODE and Speech Commands with Neural CDE—the same settings in which the proposed method had previously demonstrated
+strong regularization performance. Importantly, we did not tune hyperparameters specifically for calibration; instead, we reused
+the hyperparameters that achieved the best classification performance for each dataset and model. Predictive confidence was
+computed from the softmax probabilities, and calibration was evaluated using reliability diagrams with 10 equal-width bins.
+For Continuum Dropout, we performed 5 Monte Carlo (MC) samples of the latent trajectory z(t) to estimate its stochastic
+distribution, and applied the classification layer to these samples to compute the final predictive distribution.
+
+===PAGE===
+
+E Extended experiments on time series datasets
+We conducted a comprehensive evaluation of the proposed method (Continuum Dropout) using 30 diverse datasets from the
+University of East Anglia (UEA) and University of California Riverside (UCR) Time Series Classification Repository10 (Bagnall
+et al. 2018; Dau et al. 2019). This analysis was facilitated by the Python library sktime11 (L¨oning et al. 2019). We followed the
+experiment protocol and code repository based on Oh, Lim, and Kim (2024).
+Table 8: Data description for extended experiments
+Dataset Total number of samples Number of classes Dimension of time series Length of time series
+ArrowHead 211 3 1 251
+Car 120 4 1 577
+Coffee 56 2 1 286
+GunPoint 200 2 1 150
+Herring 128 2 1 512
+Lightning2 121 2 1 637
+Lightning7 143 7 1 319
+Meat 120 3 1 448
+OliveOil 60 4 1 570
+Rock 70 4 1 2844
+SmoothSubspace 300 3 1 15
+ToeSegmentation1 268 2 1 277
+ToeSegmentation2 166 2 1 343
+Trace 200 4 1 275
+Wine 111 2 1 234
+ArticularyWordRecognition 575 25 9 144
+BasicMotions 80 4 6 100
+CharacterTrajectories 2858 20 3 60-180
+Cricket 180 12 6 1197
+Epilepsy 275 4 3 206
+ERing 300 6 4 65
+EthanolConcentration 524 4 3 1751
+EyesOpenShut 98 2 14 128
+FingerMovements 416 2 28 50
+Handwriting 1000 26 3 152
+JapaneseVowels 640 9 12 7-26
+Libras 360 15 2 45
+NATOPS 360 6 24 51
+RacketSports 303 4 6 30
+SpokenArabicDigits 8798 10 13 4-93
+Table 9 presents a comprehensive overview of the performance improvements achieved by our proposed method (Continuum
+Dropout) across various methods. The results demonstrate significant enhancements in classification accuracy across the 30
+datasets examined. Notably, the impact was more pronounced for Neural ODE and Neural CDE models compared to Neural
+SDE-based approaches.
+Table 9: Comprehensive performance analysis on extended datasets
+(Results are averaged across 30 diverse datasets. Values in parentheses represent the mean of individual standard deviations.
+Improvement and percentage change are reported as average ± standard error of the mean.)
+Method Baseline Proposed Improvement % Change
+Neural ODE 0.521 (0.065) 0.568 (0.054) 0.047 ± 0.006 11.56 ± 2.02
+Neural CDE 0.709 (0.061) 0.781 (0.048) 0.072 ± 0.012 13.39 ± 2.70
+Neural SDE 0.526 (0.068) 0.571 (0.065) 0.045 ± 0.008 9.69 ± 1.87
+Neural LSDE 0.717 (0.056) 0.741 (0.061) 0.024 ± 0.010 4.19 ± 1.65
+Neural LNSDE 0.727 (0.047) 0.761 (0.056) 0.034 ± 0.007 5.93 ± 1.38
+Neural GSDE 0.716 (0.065) 0.752 (0.063) 0.036 ± 0.009 6.00 ± 1.50
+Tables 10 and 11 offer a detailed decomposition of our experimental outcomes, stratifying the 30 datasets into two equal
+subsets: 15 univariate and 15 multivariate time series. Our proposed method demonstrates heightened efficacy when applied
+to univariate datasets. The contrasting results between these two categories underscore the importance of considering data
+dimensionality when applying proposed method to NDEs.
+10http://www.timeseriesclassification.com/
+11https://github.com/sktime/sktime
+
+===PAGE===
+
+Table 10: Comprehensive performance analysis on 15 univariate datasets
+Method Baseline Proposed Improvement % Change
+Neural ODE 0.535 (0.073) 0.593 (0.068) 0.058 ± 0.009 11.73 ± 1.93
+Neural CDE 0.628 (0.079) 0.725 (0.065) 0.098 ± 0.020 19.33 ± 4.63
+Neural SDE 0.535 (0.086) 0.597 (0.082) 0.062 ± 0.013 12.99 ± 3.23
+Neural LSDE 0.636 (0.082) 0.683 (0.089) 0.047 ± 0.013 8.12 ± 2.35
+Neural LNSDE 0.665 (0.065) 0.718 (0.078) 0.053 ± 0.010 9.41 ± 2.19
+Neural GSDE 0.649 (0.097) 0.711 (0.096) 0.062 ± 0.015 10.30 ± 2.50
+Table 11: Comprehensive performance analysis on 15 multivariate datasets
+Method Baseline Proposed Improvement % Change
+Neural ODE 0.507 (0.056) 0.544 (0.041) 0.037 ± 0.009 11.38 ± 3.63
+Neural CDE 0.790 (0.044) 0.837 (0.031) 0.047 ± 0.010 7.45 ± 1.93
+Neural SDE 0.516 (0.049) 0.545 (0.048) 0.028 ± 0.007 6.38 ± 1.57
+Neural LSDE 0.798 (0.031) 0.800 (0.032) 0.002 ± 0.013 0.27 ± 1.88
+Neural LNSDE 0.789 (0.030) 0.805 (0.034) 0.016 ± 0.007 2.45 ± 1.18
+Neural GSDE 0.783 (0.034) 0.794 (0.030) 0.011 ± 0.005 1.71 ± 0.69
+Figure 5 illustrates the performance variations across different hyperparameter configurations. The baseline performance
+without Continuum Dropout is represented by a black dashed horizontal line. Our results consistently demonstrate that the
+proposed method enhances classification performance relative to this baseline across various hyperparameter settings. This
+robust improvement highlights the method’s effectiveness in bolstering generalization capabilities and its versatility in addressing
+diverse time series classification tasks, further validating its practical utility in real-world problems.
+0.1 0.2 0.3 0.4 0.5
+p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Baseline
+m = 5
+m = 10
+m = 50
+m = 100
+(a) Neural ODE
+0.1 0.2 0.3 0.4 0.5
+p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Baseline
+m = 5
+m = 10
+m = 50
+m = 100 (b) Neural CDE
+0.1 0.2 0.3 0.4 0.5
+p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Baseline
+m = 5
+m = 10
+m = 50
+m = 100
+(c) Neural SDE
+0.1 0.2 0.3 0.4 0.5
+p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Baseline
+m = 5
+m = 10
+m = 50
+m = 100 (d) Neural LSDE
+0.1 0.2 0.3 0.4 0.5
+p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Baseline
+m = 5
+m = 10
+m = 50
+m = 100
+(e) Neural LNSDE
+0.1 0.2 0.3 0.4 0.5
+p
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Accuracy
+Baseline
+m = 5
+m = 10
+m = 50
+m = 100 (f) Neural GSDE
+Figure 5: Performance comparison with different hyperparameters on extended datasets
+
+===PAGE===
+
+F Further Analysis of Continuum Dropout
+F.1 Sensitivity Analysis of Hyperparameters
+We conducted a sensitivity analysis to provide guidelines for selecting the hyperparameters p and m of proposed method
+(Continuum Dropout). We evaluated the accuracy of Neural CDE successfully trained on Speech Commands dataset. To observe
+the performance variations with respect to p and m, we set p ∈ [0.1, 0.2, 0.3, 0.4, 0.5] and m ∈ [3, 5, 10, 50, 100]. Table 12
+shows the performance for each combination of p and m, and we highlighted in red the cases that exhibit lower performance
+than the performance without Continuum Dropout, adjusted by one standard deviation. We observed a significant performance
+decline at high dropout rates when m = 3. This is because a smaller m increases the variance of latent processes with Continuum
+Dropout, hindering stable training. Consequently, we limited our experiments to m ∈ [5, 10, 50, 100] in this paper. This choice
+robustly improves performance regardless of hyperparameters p and m.
+Table 12: Accuracy on Speech Commands from the hyperparameter sensitivity analysis
+p m 3 5 10 50 100
+0.1 0.934 (0.002) 0.938 (0.004) 0.936 (0.002) 0.938 (0.001) 0.940 (0.002)
+0.2 0.930 (0.003) 0.939 (0.002) 0.938 (0.001) 0.939 (0.002) 0.936 (0.003)
+0.3 0.921 (0.004) 0.936 (0.003) 0.938 (0.003) 0.940 (0.001) 0.940 (0.001)
+0.4 0.914 (0.005) 0.931 (0.003) 0.934 (0.003) 0.933 (0.003) 0.931 (0.003)
+0.5 0.909 (0.008) 0.928 (0.004) 0.923 (0.003) 0.927 (0.003) 0.925 (0.004)
+Figures 6–9 illustrate how the performance of proposed method for Neural ODE and Neural SDEs on image datasets varies
+with different hyperparameters p and m, showing that the proposed method robustly enhances performance regardless of the
+choice of p and m on image datasets. Black dashed line and gray area indicate the mean and standard deviation of without
+Continuum Dropout.
+0.1 0.2 0.3 0.4 0.5
+p
+71
+72
+73
+74
+75
+76
+77
+78Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100
+(a) Neural ODE
+0.1 0.2 0.3 0.4 0.5
+p
+72
+73
+74
+75
+76
+77
+78Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100 (b) Neural SDE (additive)
+0.1 0.2 0.3 0.4 0.5
+p
+72
+73
+74
+75
+76
+77
+78Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100 (c) Neural SDE (multiplicative)
+Figure 6: Performance comparison with different hyperparameters on CIFAR-100
+0.1 0.2 0.3 0.4 0.5
+p
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100
+(a) Neural ODE
+0.1 0.2 0.3 0.4 0.5
+p
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100 (b) Neural SDE (additive)
+0.1 0.2 0.3 0.4 0.5
+p
+71
+72
+73
+74
+75
+76
+77
+78Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100 (c) Neural SDE (multiplicative)
+Figure 7: Performance comparison with different hyperparameters on CIFAR-10
+0.1 0.2 0.3 0.4 0.5
+p
+68
+69
+70
+71
+72
+73Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100
+(a) Neural ODE
+0.1 0.2 0.3 0.4 0.5
+p
+68
+69
+70
+71
+72
+73Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100 (b) Neural SDE (additive)
+0.1 0.2 0.3 0.4 0.5
+p
+68
+69
+70
+71
+72
+73Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100 (c) Neural SDE (multiplicative)
+Figure 8: Performance comparison with different hyperparameters on STL-10
+
+===PAGE===
+
+0.1 0.2 0.3 0.4 0.5
+p
+90
+91
+92
+93Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100
+(a) Neural ODE
+0.1 0.2 0.3 0.4 0.5
+p
+91
+92
+93Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100 (b) Neural SDE (additive)
+0.1 0.2 0.3 0.4 0.5
+p
+90
+91
+92
+93Top 5 Accuracy
+ m=5
+m=10
+m=50
+m=100 (c) Neural SDE (multiplicative)
+Figure 9: Performance comparison with different hyperparameters on SVHN
+(a) Dropout rate p = 0.1
+ (b) Dropout rate p = 0.5
+Figure 10: Illustration of latent process z(t) with Continuum Dropout, using different hyperparameters p and m
+F.2 Effect of Monte Carlo Sample Size
+We designed experiments to analyze the effect of Monte Carlo sample size during the test phase. Table 13 and Table 14 show the
+optimal performance based on the number of Monte Carlo simulation samples NMC on Speech Commands and CIFAR-100,
+respectively. We considered NMC = [1, 3, 5, 10, 20], and observed consistent performance improvements with only 5 samples,
+which supports the accurate inference.
+Table 13: Accuracy on Speech Commands with different numbers of Monte Carlo simulation samples
+Continuum
+Dropout NMC Neural CDE ANCDE Neural LSDE Neural LNSDE Neural GSDE
+X - 0.910 (0.005) 0.760 (0.003) 0.927 (0.004) 0.923 (0.001) 0.913 (0.001)
+O
+1 0.908 (0.002) 0.762 (0.002) 0.931 (0.003) 0.925 (0.002) 0.919 (0.006)
+3 0.929 (0.002) 0.782 (0.006) 0.932 (0.001) 0.930 (0.000) 0.927 (0.002)
+5 0.940 (0.001) 0.794 (0.003) 0.932 (0.000) 0.932 (0.001) 0.927 (0.001)
+10 0.945 (0.001) 0.793 (0.007) 0.933 (0.001) 0.932 (0.002) 0.930 (0.002)
+20 0.943 (0.003) 0.793 (0.005) 0.932 (0.001) 0.932 (0.002) 0.930 (0.001)
+Table 14: Top-5 accuracy on CIFAR-100 with different numbers of Monte Carlo simulation samples
+Continuum
+Dropout NMC Neural ODE Neural SDE (additive) Neural SDE (multiplicative)
+X - 74.475 (0.581) 74.878 (0.328) 75.317 (0.338)
+O
+1 76.365 (0.342) 76.390 (0.263) 76.006 (0.426)
+3 76.848 (0.254) 76.547 (0.398) 76.182 (0.522)
+5 76.213 (0.238) 76.958 (0.415) 76.787 (0.420)
+10 76.470 (0.480) 76.872 (0.442) 76.947 (0.458)
+20 76.374 (0.298) 76.704 (0.252) 76.927 (0.404)
+
+===PAGE===
+
+F.3 Comprehensive Analysis of Computational Efficiency
+We performed comprehensive experiments to evaluate the computational overhead of our proposed method (Continuum Dropout)
+with varying dropout rates p and expected renewal counts m. Table 15 presents the average computation times per epoch on
+Speech Commands dataset. The results indicate that while the proposed method generally increases computation time compared
+to the baseline, the impact of different p and m values is relatively minor. Also, since Monte Carlo simulation is only conducted
+during the test phase, we observe that it does not significantly increase the computational overhead. The computational overhead
+remains almost negligible, showing only a marginal increase compared to the baseline.
+Table 15: Computation time comparison on Speech Commands (time in seconds per epoch)
+p m Neural CDE ANCDE Neural LSDE Neural LNSDE Neural GSDE
+0 - 25.560 (0.259) 53.264 (0.157) 19.416 (0.147) 19.532 (0.109) 19.776 (0.052)
+0.1
+5 28.056 (0.262) 60.208 (0.292) 22.086 (0.158) 22.499 (0.223) 23.095 (0.233)
+10 28.182 (0.258) 59.914 (0.199) 22.076 (0.171) 22.207 (0.173) 22.807 (0.112)
+50 28.014 (0.245) 59.339 (0.307) 22.157 (0.150) 22.213 (0.161) 23.178 (0.246)
+100 28.375 (0.508) 60.100 (0.340) 22.332 (0.190) 22.128 (0.122) 22.939 (0.131)
+0.3
+5 27.180 (0.366) 59.148 (0.408) 21.576 (0.155) 21.668 (0.171) 22.496 (0.176)
+10 27.226 (0.305) 59.156 (0.367) 21.610 (0.135) 21.632 (0.144) 22.460 (0.216)
+50 27.064 (0.248) 59.062 (0.373) 21.589 (0.214) 21.646 (0.199) 22.482 (0.183)
+100 27.145 (0.255) 59.093 (0.276) 21.580 (0.214) 21.740 (0.131) 22.436 (0.174)
+0.5
+5 26.052 (0.255) 58.108 (0.229) 21.045 (0.094) 20.790 (0.174) 21.818 (0.089)
+10 26.393 (0.276) 57.643 (0.136) 21.058 (0.097) 21.185 (0.091) 21.893 (0.088)
+50 25.688 (0.219) 57.646 (0.407) 21.025 (0.135) 21.176 (0.120) 21.931 (0.116)
+100 26.144 (0.314) 57.905 (0.265) 21.005 (0.104) 21.098 (0.144) 21.960 (0.084)
+G Limitations of Jump Diffusion Model
+In this section, we examine the limitations of the jump diffusion model discussed in the main text in greater detail. Specifically,
+Appendix G.1 analyzes the theoretical issues of jump diffusion model, Appendix G.2 provides an analysis of the practical
+difficulty in tuning the dropout rate p, which is a hyperparameter of jump diffusion model, and Appendix G.3 demonstrates,
+through experiments, why jump diffusion model cannot be universally applied to various variants of NDEs.
+G.1 Discretization
+Liu et al. (2020) claimed that
+Z(k + 1) = Z(k) + γ(Z(k); θγ ) ◦ ξ
+= Z(k) + 1 2 γ(Z(k); θγ ) + 1 2 γ(Z(k); θγ ) ◦ Ξ (14)
+with k = 0, 1, . . . , N − 1, P(ξ(i) = 0) = 1 − P(ξ(i) = 1) = p for i = 1, . . . , dz and Ξ = 2ξ − 1 is a discrete version of the
+following jump diffusion process: for 0 ≤ t ≤ T ,
+z(t) = z(0) +
+Z t
+0
+1
+2 γ(z(τ ); θγ ) dτ +
+Z t
+0
+1
+2 γ(z(τ ); θγ ) ◦ ΞNτ dNτ , (15)
+where Nτ is a Poisson counting process.
+However, that claim is not only incomplete in defining equation 14, but even if we were to correct it properly, our analysis
+reveals theoretical inconsistencies in this approach. More specifically, the time step size ∆t has not been considered in equation 14,
+which is essential for it to be a valid discrete approximation of the continuous jump diffusion process. In fact, a correct Euler
+discretization of equation 15 is given by
+Z(k + 1) = Z(k) + 1 2 γ(Z(k); θγ )∆t + 1 2 γ(Z(k); θγ ) ◦ ΞNk ∆Nk
+= Z(k) +
+
+
+
+1
+2 γ(Z(k); θγ )∆t + 1 2 γ(Z(k); θγ ) ◦ Ξ, if ∆Nk = 1,
+1
+2 γ(Z(k); θγ )∆t, if ∆Nk = 0,
+̸= Z(k) + γ(Z(k); θγ ) ◦ ξ,
+where ∆Nk = N T N k − N T N k− ∈ {0, 1}. In contrast, our proposed method based on the alternating renewal processes (Continuum Dropout) accurately extends the
+following discrete-time equation to the continuous-time process:
+Z(k + 1) = Z(k) + γ(Z(k); θγ )∆t ◦ Ik.
+
+===PAGE===
+
+G.2 Hyperparameter Tuning
+We evaluated the performance of jump diffusion model with respect to the hyperparameter dropout rate p. Tables 16 and
+17 present the results of classification tasks on time series and image datasets, respectively. Jump diffusion model showed
+performance improvement at very low dropout rates below 0.1, but no significant improvement was observed beyond that. This
+behavior differs from na¨ıve dropout, and it introduces additional cost for tuning. However, our proposed method (Continuum
+Dropout), as analyzed in Appendix F.1, consistently improves performance robustly within the tuning grid of na¨ıve dropout.
+Table 16: Results of hyperparameter tuning for jump diffusion model in time series datasets
+(a) Jump Diffusion (Liu et al. 2020)
+p SmoothSubspace ArticularyWordRecognition ERing RacketSports
+0 0.569 (0.040) 0.859 (0.005) 0.839 (0.018) 0.565 (0.065)
+10−5 0.594 (0.048) 0.871 (0.054) 0.844 (0.050) 0.571 (0.018)
+10−4 0.617 (0.043) 0.862 (0.043) 0.861 (0.064) 0.592 (0.032)
+10−3 0.606 (0.043) 0.862 (0.014) 0.850 (0.036) 0.609 (0.031)
+10−2 0.594 (0.036) 0.856 (0.035) 0.850 (0.055) 0.592 (0.056)
+0.1 0.600 (0.057) 0.859 (0.021) 0.844 (0.057) 0.609 (0.061)
+0.2 0.611 (0.011) 0.853 (0.029) 0.844 (0.065) 0.576 (0.033)
+0.3 0.589 (0.060) 0.862 (0.049) 0.856 (0.040) 0.582 (0.071)
+0.4 0.594 (0.024) 0.856 (0.014) 0.856 (0.056) 0.576 (0.036)
+0.5 0.600 (0.068) 0.862 (0.017) 0.850 (0.033) 0.569 (0.041)
+(b) Jump Diffusion + TTN (Liu et al. 2020)
+p SmoothSubspace ArticularyWordRecognition ERing RacketSports
+0 0.569 (0.040) 0.859 (0.005) 0.839 (0.018) 0.565 (0.065)
+10−5 0.583 (0.036) 0.874 (0.029) 0.872 (0.010) 0.587 (0.080)
+10−4 0.594 (0.024) 0.876 (0.025) 0.878 (0.025) 0.576 (0.024)
+10−3 0.583 (0.024) 0.874 (0.022) 0.867 (0.031) 0.598 (0.076)
+10−2 0.594 (0.040) 0.874 (0.031) 0.861 (0.018) 0.576 (0.059)
+0.1 0.606 (0.018) 0.871 (0.015) 0.872 (0.033) 0.560 (0.060)
+0.2 0.594 (0.065) 0.862 (0.021) 0.872 (0.036) 0.587 (0.060)
+0.3 0.600 (0.057) 0.868 (0.031) 0.850 (0.024) 0.572 (0.051)
+0.4 0.606 (0.048) 0.871 (0.033) 0.861 (0.033) 0.571 (0.056)
+0.5 0.600 (0.010) 0.862 (0.020) 0.844 (0.016) 0.578 (0.039)
+Table 17: Results of hyperparameter tuning for jump diffusion model in image datasets
+(a) Jump Diffusion (Liu et al. 2020)
+p CIFAR-100 CIFAR-10 STL-10 SVHN
+0 74.475 (1.181) 73.870 (0.820) 70.650 (0.688) 91.348 (0.440)
+10−5 74.852 (1.085) 74.987 (0.350) 71.097 (0.242) 91.388 (0.348)
+10−4 76.083 (0.502) 74.370 (1.689) 71.084 (0.215) 90.906 (0.422)
+10−3 73.873 (1.973) 74.377 (1.303) 70.912 (0.436) 91.520 (0.450)
+10−2 75.098 (0.530) 74.600 (1.165) 70.409 (0.370) 91.194 (0.556)
+0.1 75.415 (0.415) 73.570 (1.788) 70.966 (0.192) 91.272 (0.367)
+0.2 74.975 (0.394) 72.927 (1.782) 70.931 (0.230) 91.539 (0.238)
+0.3 74.782 (0.608) 72.727 (1.437) 70.938 (0.648) 91.478 (0.146)
+0.4 74.900 (1.401) 72.282 (1.413) 70.903 (0.364) 91.568 (0.413)
+0.5 74.535 (0.231) 73.850 (2.184) 70.778 (0.204) 91.480 (0.135)
+(b) Jump Diffusion + TTN (Liu et al. 2020)
+p CIFAR-100 CIFAR-10 STL-10 SVHN
+0 74.475 (1.181) 73.870 (0.820) 70.650 (0.688) 91.348 (0.440)
+10−5 76.013 (0.276) 73.742 (1.646) 70.747 (0.479) 91.730 (0.518)
+10−4 75.743 (0.307) 74.305 (2.027) 70.716 (0.282) 91.366 (0.110)
+10−3 75.227 (0.261) 74.755 (1.500) 70.409 (0.390) 91.323 (0.566)
+10−2 74.430 (1.637) 74.710 (1.307) 70.544 (0.177) 91.088 (0.309)
+0.1 75.170 (0.213) 75.015 (0.503) 70.775 (0.259) 91.509 (0.107)
+0.2 75.692 (0.392) 73.403 (1.190) 70.931 (0.286) 91.561 (0.494)
+0.3 74.992 (1.470) 73.375 (2.269) 70.819 (0.455) 91.267 (0.360)
+0.4 74.553 (1.220) 73.915 (1.692) 70.741 (0.206) 91.423 (0.401)
+0.5 75.502 (1.176) 73.160 (1.698) 70.722 (0.411) 91.238 (0.606)
+
+===PAGE===
+
+G.3 Universal Applicability
+We discuss why jump diffusion model is not universally applicable, unlike the proposed method (Continuum Dropout). Liu et al.
+(2020) introduced a new type of Neural SDE by adding a stochastic dropout term to Neural ODE. However, this approach is
+limited to ODE-based models. Nonetheless, from an engineering perspective, we compared the performance of the proposed
+method with the model, which combines jump diffusion noise with the CDE-based model. Additionally, in the case of SDE-based
+models, the existing diffusion network dominates the jump diffusion model term, and thus, these models are not considered.
+Table 18 presents the performance of jump diffusion model and our proposed method on Speech Commands, using Neural
+CDE as the baseline. Under the jump-diffusion model, performance either declines or, if it improves, the improvement is not
+statistically significant. However, our proposed method demonstrates statistically significant and highly successful performance
+improvements, experimentally proving that it is the only universally applicable dropout method.
+Table 18: Performance of various dropout methods on Speech Commands
+Dropout Methods Test Accuracy
+Baseline (Neural CDE) 0.910 (0.005)
+Jump Diffusion (Liu et al. 2020) 0.917 (0.009)
+Jump Diffusion + TTN (Liu et al. 2020) 0.906 (0.013)
+Continuum Dropout (ours) 0.940 (0.001)∗∗
