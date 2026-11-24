@@ -1974,6 +1974,7 @@ angle$ 的符号，统计"违反 $L_fV<0$ 的时间点比例"（只需一次前�
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-24**：[[docs/daily/2026-11-24_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 12 个。
 - **2026-11-23**：[[docs/daily/2026-11-23_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 13 个。
 - **2026-11-22**：[[docs/daily/2026-11-22_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 12 个。
 - **研读 3 篇**（**selector top-3 连续第 13 天**全部为已知误命中，已手动改选；**本日 3 篇全部来自独立覆盖度自检捞出的"连续时间机制层"覆盖盲区**，而非 digest 候选池）：[[docs/reports/DS3M_Deep_Structured_State_Space_Models_2611.25274_研读报告.md|DS3M：连续时间系统辨识的瓶颈在 GPU 调度而非表达力，kernel fusion 加速 28–160× (2611.25274)]]、[[docs/reports/NOGI_Neural_ODE_Graph_Structure_Inference_2611.25586_研读报告.md|NOGI：把图显式拆进连续时间向量场，并证明连续时间只在长观测间隔下才有优势 (2611.25586)]]、[[docs/reports/Morse_Lyapunov_Invertible_Neural_Networks_2611.21030_研读报告.md|Morse Lyapunov 的可学性：学稳定性证书要控制 Sobolev 范数，不是 sup 范数 (2611.21030)]]。
@@ -2150,5 +2151,4 @@ angle$ 的符号，统计"违反 $L_fV<0$ 的时间点比例"（一次前向 + `
 - **2026-10-25**：[[docs/daily/2026-10-25_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 18 个。
 - **2026-10-24**：[[docs/daily/2026-10-24_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 21 个。
 - **2026-10-23**：[[docs/daily/2026-10-23_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 17 个。
-- **2026-10-22**：[[docs/daily/2026-10-22_LNN_research_digest.md|每日追踪]]，候选论文 92 篇，仓库 42 个，模型 20 个。
 <!-- daily-lnn-index:end -->
