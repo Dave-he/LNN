@@ -1,0 +1,2064 @@
+Projected Neural Differential Equations
+Projected Neural Differential Equations for Learning Constrained Dynamics
+Alistair White,1, 2,a) Anna Büttner,2 Maximilian Gelbrecht,2, 1 Valentin Duruisseaux,3 Niki Kilbertus,4, 5, 6 Frank
+Hellmann,2 and Niklas Boers1, 2, 7
+1)Munich Climate Center and Earth System Modelling Group, Department of Aerospace and Geodesy,
+School of Engineering and Design, Technical University of Munich, Munich,
+Germany
+2)Potsdam Institute for Climate Impact Research, Potsdam, Germany
+3)California Institute of Technology, Pasadena, California, USA
+4)Technical University of Munich, Munich, Germany
+5)Helmholtz Munich, Neuherberg, Germany
+6)Munich Center for Machine Learning (MCML), Munich, Germany
+7)University of Exeter, Exeter, United Kingdom
+(Dated: 9 September 2026)
+Neural differential equations offer a powerful approach for learning dynamical systems from data. However,
+they do not inherently respect known constraints, such as conservation laws, that should be obeyed by
+the learned dynamics. It is well known that enforcing constraints in data-driven models can enhance their
+generalizability and numerical stability. In this paper, we introduce projected neural differential equations
+(PNDEs), a method for constraining neural differential equations based on projection of the predicted velocities
+onto the tangent space of the manifold that fulfills the constraint. In tests on several examples from different
+fields, including chaotic dynamical systems and power grid models, PNDEs outperform existing methods for
+constraining learned dynamics, require fewer hyperparameters, and are computationally more efficient. The
+proposed approach demonstrates potential for enhancing the modeling of constrained dynamical systems,
+particularly in domains where accuracy and reliability are essential.
+Machine learning models that simulate physical
+systems often struggle to respect fundamental
+constraints, such as mass, momentum, or energy
+conservation. This limitation can lead to unphys-
+ical, inaccurate, and unstable predictions. We
+propose projected neural differential equations
+(PNDEs), a method that mathematically guaran-
+tees learned models will satisfy known physical
+constraints by projecting their predictions onto
+the space of physically valid solutions. Tests on
+challenging systems—including highly chaotic dy-
+namical systems and complex power grid mod-
+els—demonstrate that PNDEs enforce constraints
+more accurately than existing approaches while
+being more efficient and requiring fewer hyperpa-
+rameters. By enabling machine learning models
+to reliably incorporate domain knowledge, PN-
+DEs offer a promising path toward accurate and
+efficient simulation of complex physical systems in
+applications ranging from grid stability analysis
+to climate modeling, particularly in safety-critical
+contexts where constraint violations are unaccept-
+able.
+I. INTRODUCTION
+Numerical simulation of dynamical systems plays a
+pivotal role in science and engineering. Across domains,
+a)Electronic mail: alistair.white@tum.de
+¯fθ (u)
+Proju ¯fθ (u)
+M
+TuM
+uu0
+FIG. 1. Schematic of projected neural differential equations
+(PNDEs). The vector field of the unconstrained NDE (red
+arrow) is projected to the tangent space TuM of the constraint
+manifold M. For initial conditions u0 ∈ M, solutions (orange)
+of the projected vector field (green arrow) remain on the
+manifold and thereby satisfy the constraints.
+simulations extend the reach of scientific inquiry far be-
+yond the limitations of direct observation and experi-
+mentation. However, as the scale and complexity of the
+systems being studied increases, the computational cost
+of traditional numerical methods can become prohibitive.
+Deep learning surrogates, enabled by the emergence of ef-
+ficient architectures and specialized accelerator hardware,
+offer promising alternatives. By circumventing the com-
+putational limitations of conventional approaches, these
+methods stand to further advance the use of simulations
+for scientific inquiry.1–6
+Among existing machine learning approaches, neural
+ordinary differential equations (NODEs) offer a promising
+approach for data-driven modeling of dynamical systems,
+combining the expressiveness of neural networks with
+arXiv:2410.23667v2  [cs.LG]  8 Sep 2026
+
+Projected Neural Differential Equations 2
+the interpretability of differential equations.7 Building
+upon NODEs, universal differential equations (UDEs) of-
+fer a hybrid framework that integrates neural networks
+with differentiable physical models.8 We refer to these
+approaches collectively as neural differential equations
+(NDEs). NDEs have demonstrated significant potential
+across various scientific disciplines, including weather
+and climate modeling,9–12 robotics,13 epidemiology,14
+bioengineering,15 and chaotic systems.16 Despite excel-
+lent performance within the training data, NDEs often
+generalize poorly, for example, to new initial conditions
+or future times.17–19 Due to the iterative nature in which
+neural networks are applied within NDEs, errors quickly
+accumulate and can push the trajectory far outside the
+training distribution, where performance degrades.
+Inductive biases play an important role in avoiding
+such issues. In scientific machine learning, for exam-
+ple, inductive biases can take the form of physical con-
+straints, such as conservation laws or other domain-
+specific knowledge, that can enhance model performance
+and interpretability.20 Physical constraints are often incor-
+porated as additional loss terms, for example, in physics-
+informed neural networks21–23 and physics-informed oper-
+ator learning.24–28 However, a variety of issues can arise
+with these soft constraints. For instance, the resulting
+composite loss can be expensive to evaluate, due to deriva-
+tives in the physics loss, and challenging to minimize.
+Furthermore, a number of numerical issues are known to
+arise, such as worse conditioning, conflicting loss terms,
+inaccuracies in the approximated derivatives, and the ex-
+istence of spurious solutions satisfying the constraints on
+the collocation points of the physics loss.29–34 Yet perhaps
+the most significant drawback of soft constraints is that
+they provide no guarantees that the physical constraints
+will be satisfied at inference time; at best, they can only
+hope to guide the model weights toward physically plau-
+sible solutions during training. This is inadequate for
+safety-criticalapplications—suchaspowergridmodeling—
+where provable, robust adherence to physical constraints
+is essential. Furthermore, long-horizon simulations often
+demand strict constraint satisfaction: in climate model-
+ing, for example, small per-timestep energy conservation
+errors can accumulate over time and introduce significant
+biases in the simulated long-term climate. These consider-
+ations motivate stricter enforcement of constraints, both
+during training and at inference time, in the form of hard
+constraints.
+a. Contribution. In this paper, we introduce pro-
+jected neural differential equations (PNDEs), a method for
+incorporating hard constraints in NDEs based on projec-
+tion of the NDE’s predicted velocities onto tangent spaces
+of the constraint manifold (see Fig. 1). Since the con-
+straint manifold is defined by algebraic constraints on the
+system state, our method can enforce diverse constraints,
+such as conservation laws and holonomic constraints, with-
+out requiring the system to be measured in specific (e.g.,
+generalized or canonical) coordinates. To enable efficient
+training of PNDEs, we derive analytic expressions for the
+gradients of the projection operator and provide efficient
+batched implementations for both forward and backward
+passes. Our method enforces constraints to near machine
+precision—several orders of magnitude more accurately
+than existing methods—while requiring fewer hyperpa-
+rameters and avoiding the numerical stiffness that can
+affect other approaches. We further demonstrate that
+explicit constraints enable learning of complex dynamics
+in simpler coordinate systems (e.g., Cartesian) that would
+otherwise be intractable in their natural, generalized co-
+ordinates.
+b. Organization. The remainder of this paper is orga-
+nized as follows. Section II derives PNDEs and presents
+efficient implementations. Section III positions our ap-
+proach within the broader literature on constrained learn-
+ing. Section IV validates the method on chaotic dynamical
+systems and power grid models, demonstrating superior
+constraint satisfaction and numerical stability.
+II. PROJECTED NEURAL DIFFERENTIAL EQUATIONS
+A. Background
+The key geometric insight of our approach is that con-
+straining solutions to a manifold M requires constructing
+a vector field tangent to M everywhere. We briefly re-
+view the relevant differential geometry, referring readers
+to existing literature for a more detailed treatment.35–37
+The set of tangent vectors to a manifold M at a point
+u ∈ M is a vector space called the tangent space to
+M at u and is denoted by TuM. The disjoint union
+of all tangent spaces to M forms the tangent bundle
+TM = {(u, v) | u ∈ M, v ∈ TuM} of M. A vector field
+on a manifold M is a continuous map X : M → TM
+with the property that X(u) ∈ TuM for all u ∈ M. The
+integral curve at u of a vector field X on M is the smooth
+curve γ on M such that γ(0) = u and γ′(t) = X(γ(t))
+for all t in the interval of interest. In other words, the
+integral curve is the solution of the ODE γ′(t) = X(γ(t))
+with γ(0) = u, so theorems for the existence, uniqueness,
+and smoothness of ODE solutions translate directly to
+integral curves of vector fields on manifolds.
+Crucially, if M is embedded in an ambient space and
+X(u) lies in the tangent space TuM for all u, then the
+integral curve starting at any u0 ∈ M remains on M for
+all time. This forms the foundation of our projection-
+based approach.
+B. Problem Setting
+a. Neural Differential Equations. Assume we have
+an ambient n-dimensional Euclidean phase space E, and
+consider the neural differential equation
+˙u = fθ (u(t), t) u(0) = u0, (1)
+
+Projected Neural Differential Equations 3
+where u : R → E, u0 ∈ E is an initial condition, ˙u =
+du/dt, and fθ is parameterized by a neural network with
+parameters θ ∈ Rd.
+Given observations {ti, u(ti)}N i=1, the parameters θ can
+be optimized using stochastic gradient descent by integrat-
+ing a trajectory ˆu(t) = ODESolve(u0, fθ , t) and taking
+gradients of the loss L(u, ˆu) with respect to θ. Gradi-
+ents of the ODESolve operation can be obtained using
+adjoint sensitivity analysis (sometimes called optimize-
+then-discretize) or via direct automatic differentiation of
+the solver operations (discretize-then-optimize).7,38
+Since any non-autonomous system can be equivalently
+represented as an autonomous system by adding time
+as an additional coordinate, for ease of notation we will
+drop the time-dependence in Eq. (1) and consider only
+autonomous systems from now on, without loss of gener-
+ality.
+b. Constraints. Suppose that the state u(t) of the
+system must be constrained to the set
+M = {u ∈ E ; g(u) = 0}, (2)
+where g : E → Rm with g : u 7→   g1(u), . . . , gm(u)  , given
+m < n independent explicit algebraic constraints gi(u) =
+0. Assuming that the Jacobian Dg(u) exists and has full
+rank for all u ∈ M, the Regular Level Set Theorem36
+impliesthat M isasmooth (n−m)-dimensionalembedded
+submanifold of Rn. To satisfy the constraints g(u) =
+0, we seek solutions of Eq. (1) that are constrained to
+the embedded submanifold M, which we refer to as the
+constraint manifold. In other words, we seek integral
+curves on M.
+C. Proposed Approach
+We want to learn fθ : M → TM as a smooth vector
+field on the embedded submanifold M with local defining
+function g. We realize this by first parameterizing a
+smooth vector field ¯fθ : E → E on the ambient Euclidean
+space using a neural network, and then projecting ¯fθ (u)
+using a suitable projection operator Proju : E → TuM to
+obtain the desired tangent vector,
+fθ (u) = Proju
+  ¯fθ (u)  ∈ TuM. (3)
+Since M is a smooth embedded submanifold of E, the
+restriction ¯fθ |M is also smooth. Note that the projection
+acts fiberwise (i.e., acting “point-by-point”); for each u ∈
+M, it projects the vector ¯fθ (u) at u onto TuM.
+a. Construction of the projection operator. We now
+derive a suitable projection operator, following the ap-
+proach of Boumal37. Given the standard Euclidean in-
+ner product ⟨u, v⟩ = u⊤v and its induced norm ∥·∥2
+on E = Rn, the differential Dg(u) and its adjoint Dg(u)∗
+define linear maps
+Dg(u)[v] =
+ 
+⟨∇g1(u), v⟩, . . . , ⟨∇gm(u), v⟩
+
+, (4a)
+Dg(u)∗[α] =
+mX
+i=1
+αi∇gi(u). (4b)
+Denoting the orthogonal projection from E to TuM
+by Proju : E → TuM, we can uniquely decompose any
+vector v ∈ E into its components parallel and perpendicu-
+lar to TuM,
+v = Proju(v) + Dg(u)∗[α]. (5)
+The coefficients α are obtained as the solution of the
+least-squares problem
+α = arg min
+α∈Rm
+∥v − Dg(u)∗[α]∥2 =   Dg(u)∗† [v], (6)
+where (·)† denotes the Moore–Penrose pseudoinverse. Sub-
+stituting Eq. (6) into Eq. (5), we obtain a formula for the
+orthogonal projection from E to TuM,
+Proju(v) = v − Dg(u)∗
+h 
+Dg(u)∗† [v] i . (7)
+b. Projected Neural Differential Equation. Projecting
+the NDE in Eq. (1) using the projection operator defined
+in Eq. (7) gives the following Projected Neural Differential
+Equation (PNDE),
+˙u = Proju( ¯fθ (u)) ∈ TuM, (8)
+which is a differential equation on the constraint mani-
+fold M.
+Proposition 1. Solutions to the PNDE (8) with u0 ∈ M
+satisfy g(u(t)) = 0 for all t ≥ 0.
+Proof. We note that
+dg(u(t))
+dt = Dg(u)[ ˙u] = Dg(u)
+
+Proju( ¯fθ (u))  = 0 (9)
+since Proju( ¯fθ (u)) ∈ TuM = ker Dg(u). As a result,
+g(u(t)) remains constant in time and satisfies g(u(t)) =
+g(u(0)) = 0 for all t ≥ 0 since u0 ∈ M.
+Using matrix notation for the Euclidean space E = Rn,
+let G(u) ∈ Rm×n denote the Jacobian matrix of g at u,
+with entries Gij (u) = ∂gi/∂uj . Under this identification,
+the differential acts as Dg(u)[v] = G(u)v and its adjoint
+as Dg(u)∗[α] = G(u)⊤α. Since G(u) has full row rank
+by assumption, the pseudoinverse simplifies to (G⊤)† =
+(GG⊤)−1G, and the projection operator in Eq. (7) takes
+the matrix form
+Proju(v) =
+
+I − G(u)⊤  G(u)G(u)⊤−1 G(u)  v. (10)
+c. Generalization to Riemannian Metrics. While the
+standard Euclidean inner product is mathematically
+straightforward and computationally efficient, some phys-
+ical systems may require non-Euclidean geometries. For
+example, in systems where state variables possess dis-
+parate characteristic scales, a weighted inner product can
+provide physically consistent scaling, ensuring that each
+variable contributes proportionally to the projection. We
+focus on the Euclidean case in this paper and provide a
+derivation of the projection operator for arbitrary Rie-
+mannian metrics in Appendix A.
+
+Projected Neural Differential Equations 4
+D. Practical Implementation
+a. Forward Pass. To evaluate Eq. (10), we first solve
+the linear system
+GG⊤λ = Gv (11)
+for λ ∈ Rm. Then, we simply evaluate the projected
+vector as
+Proju(v) = v − G⊤λ. (12)
+This approach avoids explicitly forming the matrix inverse
+and permits the use of highly optimized batched solvers.
+In particular, since the Gram matrix GG⊤ is m × m
+symmetric positive definite, we can use the Cholesky
+factorization GG⊤ = LL⊤ to solve Eq. (11) efficiently.
+Appropriate batched and GPU-accelerated routines
+are readily available in the cuSOLVER library, part of the
+standard NVIDIA CUDA toolkit. In practice, we find
+that the equivalent routines in the MAGMA library39 are
+slightly faster and we use them throughout this paper.
+b. Backward Pass. To train the neural network pa-
+rameters via gradient descent, we require derivatives of the
+projection operator. In particular, we need to propagate
+gradients of projection outputs backwards to gradients of
+projection inputs. Consider a scalar loss function L and
+let ¯p = ∇pL denote the gradient with respect to the pro-
+jected vector p = v − G⊤λ, where λ solves GG⊤λ = Gv.
+We need the gradients ¯v = ∇v L and ¯G = ∇GL. Because
+existing automatic differentiation frameworks (such as
+Zygote.jl, which we use here) cannot differentiate calls
+to external solver libraries (e.g., cuSOLVER or MAGMA), we
+instead derive analytic expressions for ¯v and ¯G. We pro-
+vide a detailed derivation in Appendix B and outline the
+key results here.
+Firstly, the gradient with respect to v is given by
+¯v = ¯p − G⊤µ, (13)
+where µ ∈ Rm solves the adjoint system
+GG⊤µ = G¯p. (14)
+Note that this has the same form as the forward pass in
+Eq. (12), except the projection is applied to ¯p instead
+of v. Consequently, we can reuse the Cholesky factoriza-
+tion GG⊤ = LL⊤ from the forward pass to solve Eq. (14)
+efficiently, reducing the evaluation of Eq. (13) to a sin-
+gle m × m triangular solve followed by a matrix-vector
+multiplication.
+Deriving the gradient with respect to G is more in-
+volved, as G appears both explicitly in p = v − G⊤λ
+and implicitly via λ from the linear system GG⊤λ = Gv.
+However, applying the chain rule to each contribution
+and simplifying yields the surprisingly compact form
+¯G = −µp⊤ − λ¯v⊤. (15)
+Note that all quantities on the right-hand side of Eq. (15)
+have already been computed: p and λ from the forward
+pass, and ¯v and µ from Eq. (13). Thus, by caching
+and reusing these quantities, the entire backward pass
+reduces to matrix-vector multiplications and a single m ×
+m triangular solve, thereby adding minimal overhead
+compared to the forward pass.
+c. Alternative Approaches. The approach outlined
+so far is computationally efficient but may not be optimal
+when G is ill-conditioned, since forming the Gram matrix
+squares the condition number, that is, κ(GG⊤) = κ(G)2.
+In this case, we can instead use QR decomposition to solve
+Eq. (11) without explicitly forming the Gram matrix. See
+Appendix C for the forward and backward passes in this
+case.
+d. Computational Complexity. Appendix D summa-
+rizes the complexity of each operation for both the
+Cholesky- and QR-based implementations outlined above.
+In each case, the total complexity of the forward pass
+is O(m2n), although the Cholesky-based approach has
+a smaller constant factor. In both implementations, the
+backward pass complexity is reduced to O(mn) by reusing
+the factorizations from the forward pass, allowing for
+highly efficient training.
+Crucially, the linear scaling with system dimension n
+allows our approach to readily handle high-dimensional
+state spaces. The primary computational bottleneck is
+instead determined by the constraint dimension m, mak-
+ing the method most efficient for systems where con-
+straints are relatively sparse compared to the state vari-
+ables (m ≪ n). Nonetheless, the quadratic scaling with m
+is mitigated by the extreme efficiency of dense linear alge-
+bra on modern accelerators, and we observe competitive
+wall-clock times even for large values of m (Section IVD).
+III. RELATED WORK
+a. Hard Constraints. A number of projection-based
+approaches have been proposed to constrain the outputs
+of deep learning models. Harder et al.40 design constraint
+layers to ensure mass and energy conservation during
+downscaling (i.e., super-resolution) of climate model fields
+from low to high resolution. Négiar, Mahoney, and Kr-
+ishnapriyan41 and Chalapathi, Du, and Krishnapriyan42
+add a differentiable implicit constraint layer for finding
+optimal linear combinations of learned basis functions
+that approximately satisfy differential constraints at col-
+location points. Jiang et al.43 and Duruisseaux et al.44
+use a spectral projection layer to enforce linear differen-
+tial constraints efficiently in Fourier space. Hard con-
+straints have also been used to take advantage of struc-
+tured and well-understood dynamical systems, for exam-
+ple, the divergence-free property of incompressible fluid
+flows45–47 and the symplectic structure of Hamiltonian
+systems.48–57
+The work of Finzi, Wang, and Wilson58 is closely re-
+lated to ours. They use explicit algebraic constraints to
+enable the learning of Hamiltonian dynamics in Carte-
+sian coordinates, where the Hamiltonian is “simpler” and
+
+Projected Neural Differential Equations 5
+therefore easier to learn than in the original, generalized
+coordinates. They add constraints to the Hamiltonian
+via Lagrange multipliers, and use a variational approach
+to derive the corresponding constrained equations of mo-
+tion. The result is the standard Hamiltonian equations of
+motion, multiplied by a projection operator that enforces
+the constraints in a manner that is consistent with the
+underlying Hamiltonian structure. While derived from
+an entirely different perspective, our approach can be
+understood as a generalization of their method beyond
+the idealized Hamiltonian setting to a more general class
+of NDEs. In this paper, for example, we include tests on
+a damped pendulum system, which is not Hamiltonian.
+b. Stabilized Neural Differential Equations. White
+et al.59 constrain NDE solutions using stabilized neural
+differential equations (SNDEs), given by
+˙u = fθ (u) − γF (u)g(u), (16)
+where γ ≥ 0 is a scalar, F : Rn → Rn×m is a stabilization
+matrix, and g : Rn → Rm is the same constraint function
+we defined in Eq. (2). Under mild conditions on γ and F ,
+the stabilized NDE (16) admits all solutions of the original
+NDE (1) while rendering the constraint manifold provably
+asymptotically stable. In other words, the stabilized NDE
+(16) is able to learn the correct ground truth dynamics
+while guaranteeing that the constraints are satisfied.
+To understand how SNDEs relate to our proposed
+method, we first provide the intuition behind Eq. (16).
+The stabilization term (i.e., the second term on the right-
+hand side) vanishes on the manifold, since g(u) = 0 there
+by definition. Hence, the stabilization is only “activated”
+when a trajectory leaves the constraint manifold, that is,
+when the constraints have already been violated. The
+effect of the stabilization is then to “nudge” such a tra-
+jectory “back toward M,” i.e., back toward satisfying the
+constraints. The strength of the nudge is determined by
+the stabilization parameter γ; larger values of γ lead to a
+stronger nudge and stricter enforcement of the constraints.
+However, excessively large values of γ may cause the sys-
+tem to become stiff, requiring the numerical solver to take
+smaller steps.
+The key difference with our method is that SNDEs
+continuously correct violations of the constraints, while
+our method, by ensuring that velocities are always tangent
+to the constraint manifold, prevents such violations from
+occurringinthefirstplace. Accordingly, wecanexpectour
+method to yield a stricter enforcement of the constraints.
+In Appendix E, we further show that the SNDE in Eq. (16)
+reduces in the limit γ → ∞ to the PNDE in Eq. (8). We
+will use SNDEs as a baseline for comparison throughout
+this paper.
+c. Continuous Normalizing Flows on Riemannian
+Manifolds. A large body of related work has studied
+neural ODEs on Riemannian manifolds, primarily in the
+context of continuous normalizing flows on non-Euclidean
+geometries. In contrast to this paper, they typically deal
+with prototypical Riemannian manifolds, such as spheres
+and tori, and are not easily adapted to more general
+manifolds. For example, the approach of Lou et al.60
+requires a local chart for the manifold, the derivation of
+which is likely to be analytically intractable for embedded
+submanifolds with arbitrary and nonlinear local defin-
+ing functions. Similarly, the approaches of Bose et al.61
+and Rezende et al.62 require an expression for the expo-
+nential map, while the approach of Mathieu and Nickel63
+uses a custom geodesic distance layer, none of which are
+easily applied in our setting.
+d. Optimization and Numerical Integrators on Mani-
+folds. The use of projections is widespread in optimiza-
+tion on manifolds,37,64 where it is used to project iterates
+to the constraint manifold and/or gradients onto appro-
+priate tangent spaces (as in our approach). The idea of
+projecting gradients onto tangent spaces of the constraint
+set dates back several decades,65,66 and is still commonly
+used. For instance, in Riemannian optimization, Eu-
+clidean gradients are typically replaced by Riemannian
+gradients, which are their orthogonal projections onto
+tangent spaces. Explicit formulas and efficient projection
+algorithms have been derived and used for manifolds of
+greater practical interest.64,67–74 Where these methods
+differ crucially from our approach is that they typically
+seek to constrain the weights or optimization variables
+themselves to a given matrix manifold, while our aim is
+to constrain trajectories of an NDE, the weights of which
+are not themselves directly constrained. Regarding nu-
+merical integration on manifolds, the available literature
+is much less extensive,75 and most approaches restrict
+themselves to Lie groups (very structured Riemannian
+manifolds) and Hamiltonian or mechanical systems, in
+order to obtain practical algorithms.76–79 Some of these
+approaches are based on projection, similarly to optimiza-
+tion on manifolds, while others use local parametrizations
+or Lagrange multipliers. Riemannian optimization algo-
+rithms have also been obtained by simulating dynamical
+systems using numerical integrators constrained to the
+relevant Riemannian manifolds.80–87
+e. Learned Constraints. Methods have been intro-
+duced that learn and enforce constraints from data. The
+“Constants Of Motion nETwork” (COMET)88 imposes
+orthogonality between the learned vector field and dis-
+covered conserved quantities. Similarly, Yang, He, and
+Zhu89 propose a neural projection operator to learn un-
+derlying physical constraints from position data, which
+are then enforced via an iterative correction scheme. More
+recently, FINDE90 utilizes projection methods to find and
+preserve unknown first integrals. However, all of these
+methods differ fundamentally from ours in their treat-
+ment of constraints: while they aim to discover hidden
+symmetries or constraints, our approach addresses the
+challenge of enforcing known physical laws. This dis-
+tinction has significant implications for computational
+efficiency; because discovery-based approaches parame-
+terize the constraints with a neural network, they incur
+substantial gradient overhead to calculate the Jacobian of
+the constraints network at every function evaluation. In
+contrast, our method avoids this overhead by leveraging
+
+Projected Neural Differential Equations 6
+the analytic Jacobian of the known constraints, enabling
+a highly optimized and exact projection (Section IID). In
+most practical applications, especially regarding physical
+systems, the constraints are a priori known and fixed, and
+the optimized routines presented in this paper are thus
+of significant practical utility.
+IV. EXPERIMENTS
+We now apply and evaluate our proposed approach on
+several test systems, including prototypical dynamical sys-
+tems and predator-prey models subject to conservation
+laws, strongly chaotic pendulums with kinematic con-
+straints, and a complex power grid model. We benchmark
+our approach against both unconstrained and constrained
+baselines, specifically vanilla neural differential equations
+and stabilized neural differential equations, respectively.
+We evaluate each model’s predicted trajectory ˆu(t) versus
+the ground truth trajectory u(t) using the relative error
+∥u(t) − ˆu(t)∥2/∥u(t)∥2. For the constraint error we re-
+port ∥g(ˆu(t))∥2, which is zero on the constraint manifold.
+All test statistics in this section are averaged over 100
+unseen initial conditions. We provide full details of the
+data generation, model setup, and training procedure in
+Appendices F and G, and include illustrations of individ-
+ual test trajectories in Appendix H. Analytic constraint
+Jacobians for all systems are given in Appendix I.
+A. Conservation Laws
+1. 2-D Particle in a Quartic Potential
+We begin with a particle moving in two dimensions in
+a radially symmetric quartic potential given by
+V (x, y) = 1 4 (x2 + y2)2 = r4 4 , (17)
+where r =
+p
+x2 + y2. For a particle with unit mass, the
+equations of motion are
+¨x = −x(x2 + y2), ¨y = −y(x2 + y2). (18)
+Eq. (18) produces bounded, quasi-periodic orbits that
+precess and do not close.
+Converting to first-order form with state u =
+(x, y, ˙x, ˙y) ∈ R4, the system conserves both energy,
+E(u) = 1 2 ( ˙x2 + ˙y2) + 1 4 (x2 + y2)2, (19)
+and angular momentum,
+L(u) = x ˙y − y ˙x. (20)
+Knowledge of both conservation laws yields an integrable
+system. Instead, as a proof of concept, we suppose incom-
+plete knowledge of the system and enforce only conserva-
+tion of energy via the constraint
+g(u) = E(u) − E(u0) = 0, (21)
+where g : R4 → R1 and u0 is the initial condition.
+Despite the relative simplicity of this system, its pre-
+cessing orbits pose a challenge for neural network ap-
+proximation (Fig. 2). The unconstrained NDE exhibits
+rapidly growing errors, with some trajectories spiraling
+inward, while others quickly accumulate errors in the
+precession angle (Fig. 8). Of the constrained approaches,
+PNDEs predict the state most accurately while enforcing
+the constraints to near machine precision.
+2. Lotka–Volterra System
+We next consider the classic Lotka–Volterra predator-
+prey model, describing the interaction between a prey
+population x and a predator population y. The dynamics
+are governed by the coupled differential equations
+˙x = αx − βxy, ˙y = δxy − γy, (22)
+where α, β, γ, δ > 0 are interaction parameters. For any
+positive initial condition, the populations oscillate peri-
+odically and obey a conservation law given by
+V (x, y) = δx − γ ln x + βy − α ln y. (23)
+To evaluate our method, we enforce this conservation law
+as the constraint
+g(u) = V (u) − V (u0) = 0, (24)
+where u = (x, y). While this constraint does not corre-
+spond to a well-defined physical property of the system,
+such as conservation of energy, this system nonetheless
+presents a distinct challenge compared to the other sys-
+tems in this paper: the domain is restricted to the positive
+quadrant (x, y > 0) and the constraint is non-polynomial
+(involving logarithms). As a result, the Jacobian of the
+constraint, given by
+G(x, y) =
+ δ − γ/x β − α/y , (25)
+diverges as either population approaches zero. For SNDEs,
+this causes training to become unstable when the stabiliza-
+tion term is evaluated near the domain boundary, where
+it diverges, and we were unable to train SNDEs on this
+system. In contrast, PNDEs avoid this issue entirely by
+constraining trajectories to the manifold exactly, meaning
+that the Jacobian is never evaluated near the domain
+boundary.
+As shown in Fig. 2, the unconstrained NDE rapidly
+accumulates errors, leaving PNDE as the only method
+able to learn the dynamics in this setting.
+B. Simplifying Complex Learning Tasks Using Explicit
+Constraints
+We now consider a damped N -pendulum system, con-
+sisting of N simple pendulums connected end to end.
+
+Projected Neural Differential Equations 7
+2-D Quartic PotentialLotka-Volterra
+Relative State Error
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+(a)
+Constraint Error
+10−6
+10−4
+10−2
+(b)
+Time [s]
+0 50 100
+Relative State Error
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+(c)
+Time [s]
+0 50 100
+Constraint Error
+10−6
+10−4
+10−2
+(d)
+NDE
+SNDE (𝛾 = 1)
+SNDE (𝛾 = 10)
+PNDE
+FIG. 2. Comparison of NDE, SNDE, and PNDE on two bench-
+mark systems. Top row: 2-D quartic potential showing (a)
+relative state error and (b) energy conservation error. Bot-
+tom row: Lotka–Volterra system showing (c) relative state
+error and (d) conserved quantity error. On both systems,
+PNDEs clearly outperform the baselines with respect to both
+constraint error and state error, achieving constraint errors
+near machine precision and better state accuracy than NDEs
+and SNDEs. SNDEs become unstable during training on the
+Lotka–Volterra system when the constraint Jacobian is evalu-
+ated near the domain boundary, where it diverges.
+O
+θ1
+θ2
+θ3
+θ4
+FIG. 3. Illustration of a 4-pendulum.
+N = 1 corresponds to the canonical simple pendulum,
+N = 2 yields the well-known chaotic double pendulum,
+and higher values of N yield systems with progressively
+more complex and chaotic dynamics (Fig. 3 shows N = 4).
+For realism, we include damping proportional to the rel-
+ative angular velocity of each pendulum bob; this could
+represent, for example, friction in the hinges of the pen-
+dulum.
+Assuming that each bob has a mass of 1 kg and each
+arm has a length of 1 m, the equations of motion of the
+i-th bob are given by
+0 =
+NX
+j=1
+a(i, j)
+¨θj cos(θi − θj ) + ˙θ2 j sin(θi − θj ) 
++ b( ˙θi − ˙θi−1) + (N − i + 1)g sin θi,
+(26)
+where θi is the angle that the i-th arm makes with the
+vertical, b = 0.1 is the coefficient of friction, a(i, j) =
+N − max(i, j) + 1, and g = 9.81 m s−2 is acceleration due
+to gravity.
+Given observations of this system, a reasonable ap-
+proach would be to learn an NDE directly approximating
+Eq. (26), which is in generalized coordinates. However, it
+is clear from Eq. (26) that the equations of motion will be-
+come increasingly complex as N increases. Alternatively,
+and analogously to the approach taken by previous work
+for Lagrangian and Hamiltonian systems,58 we can first
+convert to Cartesian coordinates, where the equations of
+motion may be easier to learn. However, after converting
+to Cartesian coordinates, the length of each pendulum
+arm is no longer constant by construction, as is the case in
+generalized coordinates. Hence, to enable learning in the
+“easier” Cartesian coordinates, we must explicitly enforce
+that the length of each arm remains constant.
+Given the position qi = (xi, yi) of the i-th bob in
+Cartesian coordinates, we can write down N holonomic
+constraints on the system,
+g(pos) i (q) = ∥qi − qi−1∥2 − 1 = 0, i = 1, . . . , N, (27)
+where q = (q1, . . . , qN ) and q0 = (0, 0) is the origin. We
+differentiate these constraints to obtain N additional,
+conjugate constraints on the velocity,
+g(vel) i (q, ˙q) = (qi − qi−1) · ( ˙qi − ˙qi−1) = 0, i = 1, . . . , N.
+(28)
+Collecting the position and velocity constraints into a
+vector, we obtain 2N constraints for the N -pendulum in
+Cartesian coordinates:
+g(u) =
+h
+g(pos) 1 , . . . , g(pos) N , g(vel) 1 , . . . , g(vel) N
+i
+= 0, (29)
+where u = (q, ˙q) and g : R4N → R2N . We note again
+that the generalized coordinates of Eq. (26) satisfy these
+constraints automatically.
+Fig. 4 demonstrates that learning constrained dynam-
+ics in Cartesian coordinates produces better predictions
+than learning the same dynamics expressed in generalized
+coordinates. The difference in performance becomes espe-
+cially pronounced as N is increased and the dynamics in
+generalized coordinates become more complex. Among
+constrained models, PNDEs enforce the constraints sev-
+eral orders of magnitude more accurately than SNDEs
+and do not require tuning of the stabilization parameter γ.
+
+Projected Neural Differential Equations 8
+Relative State Error
+0.0
+0.5
+1.0
+Constraint Error
+10⁻⁶
+10⁻⁴
+10⁻²
+N = 4
+Time [s]
+0 1 2 3 4 5
+Relative State Error
+0.0
+0.5
+1.0
+Time [s]
+0 1 2 3 4 5
+Constraint Error
+10⁻⁶
+10⁻⁴
+10⁻²
+N = 8
+NDE (Angular)
+SNDE (𝛾 = 20)
+SNDE (𝛾 = 200)
+PNDE
+FIG. 4. Comparison of NDE, SNDE, and PNDE on N -
+pendulum systems (N = 4, 8). Left: Relative state error
+over time. Right: Constraint violation ∥g(u)∥ over time.
+NDE operates in constraint-satisfying generalized coordinates,
+while SNDE and PNDE operate in Cartesian coordinates with
+constraints explicitly enforced. The benefits of learning in
+Cartesian coordinates with constraints become pronounced as
+N is increased. PNDEs enforce the constraints several orders
+of magnitude more accurately than SNDEs.
+C. Power Grids
+The IEEE test systems are standardized power system
+models widely used in electrical engineering research and
+education.91 Representing key features of power grids
+such as topologies and operating conditions, these models
+enable researchers to benchmark algorithms and offer a
+common framework for analyzing power flow, stability,
+and reliability in electrical networks. We study the dy-
+namics of the IEEE 14-bus system (see Fig. 5), adapted
+to represent future grid dynamics by replacing conven-
+tional generators with renewable energy sources. Our
+renewables-based grids consist of three types of buses,
+or nodes: (1) renewable energy sources, (2) loads (that
+is, consumers), and (3) a slack bus (a constant-voltage
+bus representing, for example, a large power plant or a
+connection to another grid).
+The state of each bus is determined by a complex volt-
+age. In this experiment, we treat the real and imaginary
+parts separately, so a grid with N buses has 2N real-
+valued state variables. Normally, a power grid operates
+at a steady-state equilibrium, called its operation point.
+We apply random perturbations (see Appendix F) and
+learn the dynamics from the resulting transients as the
+grid returns to its operation point.
+The complex power at each PQ bus j is set to a fixed,
+FIG.5. TheIEEE14-buspowergridsystem. Circlesrepresent
+generators and arrows represent consumers. Figure reproduced
+with permission from Leon, Bretas, and Rivera 92 .
+constant value given by
+Pj + iQj = vj · i∗ j , (30)
+where Pj and Qj are the fixed active and reactive power,
+respectively, vj is the complex voltage, and ij is the
+complex current.93 These fixed power values will be the
+constraints in our experiments. The complex currents
+in Eq. (30) are determined by i = LY · v, where the
+admittance Laplacian LY ∈ CN ×N encodes the known
+line admittances. Given N total buses and M PQ buses,
+the 2M constraints (one real and one imaginary for each
+PQ bus) are given by
+g(u) =
+
+
+P1 − Re (v1 · i∗ 1)
+Q1 − Im (v1 · i∗ 1)
+...
+PM − Re (vM · i∗ M )
+QM − Im (vM · i∗ M )
+
+ = 0, (31)
+where u = (Re (v1), Im (v1), . . . , Re (vN ), Im (vN )) ∈ R2N
+and g : R2N → R2M . For the IEEE 14-bus system,
+N = 14 and M = 9, so we learn the dynamics of 28
+voltages subject to 18 constraints.
+As shown in Fig. 6, all models produce similar state
+predictions on the test set, with SNDEs indistinguishable
+from the NDE. However, unconstrained NDEs and SNDEs
+incur large errors in the PQ-bus power constraint. For
+SNDEs, increasing the stabilization hyperparameter γ
+enforces the constraints more accurately, but larger values
+lead to stiffness and, ultimately, prohibitively expensive
+simulations (see timings in Table I). Meanwhile, PNDEs
+enforce the constraints several orders of magnitude more
+accurately than the best SNDEs, without stiffness.
+Figure 7 compares PNDEs and NDEs on significantly
+longer rollouts of duration 500 s. For unconstrained NDEs,
+
+Projected Neural Differential Equations 9
+Time [s]
+0 5 10
+Relative State Error
+10−4.0
+10−3.5
+10−3.0
+10−2.5
+(a)
+Time [s]
+0 5 10
+Constraint Error
+10−6
+10−4
+10−2
+(b)
+NDE
+SNDE (𝛾 = 0.1)
+SNDE (𝛾 = 1)
+PNDE
+FIG. 6. Comparison of NDE, SNDE, and PNDE for the
+IEEE 14-bus power grid system. (a) Mean relative state
+error and (b) mean constraint error over time on 100 test
+trajectories. All models produce similar state predictions,
+with SNDEs indistinguishable from the NDE. Stabilized NDEs
+(SNDE) with γ ∈ {0.1, 1} reduce constraint drift compared to
+the unconstrained NDE but do not achieve exact constraint
+satisfaction. PNDEs enforce the constraints several orders of
+magnitude more accurately than SNDEs.
+the active power injected at the PQ (load) buses drifts
+and even turns positive, implying that they spontaneously
+generate power—this behavior is clearly unphysical, em-
+phasizing the need for constraints. By contrast, for PN-
+DEs, the active power injected at the PQ buses remains
+constant due to the constraints. For the PV buses, we
+compare the predicted voltage magnitude to the system’s
+operation point, to which it should converge. We find
+that the PNDE trajectories converge almost exactly to
+the correct operation point, while NDE trajectories drift
+and do not converge at all. It is remarkable that the
+PNDE trajectories predict the operation point so accu-
+rately, given the highly limited training data—just 100
+trajectories of duration 10 s each. For completeness, we
+plot the remaining buses in Figs. 12 and 13 in Appendix H.
+D. Computational Performance
+Table I shows the training and inference times for each
+system and model. Compared to unconstrained NDEs,
+PNDEs inevitably incur additional computation in order
+to enforce the constraints. The time required to train
+PNDEs ranges from 1.15–2.58× the time required for the
+unconstrained NDE. During inference, the time required
+for a single forward pass of the PNDE, that is, a single
+evaluation of the MLP and the constraints, is 1.23–2.81×
+that of the unconstrained NDE.
+We also report the time required to solve each model for
+an actual trajectory. Compared to benchmarking a single
+forward pass of the model, this approach also reflects
+differences in stiffness between models that may require
+P4 [p.u.]
+−0.5
+0.0
+0.5
+(a)
+P10 [p.u.]
+−0.10
+−0.05
+0.00
+0.05
+0.10
+(b)
+Time [s]
+0 250 500
+|V1| [p.u.]
+0.9
+1.0
+1.1
+1.2
+(c)
+Time [s]
+0 250 500
+|V3| [p.u.]
+0.8
+0.9
+1.0
+1.1
+1.2
+(d)
+NDE PNDE Op. point
+FIG. 7. Long-horizon rollouts on the IEEE 14-bus system
+with 50 test initial conditions. Top row: Active power injec-
+tion at PQ buses 4 and 10: the NDE trajectories drift upward
+and eventually turn positive (unphysical for load buses, im-
+plying that they spontaneously generate power), while PNDE
+trajectories remain at their initial values. Bottom row:
+Voltage magnitude at PV buses 1 and 3: PNDE trajectories
+converge to the operation point, whereas NDE trajectories do
+not converge. We plot the remaining buses in Figs. 12 and 13
+in Appendix H.
+the adaptive solver to take more steps. The time required
+for the PNDEs ranges from 1.00–2.13× the time required
+for the unconstrained NDE.
+Compared to SNDEs, the PNDE is always at least as
+fast to train and faster for a single forward pass, even
+for low values of the stabilization parameter γ. This is
+because the SNDE requires evaluating both the constraint
+function g and its Jacobian G at each step, whereas the
+PNDE only requires G. The PNDE is likewise faster than
+the SNDE for full trajectory solves in all cases except
+the 8-pendulum, where the adaptive solver requires more
+steps for the PNDE than for the SNDE at γ = 20.
+The different values of γ reflect the trade-off between
+constraint accuracy and computational cost that exists for
+SNDEs. Large values of γ enforce the constraints more ac-
+curately, but eventually lead to stiffness and significantly
+more expensive solves. PNDEs, in contrast, enforce the
+constraints close to machine precision without stiffness.
+
+Projected Neural Differential Equations 10
+TABLE I. Training and inference times for each system and
+model, using a batch size of 1024 on a single NVIDIA H100
+GPU. The forward pass time is the duration of a single forward
+pass of the model, that is, a single evaluation of the MLP
+and, where applicable, the constraints. The solve time is the
+duration to obtain a single solution of the model for an actual
+trajectory, where the duration of the trajectory for a given
+system is the same as the test trajectories used in the previous
+sections. Forward-pass and solve times report the minimum
+over repeated runs.
+System Model Train Fwd. Pass Solve
+(min) (ms) (ms)
+2-D Quartic
+Potential
+NDE 3.9 0.17 2163
+SNDE (γ=1) 4.5 0.50 2743
+SNDE (γ=10) 4.5 0.50 3908
+PNDE 4.5 0.42 2531
+Lotka–Volterra
+NDE 5.5 0.20 3201
+SNDE N/A N/A N/A
+PNDE 6.6 0.38 3199
+4-Pendulum
+NDE (Angular) 238 1.22 2235
+SNDE (γ=20) 703 1.68 3696
+SNDE (γ=200) 755 1.70 6089
+PNDE 607 1.50 3506
+8-Pendulum
+NDE (Angular) 320 1.23 3629
+SNDE (γ=20) 1005 1.95 5980
+SNDE (γ=200) 890 1.90 8778
+PNDE 825 1.75 7725
+IEEE 14-Bus
+NDE 9.8 0.36 36
+SNDE (γ=0.1) 25.5 1.22 75
+SNDE (γ=1) 23.3 1.22 83
+SNDE (γ=10) 22.8 1.23 245
+PNDE 21.3 1.00 67
+V. CONCLUSION
+We have introduced projected neural differential equa-
+tions (PNDEs), a method for enforcing hard algebraic
+constraints in neural differential equations by project-
+ing the learned vector field onto the tangent space of
+the constraint manifold. The approach provides prov-
+able constraint satisfaction to machine precision, requires
+no constraint-specific hyperparameters, and avoids the
+numerical stiffness that can affect stabilization-based alter-
+natives. Our projection method scales well with increasing
+system dimension and is applicable to any dynamical sys-
+tem subject to physical or kinematic constraints, thus cov-
+ering a wide range of applications in science and engineer-
+ing. We derived analytic gradients of the projection oper-
+ator, enabling efficient training with moderate overhead
+compared to unconstrained models. Across experiments
+on chaotic dynamical systems, a predator-prey model,
+and a realistic power grid model, PNDEs consistently out-
+performed existing methods in constraint accuracy—by
+several orders of magnitude—while maintaining at least
+competitive and typically improved state prediction and
+computational efficiency. We further showed that explicit
+constraints can enable effective learning in simpler coordi-
+nate systems, substantially improving generalization for
+high-dimensional chaotic systems. These results suggest
+that PNDEs offer a principled and practical framework for
+incorporating known physical laws in neural differential
+equation models.
+a. Limitations. The computational overhead of
+projection—roughly 1.0–2.8× for training and inference
+relative to an unconstrained NDE (Table I)—scales
+quadratically with the number of constraints m. For
+systems with many constraints, this may become a bot-
+tleneck, though in practice we find that the overhead
+remains moderate even for the largest constraint dimen-
+sions considered here. The projection also assumes that
+the constraint Jacobian has full row rank everywhere on
+the constraint manifold, but this can fail at singular con-
+figurations where constraints become linearly dependent;
+the method does not currently handle such cases. While
+PNDEsenforceconstraintstomachineprecision, round-off
+errors may nonetheless lead to drift during long simula-
+tions beyond those studied here; in such cases, a periodic
+coordinate projection (see, e.g., Hairer75) may be applied
+to return the trajectory to the constraint manifold.
+b. Future Work. Although we focus on the Euclidean
+projection in this paper, the generalized projection op-
+erator derived in Appendix A suggests several practical
+directions. While a projection based on the most general,
+state-dependent metric may be prohibitively expensive
+to evaluate, more physically motivated metrics—such as
+a constant diagonal weighting matrix for state variables
+with disparate scales or units, or the mass matrix of a
+mechanical system—may yield physically consistent pro-
+jections at negligible additional cost. Evaluating whether
+such metrics improve learning or long-horizon trajectory
+qualityisanaturalnextstep. Finally, generalizingthepro-
+jection approach to inequality constraints would broaden
+applicability to settings such as voltage bounds in power
+grid models, where one-sided constraints arise naturally.
+ACKNOWLEDGMENTS
+This work was funded by the Volkswagen Foundation.
+N.B. and M.G. acknowledge the ClimTip project that
+has received funding from the European Union’s Hori-
+zon Europe research and innovation programme under
+grant agreement No. 101137601; this is ClimTip contribu-
+tion #. F.H. acknowledges the eKI4Ds project, funded
+by the German Federal Ministry for Economy and En-
+ergy (03EI1092A). N.K. has received funding from the
+European Research Council (ERC) under the European
+Union’s Horizon Europe research and innovation pro-
+gramme (grant agreement No. 101221985). N.K. has been
+supported by the German Federal Ministry of Education
+and Research (Grant: 01IS24082). The authors gratefully
+acknowledge the European Regional Development Fund
+
+Projected Neural Differential Equations 11
+(ERDF), the German Federal Ministry of Education and
+Research, and the Land Brandenburg for supporting this
+project by providing resources on the high performance
+computer system at the Potsdam Institute for Climate
+Impact Research.
+AUTHOR DECLARATIONS
+Conflict of Interest
+The authors have no conflicts to disclose.
+DATA AVAILABILITY
+The code required for generating the data and
+running the experiments in this study is available
+on GitHub at https://github.com/white-alistair/
+Projected-Neural-Differential-Equations.
+Appendix A: Generalization to Riemannian Metrics
+In Section II, we specialized the projection operator to
+the standard Euclidean inner product. Here, we generalize
+thederivationtoanambientspace E equippedwithastate-
+dependent Riemannian metric. Let the inner product
+at u ∈ E be defined by a smoothly varying symmetric
+positive-definite matrix M (u) ∈ Rn×n, such that
+⟨v, w⟩M (u) = v⊤M (u)w (A1)
+for any tangent vectors v, w ∈ TuE.
+Let G(u) ∈ Rm×n denote the Jacobian matrix of the
+constraints g at u. The differential is given by Dg(u)[v] =
+G(u)v. To find the orthogonal projection onto the tangent
+space TuM = ker G(u) with respect to this metric, we
+must first determine the adjoint operator Dg(u)∗ such
+that
+⟨G(u)v, α⟩Rm = ⟨v, Dg(u)∗[α]⟩M (u), (A2)
+where we assume the standard Euclidean inner product
+on the constraint space Rm. Expanding both sides yields
+(G(u)v)⊤α = v⊤M (u)Dg(u)∗[α]. (A3)
+Rearranging the left side as v⊤G(u)⊤α, we identify the
+adjoint under the Riemannian metric as
+Dg(u)∗[α] = M (u)−1G(u)⊤α. (A4)
+Following the orthogonal decomposition in Eq. (5),
+any vector v ∈ E can be uniquely decomposed into a
+component parallel to TuM and a component orthogonal
+to it (with respect to M (u)),
+v = ProjM u (v) + M (u)−1G(u)⊤α. (A5)
+Because the projected vector must lie in the tangent space,
+it satisfies G(u)ProjM u (v) = 0. Applying G(u) to both
+sides of the decomposition gives
+G(u)v = 0 + G(u)M (u)−1G(u)⊤α. (A6)
+Assuming G(u) has full row rank, the ma-
+trix G(u)M (u)−1G(u)⊤ is invertible. Solving for α
+yields
+α =
+ 
+G(u)M (u)−1G(u)⊤−1 G(u)v. (A7)
+Substituting α back into the decomposition, we obtain
+the generalized projection operator,
+ProjM u (v) =  I − M −1G⊤  GM −1G⊤−1 G  v. (A8)
+Replacing the Euclidean projection in Eq. (8) with ProjM u
+yields a projected neural differential equation that is dy-
+namically consistent with the chosen Riemannian geome-
+try.
+In practice, the choice of metric depends on the physical
+properties of the system being studied. For state variables
+with disparate scales or units, a constant diagonal weight-
+ing matrix W is sufficient; since W −1 is trivially evaluated,
+this adds negligible cost compared to the Euclidean case
+and preserves the O(m2n) forward-pass complexity. More
+general choices of M require solving an n × n system,
+increasing the forward-pass cost to O(n3) and limiting
+their practical utility.
+Appendix B: Derivation of Projection Operator Gradients
+We derive the gradients of the projection operator with
+respect to its inputs, enabling backpropagation through
+the projection layer.
+1. Setup
+The forward pass computes the projection
+p = v − G⊤λ, where λ solves GG⊤λ = Gv. (B1)
+In matrix form, this is equivalent to p = P v, where
+P = I − G⊤(GG⊤)−1G is the projection matrix. Given
+a scalar loss L and its gradient ¯p = ∇pL with respect to
+the projection output p, we seek the gradients ¯v = ∇v L
+and ¯G = ∇GL with respect to the projection inputs v
+and G.
+We first state the necessary adjoint results from Giles94:
+a. Matrix Multiplication (Giles 94, §2.2): If C = AB,
+the reverse mode sensitivities are:
+¯A = ¯CB⊤, ¯B = A⊤ ¯C. (B2)
+
+Projected Neural Differential Equations 12
+b. Matrix Inverse Product (Giles 94, §2.3): If C =
+A−1B, the reverse mode sensitivities are:
+¯B = A−⊤ ¯C, ¯A = − ¯BC ⊤. (B3)
+2. Gradient with respect to v
+By the multiplication rule (B2), if p = P v then ¯v =
+P ⊤ ¯p. Since P is symmetric, ¯v = P ¯p, which means we
+simply apply the projection to ¯p:
+¯v = ¯p − G⊤µ, (B4)
+where µ solves the adjoint system GG⊤µ = G¯p. Note
+that this has the same structure as the forward pass.
+3. Gradient with respect to G
+The matrix G enters the projection (B1) in three places:
+(i) explicitly in G⊤λ, (ii) via Gv in the right-hand side of
+GG⊤λ = Gv, and (iii) via the Gram matrix GG⊤ in the
+left-hand side of GG⊤λ = Gv. We apply the chain rule
+to each contribution separately.
+a. Contribution from G⊤λ. Let q = G⊤λ. By the
+multiplication rule (B2), ¯G⊤ = ¯qλ⊤, and hence
+¯G = λ¯q⊤. (B5)
+Substituting q into (B1), we have p = v − q and, by the
+chain rule, ¯q = −¯p. Substituting ¯q into (B5), we get
+¯G(1) = −λ¯p⊤. (B6)
+b. Contribution from Gv. Let A = GG⊤ and b = Gv
+so that Aλ = b. By the multiplication rule (B2),
+¯G = ¯bv⊤. (B7)
+By the inverse product rule (B3), if λ = A−1b, then
+¯b = A−⊤ ¯λ. (B8)
+To find ¯λ, note that λ affects p through G⊤λ; we again
+apply the multiplication rule (B2) to (B1) to get
+¯λ = G(−¯p) = −G¯p. (B9)
+Substituting (B9) into (B8), we get
+¯b = A−⊤(−G¯p) = −A−1G¯p, (B10)
+where we have also used the fact that A is symmetric.
+Observe that this is exactly −µ, where µ solves the adjoint
+system GG⊤µ = G¯p introduced in the previous section.
+Hence,
+¯G(2) = ¯bv⊤ = −µv⊤. (B11)
+c. Contribution from GG⊤. The Gram matrix A =
+GG⊤ also affects λ via the linear system λ = A−1b. By
+the inverse product rule (B3),
+¯A = −¯bλ⊤. (B12)
+Substituting ¯b = −µ (established above) into (B12), we
+get
+¯A = µλ⊤. (B13)
+Since A = GG⊤, we can apply the matrix product rule
+(B2) twice to get
+¯G(3) = ¯AG + ¯A⊤G. (B14)
+Substituting (B13) into (B14),
+¯G(3) = (µλ⊤ + λµ⊤)G. (B15)
+d. Combined gradient. Summing all three contribu-
+tions:
+¯G = −λ¯p⊤ − µv⊤ + (µλ⊤ + λµ⊤)G. (B16)
+This expression can be simplified using two relations ob-
+tained by rearranging earlier equations:
+• From the forward pass (B1): v = p + G⊤λ.
+• From the gradient w.r.t. v (B4): ¯p = ¯v + G⊤µ.
+Substituting these into (B16) and expanding:
+¯G = −λ¯p⊤ − µv⊤ + µλ⊤G + λµ⊤G
+= −λ(¯v + G⊤µ)⊤ − µ(p + G⊤λ)⊤ + µλ⊤G + λµ⊤G
+= −λ¯v⊤ − λµ⊤G − µp⊤ − µλ⊤G + µλ⊤G + λµ⊤G
+= −λ¯v⊤ − µp⊤. (B17)
+The cross terms λµ⊤G and µλ⊤G cancel, yielding the
+compact form
+¯G = −µp⊤ − λ¯v⊤. (B18)
+This final expression requires only quantities already com-
+puted: p and λ from the forward pass, and ¯v and µ from
+the gradient with respect to v.
+Appendix C: QR-Based Projection Implementation
+The default implementation of the projection opera-
+tor, described in Section IID, forms the Gram matrix
+GG⊤ and solves the resulting symmetric positive-definite
+system via Cholesky factorization. While computation-
+ally efficient, this approach squares the condition number:
+κ(GG⊤) = κ(G)2. For ill-conditioned constraint Jaco-
+bians, this can lead to numerical difficulties. Here we
+describe an alternative implementation, based on QR
+decomposition, that avoids forming the Gram matrix en-
+tirely.
+
+Projected Neural Differential Equations 13
+1. Forward Pass
+We want to solve the linear system GG⊤λ = Gv for λ
+without explicitly forming GG⊤. Consider the thin QR
+factorization of the transpose of the constraint Jacobian,
+G⊤ = QR, (C1)
+where Q ∈ Rn×m has orthonormal columns and R ∈
+Rm×m is upper triangular. Since G has full row rank by
+assumption, R is nonsingular. Substituting Eq. (C1) into
+the Gram matrix yields
+GG⊤ = (QR)⊤(QR) = R⊤Q⊤QR = R⊤R, (C2)
+where we have used the orthonormality of Q. The linear
+system GG⊤λ = Gv therefore becomes
+R⊤R λ = Gv, (C3)
+which can be solved by two successive triangular solves:
+1. Solve R⊤z = Gv for z (forward substitution),
+2. Solve Rλ = z for λ (back substitution).
+Having obtained λ, the projected vector is computed as
+before via p = v − G⊤λ.
+The key advantage is that R inherits the condition num-
+berof G ratherthanitssquare: κ(R) = κ(G). Thisfollows
+from the fact that R and G have the same singular values,
+since Q is orthogonal and therefore norm-preserving.
+2. Backward Pass
+The backward pass proceeds analogously to the
+Cholesky-based derivation in Appendix B. The gradient
+with respect to v is
+¯v = ¯p − G⊤µ, (C4)
+where µ solves R⊤R µ = G¯p via the same two-step tri-
+angular solve as in the forward pass. The gradient with
+respect to G retains the same form,
+¯G = −µ p⊤ − λ ¯v⊤, (C5)
+since the derivation in Appendix B depends only on the
+structure of the linear system GG⊤λ = Gv and not on
+the specific factorization used to solve it. In particular,
+by caching R from the forward pass, the backward pass
+requires only two additional triangular solves and two
+outer products.
+Appendix D: Computational Complexity
+Table II compares the complexity of the Cholesky- and
+QR-based implementations. In both cases, the forward
+pass has complexity O(m2n), dominated by formation
+of the Gram matrix GG⊤ and the QR factorization, re-
+spectively. However, the QR-based approach avoids one
+batched matrix-matrix multiplication (the formation of
+GG⊤), at the expense of an additional triangular solve
+and a larger constant factor in the QR factorization it-
+self. The backward pass complexity is identical for both
+approaches, since both reuse the factorization from the
+forward pass.
+TABLE II. Comparison of Cholesky and QR implementations,
+where n is the state dimension and m < n is the number of
+constraints.
+Operation Cholesky QR
+Gram matrix GG⊤ O(m2n) —
+Factorization O(m3) O(m2n)
+Triangular solve(s) O(m2) O(m2)
+Matrix-vector multiplication O(mn) O(mn)
+Forward pass total O(m2n) O(m2n)
+Backward pass total O(mn) O(mn)
+Appendix E: PNDEs as the Infinite-γ Limit of SNDEs
+In this section, we demonstrate that the projected neu-
+ral differential equation (PNDE) naturally emerges as the
+infinite-penalty limit of the stabilized neural differential
+equation (SNDE). Consider the SNDE,
+˙u = fθ (u) − γF (u)g(u), (E1)
+where γ > 0 is the penalty parameter and F : Rn →
+Rn×m is the stabilization matrix. We assume the matrix
+G(u)F (u) ∈ Rm×m is invertible for all u ∈ M, where
+G(u) is the constraint Jacobian.
+Consider the constraint violation v(t) = g(u(t)) ∈ Rm.
+Differentiating v along solutions of Eq. (E1), we get
+˙v = G(u) ˙u = G(u)fθ (u) − γG(u)F (u)v. (E2)
+To take the limit, we introduce the rescaled multiplier
+λ := γv and the small parameter ϵ := 1/γ. Eq. (E2) then
+takes the standard singularly perturbed form:
+ϵ ˙λ = G(u)fθ (u) − G(u)F (u)λ. (E3)
+For each frozen u, the fast subsystem in Eq. (E3) is a linear
+ODE in λ. Because G(u)F (u) is invertible, λ relaxes on
+the fast timescale ϵ towards its quasi-steady state:
+λ⋆(u) =   G(u)F (u) −1 G(u)fθ (u). (E4)
+As ϵ → 0 (γ → ∞), this relaxation becomes instantaneous
+relative to the slow dynamics of u. For initial conditions
+u0 ∈ M, the state u starts exactly on the constraint
+manifold, though λ undergoes a brief boundary layer of
+duration O(ϵ) as it transitions from λ(0) = γg(u0) = 0 to
+its quasi-steady state λ⋆(u0). By Tikhonov’s theorem, this
+
+Projected Neural Differential Equations 14
+transient vanishes in the limit ϵ → 0, ensuring λ → λ⋆(u)
+pointwise for t > 0.
+Substituting λ⋆(u) back into the generalized SNDE in
+place of γg(u) gives the limiting equation of motion on
+the manifold:
+˙u = fθ (u) − F (u)
+ 
+G(u)F (u)
+−1
+G(u)fθ (u) = PF (u)fθ (u),
+(E5)
+where PF (u) := I − F (u)
+ 
+G(u)F (u)
+−1
+G(u). We
+note that PF (u) is idempotent (PF (u)2 = PF (u)) and
+G(u)PF (u) = 0, meaning it acts as a projection operator
+onto the tangent space TuM = ker G(u).
+The derivation above reveals that in the infinite-γ limit,
+every validSNDEactsasanobliqueprojector, pushingthe
+vector field onto the tangent space along the column space
+of F (u). To obtain an orthogonal projection, the image of
+F (u) must be the orthogonal complement to the tangent
+space. This immediately implies that the columns of F (u)
+must span the same subspace as the constraint gradients;
+canonical choices are F (u) = G(u)⊤ and F (u) = G(u)†.
+Substituting either choice into Eq. (E5) yields:
+˙u =
+
+I − G(u)⊤  G(u)G(u)⊤−1 G(u)  fθ (u), (E6)
+which recovers the PNDE of Eq. (8) with the orthogonal
+projection operator of Eq. (10).
+Appendix F: Datasets
+For each system, we generate ground truth trajectories
+from random initial conditions. The exact number of
+initial conditions used for training, validation, and testing,
+as well as the duration of each trajectory and the timestep
+used, is determined based on the individual characteristics
+of each system, and summarized in Table IV.
+For training and validation, each trajectory is split into
+contiguous segments consisting of 4 timesteps, which are
+then randomized and combined along the batch dimen-
+sion. The first observation in each segment is the initial
+condition for the prediction.
+With the exception of the power grid experiments, all
+trajectories are generated using a 9(8) explicit Runge–
+Kutta method,95 with absolute and relative solver toler-
+ances of 10−12.
+The power grid models, which are differential-algebraic
+equations (DAEs), are implemented in the Julia package
+PowerDynamics.jl.96 Given a random initial condition,
+we then generate a ground truth trajectory by solving the
+DAE using a 4th order L-stable Rosenbrock method.
+1. Initial Conditions
+a. Quartic Potential. Initial positions are drawn uni-
+formly from a ring r ∈ [0.8, 1.2] with random angle, and
+initial velocities are set to produce circular orbits with
+small random perturbations.
+b. Lotka–Volterra. Initial populations are drawn
+from x0, y0 ∼ Unif(0.5, 2.0).
+c. N -Pendulum. The initial displacements of the
+pendulum arms are drawn independently from Unif(0, 2π),
+and the pendulums are released from rest (zero initial
+velocity).
+d. Power Grids. Starting from a stable operation
+point, we generate perturbed initial conditions using the
+ambient forcing method,97 which preserves the algebraic
+PQ-bus constraints by construction. Following the ap-
+proach of Nauck et al.98, each bus j is assigned a ran-
+dom forcing vector (F re j , F im j ) = rj (cos θj , sin θj ), where
+θj ∼ Unif(0, 2π) and r2 j ∼ Unif(a, b) with a = 0.15, b = 1.
+Sampling r2 j (rather than rj ) uniformly ensures that the
+forcing vectors are distributed with uniform density per
+unit area in the complex voltage plane, so that large-
+magnitude perturbations are not under-represented rel-
+ative to their share of the annulus area. The composite
+forcing vector F is applied for a short interval τ = 0.2,
+and the subsequent unforced transient dynamics provide
+the training trajectories.
+2. State and Constraint Dimensions
+Table III summarizes the state dimension n and number
+of constraints m for each system. For the N -pendulum
+systems, dimensions correspond to the Cartesian coordi-
+nate formulation used by SNDE and PNDE.
+TABLE III. State dimension n and number of constraints m
+for each system.
+System Dimension n Constraints m
+2-D Quartic Potential 4 1
+Lotka–Volterra 2 1
+4-Pendulum 16 8
+8-Pendulum 32 16
+IEEE 14-Bus 28 18
+3. Normalization
+Normalization of the data requires careful attention.
+For all datasets, we standardize the data to have zero
+mean and unit standard deviation. However, to evaluate
+and apply the constraints, we require the state in physical
+units. Accordingly, we solve the NDE in physical units,
+meaning that we also evaluate and apply the constraints
+in physical units. This requires de-normalizing the ini-
+tial condition before solving and then re-normalizing the
+predicted trajectory before computing the loss (these op-
+erations are cheap). Despite solving in physical units, the
+inputs to the MLP are always normalized; the MLP takes
+
+Projected Neural Differential Equations 15
+TABLE IV. Summary of datasets and hyperparameters.
+2-D Quartic
+Potential
+Lotka-
+Volterra N-pendulum IEEE 14-Bus
+ntrain 120 120 400 100
+nvalid 60 60 200 50
+ntest 100 100 100 100
+T 25 25 10 10
+dt 0.1 0.1 0.01 0.1
+Hidden Layers 4 6 10 10
+Hidden Width 512 512 1024 512
+Learning Rate 10−3 10−3 5 × 10−4 10−3
+Weight Decay 10−4 10−4 10−4 10−4
+Batch Size 1024 1024 1024 1024
+Epochs 1000 1000 1000 1000
+a normalized state and predicts velocities in physical units.
+This requires continually normalizing the (physical) state
+prediction from the previous solver step before providing
+it as input to the MLP in the next step.
+The only exception is the N -pendulum NDE in gener-
+alized coordinates. Here, we provide as MLP inputs the
+sines and cosines of the angles, rather than the angles
+themselves. Since the sines and cosines are bounded be-
+tween -1 and 1, we do not normalize these inputs, but we
+do normalize the angular velocities as usual.
+Appendix G: Hyperparameters and Training
+We summarize the hyperparameters for each system in
+Table IV. We minimize the mean squared error loss using
+the AdamW optimizer.99 All systems are modeled using
+standard multilayer perceptrons with GELU activation
+functions to encourage smoothness. For the N -pendulum
+experiments, we also include skip connections between
+the hidden layers to improve training stability. The MLP
+hyperparameters in Table IV were selected by a grid
+search over the unconstrained NDE for each system, and
+the same settings were then reused for the corresponding
+constrained models (SNDE and PNDE) to ensure a fair
+comparison.
+During training, all models are solved using a 5(4) ex-
+plicit Runge–Kutta method100 with absolute and relative
+tolerances of 10−4. Gradients of ODE solutions are ob-
+tained using the adjoint sensitivity method. For testing,
+we use absolute and relative tolerances of 10−6.
+Appendix H: Supplementary Figures
+For each system, we plot in Figs. 8–11 the trajectories of
+the first four initial conditions in the test set, comparing
+the ground truth with NDE and PNDE predictions. In
+all cases, the PNDE produces visibly better predictions
+than the NDE.
+−1 0 1
+q2
+−1
+0
+1
+IC 1
+−1 0 1
+−1
+0
+1
+IC 2
+q1
+−1 0 1
+q2
+−1
+0
+1
+IC 3
+q1
+−1 0 1
+−1
+0
+1
+IC 4
+Initial Condition
+Ground Truth
+NDE
+PNDE
+FIG. 8. Trajectories of the 2-D quartic potential system,
+comparing ground truth with NDE and PNDE predictions for
+the first four initial conditions in the test set.
+2 3 4
+y
+1.0
+1.5
+2.0
+2.5
+IC 1
+2 3 4
+1.0
+1.5
+2.0
+2.5
+IC 2
+x
+2 3 4
+y
+1.0
+1.5
+2.0
+2.5
+IC 3
+x
+0 5 10
+0
+2
+4
+6
+IC 4
+Initial Condition
+Ground Truth
+NDE
+PNDE
+FIG. 9. Trajectories of the Lotka–Volterra system, comparing
+ground truth with NDE and PNDE predictions for the first
+four initial conditions in the test set.
+
+Projected Neural Differential Equations 16
+−2 0 2
+y4
+−4
+−2
+0
+IC 1
+−2 0 2
+−3
+−2
+−1
+0
+IC 2
+x4
+−2 −1 0 1 2
+y4
+−2
+0
+2
+IC 3
+x4
+−2 0 2
+−3
+−2
+−1
+0
+IC 4
+Initial Condition
+Ground Truth
+NDE
+PNDE
+FIG. 10. Trajectories of the 4-pendulum system, comparing
+ground truth with NDE and PNDE predictions for the first
+four initial conditions in the test set. We plot the position of
+the last pendulum bob as the pendulum is released from rest.
+−2 0 2 4
+y8
+−5.0
+−2.5
+0.0
+IC 1
+−2.5 0.0 2.5 5.0
+−6
+−4
+−2
+IC 2
+x8
+−5 0 5
+y8
+−7.5
+−5.0
+−2.5
+0.0
+2.5
+IC 3
+x8
+−2.5 0.0 2.5
+−6
+−4
+−2
+0
+2
+IC 4
+Initial Condition
+Ground Truth
+NDE
+PNDE
+FIG. 11. Trajectories of the 8-pendulum system, comparing
+ground truth with NDE and PNDE predictions for the first
+four initial conditions in the test set. We plot the position of
+the last pendulum bob as the pendulum is released from rest.
+FIG. 12. Active power injection at all nine PQ buses of the
+IEEE 14-bus system over 500 s rollouts. At every bus, the
+NDE trajectories (orange) drift away from their initial power
+injection values, while the PNDE trajectories (blue) remain
+constant, reflecting the constraints.
+Appendix I: Constraint Jacobians
+We provide here the analytic constraint Jacobian G(u)
+for each system. All Jacobians were tested for correctness
+using automatic differentiation.
+1. 2-D Quartic Potential
+For the energy constraint g(u) = E(u) − E(u0) with
+u = (x, y, ˙x, ˙y) and E as in Eq. (19), the Jacobian G ∈
+R1×4 is
+G =
+ x(x2+y2) y(x2+y2) ˙x ˙y . (I1)
+2. Lotka–Volterra
+For the conserved quantity constraint g(u) = V (u) −
+V (u0) with u = (x, y) and V as in Eq. (23), the Jacobian
+G ∈ R1×2 is
+G =
+ δ − γ/x β − α/y . (I2)
+
+Projected Neural Differential Equations 17
+FIG. 13. Voltage magnitude at the four PV buses of the IEEE
+14-bus system over 500 s rollouts. The dashed line indicates
+the operation point. PNDE trajectories (blue) converge to the
+operation point after initial transients, while NDE trajectories
+(orange) diverge.
+3. N-Pendulum
+With state u = (x, y, ˙x, ˙y) ∈ R4N in Cartesian coordi-
+nates, where x = (x1, . . . , xN )⊤ collects the horizontal
+positions and similarly for y, ˙x, ˙y, define the relative
+displacements
+∆xi = xi − xi−1, ∆yi = yi − yi−1,
+∆ ˙xi = ˙xi − ˙xi−1, ∆ ˙yi = ˙yi − ˙yi−1, (I3)
+with x0 = y0 = ˙x0 = ˙y0 = 0. The Jacobian G ∈ R2N ×4N
+of the position and velocity constraints (27)–(28) has the
+block structure
+G =
+
+2 D∆x 2 D∆y 0 0
+D∆ ˙x D∆ ˙y D∆x D∆y
+
+, (I4)
+where Da := diag(a) D for any a ∈ RN , diag(a) denotes
+the diagonal matrix formed from a, and D ∈ RN ×N is
+the lower bidiagonal first-difference matrix
+Dij = δij − δi−1, j . (I5)
+Each N × N block in Eq. (I4) is bidiagonal, reflecting the
+chain topology of the pendulum.
+4. Power Grids
+Writing the state as u = (vre, vim) ∈ R2N , where
+vre, vim ∈ RN collect the real and imaginary parts of
+the complex bus voltages, the complex current is i = LY v
+with real and imaginary parts
+ire = Y re vre −Y im vim, iim = Y re vim +Y im vre, (I6)
+where Y re = Re(LY) and Y im = Im(LY). Given M PQ-
+buses with index set P, the active and reactive power at
+bus j are Pj = vre j ire j +vim j iim j and Qj = vim j ire j −vre j iim j .
+Up to an overall sign arising from the constraint definition
+g = (Pj − . . . , Qj − . . .), which leaves the projection op-
+erator in Eq. (10) unchanged, the Jacobian G ∈ R2M ×2N
+has entries, for j ∈ P and k = 1, . . . , N,
+∂Pj
+∂vre k = δjk ire j + vre j Y re jk + vim j Y im jk , (I7a)
+∂Pj
+∂vim k = δjk iim j − vre j Y im jk + vim j Y re jk , (I7b)
+∂Qj
+∂vre k = −δjk iim j − vre j Y im jk + vim j Y re jk , (I7c)
+∂Qj
+∂vim k = δjk ire j − vre j Y re jk − vim j Y im jk . (I7d)
+1D. Kochkov, J. A. Smith, A. Alieva, Q. Wang, M. P. Brenner,
+and S. Hoyer, “Machine learning–accelerated computational fluid
+dynamics,” Proceedings of the National Academy of Sciences
+118, e2101784118 (2021).
+2J. Jumper, R. Evans, A. Pritzel, T. Green, M. Figurnov, O. Ron-
+neberger, K.Tunyasuvunakool, R.Bates, A.Žídek, A.Potapenko,
+A. Bridgland, C. Meyer, S. A. A. Kohl, A. J. Ballard, A. Cowie,
+B. Romera-Paredes, S. Nikolov, R. Jain, J. Adler, T. Back, S. Pe-
+tersen, D. Reiman, E. Clancy, M. Zielinski, M. Steinegger, M. Pa-
+cholska, T. Berghammer, S. Bodenstein, D. Silver, O. Vinyals,
+A.W.Senior, K.Kavukcuoglu, P.Kohli,andD.Hassabis,“Highly
+accurate protein structure prediction with AlphaFold,” Nature
+596, 583–589 (2021).
+3J. Pathak, S. Subramanian, P. Harrington, S. Raja, A. Chat-
+topadhyay, M. Mardani, T. Kurth, D. Hall, Z. Li, K. Aziz-
+zadenesheli, P. Hassanzadeh, K. Kashinath, and A. Anand-
+kumar, “FourCastNet: A global data-driven high-resolution
+weather model using adaptive Fourier neural operators,” (2022),
+arXiv:2202.11214.
+4N. Kovachki, Z. Li, B. Liu, K. Azizzadenesheli, K. Bhattacharya,
+A.Stuart,andA.Anandkumar,“Neuraloperator: Learningmaps
+between function spaces with applications to PDEs,” Journal of
+Machine Learning Research 24, 1–97 (2023).
+5A. Merchant, S. Batzner, S. S. Schoenholz, M. Aykol, G. Cheon,
+and E. D. Cubuk, “Scaling deep learning for materials discovery,”
+Nature 624, 80–85 (2023).
+6K. Azizzadenesheli, N. Kovachki, Z. Li, M. Liu-Schiaffini, J. Kos-
+saifi, and A. Anandkumar, “Neural operators for accelerating
+scientific simulations and design,” Nature Reviews Physics 6,
+320–328 (2024).
+7R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and D. K. Duve-
+naud, “Neural ordinary differential equations,” in Advances in
+Neural Information Processing Systems, Vol. 31 (Curran Asso-
+ciates, Inc., 2018) pp. 6571–6583.
+8C.Rackauckas, Y.Ma, J.Martensen, C.Warner, K.Zubov, R.Su-
+pekar, D. Skinner, A. Ramadhan, and A. Edelman, “Universal
+differential equations for scientific machine learning,” (2021),
+arXiv:2001.04385.
+
+Projected Neural Differential Equations 18
+9D. Kochkov, J. Yuval, I. Langmore, P. Norgaard, J. Smith,
+G. Mooers, M. Klöwer, J. Lottes, S. Rasp, P. Düben, S. Hatfield,
+P. Battaglia, A. Sanchez-Gonzalez, M. Willson, M. P. Brenner,
+and S. Hoyer, “Neural general circulation models for weather and
+climate,” Nature , 1–7 (2024).
+10S. Yu, Z. Hu, A. Subramaniam, W. Hannah, L. Peng, J. Lin,
+M. A. Bhouri, R. Gupta, B. Lütjens, J. C. Will, G. Behrens,
+J. J. M. Busecke, N. Loose, C. I. Stern, T. Beucler, B. Harrop,
+H. Heuer, B. R. Hillman, A. Jenney, N. Liu, A. White, T. Zheng,
+Z. Kuang, F. Ahmed, E. Barnes, N. D. Brenowitz, C. Bretherton,
+V. Eyring, S. Ferretti, N. Lutsko, P. Gentine, S. Mandt, J. D.
+Neelin, R. Yu, L. Zanna, N. Urban, J. Yuval, R. Abernathey,
+P. Baldi, W. Chuang, Y. Huang, F. Iglesias-Suarez, S. Jantre,
+P.-L. Ma, S. Shamekh, G. Zhang, and M. Pritchard, “ClimSim-
+Online: A large multi-scale dataset and framework for hybrid
+ML-physics climate emulation,” (2024), arXiv:2306.08754.
+11M. Gelbrecht, A. White, S. Bathiany, and N. Boers, “Differen-
+tiable programming for Earth system modeling,” Geoscientific
+Model Development 16, 3123–3135 (2023).
+12M. Gelbrecht, M. Klöwer, and N. Boers, “PseudospectralNet:
+Toward hybrid atmospheric models for climate simulations,” Jour-
+nal of Advances in Modeling Earth Systems 17, e2025MS004969
+(2025).
+13S. Richards, N. Azizan, J.-J. Slotine, and M. Pavone,
+“Adaptive-control-oriented meta-learning for nonlinear systems,”
+in Robotics: Science and Systems XVII (Robotics: Science and
+Systems Foundation, 2021).
+14R. Dandekar, C. Rackauckas, and G. Barbastathis, “A machine
+learning-aided global diagnostic and comparative tool to assess
+effect of quarantine control in COVID-19 spread,” Patterns 1,
+100145 (2020).
+15H.Narayanan, M.Luna, M.Sokolov, A.Butté,andM.Morbidelli,
+“Hybrid models based on machine learning and an increasing de-
+gree of process knowledge: Application to cell culture processes,”
+Industrial & Engineering Chemistry Research 61, 8658–8672
+(2022).
+16C. Schötz, A. White, M. Gelbrecht, and N. Boers, “Machine learn-
+ing for predicting chaotic systems,” Chaos: An Interdisciplinary
+Journal of Nonlinear Science 36, 053105 (2026).
+17A. J. Linot, J. W. Burby, Q. Tang, P. Balaprakash, M. D.
+Graham, and R. Maulik, “Stabilized neural ordinary differen-
+tial equations for long-time forecasting of dynamical systems,”
+Journal of Computational Physics 474, 111838 (2023).
+18J. Jia, Z. Yang, M. Wang, K. Guo, J. Yang, X. Yu, and L. Guo,
+“Feedback favors the generalization of neural ODEs,” (2025),
+arXiv:2410.10253.
+19Y. Yin, I. Ayed, E. de Bézenac, N. Baskiotis, and P. Gallinari,
+“LEADS: Learning dynamical systems that generalize across
+environments,” in Advances in Neural Information Processing
+Systems, Vol. 34 (2021) pp. 7561–7573.
+20G.E.Karniadakis, I.G.Kevrekidis, L.Lu, P.Perdikaris, S.Wang,
+and L. Yang, “Physics-informed machine learning,” Nature Re-
+views Physics 3, 422–440 (2021).
+21M. Raissi, P. Perdikaris, and G. E. Karniadakis, “Physics in-
+formed deep learning (part I): Data-driven solutions of nonlinear
+partial differential equations,” (2017), arXiv:1711.10561.
+22M. Raissi, P. Perdikaris, and G. E. Karniadakis, “Physics in-
+formed deep learning (part II): Data-driven discovery of nonlinear
+partial differential equations,” (2017), arXiv:1711.10566.
+23M. Raissi, P. Perdikaris, and G. E. Karniadakis, “Physics-
+informed neural networks: A deep learning framework for solving
+forward and inverse problems involving nonlinear partial differen-
+tial equations,” Journal of Computational Physics 378, 686–707
+(2019).
+24Z. Li, H. Zheng, N. Kovachki, D. Jin, H. Chen, B. Liu, K. Az-
+izzadenesheli, and A. Anandkumar, “Physics-informed neural
+operator for learning partial differential equations,” ACM/IMS
+Journal of Data Science 1, 1–27 (2024).
+25S. Wang, H. Wang, and P. Perdikaris, “Learning the solution
+operator of parametric partial differential equations with physics-
+informed DeepONets,” Science Advances 7, eabi8605 (2021).
+26S. Goswami, A. Bora, Y. Yu, and G. E. Karniadakis, “Physics-
+informed deep neural operator networks,” in Machine Learning
+in Modeling and Simulation: Methods and Applications, edited
+by T. Rabczuk and K.-J. Bathe (Springer, 2023) pp. 219–254.
+27R. Y. Lin, J. Berner, V. Duruisseaux, D. Pitt, D. Leibovici,
+J. Kossaifi, K. Azizzadenesheli, and A. Anandkumar, “Enabling
+automatic differentiation with mollified graph neural operators,”
+(2025), arXiv:2504.08277.
+28A. Ganeshram, H. Maust, V. Duruisseaux, Z. Li, Y. Wang,
+D. Leibovici, O. Bruno, T. Hou, and A. Anandkumar, “FC-
+PINO: High precision physics-informed neural operators via
+Fourier continuation,” (2025), arXiv:2211.15960.
+29R. Leiteritz and D. Pflüger, “How to avoid trivial solutions in
+physics-informed neural networks,” (2021), arXiv:2112.05620.
+30A. S. Krishnapriyan, A. Gholami, S. Zhe, R. M. Kirby, and M. W.
+Mahoney, “Characterizing possible failure modes in physics-
+informed neural networks,” in Neural Information Processing
+Systems (2021).
+31A. J. Huang and S. Agarwal, “On the limitations of physics-
+informed deep learning: Illustrations using first-order hyperbolic
+conservation law-based traffic flow models,” IEEE Open Journal
+of Intelligent Transportation Systems 4, 279–293 (2023).
+32S. Wang, Y. Teng, and P. Perdikaris, “Understanding and miti-
+gating gradient flow pathologies in physics-informed neural net-
+works,” SIAM Journal on Scientific Computing 43, A3055–A3081
+(2021).
+33S. Wang, X. Yu, and P. Perdikaris, “When and why PINNs
+fail to train: A neural tangent kernel perspective,” Journal of
+Computational Physics 449, 110768 (2022).
+34F. M. Rohrhofer, S. Posch, C. Gößnitzer, and B. C. Geiger, “On
+the role of fixed points of dynamical systems in training physics-
+informed neural networks,” Transactions on Machine Learning
+Research (2023).
+35S. Lang, Fundamentals of Differential Geometry, Graduate Texts
+in Mathematics, Vol. 191 (Springer-Verlag, New York, 1999).
+36J. M. Lee, Introduction to Smooth Manifolds, Graduate Texts
+in Mathematics, Vol. 218 (Springer New York, 2012).
+37N. Boumal, An Introduction to Optimization on Smooth Mani-
+folds (Cambridge University Press, 2024).
+38P. Kidger, On Neural Differential Equations, Ph.D. thesis, Uni-
+versity of Oxford (2022).
+39S. Tomov, J. Dongarra, and M. Baboulin, “Towards dense linear
+algebra for hybrid GPU accelerated manycore systems,” Parallel
+Matrix Algorithms and Applications, Parallel Computing 36,
+232–240 (2010).
+40P. Harder, A. Hernandez-Garcia, V. Ramesh, Q. Yang, P. Sat-
+tigeri, D. Szwarcman, C. Watson, and D. Rolnick, “Hard-
+constrained deep learning for climate downscaling,” Journal of
+Machine Learning Research 24, 1–40 (2023).
+41G. Négiar, M. W. Mahoney, and A. S. Krishnapriyan, “Learning
+differentiable solvers for systems with hard constraints,” in The
+Eleventh International Conference on Learning Representations
+(2023).
+42N. Chalapathi, Y. Du, and A. S. Krishnapriyan, “Scaling physics-
+informed hard constraints with mixture-of-experts,” in The
+Twelfth International Conference on Learning Representations
+(2024).
+43C. M. Jiang, K. Kashinath, Prabhat, and P. Marcus, “Enforcing
+physical constraints in CNNs through differentiable PDE layer,”
+in ICLR 2020 Workshop on Integration of Deep Neural Models
+and Differential Equations (2020).
+44V. Duruisseaux, M. Liu-Schiaffini, J. Berner, and A. Anandku-
+mar, “Towards enforcing hard physics constraints in operator
+learning frameworks,” in ICML 2024 AI for Science Workshop
+(2024).
+45J. Richter-Powell, Y. Lipman, and R. T. Q. Chen, “Neural con-
+servation laws: A divergence-free perspective,” in Advances in
+Neural Information Processing Systems (2022).
+
+Projected Neural Differential Equations 19
+46A. T. Mohan, N. Lubbers, M. Chertkov, and D. Livescu, “Embed-
+ding hard physical constraints in neural network coarse-graining
+of three-dimensional turbulence,” Phys. Rev. Fluids 8, 014604
+(2023).
+47L. Xing, H. Wu, Y. Ma, J. Wang, and M. Long, “HelmFluid:
+Learning Helmholtz dynamics for interpretable fluid prediction,”
+in International Conference on Machine Learning (2024).
+48M. Lutter, C. Ritter, and J. Peters, “Deep Lagrangian networks:
+Using physics as model prior for deep learning,” in International
+Conference on Learning Representations (2019).
+49S. Greydanus, M. Dzamba, and J. Yosinski, “Hamiltonian neural
+networks,” in Advances in Neural Information Processing Sys-
+tems, Vol. 32 (Curran Associates, Inc., 2019) pp. 15379–15389.
+50Y. D. Zhong, B. Dey, and A. Chakraborty, “Symplectic ODE-Net:
+Learning Hamiltonian dynamics with control,” in International
+Conference on Learning Representations (2020).
+51P. Jin, Z. Zhang, A. Zhu, Y. Tang, and G. E. Karniadakis,
+“SympNets: Intrinsic structure-preserving symplectic networks
+for identifying Hamiltonian systems,” Neural Networks 132, 166–
+179 (2020).
+52J.W.Burby, Q.Tang,andR.Maulik,“FastneuralPoincarémaps
+for toroidal magnetic fields,” Plasma Physics and Controlled
+Fusion 63, 024001 (2020).
+53M. Cranmer, S. Greydanus, S. Hoyer, P. Battaglia,
+D. Spergel, and S. Ho, “Lagrangian neural networks,” (2020),
+arXiv:2003.04630.
+54S. Sæmundsson, A. Terenin, K. Hofmann, and M. P. Deisen-
+roth, “Variational integrator networks for physically structured
+embeddings,” in AISTATS (2020).
+55R. Valperga, K. Webster, V. Klein, D. Turaev, and J. S. W. Lamb,
+“Learning reversible symplectic dynamics,” in Proceedings of The
+4th Annual Learning for Dynamics and Control Conference,
+Proceedings of Machine Learning Research, Vol. 168 (PMLR,
+2022) pp. 906–916.
+56V. Duruisseaux, J. W. Burby, and Q. Tang, “Approximation of
+nearly-periodic symplectic maps via structure-preserving neural
+networks,” Scientific Reports 13 (2023).
+57V. Duruisseaux, T. Duong, M. Leok, and N. Atanasov, “Lie group
+forced variational integrator networks for learning and control
+of robot systems,” in Proceedings of the 5th Annual Learning
+for Dynamics and Control Conference, Proceedings of Machine
+Learning Research, Vol. 211 (PMLR, 2023) pp. 731–744.
+58M. Finzi, K. A. Wang, and A. G. Wilson, “Simplifying Hamilto-
+nian and Lagrangian neural networks via explicit constraints,”
+in Advances in Neural Information Processing Systems, Vol. 33
+(Curran Associates, Inc., 2020) pp. 13880–13889.
+59A. White, N. Kilbertus, M. Gelbrecht, and N. Boers, “Stabilized
+neural differential equations for learning dynamics with explicit
+constraints,” in Advances in Neural Information Processing Sys-
+tems, Vol. 36 (2023) pp. 12929–12950.
+60A. Lou, D. Lim, I. Katsman, L. Huang, Q. Jiang, S. N. Lim, and
+C. M. De Sa, “Neural manifold ordinary differential equations,”
+in Advances in Neural Information Processing Systems, Vol. 33
+(Curran Associates, Inc., 2020) pp. 17548–17558.
+61J. Bose, A. Smofsky, R. Liao, P. Panangaden, and W. Hamilton,
+“Latent variable modelling with hyperbolic normalizing flows,”
+in Proceedings of the 37th International Conference on Machine
+Learning (PMLR, 2020) pp. 1045–1055.
+62D. J. Rezende, G. Papamakarios, S. Racaniere, M. Albergo,
+G. Kanwar, P. Shanahan, and K. Cranmer, “Normalizing flows
+on tori and spheres,” in Proceedings of the 37th International
+Conference on Machine Learning (PMLR, 2020) pp. 8083–8092.
+63E. Mathieu and M. Nickel, “Riemannian continuous normalizing
+flows,” in Advances in Neural Information Processing Systems,
+Vol. 33 (Curran Associates, Inc., 2020) pp. 2503–2515.
+64P.-A. Absil, R. Mahony, and R. Sepulchre, Optimization Algo-
+rithms on Matrix Manifolds (Princeton University Press, Prince-
+ton, NJ, 2008) https://press.princeton.edu/absil.
+65D. G. Luenberger, “The gradient projection method along
+geodesics,” Management Science 18, 620–631 (1972).
+66D. G. Luenberger, Introduction to linear and nonlinear program-
+ming (Addison-Wesley Pub. Co., Reading, Mass, 1973).
+67A. Edelman, T. A. Arias, and S. T. Smith, “The geometry of
+algorithms with orthogonality constraints,” SIAM Journal on
+Matrix Analysis and Applications 20, 303–353 (1998).
+68J. H. Manton, “Optimization algorithms exploiting unitary con-
+straints,” IEEE Transactions on Signal Processing 50, 635–650
+(2002).
+69Z. Wen and W. Yin, “A feasible method for optimization with
+orthogonality constraints,” Mathematical Programming 142
+(2010), 10.1007/s10107-012-0584-1.
+70P.-A. Absil and J. Malick, “Projection-like retractions on matrix
+manifolds,” SIAM Journal on Optimization 22, 135–158 (2012).
+71A. Hauswirth, S. Bolognani, G. Hug, and F. Dörfler, “Projected
+gradient descent on Riemannian manifolds with applications to
+online power system optimization,” in 2016 54th Annual Aller-
+ton Conference on Communication, Control, and Computing
+(Allerton) (2016) pp. 225–232.
+72H.ZhangandS.Sra,“First-ordermethodsforgeodesicallyconvex
+optimization,” in 29th Annual Conference on Learning Theory
+(2016) pp. 1617–1638.
+73H. F. Oviedo León and O. Dalmau-Cedeño, “A scaled gradient
+projection method for minimization over the Stiefel manifold,”
+in Advances in Soft Computing (MICAI 2019), Lecture Notes
+in Computer Science, Vol. 11835 (Springer, 2019) pp. 239–250.
+74H. F. Oviedo León, O. Dalmau-Cedeño, and H. Lara, “Two
+adaptive scaled gradient projection methods for Stiefel manifold
+constrained optimization,” Numerical Algorithms 87 (2021),
+10.1007/s11075-020-01001-9.
+75E. Hairer, “Solving differential equations on manifolds,” Lecture
+notes, Université de Genève (2011).
+76A. Iserles, H. Z. Munthe-Kaas, S. P. Nørsett, and A. Zanna, “Lie-
+group methods,” in Acta Numerica, Vol. 9 (Cambridge University
+Press, 2000) pp. 215–365.
+77S. H. Christiansen, H. Z. Munthe-Kaas, and B. Owren, “Topics
+in structure-preserving discretization,” Acta Numerica 20, 1–119
+(2011).
+78E. Celledoni, H. Marthinsen, and B. Owren, “An introduction
+to Lie group integrators – basics, new developments and ap-
+plications,” Journal of Computational Physics 257, 1040–1061
+(2014).
+79E. Celledoni, E. Çokaj, A. Leone, D. Murari, and B. Owren, “Lie
+group integrators for mechanical systems,” International Journal
+of Computer Mathematics 99, 58–88 (2022).
+80F. Alimisis, A. Orvieto, G. Bécigneul, and A. Lucchi, “A
+continuous-time perspective for modeling acceleration in Rie-
+mannian optimization,” in Proceedings of the 23rd International
+AISTATS Conference, PMLR, Vol. 108 (2020) pp. 1297–1307.
+81M. Tao and T. Ohsawa, “Variational optimization on Lie groups,
+with examples of leading (generalized) eigenvalue problems,” in
+Proceedings of the 23rd International AISTATS Conference,
+PMLR, Vol. 108 (2020).
+82T. Lee, M. Tao, and M. Leok, “Variational symplectic acceler-
+ated optimization on Lie groups,” in 60th IEEE Conference on
+Decision and Control (CDC) (2021) pp. 233–240.
+83G. França, A. Barp, M. Girolami, and M. Jordan, “Optimization
+on manifolds: A symplectic approach,” (2021), arXiv:2107.11231.
+84V. Duruisseaux and M. Leok, “Accelerated optimization on Rie-
+mannian manifolds via discrete constrained variational integra-
+tors,” Journal of Nonlinear Science 32 (2022), 10.1007/s00332-
+022-09795-9.
+85V. Duruisseaux and M. Leok, “Accelerated optimization on Rie-
+mannian manifolds via projected variational integrators,” (2022),
+arXiv:2201.02904.
+86V. Duruisseaux and M. Leok, “A variational formulation of accel-
+erated optimization on Riemannian manifolds,” SIAM Journal
+on Mathematics of Data Science 4, 649–674 (2022).
+87V. Duruisseaux and M. Leok, “Time-adaptive Lagrangian vari-
+ational integrators for accelerated optimization on manifolds,”
+Journal of Geometric Mechanics 15, 224–255 (2023).
+
+Projected Neural Differential Equations 20
+88M. F. Kasim and Y. H. Lim, “Constants of motion network,”
+Advances in Neural Information Processing Systems 35, 25295–
+25305 (2022).
+89S. Yang, X. He, and B. Zhu, “Learning physical constraints
+with neural projections,” in Advances in Neural Information
+Processing Systems, Vol. 33 (Curran Associates, Inc., 2020) pp.
+5178–5189.
+90T. Matsubara and T. Yaguchi, “FINDE: Neural differential equa-
+tions for finding and preserving invariant quantities,” in The
+Eleventh International Conference on Learning Representations
+(2023).
+91R. D. Christie, “Power systems test case archive,” University of
+Washington (1999).
+92L. M. Leon, A. S. Bretas, and S. Rivera, “Quadratically con-
+strained quadratic programming formulation of contingency con-
+strained optimal power flow with photovoltaic generation,” En-
+ergies 13, 3310 (2020).
+93J. Machowski, J. W. Bialek, and J. R. Bumby, Power System
+Dynamics, 2nd ed. (John Wiley & Sons, 2008).
+94M. B. Giles, “Collected matrix derivative results for forward
+and reverse mode algorithmic differentiation,” in Advances in
+Automatic Differentiation, edited by C. H. Bischof, H. M. Bücker,
+P. Hovland, U. Naumann, and J. Utke (Springer, 2008) pp. 35–44.
+95J. H. Verner, “Numerically optimal Runge–Kutta pairs with
+interpolants,” Numerical Algorithms 53, 383–396 (2010).
+96A. Plietzsch, R. Kogler, S. Auer, J. Merino, A. Gil-de Muro,
+J. Liße, C. Vogel, and F. Hellmann, “PowerDynamics.jl—an
+experimentally validated open-source package for the dynamical
+analysis of power grids,” SoftwareX 17, 100861 (2022).
+97A. Büttner, J. Kurths, and F. Hellmann, “Ambient forcing: sam-
+pling local perturbations in constrained phase spaces,” New
+Journal of Physics 24, 053019 (2022).
+98C. Nauck, A. Büttner, S. Liemann, F. Hellmann, and M. Lindner,
+“Predicting fault-ride-through probability of inverter-dominated
+power grids using machine learning,” IET Generation, Transmis-
+sion & Distribution 20, e70264 (2026).
+99I. Loshchilov and F. Hutter, “Decoupled weight decay regulariza-
+tion,” in International Conference on Learning Representations
+(2019).
+100C. Tsitouras, “Runge–Kutta pairs of order 5(4) satisfying only the
+first column simplifying assumption,” Computers & Mathematics
+with Applications 62, 770–775 (2011).

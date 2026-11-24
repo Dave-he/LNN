@@ -1,0 +1,573 @@
+Adaptive Stability-Constrained Neural Differential
+Equations for Controlled Dynamical Systems with
+Unknown Inputs
+Syed Pouladi
+College of Engineering and Physical Sciences, Khalifa University, Abu Dhabi, United Arab Emirates
+Abstract—Continuous-time neural models are attractive for
+identifying nonlinear systems, but a small one-step error can grow
+rapidly when a learned vector field is rolled out under inputs
+that differ from those used for training. This paper develops
+an adaptive stability-constrained neural differential equation
+(AS-NDE) for systems with measured controls and unmatched,
+unknown perturbations. The nominal vector field and a state–
+input-dependent Riemannian metric are learned jointly. Positive
+definiteness is enforced by construction, while a sampled differ-
+ential inequality penalizes violations of a prescribed contraction
+rate. An incremental input-to-state bound is derived: the dis-
+tance between two trajectories decays exponentially up to gains
+determined by differences in their controls and disturbances. The
+statement explicitly accounts for the time derivative of an input-
+dependent metric, a term that is easily omitted in heuristic stabil-
+ity regularizers. We give a reproducible evaluation protocol for a
+forced Duffing oscillator and a permanent-magnet synchronous
+motor (PMSM) model. Because no measured data or executed
+training runs accompany this draft, all numerical curves and
+tables are clearly identified as illustrative synthetic placeholders;
+their PGFPlots coordinates are embedded in the source for
+direct replacement. The resulting manuscript is intended as a
+technically consistent starting point, not as evidence of empirical
+superiority before the prescribed experiments are run.
+Index Terms—Neural ordinary differential equations, con-
+traction analysis, incremental stability, input-to-state stability,
+nonlinear system identification, PMSM.
+I. INTRODUCTION
+Learning a continuous-time vector field from sampled tra-
+jectories is a central problem in system identification. Clas-
+sical prediction-error methods provide a careful statistical
+framework [22], [23], whereas sparse regression can recover
+parsimonious governing equations when an appropriate li-
+brary is available [8], [9]. Deep models trade interpretabil-
+ity for flexible approximation. In particular, neural ordinary
+differential equations (NODEs) parameterize the derivative
+and differentiate through a numerical solver [1]. Augmented
+and latent variants address representational or observation-
+time limitations [2], [3], and universal differential equations
+combine scientific structure with learned components [5].
+Most engineered systems are not autonomous. Their state
+depends on command, load, and environmental signals. Neural
+controlled differential equations provide a principled repre-
+sentation of streams as controls [4]; here we consider the
+complementary identification setting in which a measured
+physical input enters a state equation ˙x = f (x, u). Input
+Concomitant Neural ODEs (ICODEs) make this distinction
+explicit by injecting contemporaneous, possibly nonsmooth
+extrinsic inputs into the learned dynamics rather than ab-
+sorbing them into hidden parameters [35]. Even with the
+correct input interface, rollout sensitivity remains a central
+design issue. This is particularly consequential for electric
+drives, whose voltage commands, load torque, and uncertain
+parameters change across operating points [30], [31].
+Stability-aware learning has consequently received sustained
+attention. Architectures inspired by numerical integration can
+control forward sensitivity [24], stable recurrent models con-
+strain long-run amplification [25], [26], and Lyapunov-based
+methods seek invariant regions or certificates [27], [28]. Con-
+traction analysis is especially suited to prediction because it
+compares neighboring trajectories rather than a trajectory with
+a fixed equilibrium [15], [16]. Control contraction metrics
+extend the same differential viewpoint to feedback design
+[17]. Recent ControlSynth Neural ODEs (CSODEs) show that
+a scalable nonlinear NODE architecture can satisfy tractable
+linear inequalities that guarantee convergence, while an aux-
+iliary control term helps represent multi-scale dynamics [36].
+ICODE likewise provides sufficient contraction conditions for
+its input-concomitant construction [35]. These developments
+motivate, rather than obviate, the question studied here: how to
+quantify the separation of two trajectories when their measured
+inputs and unknown disturbances are not identical.
+This paper makes three contributions. First, it introduces an
+input-conditioned metric Mϕ(x, u) whose positive definiteness
+is structural and whose total derivative is retained in training.
+Second, it establishes an incremental input-to-state contraction
+bound for differing controls and unknown disturbances. Third,
+it specifies reproducible Duffing and PMSM evaluations, in-
+cluding ablation criteria and replaceable plot data. Numerical
+values in this draft are illustrative only; this explicit separation
+between method and unexecuted evidence is necessary for a
+defensible experimental paper.
+II. RELATED WORK
+A. Data-Driven Continuous-Time Dynamics
+NODEs [1] use adaptive ODE solvers and adjoint sensi-
+tivities. Augmentation can relax topological restrictions [2],
+while latent ODEs model irregular observations [3]. Neural
+arXiv:2608.09404v1  [eess.SY]  10 Aug 2026
+
+CDEs incorporate an entire observation path [4]. Physics-
+informed neural networks penalize differential-equation resid-
+uals [6], and broader physics-informed learning combines
+data with inductive bias [7]. Alternative structured models in-
+clude Hamiltonian [13] and Lagrangian neural networks [14].
+Koopman embeddings pursue linear latent evolution [10]–[12].
+These approaches improve structure or expressivity, but do
+not by themselves give an incremental robustness bound for a
+controlled learned vector field.
+B. Stability and Robustness
+Input-to-state stability (ISS) formalizes the effect of
+bounded inputs on state size [19]; incremental stability instead
+compares pairs of solutions [18]. Differential Lyapunov theory
+unifies contraction-like certificates [16]. Neural certificates
+have been learned for regions of attraction [27] and surveyed
+in the context of safe learning and control [28]. Related safety
+constraints based on barrier functions address set invariance
+rather than trajectory convergence [29]. AS-NDE targets pre-
+diction sensitivity and yields an incremental ISS estimate in a
+learned, input-dependent metric.
+III. PROBLEM FORMULATION
+Consider trajectories on compact sets X ⊂ Rn and U ⊂ Rm
+governed by
+˙x = f⋆(x, u) + Ew, y = Cx + v, (1)
+where u is measured, w ∈ Rr is an unknown essentially
+bounded disturbance, v is measurement noise, and E is a
+known or conservative disturbance injection matrix. An iden-
+tity E is appropriate when the channel is unknown. Samples
+D = {(tk, yk, uk)} may come from multiple experiments. The
+objectives are to predict the nominal flow and to limit the
+sensitivity of a rollout to initial-state, input, and disturbance
+mismatch.
+We learn
+˙ˆx = fθ (ˆx, u), ˆy = C ˆx, (2)
+with a multilayer perceptron or a structured physical residual.
+The formulation does not attempt to identify a unique realiza-
+tion of w from state data; without additional assumptions that
+inverse problem is generally unidentifiable. Instead, w appears
+in a robustness certificate.
+Assumption 1 (Regularity and bounded metric): fθ and
+Mϕ are continuously differentiable on the compact training
+domain, u is absolutely continuous, and constants 0 < m ≤ ¯m
+exist such that
+mI ⪯ Mϕ(x, u) ⪯ ¯mI. (3)
+IV. ADAPTIVE STABILITY-CONSTRAINED NDE
+A. Metric Parameterization
+Let Lϕ(x, u) be lower triangular. Its diagonal is
+softplus(ℓii) + ϵM and its strict lower part is unconstrained.
+We set
+Mϕ(x, u) = Lϕ(x, u)Lϕ(x, u)⊤ + ϵM I, (4)
+which ensures positive definiteness. Spectral penalties on M
+enforce practical upper and lower bounds. Denote Aθ =
+∂fθ /∂x and define the total derivative along a nominal tra-
+jectory by
+˙M = X
+i
+∂M
+∂xi
+fθ,i(x, u) +
+X
+j
+∂M
+∂uj
+˙uj . (5)
+Thus, training samples must include ˙u or a differentiable
+interpolation of u. A piecewise-constant command can instead
+be handled interval by interval, with metric jumps checked
+separately.
+The contraction residual at rate λ > 0 is
+SΘ = ˙M + A⊤ θ M + M Aθ + 2λM, (6)
+where Θ = (θ, ϕ). Negative semidefiniteness of SΘ is encour-
+aged at collocation points using
+Lctr = 1 Nc
+NcX
+i=1
+softplus
+ λmax(SΘ,i)
+τ
+
+τ. (7)
+Autodifferentiation supplies Jacobian–vector products. For
+large n, power iteration estimates the leading eigenvalue
+without forming a full eigendecomposition.
+B. Prediction and Regularization
+For a segment [tk, tk+H ], the model is integrated using the
+same interpolated input used to compute (5). The objective is
+L = 1 N H X q,k ∥Wy (ˆyq,k − yq,k)∥2 2 + ρcLctr + ρM Lmetric + ρJ LJac,
+(8)
+Lmetric = 1 Nc X i [max(0, m − λmin(Mi))2 + max(0, λmax(Mi) − ¯m)2].
+(9)
+The Jacobian penalty is optional and prevents implausibly stiff
+fits outside dense regions. Collocation points mix observed
+states, rollout states, and uniformly jittered nearby states;
+checking only observed points cannot certify the region be-
+tween trajectories.
+V. INCREMENTAL ROBUSTNESS ANALYSIS
+Consider two solutions with inputs (u1, w1) and (u2, w2).
+Connect their instantaneous states and inputs by a smooth path
+indexed by s ∈ [0, 1]. The variational dynamics are
+δ ˙x = Aθ δx + Bθ δu + Eδw, Bθ = ∂fθ ∂u . (10)
+Theorem 1 (Incremental input-to-state contraction): Sup-
+pose Assumption 1 holds and ˙M + A⊤ θ M + M Aθ ⪯ −2λM
+throughout a forward-invariant domain. Let
+bu = sup
+M 1/2Bθ  2 , bw = sup M 1/2E  2 . (11)
+Then the Riemannian distance dM between the two trajectories
+satisfies
+dM (t) ≤ e−λtdM (0) +
+Z t
+0
+e−λ(t−τ )[bu ∥u1 − u2∥ + bw ∥w1 − w2∥]dτ.
+(12)
+
+Algorithm 1 Training AS-NDE
+Require: Segments (y, u); rates λ, ρc, ρM ; warm-up epochs
+Nw
+1: initialize fθ , Lϕ, and an initial-state encoder if needed
+2: for each minibatch do
+3: interpolate u(t) and evaluate ˙u(t) away from com-
+mand jumps
+4: integrate (2); compute multi-step prediction loss
+5: sample observed, rollout, and locally perturbed collo-
+cation states
+6: form (4)–(6) by automatic differentiation
+7: ramp ρc from zero after Nw; update Θ using (8)
+8: end for
+9: select the checkpoint by validation rollout error subject to
+residual rate
+Consequently,
+∥x1(t) − x2(t)∥ ≤
+r ¯m
+m e−λt ∥x1(0) − x2(0)∥
++
+bu ∥u1 − u2∥∞,[0,t] + bw ∥w1 − w2∥∞,[0,t]
+λ√m .
+(13)
+Proof: For V = δx⊤M δx, differentiate along the con-
+necting path and use the assumed matrix inequality:
+˙V ≤ −2λV + 2δx⊤M (Bθ δu + Eδw). (14)
+Cauchy–Schwarz in the metric gives D+√ V ≤ −λ √ V +
+bu ∥δu∥ + bw ∥δw∥. Integration and then minimization over
+connecting paths yield (12). Metric equivalence from (3)
+yields (13).
+Remark 1: The result certifies the learned model on the
+domain where the inequality holds; it is not automatically a
+certificate for the unknown plant. A plant-level claim requires a
+verified bound on f⋆ −fθ and its differential, or an independent
+validation argument. Sampled residual penalties are empirical
+regularizers unless completed by formal verification.
+VI. EXPERIMENTAL PROTOCOL AND DRAFT
+PLACEHOLDERS
+Status of evidence: no user-supplied measurements, code
+outputs, random seeds, or trained checkpoints were avail-
+able when this manuscript was prepared. Accordingly, every
+number in Table I and every coordinate in Figs. 1–2 is an
+illustrative synthetic draft placeholder. They must be replaced
+by executed results before submission.
+A. Controlled Duffing Benchmark
+Use the forced oscillator
+˙x1 = x2, quad ˙x2 = −0.4x2 − x1 − 0.5x3 1 + u(t) + w(t). (15)
+Generate trajectories with a high-accuracy solver, indepen-
+dently drawing initial states from [−1.5, 1.5] × [−1, 1]. Train-
+ing commands are sums of three sinusoids with randomized
+0 2 4 6 8 10
+−1
+−0.5
+0
+0.5
+1
+t (s)
+x1
+reference
+AS-NDE placeholder
+input-NODE placeholder
+Fig. 1. Illustrative synthetic Duffing rollout. Coordinates are placeholders,
+not outputs of an executed experiment.
+amplitude, frequency, and phase. Test commands use disjoint
+frequency bands and include step sequences. Report mean and
+standard deviation over five data seeds and five initialization
+seeds. Baselines should include a plain NODE [1], an input-
+conditioned NODE using the same fθ (x, u) but no stability
+loss, SINDy with control-inspired libraries [8], and AS-NDE.
+All neural baselines must use the same parameter budget,
+solver tolerances, batches, and early-stopping rule.
+B. PMSM Protocol
+For a surface-mounted PMSM in the rotating dq frame, use
+˙id = (vd − Rsid + ωeLq iq )/Ld,
+˙iq = (vq − Rsiq − ωe(Ldid + ψf ))/Lq . (16)
+The state is (id, iq ), the measured input is (vd, vq , ωe), and pa-
+rameter drift, inverter nonlinearity, and load-related effects are
+treated as disturbances. This model follows established PMSM
+dq dynamics [30], [31]. A closely related differential-neural-
+network study has already demonstrated continuous-time
+PMSM current reconstruction and short- and long-horizon
+prediction under no-load and varying-load conditions [37].
+It therefore forms a natural application-specific baseline: its
+published differential model tests whether continuous-time
+learning is effective for PMSM currents, whereas the present
+protocol additionally asks whether an adaptive contraction
+metric improves sensitivity to operating-point and disturbance
+mismatch. Any comparison must use the same raw runs and
+trajectory-level split; results from the earlier study must not be
+copied into Table I as if they arose from this implementation.
+A credible study should split complete operating trajectories—
+not overlapping windows—by speed, torque, and direction. It
+should report in-distribution and held-out operating regions,
+current RMSE in amperes, normalized RMSE, worst-case er-
+ror, and contraction-residual violation rate. Sensor bandwidth,
+sampling time, anti-alias filtering, current limits, and voltage
+normalization must be disclosed.
+C. Ablations and Reproducibility
+The principal ablations are: (i) remove Lctr; (ii) replace
+Mϕ(x, u) by I; (iii) use Mϕ(x); (iv) omit the ∂M/∂u term;
+and (v) vary the target rate λ. Accuracy alone is insufficient:
+report the largest and 95th-percentile values of λmax(S) on a
+dense held-out grid, metric condition numbers, solver function
+
+TABLE I
+ILLUSTRATIVE SYNTHETIC DRAFT RESULTS—REPLACE BEFORE
+SUBMISSION
+Method Duffing NRMSE PMSM id RMSE Violation (%)
+(20-s rollout) (A) λmax(S) > 0
+NODE 0.184 0.42 61.0
+Input-conditioned NODE 0.112 0.31 48.0
+AS-NDE, fixed M 0.078 0.25 9.0
+AS-NDE, adaptive M 0.049 0.19 2.0
+0 5 10 15 20
+10−1
+horizon (s)
+rollout RMSE
+NODE placeholder
+input-NODE placeholder
+AS-NDE placeholder
+Fig. 2. Illustrative synthetic horizon-error curves. Replace the embedded
+coordinates with mean values and add seed-wise uncertainty bands.
+evaluations, and wall-clock cost. Hyperparameters, preprocess-
+ing statistics, exact splits, dependency versions, and all seeds
+should accompany the final artifact. Statistical comparisons
+should use paired seed-level differences with confidence in-
+tervals rather than selecting the best run.
+D. Implementation Details to Be Fixed Before Evaluation
+To make comparisons interpretable, the vector-field archi-
+tecture should be fixed before looking at test trajectories. A
+suitable low-dimensional configuration is a four-layer mul-
+tilayer perceptron with 64 hidden units per layer, smooth
+tanh activations, and an affine output layer. State and input
+channels are standardized using training-set statistics only.
+The same network is used for the plain and input-conditioned
+NODE baselines; the former receives state alone and the latter
+receives the concatenated state and input. AS-NDE adds a
+metric network with three 48-unit hidden layers. Its output
+contains n(n+1)/2 entries for the triangular factor in (4). This
+separation keeps the predictor capacity identical and prevents
+an apparent benefit caused merely by adding parameters to the
+vector field.
+Use a fixed-step fourth-order Runge–Kutta method during
+controlled synthetic experiments so that every method incurs
+the same discretization. Repeat the final comparison with an
+adaptive Dormand–Prince solver to check that rankings are
+not an artifact of the selected step size. For hardware data,
+the integration grid must coincide with sample times, and
+intermediate input values should be generated by a stated
+zero-order hold or differentiable interpolation. Because Eq. (5)
+requires ˙u, cubic interpolation is convenient for the metric loss,
+but it can overshoot abrupt voltage commands. A practical
+alternative is a smoothed piecewise-linear interpolant, with a
+mask that excludes a narrow neighborhood of discontinuities
+from the differential residual.
+TABLE II
+PROPOSED STARTING CONFIGURATION (NOT YET TUNED)
+Item Proposed value
+Vector field 4 × 64, tanh
+Metric factor network 3 × 48, tanh
+Rollout segment length 64 samples
+Optimizer / initial step Adam / 10−3
+Batch size 32 segments
+Metric floor ϵM 10−3
+Target rate λ validation choice in [0.05, 0.5]
+Collocation mixture 50% data, 25% rollout, 25% jitter
+Seeds 5 data × 5 initialization
+Optimization should use Adam for an exploratory stage
+followed by a smaller fixed learning rate. Gradient clipping
+applies identically to all neural methods. The contraction
+weight is ramped linearly from zero over the first quarter
+of training; otherwise the randomly initialized metric can
+dominate before the vector field has acquired the direction
+of the flow. Table II records a proposed starting configuration,
+not tuned or validated values. All entries must be frozen using
+the validation set and published with the final results.
+E. Evaluation Metrics and Certificate Audit
+Let eq,k = ˆyq,k − yq,k for trajectory q. Report per-channel
+RMSE in physical units and normalized RMSE
+NRMSE =
+vuut P q,k ∥eq,k∥2 2 P
+q,k ∥yq,k − ¯y∥2 2 . (17)
+Normalization by a test-set range is sensitive to a single outlier
+and should not be the only measure. Horizon-dependent error
+is obtained by resetting all methods to the same measured state
+and rolling them for fixed horizons without further correction.
+Report both teacher-initialized rollouts and estimated-initial-
+state rollouts if the actual state is unavailable. The latter must
+use the same encoder or observer across methods.
+The certificate audit is distinct from prediction evaluation.
+Draw a held-out set of state–input–input-derivative triples from
+the convex hull of the identification domain, plus a thin exte-
+rior shell to reveal boundary failures. For each point, record
+r = λmax(SΘ), the smallest and largest metric eigenvalues,
+and the condition number. Report the maximum r, quantiles,
+and the fraction r > 0. A zero violation rate on finite samples
+is not a proof. If formal regional certification is required,
+interval bound propagation, mixed-integer verification, or a
+sum-of-squares relaxation must bound the residual between
+samples; the selected technique and approximation error then
+become part of the theorem’s premises.
+Robustness experiments should perturb one factor at a time.
+For the Duffing system, evaluate unseen command spectra,
+initial-condition displacement, additive bounded disturbance,
+and parameter shift in damping and cubic stiffness. For PMSM
+data, hold out temperature-dependent resistance ranges, speed
+bands, torque steps, and voltage saturation events where avail-
+able. Plot error against perturbation magnitude rather than
+
+reporting a single favorable setting. The slope and saturation
+level can then be compared qualitatively with the gain structure
+in Eq. (13), while acknowledging that the theorem concerns
+the learned model and not an unverified physical plant.
+F. Threats to Validity
+Four confounders require particular care. First, segment
+leakage occurs when overlapping windows from one physical
+run are split across training and test sets; splitting must precede
+window extraction. Second, solver tolerances can favor a
+smoother model by allocating it fewer function evaluations;
+accuracy and compute should therefore be reported together.
+Third, collocation density is an additional form of supervi-
+sion, so baseline regularization and compute budgets must be
+matched. Fourth, simulated PMSM data can make the analytic
+dq structure unrealistically easy to learn. Hardware tests, or at
+minimum a simulator with dead time, saturation, parameter
+drift, sensor noise, and discretized control, are needed for an
+industrial claim.
+An honest negative result is also informative. If AS-NDE
+reduces residual violations but does not improve held-out
+rollout error, the conclusion should be that the selected cer-
+tificate regularizes sensitivity without demonstrated predictive
+benefit. If it improves only under small disturbances, the tested
+range should delimit the claim. These reporting rules prevent
+the illustrative curves in this draft from becoming implicit
+evidence.
+VII. DISCUSSION
+An adaptive metric can be less conservative than a Euclidean
+certificate, but it adds derivatives and conditioning risks. The
+contraction weight should therefore be warmed up after the
+predictor learns a coarse vector field. Very large λ can collapse
+useful dynamics or induce stiffness. Moreover, disturbance
+robustness in (13) depends on bw/λ; a small sampled residual
+is not meaningful if the learned metric is poorly conditioned.
+The framework also has structural limitations. A globally
+contracting model cannot represent systems with multiple iso-
+lated attractors under a common fixed input. Certification over
+high-dimensional domains remains difficult, and piecewise
+commands require a hybrid treatment at jumps. Finally, PMSM
+hardware data are needed to separate improvements due to a
+stability constraint from those due to ordinary regularization
+or favorable simulation assumptions.
+VIII. CONCLUSION
+AS-NDE combines a controlled neural vector field with an
+input-dependent contraction metric and an incremental ISS
+analysis. The derivation exposes the metric total derivative and
+distinguishes a sampled training penalty from a formal plant
+certificate. The included experimental section is a reproducible
+protocol with deliberately labeled synthetic placeholders. The
+next necessary step is to run the stated baselines on released
+trajectory splits, replace all placeholder coordinates, and report
+uncertainty and residual coverage before making empirical
+claims.
+REFERENCES
+[1] R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and D. Duvenaud, “Neural
+ordinary differential equations,” in Adv. Neural Inf. Process. Syst.,
+vol. 31, 2018.
+[2] E. Dupont, A. Doucet, and Y. W. Teh, “Augmented neural ODEs,” in
+Adv. Neural Inf. Process. Syst., vol. 32, 2019.
+[3] Y. Rubanova, R. T. Q. Chen, and D. Duvenaud, “Latent ordinary
+differential equations for irregularly-sampled time series,” in Adv. Neural
+Inf. Process. Syst., vol. 32, 2019.
+[4] P. Kidger, J. Morrill, J. Foster, and T. Lyons, “Neural controlled
+differential equations for irregular time series,” in Adv. Neural Inf.
+Process. Syst., vol. 33, 2020, pp. 6696–6707.
+[5] C. Rackauckas et al., “Universal differential equations for scientific
+machine learning,” arXiv:2001.04385, 2020.
+[6] M. Raissi, P. Perdikaris, and G. E. Karniadakis, “Physics-informed
+neural networks: A deep learning framework for solving forward and
+inverse problems involving nonlinear partial differential equations,” J.
+Comput. Phys., vol. 378, pp. 686–707, 2019.
+[7] G. E. Karniadakis, I. G. Kevrekidis, L. Lu, P. Perdikaris, S. Wang, and
+L. Yang, “Physics-informed machine learning,” Nat. Rev. Phys., vol. 3,
+pp. 422–440, 2021.
+[8] S. L. Brunton, J. L. Proctor, and J. N. Kutz, “Discovering governing
+equations from data by sparse identification of nonlinear dynamical
+systems,” Proc. Natl. Acad. Sci. USA, vol. 113, no. 15, pp. 3932–3937,
+2016.
+[9] S. H. Rudy, S. L. Brunton, J. L. Proctor, and J. N. Kutz, “Data-driven
+discovery of partial differential equations,” Sci. Adv., vol. 3, no. 4, Art.
+no. e1602614, 2017.
+[10] B. Lusch, J. N. Kutz, and S. L. Brunton, “Deep learning for universal
+linear embeddings of nonlinear dynamics,” Nat. Commun., vol. 9, Art.
+no. 4950, 2018.
+[11] S. E. Otto and C. W. Rowley, “Linearly recurrent autoencoder networks
+for learning dynamics,” SIAM J. Appl. Dyn. Syst., vol. 18, no. 1, pp.
+558–593, 2019.
+[12] N. Takeishi, Y. Kawahara, and T. Yairi, “Learning Koopman invariant
+subspaces for dynamic mode decomposition,” in Adv. Neural Inf. Pro-
+cess. Syst., vol. 30, 2017.
+[13] S. Greydanus, M. Dzamba, and J. Yosinski, “Hamiltonian neural net-
+works,” in Adv. Neural Inf. Process. Syst., vol. 32, 2019.
+[14] M. Cranmer, S. Greydanus, S. Hoyer, P. Battaglia, D. Spergel, and S.
+Ho, “Lagrangian neural networks,” in ICLR Workshop on Integration of
+Deep Neural Models and Differential Equations, 2020.
+[15] W. Lohmiller and J.-J. E. Slotine, “On contraction analysis for non-linear
+systems,” Automatica, vol. 34, no. 6, pp. 683–696, 1998.
+[16] F. Forni and R. Sepulchre, “A differential Lyapunov framework for
+contraction analysis,” IEEE Trans. Autom. Control, vol. 59, no. 3, pp.
+614–628, 2014.
+[17] I. R. Manchester and J.-J. E. Slotine, “Control contraction metrics:
+Convex and intrinsic criteria for nonlinear feedback design,” IEEE Trans.
+Autom. Control, vol. 62, no. 6, pp. 3046–3053, 2017.
+[18] D. Angeli, “A Lyapunov approach to incremental stability properties,”
+IEEE Trans. Autom. Control, vol. 47, no. 3, pp. 410–421, 2002.
+[19] E. D. Sontag, “Smooth stabilization implies coprime factorization,” IEEE
+Trans. Autom. Control, vol. 34, no. 4, pp. 435–443, 1989.
+[20] H. K. Khalil, Nonlinear Systems, 3rd ed. Upper Saddle River, NJ, USA:
+Prentice Hall, 2002.
+[21] J.-J. E. Slotine and W. Li, Applied Nonlinear Control. Englewood Cliffs,
+NJ, USA: Prentice Hall, 1991.
+[22] L. Ljung, System Identification: Theory for the User, 2nd ed. Upper
+Saddle River, NJ, USA: Prentice Hall, 1999.
+[23] S. A. Billings, Nonlinear System Identification: NARMAX Methods in
+the Time, Frequency, and Spatio-Temporal Domains. Chichester, U.K.:
+Wiley, 2013.
+[24] E. Haber and L. Ruthotto, “Stable architectures for deep neural net-
+works,” Inverse Problems, vol. 34, no. 1, Art. no. 014004, 2018.
+[25] J. Miller and M. Hardt, “Stable recurrent models,” in Proc. Int. Conf.
+Learn. Representations, 2019.
+[26] M. Revay and I. R. Manchester, “Lipschitz bounded equilibrium net-
+works,” arXiv:2010.01732, 2020.
+[27] S. M. Richards, F. Berkenkamp, and A. Krause, “The Lyapunov neural
+network: Adaptive stability certification for safe learning of dynamical
+systems,” in Proc. Conf. Robot Learn., 2018, pp. 466–476.
+
+[28] C. Dawson, S. Gao, and C. Fan, “Safe control with learned certificates: A
+survey of neural Lyapunov, barrier, and contraction methods for robotics
+and control,” IEEE Trans. Robot., vol. 39, no. 3, pp. 1749–1767, 2023.
+[29] A. D. Ames, X. Xu, J. W. Grizzle, and P. Tabuada, “Control barrier
+function based quadratic programs for safety critical systems,” IEEE
+Trans. Autom. Control, vol. 62, no. 8, pp. 3861–3876, 2017.
+[30] P. Pillay and R. Krishnan, “Modeling, simulation, and analysis of
+permanent-magnet motor drives, Part I: The permanent-magnet syn-
+chronous motor drive,” IEEE Trans. Ind. Appl., vol. 25, no. 2, pp. 265–
+273, 1989.
+[31] R. Krishnan, Permanent Magnet Synchronous and Brushless DC Motor
+Drives. Boca Raton, FL, USA: CRC Press, 2010.
+[32] A. D. Ames, S. Coogan, M. Egerstedt, G. Notomista, K. Sreenath, and P.
+Tabuada, “Control barrier functions: Theory and applications,” in Proc.
+Eur. Control Conf., 2019, pp. 3420–3431.
+[33] B. Chang, M. Chen, E. Haber, and E. H. Chi, “AntisymmetricRNN:
+A dynamical system view on recurrent neural networks,” in Proc. Int.
+Conf. Learn. Representations, 2019.
+[34] S. Massaroli, M. Poli, J. Park, A. Yamashita, and H. Asama, “Dissecting
+neural ODEs,” in Adv. Neural Inf. Process. Syst., vol. 33, 2020, pp.
+3952–3963.
+[35] Z. Li, W. Mei, K. Yu, Y. Bai, and S. Li, “ICODE: Modeling dynamical
+systems with extrinsic input information,” IEEE Trans. Autom. Sci. Eng.,
+vol. 22, pp. 14358–14370, 2025, doi: 10.1109/TASE.2025.3560450.
+[36] W. Mei, D. Zheng, and S. Li, “ControlSynth neural ODEs: Modeling
+dynamical systems with guaranteed convergence,” in Adv. Neural Inf.
+Process. Syst., vol. 37, 2024, doi: 10.52202/079017-3148.
+[37] W. Mei, X. Wang, Y. Lu, K. Yu, and S. Li, “Learning and current
+prediction of PMSM drive via differential neural networks,” IEEE Trans.
+Circuits Syst. II, Exp. Briefs, vol. 72, no. 3, pp. 489–493, 2025, doi:
+10.1109/TCSII.2025.3527024.

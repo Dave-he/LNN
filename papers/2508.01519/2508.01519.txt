@@ -1,0 +1,971 @@
+The Vanishing Gradient Problem for Stiff Neural Differential Equations
+The Vanishing Gradient Problem for Stiff Neural Differential Equations
+Colby Fronk1 and Linda Petzold2, 3
+1)Department of Chemical Engineering; University of California, Santa Barbara; Santa Barbara, CA 93106,
+USAa)
+2)Department of Mechanical Engineering; University of California, Santa Barbara; Santa Barbara, CA 93106,
+USA
+3)Department of Computer Science; University of California, Santa Barbara; Santa Barbara, CA 93106,
+USAb)
+(Dated: 5 August 2025)
+Gradient-based optimization of neural differential equations and other parameterized dynamical systems fundamentally
+relies on the ability to differentiate numerical solutions with respect to model parameters. In stiff systems, it has been
+observed that sensitivities to parameters controlling fast-decaying modes become vanishingly small during training,
+leading to optimization difficulties. In this paper, we show that this vanishing gradient phenomenon is not an artifact
+of any particular method, but a universal feature of all A-stable and L-stable stiff numerical integration schemes. We
+analyze the rational stability function for general stiff integration schemes and demonstrate that the relevant parameter
+sensitivities, governed by the derivative of the stability function, decay to zero for large stiffness. Explicit formulas
+for common stiff integration schemes are provided, which illustrate the mechanism in detail. Finally, we rigorously
+prove that the slowest possible rate of decay for the derivative of the stability function is O(|z|−1), revealing a funda-
+mental limitation: all A-stable time-stepping methods inevitably suppress parameter gradients in stiff regimes, posing
+a significant barrier for training and parameter identification in stiff neural ODEs.
+Neural differential equations have become a transforma-
+tive tool in machine learning and scientific computing, en-
+abling data-driven modeling of complex, time-dependent
+phenomena in fields ranging from chemistry and biology
+to climate science and engineering. However, many real-
+world systems are “stiff,” meaning they evolve on multi-
+ple timescales, with some processes occurring much more
+rapidly than others. In such cases, numerical integration
+methods must be carefully chosen to ensure stable and ef-
+ficient simulation. Our work reveals a fundamental and
+previously underappreciated challenge: for all widely used
+numerically stable (A-stable and L-stable) solvers, gra-
+dients with respect to parameters controlling fast (stiff)
+modes inevitably decay to zero during training. This “van-
+ishing gradient” phenomenon is not merely a technical ob-
+stacle or a quirk of specific algorithms, but a universal fea-
+ture rooted in the mathematics of stable stiff integration
+methods. As a result, crucial information about how pa-
+rameters influence the model is lost, severely limiting the
+ability of neural ODEs to learn from data and accurately
+identify system parameters in stiff regimes. Our analysis
+provides a theoretical foundation for this effect, quantifies
+its severity, and highlights its inevitability across a broad
+class of integration schemes. These findings challenge the
+current paradigm of gradient-based learning in stiff dy-
+namical systems and motivate the search for fundamen-
+tally new computational strategies to overcome this bar-
+rier and enable scientific discovery in complex, multiscale
+environments.
+a)Correspond to colbyfronk@ucsb.edu
+b)Correspond to petzold@ucsb.edu
+INTRODUCTION
+The vanishing gradient problem1–9 is one of the best-known
+and most deeply studied obstacles in deep learning. In stan-
+dard feedforward10,11 or recurrent neural networks3,12–15, gra-
+dients are propagated backwards through potentially dozens
+or hundreds of nonlinear layers via the chain rule. When the
+Jacobians associated with each layer interact, the resulting
+product can quickly become exponentially small. This phe-
+nomenon causes gradients with respect to early-layer param-
+eters to vanish. As a result, these parameters cease to update
+during gradient-based optimization, causing slow or stalled
+learning, and rendering parts of the network untrainable. Over
+time, the community has developed an array of architectural
+and algorithmic solutions to counteract this problem. These
+include clever initialization schemes16–21 to preserve gradi-
+ent norm, activation functions less prone to saturation (e.g.,
+ReLU22,23 and its alternatives24–27), and architectural innova-
+tions such as residual connections28–30, gating mechanisms15
+(as in LSTMs31,32 and GRUs33,34), normalization layers35–38,
+skip connections28,39,40, and Transformers41,42. Despite these
+advances, vigilance against vanishing gradients remains a fun-
+damental concern when designing and training deep neural
+networks.
+Modeling the dynamics of complex systems has tradition-
+ally relied on differential equations grounded in first princi-
+ples. However, deriving such equations is challenging for
+most real-world systems where the underlying mechanisms
+are only partially known or are highly complex. In these
+settings, data-driven modeling offers a compelling alterna-
+tive by learning the system’s dynamics directly from observed
+data, making it possible to uncover governing equations and
+make predictions even in the absence of a complete mech-
+anistic understanding. A particularly powerful example of
+this approach is neural ordinary differential equations (neu-
+ral ODEs)43–54. Neural ODEs use parameterized neural net-
+arXiv:2508.01519v1  [cs.LG]  2 Aug 2025
+
+The Vanishing Gradient Problem for Stiff Neural Differential Equations 2
+works to define the vector field of an ODE, allowing the
+model to learn continuous-time dynamics directly from data.
+This framework is especially well-suited to modeling time-
+dependent or irregularly sampled systems and can be naturally
+integrated with latent variable models and control tasks. Com-
+plementary approaches such as physics-informed neural net-
+works (PINNs)55–61 and MeshGraphNets62 further enhance
+the capabilities of data-driven differential equation modeling.
+PINNs embed known physical laws as soft constraints during
+training, improving generalization and interpretability, while
+MeshGraphNets leverage graph neural networks to model sys-
+tems defined on complex meshes. Together, these methods
+provide a flexible and robust toolkit for learning, simulating,
+and controlling dynamical systems directly from data, driving
+advances across scientific and engineering disciplines.
+The primary computational difficulty associated with neu-
+ral differential equations is their training, as it relies on dif-
+ferentiation methods such as automatic differentiation63,64 to
+compute gradients of the loss with respect to all network
+parameters43,51,65,66. Since the output of a neural differential
+equation depends on parameters through the solution trajec-
+tory, it becomes necessary to differentiate not only through
+the neural network itself, but through the entire ODE solver.
+This requirement creates unique challenges compared to stan-
+dard feedforward networks, as the integration procedure must
+be made compatible with gradient-based optimization. To
+address this, two primary training strategies have emerged:
+optimize-discretize (Opt-Disc) and discretize-optimize (Disc-
+Opt)65,67. In the Opt-Disc approach, the optimization problem
+is formulated in continuous time, and gradients are computed
+by integrating an adjoint ODE backward in time68–71. The ad-
+joint technique greatly reduces memory overhead compared
+to traditional backpropagation, but the accuracy and stability
+of gradients can be sensitive to both the forward and adjoint
+solvers, especially in stiff or chaotic systems65,67. In con-
+trast, the Disc-Opt approach begins by discretizing the ODE
+system, then leverages the powerful automatic differentiation
+tools developed in modern deep learning frameworks to com-
+pute exact gradients for the chosen numerical scheme67. By
+aligning the optimization with the discrete solver, Disc-Opt
+often yields more robust and reliable gradients, and can be
+computationally more efficient, particularly when training on
+noisy data or working with stiff systems. Recent studies have
+shown that Disc-Opt can offer significant speed and stabil-
+ity advantages for neural ODE training, with improvements in
+both convergence and generalization67.
+Neural differential equations encounter distinct computa-
+tional challenges when used in real-world contexts, predom-
+inantly due to the widespread occurrence of stiffness in the
+governing ODEs. This is particularly relevant in fields such
+as chemical engineering, climate modeling, and systems biol-
+ogy, where models frequently involve processes evolving on
+vastly different timescales. For example, in cell death path-
+ways such as apoptosis and necroptosis, caspase activation
+unfolds in seconds to minutes, while feedback regulation via
+gene expression may take hours, resulting in stiff dynamics
+that span orders of magnitude in timescale72–74. Similarly, in
+the p53 pathway, rapid protein modifications occur in min-
+utes, whereas synthesis and accumulation of regulatory pro-
+teins like Mdm2 and Wip1 occur over hours75–77.
+Standard explicit integrators, such as forward Euler or
+explicit Runge-Kutta methods, are typically impractical for
+stiff problems because stability restrictions require extremely
+small time steps, leading to simulations that are computa-
+tionally infeasible78–80. As a result, A-stable and L-stable
+implicit time-stepping methods such as backward Euler, the
+trapezoid method, backward differentiation formulas (BDF),
+and implicit Runge-Kutta schemes are the standard approach
+for robustly integrating stiff ODEs. Most of these methods
+are specifically designed so that their stability regions encom-
+pass the entire left-half complex plane, allowing them to sta-
+bly handle large negative eigenvalues that arise from the stiff
+components of the system.
+Neural ODEs can still become stiff throughout the train-
+ing process, even if the original data comes from non-stiff
+ODEs, due to the nonlinear dynamics produced by the neu-
+ral network81–83. This stiffness often originates from the
+highly expressive nature of neural networks, which can en-
+counter stiff behavior while exploring the parameter space
+during training. Such stiffness may drastically impede train-
+ing progress or prevent convergence, highlighting the impor-
+tance of using solvers that are naturally robust to stiffness.
+Earlier approaches have attempted to mitigate stiffness in
+neural ODEs by modifying the system dynamics through tech-
+niques such as equation scaling, regularization, projection
+into a latent space, or selection of training optimizers67,81–103;
+however, these methods address the problem only indirectly
+and do not fully resolves the actual stiffness issue. Ref. 104
+recently showed that the single-step implicit solvers backward
+Euler, trapezoid method, Radau3, and Radau5 can accurately
+train neural ODEs on stiff systems; however, these methods
+come at a high cost of solving a nonlinear system of equa-
+tions at every time step. Refs. 104 and 105 aimed to over-
+come the cost of implicit schemes by exploring explicit expo-
+nential integration schemes, finding the first-order explicit A-
+stable integrating factor Euler (IF Euler) method more stable
+than implicit schemes. Despite thorough testing, they found
+no higher-order explicit exponential integration methods with
+reliability, accuracy, and stability suitable for neural ODEs.
+While the IF Euler method has impressive stability, it is lim-
+ited by its first-order accuracy. Ref. 106 showed that A-stable,
+second- and third-order explicit rational Taylor series methods
+allow for stable high-accuracy training of stiff neural ODEs
+with just a single linear solve per step.
+When applying A-stable and L-stable stiff integration meth-
+ods to train stiff neural ODEs, a distinct vanishing gradient
+phenomenon emerges. Here, the gradients of the loss with re-
+spect to parameters controlling the stiff (fast-decaying) modes
+of the system tend to zero, even if the underlying neural net-
+work is shallow or carefully constructed to avoid standard
+vanishing gradient pitfalls. Both vanishing gradient mech-
+anisms of the classic effect from deep neural networks and
+the suppression caused by stiff ODE integrators can act si-
+multaneously and even reinforce each other in neural ODE
+models. When the neural network is deep and the dynamics
+are stiff, gradients may vanish due to both repeated nonlinear
+
+The Vanishing Gradient Problem for Stiff Neural Differential Equations 3
+transformations and the numerical damping imposed by the
+integrator’s stability function, making some parameters effec-
+tively untrainable. Notably, standard architectural solutions
+such as residual connections or normalization, which mitigate
+depth-induced vanishing gradients, cannot address the gradi-
+ent decay inherent to A-stable or L-stable methods. As a re-
+sult, parameter unidentifiability in stiff neural ODEs presents
+a fundamental challenge for effective learning.
+In this work, we provide a comprehensive theoretical and
+empirical analysis of the vanishing gradient problem in stiff
+neural ODEs, focusing on the universal attenuation of param-
+eter sensitivities induced by A-stable and L-stable implicit
+time-stepping methods. A central concept in our study is the
+stability function R(z), which provides a clear measure of how
+numerical methods amplify or dampen dynamics over succes-
+sive time steps, especially under stiff conditions. Our main
+theoretical result is that for any A-stable or L-stable method,
+as the stiffness parameter z = λ h becomes large (|z| ≫ 1), the
+derivative R′(z) = dR/dz must decay to zero. For most stan-
+dard schemes, we explicitly compute R(z) and R′(z), showing
+that the decay rate is typically O(|z|−2). We show that the
+slowest possible decay of R′(z) for any A-stable or L-stable
+method is O(|z|−1). This establishes the following universal
+result: all A-stable and L-stable time-stepping methods in-
+evitably suppress parameter gradients in the stiff regime, re-
+gardless of network structure or depth. Thus, the vanishing
+gradient phenomenon in this setting is an inescapable conse-
+quence of the numerical properties of stiff integrators, not an
+artifact of implementation or neural network architecture.
+By quantifying this decay and its limits, our work shifts the
+focus from architectural tweaks to a more foundational chal-
+lenge that demands new strategies in how we approach both
+integration and sensitivity analysis for stiff neural differential
+equations. The universal nature of this decay highlights the
+need for fundamentally new tools or theoretical breakthroughs
+if we are to make progress on learning in the presence of ex-
+treme stiffness.
+BACKGROUND
+Neural ordinary differential equations43–54 (neural ODEs)
+have emerged as a powerful framework for modeling complex
+dynamical systems, where the evolution of the state y(t) is
+governed by a neural network. In this setting, the dynamics
+are described by an ODE of the form
+dy
+dt = NN(t, y(t), θ ), y(0) = y0,
+where NN(t, y, θ ) is a neural network parameterized by θ , and
+y0 is the initial condition. The solution at a final time T , de-
+noted ypred = y(T ), serves as the model’s prediction.
+Training a neural ODE typically involves comparing the
+model’s prediction ypred to observed data yknown by minimiz-
+ing a loss function such as
+L(ypred, yknown) = L(y(T ), yknown).
+To optimize the parameters θ , gradient-based methods are
+used, which require computing the gradient of the loss with
+respect to θ :
+dL
+dθ = ∂ L ∂ y(T ) · ∂ y(T ) ∂ θ .
+Here, the critical quantity is ∂ y(T ) ∂ θ , reflecting how parame- ter changes influence the ODE solution at time T . In prac-
+tice, y(T ) depends on θ through the sequence of numerical
+updates performed by the ODE solver. At each time step,
+the solver advances the state according to an update rule,
+yn+1 = Φ(yn, yn+1, f , h, θ ), where Φ represents the chosen nu-
+merical method (such as implicit Euler or Runge-Kutta). Us-
+ing automatic differentiation, the sensitivities with respect to
+the parameters can be computed recursively at each solver step
+via the chain rule:
+dyn+1
+dθ = ∂ Φ ∂ yn dyn dθ + ∂ Φ ∂ θ .
+This recursion efficiently accumulates how infinitesimal
+changes in the parameters affect the trajectory, ultimately
+yielding the overall sensitivity ∂ y(T ) ∂ θ required for learning. A central challenge in modeling and training neural ODEs
+arises when the underlying dynamical system is stiff. Stiff-
+ness in ordinary differential equations refers to situations in
+which the solution exhibits dynamics across widely sepa-
+rated timescales, typically involving rapidly decaying tran-
+sient modes alongside slowly evolving components. A com-
+mon quantitative measure of stiffness is the ratio of the largest
+to smallest magnitude of negative real eigenvalues, which can
+span many orders of magnitude in real-world problems.
+Numerical integration schemes can be analyzed through
+their action on the linear test equation ˙y = λ y. In this con-
+text, the update step is often written as
+yn+1 = R(hλ ) yn = R(z) yn,
+where h is the time step, z = hλ , and R(z) is the stability func-
+tion that characterizes the method’s behavior78. This formu-
+lation provides a unified way to study how different schemes
+propagate solutions and maintain stability, which is particu-
+larly important for stiff problems. The structure of the sta-
+bility function determines the method’s ability to stably inte-
+grate stiff systems. A numerical integrator is called A-stable78
+if |R(z)| ≤ 1 for all z with non-positive real part (ℜ(z) ≤ 0),
+ensuring that the numerical solution does not grow in modes
+that should decay. L-stability78 is an even stronger property
+that additionally requires lim|z|→∞ R(z) = 0, guaranteeing that
+very stiff modes are suppressed rapidly at each time step. For
+example, implicit Euler is both A- and L-stable, robustly han-
+dling stiff modes, while the trapezoid rule is A-stable but not
+L-stable, providing weaker suppression of very stiff dynam-
+ics.
+In the context of neural ODEs, training and parameter in-
+ference via gradient-based optimization require differentiat-
+ing the numerical solution with respect to model parameters,
+which involves differentiating through the solver itself. The
+
+The Vanishing Gradient Problem for Stiff Neural Differential Equations 4
+calculation of parameter sensitivities depends on the deriva-
+tive of the stability function, R′(z) = dR/dz. At each step, the
+chain rule accumulates multiplicative factors involving R′(z),
+and thus the shape and magnitude of R′(z) directly influence
+how parameter sensitivities propagate through the solver over
+time. Intuitively, R′(z) quantifies how parameter changes af-
+fect the decay rate of each mode.
+Empirically, practitioners observe that in stiff regimes, sen-
+sitivities with respect to parameters controlling fast-decaying
+modes often vanish rapidly. However, a general and rigor-
+ous explanation for this phenomenon has been lacking. To
+understand this effect, it is necessary to examine the asymp-
+totic behavior of R′(z) for large stiffness. As we will show,
+the intrinsic mathematical structure of all A-stable rational
+stability functions ensures a universal vanishing of sensitiv-
+ities in the stiff regime, revealing a fundamental limitation of
+standard implicit integrators for gradient-based optimization
+in stiff neural ODEs.
+EXACT SENSITIVITY OF THE LINEAR TEST EQUATION
+To provide a point of reference, consider the exact sensitiv-
+ity for the linear test equation, ˙y = λ y, evaluated at time t = h.
+The exact solution is y(h) = y0eλ h, so the sensitivity of the
+state at time h with respect to λ is
+∂ y(h)
+∂ λ = hy0eλ h = hy0ez,
+where z = hλ . For large negative z (the stiff regime), this exact
+sensitivity decays exponentially:
+ ∂ y(h) ∂ λ  = h|y0|eRe(z) → 0 as Re(z) → −∞.
+ASYMPTOTIC BEHAVIOR OF STABILITY FUNCTION
+DERIVATIVES
+To understand the vanishing gradient phenomenon in stiff
+regimes, we analyze the asymptotic decay of the derivative
+of the stability function, R′(z), for general ODE integration
+methods. The stability function of such methods is typically
+rational and can be written as
+R(z) = P(z) Q(z) ,
+where P(z) and Q(z) are polynomials of degree m and n, re-
+spectively. The parameter sensitivity relevant for training neu-
+ral ODEs is determined by the derivative
+R′(z) = P′(z)Q(z) − P(z)Q′(z) [Q(z)]2 .
+The asymptotic decay rate of R′(z) as |z| → ∞ is dictated by
+the relative degrees of P(z) and Q(z), as well as by possible
+cancellations of leading-order terms in the numerator.
+Let m = degP and n = degQ. We analyze the possible
+cases:
+Case 1: Numerator Degree Greater Than Denominator
+(m > n)
+If m > n, then for large |z|, the leading-order behavior of
+the stability function itself is
+R(z) ∼ amzm
+bnzn ∝ zm−n → ∞.
+Thus, the numerical method amplifies stiff modes as |z| → ∞,
+violating the A-stability requirement |R(z)| ≤ 1 for ℜ(z) ≤ 0.
+Therefore, any rational integrator with m > n is unstable and
+not used in stiff problems.
+Case 2: Denominator Degree Greater Than Numerator
+(m < n)
+If m < n, then for large |z|,
+P′(z)Q(z) ∼ mambnzm−1+n = mambnzm+n−1,
+P(z)Q′(z) ∼ nambnzm+n−1 = nambnzm+n−1.
+Thus,
+P′(z)Q(z) − P(z)Q′(z) ∼ (m − n)ambnzm+n−1.
+The denominator is
+[Q(z)]2 ∼ b2 nz2n.
+Therefore, the leading asymptotic behavior is
+R′(z) ∼ (m − n)ambn
+b2n zm−n−1,
+that is,
+R′(z) = O(|z|m−n−1),
+as |z| → ∞.
+Case 3: Numerator and Denominator Have Equal Degree
+(m = n)
+If m = n, then for large |z|,
+P(z) ∼ anzn, Q(z) ∼ bnzn,
+P′(z)Q(z) ∼ nanbnz2n−1,
+P(z)Q′(z) ∼ nanbnz2n−1.
+These leading terms in the numerator always cancel:
+P′(z)Q(z) − P(z)Q′(z) = 0 at order z2n−1.
+The next highest possible power in the numerator is at most
+2n − 2, while the denominator remains degree 2n, so
+R′(z) = O(|z|−2)
+as |z| → ∞.
+
+The Vanishing Gradient Problem for Stiff Neural Differential Equations 5
+m = degP n = degP Decay of R′(z)
+m > n n O(|z|m−n)
+m = n n O(|z|−2)
+m < n n O(|z|m−n−1)
+TABLE I. Decay of R′(z) for different degrees of P and Q.
+UNIVERSAL LOWER BOUND ON THE DECAY OF
+STABILITY FUNCTION DERIVATIVES
+We now rigorously establish a universal lower bound on the
+asymptotic decay of the derivative of the stability function,
+R(z), for any consistent A-stable ODE integration scheme.
+This result formalizes the unavoidable vanishing of parame-
+ter sensitivities associated with stiff modes in numerical solu-
+tions, regardless of the particular choice of A-stable scheme.
+Theorem (Universal Lower Bound for A-stable Schemes)
+Let R(z) be the stability function of a consistent, one-step,
+A-stable ODE integration scheme, that is:
+1. R(z) is analytic in the closed left half-plane C− = {z ∈
+C : Re(z) ≤ 0},
+2. |R(z)| ≤ 1 for all z with Re(z) ≤ 0,
+3. R(0) = 1 and R′(0) = 1 (consistency conditions).
+Then, for any z with Re(z) < 0, the following sharp bound
+holds:
+|R′(z)| ≤ 1 −Re(z) .
+Moreover, for any fixed δ ∈ (0, π/2), if z lies in the sector
+Sδ = {z ∈ C : Re(z) < 0, | arg(−z)| ≤ π − δ } ,
+then
+|R′(z)| ≤ 1 |z| cos δ .
+If, in addition, R(z) is a rational function, R(z) = P(z) Q(z) with
+P, Q polynomials of degrees m, n, then the asymptotic decay
+rate of R′(z) as |z| → ∞ in any fixed sector Sδ is given by:
+• If m = n, the leading terms in the numerator of R′(z)
+cancel, so
+R′(z) = O(|z|−2).
+• If m < n, the leading terms do not cancel, and
+R′(z) = O(|z|m−n−1).
+• If m > n, R(z) is unbounded as |z| → ∞ in the left half-
+plane, so A-stability is impossible.
+All of these bounds are sharp.
+Proof
+Let z0 ∈ C be any point with Re(z0) < 0. Our goal is to
+bound |R′(z0)|.
+Define r = −Re(z0) > 0. Consider the closed disk
+D = {w ∈ C : |w − z0| ≤ r}.
+We first verify that D lies entirely within the closed left half-
+plane. For any w ∈ D, we have
+Re(w) = Re(z0) + Re(w − z0).
+Since |w − z0| ≤ r, it follows that Re(w − z0) ≥ −|w − z0| ≥
+−r. Thus,
+Re(w) ≤ Re(z0) + r = 0,
+so every point in D remains in the closed left half-plane, where
+A-stability holds.
+Because R(z) is analytic on and inside D, we may apply
+Cauchy’s integral formula for the first derivative:
+R′(z0) = 1 2πi I |w−z0|=r R(w) (w − z0)2 dw.
+We now bound the modulus of this integral. On the contour
+|w − z0| = r:
+• |R(w)| ≤ 1 by A-stability,
+• |w − z0| = r everywhere on the contour.
+Thus,
+|R′(z0)| ≤ 1 2π I |w−z0|=r 1 r2 |dw| = 1 2π · 1 r2 ·(2πr) = 1 r = 1 −Re(z0) .
+This establishes the first (global) bound.
+Next, we consider the sectorial bound. Suppose z0 lies in
+the sector
+Sδ = {z ∈ C : Re(z) < 0, | arg(−z)| ≤ π − δ }
+for some δ ∈ (0, π/2). Write z0 = |z0|eiθ , so −z0 =
+|z0|ei(θ +π), and | arg(−z0)| ≤ π − δ by definition.
+Note that
+−Re(z0) = Re(−z0) = |z0| cos θ ′,
+where θ ′ = arg(−z0) and |θ ′| ≤ π − δ . Thus, for all such z0,
+−Re(z0) ≥ |z0| cos δ .
+
+The Vanishing Gradient Problem for Stiff Neural Differential Equations 6
+Combining with the earlier bound, we obtain
+|R′(z0)| ≤ 1 −Re(z0) ≤ 1 |z0| cos δ .
+Thus, in any fixed sector away from the imaginary axis, the
+decay rate of |R′(z0)| is at least as fast as O(1/|z0|), with the
+constant determined by δ .
+Now, we turn to the case where R(z) is a rational function,
+R(z) = P(z) Q(z) ,
+where P and Q are polynomials of degrees m and n respec-
+tively. The derivative is given by
+R′(z) = P′(z)Q(z) − P(z)Q′(z) Q(z)2 .
+The large-|z| asymptotic decay rate of R′(z) depends on the
+degrees:
+• If m = n, expand:
+P(z) ∼ anzn, Q(z) ∼ bnzn
+so
+P′(z)Q(z) ∼ nanbnz2n−1, P(z)Q′(z) ∼ nanbnz2n−1
+and the highest order terms in the numerator cancel
+identically:
+P′(z)Q(z) − P(z)Q′(z) ∼ 0.
+Therefore, the next-highest degree determines the be-
+havior, and the overall decay is
+R′(z) = O(|z|−2).
+• If m < n, the leading order terms do not cancel. The
+numerator is degree m + n − 1, denominator is degree
+2n, so
+R′(z) = O(|z|m−n−1).
+• If m > n, then for large |z|,
+R(z) ∼ am
+bn
+zm−n → ∞,
+which violates the A-stability property (|R(z)| ≤ 1).
+The bounds given above are optimal in the following sense:
+for any fixed sector bounded away from the imaginary axis,
+there exist analytic and A-stable stability functions whose
+derivatives decay as slowly as O(1/|z|) for large |z|. In par-
+ticular, Möbius-type rational stability functions (e.g., Rβ (z) =
+1/(1 − β z)) can achieve the O(1/|z|) rate in appropriate sec-
+tors, thus showing that the sectorial bound cannot be improved
+in general. However, most classical A-stable and L-stable in-
+tegrators such as backward Euler, trapezoidal rule, and Radau
+methods exhibit faster decay, typically O(|z|−2) for |R′(z)| as
+|z| → ∞. The exponential Euler method (R(z) = ez), while
+analytic and A-stable, actually decays much faster (exponen-
+tially with Re(z)), and so falls well below the universal bound
+for large negative Re(z). Thus, the stated rates are genuinely
+sharp: they are the slowest possible decay rates allowed by the
+analytic and boundedness properties imposed by A-stability,
+even though most practical schemes in scientific computing
+achieve even more rapid decay.
+ANALYTICAL RESULTS FOR STABILITY FUNCTIONS
+AND PARAMETER SENSITIVITIES
+We have derived explicit analytical expressions for both the
+amplification factor (stability function) and the parameter sen-
+sitivity for a comprehensive suite of stiff ODE integrators.
+The schemes we considered include Backward Euler, Trape-
+zoid, Radau3, Radau5, BDF2, the exponential integrating fac-
+tor Euler method (IF Euler), as well as the second-order and
+third-order rational methods. For each of these integrators, we
+carefully computed how the numerical solution at each step is
+amplified as a function of the stiffness parameter, and how
+changes in this parameter influence the sensitivity of the solu-
+tion.
+As a reference, we note that for the exact solution of the
+linear test equation, the sensitivity with respect to the stiff-
+ness parameter z decays exponentially as |z| increases, i.e., ∂ y(h) ∂ λ  ∼ eRe(z) for large negative Re(z). This demonstrates
+that the vanishing gradient problem is intrinsic to stiff ODEs
+themselves, arising fundamentally from the dynamics of the
+system rather than from any particular numerical method.
+Our analysis revealed a remarkably consistent pattern
+across the majority of these methods: Backward Euler, Trape-
+zoid, Radau3, Radau5, and both second- and third-order ra-
+tional methods all exhibit a decay of parameter sensitivity
+proportional to O(|z|−2) as the stiffness |z| increases. The
+only exceptions to this rule were BDF2 and IF Euler. BDF2
+demonstrated a somewhat slower suppression of sensitivities,
+with a decay rate of O(|z|−3/2). Meanwhile, the A-stable ex-
+ponential integrating factor Euler method, due to its use of the
+exact exponential for the linear part, matches the exponential
+decay of the exact solution.
+These analytical findings, summarized in Table 2, directly
+illustrate the universality and inevitability of the vanishing
+gradient problem for stiff neural ODEs. Regardless of which
+of these widely used A-stable and L-stable schemes is chosen,
+the intrinsic properties of their stability functions ensure that
+gradients with respect to parameters controlling stiff modes
+will vanish rapidly, posing a fundamental challenge to ef-
+fective training. This pattern underscores that the vanishing
+gradient phenomenon is not an artifact of implementation or
+solver details, but a deep consequence of the mathematical
+structure of all practical stiff integrators. Furthermore, the ex-
+act sensitivity also shows that the vanishing gradient problem
+is intrinsic to stiff ODEs themselves, arising fundamentally
+from the dynamics of the system rather than from any partic-
+ular numerical method.
+
+The Vanishing Gradient Problem for Stiff Neural Differential Equations 7
+Method Amplification Factor Parameter Sensitivity Decay Rate
+Backward Euler yn+1 = 1 1 − z yn dyn+1 dλ = hyn (1 − z)2 O   |z|−2
+Trapezoid yn+1 = 2 + z 2 − z yn dyn+1 dλ = 4hyn (2 − z)2 O   |z|−2
+Radau3 yn+1 = 6 + 2z 6 − 4z + z2 yn dyn+1 dλ = −2z2 − 12z + 36 z4 − 8z3 + 28z2 − 48z + 36 hyn O   |z|−2
+Radau5 yn+1 = 60 + 24z + 3z2 60 − 36z + 9z2 − z3 yn dyn+1 dλ = 3z4 + 48z3 − 144z2 − 720z + 3600 z6 − 18z5 + 153z4 − 768z3 + 2376z2 − 4320z + 3600 hyn O   |z|−2
+BDF2 yn+1 = 4 +
+p
+16 − 4(3 − 2z)
+2(3 − 2z) yn
+dyn+1
+dλ = 5 + 2z + 4√1 + 2z (3 − 2z)2√1 + 2z hyn O   |z|−3/2
+IF Euler yn+1 = exp(z)yn
+dyn+1
+dλ = exp(z)hyn O
+ 
+ez
+2nd Order Rational yn+1 = 2 + z 2 − z yn dyn+1 dλ = 4hyn (2 − z)2 O   |z|−2
+3rd Order Rational yn+1 = 12 + 6z + z2 12 − 6z + z2 yn dyn+1 dλ = 12z2 − 144 (12 − 6z + z2)2 hyn O   |z|−2
+TABLE II. Summary of amplification factors, parameter sensitivities, and decay rates for various stiff ODE methods.
+
+The Vanishing Gradient Problem for Stiff Neural Differential Equations 8
+DISCUSSION
+This work has established a fundamental and universal lim-
+itation in the training of stiff neural ODEs: the vanishing of
+parameter sensitivities for stiff modes is a direct consequence
+of the mathematical properties required for numerical stabil-
+ity in stiff integration schemes. Our theoretical analysis shows
+that, for all consistent A-stable and L-stable methods, the gra-
+dient of the numerical solution with respect to parameters
+decays rapidly as the stiffness increases. This decay is gov-
+erned by the asymptotic behavior of the derivative of the ra-
+tional stability function, and we have rigorously demonstrated
+that it cannot decay more slowly than O(|z|−1) in any sector
+bounded away from the imaginary axis. In practical terms, for
+most standard integrators, parameter sensitivities with respect
+to fast-decaying components vanish even faster, typically at
+O(|z|−2).
+These results have significant implications for the use of
+neural ODEs and related parameterized dynamical systems
+in scientific machine learning. Unlike the classical vanish-
+ing gradient problem, which can often be mitigated by ar-
+chitectural design, careful initialization, or algorithmic tricks,
+the suppression of parameter sensitivities in stiff neural ODEs
+is deeply rooted in the requirements for numerical stability.
+Standard remedies from deep learning such as residual con-
+nections, normalization layers, or skip connections cannot ad-
+dress this issue, since it arises from the integrator’s action on
+stiff modes, not from the depth or structure of the neural net-
+work itself. As a consequence, gradient-based optimization in
+stiff regimes can become fundamentally limited, and certain
+parameters may remain effectively unidentifiable even with
+sophisticated network design or training schemes.
+Despite these universal constraints, the extent to which the
+vanishing gradient phenomenon limits practical learning re-
+mains an open question. It is worth noting that even the ex-
+act sensitivity for the linear test equation exhibits exponential
+decay with increasing stiffness, highlighting that the vanish-
+ing gradient phenomenon is intrinsic to stiff dynamical sys-
+tems themselves, not merely a numerical artifact. Our results
+thus emphasize that, while numerical integration further sup-
+presses parameter gradients, the fundamental challenge orig-
+inates from the underlying dynamics. There may exist un-
+explored algorithmic, architectural, or theoretical approaches
+that can partially circumvent or mitigate these effects in cer-
+tain settings. Furthermore, the impact of this phenomenon on
+different classes of models, tasks, and data regimes is not yet
+fully understood. We hope that these findings stimulate fur-
+ther investigation into both the mathematical foundations and
+practical strategies for learning in stiff dynamical systems, and
+that they motivate new perspectives on the interplay between
+numerical analysis and machine learning in the context of sci-
+entific computing.
+I. ACKNOWLEDGEMENTS
+Use was made of computational facilities purchased with
+funds from the National Science Foundation (CNS-1725797)
+and administered by the Center for Scientific Computing
+(CSC). The CSC is supported by the California NanoSystems
+Institute and the Materials Research Science and Engineer-
+ing Center (MRSEC; NSF DMR 1720256) at UC Santa Bar-
+bara. This work was supported in part by NSF awards CNS-
+1730158, ACI-1540112, ACI-1541349, OAC-1826967, OAC-
+2112167, CNS-2120019, the University of California Office
+of the President, and the University of California San Diego’s
+California Institute for Telecommunications and Information
+Technology/Qualcomm Institute. Thanks to CENIC for the
+100Gbps networks. The content of the information does not
+necessarily reflect the position or the policy of the funding
+agencies, and no official endorsement should be inferred. The
+funders had no role in study design, data collection and anal-
+ysis, decision to publish, or preparation of the manuscript.
+1S. Hochreiter, Untersuchungen zu dynamischen neuronalen Netzen,
+Diploma thesis, TU Munich (1991).
+2Y. Bengio, P. Simard, and P. Frasconi, “Learning long-term dependencies
+with gradient descent is difficult,” IEEE transactions on neural networks 5,
+157–166 (1994).
+3R. Pascanu, T. Mikolov, and Y. Bengio, “On the difficulty of training re-
+current neural networks,” in International conference on machine learning
+(Pmlr, 2013) pp. 1310–1318.
+4Y. LeCun, Y. Bengio, and G. Hinton, “Deep learning,” nature 521, 436–
+444 (2015).
+5I. Goodfellow, Y. Bengio, and A. Courville, Deep Learning (MIT Press,
+2016) http://www.deeplearningbook.org.
+6M. Raghu, B. Poole, J. Kleinberg, S. Ganguli, and J. Sohl-Dickstein, “On
+the expressive power of deep neural networks,” in International Confer-
+ence on Machine Learning (PMLR, 2017) pp. 2847–2854.
+7G. F. Montufar, R. Pascanu, K. Cho, and Y. Bengio, “On the number of
+linear regions of deep neural networks,” in Advances in neural information
+processing systems, Vol. 27 (2014).
+8J. Schmidhuber, “Learning complex, extended sequences using the princi-
+ple of history compression,” Neural Computation 4, 234–242 (1992).
+9M. Arjovsky, A. Shah, and Y. Bengio, “Unitary evolution recurrent neu-
+ral networks,” in International Conference on Machine Learning (PMLR,
+2016) pp. 1120–1128.
+10X. Glorot and Y. Bengio, “Understanding the difficulty of training deep
+feedforward neural networks,” in Proceedings of the thirteenth interna-
+tional conference on artificial intelligence and statistics (JMLR Workshop
+and Conference Proceedings, 2010) pp. 249–256.
+11A. M. Saxe, J. L. McClelland, and S. Ganguli, “Exact solutions to the non-
+linear dynamics of learning in deep linear neural networks,” arXiv preprint
+arXiv:1312.6120 (2013).
+12S. Hochreiter, Y. Bengio, P. Frasconi, and J. Schmidhuber, “Gradient flow
+in recurrent nets: The difficulty of learning long-term dependencies,” in
+A Field Guide to Dynamical Recurrent Neural Networks, edited by S. C.
+Kremer and J. F. Kolen (IEEE Press, 2001).
+13A. Graves, A.-r. Mohamed, and G. Hinton, “Speech recognition with
+deep recurrent neural networks,” in 2013 IEEE international conference
+on acoustics, speech and signal processing (Ieee, 2013) pp. 6645–6649.
+14J. Chung, C. Gulcehre, K. Cho, and Y. Bengio, “Empirical evaluation
+of gated recurrent neural networks on sequence modeling,” arXiv preprint
+arXiv:1412.3555 (2014).
+15R. Jozefowicz, W. Zaremba, and I. Sutskever, “An empirical exploration
+of recurrent network architectures,” in International conference on ma-
+chine learning (PMLR, 2015) pp. 2342–2350.
+16K. He, X. Zhang, S. Ren, and J. Sun, “Delving deep into rectifiers: Sur-
+passing human-level performance on imagenet classification,” in Proceed-
+ings of the IEEE international conference on computer vision (2015) pp.
+1026–1034.
+17Y. LeCun, L. Bottou, G. B. Orr, and K.-R. Müller, “Efficient backprop,”
+in Neural networks: Tricks of the trade (Springer, 2002) pp. 9–50.
+18B. Poole, S. Lahiri, M. Raghu, J. Sohl-Dickstein, and S. Ganguli, “Ex-
+ponential expressivity in deep neural networks through transient chaos,”
+Advances in neural information processing systems 29 (2016).
+
+The Vanishing Gradient Problem for Stiff Neural Differential Equations 9
+19B. Hanin and D. Rolnick, “How to start training: The effect of initialization
+and architecture,” Advances in neural information processing systems 31
+(2018).
+20D. Mishkin and J. Matas, “All you need is a good init,” in International
+Conference on Learning Representations (2016).
+21I. Sutskever, J. Martens, G. Dahl, and G. Hinton, “On the importance of
+initialization and momentum in deep learning,” in International conference
+on machine learning (PMLR, 2013) pp. 1139–1147.
+22X. Glorot, A. Bordes, and Y. Bengio, “Deep sparse rectifier neural net-
+works,” in Proceedings of the fourteenth international conference on ar-
+tificial intelligence and statistics (JMLR Workshop and Conference Pro-
+ceedings, 2011) pp. 315–323.
+23V. Nair and G. E. Hinton, “Rectified linear units improve restricted boltz-
+mann machines,” in Proceedings of the 27th international conference on
+machine learning (ICML-10) (2010) pp. 807–814.
+24D.-A. Clevert, T. Unterthiner, and S. Hochreiter, “Fast and accurate
+deep network learning by exponential linear units (elus),” arXiv preprint
+arXiv:1511.07289 4, 11 (2015).
+25P. Ramachandran, B. Zoph, and Q. V. Le, “Searching for activation func-
+tions,” arXiv preprint arXiv:1710.05941 (2017).
+26A. L. Maas, A. Y. Hannun, and A. Y. Ng, “Rectifier nonlinearities improve
+neural network acoustic models,” in Proc. ICML, Vol. 30 (2013) p. 3.
+27D. Hendrycks and K. Gimpel, “Gaussian error linear units (gelus),” arXiv
+preprint arXiv:1606.08415 (2016).
+28K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image
+recognition,” in Proceedings of the IEEE conference on computer vision
+and pattern recognition (2016) pp. 770–778.
+29A. Veit, M. J. Wilber, and S. Belongie, “Residual networks behave like
+ensembles of relatively shallow networks,” Advances in neural information
+processing systems 29 (2016).
+30K. He, X. Zhang, S. Ren, and J. Sun, “Identity mappings in deep residual
+networks,” in European conference on computer vision (Springer, 2016)
+pp. 630–645.
+31S. Hochreiter and J. Schmidhuber, “Long short-term memory,” Neural
+computation 9, 1735–1780 (1997).
+32F. A. Gers, J. Schmidhuber, and F. Cummins, “Learning to forget: Con-
+tinual prediction with lstm,” Neural computation 12, 2451–2471 (2000).
+33K. Cho, B. van Merrienboer, C. Gulcehre, D. Bahdanau, F. Bougares,
+H. Schwenk, and Y. Bengio, “Learning phrase representations using rnn
+encoder-decoder for statistical machine translation,” in Proceedings of the
+2014 Conference on Empirical Methods in Natural Language Processing
+(EMNLP) (2014) pp. 1724–1734.
+34K. Cho, B. Van Merriënboer, D. Bahdanau, and Y. Bengio, “On the prop-
+erties of neural machine translation: Encoder-decoder approaches,” arXiv
+preprint arXiv:1409.1259 (2014).
+35S. Ioffe and C. Szegedy, “Batch normalization: Accelerating deep network
+training by reducing internal covariate shift,” in International conference
+on machine learning (PMLR, 2015) pp. 448–456.
+36J. L. Ba, J. R. Kiros, and G. E. Hinton, “Layer normalization,” arXiv
+preprint arXiv:1607.06450 (2016).
+37S. Santurkar, D. Tsipras, A. Ilyas, and A. Madry, “How does batch nor-
+malization help optimization?” Advances in neural information processing
+systems 31 (2018).
+38Y. Wu and K. He, “Group normalization,” in Proceedings of the European
+conference on computer vision (ECCV) (2018) pp. 3–19.
+39R. K. Srivastava, K. Greff, and J. Schmidhuber, “Highway networks,” in
+ICML Deep Learning Workshop (2015).
+40S. Zagoruyko and N. Komodakis, “Wide residual networks,” in British Ma-
+chine Vision Conference (2016).
+41A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” in Advances in
+neural information processing systems, Vol. 30 (2017).
+42D. Wang, Z. Dong, J. Xu, Q. Liu, H. Wang, W. Shi, and K. Li, “A survey
+of transformers,” arXiv preprint arXiv:2206.06488 (2022).
+43R. T. Chen, Y. Rubanova, J. Bettencourt, and D. K. Duvenaud, “Neural or-
+dinary differential equations,” Advances in neural information processing
+systems 31 (2018).
+44Y. Rubanova, R. T. Q. Chen, and D. K. Duvenaud, “Latent ordinary dif-
+ferential equations for irregularly-sampled time series,” in Advances in
+Neural Information Processing Systems, Vol. 32, edited by H. Wallach,
+H. Larochelle, A. Beygelzimer, F. d'Alché-Buc, E. Fox, and R. Garnett
+(Curran Associates, Inc., 2019).
+45R. Dandekar, V. Dixit, M. Tarek, A. Garcia-Valadez, and C. Rackauckas,
+“Bayesian neural ordinary differential equations,” CoRR abs/2012.07244
+(2020), 2012.07244.
+46X. Li, T.-K. L. Wong, R. T. Q. Chen, and D. Duvenaud, “Scalable gradi-
+ents for stochastic differential equations,” in Proceedings of the Twenty
+Third International Conference on Artificial Intelligence and Statistics,
+Proceedings of Machine Learning Research, Vol. 108, edited by S. Chi-
+appa and R. Calandra (PMLR, 2020) pp. 3870–3882.
+47P. Kidger, J. Morrill, J. Foster, and T. Lyons, “Neural controlled differen-
+tial equations for irregular time series,” Advances in Neural Information
+Processing Systems 33, 6696–6707 (2020).
+48P. Kidger, “On neural differential equations,” arXiv preprint
+arXiv:2202.02435 (2022).
+49J. Morrill, C. Salvi, P. Kidger, and J. Foster, “Neural rough differential
+equations for long time series,” in International Conference on Machine
+Learning (PMLR, 2021) pp. 7829–7838.
+50J. Jia and A. R. Benson, “Neural jump stochastic differential equations,”
+Advances in Neural Information Processing Systems 32 (2019).
+51R. T. Chen, B. Amos, and M. Nickel, “Learning neural event functions for
+ordinary differential equations,” arXiv preprint arXiv:2011.03902 (2020).
+52D. Duvenaud, M. Heinonen, M. Tiemann, and M. Welling, “Differential
+equations and continuous-time deep learning,” Visualization and Decision
+Making Design Under Uncertainty , 19 (2023).
+53C. Fronk and L. Petzold, “Interpretable polynomial neural ordinary differ-
+ential equations,” Chaos: An Interdisciplinary Journal of Nonlinear Sci-
+ence 33, 043101 (2023).
+54C. Fronk, J. Yun, P. Singh, and L. Petzold, “Bayesian polynomial neural
+networks and polynomial neural ordinary differential equations,” PLOS
+Computational Biology 20, 1–38 (2024).
+55H. Owhadi, “Bayesian numerical homogenization,” Multiscale Modeling
+& Simulation 13, 812–828 (2015).
+56M. Raissi and G. Karniadakis, “Hidden physics models: Machine learn-
+ing of nonlinear partial differential equations,” Journal of Computational
+Physics 357 (2017), 10.1016/j.jcp.2017.11.039.
+57M. Raissi, P. Perdikaris, and G. E. Karniadakis, “Numerical gaussian
+processes for time-dependent and nonlinear partial differential equations,”
+SIAM Journal on Scientific Computing 40, A172–A198 (2018).
+58M. Raissi, P. Perdikaris, and G. E. Karniadakis, “Physics informed deep
+learning (part ii): Data-driven discovery of nonlinear partial differential
+equations,” (2017), arXiv:1711.10566 [cs.AI].
+59M. Raissi, P. Perdikaris, and G. E. Karniadakis, “Physics-informed neu-
+ral networks: A deep learning framework for solving forward and in-
+verse problems involving nonlinear partial differential equations,” Journal
+of Computational physics 378, 686–707 (2019).
+60S. Cuomo, V. S. Di Cola, F. Giampaolo, G. Rozza, M. Raissi, and F. Pic-
+cialli, “Scientific machine learning through physics–informed neural net-
+works: Where we are and what’s next,” Journal of Scientific Computing
+92, 88 (2022).
+61S. Cai, Z. Mao, Z. Wang, M. Yin, and G. E. Karniadakis, “Physics-
+informed neural networks (pinns) for fluid mechanics: A review,” Acta
+Mechanica Sinica 37, 1727–1738 (2021).
+62T. Pfaff, M. Fortunato, A. Sanchez-Gonzalez, and P. Battaglia, “Learning
+mesh-based simulation with graph networks,” in International conference
+on learning representations (2020).
+63A. G. Baydin, B. A. Pearlmutter, A. A. Radul, and J. M. Siskind, “Auto-
+matic differentiation in machine learning: a survey,” Journal of machine
+learning research 18, 1–43 (2018).
+64A. Griewank and A. Walther, Evaluating derivatives: principles and tech-
+niques of algorithmic differentiation (SIAM, 2008).
+65A. Gholaminejad, K. Keutzer, and G. Biros, “Anode: Unconditionally ac-
+curate memory-efficient gradients for neural odes,” in Proceedings of the
+Twenty-Eighth International Joint Conference on Artificial Intelligence,
+IJCAI-19 (International Joint Conferences on Artificial Intelligence Or-
+ganization, 2019) pp. 730–736.
+66C. Rackauckas, Y. Ma, J. Martensen, C. Warner, K. Zubov, R. Supekar,
+D. Skinner, and A. J. Ramadhan, “Universal differential equations for
+scientific machine learning,” CoRR abs/2001.04385 (2020), 2001.04385.
+
+The Vanishing Gradient Problem for Stiff Neural Differential Equations 10
+67D. Onken and L. Ruthotto, “Discretize-optimize vs. optimize-discretize
+for time-series regression and continuous normalizing flows,” (2020),
+arXiv:2005.13420 [cs.LG].
+68L. S. Pontryagin, Mathematical theory of optimal processes (Routledge,
+2018).
+69G. A. Bliss, “The use of adjoint systems in the problem of differential
+corrections for trajectories,” JUS Artillery 51, 296–311 (1919).
+70Y. Cao, S. Li, L. Petzold, and R. Serban, “Adjoint sensitivity analysis for
+differential-algebraic equations: The adjoint dae system and its numerical
+solution,” SIAM journal on scientific computing 24, 1076–1089 (2003).
+71A. Ben-Israel and T. N. Greville, “Generalized inverses: Theory and ap-
+plications bibliography for the 2nd edition,” (2001).
+72S. L. Spencer and P. K. Sorger, “Measuring and modeling apoptosis in
+single cells,” Cell 144, 926–939 (2011).
+73W. H. Wu, F. S. Wang, and M. S. Chang, “Sensitivity analysis of dynamic
+biological systems with time-delays,” in BMC bioinformatics, Vol. 11
+(Springer, 2010) pp. 1–17.
+74J. G. Albeck, J. M. Burke, S. L. Spencer, D. A. Lauffenburger, and P. K.
+Sorger, “Modeling a snap-action, variable-delay switch controlling extrin-
+sic cell death,” PLoS biology 6, e299 (2008).
+75J. Eliaš and C. K. Macnamara, “Mathematical modelling of p53 signalling
+during dna damage response: A survey,” International Journal of Molecu-
+lar Sciences 22, 10590 (2021).
+76E. Batchelor, C. S. Mock, I. Bhan, A. Loewer, and G. Lahav, “Recur-
+rent initiation: a mechanism for triggering p53 pulses in response to dna
+damage,” Molecular cell 30, 277–289 (2008).
+77J. Eliaš, L. Dimitrio, J. Clairambault, and R. Natalini, “The dynamics of
+p53 in single cells: physiologically based ode and reaction–diffusion pde
+models,” Physical biology 11, 045001 (2014).
+78U. M. Ascher and L. R. Petzold, Computer methods for ordinary differen-
+tial equations and differential-algebraic equations, Vol. 61 (Siam, 1998).
+79D. Griffiths and D. Higham, Numerical Methods for Ordinary Differential
+Equations: Initial Value Problems, Springer Undergraduate Mathematics
+Series (Springer London, 2010).
+80E. Hairer, S. Nørsett, and G. Wanner, Solving Ordinary Differential Equa-
+tions I: Nonstiff Problems, Springer Series in Computational Mathematics
+(Springer Berlin Heidelberg, 2008).
+81J. Kelly, J. Bettencourt, M. J. Johnson, and D. K. Duvenaud, “Learning
+differential equations that are easy to solve,” Advances in Neural Informa-
+tion Processing Systems 33, 4370–4380 (2020).
+82A. Pal, Y. Ma, V. Shah, and C. V. Rackauckas, “Opening the blackbox:
+Accelerating neural differential equations by regularizing internal solver
+heuristics,” in International Conference on Machine Learning (PMLR,
+2021) pp. 8325–8335.
+83D. Onken, S. W. Fung, X. Li, and L. Ruthotto, “Ot-flow: Fast and accurate
+continuous normalizing flows via optimal transport,” in Proceedings of the
+AAAI Conference on Artificial Intelligence, Vol. 35 (2021) pp. 9223–9232.
+84S. Kim, W. Ji, S. Deng, Y. Ma, and C. Rackauckas, “Stiff neural ordinary
+differential equations,” Chaos: An Interdisciplinary Journal of Nonlinear
+Science 31, 093122 (2021).
+85M. Caldana and J. S. Hesthaven, “Neural ordinary differential equa-
+tions for model order reduction of stiff systems,” arXiv preprint
+arXiv:2408.06073 (2024).
+86H. E. Dikeman, H. Zhang, and S. Yang, “Stiffness-reduced neural ode
+models for data-driven reduced-order modeling of combustion chemical
+kinetics,” in AIAA SCITECH 2022 Forum (2022) p. 0226.
+87A. J. Linot, J. W. Burby, Q. Tang, P. Balaprakash, M. D. Graham, and
+R. Maulik, “Stabilized neural ordinary differential equations for long-time
+forecasting of dynamical systems,” Journal of Computational Physics 474,
+111838 (2023).
+88S. I. Holt, Z. Qian, and M. van der Schaar, “Neural laplace: Learning
+diverse classes of differential equations in the laplace domain,” in Interna-
+tional Conference on Machine Learning (PMLR, 2022) pp. 8811–8832.
+89J. Baker, H. Xia, Y. Wang, E. Cherkaev, A. Narayan, L. Chen, J. Xin,
+A. L. Bertozzi, S. J. Osher, and B. Wang, “Proximal implicit ode solvers
+for accelerating learning neural odes,” arXiv preprint arXiv:2204.08621
+(2022).
+90R. Malpica Galassi, P. P. Ciottoli, M. Valorani, and H. G. Im, “An adaptive
+time-integration scheme for stiff chemistry based on computational singu-
+lar perturbation and artificial neural networks,” Journal of Computational
+Physics 451, 110875 (2022).
+91T. Thummerer and L. Mikelsons, “Eigen-informed neural ordinary differ-
+ential equations: Dealing with stability and convergence issues,” Available
+at SSRN 4819144.
+92Y. Weng, Z. Zhao, H. Zhang, and D. Zhou, “Extending fourier neural
+operators to learn stiff chemical kinetics,” in 40th International Symposium
+on Combustion (submitted) (2024).
+93A. Ghosh, H. Behl, E. Dupont, P. Torr, and V. Namboodiri, “Steer: Simple
+temporal regularization for neural ode,” Advances in Neural Information
+Processing Systems 33, 14831–14843 (2020).
+94C. Finlay, J.-H. Jacobsen, L. Nurbekyan, and A. Oberman, “How to train
+your neural ode: the world of jacobian and kinetic regularization,” in Inter-
+national conference on machine learning (PMLR, 2020) pp. 3154–3164.
+95S. Massaroli, M. Poli, M. Bin, J. Park, A. Yamashita, and H. Asama,
+“Stable neural flows,” (2020), arXiv:2003.08063 [cs.LG].
+96S. Massaroli, M. Poli, J. Park, A. Yamashita, and H. Asama, “Dissect-
+ing neural odes,” Advances in Neural Information Processing Systems 33,
+3952–3963 (2020).
+97W. Ji, W. Qiu, Z. Shi, S. Pan, and S. Deng, “Stiff-pinn: Physics-informed
+neural network for stiff chemical kinetics,” The Journal of Physical Chem-
+istry A 125, 8098–8106 (2021).
+98N. Guglielmi, A. De Marinis, A. Savostianov, and F. Tudisco, “Contrac-
+tivity of neural odes: An eigenvalue optimization problem,” Mathematics
+of Computation (2025).
+99A. Pal, A. Edelman, and C. V. Rackauckas, “Locally regularized neural
+differential equations: Some black boxes were meant to remain closed!” in
+International Conference on Machine Learning (PMLR, 2023) pp. 26809–
+26819.
+100T. Kumar, A. Kumar, and P. Pal, “A physics-constrained neural ordinary
+differential equations approach for robust learning of stiff chemical kinet-
+ics,” Combustion Theory and Modelling , 1–16 (2025).
+101T. Kumar, A. Kumar, and P. Pal, “A physics-informed autoencoder-
+neuralode framework (phy-chemnode) for learning complex fuel combus-
+tion kinetics,” in NeurIPS Machine Learning and the Physical Sciences
+Workshop (2024) p. 1.
+102A. S. Nair, S. Barwey, P. Pal, J. F. MacArt, T. Arcomano, and R. Maulik,
+“Understanding latent timescales in neural ordinary differential equation
+models of advection-dominated dynamical systems,” Physica D: Nonlinear
+Phenomena 476, 134650 (2025).
+103O. Owoyele and P. Pal, “Chemnode: A neural ordinary differential equa-
+tions framework for efficient chemical kinetic solvers,” Energy and AI 7,
+100118 (2022).
+104C. Fronk and L. Petzold, “Training stiff neural ordinary differential equa-
+tions with implicit single-step methods,” Chaos: An Interdisciplinary Jour-
+nal of Nonlinear Science 34, 123147 (2024).
+105C. Fronk and L. Petzold, “Performance evaluation of single-step explicit
+exponential integration methods on stiff ordinary differential equations,”
+(2024), arXiv:2411.19374 [math.NA].
+106C. Fronk and L. Petzold, “Training stiff neural ordinary differential equa-
+tions with explicit rational taylor series methods,” Chaos: An Interdisci-
+plinary Journal of Nonlinear Science 35, 073133 (2025).
