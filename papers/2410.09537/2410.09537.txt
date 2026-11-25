@@ -1,0 +1,1222 @@
+ADAPTIVE HIGHER ORDER REVERSIBLE INTEGRATORS
+FOR MEMORY EFFICIENT DEEP LEARNING
+S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+Abstract. The depth of networks plays a crucial role in the effectiveness
+of deep learning. However, the memory requirement for backpropagation
+scales linearly with the number of layers, which leads to memory bottlenecks
+during training. Moreover, deep networks are often unable to handle time-
+series data appearing at irregular intervals. These issues can be resolved by
+considering continuous-depth networks based on the neural ODE framework
+in combination with reversible integration methods that allow for variable
+time-steps. Reversibility of the method ensures that the memory requirement
+for training is independent of network depth, while variable time-steps are
+required for assimilating time-series data on irregular intervals. However, at
+present, there are no known higher-order reversible methods with this property.
+High-order methods are especially important when a high level of accuracy in
+learning is required or when small time-steps are necessary due to large errors in
+time integration of neural ODEs, for instance in context of complex dynamical
+systems such as Kepler systems and molecular dynamics. The requirement of
+small time-steps when using a low-order method can significantly increase the
+computational cost of training as well as inference. In this work, we present an
+approach for constructing high-order reversible methods that allow adaptive
+time-stepping. Our numerical tests show the advantages in computational
+speed when applied to the task of learning dynamical systems.
+1. Introduction
+Deep neural networks are widely used across various learning tasks [54, 19], and
+their depth often plays a crucial role in the effectiveness of learning. These networks
+have also been shown to be particularly useful in the tasks of learning models
+of dynamical systems [11, 48, 52, 55, 53, 35, 49]. It was recently shown that the
+use of numerical methods for neural network architectures can provide impressive
+results with theoretical guarantees [25, 10, 9, 37]. In this work we use the theory
+of symmetric numerical methods for the construction of a new class of reversible
+neural networks. The new class allows memory efficient computations of gradients in
+training and reduced computational costs in learning models of dynamical systems,
+where the parameters typically need to be identified to high accuracy and the depth
+of the networks can be very large. Our network architecture constitutes an important
+contribution to ensure scalability of neural ODEs to high-dimensional dynamical
+systems that arise, for instance, as discretizations of systems governed by partial
+differential equations.
+The high memory costs of computing the gradient of very deep neural networks
+using the backpropagation algorithms poses a significant bottleneck in their training,
+hindering their scalability and efficiency. To address this, a neural ODE approach
+combined with the adjoint method has been proposed for gradient computations [11],
+which avoids storing intermediate states during forward propagation, potentially
+making the cost of gradient computation independent of network depth. However, it
+was quickly realized [21, 63] that using this approach with arbitrary discretization
+methods leads to incorrect gradients.
+1
+arXiv:2410.09537v2  [math.NA]  19 Feb 2025
+2 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+The solution of this problem is to use reversible integrators, which ensure accu-
+rate gradient computations by reconstructing intermediate states precisely during
+backward integration. However, symplectic reversible integrators [10], which are
+a large class of well studied integrators, do not allow adaptivity in the step size
+and require a particular structure in the neural ODE. This makes them unsuitable
+for use in time-series applications where data appears at irregular intervals, when
+time-steps need to be decreased adaptively to achieve a prescribed accuracy in
+the learning of dynamical systems, or when the identified model is used to predict
+continuous trajectories.
+Adaptive time-stepping for numerical integrators for differential equations is
+a well-established field in numerical analysis [27, 18]. In adaptive time-stepping,
+step sizes for an integration step are selected such that an estimate for the local
+error is below a given error tolerance. In this way, computational cost in numerical
+integration can be saved when large step sizes are sufficient to obtain accurate results,
+while step sizes are automatically decreased when required. The only reversible
+methods compatible with variable time-step selection without losing the reversibility
+property are asynchronous leapfrog (ALF) [40], which is based on the classical Verlet
+method (also known as leapfrog method) [60], and the reversible Heun method [32].
+ALF has been used to construct neural network architectures known as MALI
+networks [64]. These methods are based on operating on an augmented space: a
+neural ODE in the original variable z is extended to a larger space and replaced by
+a neural ODE in (z, v). Both methods are known to be of order of accuracy (2, 1) in
+(z, v) [40], which makes them computationally costly in learning tasks that require
+high accuracy in the integration of the neural ODE, in particular, in learning of
+dynamical systems. To be able to reach high accuracy, the lower order methods are
+forced to use small step sizes and, as a result, have higher computational costs. This
+phenomenon was highlighted in the examples in [39]. Furthermore, we show in C.1
+that in parameter identification tasks there is a direct relation between the order of
+a numerical integrator and the order of accuracy of identified parameters. Therefore,
+there is a need for higher order reversible methods, which we address in this paper.
+Various machine learning techniques have emerged in the past decades for approxi-
+mating models of dynamical systems [20]. These include methods based on Gaussian
+processes [7, 47, 28], sparse regression on libraries of basis functions [8, 59, 50],
+and recurrent neural networks (RNNs) [29, 2, 31]. In particular, the neural ODE
+approach [11] identified an important connection between the RNN structure and
+the numerical methods available for integration of differential equations. This was
+generalized by universal differential equations in [46] for different types of differential
+equations. Other generalizations include physics informed learning of dynamical
+systems [23, 15, 30, 13] and operator approximation [12, 36, 34, 6]. If the training
+data consists of time-series data that corresponds to a constant time-step, neural
+ODEs can be trained with a low order method and time-series can be predicted
+with high accuracy provided that the trained neural ODE is integrated with the
+same integrator that was used during training [62, 17, 42, 41]. However, in realistic
+examples, snapshots of trajectories with variable time-steps need to be processed
+[49, 52, 35]. Moreover, a discretization-independent prediction of the system’s
+evolution is often desired and learning of underlying differential equations requires
+high accuracy in the learned parameters, which requires high accuracy simulation.
+We demonstrate that our approach can be applied to high-dimensional dynamical
+systems, including those arising from discretizations of partial differential equations.
+This is a highly active research area. Other approaches in this context include
+model order reduction based techniques and operator inference (see the review [33]
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 3
+or e.g. [57, 56, 1, 38]), or structure-preserving approaches for discrete field theories
+[45, 44, 43].
+The main contribution of this paper is the development of a methodology to
+construct reversible neural networks based on higher order numerical methods.
+First, we prove that, in contrast to the analysis in [40], ALF is of order 2 in
+both (z, v) at even time-steps. Using this property and the theory of composition
+methods, we construct a class of reversible networks of any even order. A particular
+architecture based on 4th order networks is compared to the already known ALF
+method on examples of learning dynamical systems. The comparison of the two
+methods with adaptive time-stepping shows that the proposed higher order method
+is computationally more efficient.
+2. Background
+2.1. Neural ODE. Assume that an unknown function F : X → Y is approximated
+by a neural network based on training data {xi, yi = F (xi)}n i=1. The neural ODE
+approach to the deep network design employs the idea of continuous-depth networks
+and their discretization by a numerical method. The continuous-depth network is
+defined as a flow of a neural ODE of the form
+(2.1) ˙z(t) = f (z(t), θ(t)), z(0) = (x1, . . . , xn),
+on the time interval [0, T ] for some vector field f . Discretization of a neural ODE
+with a numerical method of step size h is defined as follows
+(2.2)
+zj+1 = σh(zj , θj ), j = 0, . . . , N − 1,
+z0 = z,
+where zj is the value of the feature variable at the jth layer with the total number of
+layers N and z = (x1, . . . , xn). The step size can be chosen in an adaptive manner
+for each layer and it is not considered as an optimization parameter. The learning
+problem is to find parameters {θj }N −1 j=0 which lead to the best approximation of
+F . The parameters are usually found as a solution of the following optimization
+problem.
+(2.3)
+min
+{θj }
+J = L(zN , y)
+zj+1 = σh(zj , θj ), j = 0, . . . , N − 1,
+z0 = z,
+where L(·, ·) is a loss function which measures the distance between the output of
+the network and the training data y = (y1, . . . , yN ).
+Because of the connection between network (2.2) and the corresponding neural
+ODE (2.1), there exists a continuous counterpart of (2.3) which makes (2.3) an
+approximation of an optimal control problem of the form
+min
+θ(t)
+J = L(z(T ), y)
+˙z(t) = f (z(t), θ(t)), t ∈ [0, T ],
+z(0) = z.
+Solutions of (2.3) are usually found using methods based on gradient descent.
+Such methods require computations of the gradients of the loss function with respect
+to all parameters {θj }N −1 j=0 .
+2.2. Methods of gradient computations.
+4 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+Backpropagation. Let J = L(zN , y). By the chain rule, the gradient is given by
+∂
+∂θj
+J = ∇z L(zN , y)⊤ ∂zN ∂zN −1 · · · ∂zj+2 ∂zj+1 ∂zj+1 ∂θj .
+To avoid computationally expensive multiplication of large matrices, the formula
+is evaluated from the left to the right (backpropagation). This requires that the
+intermediate values zj (j = 1, . . . , N ) are available. Their size corresponds to the
+width of the layer and their number to the network’s depth N .
+Adjoint method. This approach is based on the formula for the continuous gradients
+via adjoint variables p(t). The adjoint variables are the solution of
+(2.4) ˙p = − ∂ ∂z f (z(t), θ(t))⊤p, p(T ) = ∇L(z(T ), y),
+on time interval [0, T ] and the differential of J(θ) with respect to θ(t) is calculated
+as follows
+DJ(θ(t)) = p⊤(t) ∂ ∂θ f (z(t), θ(t)).
+This method is particularly interesting when the available memory is limited. In this
+case, the forward propagation is done to obtain the value of z(T ) and ∇L(z(T ), y),
+there is no need to save the intermediate values zj and the computational graph,
+because the backpropagation is realized by integrating the equations for (z(t), p(t))
+numerically backward in time. The correct discretization of the state-adjoint
+equations leads to the same expression for the gradient as the one obtained in
+the backpropagation approach. Still, the values of zj obtained by the numerical
+integration backward do not always coincide with the values obtained in the forward
+pass. This is why this approach usually leads to inexact gradients. This issue can
+be solved by considering reversible networks.
+Checkpointing. An alternative approach for memory reduction is checkpointing [21],
+which stores a few intermediate states for a regeneration of the computation graph.
+In case of adaptive time-stepping it was described in [63] and further improved
+in [39] for the class of Runge-Kutta methods. This is a highly efficient approach,
+when used in combination with higher order methods. In this case, a small number
+of checkpoints is required to get a high accuracy in learning. However, when the
+learning task is to learn a dynamical system from long trajectories of complex
+systems, then the number of checkpoints becomes large and can lead to memory
+leaks. This is why it is important to have an alternative approach based on reversible
+networks with the memory costs independent from the given task.
+2.3. Reversible neural network. A reversible network is a network with the
+property that there exists an explicit formula for backward propagation zj+1 7→ zj
+that exactly inverts a forward pass zj 7→ zj+1, i.e., there exists a map ˜σ(·), such
+that zj = ˜σ(zj+1) and zj+1 = σh(˜σ(zj+1), θj ). It requires that the time-steps
+t0, . . . , tN have been stored when the forward propagation was computed but it
+does not require storage of the (potentially very high-dimensional) intermediate
+values zj . The discretizations of neural ODE (2.2), which admit this property are
+called reversible methods. As for now, there are only two known reversible methods
+allowing for an adaptive choice of the step size, namely, asynchronous leapfrog [64]
+and reversible Heun [32].
+This notion of reversibility for neural networks needs to be contrasted with the
+notion of time-reversibility or symmetry for numerical integrators. In the context of
+neural networks, reversibility means that there exists an explicit, efficient formula
+to invert the forward pass. In numerical integration theory, a time-reversible or
+symmetric numerical integrator is a formula to advance the solution of an ordinary
+differential equation by time h such that its inverse is obtained by substituting h
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 5
+by −h [26, II.3]. In case of the dynamical system f (z(t), θ(t)) from (2.2), if the
+discretization by a numerical method zj+1 = σh(zj , θ(tj )) is symmetric, then it
+implies zj = σ−h(zj+1, θ(tj+1)), or equivalently, zj = σ−h(zj+1, θj+1). Therefore,
+we can set ˜σ(·) = σ−h(·, θj+1), which implies that the method is reversible. The
+symmetry of integrators is beneficial in the context of the article as inverses of
+the methods required for backpropagation take simple forms and efficient classical
+techniques to construct higher order methods [26, II.4] apply.
+Asynchronous Leapfrog (ALF) method. As the optimization parameter θ(t) in the
+dynamics f (z(t), θ(t)) depends on time, it can be seen as a part of f and written
+simply fθ (z(t), t). The ALF method requires the augmentation of the pair of state
+and time (z, t) with the velocity v which approximates fθ (z(t), t). We denote a
+step forward of the ALF method with the step size h by ΨALF h . Given a triple
+(zj , vj , tj ) and a step size h, the algorithm generates in the forward pass the next
+values (zj+1, vj+1, tj+1) as follows
+(2.5) zj+1
+vj+1
+!
+= ΨALF h (zj , vj , tj ) =
+
+
+zj + hfθ (zj + h 2 vj , tj + h 2 )
+2fθ (zj + h 2 vj , tj + h 2 ) − vj
+
+ , tj+1 = tj + h.
+The step backward calculates (zj , vj , tj ) from (zj+1, vj+1, tj+1) as follows
+(2.6)
+ zj
+vj
+!
+= ΨALF −h (zj+1, vj+1, tj+1), tj = tj+1 − h.
+If the method is initialized at (z0, f (z0, t0), t0), then ALF is a second order method
+in z and first order method in v, as it was shown in [64]. The order of accuracy is
+the order in step size h of the error of the numerical flow compared with the exact
+flow of the ODE [26]. Notice that ALF is symmetric by definition.
+The reversible Heun method is another reversible method based on state-space
+augmentation and was introduced in [32]. The method was shown to be also of
+second order in z and first order in v. In addition, it is a symmetric method. In the
+following part of the paper we will concentrate on the construction of higher order
+methods based on ALF, but the same can be also applied to the reversible Heun
+method.
+3. New reversible architectures
+A general approach in numerical analysis to construct higher order symmetric
+methods is by composition [26, 27, 4]. In this case one can start with a lower order
+numerical method and construct a new method by composition of the lower order
+method with a particular choice of step sizes. This construction leads to a method
+of higher order of accuracy.
+Numerical experiments, see Appendix A, show that ALF is of second order in
+the error with respect to a high accuracy solver in both z and v. This is surprising
+as the order of consistency of ALF in v is only 1 [64]. Indeed, as we show below, a
+method consisting of a composition of two steps of ALF has order of consistency 2
+in (z, v), which explains the convergence behaviour. This observation is required to
+apply theory for composition methods [27, 4, 61] to (two steps of) ALF.
+Theorem 3.1. Composition of two steps of ALF methods, i.e. ΨALF h/2 ◦ ΨALF h/2 ,
+applied to ˙z = f (z, t) provides second order accurate approximations of position z
+and velocity v = ˙z.
+The proof of the theorem is based on comparing the terms in the Taylor series
+of the exact flow of a differential equation and the numerical flow obtained by
+6 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+composition of two steps of the ALF method. We refer to the Appendix A.1 for
+the computations. The composition of two steps of the ALF method, each with
+time-step h 2 , will be called ALF2 and denoted by ΨALF 2 h . Now we are in a classical
+situation, with ALF2 a one step reversible method of even order and we can apply the
+composition methods to construct higher order methods. In this work we consider
+the Yoshida approach [61]. Yoshida composition permits to construct methods of a
+higher accuracy by composing numerical methods of order 2k for some integer k. It
+is defined by a symmetric composition of the same method Ψ2k (2k stands for the
+order) with different step sizes
+ΨY h = Ψ2k ah ◦ Ψ2k bh ◦ Ψ2k ah
+with time-steps defined by
+a = 1
+2 − 2
+1
+2k+1
+, b = 1 − 2a.
+Theorem 3.2 ([61]). Yoshida composition of a reversible method Ψ2k of order 2k
+has order 2k + 2 and is reversible.
+Yoshida is not the only composition method that can be used, another possible
+approach is Suzuki composition [58]. Several approaches are reviewed in [26, 5].
+Remark 3.3. The approach based on Yoshida composition might require check-
+points in case of certain neural ODEs, e.g., when the learning task is to learn a
+dispersive partial differential equation such as heat equation. This is because the
+Yoshida composition forces the use of negative time-steps, which can be a problem
+in dissipative cases, where it can lead to instability.
+In the following, we will denote by ΨY,2k h the higher order methods obtained by
+Yoshida composition of ALF2, where 2k is the order of the method. The constructed
+higher order reversible method can be used for the construction of a reversible
+network. In this case, the step forward and the step backward are defined recursively
+based on the steps forward and backward of a lower order method ΨY,2k−2 h . The
+starting method of order 2 is the ALF2 method, i.e. ΨY,2 h = ΨALF 2 h by abuse of
+notation.
+Algorithm 1 Step forward of 2k-th order Yoshida
+1. Input: (zj , vj , tj , hj )
+2. Set a = 1/(2 − 2
+1
+2k+1 ), b = 1 − 2a.
+3. Set (˜z1, ˜v1) = ΨY,2k−2 ahj (zj , vj , tj ), ˜t1 = tj + ahj
+4. Set (˜z2, ˜v2) = ΨY,2k−2 bhj (˜z1, ˜v1, ˜t1), ˜t2 = ˜t1 + bhj
+5. Set (zj+1, vj+1) = ΨY,2k−2 ahj (˜z2, ˜v2, ˜t2), tj+1 = ˜t2 + ahj
+if adaptive time-stepping then
+6a. compute the error of zj+1, vj+1 w.r.t. the output of a (2k + 1)st order
+integration method
+6b. compute the new hj+1 following [26]
+else
+6. hj+1 = hj
+end if
+7. Output: (zj+1, vj+1, tj+1, hj+1)
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 7
+Adaptive stepping. One of the main advantages in the construction of reversible
+methods based on ALF is that they allow for adaptive step sizes [26]. This can
+be done in the same manner as for ALF [64], where the main idea is to delete the
+computational graph and all the variables needed for the step size computations
+and only the value of the accepted new step size hj is saved. As a result, values
+h1, . . . , hN are saved and then accessed in the integration backward needed for
+gradient computations. This can be done in exactly the same manner for our
+Yoshida-based methods. The resulting steps forward and backward are summarized
+in Algorithm 1 and Algorithm 2.
+Remark 3.4. Notice that even though the reversible Heun method was proved to
+be of order (2, 1) in (z, v) in [32], it was noted in the same paper that it gains the
+second order in both variables at even steps. This implies that the composition
+approach can be used in this case as well.
+Algorithm 2 Step backward of 2k-th order Yoshida
+1. Input: (zj+1, vj+1, tj+1, hj+1)
+2. Set a = 1/(2 − 2
+1
+2k+1 ), b = 1 − 2a.
+3. Set (˜z1, ˜v1) = ΨY,2k−2 −ahj+1 (zj+1, vj+1, tj+1), ˜t1 = tj+1 − ahj+1
+4. Set (˜z2, ˜v2) = ΨY,2k−2 −bhj+1 (˜z1, ˜v1, ˜t1), ˜t2 = ˜t1 − bhj+1
+5. Set (zj , vj ) = ΨY,2k−2 −ahj+1 (˜z2, ˜v2, ˜t2), tj = ˜t2 − ahj+1
+6. Set hj from h1, . . . , hN obtained in the integration forward
+7. Output: (zj , vj , tj , hj )
+Gradient computations. The augmentation of the feature space leads to the new
+variable which we denote by ϕ = (z, v). Then, the learning problem is formulated
+as follows with Pz (ϕ) projection of ϕ to z
+(3.1)
+min
+{θj }
+J = L(Pz (ϕN ), y)
+ϕj+1 = ΨY,2k h (ϕj , θj ), j = 0, . . . , N − 1,
+ϕ0 = (z, f (z, θ0)).
+Following [24], the discrete version of (2.4) associated with (3.1) is given by
+(3.2) (λN )⊤ = ∇L(ϕN ), λj =
+ ∂ϕj+1
+∂ϕj
+⊤
+λj+1,
+and the gradients are computed by
+(3.3) ∂J(θ) ∂θj = λ⊤ j+1 ∂ϕj+1 ∂θj .
+The adjoint method for the gradient computation as in the MALI network [64] and the
+reversible Heun network [32] is based on the propagation ϕj → ϕj+1 and automatic
+differentiation for the computation of the step backward of the adjoint variable
+following (3.2). The resulting method of gradient computation is summarized in
+Algorithm 3. Alternatively, the exact expression of the numerical method governing
+the adjoint dynamics (3.2) can be obtained, see details in Appendix B. In this case,
+there is no need to compute ∂ϕj+1 ∂ϕj , which makes the approach computationally more
+efficient and memory efficient.
+8 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+Algorithm 3 Computation of gradients
+1. Input: training data z0, initialization of parameters θ, velocity v0 = f (z0, θ0)
+2. Propagate through the network using ΨY,2k h to get (zN , vN )
+3. Set λz N = ∇L(zN , y) and λv N = 0
+for j = N-1 to 1 do
+4. Compute ϕj from ϕj+1 using Algorithm 2
+5. Compute ϕj+1 from ϕj using Algorithm 1 to get the computational graph
+6. Compute λj from λj+1 using (3.2) and AD to compute ∂ϕj+1 ∂ϕj
+7. Compute ∂J(θ) ∂θj using (3.3)
+8. Delete λj+1, ϕj+1 and the computational graphs
+end for
+9. Output: gradients ∂J(θ) ∂θj for j = 1, . . . , N − 1.
+Costs comparison. We will use the following notations: d is the dimension of z, T is
+the length of the time interval in the continuous-depth setting, N is the number of
+layers, M stands for the number of layers in f , when f is given by a neural network
+itself, s denotes the number of steps needed for the computation of a time-step in
+the adaptive step size selection, p is the order of the considered numerical method
+and r is the number of evaluations of f used in the numerical method (e.g. stages in
+Runge-Kutta methods or compositions in our approach). We show the comparison
+of the new proposed approach with the standard backpropagation approach, adjoint
+method version NODE [11], ACA approach [63] and MALI approach [64] in Table 1,
+which extends the Table 1 in [64]. We use big O notation, when the constants
+depend on the learning tasks.
+Computational costs. The compositional structure of the proposed method directly
+implies that the computation costs for gradient computations are equal to the
+computational costs by ALF multiplied by r, the number of the compositions.
+Notice that N depends on the order p of the discretization method and becomes
+smaller when the order is higher for fixed ε and T . As a result, ALF method needs
+more time-steps, than higher order methods for ε < 1, which is related to the bias in
+the learned parameters in the task of identification of the parameters, as explained
+in Appendix C.1 and illustrated in Figure 4, and to the training error.
+Memory costs. The gradient computation requires to compute ∂ϕj+1 ∂ϕj leading to the
+storage of all the intermediate states involved in the step forward. This increases the
+memory costs of MALI by a factor r, see Table 1. Notice that the approach presented
+in Appendix B does not require to store all the intermediate states. Indeed, a step
+backward of the state-adjoint system is a composition of rescaled steps backward of
+the ALF method. Therefore, we only need to store one intermediate state obtained
+in the composition at a time. This makes the method of the same memory cost as
+MALI. Notice that depending on the depth of the network, adaptive checkpointing
+as in [39] can be added. When no checkpoints are needed the behaviour is as in
+NODE and in the worst case the behaviour is as in the backprop. In general, the
+number of checkpoints depends on N , which depends linearly on T . Therefore, more
+checkpoints are needed in case of large T .
+4. Experiments
+4.1. Parameter identification in dynamical systems. We consider the identifi-
+cation problem of unknown parameters of a dynamical system. The structure of the
+differential equations is assumed to be known, but some parameters in the equations
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 9
+Table 1. Comparison of costs in gradient computations for differ-
+ent approaches
+Method Computational costs Memory costs Number of epochs N in
+function of accuracy ε∗
+Backprop r × d × M × N × s × 2 r×d×M ×N ×s T × O(ε− 1 p+1 )
+NODE r × d × M × N × s × 2 d × M T × O(ε− 1 p+1 )
+ACA r × d × M × N × (s + 1) d × (M + N ) T × O(ε− 1 p+1 )
+MALI d × M × N × (s + 2) d × (M + 1) T × O(ε− 1 3 )
+Proposed
+method
+r × d × M × N × (s + 2) r∗∗ ×d×(M + 1) T × O(ε− 1 p+1 )
+∗ ε is the error tolerance for the estimation of the local error in the stepsize selection
+∗∗ Memory costs of the proposed method can be reduced to r = 1, if the gradients are computed
+as in AppendixB
+are unknown. The training data is given by snapshots of trajectories {xl(ti)}i,l
+with l = 1, . . . L, i = 0, . . . , I. The goal is to learn the parameters from the given
+trajectories. This class of problems can be naturally treated using the neural ODE
+approach. The vector field f in (2.1) is given by the known differential equation
+and θ = θ1, . . . , θs is the set of unknown parameters. In this case, the learning
+problem can be stated in the form of (3.1), where the same θ1, . . . , θs appear all at
+each layer. The training data z0 = (x1(t0), . . . , xL(t0)) stands for the initial points
+and y includes all the other points of the given trajectories. We denote by y(ti)
+the points in y corresponding to trajectories at time ti for i = 1, . . . , I. The loss
+have a particular structure in this case as it depends on the intermediate states
+obtained during the integration of neural ODE, namely, it depends on (zN1 , . . . , zNI ),
+to measure the distance with the given trajectories points (y(t1), . . . , y(tI )). As a
+result, it takes the form L = PI i=1 Li(zNi , y(ti)). Because of the additive form of
+the loss, the gradients can be computed as a sum of the corresponding gradients of
+L1, . . . , LI as follows
+∂L
+∂θi
+= ∂L1
+∂θi
++ · · · + ∂LI
+∂θi
+, i = 1, . . . , s,
+where each of the terms in the sum is computed using Algorithm 3. The memory
+efficiency is still important in this case, because we do not store all the intermediate
+states at the propagation forward, but only the states which approximate the
+trajectories at the desired times t1, . . . , tI .
+Statistical inference. In simulation based inference or likelihood-free inference prob-
+abilistic methods are employed to identify parameters in models based on repeated
+forward simulations [14]. Traditionally, these consider the forward pass as a black
+box (such as Approximate Bayesian Computation (ABC) [51, 3]) and do not require
+differentiability with respect to the model parameters or the inputs. This needs to
+be contrasted to our proposed neural network architecture, which is designed to
+circumvent large memory requirements in the computation of gradients when the
+layers are wide. Indeed, a combination of our architecture with simulation based
+inference models that do make use of gradients such as [22] constitutes an interesting
+avenue for future research.
+4.1.1. Kepler problem. We consider the Kepler problem, where the dynamics de-
+scribes the evolution of the position q and velocity v of a mass point moving around
+a much heavier body. It is modeled on the 4-dimensional space x = (q, v) ∈ R2 × R2.
+10 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+Table 2. Time to reach accuracy 10−8 using adaptive methods in
+the Kepler problem
+Computation time
+Initial value of α adaptive ALF adaptive Y4
+0.1 7.68 sec 2.42 sec
+0.7 4.07 sec 1.02 sec
+0.75 3.26 sec 0.803 sec
+0.8 2.5 sec 0.44 sec
+1.3 8.39 sec 3.85 sec
+The equations are defined on the time interval [0, 1] as follows
+(4.1) ˙q = v, ˙v = − α ∥q∥3 q,
+with an unknown parameter α ∈ R. The training set is given by the initial
+condition x(t0) and q-coordinate of 5 points on a trajectory of (4.1) generated with
+α = π/4 ≈ 0.785, i.e. {q(ti)}5 i=1. The task is to learn α as accurately as possible.
+From the training set we form z0 = x(t0) and the corresponding y(ti) = q(ti) for
+i = 1, . . . , 5. We set up a learning problem in the form of (3.1) with the loss defined
+by L = P5 i=1 ∥qNi − q(ti)∥2 with qNi projection of zNi to q-coordinate and Ni the
+number of time-steps used in the integration from ti−1 to ti. We compare two
+algorithms for performing the numerical integration during training, namely, ALF
+and the Yoshida composition of ALF2 of order 4. We write Y4 for the Yoshida
+composition method for shortness. We test the wall-clock time required to reach loss
+accuracy 10−8 using adaptive methods. The tests are run for different initializations
+of α in optimization. The results can be seen in Table 2. It can be observed that
+in all tests, Y4 is at least four times faster than ALF. The reason of the faster
+training for Y4 is in using larger step sizes for the forward integration. The lower
+order method requires smaller step sizes to reach the same accuracy defined by
+an error tolerance and this leads to more steps in the computation of trajectories.
+Additional results for the Kepler problem supporting the reasoning can be found in
+Appendix C.1.
+4.1.2. Nonlinear harmonic oscillator. In the second example we consider a system
+of coupled Duffing oscillators, which describes the movements of a coupled system
+of mass points attached with springs with nonlinear elastic forces. The dynamics of
+N mass points is given by the following equations
+(4.2) ˙qi = vi, ˙vi = −aiqi − biq3 i −
+NX
+j=1
+ei,j (qi − qj ), i = 1, . . . , N,
+with the condition ei,j = ej,i. Positions of N mass points are given by q =
+(q1, · · · , qN ) ∈ RN and velocities by v = (v1, · · · , vN ) ∈ RN . We set x = (q, v) ∈
+R2N . In the numerical experiments we fix N = 10 and assume that parameters
+ai, bi, ei,j ∈ R for i, j = 1, . . . , 10 are unknown. As a result, (4.2) has dimension
+20 with 65 unknown parameters. The training set consists of initial and final
+positions of 200 trajectories, that is z0 = (x1(t0), . . . , x200(t0)) and y = y(t1) =
+(x1(t1), . . . , x200(t1)). In this setting, we compare the computational time to reach
+a certain training accuracy of ALF and Y4 with adaptive time-stepping and the
+training accuracy of ALF and Y4 with fixed step-size. We present the wall-clock
+times to reach the training accuracy 10−4 in Table 3. The time required by Y4
+to reach accuracy 10−4 is almost two times smaller which illustrates the lower
+computational costs of the method. As before, the ALF method with adaptive
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 11
+Table 3. Time to reach accuracy 10−4 using adaptive methods in
+nonlinear oscillators problem
+Computation time
+Mean parameter error at initialization adaptive ALF adaptive Y4
+0.28897009 81608 sec 51720 sec
+0.29821727 68645 sec 40646 sec
+0.30549358 56764 sec 29990 sec
+0.30289593 96301 sec 46524 sec
+0.29106813 22161 sec 13790 sec
+Table 4. Time to get accuracy 10−2 by adaptive methods in
+oscillators problem parameterized by NN
+Computation time
+Random initialization of parameters in
+NN
+adaptive ALF adaptive Y4
+Initialization 1 2504 sec 1974 sec
+Initialization 2 2961 sec 1857 sec
+Initialization 3 4185 sec 2627 sec
+Initialization 4 3542 sec 2125 sec
+Initialization 5 3396 sec 2616 sec
+time-stepping requires smaller step sizes and more steps are used in each epoch
+of the optimization. Details with additional results confirming the behaviour are
+presented in Appendix C.2.1.
+4.2. Learning of dynamical systems parameterized by neural network. We
+consider a problem, where a part of the structure of the differential equations is
+known and the unknown part is approximated using a neural network. Our goal is
+to find the neural network parameterization such that the resulting trajectories of
+the system are as close as possible to given trajectories from the training set. As
+before, the problem can be treated by the neural ODE approach. In this case the
+vector field f in (2.1) is given by a neural network.
+4.2.1. Nonlinear harmonic oscillator. We consider the problem of approximating
+the potential function of a physical system, given by the Duffing oscillators with
+two mass points. Equations can be equivalently written as
+(4.3) ˙q = v, ˙v = −∇V (q),
+with q = (q1, q2), v = (v1, v2) and V (q) stands for the potential energy of the system.
+The learning task is to learn V (q). The gradient of the potential is approximated
+using a neural network with 51500 parameters. To obtain the potential from the
+learned vector field, we apply numerical integration methods to the neural network
+approximating −∇V (q). We compare the computational time of ALF and Y4 to
+reduce the value of the loss function below 10−2. The results presented in Table 4
+show that Y4 is faster than ALF in completing the training on different random
+initializations of the network parameters.
+4.2.2. Discretized wave equation. In the second example we consider the 1-dimensional
+wave equation utt(t, x) = uxx(t, x) − ∇V (u(t, x)) on the spatial-temporal do-
+main [0, 1] × [0, 0.3] with periodic boundary conditions in space for the potential
+12 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+Table 5. Wallclock time to get the training loss below 10−3 by
+adaptive methods in discretized PDE
+Computation time
+Random initialization of parameters in
+NN
+adaptive ALF adaptive Y4
+Initialization 1 336.6808 sec 138.5936 sec
+Initialization 2 169.5010 sec 133.6825 sec
+Initialization 3 180.8185 sec 140.3172 sec
+Initialization 4 153.7389 sec 128.2795 sec
+Initialization 5 142.7732 sec 142.9196 sec
+V (u) = 1 2 u2. On a spatial, equidistant, periodic mesh with mesh width ∆x = 1 40 we
+seek to describe the system’s evolution by the first order system
+˙ud = vd, ˙vd = f (ud),
+where the unknown function f is parametrized as a fully connected ReLU neural
+network with one hidden layer of size 100. The dimension of (ud, vd) is 40. We
+compare the training performance of ALF and Y4. Both adaptive methods are
+employed with the same error tolerance. Yoshida is faster in finishing each epoch
+and the optimizer takes less time to minimize the training loss below 10−3. The
+precise results are reported in Table 5 for 5 random initializations in the training.
+This illustrates the applicability of our method to the highly active research area of
+learning models of systems that are governed by partial differential equations.
+5. Conclusion
+In this work, we construct higher order reversible methods. These constitute
+explicit numerical integrators which are compatible with adaptive step-size selection
+strategies. The methods are employed to train deep neural networks that are based
+on neural ODEs. Thanks to the reversibility property, we avoid high memory require-
+ments for backpropagation in the optimization procedure of the network parameters.
+Memory efficient backpropagation allows an application of deep architectures to
+the identification tasks of models of high-dimensional dynamical systems, which
+arise, for instance, as spatial discretizations of partial differential equations. As
+the method is based on neural ODEs, it can be trained with time-series data at
+irregular time-steps and can predict continuous time-series data. We showed the
+advantages of the newly constructed networks on the example of a network based
+on a 4th order method and demonstrate lower memory costs and faster training in
+comparison to lower order methods.
+While the examples in the article focus on system identification tasks for systems
+governed by differential equations, extensions to neural stochastic differential equa-
+tions [32] are of interest and applications to normalizing flows or image processing
+[1] can be an exciting avenue to explore in future works.
+References
+[1] Christine Allen-Blanchette, Sushant Veer, Anirudha Majumdar, and Naomi Ehrich Leonard.
+LagNetViP: A Lagrangian neural network for video prediction (AAAI 2020 symposium on
+physics guided ai), 2020.
+[2] Coryn A L Bailer-Jones, David J C MacKay, and Philip J Withers. A recurrent neural network
+for modelling dynamical systems. Network: Computation in Neural Systems, 9(4):531, nov
+1998.
+[3] Mark A Beaumont, Wenyang Zhang, and David J Balding. Approximate bayesian computation
+in population genetics. Genetics, 162(4):2025–2035, December 2002.
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 13
+[4] Sergio Blanes, Fernando Casas, and Ander Murua. Splitting methods for differential equations.
+Acta Numerica, 33:1–161, 2024.
+[5] Sergio Blanes, Fernando Casas, and Ander Murua. Splitting methods for differential equations,
+2024.
+[6] Nicolas Boull´e and Alex Townsend. Chapter 3 - a mathematical guide to operator learning. In
+Siddhartha Mishra and Alex Townsend, editors, Numerical Analysis Meets Machine Learning,
+volume 25 of Handbook of Numerical Analysis, pages 83–125. Elsevier, 2024.
+[7] Jake Bouvrie and Boumediene Hamzi. Kernel methods for the approximation of nonlinear
+systems. SIAM Journal on Control and Optimization, 55(4):2460–2492, 2017.
+[8] Steven L. Brunton, Joshua L. Proctor, and J. Nathan Kutz. Discovering governing equations
+from data by sparse identification of nonlinear dynamical systems. Proceedings of the National
+Academy of Sciences, 113(15):3932–3937, 2016.
+[9] E. Celledoni, M. J. Ehrhardt, C. Etmann, R. I. Mclachlan, B. Owren, C.-B. Schonlieb, and
+F. Sherry. Structure-preserving deep learning. European Journal of Applied Mathematics,
+32(5):888–936, 2021.
+[10] Bo Chang, Lili Meng, Eldad Haber, Lars Ruthotto, David Begert, and Elliot Holtham.
+Reversible architectures for arbitrarily deep residual neural networks. In Proceedings of the
+AAAI conference on artificial intelligence, volume 32, 2018.
+[11] Ricky T. Q. Chen, Yulia Rubanova, Jesse Bettencourt, and David K Duvenaud. Neural
+ordinary differential equations. In Advances in Neural Information Processing Systems, 2018.
+[12] Tianping Chen and Hong Chen. Universal approximation to nonlinear operators by neural
+networks with arbitrary activation functions and its application to dynamical systems. IEEE
+Transactions on Neural Networks, 6(4):911–917, 1995.
+[13] Zhengdao Chen, Jianyu Zhang, Martin Arjovsky, and L´eon Bottou. Symplectic recurrent
+neural networks. In International Conference on Learning Representations, 2020.
+[14] Kyle Cranmer, Johann Brehmer, and Gilles Louppe. The frontier of simulation-based inference.
+Proceedings of the National Academy of Sciences, 117(48):30055–30062, 2020.
+[15] Miles Cranmer, Sam Greydanus, Stephan Hoyer, Peter Battaglia, David Spergel, and Shirley
+Ho. Lagrangian neural networks, 2020.
+[16] Wolfgang Dahmen and Arnold Reusken. Numerik f¨ur Ingenieure und Naturwissenschaftler:
+Methoden, Konzepte, Matlab-Demos, E-Learning. Springer Berlin Heidelberg, 2022.
+[17] Marco David and Florian M´ehats. Symplectic learning for hamiltonian neural networks.
+Journal of Computational Physics, 494:112495, 2023.
+[18] Peter Deuflhard and Folkmar Bornemann. Scientific Computing with Ordinary Differential
+Equations. Springer New York, 2002.
+[19] Andre Esteva, Brett Kuprel, Roberto A Novoa, Justin Ko, Susan M Swetter, Helen M
+Blau, and Sebastian Thrun. Dermatologist-level classification of skin cancer with deep neural
+networks. Nature, 542(7639):115—118, February 2017.
+[20] Amin Ghadami and Bogdan I. Epureanu. Data-driven prediction in dynamical systems: recent
+developments. Philosophical Transactions of the Royal Society A: Mathematical, Physical
+and Engineering Sciences, 380(2229):20210213, 2022.
+[21] Amir Gholaminejad, Kurt Keutzer, and George Biros. Anode: Unconditionally accurate
+memory-efficient gradients for neural odes. International Joint Conferences on Artificial
+Intelligence.
+[22] Matthew M. Graham and Amos J. Storkey. Asymptotically exact inference in differentiable
+generative models. Electronic Journal of Statistics, 11(2):5105 – 5164, 2017.
+[23] Samuel Greydanus, Misko Dzamba, and Jason Yosinski. Hamiltonian neural networks. In
+H. Wallach, H. Larochelle, A. Beygelzimer, F. d'Alch´e-Buc, E. Fox, and R. Garnett, editors,
+Advances in Neural Information Processing Systems, volume 32. Curran Associates, Inc.,
+2019.
+[24] R. Griesse and A. Walther. Evaluating gradients in optimal control: Continuous adjoints versus
+automatic differentiation. Journal of Optimization Theory and Applications, 122(1):63–86,
+2004.
+[25] Eldad Haber and Lars Ruthotto. Stable architectures for deep neural networks. Inverse
+Problems, 34(1):014004, dec 2017.
+[26] Ernst Hairer, Marlis Hochbruck, Arieh Iserles, and Christian Lubich. Geometric numerical
+integration. Oberwolfach Reports, 3(1):805–882, 2006.
+[27] Ernst Hairer, Christian Lubich, and Gerhard Wanner. Geometric Numerical Integration:
+Structure-Preserving Algorithms for Ordinary Differential Equations. Springer Series in
+Computational Mathematics. Springer Berlin Heidelberg, 2013.
+[28] Boumediene Hamzi and Houman Owhadi. Learning dynamical systems from data: A simple
+cross-validation perspective, part i: Parametric kernel flows. Physica D: Nonlinear Phenomena,
+421:132817, 2021.
+14 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+[29] Ken ichi Funahashi and Yuichi Nakamura. Approximation of dynamical systems by continuous
+time recurrent neural networks. Neural Networks, 6(6):801–806, 1993.
+[30] Pengzhan Jin, Zhen Zhang, Aiqing Zhu, Yifa Tang, and George Em Karniadakis. Sympnets:
+Intrinsic structure-preserving symplectic networks for identifying hamiltonian systems. Neural
+Networks, 132:166–179, 2020.
+[31] George Em Karniadakis, Ioannis G. Kevrekidis, Lu Lu, Paris Perdikaris, Sifan Wang, and Liu
+Yang. Physics-informed machine learning. Nature Reviews Physics, 3(6):422–440, 2021.
+[32] Patrick Kidger, James Foster, Xuechen (Chen) Li, and Terry Lyons. Efficient and accurate
+gradients for neural sdes. In M. Ranzato, A. Beygelzimer, Y. Dauphin, P.S. Liang, and
+J. Wortman Vaughan, editors, Advances in Neural Information Processing Systems, volume 34,
+pages 18747–18761. Curran Associates, Inc., 2021.
+[33] Boris Kramer, Benjamin Peherstorfer, and Karen E. Willcox. Learning nonlinear reduced
+models from data with operator inference. Annual Review of Fluid Mechanics, 56(Volume 56,
+2024):521–548, 2024.
+[34] Guang Lin, Christian Moya, and Zecheng Zhang. Learning the dynamical response of non-
+linear non-autonomous dynamical systems with deep operator neural networks. Engineering
+Applications of Artificial Intelligence, 125:106689, 2023.
+[35] Yuying Liu, J. Nathan Kutz, and Steven L. Brunton. Hierarchical deep learning of multi-
+scale differential equation time-steppers. Philosophical Transactions of the Royal Society A:
+Mathematical, Physical and Engineering Sciences, 380(2229):20210200, 2022.
+[36] Lu Lu, Pengzhan Jin, Guofei Pang, Zhongqiang Zhang, and George Em Karniadakis. Learning
+nonlinear operators via deeponet based on the universal approximation theorem of operators.
+Nature Machine Intelligence, 3(3):218–229, 2021.
+[37] Sofya Maslovskaya and Sina Ober-Bl¨obaum. Symplectic methods in deep learning. IFAC-
+PapersOnLine, 58(17):85–90, 2024. 26th International Symposium on Mathematical Theory
+of Networks and Systems MTNS 2024.
+[38] Justice Mason, Christine Allen-Blanchette, Nicholas Zolman, Elizabeth Davison, and Naomi
+Leonard. Learning interpretable dynamics from images of a freely rotating 3d rigid body, 2022.
+[39] Takashi Matsubara, Yuto Miyatake, and Takaharu Yaguchi. Symplectic adjoint method
+for exact gradient of neural ode with minimal memory. In M. Ranzato, A. Beygelzimer,
+Y. Dauphin, P.S. Liang, and J. Wortman Vaughan, editors, Advances in Neural Information
+Processing Systems, volume 34, pages 20772–20784. Curran Associates, Inc., 2021.
+[40] Ulrich Mutze. An asynchronous leapfrog method ii, 2016.
+[41] Sina Ober-Bl¨obaum and Christian Offen. Variational learning of euler–lagrange dynamics
+from data. Journal of Computational and Applied Mathematics, 421:114780, March 2023.
+[42] C. Offen and S. Ober-Bl¨obaum. Symplectic integration of learned hamiltonian systems. Chaos:
+An Interdisciplinary Journal of Nonlinear Science, 32(1), 1 2022.
+[43] Christian Offen. Machine learning of discrete field theories with guaranteed convergence and
+uncertainty quantification, 2024.
+[44] Christian Offen and Sina Ober-Bl¨obaum. Learning of discrete models of variational pdes from
+data. Chaos: An Interdisciplinary Journal of Nonlinear Science, 34(1), January 2024.
+[45] Hong Qin. Machine learning and serving of discrete field theories. Scientific Reports, 10(1),
+November 2020.
+[46] Christopher Rackauckas, Yingbo Ma, Julius Martensen, Collin Warner, Kirill Zubov, Rohit
+Supekar, Dominic Skinner, Ali Ramadhan, and Alan Edelman. Universal differential equations
+for scientific machine learning, 2021.
+[47] Maziar Raissi and George Em Karniadakis. Hidden physics models: Machine learning of
+nonlinear partial differential equations. Journal of Computational Physics, 357:125–141, 2018.
+[48] Maziar Raissi, Paris Perdikaris, and George Em Karniadakis. Multistep neural networks for
+data-driven discovery of nonlinear dynamical systems, 2018.
+[49] Maziar Raissi, Paris Perdikaris, and George Em Karniadakis. Multistep neural networks for
+data-driven discovery of nonlinear dynamical systems. arXiv preprint arXiv:1801.01236, 2018.
+[50] Patrick A. K. Reinbold, Logan M. Kageorge, Michael F. Schatz, and Roman O. Grigoriev.
+Robust learning from noisy, incomplete, high-dimensional experimental data via physically
+constrained symbolic regression. Nature Communications, 12(1):3219, 2021.
+[51] Donald B. Rubin. Bayesianly Justifiable and Relevant Frequency Calculations for the Applied
+Statistician. The Annals of Statistics, 12(4):1151 – 1172, 1984.
+[52] Samuel H. Rudy, J. Nathan Kutz, and Steven L. Brunton. Deep learning of dynamics and
+signal-noise decomposition with time-stepping constraints. Journal of Computational Physics,
+396:483–506, 2019.
+[53] Samuel H. Rudy, J. Nathan Kutz, and Steven L. Brunton. Deep learning of dynamics and
+signal-noise decomposition with time-stepping constraints. Journal of Computational Physics,
+396:483–506, 2019.
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 15
+[54] Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause, Sanjeev Satheesh, Sean Ma, Zhiheng
+Huang, Andrej Karpathy, Aditya Khosla, Michael Bernstein, Alexander C. Berg, and Li Fei-Fei.
+Imagenet large scale visual recognition challenge. International Journal of Computer Vision,
+115(3):211–252, 2015.
+[55] Max Sch¨ussler, Tobias M¨unker, and Oliver Nelles. Deep recurrent neural networks for nonlinear
+system identification. In 2019 IEEE Symposium Series on Computational Intelligence (SSCI),
+pages 448–454, 2019.
+[56] Harsh Sharma, Hongliang Mu, Patrick Buchfink, Rudy Geelen, Silke Glas, and Boris Kramer.
+Symplectic model reduction of hamiltonian systems using data-driven quadratic manifolds.
+Computer Methods in Applied Mechanics and Engineering, 417:116402, 2023.
+[57] Harsh Sharma, David A. Najera-Flores, Michael D. Todd, and Boris Kramer. Lagrangian
+operator inference enhanced with structure-preserving machine learning for nonintrusive model
+reduction of mechanical systems. Computer Methods in Applied Mechanics and Engineering,
+423:116865, 2024.
+[58] Masuo Suzuki. General theory of fractal path integrals with applications to many-body theories
+and statistical physics. Journal of Mathematical Physics, 32(2):400–407, 02 1991.
+[59] Giang Tran and Rachel Ward. Exact recovery of chaotic systems from highly corrupted data.
+Multiscale Modeling & Simulation, 15(3):1108–1129, 2017.
+[60] Loup Verlet. Computer ”experiments” on classical fluids. i. thermodynamical properties of
+lennard-jones molecules. Phys. Rev., 159:98–103, Jul 1967.
+[61] Haruo Yoshida. Construction of higher order symplectic integrators. Physics Letters A,
+150(5):262–268, 1990.
+[62] Aiqing Zhu, Pengzhan Jin, Beibei Zhu, and Yifa Tang. Inverse modified differential equations
+for discovery of dynamics, 2021.
+[63] Juntang Zhuang, Nicha Dvornek, Xiaoxiao Li, Sekhar Tatikonda, Xenophon Papademetris,
+and James Duncan. Adaptive checkpoint adjoint method for gradient estimation in neural
+ODE. In Hal Daum´e III and Aarti Singh, editors, Proceedings of the 37th International
+Conference on Machine Learning, volume 119 of Proceedings of Machine Learning Research,
+pages 11639–11649. PMLR, 13–18 Jul 2020.
+[64] Juntang Zhuang, Nicha C. Dvornek, Sekhar Tatikonda, and James S. Duncan. Mali: A memory
+efficient and reverse accurate integrator for neural odes, 2021.
+Appendix A. Error analysis of ALF2
+Example A.1. Consider a simple example of a differential equation on R given by
+(A.1) ˙z = z2 + t + sin(zt) + 1 z2 + 1 .
+We solve the equation numerically using the ALF method and compare with a
+solution of high accuracy for different step sizes. The results are plotted in Figure 1
+and show the second order behaviour in both (z, v) variables.
+10-3 10-2 10-1
+10-4
+10-2
+zALF
+vALF
+h2
+Figure 1. Log-log plot of the global error of trajectories (z(t), v(t))
+of (A.1) defined on time interval [0, 1.0] and obtained by ALF with
+h ranging from 0.5 to 10−3.
+16 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+A.1. Proof of Theorem 3.1. We show that the local error of ALF2 in (z, v) is
+of order O(h3). Let us consider the Taylor expansion of the exact flow (z(t), v(t))
+around (z(t0), v(t0) = f (z0, t0)).
+z(t0 + h) = z0 + hf (z0, t0) + h2 2  ∂f ∂z (z0, t0) ◦ f (z0, t0) + ∂f ∂t (z0, t0)  + O(h3),
+v(t0 + h) = f (z0, t0) + h
+ ∂f
+∂z (z0, t0) ◦ f (z0, t0) + ∂f ∂t (z0, t0)  +
+h2
+2 ( ∂2f ∂z2 (z0, t0)(f (z0, t0), f (z0, t0))+ ∂f ∂z (z0, t0)◦ ∂f ∂z (z0, t0)◦f (z0, t0)+2 ∂2f ∂z∂t (z0, t0)◦f (z0, t0)
++ ∂f ∂z (z0, t0) ◦ ∂f ∂t (z0, t0) + ∂2f ∂t2 (z0, t0)) + O(h3).
+Now we consider the same for the numerical flow obtained with ALF2, that is
+composition of two steps of ALF each with the step size h 2 . One step of ALF2 from
+(z0, v0) leads to (z1, v1) of the form
+z1(h) = z0 + h 2 (f (z0 + h 4 f (z0, t0), t0 + h 4 ) + f (z0 + hf (z0 + h 4 f (z0, t0), t0 + h 4 )
+− h 4 f (z0, t0), t0 + 3h 4 )),
+and
+v1(h) = v0+2(f (z0+hf (z0+ h 4 f (z0, t0), t0+ h 4 )− h 4 v0, t0+ 3h 4 )−f (z0+ h 4 f (z0, t0), t0+ h 4 )).
+Writing down the Taylor expansion in h for (z1(h), v1(h)) we find exactly the
+same terms as in (z(t0 + h), v(t0 + h)) up to terms of the third order O(h3). The
+computations to obtain the Taylor expansion of (z1, v1) were done using Maple
+software. This implies that the local error of ALF2 is of the 3rd order, and therefore,
+the global error is of order 2. This completes the proof.
+Appendix B. Numerical method for the adjoint
+The expression of (3.2) for ϕk+1 obtained from ϕk by a step forward of ALF2
+can be interpreted as a rescaled step backward of ALF2 applied to the state-adjoint
+dynamics. Let us introduce a map Wh depending on h, which acts on (z, v, λz , λv )
+as follows. It only transforms λv multiplying it by − h2 16 , that is
+Wα(z, v, λz , λv ) =
+
+
+Id 0 0 0
+0 Id 0 0
+0 0 Id 0
+0 0 0 αId
+
+
+
+
+z
+v
+λz
+λv
+
+ .
+Theorem B.1. The step backward of the discretized state-adjoint system associated
+to the ALF2 method satisfies
+(B.1) (zk, vk, λz k, λv k) = W −1 −h2
+16
+◦ ΨALF 2 −h ◦ W −h2
+16
+(zk+1, vk+1, λz k+1, λv k+1),
+where ΨALF 2 −h is applied to the state-adjoint equations of the augemented system for
+ϕ = (z, v)
+˙ϕ(t) = ˜f (ϕ(t), θ(t)), ˙λ = − ∂ ∂ϕ ˜f (ϕ(t), θ(t))⊤λ,
+with ˜f (ϕ, θ) = (f (z, θ), ∂ ∂z f (z, θ)f (z, θ)).
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 17
+Proof. In order to find the expression for ALF2, we first determine the expression
+for ALF and use the chain rule. Let us compute ∂ϕk+1 ∂ϕk for ALF method, where
+ϕk+1 = (zk+1, vk+1) and ϕk = (zk, vk). Differentiating (2.5) with respect to (zk, vk),
+we obtain
+∂ϕk+1
+∂ϕk
+=
+
+Id + h ∂f ∂z (zk + h 2 vk, tk + h 2 ) h2 2 ∂f ∂z (zk + h 2 vk, tk + h 2 )
+2 ∂f ∂z (zk + h 2 vk, tk + h 2 ) h ∂f ∂z (zk + h 2 vk, tk + h 2 ) − Id
+
+ .
+This implies
+(B.2)
+λz k =
+
+Id + h ∂ ∂z f (zk + h 2 vk, tk + h 2 )  λz k+1 + 2 ∂ ∂z f (zk + h 2 vk, tk + h 2 )λv k+1,
+λv k = h2 2 ∂ ∂z f (zk + h 2 vk, tk + h 2 )λz k+1 +  h ∂ ∂z f (zk + h 2 vk, tk + h 2 ) − Id  λv k+1.
+Notice that (B.2) can be equivalently written as
+λz k = λz k+1 + h ∂ ∂z f (zk + h 2 vk, tk + h 2 )  λz k+1 + 2 h λv k+1  ,
+λv k = −2 ∂ ∂z f (zk + h 2 vk, tk + h 2 )  − h2 4 λz k+1 − h 2 λv k+1  − λv k+1.
+Let us now introduce ˜λv k = − 4 h2 λv k. Then equations take the following form
+λz k = λz k+1 + h ∂ ∂z f (zk + h 2 vk, tk + h 2 )  λz k+1 − h 2 ˜λv k+1  ,
+˜λv k = −2 ∂ ∂z f (zk + h 2 vk, tk + h 2 )  λz k+1 − h 2 ˜λv k+1  − ˜λv k+1.
+Taking into account that zk + h 2 vk = zk+1 − h 2 vk+1 from the construction of (2.5)-
+(2.6), we conclude that variables (λz k, − 4 h2 λv k) follow the backward integration with
+ALF method and its step backward defined by (2.6) applied to the continuous
+equations of the adjoint (2.4). As a result, the step backward of the adjoint variables
+λ can be expressed as
+(λz k, λv k) = cW −1 −h2
+4
+◦ bΨALF −h (zk+1, vk+1) ◦ cW −h2
+4
+(λz k+1, λv k+1),
+where cWα is a projection of Wα to variables (λz k, λv k) and bΨALF −h (zk+1, vk+1) stands
+for a projection of the backward ALF step to (λz , λv ), which is still a function of
+(zk+1, vk+1). To deduce the formula for the ALF2 method, we use its composition
+structure, namely, ΨALF 2 h = ΨALF h/2 ◦ ΨALF h/2 . This implies
+∂ϕk+1
+∂ϕk
+= ∂ ∂ϕk  ΨALF h/2 ◦ ΨALF h/2  =  ∂ΨALF 2 h/2 ∂ϕ (ϕk+ 1 2 ) ! ◦  ∂ΨALF 2 h/2 ∂ϕ (ϕk) !
+with
+ϕk+ 1 2 = ΨALF 2 h/2 (ϕk) = ΨALF 2 −h/2 (ϕk+1).
+As a result,
+18 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+ ∂ϕk+1
+∂ϕk
+⊤
+=
+ 
+∂ΨALF 2 h/2
+∂ϕ (ϕk)
+!⊤
+◦
+ 
+∂ΨALF 2 h/2
+∂ϕ (ϕk+ 1 2 )
+!⊤
+= cW −1 −h2
+16
+◦ bΨALF −h/2(ϕk+ 1 2 ) ◦ cW −h2 16 ◦ cW −1 −h2 16 ◦ bΨALF −h/2(ϕk+1) ◦ cW −h2 16
+= cW −1 −h2
+16
+◦ bΨALF −h/2(ΨALF 2 −h/2 (ϕk+1)) ◦ bΨALF −h/2(ϕk+1) ◦ cW −h2
+16
+= cW −1 −h2
+16
+◦ bΨALF 2 −h (zk+1, vk+1) ◦ cW −h2
+16
+.
+The resulting equations for the backward step of the state-adjoint system are given
+in (B.1). This completes the proof of Theorem B.1. □
+The formula for the adjoint of Yoshida methods ΦY 2k follows from the composition
+structure of the method and is presented the following theorem. With a slight abuse
+of notation we denote ΦALF 2 by ΦY 2 .
+Theorem B.2. Assume that the discrete one step method in (2.2) is given for k ≥ 2
+by
+(B.3) ΨY 2k(h) = ΨY 2k−2(ah) ◦ ΨY 2k−2(bh) ◦ ΨY 2k−2(ah), ϕk+1 = ΨY 2k(h) ◦ ϕk.
+Then the state-adjoint backward step can be computed recursively as follows
+(B.4) (ϕk, λk) = eΨY 2k−2(ah) ◦ eΨY 2k−2(bh) ◦ eΨY 2k−2(ah)(ϕk+1, λk+1),
+with eΨY 2k−2 the map, which defines the backward step of state-adjoint system of the
+method ΦY 2k−2.
+Proof. The proof is by induction on k in the considered method ΨY 2k and is based
+on the composition structure of ΨY 2k in (B.3). Let k = 2, then ΨY 4 (h) = ΨALF 2 ah ◦
+ΨALF 2 bh ◦ ΨALF 2 ah . By the chain rule we have
+ ∂ϕk+1
+∂ϕk
+⊤
+=
+ ∂ΨALF 2 ah
+∂ϕ (ϕk+ 1 3 )
+⊤
+◦
+ ∂ΨALF 2 bh
+∂ϕ (ϕk+ 2 3 )
+⊤
+◦
+ ∂ΨALF 2 ah
+∂ϕ (ϕk+1)
+⊤
+with
+ϕk+ 2 3 = ΨALF 2 −ah (ϕk+1),
+ϕk+ 1 3 = ΨALF 2 −bh ◦ ΨALF 2 −ah (ϕk+1).
+By construction of the backward step of the state adjoint system by ALF2 shown in
+(B.1), we have
+ ∂ϕk+1
+∂ϕk
+⊤
+= P rλ
+ 
+W −1 ah ◦ ΨALF 2 −ah ◦ Wah  ◦ P rλ   W −1 bh ◦ ΨALF 2 −bh ◦ Wbh  ◦
+◦ P rλ
+ 
+W −1 ah ◦ ΨALF 2 −ah ◦ Wah  ,
+where bΨALF 2 hi = P rλ   W −1 hi ◦ ΨALF 2 −hi ◦ Whi  , hi ∈ {ah, bh} defines a step backward with the ALF2 method with step-size hi in the adjoint variable. This proves the
+Theorem for k = 2. Let us assume now that the statement of the theorem holds for
+k = k0 and we consider the adjoint method for ΨY 2k0 (h) = ΨY 2k0 −2(ah) ◦ ΨY 2k0 −2(bh) ◦
+ΨY 2k0 −2(ah). As before, applying the chain rule and the assumption of the induction,
+it follows that
+ ∂ϕk+1
+∂ϕk
+⊤
+=
+ 
+∂ΨY 2k0 −2(ah)
+∂ϕ ( ˜ϕk+ 1 3 )
+!⊤
+◦
+ 
+∂ΨY 2k0 −2(bh)
+∂ϕ ( ˜ϕk+ 2 3 )
+!⊤
+◦
+ 
+∂ΨY 2k0 −2(ah)
+∂ϕ (ϕk+1)
+!⊤
+= deΨY 2k0 −2(ah) ◦ deΨY 2k0 −2(bh) ◦ deΨY 2k0 −2(ah),
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 19
+where we used the notation
+˜ϕk+ 2 3 = ΨY 2k0 −2(−ah)(ϕk+1), ˜ϕk+ 1 3 = ΨY 2k0 −2(−bh) ◦ ΨY 2k0 −2(−ah)(ϕk+1),
+and deΨY 2k0 −2 the projection of the step backward associated to the state-adjoint
+system and ΨY 2k0 −2 method. This completes the induction step and the proof. □
+In case of k = 2, Theorem B.2 in combination with (B.1) leads to the following
+expression
+eΨY 4 = W −1 −(ah)2
+16
+◦ ΨALF 2 −ah ◦ W a2
+b2
+◦ ΨALF 2 −bh ◦ W b2
+a2
+◦ ΨALF 2 −ah ◦ W −(ah)2
+16
+.
+The obtained results lead to the Algorithm 4 for the computation of gradients.
+Algorithm 4 Computation of gradients
+1. Input: training data z0, initialization of parameters θ, velocity v0 = f (z0, θ0)
+2. Propagate through the network using ΨY 2k to get (zN , vN )
+3. Set λz N = ∇L(zN ) and λv N = 0
+for k = N to 1 do
+4. Compute ϕk, λk from ϕk+1, λk+1 using (B.1) and (B.4).
+5. Compute ∂J(θ) ∂θk using (3.3) end for
+6. Output: gradients ∂J(θ) ∂θk for k = 1, . . . N − 1.
+Appendix C. Details of numerical experiments
+In all the numerical experiments, our implementation of the Yoshida composition
+method uses the code of the MALI network [64]. We use the steps forward and
+backward of the ALF method as composition steps to compute ALF2 and its Yoshida
+composition.
+C.1. Kepler problem. The training data for the comparison of the computational
+time in Table 2 is given by a trajectory x of (4.1) with initial condition x0 =
+(0.75, 0, 0, 0.9π 4
+q
+5
+3 ) on time interval [0, T ] = [0, 1], which is an elliptic orbit. The
+trajectory is obtained by numerical integration using sci.integrate.odeint with
+relative and absolute tolerances 10−7 and 10−8 respectively and maximum step
+size 10−5. The optimizer used in the training is SGD from PyTorch with initial
+learning rate 0.1 and scaled by 0.95 for each epoch. For completeness, we show
+the evaluation of the parameter error across the learning displayed as a function of
+time in Figure 2 and as a function of epochs in Figure 3. In the plots we show the
+results obtained with ALF, Y4 and also Runge-Kutta 4(5) (RK45), the latter is not
+a reversible method and requires storage of the intermediate states obtained during
+the integration forward. This implies additional memory consumption, namely,
+at each epoch the algorithm saves 8 additional states obtained during integration
+forward, making the memory consumption of the training higher. The four plots in
+Figures 3 and 2 are obtained for different initializations of the parameters α0 in the
+learning, namely, α0 = 1.3, 0.1, 0.7, 0.75.
+The error landscape in Figure 4 is obtained by considering 81 trajectories obtained
+using the same integration method as for the time comparison explained above for 81
+different initial conditions (x0)i in a neighborhood of x0, given by a 4-dimensional
+box of diameter 0.4 around x0. The points (x0)i are chosen on a grid with a step
+size 0.1, which includes x0 as its point. The behaviour of ALF and Y4 with adaptive
+stepping can be better understood when looking at fixed step methods, when the
+20 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+Figure 2. Error of the learned parameter with respect to the
+ground truth α as a function of time.
+Figure 3. Error of the learned parameter with respect to the
+ground truth α as a function of epochs.
+step size hi = h is fixed for all the steps. The loss landscape visualized in Figure 4
+for fixed step ALF and fixed step Y4 shows that the minimum value of the loss is
+achieved at a better precision of the true parameter for the higher order methods
+than for the lower order method, which will be explained in more detail below.
+The loss visualized in Figure 4 as a function of α is
+L(αk) = 1 81
+81X
+i=1
+5X
+j=1
+X
+∥(qNj (αk))i − q(tj , (x0)i)∥2
+with qNj projection of zNj to q-coordinate and αk taking 300 values in [ π 4 − 10−4, π 4 +
+10−4]. Here (qNj (α))i is obtained by numerical integration of (4.1).
+If (qNj (α))i was obtained by exact integration of (4.1) and in the absence of noise
+and round-off errors, true parameter values constitute minima for L. We interpret
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 21
+Figure 4. Error landscape of ALF and Y4 methods for Kepler
+problem showing the loss computed for the parameters in a neigh-
+bourhood of the true value of α displayed by a vertical line.
+the application of a numerical integrator as a perturbation of size O(hp) to the exact
+(qNj (α))i, where h is the step size of the integration and p the order of the numerical
+method. This yields a perturbation ˜L of L of size O(h2p) in case of the mean-square
+loss. Thus, assuming that the local minima of L at the true parameter value is
+non-degenerate, ˜L has a local minimum within a ball around the true parameter of
+size O(hp). This follows from classical discussions on the numerical conditioning
+of computing zeros of a function as, for instance, in [16, §5.2]. This provides a
+direct relation of the order of an integration method and the accuracy of identified
+parameters.
+Notice that in the adaptive-step size context the perturbation of L and, thus,
+the error of its minima are controlled by the provided error tolerance. However,
+the discussion shows that in order to be able to expect the same accuracy in the
+parameter identification, neural ODEs based on lower-order methods require more
+integration steps than neural ODEs based on high-order methods.
+The above O(hp) error relation in the parameter estimation constitutes an
+asymptotic upper bound. In Geometric Numerical Integration errors of numerical
+integrators can enter in highly symmetric way [27]. In symplectic integration of
+Hamiltonian systems, for instance, energy errors enter in an unbiased form. If the
+sought parameter is related to the geometric structure that is preserved by the
+geometric numerical integrator, parameters can potentially be estimated to higher
+accuracy than expected by the order of the numerical integrator. This, together
+with backward error analysis techniques, was used in [42], for instance, to accurately
+identify a Hamiltonian function of a dynamical system even though a low order
+method was used to discretize the dynamical system. These techniques, however,
+are tailored to the geometric problem at hand, while the approach of this article
+considers a more general case.
+C.2. Nonlinear harmonic oscillator. There are two settings considered for the
+learning of the dynamics (4.2). In the first setting, the learning problem is the
+parameter identification as presented in Section 4.1.2. In the second case we consider
+the parametrization of the potential by a neural network as described in Section 4.2.1.
+Here we give more details on both problems.
+C.2.1. Identification of parameters. In the experiments for the time comparison
+shown in Table 3 we consider a set of 200 trajectories in the training data with
+the initial conditions generated by the Halton sequence in a 20-dimensional box
+22 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+around zero vector x0 with diameter 2.0. The trajectories are obtained by numerical
+integration using sci.integrate.odeint with relative and absolute tolerances
+10−13 and 10−14 respectively. In the training we use AdamW optimizer from PyTorch
+with learning rate scheduler ExponentialLR. The results shown in Table 3 are
+obtained with different learning rates, namely, the first two with the initial learning
+rate 10−2 and γ = 0.995, the last three with the initial learning rate 10−1 and
+γ = 0.998, 0.997, 0.99 for the tree results respectively. At each epoch we consider all
+200 trajectories, so that the loss is L = 1 200 P200 i=1 ∥(zN )i − x(T, (x0)i)∥2 with T = 0.5.
+While Table 3 compares the training time of ALF and Y4, it is also important to
+compare their performance in the learned parameters. In Figure 5 we show the
+results in the error of the learned parameters as a function of computational time
+measured at each epoch of ALF, Y4 and also RK45, which is not reversible. We can
+see that Y4 in not only faster than ALF in the training but the same also holds for
+the error in the learned parameters. While RK45 is the fastest to get to accurate
+parameters, it also requires the storing of 80 additional states during integration
+at each epoch, which means a considerable contribution to the memory costs. To
+better understand the reasons of the faster learning of Y4 than ALF, we show in
+Figure 6 the computation time accumulated at each epoch of the training. The
+computational time per epoch is smaller for Y4, which contributes to the faster
+convergence in the training. In both Figures 5 and6, the four plots correspond to
+different random initializations of the parameters in the optimization.
+Figure 5. Error in learned parameters as a function of time.
+In addition to results obtained for adaptive stepping, we test ALF and Y4 with
+the step size fixed to h = 0.1 and the training until either the training accuracy
+reaches 10−4 or the number of epochs reaches 500. Figure 7 shows that ALF is
+stuck at the training accuracy 10−2 and the training stops because of reaching 500
+epochs, while Y4 converges to accuracy 10−4 with 181 epochs. The same behaviour
+is observed for different parameter initialization. Decreasing the step size to h = 0.01
+permits ALF to reach accuracy 10−4. The results obtained in Figure 7 show that
+with a fixed step size the lower order method is unable to achieve an accuracy better
+than 10−2 in training loss, whereas Y4 reaches accuracy 10−4. This illustrates what
+happens in the case of the adaptive time-stepping. A lower order method needs
+to reduce the step size to get to better accuracy. This implies more steps in the
+integration, and therefore, slower computations.
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 23
+Figure 6. Time of computation in function of epochs. When the
+curve is positioned lower, the corresponding algorithm is faster.
+Figure 7. Training loss is displayed in logarithmic scale for the
+parameter identification in case of coupled oscillation for ALF and
+Y4 with fixed step size h = 0.1.
+C.2.2. Neural network parametrization. The goal is to find the unknown potential
+governing (4.3). For this we assume a particular form of the potential, namely,
+V (q) =
+sX
+i=1
+nX
+j=1
+ci,j σi(qj ) +
+dX
+i=1
+nX
+j=1
+nX
+k=j+1
+Ci,j,kΣi(∥qj − qk∥),
+where σi stand for different single particle potentials and Σi for double particle
+potentials. In the case considered above, we have
+c1,1 = a1 2 , c1,2 = a2 2 , σ1(q) = q2,
+c2,1 = b1 4 , c2,2 = b2 4 , σ2(q) = q4,
+C1,1,2 = e 2 , Σ1(x) = x2.
+In the learning problem, we assume that functions σ1, σ2 and Σ1 are unknown as well
+as parameters a1, a2, b1, b2, e. We parameterize the derivatives a1 2 σ′ 1, a2 2 σ′ 1, b1 4 σ′ 2, b2 4 σ′ 2
+and e 2 Σ′ 1 by neural networks each and use them to model the dynamics in (4.3). We
+use 5 neural networks, which we denote by ξ1, ξ2, ξ3, ξ4, ξ5. All of them have the same
+architecture q 7→ W1 tanh (W2 tanh (W3q)), where W1 is a matrix of parameters of
+size 1 × 100, matrix W2 is of size 100 × 100 and W3 is of size 100 × 1. The resulting
+24 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+Figure 8. Two samples of the training data used in section C.3.
+dynamics is defined by
+˙q1 = v1, ˙v1 = −ξ1(q1) − ξ3(q1) − ξ5(q1 − q2),
+˙q2 = v2, ˙v2 = −ξ2(q2) − ξ4(q2) − ξ5(q2 − q1).
+The equations parameterized by neural networks are then integrated using ALF or
+Yoshida composition of ALF2 at each epoch in the training. The training data is set
+to be a set of 1000 trajectories with the initial conditions generated by the Halton
+sequence in a 4-dimensional box around x0 = (0.8, −0.4, 0.0, 0.0) with diameter 2.0.
+The optimizer is AdamW with initial learning rate 10−3 and scheduler ExponentialLR
+with γ = 0.995. In addition, we consider batches of 300 trajectories at each epoch
+with the resulting loss function of the same form as in the case of the parameter
+identification problem.
+C.3. Discretized wave equations. For generation of the training data, we consider
+the wave equation with potential V (u) = 1 2 u2. The true motions can be expressed
+in the time-dependent Fourier series as
+u(t, x) =
+∞X
+m=−∞
+ˆum(t)e2πimx/L, L = 1
+where the Fourier coefficients evolve as
+ˆum(t) = γ−1 m ˆvm,0 sin(γmt) + ˆum,0 cos(γmt), γm =
+r
+1 + 4π2
+L2 m2.
+Here ˆum,0, ˆvm,0 are the Fourier coefficients of an initial wave u(0, x) and velocity
+ut(0, x), respectively. Notice that a Fourier coefficient ˆum(t) remains exactly zero
+over time if and only if ˆum,0 = 0 = ˆvm,0. Training data to initial data with only
+finitely many nonzero Fourier coefficients can, therefore, be obtained to machine
+precision by a spectral method. Alternatively, solutions can be computed by an
+application of the 5-point stencil as described in Example 7 (16) in [44] on a fine
+mesh with discretization parameters ∆t = 1/160, ∆x = 1/80 and then subsampled
+to a mesh with ∆t = 1/40, ∆x = 1/20. In our case both methods yield the same
+training data up to a maximum error of order 1e − 4. In the training data creation,
+we sample initial ˆum,0, ˆvm,0 from a standard normal distribution. It is then weighted
+by e−4m8 such that effectively only the first two Fourier modes are active. See figure
+8 for a plot of two of the solutions to the wave equation that were used to create
+the training data set. In the training, we consider initial and final points of 50
+trajectories on time interval [0, 0.3] and 30 unseen trajectories in the testing. We use
+the optimiser LBFGS with the default values of the parameters. In the numerical
+tests, we compare the behaviour of ALF, Y4 and Runge-Kutta 4(5). It can be seen
+HIGHER ORDER REVERSIBLE INTEGRATORS IN DEEP LEARNING 25
+Figure 9. Time of computation in function of epochs. Lower curve
+means faster computations.
+Figure 10. Time of computation in function of epochs. When the
+curve is positioned lower, the corresponding algorithm is faster.
+in Figure 9 that Y4 reaches the lowest values in the training loss faster than ALF.
+While RK45 is fastest, it also consumes more memory, which can make a crucial
+difference in high dimensional systems. We also report a lower time of computations
+per epoch for Y4 with respect to the results by ALF in Figure 10.
+26 S. MASLOVSKAYA, S. OBER-BL ¨OBAUM, C. OFFEN, P. SINGH, AND B. WEMBE
+Sofya Maslovskaya, Paderborn University, Department of Mathematics, Warburger
+Str. 100, 33098 Paderborn, Germany
+Email address: sofyam@math.upb.de
+Sina Ober-Bl¨obaum, Paderborn University, Department of Mathematics, Warburger
+Str. 100, 33098 Paderborn, Germany
+Email address: sinaober@math.upb.de
+Christian Offen, Paderborn University, Department of Mathematics, Warburger Str.
+100, 33098 Paderborn, Germany
+Email address: christian.offen@upb.de
+Pranav Singh, Department of Mathematical Sciences, University of Bath, Bath, BA2
+7AY, United Kingdom
+Email address: ps2106@bath.ac.uk
+Boris Wembe, Paderborn University, Department of Mathematics, Warburger Str.
+100, 33098 Paderborn, Germany
+Email address: wboris@math.upb.de

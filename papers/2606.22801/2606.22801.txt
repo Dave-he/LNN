@@ -1,0 +1,1744 @@
+1
+Learning Adaptive Dynamical Features via Multi-τ
+Liquid-Mamba for All-in-one Image Restoration
+Hu Gao, Changshuo Wang, Yulong Chen and Lizhuang Ma†
+Abstract—Image restoration aims to recover high-quality im-
+ages from degraded observations. Recent Mamba-based im-
+age restoration models have demonstrated strong potential
+in modeling long-range dependencies with linear complexity.
+However, most existing designs still rely on a single state-
+evolution timescale, which limits their adaptability to spatially
+heterogeneous and task-dependent degradation patterns in all-
+in-one image restoration. In this paper, we propose Multi-τ
+Liquid-Mamba, an adaptive state space module that introduces
+input-conditioned multi-timescale liquid discretization into se-
+lective state space modeling. Instead of changing the overall
+selective scan pipeline, the proposed module modulates the
+effective discretization steps of multiple dynamical branches and
+adaptively fuses their responses according to degradation-aware
+gating weights. This design allows the model to capture both
+fast-varying local details and slowly evolving global structures
+while preserving the linear scaling property of Mamba with
+respect to sequence length. Importantly, Multi-τ Liquid-Mamba
+modulates the effective transition dynamics while preserving
+the original selective parameterization and hardware-efficient
+selective scan mechanism, making it a plug-and-play module
+that can be seamlessly integrated into existing Mamba-based
+architectures. Built upon this framework, we develop a Multi-
+τ Liquid-Mamba Image Restoration Network (MLMIR) for
+all-in-one image restoration. Extensive experiments on a wide
+range of restoration benchmarks demonstrate that MLMIR
+consistently achieves state-of-the-art performance in all-in-one
+image restoration while remaining highly competitive in task-
+aligned restoration settings.
+Index Terms—Image restoration, All-in-one, Mamba, Liquid
+neural dynamics
+I. INTRODUCTION
+Image restoration aims to recover high-quality images from
+degraded observations. Over the past decades, extensive efforts
+have been devoted to addressing various degradation types,
+including image denoising, deblurring, deraining, desnowing,
+and dehazing. Recently, with the increasing demand for prac-
+tical applications, the research focus has gradually shifted
+from task-specific and task-aligned restoration toward more
+challenging all-in-one image restoration, where a single model
+is expected to handle multiple degradations simultaneously.
+Compared with task-aligned settings, all-in-one restoration
+requires stronger representation capability and greater adapt-
+ability to diverse degradation characteristics.
+Early image restoration methods mainly relied on hand-
+crafted priors, such as sparsity constraints, total variation
+Hu Gao, Changshuo Wang and Lizhuang Ma are with the Department of
+Computer Science, Shanghai Jiao Tong University, Shanghai 200240, China
+(e-mail: gao h@sjtu.edu.cn, 1145209406@sjtu.edu.cn, lzma@sjtu.edu.cn).
+Yulong Chen is with the Department of Architecture and Design, Harbin
+Institute of Technology, Heilongjiang, China (e-mail: llong c@hit.edu.cn)
+regularization, and physical degradation modeling [1]–[3].
+Although these methods exhibit good interpretability, their
+restoration performance depends heavily on strong assump-
+tions about degradation factors. In real-world scenarios, where
+degradations are often uncertain or unknown, accurate mod-
+eling becomes challenging, leading to limited generaliza-
+tion and unstable performance. With the rapid development
+of deep learning, convolutional neural networks (CNNs)
+have significantly advanced image restoration by learning
+powerful degradation-specific representations from large-scale
+datasets [4]–[6]. Nevertheless, the inherently local receptive
+field of convolution operations makes it difficult to model
+long-range dependencies and global contextual information,
+which are crucial for recovering severely degraded images.
+To address this limitation, Transformer-based approaches have
+been extensively explored in image restoration [7]–[9]. By
+leveraging self-attention mechanisms, Transformers can cap-
+ture long-range interactions and global image structures. Nu-
+merous studies have demonstrated superior restoration per-
+formance. However, the quadratic computational complexity
+of self-attention with respect to image resolution substantially
+increases memory consumption and computational cost, limit-
+ing scalability to high-resolution image restoration scenarios.
+More recently, State Space Models (SSMs) have emerged as
+a promising alternative for efficient sequence modeling [10]–
+[14]. In particular, the introduction of Mamba has attracted
+significant attention due to its ability to capture long-range
+dependencies with linear computational complexity. Benefiting
+from the selective state space mechanism and efficient se-
+lective scan implementation, Mamba-based architectures have
+rapidly achieved competitive performance in image restora-
+tion.
+Despite these advantages, current Mamba-based restoration
+models still suffer from an inherent limitation. Specifically,
+the state transition process is typically governed by a single
+discretization mechanism, where hidden-state evolution fol-
+lows a fixed continuous-time system with only partially input-
+dependent parameterization. Although the selective mecha-
+nism allows adaptive modulation of certain state-space pa-
+rameters, the underlying temporal dynamics remain restricted
+to a single timescale. This design is not ideal for image
+restoration, as degradation patterns often exhibit substantial
+spatial heterogeneity. For instance, smooth regions generally
+require stable and gradual state evolution to preserve global
+structures, whereas edges and textured areas benefit from
+faster dynamics to recover fine details. Consequently, a single-
+timescale dynamical system lacks the flexibility needed to
+effectively accommodate these diverse restoration demands.
+arXiv:2606.22801v1  [cs.CV]  22 Jun 2026
+2
+Fig. 1. Comparison of representative all-in-one image restoration methods
+across five restoration benchmarks. MLMIR achieves the highest overall
+performance and consistently outperforms the strongest competing baseline
+on most tasks.
+More importantly, this limitation restricts the applicability of
+existing Mamba architectures to all-in-one image restoration.
+In real-world scenarios, images are often corrupted by multiple
+degradation types, each characterized by distinct spatial distri-
+butions and degradation behaviors. To handle such diversity,
+an all-in-one restoration model should be able to automatically
+adapt its feature evolution process according to local image
+content without requiring prior knowledge of the degradation
+type. However, existing Mamba-based methods largely rely on
+a unified state evolution mechanism across all image regions,
+making it difficult to adjust restoration dynamics to different
+degradation patterns. As a result, the learned representations
+may become biased toward specific degradations, thereby lim-
+iting both generalization and adaptive restoration performance
+in complex degradation environments. From a dynamical sys-
+tems perspective, robust all-in-one restoration requires a model
+capable of capturing feature evolution at multiple timescales
+while adaptively selecting appropriate dynamics conditioned
+on the input. Unfortunately, such flexibility remains largely
+absent from current Mamba-based restoration frameworks.
+To address these limitations, we propose Multi-τ Liquid-
+Mamba, a novel plug-and-play adaptive state space frame-
+work for image restoration. Unlike existing Mamba archi-
+tectures that rely on fixed or only partially input-conditioned
+state transition dynamics, the proposed framework introduces
+continuous-time liquid neural dynamics into selective state
+space modeling. By incorporating multiple adaptive time con-
+stants into the discretization process, Multi-τ Liquid-Mamba
+enables input-dependent state transitions, allowing the dynam-
+ical system to flexibly adjust its temporal evolution according
+to local degradation characteristics. Specifically, a set of adap-
+tive time constants is estimated from the input features and
+dynamically fused through a lightweight gating mechanism,
+resulting in a multi-timescale liquid discretization strategy.
+This formulation allows hidden-state dynamics to evolve at
+different rates across image regions, thereby effectively ac-
+commodating the substantial spatial variability of real-world
+degradations. As a consequence, the model can automatically
+adapt its feature propagation behavior to diverse degradation
+patterns, significantly enhancing the dynamic expressiveness
+and adaptive modeling capability of selective state space mod-
+els. Importantly, our method modulates the effective transition
+dynamics while preserving the original selective scan operator
+and state-space parameterization. Therefore, Multi-τ Liquid-
+Mamba can be seamlessly integrated into existing Mamba-
+based restoration architectures as a plug-and-play module
+with negligible computational overhead. By enabling content-
+adaptive multi-timescale state evolution, the proposed frame-
+work naturally extends conventional Mamba-based networks
+from task-specific restoration to the more challenging all-in-
+one restoration setting.
+Building upon the proposed framework, we further de-
+velop a Multi-τ Liquid-Mamba Image Restoration Network
+(MLMIR) for all-in-one image restoration. MLMIR adopts
+a hierarchical encoder–decoder architecture and incorporates
+the proposed Multi-τ Liquid-Mamba blocks throughout the
+network to jointly model long-range contextual dependencies
+and fine-grained local structures. Benefiting from the adap-
+tive multi-timescale dynamics, MLMIR effectively handles
+diverse degradation patterns. As shown in Figure 1, extensive
+experiments on multiple all-in-one and task-aligned image
+restoration benchmarks demonstrate the superiority of the
+proposed approach.
+The main contributions of this work are summarized as
+follows:
+1) We propose Multi-τ Liquid-Mamba, a novel adaptive
+state space framework that extends existing Mamba-
+based restoration networks from fixed or partially input-
+conditioned dynamics to fully input-dependent multi-
+timescale state evolution. As a plug-and-play module, it
+can be seamlessly integrated into existing architectures,
+providing a more expressive dynamical formulation for
+all-in-one image restoration.
+2) We design a multi-timescale liquid discretization strat-
+egy that jointly models diverse feature evolution rates
+through learnable liquid time constants and adaptive
+gating. This mechanism enables content-aware state
+transitions and significantly enhances the ability of se-
+lective state space models to accommodate spatially
+heterogeneous degradations.
+3) We develop MLMIR, a hierarchical image restoration
+network built upon the proposed framework. Exten-
+sive experiments on task-aligned, all-in-one, real-world,
+unseen-degradation, and mixed-degradation benchmarks
+demonstrate the effectiveness, generality, and plug-and-
+play applicability of the proposed module.
+II. RELATED WORKS
+A. Image Restoration
+Image restoration (IR) aims to recover high-quality images
+from degraded observations and represents a fundamental
+yet highly ill-posed problem in low-level vision. Traditional
+restoration methods mainly rely on handcrafted priors [1]–
+[3], such as sparsity constraints, low-rank representations,
+and physical degradation modeling, to regularize the solution
+space. Although these methods exhibit strong interpretability,
+their performance is often limited by manually designed as-
+sumptions and poor generalization across diverse degradation
+scenarios.
+3
+With the rapid advancement of deep learning, data-driven
+restoration models have significantly improved restoration
+quality by learning degradation-aware representations from
+large-scale datasets [5], [13], [15]–[18]. Existing methods
+can be broadly categorized into task-specific, task-aligned,
+and all-in-one image restoration according to the number of
+degradations handled by a single model.
+1) Task-specific Image Restoration: Task-specific methods
+are designed for a particular degradation type, such as image
+deblurring, denoising, deraining, dehazing, or desnowing. Re-
+cent approaches have achieved remarkable progress by exploit-
+ing degradation-specific priors and network architectures. For
+example, ALGNet [10] introduces adaptive local-global fea-
+ture extraction for motion deblurring, while XYScanNet [19]
+employs alternating scanning strategies to model long-range
+spatial dependencies. EfDeRain+ [20] formulates image de-
+raining as a predictive filtering process, avoiding explicit rain-
+layer modeling. PGH2Net [21] combines bright/dark channel
+priors with histogram equalization for hierarchical dehazing.
+Diffusion-based methods, such as UPID-EDM [22] and Diff-
+Unmix [23], further improve restoration quality by leveraging
+generative priors and iterative denoising processes. Despite
+their strong performance, task-specific methods generally re-
+quire separate models for different degradations and thus
+exhibit limited applicability in real-world scenarios.
+2) Task-aligned Image Restoration: To improve gener-
+alization across multiple restoration tasks, task-aligned ap-
+proaches aim to learn a general network capable of handling
+multiple degradations by sequential training across diverse
+datasets [6], [16]. Representative methods include SFNet [24],
+FSNet [16], ACL [25], StarIR [5], and MHNet [6], which
+exploit frequency-domain modeling, linear attention mech-
+anisms, or hierarchical feature representations to enhance
+restoration capability. Although these methods improve robust-
+ness across different degradations, they still assume a known
+degradation type during inference and therefore remain limited
+when confronted with unknown real-world degradations.
+3) All-in-one Image Restoration: All-in-one image restora-
+tion further extends this paradigm by training a single model
+to handle multiple degradation types simultaneously [8], [9],
+[17]. PromptIR [26] introduces degradation-aware prompts
+to guide restoration, while CAPTNet [17] leverages prompt
+learning to model degradation-specific components. NDR [27]
+employs neural degradation representations to capture shared
+degradation characteristics across tasks. BaryIR [8] learns a
+degradation-invariant representation by minimizing the aver-
+age Wasserstein distance across multiple degraded distribu-
+tions, thereby improving generalization to diverse restora-
+tion scenarios. Recently, large-model-based approaches have
+shown promising results. VLU-Net [28] incorporates vision-
+language representations to identify degradation-aware cues,
+AutoDIR [29] combines vision-language guidance with la-
+tent diffusion priors, and Defusion [30] utilizes degradation
+instruction diffusion for generalized restoration. AdaIR [31]
+disentangles degradation and content information in both
+spatial and frequency domains to improve restoration robust-
+ness. Perceive-IR [32] introduces a two-stage design that
+identifies both degradation types and fine-grained severity
+levels, achieving strong transferability across restoration tasks.
+AllRestore [9] leverages a composite scene embedding that
+combines image and text features to characterize degradation
+conditions, allowing a single model to adaptively handle
+various restoration tasks.
+Despite their strong performance, most existing all-in-one
+restoration methods rely on prompts, degradation classifiers,
+diffusion processes, or large vision-language models, leading
+to substantial computational overhead and increased architec-
+tural complexity. In contrast, our method enhances restoration
+capability from a dynamical systems perspective by introduc-
+ing adaptive multi-timescale state transitions, without requiring
+additional degradation recognition modules or external priors.
+B. State Space Models for Image Restoration
+State Space Models (SSMs) have recently emerged as a
+powerful alternative to convolutional and Transformer archi-
+tectures for long-range dependency modeling. Early works
+such as S4 [33] and S5 [34] demonstrated that structured
+state space representations can effectively capture long-range
+dependencies while maintaining linear computational com-
+plexity.
+Building upon these advances, Mamba [35] introduces
+input-selective state transitions and a hardware-aware selective
+scan algorithm, significantly improving modeling efficiency
+and scalability. Owing to its favorable balance between perfor-
+mance and efficiency, Mamba has rapidly attracted attention
+in image restoration [10]–[14]. Representative methods such
+as MambaIR [12] and MambaIRv2 [13] introduce multidi-
+rectional scanning and non-causal state modeling to enhance
+spatial representation learning and contextual aggregation.
+Other studies explore alternative scanning strategies or hybrid
+architectures to compensate for the limitations of sequential
+state evolution. For instance, XYScanNet [19] employs al-
+ternating scanning patterns to capture spatial dependencies,
+while hybrid CNN-Mamba architectures [10] combine local
+convolutional priors with global state-space modeling.
+Despite their success, most existing Mamba-based restora-
+tion networks are primarily designed for task-specific or task-
+aligned restoration settings. Several recent studies [36], [37]
+have attempted to improve restoration generalization through
+degradation-aware prompts, auxiliary degradation estimators,
+or large-scale vision-language priors. However, these ap-
+proaches usually introduce additional network branches, exter-
+nal guidance modules, or substantial computational overhead.
+In contrast, we revisit image restoration from a dynamical
+systems perspective and focus on enhancing the adaptability
+of the state transition process itself. In this paper, we propose
+a novel Multi-τ Liquid-Mamba all-in-one image restoration
+framework, which introduces adaptive multi-timescale liquid
+dynamics into selective state space modeling. By learning
+multiple input-dependent time constants and integrating them
+into the discretization process, the proposed method signif-
+icantly improves the dynamic expressiveness of Mamba and
+enables more flexible state evolution under diverse degradation
+conditions. Importantly, Multi-τ Liquid-Mamba only modifies
+the state transition dynamics while preserving the original
+4
+selective scan implementation and linear computational com-
+plexity. Therefore, it can be seamlessly integrated into existing
+Mamba-based image restoration architectures as a plug-and-
+play module, providing a simple yet effective solution for
+enhancing both task-specific and all-in-one image restoration
+performance.
+III. METHOD
+In this section, we first review the necessary preliminaries,
+then introduce the formulation of Multi-τ Liquid-Mamba, and
+finally present the proposed image restoration network built
+upon it.
+A. Preliminaries
+State Space Models (SSMs) [33], [34] provide an efficient
+framework for modeling long-range dependencies through
+continuous-time dynamical systems. A linear continuous-time
+SSM can be formulated as:
+dx(t)
+dt = Ax(t) + Bu(t), (1)
+y(t) = Cx(t), (2)
+where x(t) ∈ RN denotes the hidden state, u(t) ∈ RD denotes
+the input signal, and y(t) represents the output. The exact
+solution over a time interval ∆ can be expressed as:
+x(t + ∆) = e∆Ax(t) +
+Z ∆
+0
+e(∆−s)ABu(t + s) ds. (3)
+Assuming the input is piecewise constant within each in-
+terval, i.e., u(t + s) = uk, and following a zero-order hold
+discretization, the continuous system can be discretized into
+the following form:
+xk+1 = ¯Axk + ¯Buk, (4)
+yk = Cxk, (5)
+¯A = e∆A, ¯B = (∆A)−1   e∆A − I  (∆B). (6)
+This formulation serves as the foundation of modern struc-
+tured state space models. Recent Mamba [35] architectures
+extend SSMs via selective state space mechanisms, introducing
+input-dependent parameterization that enables content-aware
+information propagation. Instead of relying on fixed input and
+output projections, selective SSMs dynamically generate:
+xk+1 = ¯Axk + B(uk)uk, (7)
+yk = C(uk)xk, (8)
+Bk = B(uk), Ck = C(uk). (9)
+By leveraging the selective scan algorithm, these recurrent
+dynamics can be computed with linear complexity with respect
+to sequence length. Despite their remarkable success, most
+existing Mamba-based restoration networks [11], [13], [25] are
+primarily developed for task-specific or task-aligned restora-
+tion scenarios. Their performance gains mainly stem from
+architectural refinements, feature interaction mechanisms, and
+improved scanning strategies, while the underlying state transi-
+tion dynamics remain largely unchanged. In particular, existing
+methods typically employ a single-timescale discretization
+scheme to govern hidden-state evolution. Although such a
+formulation is effective for capturing long-range dependen-
+cies, it lacks the flexibility required to accommodate the
+highly heterogeneous degradation patterns encountered in all-
+in-one image restoration, where multiple degradation types
+may coexist and exhibit substantially different restoration
+characteristics. As a result, the representation capability of
+current Mamba-based models is inherently constrained when
+attempting to model diverse degradation distributions within a
+unified framework.
+B. Multi-τ Liquid-Mamba
+Although Mamba introduces input-dependent parameteriza-
+tion for Bk and Ck, the hidden-state evolution is still governed
+by a single transition operator Φk = eA0 ∆k , where A0 denotes
+the shared state matrix and ∆k is generated from a single
+discretization branch.
+Such a formulation implicitly assumes that all degradations
+can be modeled using a common dynamical system. While
+this design is effective for long-range sequence modeling, it
+provides limited flexibility for adapting to the diverse degrada-
+tion characteristics encountered in all-in-one image restoration.
+Different degradation types often exhibit distinct restoration
+dynamics and require different state evolution behaviors, ren-
+dering a single-timescale transition mechanism insufficient
+for jointly modeling multiple degradations within a unified
+architecture. For example, image denoising mainly relies on
+short-range information aggregation, while motion deblurring
+and haze removal require substantially longer memory hori-
+zons to capture global degradation structures. Consequently,
+employing a single transition process inevitably limits the
+adaptability of existing Mamba-based restoration networks.
+To address this limitation, we revisit selective state space
+modeling from the perspective of continuous-time dynamical
+systems and incorporate adaptive liquid dynamics into the
+discretization process. Rather than directly modifying the state
+matrix, we regulate the evolution speed of hidden states
+through input-dependent time constants. This design retains
+the computational efficiency and parallelizable selective scan
+implementation of Mamba, while significantly improving the
+adaptability and expressiveness of the underlying state transi-
+tion dynamics.
+1) Liquid State Transition Dynamics: Liquid Time-
+Constant Networks (LTCs) [38] introduce adaptive continuous-
+time dynamics through input-dependent time constants:
+dx(t)
+dt = − x(t) τ (u) + f (u), (10)
+where τ (u) controls the evolution speed of the hidden state.
+Inspired by LTCs, we introduce liquid dynamics into selective
+5
+state space models and consider the following input-dependent
+continuous-time system:
+dx(t)
+dt = A(u)x(t) + B(u)u(t). (11)
+Unlike conventional Liquid-S4 [39], directly replacing the
+state transition matrix with a scalar liquid coefficient may
+destroy the expressive transition structure learned by Mamba.
+Therefore, we preserve the original state matrix and introduce
+adaptive perturbations around the original dynamics.
+2) Multi-Timescale Liquid Dynamics: Although a single
+adaptive time constant improves flexibility, it remains in-
+sufficient for modeling the diverse degradation characteris-
+tics encountered in all-in-one image restoration. In practice,
+smooth regions, edges, textures, and severe degradations often
+require different state evolution rates. Therefore, we intro-
+duce multiple learnable timescales to capture heterogeneous
+restoration dynamics. Unlike conventional LTC formulations,
+directly replacing the transition matrix with a scalar liquid
+coefficient may weaken the expressive transition structure
+learned by Mamba. To avoid this issue, we keep the original
+Mamba transition matrix A0 as a shared base and introduce
+a lightweight input-conditioned low-rank residual perturbation
+around it:
+dx(t)
+dt = Am(u)x(t) + B(u)u(t), (12)
+Am(u) = A0 + Γm(u), (13)
+Γm(u) = Um diag
+ 
+τm(u)
+
+VT m. (14)
+where A0 denotes the base transition matrix inherited from
+Mamba, τm(u) is the m-th adaptive liquid timescale, and
+Um, Vm are learnable low-rank projections. This formula-
+tion does not replace the original transition structure with
+an independently learned full matrix. Instead, it performs
+a lightweight residual modulation of the effective transition
+operator, allowing the dynamics to adapt to image content
+while retaining the original Mamba-style state-space param-
+eterization. Unlike Liquid-S4, which modifies the convolution
+kernel through bilinear liquid approximations, our formu-
+lation directly modulates the state-transition operator while
+preserving the selective scan mechanism. Here, preserving the
+selective scan mechanism means that the scan order, recur-
+rent computation form, and hardware-efficient selective scan
+implementation are kept unchanged. The proposed low-rank
+perturbation only changes the branch-wise effective transition
+parameters used inside the state update, rather than introducing
+new scanning directions, external degradation estimators, or
+additional attention-style global interactions.
+Compared with directly learning an independent transition
+matrix for each degradation, the low-rank formulation in
+Eq. (14) preserves the efficient structure of Mamba while
+enabling adaptive deformation of the underlying dynamical
+system. Given the hidden representation rk, the m-th timescale
+is generated as:
+τm = Softplus(Wτm rk + bτm ), (15)
+Each branch therefore evolves under both a distinct dynam-
+ical system Am and a distinct evolution speed τm, resulting
+in a family of multi-timescale liquid dynamical systems.
+3) Continuous-to-Discrete State Evolution: Eq. (12) apply
+zero-order hold discretization over interval ∆kτm gives
+x(m) k+1 = Φmx(m) k + Ψmuk, (16)
+Φm = exp(Am∆kτm) , (17)
+Ψm = A−1 m (Φm − I) B(uk). (18)
+Compared with the original Mamba transition operator
+Φ0 = eA0 ∆k , the proposed formulation simultaneously adapts
+both the transition dynamics and the evolution timescale.
+Using the Fr´echet expansion of the matrix exponential:
+e(A0 +Γm)∆k τm = eA0 ∆k τm + Lexp(A0∆kτm, Γm∆kτm)
++ O(∥Γm∆kτm∥2),
+(19)
+Lexp =
+Z 1
+0
+e(1−s)A0 ∆k τm Γm∆kτmesA0 ∆k τm ds. (20)
+Therefore, Multi-τ Liquid-Mamba can be interpreted as
+learning a continuous family of transition operators around
+the original Mamba dynamics.
+4) Adaptive Dynamical Fusion: To adaptively select suit-
+able restoration dynamics, a gating network predicts the fusion
+coefficients
+αm = exp(Wαm rk + bαm )PM
+j=1 exp(Wαj rk + bαj )
+. (21)
+The final hidden state is obtained by aggregating all liquid
+branches:
+xk+1 =
+MX
+m=1
+αmx(m) k+1
+=
+MX
+m=1
+αm
+h
+Φmx(m) k + Ψmuk
+i
+.
+(22)
+Eq. (22) reveals that the proposed Multi-τ Liquid-Mamba
+can be viewed as an adaptive mixture of multiple dynamical
+systems operating at distinct evolution rates. As illustrated
+in Algorithm 1, in contrast to conventional Mamba, which
+relies on a single transition operator, the proposed formula-
+tion jointly learns adaptive transition dynamics via Am(u),
+adaptive memory horizons through τm(u), and degradation-
+aware dynamical fusion through αm. Consequently, different
+degradations can induce distinct state-transition behaviors and
+memory ranges, enabling the model to capture substantially
+richer dynamics and achieve stronger adaptability in all-in-one
+image restoration.
+6
+Algorithm 1 Comparison of Mamba and Multi-τ Liquid-
+Mamba State Evolution
+1: Input: u
+2: Output: y
+— Mamba (Single Transition Dynamics) —
+3: B = B(u)
+4: C = C(u)
+5: ∆ = τ∆
+6: Φk = exp(A0∆k)
+7: xk+1 = Φkxk + Bkuk
+8: Return: yk+1 = Ckxk+1
+— Multi-τ Liquid-Mamba (Proposed) —
+9: B = B(u)
+10: C = C(u)
+11: Extract hidden representation r
+12: τm(u) = Softplus(Wτm r + bτm ), m = 1, . . . , M
+13: Am(u) = A0 + Umdiag(τm(u))VT m
+14: ∆τm → Φm = exp(Am(u)∆τm)
+15: Ψm = A−1 m (Φm − I)B
+16: for m = 1 to M do
+17: x(m) k+1 = Φmx(m) k + Ψmuk
+18: end for
+19: αm = Softmax(Wαm r)
+20: xk+1 = PM m=1 αmx(m) k+1
+21: Return: yk+1 = Ckxk+1
+Fig. 2. The overall architecture of MLMIR.
+Importantly, the proposed framework modulates the effec-
+tive transition dynamics through lightweight low-rank residu-
+als while preserving the original selective scan formulation
+and linear scaling with respect to sequence length. As a
+result, Multi-τ Liquid-Mamba can be seamlessly integrated
+into existing Mamba-based restoration architectures as a plug-
+and-play module, without changing the scan order or selective
+scan implementation.
+C. Multi-τ Liquid-Mamba Image Restoration Network
+Built upon the above framework, we propose a Multi-
+τ Liquid-Mamba Image Restoration Network (MLMIR) to
+enhance the adaptability of state space modeling for all-in-one
+image restoration. The overall framework follows a U-shaped
+architecture similar to NAFNet [40], which has demonstrated
+strong performance and optimization stability in image restora-
+tion tasks. Based on this backbone, we replace the original
+NAFBlock with a Multi-τ Liquid-Mamba enhanced block,
+enabling more flexible and input-adaptive state evolution.
+As shown in Figure 2, the network adopts a multi-scale
+encoder–decoder paradigm with skip connections to preserve
+both global context and fine-grained spatial details. Unlike
+standard designs that rely on single-path feature propagation,
+our model introduces a multi-input multi-output mechanism
+across stages, allowing features from different scales to in-
+teract more effectively and improving cross-scale information
+exchange. The key component of the proposed method is the
+Multi-τ Liquid-Mamba module, which extends conventional
+state space models by introducing multiple temporal evolution
+scales.
+Our model architecture follows a design strategy similar
+to NAFNet. Specifically, we adopt a block configuration of
+[1, 1, 1, 28] for each encoder stage, a single block at the
+bottleneck, and [1, 1, 1, 1] blocks for each decoder stage. This
+lightweight yet effective design ensures a balanced trade-off
+between representation capacity and computational efficiency
+across different resolution levels. To optimize the network, we
+employ a composite loss function defined as:
+L =
+4X
+i=1
+[Lc( ˆJi, I) + δLe( ˆJi, I) + λLf ( ˆJi, I)]
+Lc =
+q
+|| ˆJi − I||2 + ϵ2
+Le =
+q
+||△ ˆJi − △I||2 + ϵ2
+Lf = ||F ( ˆJi) − F (I)||1
+(23)
+where i denotes the index of multi-stage outputs and their
+corresponding ground-truth supervision, and I represents the
+ground-truth image. Lc is the Charbonnier loss, where ϵ is
+set to 0.001 across all experiments for numerical stability.
+Le is an edge-preserving constraint computed in the gradi-
+ent domain using the Laplacian operator △, which encour-
+ages the reconstruction of sharp structural details. Lf is a
+frequency-domain reconstruction loss, where F (·) denotes the
+fast Fourier transform to enforce spectral consistency. The
+weighting coefficients λ and δ are empirically set to 0.1 and
+0.05, respectively, following prior works [16], [41].
+IV. EXPERIMENTS
+In this section, we first present the experimental setup,
+followed by qualitative and quantitative comparison results.
+Finally, ablation studies are conducted to verify the effective-
+ness of the proposed method.
+A. Experimental Setup
+We evaluate our method under both all-in-one and task-
+aligned settings.
+7
+1) Datasets: Task-aligned setting. i) Image deraining:
+we train the deraining model on 13,712 paired clean–rain
+images collected from multiple datasets [42]–[45]. The trained
+MLMIR is evaluated on several benchmark datasets, in-
+cluding Rain100H [42], Rain100L [42], Test100 [43], and
+Test1200 [46].
+ii) Image desnowing: we utilize the Snow100K [47],
+SRRS [48], and CSD [49] datasets. Following the protocol
+in [16], we randomly sample 2,500 image pairs for training
+and 2,000 images for evaluation.
+iii) Image dehazing: we evaluate MLMIR on the daytime
+synthetic subsets of RESIDE [50], including the Indoor Train-
+ing Set (ITS), Outdoor Training Set (OTS), and Synthetic
+Objective Testing Set (SOTS). We train separate models on
+ITS and OTS, and evaluate them on SOTS-Indoor and SOTS-
+Outdoor, each containing 500 paired images.
+iv) Image deblurring: we train MLMIR on the GoPro
+dataset [51], which contains 2,103 training pairs and 1,111
+test pairs.
+v) Image denoising: we train a unified MLMIR model
+to handle multiple noise levels using a composite dataset
+consisting of 800 images from DIV2K [52], 2,650 images
+from Flickr2K [53], 400 images from BSD500 [54], and
+4,744 images from WED [55]. Noisy inputs are generated
+by adding additive white Gaussian noise with a randomly
+sampled noise level σ ∈ {15, 25, 50}. Evaluation is performed
+on CBSD68 [56], Urban100 [57], and Kodak24 [58].
+All-in-one setting. For the all-in-one scenario, we con-
+struct a unified training set by combining multiple restora-
+tion datasets, namely “Rain+Snow+Haze+Blur+Noise”. Dur-
+ing testing, we evaluate on Test100 [43] for deraining,
+Snow100K [47] for desnowing, SOTS-Indoor [50] for de-
+hazing, GoPro [51] for deblurring, and CBSD68 [56] for
+denoising.
+2) Evaluation Metrics: We adopt both full-reference and
+no-reference metrics for evaluation. Full-reference metrics
+include Peak Signal-to-Noise Ratio (PSNR), Structural Sim-
+ilarity Index (SSIM), and Learned Perceptual Image Patch
+Similarity (LPIPS) [59]. No-reference metrics include the
+Underwater Colour Image Quality Evaluation (UCIQE) [60],
+Underwater Image Quality Measure (UIQM) [61], Fog Aware
+Density Evaluator (FADE) [62], Blind/Referenceless Image
+Spatial Quality Evaluator (BRISQUE) [63], and Neural Image
+Assessment (NIMA) [64]. Among them, UCIQE and UIQM
+are designed for underwater image quality assessment, while
+FADE, BRISQUE, and NIMA are commonly used for real-
+world dehazing evaluation. For PSNR, SSIM, UCIQE, UIQM,
+and NIMA, higher values indicate better performance, whereas
+lower values are preferred for LPIPS, FADE, and BRISQUE.
+In all tables, the best and second-best results are highlighted
+in bold and underlined, respectively.
+3) Training Details: All models are optimized using the
+Adam optimizer [67] with β1 = 0.9 and β2 = 0.999. The
+initial learning rate is set to 2 × 10−4 and gradually decayed
+to 1 × 10−7 following a cosine annealing schedule [68].
+During training, we randomly crop 256 × 256 patches with
+a batch size of 32, and train for 4 × 105 iterations. Data
+augmentation is performed via horizontal and vertical flipping.
+For fair comparison, all deep learning baselines are retrained or
+fine-tuned using the hyperparameter settings reported in their
+original papers.
+B. All-in-one Setting Results
+Table I presents a comprehensive comparison among task-
+specific, task-aligned, and all-in-one image restoration meth-
+ods under the challenging R+S+H+B+N setting. Overall, the
+results clearly demonstrate the superior effectiveness and ro-
+bustness of the proposed MLMIR across diverse degradation
+types.
+Comparison with task-specific methods. Although
+task-specific approaches such as PGH2Net [21] and
+EfDeRain+ [20] achieve competitive performance on
+their respective target degradations, their generalization
+ability across tasks remains limited, leading to suboptimal
+average performance. In contrast, MLMIR consistently
+outperforms all task-specific baselines, achieving a clear
+gain of +2.39 dB over the best task-specific average PSNR
+(31.84 dB of PGH2Net vs. 34.23 dB of MLMIR). This
+substantial improvement highlights the advantage of learning
+unified degradation-aware dynamics rather than task-isolated
+modeling.
+Comparison with task-aligned methods. Task-aligned
+methods improve performance by sequentially training across
+different degradation datasets. However, they still rely on
+relatively fixed transition mechanisms. As shown in Ta-
+ble I, MLMIR surpasses the strongest task-aligned baseline
+ACL [25] by +1.45 dB in average PSNR (32.78 dB vs. 34.23
+dB). This indicates that explicitly modeling adaptive state-
+transition dynamics is more effective in capturing heteroge-
+neous degradation distributions.
+Comparison with all-in-one methods. When compared
+with recent state-of-the-art all-in-one restoration models,
+MLMIR still demonstrates consistent and significant improve-
+ments. In particular, MLMIR achieves the best overall perfor-
+mance with 34.23 dB PSNR and 0.957 SSIM, outperforming
+the strongest competing method Defusion [30] by +0.65 dB
+in average PSNR (33.58 dB → 34.23 dB).
+Beyond the average metrics, MLMIR achieves the best or
+second-best performance across most individual tasks. Specif-
+ically, it obtains the highest PSNR on deraining (31.11 dB),
+desnowing (34.01 dB), and dehazing (40.86 dB), while also
+delivering competitive performance on deblurring (31.41 dB,
+best among all methods) and denoising (33.76 dB, close to the
+best score of 33.81 dB achieved by Perceive-IR [32]). These
+consistent gains across different degradation types demonstrate
+the effectiveness of the proposed multi-timescale liquid dy-
+namics in modeling heterogeneous restoration processes.
+Figure 3 further provides qualitative comparisons, where
+MLMIR produces sharper structures and more faithful textures
+compared with existing methods.
+C. Task-aligned Setting Results
+To demonstrate that the proposed MLMIR is effective not
+only for all-in-one restoration but also for task-specific sce-
+narios, we conduct experiments on five representative image
+8
+TABLE I
+QUANTITATIVE RESULTS IN THE ALL-IN-ONE SETTING WITH TASK-SPECIFIC, TASK-ALIGNED, AND ALL-IN-ONE IR METHODS. DENOISING RESULTS ARE
+REPORTED FOR THE NOISE LEVEL 15.
+Type Methods Deraining Desnowing Dehazing Deblurring Denoising Average PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+Specific
+MSP-Former [65] 28.89 0.891 32.56 0.949 36.56 0.978 27.97 0.859 32.45 0.906 31.69 0.917
+EfDeRain+ [20] 30.89 0.909 29.42 0.925 36.39 0.979 26.48 0.804 32.67 0.906 31.17 0.905
+PGH2Net [21] 29.52 0.896 31.88 0.932 38.82 0.985 25.96 0.789 33.05 0.943 31.84 0.909
+ALGNet [10] 28.99 0.896 30.89 0.924 36.55 0.983 29.41 0.882 32.88 0.921 31.74 0.921
+Aligned
+ECFNet [4] 30.44 0.890 32.54 0.932 37.09 0.990 27.58 0.836 33.33 0.955 32.20 0.921
+MHNet [6] 30.26 0.888 31.94 0.941 37.44 0.989 27.41 0.830 33.25 0.934 32.06 0.916
+PPTformer [66] 30.52 0.906 32.58 0.931 37.96 0.990 27.89 0.845 33.51 0.949 32.50 0.925
+ACL [25] 30.62 0.893 32.52 0.926 38.59 0.991 28.59 0.847 33.61 0.956 32.78 0.922
+All-in-One
+AdaIR [31] 30.98 0.908 32.82 0.946 39.46 0.995 29.86 0.890 33.52 0.959 33.33 0.940
+VLU-Net [28] 30.58 0.904 33.01 0.950 39.82 0.994 30.01 0.889 33.78 0.961 33.43 0.940
+Perceive-IR [32] 30.93 0.902 32.99 0.948 40.05 0.996 29.79 0.889 33.81 0.962 33.51 0.940
+Defusion [30] 30.66 0.905 33.33 0.952 40.21 0.995 29.98 0.889 33.73 0.962 33.58 0.940
+AllRestore [9] 30.71 0.903 33.17 0.951 40.11 0.991 29.63 0.882 33.62 0.959 33.45 0.937
+BaryIR [8] 30.82 0.907 33.05 0.948 40.20 0.995 29.52 0.881 33.55 0.963 33.43 0.939
+MLMIR(Ours) 31.11 0.918 34.01 0.961 40.86 0.996 31.41 0.946 33.76 0.963 34.23 0.957
+TABLE II
+IMAGE DERAINING RESULTS IN THE TASK-ALIGNED SETTING.
+Test100 Test1200 Rain100H Rain100L Average
+Methods PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+FSNet [16] 31.05 0.919 33.08 0.916 31.77 0.906 38.00 0.972 33.48 0.928
+MHNet [6] 31.25 0.901 33.45 0.925 31.08 0.899 40.04 0.985 33.96 0.928
+PPTformer [66] 31.48 0.922 33.39 0.911 31.77 0.907 39.33 0.983 33.99 0.931
+ACL [25] 31.51 0.914 33.27 0.928 32.22 0.920 39.18 0.983 34.05 0.936
+EfDeRain+ [20] 31.10 0.911 33.12 0.925 34.57 0.957 39.03 0.972 34.46 0.941
+MLMIR(Ours) 32.66 0.925 35.02 0.941 33.07 0.921 40.38 0.985 35.28 0.943
+restoration tasks: image deraining, image desnowing, image
+dehazing, image deblurring and image denoising.
+1) Image Deraining: Following the evaluation protocol
+in prior work [6], we report PSNR and SSIM on the Y
+channel in the YCbCr color space for the deraining task.
+Table II summarizes the quantitative results under the task-
+aligned setting. Overall, the proposed MLMIR consistently
+achieves superior performance across all benchmark datasets.
+On Test100 [43] and Test1200 [46], MLMIR achieves 32.66
+dB and 35.02 dB in PSNR, respectively, outperforming all
+competing methods by a clear margin. For Rain100H [42],
+EfDeRain+ [20] obtains a slightly higher PSNR (34.57 dB),
+while MLMIR still delivers competitive results (33.07 dB)
+and maintains the best overall performance across datasets.
+In particular, MLMIR achieves the best average PSNR (35.28
+dB) and SSIM (0.943), surpassing all competing methods,
+including the strongest baseline EfDeRain+ (34.46 dB PSNR
+and 0.941 SSIM). This demonstrates that the proposed method
+achieves a better trade-off between different rain degradation
+types and provides more consistent restoration performance
+across diverse scenarios. Figure 4 further shows that MLMIR
+produces visually cleaner results with significantly reduced
+color distortion compared with existing methods. In addition,
+it reconstructs finer textures and sharper structural details
+in heavily degraded regions, highlighting its effectiveness in
+restoring both global consistency and local detail fidelity.
+2) Image Desnowing: Table III reports quantitative com-
+parisons for image desnowing on three benchmark datasets,
+including CSD, SRRS, and Snow100K. Overall, the proposed
+MLMIR achieves highly competitive and consistently strong
+TABLE III
+IMAGE DESNOWING RESULTS IN THE TASK-ALIGNED SETTING.
+CSD SRRS Snow100K
+Methods PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+NAFNet [40] 33.13 0.96 29.72 0.94 32.41 0.95
+FocalNet [69] 37.18 0.99 31.34 0.98 33.53 0.95
+MSP-Former [65] 33.75 0.96 30.76 0.95 33.43 0.96
+IRNeXt [70] 37.29 0.99 31.91 0.98 33.61 0.95
+PEUNet [71] 37.28 0.97 31.89 0.98 34.11 0.96
+PW-FNet [72] - - 32.74 0.98 34.50 0.95
+StarIR [5] 38.57 0.99 32.75 0.98 34.46 0.96
+MLMIR(Ours) 38.35 0.98 33.86 0.98 34.45 0.96
+performance across all datasets. On the CSD dataset [49],
+MLMIR achieves 38.35 dB PSNR and 0.98 SSIM, delivering
+competitive performance compared with the best baseline
+StarIR [5], which obtains the highest PSNR (38.57 dB). On
+SRRS [48], MLMIR reaches 33.86 dB PSNR, outperforming
+all competing methods by a clear margin, including StarIR
+(32.75 dB) and PW-FNet (32.74 dB). On Snow100K [47],
+MLMIR achieves 34.45 dB PSNR and 0.96 SSIM, match-
+ing or exceeding state-of-the-art performance, and remaining
+highly competitive with the best-performing methods such as
+PEUNet [71] (34.11 dB) and StarIR (34.46 dB). Figure 5
+presents qualitative comparisons for image desnowing. As
+shown, existing methods often suffer from residual snow
+artifacts or over-smoothing in background regions. In contrast,
+MLMIR produces cleaner restored images with more faithful
+structural preservation and sharper texture details, especially
+in heavily snow-occluded regions.
+3) Image Dehazing: Table IV reports quantitative com-
+parisons on the SOTS [50] benchmark for image dehazing.
+9
+Fig. 3. Qualitative results under the all-in-one experimental setup. Our MLMIR recovers finer details in the reconstructed images.
+Fig. 4. Image deraining results under the task-aligned experimental setup.
+Fig. 5. Image desnowing results under the task-aligned experimental setup.
+The proposed MLMIR consistently achieves state-of-the-art
+performance on both SOTS-Indoor and SOTS-Outdoor sub-
+sets. On SOTS-Indoor, MLMIR attains a PSNR of 42.14
+dB, outperforming all competing methods. In particular, it
+surpasses the previous best-performing method PGH2Net [21]
+(41.70 dB) by +0.44 dB, demonstrating its superior ability
+Fig. 6. Image dehazing results under the task-aligned experimental setup.
+TABLE IV
+IMAGE DEHAZING RESULTS IN THE TASK-ALIGNED SETTING.
+SOTS-Indoor SOTS-Outdoor
+Methods PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+IRNext [70] 41.21 0.996 39.18 0.996
+DEA-Net-CR [73] 41.31 0.995 36.59 0.990
+Defusion [30] 41.65 0.995 37.41 0.993
+PGH2Net [21] 41.70 0.996 37.52 0.989
+MLMIR(Ours) 42.14 0.997 39.55 0.989
+to restore clear structures under indoor haze conditions. On
+the more challenging SOTS-Outdoor benchmark, MLMIR
+achieves 39.55 dB PSNR, outperforming the strongest baseline
+IRNext [70] (39.18 dB) by +0.37 dB. Although DEA-Net-
+CR [73] and Defusion [30] achieve competitive SSIM values,
+MLMIR maintains the best overall balance between distortion
+10
+Fig. 7. Image deblurring results under the task-aligned experimental setup.
+TABLE V
+IMAGE DEBLURRING RESULTS IN THE TASK-ALIGNED SETTING.
+GoPro HIDE
+Methods PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+MPRNet [41] 32.66 0.959 30.96 0.939
+FSNet [16] 33.29 0.963 31.05 0.941
+MambaIR [12] 33.21 0.962 31.01 0.939
+ACL [25] 33.25 0.964 - -
+Omni-Deblurring [74] 33.29 0.963 31.65 0.947
+StarIR [5] 34.34 0.970 32.12 0.951
+MLMIR(Ours) 34.47 0.970 32.92 0.957
+removal and structural preservation. Figure 6 shows that
+MLMIR more effectively suppresses haze while preserving
+fine-grained textures and structural details.
+4) Image Deblurring: Table V reports quantitative com-
+parisons of different image deblurring methods on the Go-
+Pro [51] and HIDE [75] datasets. Overall, the proposed
+MLMIR achieves consistently superior performance across
+both benchmarks. On the GoPro dataset, MLMIR achieves
+34.47 dB PSNR, outperforming all competing methods. In
+particular, it surpasses the previous state-of-the-art StarIR [5]
+by +0.13 dB, demonstrating its strong capability in modeling
+complex motion blur degradations. Compared with Omni-
+Deblurring [74], MLMIR also shows a clear advantage in
+PSNR while maintaining comparable structural fidelity. More
+importantly, although MLMIR is trained solely on GoPro,
+it generalizes well to the cross-dataset HIDE benchmark.
+Specifically, MLMIR achieves 32.92 dB PSNR on HIDE,
+outperforming the strongest baseline StarIR [5] by +0.80 dB
+in PSNR. Compared with FSNet [16], MLMIR further yields
+a substantial gain of +1.87 dB, highlighting its strong cross-
+domain generalization ability under severe motion blur condi-
+tions. Figure 7 presents qualitative comparisons on represen-
+tative deblurring cases. As shown, MLMIR produces sharper
+structures and more faithful texture restoration, effectively
+recovering fine details such as edges and repeated patterns.
+5) Image Denoising: Table VI reports quantitative results
+of MLMIR under different noise levels (σ = 15, 25, 50)
+Fig. 8. Image denoising results under the task-aligned experimental setup.
+TABLE VI
+IMAGE DENOISING RESULTS IN THE TASK-ALIGNED SETTING.
+CBSD68 Kodak24 Urban100
+Methods 15 25 50 15 25 50 15 25 50
+SFNet [24] 34.09 31.49 28.02 34.93 32.42 29.25 34.19 32.01 29.03
+FSNet [16] 34.11 31.51 28.01 34.95 32.42 29.27 34.15 32.04 29.15
+Perceive-IR [32] 34.38 31.74 28.53 34.84 32.50 29.16 34.86 32.55 29.42
+VLU-Net [28] 34.35 31.72 28.46 - - - 34.92 32.71 29.61
+MLMIR(Ours) 34.44 31.69 28.50 35.38 32.89 29.86 34.94 32.56 29.54
+on CBSD68, Kodak24, and Urban100 benchmarks. Overall,
+the proposed MLMIR consistently achieves competitive or
+superior performance across different noise intensities and
+datasets. On the CBSD68 dataset, MLMIR achieves strong and
+stable performance across all noise levels, with particularly
+competitive results at σ = 15 and σ = 50, where it
+reaches 34.44 dB and 28.50 dB, respectively. At the medium
+noise level (σ = 25), MLMIR remains comparable to the
+best-performing methods. On the Kodak24 dataset, MLMIR
+achieves 35.38 dB, 32.89 dB, and 29.86 dB for noise levels
+15, 25, and 50, respectively, consistently outperforming all
+competing methods. In particular, under the most challenging
+setting (σ = 50), MLMIR surpasses FSNet [16] by +0.59
+dB, highlighting its strong ability to handle severe Gaussian
+noise. On the Urban100 dataset, which contains rich structural
+textures, MLMIR achieves 34.94 dB and 29.54 dB at noise
+levels 15 and 50, respectively, delivering consistently strong
+performance. Although VLU-Net [28] achieves slightly higher
+results at σ = 25, MLMIR remains competitive across all
+settings and maintains balanced performance across datasets.
+Figure 8 presents qualitative comparisons of image denoising
+results. As shown, MLMIR produces cleaner images with bet-
+ter edge preservation and more faithful texture reconstruction,
+especially in highly detailed regions.
+D. Generalization
+1) Zero-shot generalization in real-world scenes: We fur-
+ther evaluate the zero-shot generalization capability of differ-
+ent methods under the unified training setting R+S+H+B+N
+on real-world benchmarks, including RealRain-1k-L [76],
+RTTS [77], and SIDD [78]. Table VII summarizes the quanti-
+tative results. On the RealRain-1k-L dataset, MLMIR achieves
+27.54 dB PSNR and 0.370 LPIPS, clearly outperforming all
+task-specific and task-aligned methods. Compared with the
+strongest baseline Defusion [30], MLMIR improves PSNR by
++0.17 dB while achieving slightly better perceptual quality,
+demonstrating its superior restoration capability under real-
+world rain degradations. On the RTTS hazy scene benchmark,
+MLMIR achieves the best overall performance with a FADE
+score of 1.233 and the highest NIMA score of 4.631, while
+also obtaining competitive BRISQUE results. In particular, it
+outperforms all existing methods in NIMA, indicating better
+perceptual quality and more natural visual appearance. These
+results suggest that MLMIR effectively enhances scene visi-
+bility while maintaining realistic image statistics under chal-
+lenging haze conditions. On the SIDD denoising benchmark,
+MLMIR achieves 24.69 dB PSNR and 0.499 SSIM, outper-
+forming all competing methods. Compared with the strongest
+baseline ACL [25] (24.66 dB PSNR), MLMIR achieves con-
+11
+TABLE VII
+REAL-WORLD RESULTS IN THE ALL-IN-ONE SETTING WITH TASK-SPECIFIC, TASK-ALIGNED, AND ALL-IN-ONE IR METHODS.
+Type Methods RealRain-1k-L RTTS SIDD PSNR ↑ SSIM ↑ LPIPS ↓ FADE ↓ BRISQUE ↓ NIMA ↑ PSNR ↑ SSIM ↑
+Specific
+MSP-Former [65] 21.09 0.744 0.428 1.721 31.039 4.322 24.12 0.457
+EfDeRain+ [20] 24.05 0.762 0.398 1.393 28.865 4.457 24.07 0.475
+PGH2Net [21] 21.65 0.747 0.419 1.352 28.501 4.625 24.00 0.466
+Aligned
+ECFNet [4] 23.69 0.756 0.401 1.394 29.105 4.372 24.33 0.471
+PPTformer [66] 23.75 0.756 0.412 1.405 28.301 4.320 24.37 0.469
+ACL [25] 23.96 0.757 0.408 1.360 28.962 4.319 24.66 0.473
+All-in-One
+VLU-Net [28] 27.22 0.899 0.375 1.242 23.490 4.564 24.31 0.471
+Perceive-IR [32] 27.31 0.901 0.372 1.264 23.694 4.613 24.53 0.497
+Defusion [30] 27.37 0.903 0.371 1.277 23.520 4.615 24.52 0.495
+MLMIR(Ours) 27.54 0.902 0.370 1.233 23.520 4.631 24.69 0.499
+TABLE VIII
+RESULTS ON THE TRAINING-UNSEEN DEGRADATION TYPE IN THE
+ALL-IN-ONE SETTING.
+Methods UIEB C60 PSNR ↑ SSIM ↑ LPIPS ↓ UCIQE↑ UIQM↑
+EfDeRain+ [20] 17.66 0.741 0.377 0.480 1.866
+ECFNet [4] 20.49 0.856 0.223 0.539 2.517
+ACL [25] 20.94 0.867 0.201 0.552 2.485
+VLU-Net [28] 21.58 0.889 0.172 0.556 2.493
+Perceive-IR [32] 21.77 0.891 0.169 0.557 2.555
+MLMIR(Ours) 21.82 0.893 0.161 0.557 2.557
+sistent improvements while also matching or surpassing all all-
+in-one methods in SSIM, demonstrating strong robustness un-
+der real-world sensor noise. These results demonstrate that the
+proposed method generalizes effectively to unseen real-world
+degradations, benefiting from its adaptive multi-timescale state
+dynamics, which enables robust modeling of complex and
+mixed corruption patterns in zero-shot scenarios.
+2) Generalization to unknown degradation type: To further
+evaluate the generalization ability of different methods, we
+test models trained under the unified R+S+H+B+N setting on
+unseen underwater image restoration benchmarks, including
+UIEB and C60. Table VIII summarizes the quantitative results.
+Overall, the proposed MLMIR consistently achieves the best or
+highly competitive performance across all evaluation metrics,
+demonstrating strong robustness to previously unseen degra-
+dation types. On the UIEB dataset, MLMIR achieves the best
+overall performance. Compared with the strongest baseline
+Perceive-IR [32], MLMIR improves PSNR by +0.05 dB and
+further reduces LPIPS, indicating better perceptual quality and
+more faithful structural restoration under complex underwater
+distortions. On the C60 benchmark, MLMIR achieves 0.557
+UCIQE and 2.557 UIQM, matching or slightly surpassing
+state-of-the-art methods. In particular, MLMIR reaches the
+best UIQM score, demonstrating superior color correction and
+perceptual enhancement capability in challenging underwater
+environments. Compared with existing all-in-one methods,
+MLMIR consistently maintains stronger or comparable perfor-
+mance across both reference-based and no-reference metrics.
+3) Generalization to unknown degradation severity: To
+evaluate the robustness of the proposed method under unseen
+degradation intensities, we train all models using Gaussian
+noise levels within the range σ ∈ [15, 25, 50], and further test
+them on substantially higher, unseen noise levels σ = 60 and
+TABLE IX
+RESULTS ON THE TRAINING-UNSEEN DEGRADATION SEVERITY IN THE
+ALL-IN-ONE SETTING .
+Methods CBSD68 Urban100 60 100 60 100
+VLU-Net [28] 27.11 20.59 27.64 21.53
+Perceive-IR [32] 27.13 20.65 27.65 21.55
+Defusion [30] 27.11 20.72 27.67 21.49
+MLMIR(Ours) 27.17 20.71 27.66 21.58
+Fig. 9. Multi-degradation (H+R+N) image restoration results under the all-
+in-one experimental setup.
+σ = 100. The corresponding results are reported in Table IX.
+Overall, MLMIR consistently achieves competitive or superior
+performance across both CBSD68 and Urban100 benchmarks
+under unseen noise severities, demonstrating strong robustness
+to distribution shifts in degradation intensity. On the CBSD68
+dataset, MLMIR achieves the best performance at σ = 60
+with 27.17 dB PSNR, outperforming all competing methods.
+At the more challenging noise level σ = 100, MLMIR
+remains highly competitive with 20.71 dB PSNR, closely
+matching the best-performing method Defusion [30]. This
+indicates that the proposed model maintains stable restoration
+capability even under extremely strong noise corruption. On
+the Urban100 dataset, which contains rich structural textures,
+MLMIR achieves the best performance at σ = 100 with 21.58
+dB PSNR, surpassing all competing methods. At σ = 60,
+MLMIR also maintains competitive results (27.66 dB).
+4) Generalization to mixed degradation: To further evalu-
+ate the robustness of different methods under complex real-
+world conditions, we conduct experiments on mixed degrada-
+tion scenarios, where multiple corruption types (haze, rain,
+and noise) are either present individually or combined in
+various forms. The corresponding quantitative and qualita-
+tive results are reported in Table X and Fig. 9, Fig. 10,
+respectively. MLMIR consistently achieves the best or highly
+12
+TABLE X
+QUANTITATIVE RESULTS OF DIFFERENT MODELS IN THE ALL-IN-ONE SETTING CONDUCTED ON VARIOUS COMBINATIONS OF DEGRADATION TYPES.
+Methods H + R + N H + R H + N R + N H R N Average
+VLU-Net [28] 29.35/0.842 30.38/0.935 28.79/0.869 28.21/0.843 31.37/0.959 33.82/0.968 27.88/0.853 29.97/0.896
+FDTANet [18] 29.68/0.846 30.91/0.937 29.06/0.874 27.63/0.827 31.91/0.981 29.13/0.892 28.88/0.857 29.60/0.888
+Ref-IRT [79] 28.95/0.823 32.33/0.961 28.62/0.872 31.22/0.831 30.69/0.961 31.89/0.902 29.39/0.899 30.44/0.893
+Perceive-IR [32] 30.22/0.894 31.55/0.945 28.32/0.871 30.52/0.849 31.90/0.980 38.95/0.983 31.88/0.923 31.90/0.921
+Defusion [30] 29.66/0.849 29.93/0.937 28.11/0.866 32.17/0.920 31.29/0.969 40.15/0.986 32.72/0.925 32.01/0.922
+DSwinIR [7] 30.09/0.899 31.07/0.960 28.45/0.873 31.29/0.915 31.77/0.973 39.09/0.982 32.22/0.923 31.99/0.932
+MLMIR(Ours) 30.45/0.901 32.52/0.965 28.73/0.876 32.23/0.917 31.82/0.979 40.11/0.987 32.72/0.929 32.65/0.936
+Fig. 10. Multi-degradation image restoration results under the all-in-one setting across various degradation combinations. The top row shows the degraded
+inputs, the middle row presents the corresponding ground-truth images, and the bottom row displays the restoration results produced by MLMIR.
+competitive performance across all degradation combinations,
+demonstrating strong adaptability to both single and compound
+corruptions.
+On mixed degradation settings, MLMIR achieves the best
+overall performance. In particular, MLMIR significantly im-
+proves performance under joint degradation scenarios, where
+multiple corruption types interact and amplify restoration
+difficulty. Compared with the strongest baseline Defusion [30],
+MLMIR achieves clear gains on both H+R+N and H+R,
+demonstrating superior capability in handling coupled degra-
+dation distributions. On single-degradation settings, MLMIR
+maintains consistently strong performance. These results indi-
+cate that the proposed method does not sacrifice single-task
+performance while improving multi-task generalization.
+Figure 9 further illustrates qualitative comparisons under
+multi-degradation scenarios. Existing methods often fail to
+simultaneously suppress different types of degradations, result-
+ing in residual artifacts, over-smoothing, or color distortion.
+In contrast, MLMIR produces visually cleaner results with
+sharper structures and more accurate color recovery, even
+under severe mixed corruption. More detailed visualizations
+in Figure 10 further demonstrate that MLMIR consistently
+reconstructs fine textures and global structures across different
+degradation combinations, including H+R+N, H+R, H+N, and
+R+N. Notably, MLMIR preserves structural consistency close
+to the ground truth while effectively suppressing compound
+artifacts, highlighting its strong robustness and generalization
+capability.
+E. Ablation Studies
+1) Effect of each component: We conduct ablation studies
+under the all-in-one setting to systematically evaluate the
+13
+TABLE XI
+ABLATION STUDY ON INDIVIDUAL COMPONENTS OF MLMIR.
+Method Multi-τ Liquid-Mamba Multi-in and Multi-out PSNR △ PSNR
+(a) 32.34 -
+(b) ✔ 33.96 + 1.62 dB
+(c) ✔ 32.55 + 0.21 dB
+(d) ✔ ✔ 34.23 + 1.89 dB
+TABLE XII
+EFFECT OF DIFFERENT COMBINATIONS OF RESTORATION TASK.
+Task Deraining Desnowing Dehazing Deblurring DenoisingR S H B N
+✔ 32.66 - - - -
+✔ - 34.45 - - -
+✔ - - 42.14 - -
+✔ - - - 34.47 -
+✔ - - - - 34.44
+✔ ✔ 32.56 34.39 - - -
+✔ ✔ 32.45 - 41.99 - -
+✔ ✔ - 34.33 41.83 - -
+✔ ✔ - - - 33.88 34.32
+✔ ✔ ✔ 31.43 34.22 41.15 - -
+✔ ✔ ✔ 31.32 34.13 - 31.45 -
+✔ ✔ ✔ 31.40 34.19 - - 34.02
+✔ ✔ ✔ ✔ 31.23 34.19 40.88 31.43 -
+✔ ✔ ✔ ✔ 31.25 34.07 40.92 - 33.96
+✔ ✔ ✔ ✔ 31.22 34.15 - 31.48 33.97
+✔ ✔ ✔ ✔ ✔ 31.11 34.01 40.86 31.41 33.76
+contribution of each proposed component. Starting from a
+baseline model NAFNet [40] without any of the proposed
+modules (a), the network achieves a PSNR of 32.34 dB. When
+the Multi-τ Liquid-Mamba module is introduced alone (b), the
+performance is significantly improved to 33.96 dB, yielding a
+gain of +1.62 dB. This demonstrates that incorporating multi-
+timescale state modeling effectively enhances the network’s
+ability to handle complex and spatially varying degradations.
+In contrast, introducing only the multi-input and multi-output
+(MIMO) mechanism (c) leads to a modest improvement to
+32.55 dB (+0.21 dB), indicating that cross-scale feature inter-
+action alone provides limited gains when not combined with
+stronger dynamic modeling. When both the Multi-τ Liquid-
+Mamba module and the MIMO design are jointly applied (d),
+the model achieves the best performance of 34.23 dB, resulting
+in a substantial improvement of +1.89 dB over the baseline.
+2) Effect of different combinations of restoration tasks:
+To analyze the impact of task composition in the proposed
+all-in-one restoration framework, we conduct extensive abla-
+tion experiments under different combinations of degradation
+types, including R, S, H, B, N. The corresponding quantitative
+results are reported in Table XII.
+The model achieves the best performance when trained on a
+single degradation type, indicating that task-specific optimiza-
+tion provides the most specialized restoration capability for
+individual corruption distributions. When multiple degradation
+types are jointly introduced, a clear performance trade-off
+can be observed across individual tasks. In general, as the
+number of joint tasks increases, the performance on each
+specific degradation slightly decreases, reflecting the inherent
+optimization conflict in learning heterogeneous restoration
+objectives within a unified model.
+Despite this trade-off, carefully designed task combinations
+can still benefit certain restoration tasks through shared degra-
+dation priors. For instance, the combination of rain, snow,
+haze, and noise achieves stronger deraining and desnowing
+TABLE XIII
+PLUG-AND-PLAY REPLACEMENT RESULTS OBTAINED BY SUBSTITUTING
+THE ORIGINAL MAMBA BLOCKS IN EXISTING RESTORATION
+ARCHITECTURES WITH THE PROPOSED MULTI-τ LIQUID-MAMBA.
+Method △ Params(M) △ Flops(G) PSNR △ PSNR
+ACL [25] - - 32.78 -
+Replace with Multi-τ Liquid-Mamba +0.013 +2.74 33.99 +1.21
+MambaIRv2 [13] - - 32.56 -
+Replace with Multi-τ Liquid-Mamba +0.045 +3.62 33.92 +1.36
+TSPMamba [11] - - 31.79 -
+Replace with Multi-τ Liquid-Mamba +0.012 +2.56 33.65 +1.86
+Fig. 11. Visualization of restoration responses under different methods. From
+left to right: degraded inputs, results of the baseline Mamba, and results of
+the proposed Multi-τ Liquid-Mamba. The proposed method adaptively adjusts
+multi-scale temporal dynamics across different degradation types, leading to
+more effective restoration and clearer structural recovery.
+performance compared to configurations that replace haze or
+snow with blur. This suggests that degradations such as haze
+and noise, which primarily affect global intensity and low-
+frequency statistics, may provide complementary supervisory
+signals that facilitate more transferable feature learning. In
+contrast, motion blur introduces spatially structured distortions
+that differ significantly from other degradation types. As
+shown in Table XII, configurations involving blur tend to
+slightly reduce performance on other tasks, indicating potential
+optimization conflicts between spatially variant and globally
+distributed degradations.
+3) Plug-and-Play Integration into Existing Architectures:
+To evaluate the generality and transferability of the proposed
+Multi-τ Liquid-Mamba, we conduct a plug-and-play replace-
+ment study on several representative Mamba-based restora-
+tion frameworks, including ACL [25], MambaIRv2 [13], and
+TSPMamba [11]. Specifically, we replace the original Mamba
+blocks in each model with our Multi-τ Liquid-Mamba, while
+keeping all other architectural components and training set-
+tings unchanged.
+As shown in Table XIII, consistent performance improve-
+ments are observed across all evaluated architectures. For
+ACL, the replacement yields a significant improvement from
+32.78 dB to 33.99 dB, achieving a gain of +1.21 dB with only
+marginal increases in computational cost (+0.013M parameters
+14
+Fig. 12. T-SNE visualization of learned feature distributions under different τ designs (w/o τ, Single-τ, and Multi-τ).
+TABLE XIV
+EFFECT OF THE MULTI-τ DESIGN.
+Method PSNR △ PSNR
+Multi-τ 34.23 -
+Single-τ 33.05 -1.18
+w/o τ 32.59 -1.64
+and +2.74G FLOPs). Similarly, MambaIRv2 benefits from a
+larger gain, improving from 32.56 dB to 33.92 dB (+1.36 dB),
+accompanied by a slight overhead of +0.045M parameters and
++3.62G FLOPs. These results demonstrate that introducing
+multi-timescale liquid dynamics can effectively enhance the
+representation capacity of selective state-space models without
+altering their overall architectural design. We further validate
+the effectiveness of our method on TSPMamba, a recent task-
+specific restoration framework. After replacing its original
+Mamba modules with Multi-τ Liquid-Mamba, the perfor-
+mance improves from 31.79 dB to 33.65 dB, corresponding to
+a substantial gain of +1.86 dB, with only minimal additional
+computational cost (+0.012M parameters and +2.56G FLOPs).
+To further investigate the effectiveness of the proposed
+Multi-τ Liquid-Mamba, we visualize the features across dif-
+ferent degradation types in Figure 11. As shown in the figure,
+the baseline Mamba exhibits noticeable limitations when han-
+dling heterogeneous degradations. In particular, its restoration
+results tend to suffer from residual artifacts and insufficient
+structure recovery. In contrast, the proposed Multi-τ Liquid-
+Mamba consistently produces clearer and more faithful recon-
+structions across all cases. By introducing multiple temporal
+evolution rates, the model is able to adaptively adjust its
+restoration behavior according to the underlying degradation
+characteristics. As a result, different degradation patterns are
+effectively handled within a unified framework, leading to
+improved structural preservation and reduced artifacts.
+4) Effect of the multi-τ design: The effectiveness of the
+proposed multi-τ design is evaluated in Table XIV. Specifi-
+cally, we compare the complete Multi-τ Liquid-Mamba with
+two variants: i) Single-τ, which employs only a single adap-
+tive time constant, and ii) w/o τ, which removes the liq-
+uid timescale modeling and degenerates to the conventional
+Mamba-style state transition mechanism. As shown in Ta-
+ble XIV, the complete Multi-τ design achieves the best per-
+formance. When the multiple timescale mechanism is reduced
+TABLE XV
+EFFECT OF DIFFERENT MULTI-τ STATE FUSION STRATEGIES.
+Method PSNR △ PSNR
+Add 33.78 -
+Concat + Conv 33.91 +0.13
+Adaptive (Ours) 34.23 +0.45
+to a single adaptive time constant, the performance drops to
+33.05 dB, resulting in a decrease of 1.18 dB. This indicates
+that a single temporal scale is insufficient to model the
+diverse degradation characteristics encountered in all-in-one
+image restoration. Furthermore, removing the τ-based liquid
+dynamics entirely leads to a more pronounced performance
+degradation. Compared with the full model, this variant suffers
+a decrease of 1.64 dB, demonstrating the importance of adap-
+tive timescale modulation in the proposed framework. Without
+dynamic memory control, the state evolution becomes less
+flexible and cannot effectively adapt to degradation-dependent
+restoration requirements.
+To further evaluate the effectiveness of the proposed multi-
+τ design, we visualize the learned feature distributions using
+t-SNE, as shown in Figure 12. As can be observed, when the
+τ-based temporal modeling is removed (w/o τ), features corre-
+sponding to different degradation types are heavily entangled.
+The resulting feature space exhibits substantial overlap and
+lacks a clear clustering structure, indicating limited capability
+in distinguishing heterogeneous degradation patterns without
+explicit temporal dynamics. Introducing a Single-τ design
+leads to a more organized feature distribution, where prelimi-
+nary clustering behavior emerges among different degradation
+types. Nevertheless, noticeable overlaps remain between sev-
+eral degradation categories, suggesting that a single evolution
+timescale is insufficient to capture the diverse restoration
+dynamics required for multiple degradations. In contrast, the
+proposed Multi-τ design produces well-separated and com-
+pact clusters for all degradation types. Different degrada-
+tions occupy distinct regions in the feature space, exhibiting
+substantially improved intra-class compactness and inter-class
+separability. These results demonstrate that modeling multiple
+temporal evolution scales enables the network to adaptively
+capture degradation-specific dynamics, resulting in more dis-
+criminative and disentangled feature representations.
+The proposed Multi-τ Liquid-Mamba maintains multiple
+15
+state trajectories operating at different temporal scales. There-
+fore, an effective fusion mechanism is required to aggregate
+the information from different dynamic branches. Table XV
+compares three fusion strategies, including direct summation
+(Add), channel concatenation followed by convolution (Concat
++ Conv), and the proposed adaptive fusion mechanism. As
+shown in Table XV, directly summing the multi-τ states yields
+a PSNR of 33.78 dB. Although this strategy introduces neg-
+ligible computational overhead, it treats all temporal branches
+equally and ignores their degradation-dependent importance.
+Replacing it with channel concatenation followed by a con-
+volutional projection improves the performance to 33.91 dB,
+indicating that learnable interactions among different temporal
+scales are beneficial for restoration. The proposed adaptive
+fusion strategy achieves the best performance, reaching 34.23
+dB PSNR. Compared with direct summation and Concat +
+Conv, it provides improvements of 0.45 dB and 0.32 dB,
+respectively. This gain can be attributed to the degradation-
+aware weighting mechanism, which dynamically adjusts the
+contribution of each temporal branch according to the input
+content.
+TABLE XVI
+ABLATION STUDY ON THE NUMBER OF TIMESCALES M .
+M PSNR △ PSNR △ FLOPs(G)
+1 33.05 - -
+2 33.68 +0.63 +1.25
+3 33.94 +0.89 +2.11
+4 34.23 +1.18 +2.74
+6 34.17 +1.12 +3.82
+To investigate the impact of the proposed multi-timescale
+mechanism, we conduct an ablation study on the number
+of timescales M in Multi-τ Liquid-Mamba. We evaluate the
+model under different settings M ∈ {1, 2, 3, 4, 6}, while
+keeping all other training and architectural configurations
+unchanged. As shown in Table XVI, the model with a single
+timescale (M = 1) degenerates to a standard liquid-state
+Mamba variant and yields the lowest performance, suggesting
+that a single temporal evolution pattern is insufficient for
+modeling complex and spatially varying degradations. As the
+number of timescales increases, the restoration performance
+improves consistently, demonstrating that the proposed multi-
+timescale design effectively enhances the model’s ability to
+capture both rapidly varying local details and slowly evolving
+global contextual information. The performance reaches its
+optimum at M = 4, achieving 34.23 dB PSNR. This result
+indicates that four timescales provide a favorable balance
+between representation capacity and redundancy across dif-
+ferent temporal dynamics. When M is further increased to
+6, the performance exhibits a slight saturation and marginal
+decline, which may be attributed to the increased correla-
+tion among timescale branches and the diminishing benefit
+of additional dynamical components. Therefore, M = 4 is
+adopted as the default setting throughout this paper. From an
+efficiency perspective, the computational overhead introduced
+by additional timescales is relatively small, as evidenced by the
+marginal increase in FLOPs with increasing M. This obser-
+vation suggests that the performance improvements primarily
+Fig. 13. Visualization and statistical analysis of degradation-dependent multi-
+timescale dynamics. (a) Average fusion weights (αm) of different dynamical
+branches under representative degradation types. (b) Region-level statistics of
+the branch-level scalar timescale for visualization over smooth, edge, texture,
+and haze regions.
+stem from enhanced dynamical modeling capability rather
+than a substantial increase in model capacity, highlighting the
+effectiveness of the proposed multi-timescale liquid dynamics.
+To further investigate whether the proposed Multi-τ Liquid-
+Mamba indeed learns degradation-dependent state-evolution
+patterns, we analyze the learned adaptive fusion weights αm
+and liquid timescales As shown in Figure 13(a), different
+degradation types exhibit distinct branch-selection patterns.
+Rain and noise tend to assign larger weights to short-timescale
+branches, suggesting that these locally dominated degradations
+require faster state evolution to suppress high-frequency cor-
+ruptions and recover local details. In contrast, haze and blur
+show higher responses on long-timescale branches, indicating
+that the model relies more on slowly evolving dynamics and
+broader contextual aggregation to handle spatially extended
+degradation structures. Snow exhibits a more balanced dis-
+tribution over multiple branches, which is consistent with its
+mixed degradation characteristics involving both local occlu-
+sion and global visibility distortion. We further analyze the
+spatial behavior of the learned dynamics by computing τ
+over different image regions, including smooth, edge, texture,
+and haze regions. As shown in Figure 13(b), smooth and
+haze regions exhibit larger effective timescales, implying that
+the model adopts longer memory horizons to preserve global
+consistency and model slowly varying degradation patterns.
+By contrast, edge and texture regions have smaller timescales,
+suggesting that the model favors faster state transitions for
+high-frequency structures and fine-grained details. This region-
+level difference indicates that the proposed module is not only
+sensitive to degradation categories, but also adaptively adjusts
+its state-evolution behavior according to local image content.
+These observations provide direct evidence that MLMIR
+does not rely on a fixed transition mechanism. Instead, the
+proposed Multi-τ Liquid-Mamba learns to dynamically select
+different temporal branches and memory horizons according
+to both degradation type and spatial content. This adaptive
+multi-timescale behavior explains why MLMIR can effectively
+handle heterogeneous degradations in the all-in-one restoration
+setting.
+V. DISCUSSION
+A. Design Principles
+The proposed Multi-τ Liquid-Mamba is built upon three
+core design principles. First, we introduce adaptive state
+16
+transition dynamics, where continuous-time liquid neural mod-
+eling is incorporated into selective state space models to
+improve adaptability under spatially varying degradations.
+Second, we adopt a multi-timescale formulation, enabling the
+model to simultaneously capture fast-changing local structures
+and slowly varying global contextual dependencies through
+multiple learnable time constants. Third, we ensure plug-and-
+play compatibility, such that the proposed module can be
+seamlessly integrated into existing Mamba-based restoration
+architectures without modifying their overall pipeline, making
+it a general and reusable component for diverse image restora-
+tion tasks.
+B. Computational Complexity
+We analyze the computational complexity of Multi-τ
+Liquid-Mamba with respect to the input sequence length L,
+feature dimension D, state dimension N, and the number of
+timescales M. In standard selective state space models, the
+dominant computation arises from the selective scan operation,
+which can be implemented in O(L · D · N ) complexity due to
+linear-time recurrent state updates.
+In our method, each time step maintains M parallel liquid
+state trajectories with different time constants {τm}M m=1. The
+state update for each branch follows the same linear recurrent
+form as the original Mamba-style scan, resulting in a per-
+branch complexity of O(L · D · N ). Aggregating all branches
+yields O(M · L · D · N ). In addition, the computation of
+the timescale gating parameters and liquid modulation terms
+(e.g., τm, αm, and input-dependent transition modulation)
+introduces an extra projection cost of O(L · D2), which is
+consistent with standard linear projection layers in Mamba-
+style blocks. Therefore, the total complexity of the proposed
+Multi-τ Liquid-Mamba is O(M · L · D · N + L · D2). Since M
+is a small constant (e.g., M ∈ [2, 6] in practice) and N ≪ D
+in typical configurations, the proposed method preserves the
+linear scaling property O(L) with respect to sequence length
+L. Therefore, Multi-τ Liquid-Mamba retains the efficiency
+advantage of selective state space models while introducing
+only marginal overhead for multi-timescale dynamics.
+C. Limitations and Future Work
+Although the proposed method consistently improves per-
+formance across different restoration architectures, several
+limitations remain. First, the introduction of multiple timescale
+hyperparameters increases the model design space. Second,
+the method does not explicitly incorporate physical degrada-
+tion priors, which may limit interpretability under extremely
+complex or unseen degradation conditions. Third, the current
+formulation is primarily validated on single-image restoration
+tasks, and its behavior in temporally consistent scenarios such
+as video restoration remains unexplored.
+Future research can be extended in several directions. A
+promising avenue is to integrate explicit physical degradation
+modeling with liquid state space dynamics to further enhance
+robustness and interpretability. Another direction is to extend
+the proposed framework to video and multi-frame restora-
+tion tasks, where continuous-time dynamics may naturally
+benefit temporal modeling. Additionally, developing adaptive
+mechanisms to automatically determine the optimal number of
+timescales could further improve scalability and reduce manual
+design effort.
+VI. CONCLUSION
+In this work, we propose Multi-τ Liquid-Mamba, a novel
+adaptive state space modeling framework that integrates
+continuous-time liquid neural dynamics into selective state
+space models to address the limited adaptability of exist-
+ing Mamba-based image restoration methods under spatially
+varying degradations. By introducing input-dependent multi-
+timescale state transitions, the proposed method enables flex-
+ible and content-aware temporal evolution, significantly en-
+hancing the expressiveness of state transition modeling while
+preserving the linear complexity and efficiency of Mamba.
+Importantly, Multi-τ Liquid-Mamba is designed as a plug-
+and-play module that can be seamlessly integrated into a
+wide range of existing restoration architectures, consistently
+improving performance across both task-aligned and all-in-one
+restoration settings. Built upon this design, we further develop
+MLMIR, a hierarchical encoder–decoder network that jointly
+captures global contextual dependencies and local structural
+details. Extensive experiments demonstrate that our method
+achieves state-of-the-art performance on multiple restoration
+benchmarks and consistently improves diverse Mamba-based
+backbones, validating its generality.
+REFERENCES
+[1] K. He, J. Sun, and X. Tang, “Single image haze removal using dark
+channel prior.” TPAMI, 2011.
+[2] J. Rong, H. Huang, and J. Li, “Imu-assisted accurate blur kernel re-
+estimation in non-uniform camera shake deblurring,” IEEE Transactions
+on Image Processing, vol. 33, pp. 3823–3838, 2024.
+[3] H. Feng, L. Wang, Y. Huang, Y. Wang, L. Zhu, and H. Huang, “Learning
+physics-informed noise models from dark frames for low-light raw
+image denoising,” IEEE Transactions on Pattern Analysis and Machine
+Intelligence, vol. 48, no. 4, pp. 3952–3969, 2026.
+[4] H. Gao, B. Ma, Y. Zhang, J. Yang, J. Yang, X. Wang, and D. Dang,
+“Emphasizing crucial features for efficient image restoration,” Pattern
+Recognition, p. 113575, 2026.
+[5] Y. Cui, S. W. Zamir, M.-H. Yang, A. Knoll, F. S. Khan, and S. Khan,
+“Starir: Convolutional image restoration with spatial-frequency fusion,”
+IEEE Transactions on Pattern Analysis and Machine Intelligence, pp.
+1–18, 2026.
+[6] H. Gao, Y. Zhang, J. Yang, and D. Dang, “Mixed hierarchy network for
+image restoration,” Pattern Recognition, vol. 161, p. 111313, 2025.
+[7] G. Wu, J. Jiang, K. Jiang, X. Liu, and L. Nie, “Dswinir: Rethinking
+window-based attention for image restoration,” IEEE Transactions on
+Pattern Analysis and Machine Intelligence, vol. 48, no. 4, pp. 4350–
+4366, 2026.
+[8] X. Tang, X. He, J. Xu, X. Gu, and J. Sun, “Learning continuous wasser-
+stein barycenter space for generalized all-in-one image restoration,”
+IEEE Transactions on Pattern Analysis and Machine Intelligence, pp.
+1–16, 2026.
+[9] J. Mao, Y. Yang, X. Yin, L. Shao, and H. Tang, “All-in-one transformer
+for image restoration under adverse weather degradations,” IEEE Trans-
+actions on Pattern Analysis and Machine Intelligence, vol. 48, no. 6,
+pp. 6628–6641, 2026.
+[10] H. Gao, B. Ma, Y. Zhang, J. Yang, J. Yang, and D. Dang, “Learning
+enriched features via selective state spaces model for efficient image
+deblurring,” in Proceedings of the 32nd ACM International Conference
+on Multimedia, 2024, pp. 710–718.
+[11] K. Zhou, X. Lin, and J. Lu, “Tsp-mamba: The travelling salesman
+problem meets mamba for image super-resolution and beyond,” in
+Proceedings of the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition (CVPR), June 2025, pp. 28 134–28 143.
+17
+[12] H. Guo, J. Li, T. Dai, Z. Ouyang, X. Ren, and S.-T. Xia, “Mambair:
+A simple baseline for image restoration with state-space model,” in
+European Conference on Computer Vision, 2024, pp. 222–241.
+[13] H. Guo, Y. Guo, Y. Zha, Y. Zhang, W. Li, T. Dai, S.-T. Xia, and Y. Li,
+“Mambairv2: Attentive state space restoration,” in Proceedings of the
+Computer Vision and Pattern Recognition Conference, 2025, pp. 28 124–
+28 133.
+[14] H. Gao, X. Lei, X. Xu, D. Dang, and L. Ma, “Mbmamba: When
+memory buffer meets mamba for structure-aware image deblurring,”
+arXiv preprint arXiv:2508.12346, 2025.
+[15] H. Gao, J. Yang, Y. Zhang, J. Yang, B. Ma, and D. Dang, “Learn-
+ing optimal combination patterns for lightweight stereo image super-
+resolution,” in Proceedings of the 32nd ACM International Conference
+on Multimedia, 2024, pp. 5566–5574.
+[16] Y. Cui, W. Ren, X. Cao, and A. Knoll, “Image restoration via frequency
+selection,” TPAMI, pp. 1–16, 2023.
+[17] H. Gao, J. Yang, Y. Zhang, N. Wang, J. Yang, and D. Dang, “Prompt-
+based ingredient-oriented all-in-one image restoration,” IEEE Transac-
+tions on Circuits and Systems for Video Technology, vol. 34, no. 10, pp.
+9458–9471, 2024.
+[18] H. Gao, B. Ma, Y. Zhang, J. Yang, J. Yang, and D. Dang, “Frequency
+domain task-adaptive network for restoring images with combined
+degradations,” Pattern Recognition, vol. 158, p. 111057, 2025.
+[19] H. Liu, C. Liu, J. Xu, P. Jiang, and M. Lu, “Xyscannet: An interpretable
+state space model for perceptual image deblurring,” in Proceedings of
+the Computer Vision and Pattern Recognition Conference (CVPR), 2025,
+pp. 779–789.
+[20] Q. Guo, H. Qi, J. Sun, F. Juefei-Xu, L. Ma, D. Lin, W. Feng,
+and S. Wang, “Efficientderain+: Learning uncertainty-aware filtering
+via rainmix augmentation for high-efficiency deraining,” International
+Journal of Computer Vision, vol. 133, no. 4, pp. 2111–2135, 2025.
+[21] X. Su, S. Li, Y. Cui, M. Cao, Y. Zhang, Z. Chen, Z. Wu, Z. Wang,
+Y. Zhang, and X. Yuan, “Prior-guided hierarchical harmonization net-
+work for efficient image dehazing,” in Proceedings of the AAAI Confer-
+ence on Artificial Intelligence, vol. 39, no. 7, 2025, pp. 7042–7050.
+[22] Y. Wen, T. Gao, and T. Chen, “Unpaired photo-realistic image deraining
+with energy-informed diffusion model,” in Proceedings of the 32nd ACM
+International Conference on Multimedia, 2024, p. 360–369.
+[23] H. Zeng, J. Cao, K. Zhang, Y. Chen, H. Luong, and W. Philips, “Unmix-
+ing diffusion for self-supervised hyperspectral image denoising,” in 2024
+IEEE/CVF Conference on Computer Vision and Pattern Recognition
+(CVPR), 2024, pp. 27 820–27 830.
+[24] Y. Cui, Y. Tao, Z. Bing, W. Ren, X. Gao, X. Cao, K. Huang, and
+A. Knoll, “Selective frequency network for image restoration,” in ICLR,
+2023.
+[25] Y. Gu, Y. Meng, J. Ji, and X. Sun, “Acl: Activating capability of linear
+attention for image restoration,” in Proceedings of the Computer Vision
+and Pattern Recognition Conference, 2025, pp. 17 913–17 923.
+[26] V. Potlapalli, S. W. Zamir, S. Khan, and F. S. Khan, “Promptir:
+Prompting for all-in-one blind image restoration,” Advances in Neural
+Information Processing Systems (NeurIPS), 2023.
+[27] M. Yao, R. Xu, Y. Guan, J. Huang, and Z. Xiong, “Neural degradation
+representation learning for all-in-one image restoration,” IEEE Transac-
+tions on Image Processing, vol. 33, pp. 5408–5423, 2024.
+[28] H. Zeng, X. Wang, Y. Chen, J. Su, and J. Liu, “Vision-language gradient
+descent-driven all-in-one deep unfolding networks,” in Proceedings of
+the IEEE/CVF Conference on Computer Vision and Pattern Recognition
+(CVPR), June 2025, pp. 7524–7533.
+[29] Y. Jiang, Z. Zhang, T. Xue, and J. Gu, “Autodir: Automatic all-in-one
+image restoration with latent diffusion,” in Computer Vision – ECCV
+2024: 18th European Conference, Milan, Italy, September 29–October
+4, 2024, Proceedings, Part XL, 2024, p. 340–359.
+[30] W. Luo, H. Qin, Z. Chen, L. Wang, D. Zheng, Y. Li, Y. Liu, B. Li,
+and W. Hu, “Visual-instructed degradation diffusion for all-in-one image
+restoration,” in Proceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition (CVPR), June 2025, pp. 12 764–12 777.
+[31] Y. Cui, S. W. Zamir, S. Khan, A. Knoll, M. Shah, and F. S. Khan,
+“AdaIR: Adaptive all-in-one image restoration via frequency mining and
+modulation,” in The Thirteenth International Conference on Learning
+Representations, 2025.
+[32] X. Zhang, J. Ma, G. Wang, Q. Zhang, H. Zhang, and L. Zhang,
+“Perceive-ir: Learning to perceive degradation better for all-in-one image
+restoration,” IEEE Transactions on Image Processing, pp. 1–1, 2025.
+[33] A. Gu, I. Johnson, K. Goel, K. Saab, T. Dao, A. Rudra, and C. R´e,
+“Combining recurrent, convolutional, and continuous-time models with
+linear state space layers,” Advances in neural information processing
+systems, vol. 34, pp. 572–585, 2021.
+[34] J. T. Smith, A. Warrington, and S. W. Linderman, “Simplified state space
+layers for sequence modeling,” ICLR, 2023.
+[35] T. Dao and A. Gu, “Transformers are SSMs: Generalized models and
+efficient algorithms through structured state space duality,” in Interna-
+tional Conference on Machine Learning (ICML), 2024.
+[36] Y. Wang, Y. Li, Z. Zheng, X.-P. Zhang, and M. Wei, “M2restore:
+Mixture-of-experts-based mamba-cnn fusion framework for all-in-one
+image restoration,” IEEE Transactions on Image Processing, vol. 34,
+pp. 8086–8100, 2025.
+[37] Z. Lu, T. Liu, Z. Chen, J. Huang, X. Li, B. Xiao, and W. Zhao, “Aim-
+vr: All-in-one video restoration via dual-path mamba with frequency
+adaptive fusion,” in 2025 IEEE International Conference on Multimedia
+and Expo (ICME), 2025, pp. 1–6.
+[38] R. Hasani, M. Lechner, A. Amini, D. Rus, and R. Grosu, “Liquid time-
+constant networks,” in Proceedings of the AAAI conference on artificial
+intelligence, vol. 35, no. 9, 2021, pp. 7657–7666.
+[39] R. Hasani, M. Lechner, T.-H. Wang, M. Chahine, A. Amini, and D. Rus,
+“Liquid structural state-space models,” in The Eleventh International
+Conference on Learning Representations, 2023.
+[40] L. Chen, X. Chu, X. Zhang, and J. Sun, “Simple baselines for image
+restoration,” ECCV, 2022.
+[41] S. W. Zamir, A. Arora, S. Khan, M. Hayat, F. S. Khan, M.-H. Yang, and
+L. Shao, “Multi-stage progressive image restoration,” in CVPR, 2021.
+[42] W. Yang, R. T. Tan, J. Feng, J. Liu, Z. Guo, and S. Yan, “Deep joint
+rain detection and removal from a single image,” CVPR, pp. 1685–1694,
+2016.
+[43] H. Zhang, V. A. Sindagi, and V. M. Patel, “Image de-raining using a
+conditional generative adversarial network,” TCSVT, vol. 30, pp. 3943–
+3956, 2017.
+[44] X. Fu, J. Huang, D. Zeng, Y. Huang, X. Ding, and J. Paisley, “Removing
+rain from single images via a deep detail network,” in 2017 IEEE
+Conference on Computer Vision and Pattern Recognition (CVPR), 2017,
+pp. 1715–1723.
+[45] Y. Li, R. T. Tan, X. Guo, J. Lu, and M. S. Brown, “Rain streak removal
+using layer priors,” in 2016 IEEE Conference on Computer Vision and
+Pattern Recognition (CVPR), 2016, pp. 2736–2744.
+[46] H. Zhang and V. M. Patel, “Density-aware single image de-raining using
+a multi-stream dense network,” CVPR, pp. 695–704, 2018.
+[47] Y.-F. Liu, D.-W. Jaw, S.-C. Huang, and J.-N. Hwang, “Desnownet:
+Context-aware deep network for snow removal,” IEEE Transactions on
+Image Processing, vol. 27, no. 6, pp. 3064–3073, 2018.
+[48] W.-T. Chen, H.-Y. Fang, J.-J. Ding, C.-C. Tsai, and S.-Y. Kuo, “Jstasr:
+Joint size and transparency-aware snow removal algorithm based on
+modified partial convolution and veiling effect removal,” in Computer
+Vision–ECCV 2020: 16th European Conference, Glasgow, UK, August
+23–28, 2020, Proceedings, Part XXI 16. Springer, 2020, pp. 754–770.
+[49] W.-T. Chen, H.-Y. Fang, C.-L. Hsieh, C.-C. Tsai, I. Chen, J.-J. Ding,
+S.-Y. Kuo et al., “All snow removed: Single image desnowing algo-
+rithm using hierarchical dual-tree complex wavelet representation and
+contradict channel loss,” in Proceedings of the IEEE/CVF International
+Conference on Computer Vision, 2021, pp. 4196–4205.
+[50] B. Li, W. Ren, D. Fu, D. Tao, D. Feng, W. Zeng, and Z. Wang,
+“Benchmarking single-image dehazing and beyond,” TIP, vol. 28, no. 1,
+pp. 492–505, 2018.
+[51] S. Nah, T. H. Kim, and K. M. Lee, “Deep multi-scale convolutional
+neural network for dynamic scene deblurring,” CVPR, pp. 257–265,
+2016.
+[52] E. Agustsson and R. Timofte, “Ntire 2017 challenge on single image
+super-resolution: Dataset and study,” in 2017 IEEE Conference on
+Computer Vision and Pattern Recognition Workshops (CVPRW), 2017,
+pp. 1122–1131.
+[53] B. Lim, S. Son, H. Kim, S. Nah, and K. Mu Lee, “Enhanced deep
+residual networks for single image super-resolution,” in Proceedings
+of the IEEE conference on computer vision and pattern recognition
+workshops, 2017, pp. 136–144.
+[54] P. Arbel´aez, M. Maire, C. Fowlkes, and J. Malik, “Contour detection
+and hierarchical image segmentation,” IEEE Transactions on Pattern
+Analysis and Machine Intelligence, vol. 33, no. 5, pp. 898–916, 2011.
+[55] K. Ma, Z. Duanmu, Q. Wu, Z. Wang, H. Yong, H. Li, and L. Zhang,
+“Waterloo exploration database: New challenges for image quality
+assessment models,” IEEE Transactions on Image Processing, vol. 26,
+no. 2, pp. 1004–1016, 2016.
+[56] D. Martin, C. Fowlkes, D. Tal, and J. Malik, “A database of human
+segmented natural images and its application to evaluating segmentation
+algorithms and measuring ecological statistics,” in Proceedings Eighth
+IEEE International Conference on Computer Vision. ICCV 2001, vol. 2,
+2001, pp. 416–423 vol.2.
+18
+[57] J.-B. Huang, A. Singh, and N. Ahuja, “Single image super-resolution
+from transformed self-exemplars,” in 2015 IEEE Conference on Com-
+puter Vision and Pattern Recognition (CVPR), 2015, pp. 5197–5206.
+[58] R. Franzen, “Kodak lossless true color image suite,” source: http://r0k.
+us/graphics/kodak, vol. 4, no. 2, p. 9, 1999.
+[59] R. Zhang, P. Isola, A. A. Efros, E. Shechtman, and O. Wang, “The
+unreasonable effectiveness of deep features as a perceptual metric,” in
+Proceedings of the IEEE conference on computer vision and pattern
+recognition, 2018, pp. 586–595.
+[60] M. Yang and A. Sowmya, “An underwater color image quality evaluation
+metric,” IEEE transactions on image processing, vol. 24, no. 12, pp.
+6062–6071, 2015.
+[61] K. Panetta, C. Gao, and S. Agaian, “Human-visual-system-inspired un-
+derwater image quality measures,” IEEE journal of oceanic engineering,
+vol. 41, no. 3, pp. 541–551, 2015.
+[62] L. K. Choi, J. You, and A. C. Bovik, “Referenceless prediction of per-
+ceptual fog density and perceptual image defogging,” IEEE Transactions
+on Image Processing, vol. 24, no. 11, pp. 3888–3901, 2015.
+[63] A. Mittal, A. K. Moorthy, and A. C. Bovik, “Blind/referenceless image
+spatial quality evaluator,” in 2011 conference record of the forty fifth
+asilomar conference on signals, systems and computers (ASILOMAR).
+IEEE, 2011, pp. 723–727.
+[64] H. Talebi and P. Milanfar, “Nima: Neural image assessment,” IEEE
+transactions on image processing, vol. 27, no. 8, pp. 3998–4011, 2018.
+[65] S. Chen, T. Ye, Y. Liu, T. Liao, J. Jiang, E. Chen, and P. Chen, “Msp-
+former: Multi-scale projection transformer for single image desnowing,”
+in ICASSP 2023 - 2023 IEEE International Conference on Acoustics,
+Speech and Signal Processing (ICASSP), 2023, pp. 1–5.
+[66] C. Wang, J. Pan, L. Wang, and W. Wang, “Intra and inter parser-
+prompted transformers for effective image restoration,” in Proceedings
+of the AAAI Conference on Artificial Intelligence, vol. 39, no. 7, 2025,
+pp. 7609–7618.
+[67] D. Kingma and J. Ba, “Adam: A method for stochastic optimization,”
+Computer Science, 2014.
+[68] I. Loshchilov and F. Hutter, “Sgdr: Stochastic gradient descent with
+warm restarts,” 2016.
+[69] Y. Cui, W. Ren, X. Cao, and A. Knoll, “Focal network for image
+restoration,” in Proceedings of the IEEE/CVF International Conference
+on Computer Vision, 2023, pp. 13 001–13 011.
+[70] Y. Cui, W. Ren, S. Yang, X. Cao, and A. Knoll, “Irnext: Rethinking
+convolutional network design for image restoration,” in Proceedings of
+the 40th International Conference on Machine Learning, 2023.
+[71] X. Guo, X. Wang, X. Fu, and Z.-J. Zha, “Deep unfolding network for
+image desnowing with snow shape prior,” IEEE Transactions on Circuits
+and Systems for Video Technology, vol. 35, no. 5, pp. 4740–4752, 2025.
+[72] X. Jiang, N. Gao, H. Dou, X. Zhang, X. Zhong, Y. Deng, and H. Li,
+“Global modeling matters: A fast, lightweight, and effective baseline for
+efficient image restoration,” IEEE Transactions on Image Processing,
+vol. 35, pp. 2740–2754, 2026.
+[73] Z. Chen, Z. He, and Z.-M. Lu, “Dea-net: Single image dehazing based
+on detail-enhanced convolution and content-guided attention,” IEEE
+Transactions on Image Processing, 2024.
+[74] Y. Li, H. An, T. Zhang, X. Chen, B. Jiang, and J. Pan, “Omni-deblurring:
+Capturing omni-range context for image deblurring,” IEEE Transactions
+on Circuits and Systems for Video Technology, pp. 1–1, 2025.
+[75] Z. Shen, W. Wang, X. Lu, J. Shen, H. Ling, T. Xu, and L. Shao, “Human-
+aware motion deblurring,” 2019 IEEE/CVF International Conference on
+Computer Vision (ICCV), pp. 5571–5580, 2019.
+[76] W. Li, Q. Zhang, J. Zhang, Z. Huang, X. Tian, and D. Tao, “Toward
+real-world single image deraining: A new benchmark and beyond,” arXiv
+preprint arXiv:2206.05514, 2022.
+[77] B. Li, W. Ren, D. Fu, D. Tao, D. Feng, W. Zeng, and Z. Wang,
+“Benchmarking single-image dehazing and beyond,” IEEE transactions
+on image processing, vol. 28, no. 1, pp. 492–505, 2018.
+[78] A. Abdelhamed, S. Lin, and M. S. Brown, “A high-quality denoising
+dataset for smartphone cameras,” in Proceedings of the IEEE conference
+on computer vision and pattern recognition, 2018, pp. 1692–1700.
+[79] Y. Zhang, Q. Yang, D. M. Chandler, and X. Mou, “Reference-based
+multi-stage progressive restoration for multi-degraded images,” IEEE
+Transactions on Image Processing, vol. 33, pp. 4982–4997, 2024.

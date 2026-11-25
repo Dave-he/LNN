@@ -1,0 +1,81 @@
+{
+  "date": "2026-11-26",
+  "generated_by": "agent (LLM daily digest-cron), independent coverage self-check per AGENTS.md constraint 7",
+  "arxiv_upstream": {
+    "errors": [],
+    "digest_pool_size": 97,
+    "groups": {
+      "主线-LNN": "25 hits (truncated: 38 exist at max_results=100)",
+      "主线-LTC": "25 hits (truncated: 29 exist)",
+      "主线-CfC": "17 hits (0 truncated)",
+      "主线-NCP": "6 hits (truncated: 7 exist)",
+      "主线-state-space": "1 hit",
+      "基础模型": "12 hits",
+      "相关方法": "5 hits",
+      "应用场景": "18 hits"
+    }
+  },
+  "selector_top3_all_false_positives": [
+    {"id": "2611.23615v2", "score": 11, "title": "Weight Space Programming for Vision Language Model Repair", "why_fp": "only mentions LFM2-VL as an experimental backbone; 17th consecutive day"},
+    {"id": "2607.15232v1", "score": 10, "title": "In-Place Tokenizer Expansion for Pre-trained LLMs", "why_fp": "LFM2 tokenizer expansion; 17th consecutive day"},
+    {"id": "2412.17006v1", "score": 9, "title": "Resilience Dynamics in Coupled Natural-Industrial Systems", "why_fp": "LTC climate-resilience surrogate, eess.SY pure simulation; excluded since 10-29 (17 rounds)"}
+  ],
+  "digest_pool_strong_keyword": {"total": 80, "covered": 69, "uncovered": 11},
+  "digest_pool_uncovered_ids_all_known_false_positives": [
+    "2611.28331", "2611.23615", "2611.17169", "2611.04233", "2607.15232",
+    "2604.24346", "2603.02250", "2509.14008", "2412.17006", "2309.13499", "2203.10041"
+  ],
+  "truncation_blind_spot_check": {
+    "method": "re-query 5 LNN-family groups with max_results=100, diff against digest pool",
+    "dropped_by_max_results_25": {
+      "主线-LNN": 10, "主线-LTC": 2, "主线-NCP": 1, "液态+变体": 9
+    },
+    "dropped_and_uncovered": 0,
+    "verdict": "all dropped papers are already covered; 'no new strong-keyword papers' is a field fact, not a coverage blind spot"
+  },
+  "mechanism_layer_scan": {
+    "queries": 23,
+    "unique_papers": 409,
+    "errors": 0,
+    "title_strong_uncovered": 152,
+    "recent_75d_uncovered_direct_relevant": ["2611.30577", "2610.30890"],
+    "liquid_family_uncovered": ["2607.02861", "2606.22801", "2408.15462", "1907.04273"]
+  },
+  "papers_read_today": [
+    {
+      "id": "2606.22801",
+      "title": "Learning Adaptive Dynamical Features via Multi-τ Liquid-Mamba for All-in-one Image Restoration",
+      "published": "2026-06-22",
+      "why": "only uncovered liquid-family paper in the mechanism scan that is actually about LNN time constants; +1.62 dB ablation isolates multi-timescale discrete-time modulation",
+      "report": "docs/reports/MultiTau_Liquid_Mamba_All_In_One_Image_Restoration_2606.22801_研读报告.md"
+    },
+    {
+      "id": "2410.09537",
+      "title": "Adaptive higher order reversible integrators for memory efficient deep learning",
+      "published": "2024-10-12",
+      "why": "supplies the missing cost axis for continuous-time modelling: integrator order sets the parameter-identification accuracy ceiling O(h^p); makes 'which discretizer did you use' a mandatory bench column",
+      "report": "docs/reports/Adaptive_Higher_Order_Reversible_Integrators_2410.09537_研读报告.md"
+    },
+    {
+      "id": "2603.27442",
+      "title": "Interpretable Physics Extraction from Data for Linear Dynamical Systems using Lie Generator Networks",
+      "published": "2026-03-28",
+      "why": "refines the 11-19 caveat 'closed-form is not a moat': closed form's real value is that structural constraints become algebraic identities (A = S - D => Re(lambda) <= 0) rather than loss terms",
+      "report": "docs/reports/Lie_Generator_Networks_Interpretable_Physics_2603.27442_研读报告.md"
+    }
+  ],
+  "spare_mechanism_layer_candidates": [
+    "2611.30577", "2610.30890", "2607.04955", "2606.19680", "2606.26662",
+    "2609.11725", "2606.19138", "2505.17761", "2603.04525", "2509.12289",
+    "2607.16258", "2607.23417", "2503.22313", "2510.04138", "2405.00077",
+    "2402.01231", "2511.03263", "2506.03227", "2605.22235", "2412.00165"
+  ],
+  "network": {
+    "ssh": "TUN fake IP 198.18.0.203 => direct dead; local proxy 127.0.0.1:7890 alive for both arXiv (HTTP 200) and ssh.github.com:443 (auth OK); used the 11-12 PATH-prepended ssh shim",
+    "arxiv": "direct curl timeout (exit 28) / proxy HTTP 200"
+  },
+  "paper_analyzer_skill": {
+    "cron_preamble_claim": "not found and skipped",
+    "verified": "skills/paper-analyzer/SKILL.md exists (1.8K, 6-section SOP) -> preamble claim is unreliable (trap #N+18, Nth confirmation)"
+  }
+}
