@@ -1,0 +1,815 @@
+GradRepair-ODE: Certified Gradient Repair for Neural ODE
+Training
+Ziqian Bi∗ Xin Liang Chia†
+Short title: GradRepair-ODE Authors: Z. Bi and X. L. Chia
+Abstract
+Neural ordinary differential equations use numerical solvers inside the training loop. The solver deter-
+mines the forward trajectory and also affects the gradient passed to the optimizer. That coupling creates
+a reliability problem for scientific machine learning and continuous-time generative modeling, includ-
+ing diffusion probability-flow ordinary differential equations and flow-matching models. Under loose
+step sizes, stiff dynamics, chaotic sensitivity, or event discontinuities, a differentiable ODE pipeline can
+return a finite gradient whose direction is numerically suspect. We introduce GradRepair-ODE, a relia-
+bility framework for checking, repairing, and rejecting ODE gradients at the optimizer step. The method
+computes several gradient candidates, compares them with directional finite-difference checks and solver
+diagnostics, diagnoses likely numerical failure modes, repairs selected gradients through path switching
+or stricter recomputation, and rejects steps whose descent direction cannot be certified. In six synthetic
+ODE systems, GradRepair-ODE leaves low-risk systems unchanged, repairs Robertson and Lorenz gra-
+dients to cosine similarity 1.000 against a strict reference, reduces unsafe accepted steps from 37 to 0,
+and rejects an event-discontinuous case instead of applying an uncertified update. The paper argues for
+a simple change in the training contract: an ODE gradient should reach the optimizer with numerical
+evidence attached.
+Keywords. Neural ordinary differential equations; differentiable simulation; adjoint sensitivity; numerical
+stability; gradient reliability; scientific machine learning; diffusion models; flow matching; continuous nor-
+malizing flows.
+Mathematics Subject Classification. 65L05; 65L06; 65L20; 65L50; 68T07; 90C30.
+SISC section. Machine Learning Methods for Scientific Computing.
+1 Introduction
+Neural ordinary differential equations (Neural ODEs) replace a discrete stack of transformations with a
+continuous-time dynamical system whose trajectory is computed by a numerical ordinary differential equa-
+tion (ODE) solver [4]. This formulation gives the model an appealing mathematical interface and allows
+solver tolerance to trade numerical precision for speed. It also moves a large part of training into numerical
+analysis: the optimizer does not receive an exact gradient, but a gradient shaped by solver error, interpolation,
+stiffness, horizon length, and the chosen sensitivity path.
+Modern differentiable ODE methods expose both direct backpropagation through solver operations and
+adjoint-style methods with different memory and accuracy tradeoffs [4, 14]. The same numerical issue
+∗Purdue University, West Lafayette, IN, USA (bi32@purdue.edu).
+†Rice University, Houston, TX, USA (xc71@rice.edu).
+1
+arXiv:2609.13204v1  [cs.LG]  14 Aug 2026
+reaches beyond classical Neural ODE benchmarks. Continuous normalizing flows (CNFs) use ODE dynam-
+ics for density modeling [7]; diffusion probabilistic models and score-based stochastic differential equation
+(SDE) models connect generative modeling to continuous-time dynamics and probability-flow ODEs [13,23];
+flow matching trains CNFs by regressing vector fields along probability paths and explicitly includes diffu-
+sion paths as an important case [15]; rectified flow learns ODE transports that aim to make generative paths
+straight and solver-eﬀicient [16]. In all of these settings, a learned vector field is ultimately paired with nu-
+merical integration. When such models are trained through differentiable solves or evaluated by ODE-based
+likelihood or sampling routines, gradient reliability is no longer a niche implementation detail; it is part of
+the numerical foundation of continuous-time generative modeling.
+Prior work has shown that optimize-then-discretize adjoints and discretize-then-optimize gradients can
+disagree in ways that matter for Neural ODE training [6, 18]. Classical numerical analysis has long treated
+step-size control, dense output, stiffness, backward differentiation formulae, finite-precision effects, and sen-
+sitivity analysis as solver-level concerns [2, 3, 5, 9, 10, 11, 12, 22]. General scientific computing libraries
+likewise distinguish non-stiff explicit solvers from stiff-aware implicit methods and warn that divergence or
+unusually many iterations can indicate stiffness [20]. These facts are well understood at the solver level, but
+the optimizer interface usually receives only the resulting tensor. Once automatic differentiation returns a
+finite array with the expected shape, most training loops have little additional evidence about its directional
+reliability.
+The failure is easy to miss. A gradient tensor can be finite, shaped correctly, and still point in the wrong
+direction. If that direction disagrees with other sensitivity paths or with local directional checks, the optimizer
+may increase the loss while the training loop records only a normal update. The relevant question is whether
+the current numerical evidence supports the next step.
+GradRepair-ODE answers that question at the optimizer boundary. It computes multiple gradient can-
+didates, builds a reliability certificate from path disagreement and finite-difference residuals, diagnoses nu-
+merical risk, repairs selected gradients, and certifies whether the final step is accepted. The method does not
+propose another ODE architecture or another general-purpose solver. It adds a missing interface: gradient
+trust, repair, and rejection become recorded training events.
+The point is sharper than a debugging aid. Solver tolerance, an adjoint method, and a loss curve do not say
+whether the next update is defensible. GradRepair-ODE places a certificate where numerical approximation
+becomes optimization action. The certificate can trust a benign gradient, route a repairable gradient to a
+safer path, or withhold an update whose smooth-gradient evidence has collapsed. This matters in scientific
+computing because the damaging failure is often silent: the computation continues with a plausible number
+whose direction has lost numerical meaning.
+The experiments use controlled mechanisms rather than decorative applications. The suite contains
+smooth, stiff, chaotic, event-driven, and neural-vector-field dynamics, so the same reliability layer faces the
+pathologies it claims to expose. The main result is the conversion of hidden optimizer risk into explicit
+decisions. GradRepair-ODE leaves low-risk systems untouched, repairs Robertson and Lorenz gradients to
+cosine similarity 1.000 against a strict reference, reduces unsafe accepted steps from 37 to 0, and rejects
+the event-discontinuous case when repair would overstate the evidence. A useful reliability method should
+have exactly this profile: keep benign steps cheap, pay for accuracy when the direction can be recovered, and
+refuse an update when the differentiated object no longer matches the optimized trajectory.
+The paper contributes four pieces. It defines an optimizer-facing gradient reliability certificate for dif-
+ferentiable ODE training, using sensitivity-path disagreement, directional finite differences, and solver di-
+agnostics. It formulates repair as constrained selection among gradient paths, not as a blanket move to the
+strictest computation. It derives a local descent certificate that connects an empirical gradient-error radius to
+the next optimizer step. It also reports a controlled numerical study, with gradient clipping and Armijo-style
+line search included as safeguards, showing when the certificate trusts, repairs, or rejects. The outcome is
+not a training-stability anecdote. It is a per-step numerical account of the update stream.
+2
+2 Method
+2.1 Problem Setup
+We consider an ODE parameterized by θ,
+dx
+dt = f (t, x, θ), x(t0) = x0, (1)
+with a trajectory-level loss
+L(θ) = ℓ(x(t0 : t1; θ), y). (2)
+The training loop receives an approximate gradient ˆg produced by a numerical solver and a sensitivity path.
+GradRepair-ODE tests whether ˆg can support the update −ηˆg.
+The distinction between a derivative and an update is practical, not semantic. A sensitivity path can
+produce a parameter-space vector even when the trajectory used to construct it is fragile. Let S denote the
+solver configuration, including the integration rule, tolerance, step-size policy, interpolation rule, and event
+handling. Let P denote the sensitivity path. The returned gradient is better written as
+ˆg = G(θ; S, P), (3)
+instead of simply ∇L(θ). GradRepair-ODE treats the gap between G(θ; S, P) and ∇L(θ) as an observ-
+able numerical quantity. The framework is solver-agnostic in the same sense that a line search is optimizer-
+agnostic: it leaves the underlying numerical method in place and changes the condition under which the
+optimizer trusts its output.
+Each training step produces gradient-path evidence, directional evidence, and solver evidence. Gradient-
+path evidence compares independent or partially independent approximations of the same derivative. Direc-
+tional evidence compares inner products against local centered finite differences. Solver evidence records
+numerical stress, such as step-size collapse, high function-evaluation counts, failed steps, or known discon-
+tinuities. A gradient supported by these signals passes cheaply. A gradient that fails them is repaired or
+withheld.
+2.2 Gradient Candidates
+Each diagnostic step compares the default coarse solver-path gradient with gradients from more accurate
+recomputation paths. A finer discrete path tests whether the direction survives reduced integration error.
+A checkpointed-style recomputation path tests whether greater trajectory consistency changes the gradient.
+A strict path provides a high-cost reference for certification or last-resort repair. This design borrows the
+memory-computation tradeoff familiar from reverse-mode differentiation, adjoint sensitivity analysis, and
+checkpointing [8, 12, 21]. Here the goal is the update decision: accept, repair, or reject before the parameter
+changes.
+The candidate set is ordered by cost and expected numerical fidelity:
+C = {gcoarse, gdisc, gckpt, gstrict}. (4)
+The coarse path is the gradient a standard training loop would consume. The discrete path recomputes
+the solve at smaller steps and checks whether the direction survives refinement. The checkpointed-style
+path represents a more trajectory-consistent recomputation with additional cost. The strict path is used as a
+repair target or evaluation reference in the controlled study. In a larger implementation, these symbols may
+correspond to continuous adjoints, direct differentiation through solver operations, checkpointed discrete
+adjoints, direct sensitivity equations, or stiff-aware solvers. The claim does not depend on a particular solver;
+it depends on multiple numerical routes whose disagreement carries information.
+3
+2.3 Reliability Certificate
+For a candidate gradient gi, GradRepair-ODE computes pairwise cosine disagreement
+Dcos(gi, gj ) = 1 − ⟨gi, gj ⟩ ∥gi∥∥gj ∥ + δ , (5)
+relative norm disagreement
+Dnorm(gi, gj ) = ∥gi − gj ∥ ∥gi∥ + ∥gj ∥ + δ , (6)
+and directional finite-difference (FD) residual
+RFD(g, v) = |⟨g, v⟩ − FD(θ, v)| |FD(θ, v)| + δ . (7)
+These terms are combined with solver instability and stiffness proxies into an empirical uncertainty score
+bϵi = wcosDcos + wnormDnorm + wFDRFD + wsolverS + wstiffK, (8)
+where S denotes solver instability evidence and K denotes stiffness evidence. The certificate assigns one of
+four states: Trusted, Repairable, Unsafe, or Failed. The certificate is a visible reliability estimate, not a
+claimed mathematical upper bound.
+A Trusted gradient is applied without repair. A Repairable gradient justifies additional computation
+but not the original update. An Unsafe gradient lacks a certified descent direction after the available repairs.
+A Failed gradient contains nonfinite values, invalid shapes, or broken differentiation state. These states keep
+warnings, repairs, acceptances, and failures separate.
+The certificate also diagnoses the failure mode. Large finite-difference residuals indicate directional
+inconsistency. Large pairwise disagreement indicates sensitivity-path instability. Large solver stress indicates
+numerical diﬀiculty before the gradient is inspected. Event flags indicate that the smooth adjoint model may
+be mismatched to the trajectory. When the evidence is mixed, the diagnosis reports numerical instability
+instead of assigning a precise physical cause.
+2.4 Repair and Step Certification
+If the naive gradient is trusted, the optimizer can use it directly. If the certificate reports repairable risk,
+GradRepair-ODE switches to a more reliable gradient path. If the repaired certificate remains unsafe, the
+step is rejected. At step level, the decision compares the predicted gradient signal against the estimated
+numerical uncertainty:
+η∥ˆg∥2 > ηϵ∥ˆg∥ + m, (9)
+where ϵ is the empirical error proxy and m is a small margin. This rule is suﬀicient for the step certificate
+used here; it is not a global convergence theorem.
+Repair is selected by a cost-aware policy. Tolerance tightening is used when the evidence points to
+loose integration. Path switching is used when sensitivity routes disagree but a refined path is available.
+Strict recomputation is used for stiff or chaotic cases that remain repairable under additional numerical work.
+Rejection is selected when the trajectory contains an event discontinuity without an event-aware derivative,
+or when no candidate produces a positive descent margin. The policy minimizes computation subject to a
+reliability constraint:
+min
+gi∈C
+Ci such that Cert(gi) = Trusted and ∆i > 0. (10)
+If the feasible set is empty, the update is rejected. This separates GradRepair-ODE from ordinary optimizer
+safeguards. Clipping and line search operate on the proposed move; GradRepair-ODE checks the numerical
+origin of the gradient that produced the move.
+4
+3 Theory and Certification
+GradRepair-ODE uses a local theoretical object: a certificate for the next optimizer step. The certificate does
+not prove that an ordinary differential equation solver returned the exact gradient. It combines a computed
+gradient, an empirical uncertainty radius, and local descent geometry. Global guarantees are usually out of
+reach for stiff, chaotic, or event-driven dynamics. Step-level evidence is still enough to decide whether a
+gradient can be used, repaired, or rejected.
+3.1 Uncertainty Sets
+Let L(θ) denote the training loss, g = ∇L(θ) the exact gradient, and ˆgi the gradient candidate produced
+by path i. GradRepair-ODE assigns the candidate an empirical uncertainty radius bϵi obtained from path
+disagreement, directional finite-difference residuals, solver instability, and stiffness evidence. The associated
+local uncertainty set is
+Gi = {g′ : ∥g′ − ˆgi∥2 ≤ bϵi}. (11)
+This set is local. It does not describe future gradients; it describes the numerical ambiguity attached to the
+current candidate at the current step.
+Assumption 1 (Local smoothness). In a neighborhood of the proposed update, L is differentiable and its
+gradient is locally M -Lipschitz:
+∥∇L(θa) − ∇L(θb)∥2 ≤ M ∥θa − θb∥2. (12)
+The assumption is local to the step. It does not require global smoothness of the full dynamical system.
+Assumption 2 (Certificate calibration). The score bϵi is calibrated as an empirical proxy for current-step
+gradient error. Larger path disagreement, larger finite-difference residuals, larger solver instability, and
+stronger stiffness evidence produce a larger radius. The analysis below is conditional on this radius. Weak
+calibration makes the certificate conservative.
+3.2 Descent Geometry
+The acceptance test is a robust first-order statement. The update −ˆgi is certified only when every gradient in
+Gi gives a negative directional derivative along that update with margin m ≥ 0:
+sup
+g′∈Gi
+⟨g′, −ˆgi⟩ < −m. (13)
+Lemma 1 (Support function of the gradient error ball). For Gi = {g′ : ∥g′ − ˆgi∥2 ≤ bϵi},
+sup
+g′∈Gi
+⟨g′, −ˆgi⟩ = −∥ˆgi∥2 2 + bϵi∥ˆgi∥2. (14)
+Proof. Write g′ = ˆgi + e with ∥e∥2 ≤ bϵi. Then
+⟨g′, −ˆgi⟩ = −∥ˆgi∥2 2 − ⟨e, ˆgi⟩. (15)
+The supremum occurs when e is anti-parallel to ˆgi, giving −⟨e, ˆgi⟩ = bϵi∥ˆgi∥2.
+5
+Proposition 1 (Certified descent margin). Under the uncertainty set above, condition (13) is equivalent to
+∆i = ∥ˆgi∥2 2 − bϵi∥ˆgi∥2 − m > 0. (16)
+If Assumption 1 holds, then for a learning rate η > 0,
+L(θ − ηˆgi) ≤ L(θ) − η
+ 
+∥ˆgi∥2 2 − bϵi∥ˆgi∥2  + M η2 2 ∥ˆgi∥2 2. (17)
+Thus a positive margin yields a descent certificate for suﬀiciently small η.
+Corollary 1 (Rejection is informative). If ∥ˆgi∥2 ≤ bϵi, the uncertainty ball contains gradients whose pro-
+jection along −ˆgi is nonnegative. In that case, rejecting the update is not a failed optimization step; it is a
+recorded absence of descent evidence.
+Proposition 2 (Monotonicity of evidence). For a fixed candidate norm ∥ˆgi∥2 and margin m, the descent
+margin ∆i is strictly decreasing in the uncertainty radius bϵi whenever ∥ˆgi∥2 > 0. Consequently, adding
+evidence that increases numerical uncertainty can only make the certificate more conservative, never more
+permissive.
+Proof. Equation (16) gives
+∂∆i
+∂bϵi
+= −∥ˆgi∥2. (18)
+The derivative is negative for every nonzero candidate gradient.
+Proposition 3 (Descent cone). If the true error satisfies ∥g − ˆgi∥2 ≤ ϵ < ∥ˆgi∥2, then every admissible true
+gradient lies in a cone around ˆgi with half-angle α satisfying
+sin α ≤ ϵ ∥ˆgi∥2 . (19)
+The certificate evaluates direction as well as magnitude. A low-norm candidate can be rejected even with
+small absolute error, while a high-norm candidate can remain certified under larger numerical uncertainty.
+3.3 Directional Evidence
+Finite differences are not treated as ground truth. They are local directional witnesses. For v with ∥v∥2 = 1,
+define
+Dh(θ; v) = L(θ + hv) − L(θ − hv) 2h . (20)
+Proposition 4 (Centered directional consistency). If ϕ(α) = L(θ + αv) is three times continuously differ-
+entiable near 0, then
+Dh(θ; v) = ⟨∇L(θ), v⟩ + O(h2) + O(u/h), (21)
+where u denotes the floating-point roundoff scale. Therefore, a sign disagreement between ⟨ˆgi, v⟩ and
+Dh(θ; v) is meaningful only when h is chosen outside both the truncation-dominated and roundoff-dominated
+regimes.
+Corollary 2 (Multi-direction directional risk). For independent directions v1, . . . , vk, define
+Ak(ˆgi) = 1 k kX j=1 1[sign⟨ˆgi, vj ⟩ = sign Dh(θ; vj )] . (22)
+Low Ak is direct evidence that the candidate is directionally fragile. It is evidence rather than proof, but it is
+more informative than accepting a gradient only because automatic differentiation returned a finite tensor.
+6
+Proposition 5 (Directional rejection witness). Assume there exists a tested direction v such that the centered
+finite difference is in its consistency regime and
+sign⟨ˆgi, v⟩ ̸= sign Dh(θ; v), |Dh(θ; v)| > ρ, (23)
+for a tolerance ρ larger than the estimated finite-difference noise floor. Then the candidate cannot be cer-
+tified by directional evidence alone; any acceptance must be justified by stronger path or solver evidence.
+GradRepair-ODE uses this witness to move the candidate from trusted to repairable or unsafe.
+Proof. In the finite-difference consistency regime, Dh(θ; v) estimates ⟨g, v⟩ up to truncation and roundoff
+errors below ρ. A sign mismatch above that floor means the candidate and the local directional witness
+disagree on whether moving along v increases or decreases the loss. The candidate may still be correct if the
+witness is corrupted, but the available evidence is no longer suﬀicient for trust.
+3.4 Repair as Constrained Selection
+Let I be the available set of gradient paths and let Ci denote the cost of candidate i. GradRepair-ODE selects
+i⋆ ∈ arg min
+i∈I
+Ci subject to ∆i > 0, Ak(ˆgi) ≥ τ. (24)
+If no candidate satisfies the constraints, the optimizer step is rejected. Repair is constrained selection under
+numerical evidence, not an unconditional move toward the strictest computation.
+Proposition 6 (Selective repair cost). Let the naive path cost be C0, diagnostic cost Cd, repair cost Cr, and
+always-strict cost Cs, all measured in function evaluations. If a fraction p of steps trigger repair, the expected
+GradRepair cost is
+CGR = C0 + Cd + pCr. (25)
+An always-strict strategy is more expensive whenever
+p < Cs − C0 − Cd
+Cr
+. (26)
+This gives the cost-reliability premise of GradRepair-ODE: use cheap gradients when the evidence is coher-
+ent, pay for repair when evidence breaks, and reject when no path produces a certified step.
+Proposition 7 (Dominance over warning-only diagnostics). Consider two policies that observe the same
+certificate. A warning-only policy always applies the original candidate, while a certificate-controlled policy
+applies only candidates satisfying ∆i > 0 and rejects otherwise. On any step where the original candidate
+has ∆i ≤ 0, the warning-only policy accepts an uncertified update and the certificate-controlled policy
+does not. Therefore, for a fixed sequence of certificates, certificate control weakly reduces the number of
+uncertified accepted steps relative to warning-only diagnostics.
+Proof. The statement follows directly from the policy definitions. Steps with ∆i > 0 may be accepted by
+both policies. Steps with ∆i ≤ 0 are accepted by the warning-only policy but withheld by the certificate-
+controlled policy. Summing over the sequence gives the weak reduction.
+Corollary 3 (Irreparable steps). For discontinuous or hybrid dynamics, an ordinary smooth-gradient path
+may remain uncertified even after recomputation. Preventing an unsupported update is a valid certified
+action.
+7
+3.5 What the Certificate Establishes
+The certificate establishes a step-local statement:
+certified ⇐⇒ ∃i ∈ I such that ∆i > 0 and Ak(ˆgi) ≥ τ. (27)
+It does not establish global convergence, exact adjoint correctness, or universal solver reliability. This nar-
+rowness is a strength of the formulation. The object being certified is precisely the object consumed by
+the optimizer: the next update direction. When the candidate fails the test, the output is not an ambiguous
+warning but an optimizer action: repair with a different path, reduce trust in the step, or reject the update.
+The reliability claim can fail at three levels. At the gradient level, path disagreement and finite-difference
+evidence can contradict the candidate. At the step level, the descent margin can fail. At the system level, the
+cost of repair can exceed the value of using a cheap path. The certification boundary is local, numerical,
+optimizer-facing, and still strong enough to change training behavior.
+Appendix A connects the diagnostics to standard inequalities. Pairwise path disagreement lower-bounds
+the error of at least one candidate. Finite-difference residuals lower-bound directional projection error after
+accounting for the finite-difference noise floor. Sensitivity growth follows the variational equation through a
+Gronwall-type amplification bound. These results do not turn the empirical proxy into an oracle; they explain
+why the proxy uses these numerical quantities.
+4 Experiments
+4.1 Systems and Baselines
+We evaluate six synthetic systems: a harmonic oscillator, Van der Pol oscillator, Robertson chemical kinetics,
+Lorenz dynamics, a bouncing ball with event discontinuities, and a neural right-hand side (RHS) system. The
+systems cover smooth dynamics, stiffness, chaotic sensitivity, hybrid events, and a small neural vector field.
+The design stresses the gradient interface. It includes cases where a coarse sensitivity path is harmless,
+cases where it is directionally wrong, and cases where no smooth-gradient update is defensible. We compare
+a naive coarse solver path, a discrete finer solver path, a checkpointed-style repair path, and GradRepair-
+ODE. The strict reference is used only to measure agreement. The same deterministic protocol generates all
+reported numbers.
+Each system isolates a numerical mechanism that a scientific-computing reader can inspect. Smooth
+periodic dynamics should not trigger repair. Stiffness should expose tolerance and path sensitivity. Chaotic
+dynamics should challenge long-horizon directionality. Event discontinuities should prevent an ordinary
+smooth-gradient certificate from making an unsupported claim. The neural RHS checks that the reliabil-
+ity layer stays quiet when the learned vector field is numerically benign. The benchmark tests mechanism
+recognition as well as final loss.
+The baselines address different objections. The naive solver path tests the common training interface in
+which a returned gradient is applied without further numerical evidence. Gradient clipping tests whether
+magnitude control is enough. Armijo-style line search tests whether suﬀicient decrease on the proposed
+move can substitute for gradient-source repair. GradRepair-ODE faces a stricter test: it must reduce unsafe
+accepted updates, preserve benign updates, repair cases with coherent numerical alternatives, and reject cases
+where smooth-gradient evidence is inadequate.
+4.2 Deterministic Protocol
+All tables and figures come from the same recorded diagnostic run. The random seed fixes the initial con-
+ditions, parameter perturbations, and finite-difference directions. For each system, the experiment records
+8
+the loss, gradient candidates, cosine similarity to the strict reference, finite-difference residuals, failure di-
+agnosis, repair action, acceptance decision, wall-clock time, and function-evaluation counts. Training-level
+summaries are computed from the saved step records. The ablation table replays the same evidence, so
+changes across rows reflect decision logic rather than a different numerical run.
+The protocol centers the optimizer decision instead of a post-hoc curve. Repair without cost accounting
+is incomplete. Detection without control is incomplete. Rejecting every suspicious step is safe but uninfor-
+mative. The recorded protocol keeps those cases separate.
+4.3 Gradient Reliability
+Table 1 shows the reliability pattern. Harmonic, Van der Pol, and neural RHS dynamics have cosine agree-
+ment close to one and no repair. Robertson and bouncing-ball gradients reverse direction under the naive
+path, with cosine similarity −1.000 against the strict reference. Lorenz does not fully reverse, but its naive
+cosine similarity drops to 0.698. GradRepair restores Robertson and Lorenz to cosine similarity 1.000 and
+refuses the event-discontinuous bouncing-ball update, where the certificate cannot justify a smooth-gradient
+claim.
+Table 1: Gradient reliability across ODE systems. Gray cells mark quantities that triggered certificate at-
+tention: large finite-difference risk or a nonzero repair rate. A dash indicates that no repaired gradient
+was accepted. Cosine similarity is measured against a strict reference gradient. Finite-difference risk is
+log10(1 + finite-difference residual), with the raw residual preserved in the experiment log.
+System Naive cos Discrete cos GradRepair cos Finite-difference risk Repair rate
+Harmonic 1.000 1.000 1.000 0.003 0.00
+Van der Pol 1.000 1.000 1.000 0.064 0.00
+Robertson -1.000 -1.000 1.000 8.140 1.00
+Lorenz 0.698 1.000 1.000 0.228 1.00
+Bouncing ball -1.000 -1.000 – 0.934 1.00
+Neural RHS 1.000 1.000 1.000 0.001 0.00
+9
+harmonic Van der
+Pol
+Robertson Lorenz bouncing
+ball
+neural
+right-hand
+side
+−1.0
+−0.5
+0.0
+0.5
+1.0
+cosine to strict reference
+naive discrete GradRepair
+Figure 1: Gradient direction agreement against a strict reference. GradRepair-ODE leaves smooth low-risk
+systems unchanged, while exposing failure or repair needs in stiff, chaotic, and event-driven systems.
+Table 2: Failure routing induced by the certificate. Gray cells mark final accepted or rejected interventions
+selected by the certificate. The table reports the primary numerical evidence, selected repair action, final
+optimizer decision, and function-evaluation multiplier for each system.
+System Primary evidence Routing action Final step Cost multiplier
+Harmonic consistent paths none accepted 1.0
+Van der Pol consistent paths none accepted 1.0
+Robertson finite-difference residual strict recomputation accepted 301.0
+Lorenz path disagreement checkpointed routing accepted 9.3
+Bouncing ball finite-difference residual reject rejected 41.0
+Neural RHS consistent paths none accepted 1.0
+4.4 Training Stability
+Table 3 reports the optimizer-facing consequence. The naive loop accepts 37 uncertified updates across
+Robertson, Lorenz, and bouncing ball. GradRepair reduces that count to zero. The method is not conservative
+by default: low-risk systems are trusted, Lorenz and Robertson are repaired, and the event-discontinuous
+system is rejected. The intervention occurs where the evidence changes the status of the step.
+10
+Table 3: Training stability summary. Red cells mark unsafe updates accepted by the naive loop, green cells
+mark repaired or cleared unsafe counts, yellow cells mark certified rejection, and gray cells mark trusted
+no-intervention decisions. Unsafe accepted counts steps that the naive loop applied despite a non-trusted
+certificate.
+System
+Naive
+loss
+GradRepair
+loss
+Naive
+unsafe
+GradRepair
+unsafe
+GradRepair
+rejected
+Repair
+rate Decision
+Harmonic 1.273e-05 1.273e-05 0 0 0 0.00 trust
+Van der Pol 3.081 3.081 0 0 0 0.00 trust
+Robertson 0.03433 0.03483 18 0 0 1.00 repair
+Lorenz 48.42 48.33 18 0 0 1.00 repair
+Bouncing ball 6.408 1.068 1 0 18 1.00 reject
+Neural RHS 0.09854 0.09854 0 0 0 0.00 trust
+10−5
+10−4
+10−3
+10−2
+10−1
+100
+Harmonic
+3.08 × 100
+3.09 × 100
+3.1 × 100
+3.11 × 100
+3.12 × 100
+3.13 × 100
+3.14 × 100
+3.15 × 100
+Van der Pol
+3.44 × 10−2
+3.45 × 10−2
+3.46 × 10−2
+3.47 × 10−2
+3.48 × 10−2
+Robertson
+0 2 4 6 8 10 12 14 16
+4.834 × 101
+4.836 × 101
+4.838 × 101
+4.84 × 101
+4.842 × 101
+4.844 × 101
+Lorenz
+0 2 4 6 8 10 12 14 16
+100
+2 × 100
+3 × 100
+4 × 100
+6 × 100
+Bouncing ball
+0 2 4 6 8 10 12 14 16
+10−1
+1.1 × 10−1
+1.2 × 10−1
+1.3 × 10−1
+1.4 × 10−1
+1.5 × 10−1
+Neural RHS
+training step
+loss
+naive gradrepair
+Figure 2: Loss trajectories under naive training and GradRepair-ODE. The goal is reliability control rather
+than aggressive optimization; rejected steps preserve evidence when no safe gradient is available.
+4.5 Ablation and Sensitivity
+Table 4 isolates the reliability components. The ablation asks how many unsafe updates remain when de-
+tection, repair routing, finite-difference evidence, or step certification is removed. Detection without action
+leaves all unsafe accepted updates in place. Removing step certification allows the event-discontinuous case
+to pass after a failed repair. Removing repair routing avoids unsafe updates but rejects every non-trusted
+step, including repairable Robertson and Lorenz updates. The full system repairs repairable steps, rejects the
+irreparable event case, and leaves zero unsafe accepted updates.
+11
+Table 4: Ablation study from the same recorded step evidence. Red cells mark unsafe accepted updates,
+green cells mark repaired or cleared unsafe counts, and yellow cells mark rejected updates.
+Policy Unsafe accepted Repaired Rejected Main effect
+naive 37 0 0 no control
+detect only 37 0 0 warning only
+no finite-difference evidence 18 36 0 event risk passes
+no repair routing 0 0 54 over-rejects
+no step certification 18 54 0 applies failed repair
+full GradRepair-ODE 0 54 18 repair or reject
+0.4 0.5 0.6 0.7 0.8 0.9
+certificate threshold
+0
+5
+10
+15
+20
+25
+30
+35steps
+unsafe accepted repaired rejected
+Figure 3: Threshold sensitivity for the certificate decision. The reliability layer has a stable operating region:
+stricter thresholds increase repair and rejection, while unsafe accepted steps disappear once suspicious gra-
+dients are no longer trusted by default.
+12
+naive discrete GradRepair
+−1.00
+−0.75
+−0.50
+−0.25
+0.00
+0.25
+0.50
+0.75
+1.00
+cosine to strict reference finite-difference risk = 8.140
+routing = strict recomputation
+cost multiplier = 301.0
+Figure 4: Robertson case study. The naive and discrete paths point in the opposite direction from the strict
+reference, while GradRepair-ODE routes to strict recomputation and restores cosine similarity to 1.000.
+4.6 Cost and Classical Safeguards
+Table 5 reports wall-clock time and function-evaluation overhead for the diagnostic step. Low-risk systems
+incur essentially no repair overhead, Lorenz is repaired at moderate cost, and Robertson shows the expensive
+edge of strict recomputation. GradRepair-ODE does not claim that certification is free. It makes the price of
+reliable gradients explicit and pays it only where the evidence requires it.
+Table 5: Measured diagnostic cost. Yellow cells mark time or function-evaluation multipliers above 5×. Wall-
+clock measurements are generated by the same deterministic experiment script and reported in milliseconds.
+System Naive ms GradRepair ms Time multiplier NFE multiplier
+Harmonic 4.48 4.48 1.0 1.0
+Van der Pol 0.54 0.54 1.0 1.0
+Robertson 0.34 29.04 85.9 301.0
+Lorenz 2.10 17.74 8.4 9.3
+Bouncing ball 0.23 2.74 11.9 41.0
+Neural RHS 2.69 2.69 1.0 1.0
+Table 6 compares GradRepair-ODE with two standard optimizer safeguards. Gradient clipping controls
+magnitude but cannot repair a wrong direction [19]. Line search checks whether a proposed move decreases
+the measured loss [1, 17], but it does not identify the numerical source of the gradient error and may reject
+without producing a reliable replacement direction. GradRepair-ODE addresses a different failure mode:
+it uses numerical evidence to decide whether to accept, repair, or reject the gradient before the optimizer
+consumes it.
+13
+Table 6: Comparison with classical safeguards. Red cells mark unsafe accepted updates, green cells mark
+cleared unsafe counts, yellow cells mark rejected updates, and light red cells mark loss spikes.
+Method Mechanism Unsafe accepted Rejected Loss spikes
+naive coarse update 37 0 1
+naive + clipping norm control only 47 0 3
+naive + line search loss decrease check 37 17 0
+GradRepair-ODE repair or reject 0 18 0
+0 2 4 6 8 10 12 14 16
+training step
+harmonic
+Van der Pol
+Robertson
+Lorenz
+bouncing ball
+neural right-hand side
+trusted repaired rejected
+Figure 5: Per-step GradRepair decisions. Trusted steps are left unchanged, repaired steps are routed to a safer
+gradient path, and rejected steps are withheld when no smooth-gradient claim is certified.
+14
+harmonic Van der
+Pol
+Robertson Lorenz bouncing
+ball
+neural
+right-hand
+side
+100
+101
+102
+function-evaluation multiplier
+Figure 6: Repair cost measured as the multiplier in function evaluations relative to the naive gradient path,
+shown on a logarithmic scale to preserve the full Robertson cost.
+harmonic Van der
+Pol
+Robertson Lorenz bouncing
+ball
+neural
+right-hand
+side
+0.00
+0.25
+0.50
+0.75
+1.00
+1.25
+1.50
+1.75
+2.00cosine improvement
+Figure 7: Reliability gain measured as cosine improvement relative to the naive gradient path. The largest
+gains occur where the naive direction is inconsistent with the strict reference.
+15
+harmonic Van der
+Pol
+Robertson Lorenz bouncing
+ball
+neural
+right-hand
+side
+0
+1
+2
+3
+4
+5
+6
+7
+8log10(1 + finite-difference residual)
+Figure 8: Directional finite-difference residuals. Large residuals identify candidates whose directional deriva-
+tive evidence is inconsistent with the proposed gradient.
+5 Discussion
+The experiments show that gradient reliability can be handled at the optimizer boundary. GradRepair-ODE
+changes the update stream: low-risk harmonic and neural RHS systems pass without intervention, Robertson
+and Lorenz are repaired to agreement with a strict reference, and the event-discontinuous system is rejected
+when the smooth-gradient evidence is insuﬀicient. The repair-controlled loop eliminates unsafe accepted
+steps in these runs, from 37 under the naive policy to 0 under GradRepair-ODE.
+The design separates detection, diagnosis, repair, and step acceptance. A scalar loss curve rarely re-
+veals whether instability comes from the model, the solver, the sensitivity path, or an event discontinuity.
+GradRepair-ODE records finite-difference residuals, pairwise gradient disagreement, solver failure, repair
+action, and step acceptance for each update.
+This is more precise than a solver-tolerance recommendation. Tight tolerances can be wasteful when
+the gradient is already coherent, and they do not fix a wrong differentiability assumption, as the event-
+discontinuous case shows. GradRepair-ODE asks what evidence supports this step. That question gives
+the method its cost-reliability profile: harmonic, Van der Pol, and neural RHS systems do not pay for repair;
+Robertson and Lorenz do; the bouncing-ball system is not allowed to turn a discontinuity into a smooth-
+gradient update.
+The comparison with clipping and line search clarifies the gap. Clipping modifies vector length; it does
+not repair direction. Line search can reject a bad move, but it does not say whether the failure came from
+stiffness, chaos, interpolation, event structure, or sensitivity-path mismatch. GradRepair-ODE answers the
+earlier numerical question: whether the vector used to define the move deserves trust.
+The claim has a clear boundary. Finite differences are directional checks with truncation and floating-
+point error. The certificate is an empirical proxy, not a formal upper bound. Within that boundary, the
+experiments show that a small evidence layer can distinguish trusted, repairable, unsafe, and failed gradient
+states while preserving the option to refuse a step when repair would overclaim.
+16
+For scientific computing, the practical message is direct. When a differentiable solver supplies a gra-
+dient to an optimizer, it should also supply enough numerical evidence to make the update accountable.
+GradRepair-ODE gives one design for that evidence: multiple gradient candidates, calibrated disagreement,
+repair routing, and a descent certificate attached to the step itself.
+6 Limitations and Scope
+GradRepair-ODE is a reliability layer for optimizer steps, not a universal solver correctness theorem. The
+experiments are synthetic and diagnostic; they expose numerical failure modes under controlled conditions
+rather than establish application-level superiority. That scope matches the claim: the paper studies whether
+unreliable ODE gradients can be detected, repaired, or rejected before they become optimizer updates.
+Several boundaries are visible in the formulation. Directional finite-difference checks become expensive
+in very high-dimensional parameter spaces. Random directional checks reduce the cost, but they do not
+replace full-gradient verification. Stochastic objectives or noisy mini-batches require additional calibration
+because finite-difference residuals can mix numerical error with sampling noise. Hybrid systems with event-
+time derivatives may require event-aware adjoints; the bouncing-ball experiment is therefore rejected instead
+of repaired. Strict recomputation can be expensive, as Robertson shows. The method reports this cost so
+reliability and computation can be compared directly.
+The controlled benchmark suite should be read as a mechanism study. Six systems do not cover all
+scientific machine learning. They cover the failure modes most likely to corrupt ODE gradients: benign
+smooth flow, stiffness, chaos, event discontinuity, and neural-vector-field training. A domain application
+would add modeling assumptions; it would still need the reliability question studied here.
+These limitations define the operating regime for the certificate: deterministic or low-noise differentiable
+ODE training, observable solver diagnostics, multiple feasible gradient paths, and optimizer steps whose
+safety can be evaluated locally. In that regime, GradRepair-ODE makes numerical gradient reliability a
+measured training variable, with direct consequences for repair, rejection, and unsafe accepted updates. The
+formulation is conservative when evidence is thin and assertive when evidence is coherent.
+7 Conclusion
+GradRepair-ODE treats differentiable ODE training as a numerical optimization problem in the literal sense:
+the optimizer receives gradients produced by approximate trajectories, approximate sensitivity paths, and
+solver configurations that may be under stress. A finite tensor is not enough. By combining gradient-path
+disagreement, directional finite-difference checks, solver diagnostics, repair routing, and descent-safe step
+decisions, GradRepair-ODE makes numerical fragility visible at the update level.
+The evidence in this paper is step-level. Low-risk systems are left alone. Repairable stiff and chaotic
+gradients are routed to safer computations. An event-discontinuous case is rejected when ordinary smooth-
+gradient evidence is insuﬀicient. The training loop records why a gradient was trusted, how it was repaired, or
+why it was withheld. That record is the contribution: an ODE gradient reaches the optimizer with numerical
+evidence attached.
+References
+[1] Larry Armijo. Minimization of functions having lipschitz continuous first partial derivatives. Pacific
+Journal of Mathematics, 16(1):1–3, 1966.
+17
+[2] Uri M. Ascher and Linda R. Petzold. Computer Methods for Ordinary Differential Equations and
+Differential-Algebraic Equations. SIAM, 1998.
+[3] Kathryn E. Brenan, Stephen L. Campbell, and Linda R. Petzold. Numerical Solution of Initial-Value
+Problems in Differential-Algebraic Equations, volume 14 of Classics in Applied Mathematics. SIAM,
+1996.
+[4] Ricky T. Q. Chen, Yulia Rubanova, Jesse Bettencourt, and David K. Duvenaud. Neural ordinary dif-
+ferential equations. In Advances in Neural Information Processing Systems, volume 31, 2018.
+[5] J. R. Dormand and P. J. Prince. A family of embedded Runge–Kutta formulae. Journal of Computa-
+tional and Applied Mathematics, 6(1):19–26, 1980.
+[6] Amir Gholaminejad, Kurt Keutzer, and George Biros. ANODE: Unconditionally accurate memory-
+eﬀicient gradients for neural ODEs. In Proceedings of the Twenty-Eighth International Joint Conference
+on Artificial Intelligence, pages 730–736, 2019.
+[7] Will Grathwohl, Ricky T. Q. Chen, Jesse Bettencourt, Ilya Sutskever, and David Duvenaud. FFJORD:
+Free-form continuous dynamics for scalable reversible generative models. In International Conference
+on Learning Representations, 2019.
+[8] Andreas Griewank and Andrea Walther. Algorithm 799: Revolve: An implementation of checkpointing
+for the reverse or adjoint mode of computational differentiation. ACM Transactions on Mathematical
+Software, 26(1):19–45, 2000.
+[9] Ernst Hairer, Syvert P. Nørsett, and Gerhard Wanner. Solving Ordinary Differential Equations I: Non-
+stiff Problems, volume 8 of Springer Series in Computational Mathematics. Springer, 2 edition, 1993.
+[10] Ernst Hairer and Gerhard Wanner. Solving Ordinary Differential Equations II: Stiff and Differential-
+Algebraic Problems, volume 14 of Springer Series in Computational Mathematics. Springer, 2 edition,
+1996.
+[11] Nicholas J. Higham. Accuracy and Stability of Numerical Algorithms. SIAM, 2 edition, 2002.
+[12] Alan C. Hindmarsh, Peter N. Brown, Keith E. Grant, Steven L. Lee, Radu Serban, Dan E. Shumaker,
+and Carol S. Woodward. SUNDIALS: Suite of nonlinear and differential/algebraic equation solvers.
+ACM Transactions on Mathematical Software, 31(3):363–396, 2005.
+[13] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffusion probabilistic models. In Advances in
+Neural Information Processing Systems, volume 33, pages 6840–6851, 2020.
+[14] Patrick Kidger, Ricky T. Q. Chen, and Terry J. Lyons. “hey, that’s not an ODE”: Faster ODE adjoints
+via seminorms. In Proceedings of the 38th International Conference on Machine Learning, volume
+139 of Proceedings of Machine Learning Research, pages 5443–5452. PMLR, 2021.
+[15] Yaron Lipman, Ricky T. Q. Chen, Heli Ben-Hamu, Maximilian Nickel, and Matthew Le. Flow matching
+for generative modeling. In International Conference on Learning Representations, 2023.
+[16] Xingchao Liu, Chengyue Gong, and Qiang Liu. Flow straight and fast: Learning to generate and transfer
+data with rectified flow. In International Conference on Learning Representations, 2023.
+[17] Jorge Nocedal and Stephen J. Wright. Numerical Optimization. Springer Series in Operations Research
+and Financial Engineering. Springer, 2 edition, 2006.
+18
+[18] Derek Onken and Lars Ruthotto. Discretize-optimize vs. optimize-discretize for time-series regression
+and continuous normalizing flows, 2020.
+[19] Razvan Pascanu, Tomas Mikolov, and Yoshua Bengio. On the diﬀiculty of training recurrent neural
+networks. In Proceedings of the 30th International Conference on Machine Learning, volume 28 of
+Proceedings of Machine Learning Research, pages 1310–1318. PMLR, 2013.
+[20] SciPy Developers. scipy.integrate.solve_ivp documentation. https://docs.scipy.org/doc/
+scipy/reference/generated/scipy.integrate.solve_ivp.html. Accessed 2026-08-14.
+[21] Radu Serban and Alan C. Hindmarsh. CVODES: The sensitivity-enabled ODE solver in SUNDIALS.
+In Proceedings of the ASME 2005 International Design Engineering Technical Conferences and Com-
+puters and Information in Engineering Conference, Long Beach, California, USA, 2005.
+[22] Lawrence F. Shampine and Mark W. Reichelt. The MATLAB ODE suite. SIAM Journal on Scientific
+Computing, 18(1):1–22, 1997.
+[23] Yang Song, Jascha Sohl-Dickstein, Diederik P. Kingma, Abhishek Kumar, Stefano Ermon, and Ben
+Poole. Score-based generative modeling through stochastic differential equations. In International
+Conference on Learning Representations, 2021.
+19
+A Additional Mathematical Details
+A.1 From Gradient Error to Robust Descent
+Let ˆg be the gradient consumed by the optimizer and let the unknown exact gradient be g = ˆg + e with
+∥e∥2 ≤ ϵ. The first-order change along the proposed update d = −ˆg is
+⟨g, d⟩ = −∥ˆg∥2 2 − ⟨e, ˆg⟩. (28)
+The worst admissible error is anti-parallel to ˆg, so
+sup
+∥e∥2≤ϵ
+⟨g, −ˆg⟩ = −∥ˆg∥2 2 + ϵ∥ˆg∥2. (29)
+Therefore, the suﬀicient condition for robust first-order descent is
+∥ˆg∥2 > ϵ. (30)
+With a margin m ≥ 0, GradRepair-ODE uses the stricter condition
+∥ˆg∥2 2 − ϵ∥ˆg∥2 > m. (31)
+This gives the descent-safe step certificate used in the main text.
+A.2 Learning-Rate Dependence
+Under local M -smoothness,
+L(θ − ηˆg) ≤ L(θ) + η⟨g, −ˆg⟩ + M η2
+2 ∥ˆg∥2 2. (32)
+Substituting the worst-case bound gives
+L(θ − ηˆg) − L(θ) ≤ −η∥ˆg∥2(∥ˆg∥2 − ϵ) + M η2 2 ∥ˆg∥2 2. (33)
+Thus a certified direction remains a descent step for any
+0 < η < 2(∥ˆg∥2 − ϵ) M ∥ˆg∥2 . (34)
+GradRepair-ODE does not need to estimate M exactly; the inequality explains why the step certificate and
+the learning-rate scale interact.
+A.3 Directional Finite-Difference Error
+For ϕ(α) = L(θ + αv), Taylor expansion gives
+ϕ(h) = ϕ(0) + hϕ′(0) + h2
+2 ϕ′′(0) + h3 6 ϕ′′′(ξ+), (35)
+ϕ(−h) = ϕ(0) − hϕ′(0) + h2
+2 ϕ′′(0) − h3 6 ϕ′′′(ξ−). (36)
+Subtracting and dividing by 2h yields
+ϕ(h) − ϕ(−h)
+2h = ϕ′(0) + O(h2). (37)
+Floating-point evaluation adds a competing O(u/h) term, where u is the roundoff scale [11]. This produces
+the classical finite-difference tradeoff: too large a step is truncation dominated, while too small a step is
+roundoff dominated. GradRepair-ODE therefore uses finite differences as directional evidence, not as abso-
+lute ground truth.
+20
+A.4 Path Disagreement as an Error Witness
+Let g denote the exact gradient and let ˆga, ˆgb be two independently computed candidates. Even without
+knowing g, their disagreement imposes a deterministic lower bound on the error of at least one candidate:
+max{∥ˆga − g∥2, ∥ˆgb − g∥2} ≥ 1 2 ∥ˆga − ˆgb∥2. (38)
+This follows immediately from the triangle inequality,
+∥ˆga − ˆgb∥2 ≤ ∥ˆga − g∥2 + ∥ˆgb − g∥2. (39)
+The inequality gives a direct reason to inspect path disagreement. A large separation between two sensitivity
+paths proves that at least one path is inaccurate at the current step. It does not identify which path is wrong,
+so GradRepair-ODE combines disagreement with directional checks and solver diagnostics before selecting
+a repair.
+A.5 Finite-Difference Residual and Projection Error
+Let qv = ⟨g, v⟩ be the exact directional derivative and let Dh(θ; v) be the centered finite-difference estimate.
+Suppose the finite-difference error along v is bounded by βh:
+|Dh(θ; v) − qv| ≤ βh. (40)
+For a candidate ˆg, the observed residual satisfies
+|⟨ˆg, v⟩ − Dh(θ; v)| ≤ |⟨ˆg − g, v⟩| + βh, (41)
+and therefore
+|⟨ˆg − g, v⟩| ≥ |⟨ˆg, v⟩ − Dh(θ; v)| − βh. (42)
+Thus a large finite-difference residual, after accounting for the finite-difference noise floor, lower-bounds the
+candidate’s error in at least one tested direction. This is why the certificate treats finite-difference residuals
+as directional witnesses.
+A.6 Sensitivity Growth and Long-Horizon Risk
+For a smooth ODE, the state sensitivity S(t) = ∂x(t)/∂θ satisfies the variational equation used in classical
+sensitivity analysis [2, 21]:
+dS
+dt = Jx(t)S(t) + Jθ(t), Jx(t) = ∂f ∂x (t, x(t), θ), Jθ(t) = ∂f ∂θ (t, x(t), θ). (43)
+Gronwall’s inequality gives the bound
+∥S(t)∥2 ≤ exp
+Z t
+t0
+∥Jx(s)∥2 ds
+ 
+∥S(t0)∥2 +
+Z t
+t0
+∥Jθ(r)∥2 dr
+
+. (44)
+We do not use this inequality as a tight numerical estimate. Large Jacobian norms, stiff transients, and long
+horizons can amplify small trajectory or sensitivity errors into large gradient discrepancies. The certificate’s
+stiffness and solver-instability terms follow this variational structure.
+21
+A.7 Ablation Replay Definitions
+The ablation table replays the same recorded diagnostic evidence under counterfactual decision policies.
+The ODE solves, gradient candidates, finite-difference residuals, and step labels are held fixed, so each row
+changes the reliability mechanism rather than the numerical episode. In the detect-only replay, the certifi-
+cate is observed but the naive update is still applied; this measures the gap between warning and control.
+Removing finite-difference evidence suppresses the event-discontinuity signal and shows why path agree-
+ment alone can be over-permissive. Removing repair routing converts every non-trusted step into rejection,
+which exposes the cost of treating reliability as a binary gate. Removing step certification applies repaired
+gradients even when the final margin remains unsafe, isolating the last optimizer-level decision. The full
+GradRepair-ODE policy accepts trusted gradients, repairs repairable gradients, and rejects gradients whose
+descent direction is not certified. The replay compares decision logic without changing the underlying nu-
+merical evidence.
+A.8 Safeguard Definitions
+The clipping baseline rescales the naive gradient to unit norm when its Euclidean norm exceeds one, follow-
+ing the standard role of clipping as magnitude control [19]. The line-search baseline uses a backtracking
+suﬀicient-decrease check inspired by classical Armijo-style methods [1, 17]. Both safeguards operate on the
+proposed update. They do not compute a gradient reliability certificate, compare sensitivity paths, or repair
+the numerical source of a wrong gradient direction.
+22

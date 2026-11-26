@@ -1,0 +1,1441 @@
+Observable Neural ODEs for Identifiable Causal
+Forecasting in Continuous Time
+Jennifer Wendland
+wendland@uni-koblenz.de
+Nicolas Freitag
+nfreitag@uni-koblenz.de
+Maik Kschischo
+kschischo@uni-koblenz.de
+Department of Computer Science
+University of Koblenz
+53424 Koblenz, Germany
+Abstract
+Causal inference in continuous-time sequential decision problems is challenged
+by hidden confounding and partially observed states. We show that, under ex-
+plicit structural assumptions, observability of the latent state enables identification
+of dynamic treatment effects through a continuous-time conditional front-door
+adjustment, even in the presence of hidden confounding.
+We derive a general adjustment formula and show that it reduces to a tractable
+state-space formula when unobserved contemporaneous disturbances are tempo-
+rally uncorrelated. This formula expresses potential-outcome distributions under
+alternative treatment trajectories through the measurement model, latent dynamics,
+and the filtering distribution over latent states.
+We propose Observable Neural ODEs (ObsNODEs), Neural ODE models in observ-
+able normal form that implement this tractable adjustment for causal forecasting.
+ObsNODEs learn continuous-time dynamics with states reconstructible from ob-
+servations, enabling outcome prediction under alternative treatment paths.
+Experiments on synthetic, semi-synthetic, and real-world clinical data demonstrate
+strong performance over recent sequence models, including external validation.
+1 Introduction
+Sequential decision-making requires predicting how actions affect future outcomes under evolving
+observations. In medicine, this arises in dynamic treatment regimes (DTRs), where treatments are
+repeatedly adapted to a patient’s longitudinal history (Murphy, 2003; Robins, 2004).
+A central challenge is the identification of causal treatment effects in continuous time. In observational
+data, time-dependent confounding and treatment–confounder feedback arise when covariates affect
+both treatment assignment and outcomes while themselves being affected by earlier treatments
+(Hernán, Robins, 2023). Identification becomes even more difficult when relevant components of the
+evolving disease state are latent and hidden variables affect both treatment and outcomes.
+We address this problem from a state-space perspective. Under explicit structural assumptions, we
+show that observability makes the latent state reconstructible from treatment-outcome histories and
+thereby enables identification through a continuous-time conditional front-door adjustment, even
+in the presence of hidden confounding. We derive a general adjustment formula and show that, for
+temporally uncorrelated contemporaneous disturbances, it reduces to a tractable state-space formula.
+Preprint.
+arXiv:2604.26070v3  [cs.LG]  6 Oct 2026
+Based on this result, we introduce ObsNODEs, Neural ODE models in observable normal form for
+causal forecasting under discrete and continuous treatment trajectories.
+Contributions. (i) We link control-theoretic observability to causal identifiability in latent continuous-
+time state-space models and derive a general conditional front-door adjustment for dynamic treatment
+effects under hidden confounding. (ii) We derive a tractable state-space adjustment under temporally
+uncorrelated contemporaneous disturbances and propose ObsNODEs, which enforce observability by
+construction for causal forecasting under dynamic treatment regimes. (iii) We demonstrate strong
+causal forecasting performance on synthetic, semi-synthetic, and real-world clinical data compared
+with recent sequence models, including external validation.
+2 Problem statement
+We assume hat we observe a continuous-time multivariate outcome process Yt and a time-varying
+treatment process At for times t ∈ [0, tc). Given the observed history {a[0,tc ), y[0,tc ]} with a[0,tc ) =
+{At = at|0 ≤ t < tc} and y[0,tc ] = {Yt = yt|0 ≤ t ≤ tc}, the goal is to predict the probability
+density of the conditional potential outcome Yt(a[tc ,tc +s)) on [tc, tc + s) under a hypothetical
+treatment path a[tc ,tc +s) = {At = at|tc ≤ t < tc + s}. More precisely, we seek to identify the
+conditional potential-outcome density (CPOD) PYtc +s (a[tc ,tc +s) )|Ytc ,O[0,tc ) (ytc +s|ytc , o[0,tc )), given
+the last observation ytc and the history of observations and treatments o[0,tc ) = {a[0,tc ), y[0,tc )}.
+In clinical applications, Yt may contain irregularly sampled laboratory values, vital signs, or imaging
+embeddings, while At represents binary, categorical, or continuous treatments. Outside randomized
+trials, treatment assignment depends on the evolving patient history, which induces time-dependent
+confounding and treatment-confounder feedback.
+We treat all measured variables as components of Yt and define outcomes, when needed, as functions
+of Yt. This entails no loss of generality for the identification results below. We use outcome and
+observed process interchangeably for Yt.
+3 Preliminaries
+3.1 Nonlinear state-space model
+A continuous-time deterministic state-space model is given by
+˙zt = f (zt, at) (1a), yt = h(zt) (1b), z0 = ζ (1c) (1)
+where zt ∈ Rdz is a latent state, at ∈ Rda a treatment or control, and yt ∈ Rdy the observed process.
+The measurement function h is not necessarily invertible, in particular when dz > dy . We assume f
+is Lipschitz in z, so the system admits a unique solution for any admissible control path and initial
+condition.
+For a given control path, observability asks whether the latent state or, equivalently, its initial value,
+is uniquely determined by the observed output over a finite horizon (Bernard, 2019). For a given
+control a and initial condition z0 = ζ, let zt(a, ζ) denote the resulting state trajectory, and define
+the corresponding output trajectory by yt(a, ζ) := h(zt(a, ζ)).
+Definition 3.1. The system (1) is uniformly observable on an open set U ⊂ Rdz if, for any control
+path a : [0, T ] → Rda and any ζ, η ∈ U,
+yt(a, ζ) = yt(a, η) ∀t ∈ [0, T ] =⇒ ζ = η,
+where [0, T ] is the maximal interval on which both solutions exist.
+3.2 Potential outcomes and graphical causal models
+We use the potential-outcomes framework and graphical causal models to formalize interventions
+(Robins, 1986; Pearl, 2000; Peters et al., 2017; Hernán, Robins, 2023). We assume consistency, the
+stable unit treatment value assumption (SUTVA), and positivity. SUTVA excludes interference be-
+tween units and multiple versions of treatment (Rubin, 1980; Hernán, Robins, 2023), while positivity
+2
+(a) (b)
+Figure 1: (a) Temporal DAG for treatment A, observation Y , and latent state Z at three consecutive
+time points. The temporally independent latent disturbances ϵ jointly affect contemporaneous
+treatment assignment and observations. (b) Under a dynamic treatment regime, treatment additionally
+depends on the observed treatment-outcome history, as indicated by the green dashed arrows.
+requires that the considered interventions lie within the support of the observational treatment process
+conditional on the relevant history. In longitudinal observational settings, identifiability of causal
+treatment effects is complicated by time-dependent confounding and treatment-confounder feedback.
+3.2.1 The conditional front-door criterion
+To connect causal identification with latent state-space models, we use the conditional front-door
+criterion (Xu et al., 2024), an extension of the front-door criterion (Pearl, 2000) for estimating the
+effect of an intervention in the presence of an unobserved common cause of both treatment and
+outcome:
+Theorem 3.2. (Xu et al., 2024) A set of variables M fulfills the conditional front-door criterion
+(CFD) relative to the ordered pair of variables (A, Y ) in a directed acyclic graph (DAG) G, if (i) M
+intercepts all directed paths from A to Y , (ii) there exists a set of conditioning variables W that
+blocks all backdoor paths from A to M and (iii) all backdoor paths between M and Y are blocked by
+{A} ∪ W . If M fulfills the CFD relative to (A, Y ) with conditioning variables W the causal effect
+estimate is given by
+P (Y (a)) =
+∑
+m,w,a′
+P (y|a′, m, w)P (a′|w)P (m|a, w)P (w), (2)
+where the sum over a′ runs over alternative treatments.
+4 Observable Neural ODEs for dynamic treatment regimes
+We model the observed process by a latent Neural ODE (Chen et al., 2018; Rubanova et al., 2019;
+Kidger et al., 2020) with parameters θ
+Z0 ∼ pθ (Z0), ˙Zt = fθ (Zt, At), Yt ∼ qθ (·|Zt), (3)
+where pθ parameterizes the initial state distribution and fθ the vector field. The state is mapped via
+the dsitribution q(·|Zt, ϵt) to the observations and the observation model qθ describes the marginal
+observation distribution. We interpret the treatment process as an intervention on the latent dynamics,
+as illustrated in Fig. 1(a). Typically, the treatment is adjusted according to the observations and
+we have a dynamic treatment regime (Murphy, 2003; Robins, 2004; Hernán, Robins, 2023): At =
+π(yt, y[0,t), a[0,t)) (see Fig. 1(b)). The temporally independent latent disturbance ϵt may additionally
+affect both contemporaneous treatment assignment and observation, as illustrated in Fig. 1.
+4.1 Causal identifiability for the state-space model
+To establish an adjustment formula for the CPOD, we make the following assumptions for the data
+generating process, see Fig. 1.
+Assumption 4.1. The latent state Zt is a controlled continuous-time Markov process with transition
+probability density p(zt+s|a[t,t+s), zt).
+Assumption 4.2. Given the latent state, the observation is independent of previous observations and
+treatments: p(yt|zt, y[0,t), a[0,t)) = p(yt|zt).
+3
+Theorem 4.3. Under consistency, SUTVA, overlap (positivity), Assumptions 4.1 and 4.2, and observ-
+ability of the latent state, the conditional potential-outcome distribution under a[t,t+s) is identified
+by the adjustment formula
+PYt+s (a[t,t+s) )|Yt ,O[0,t) (yt+s|yt, o[0,t))
+=
+∫
+zt+s
+∫
+zt
+p(zt|yt, o[0,t)) p(zt+s|a[t,t+s), zt) p(yt+s|zt+s), (4)
+This identification remains valid when temporally independent latent disturbances ϵt induce unob-
+served contemporaneous dependence between treatment assignment and observations. The result
+also applies to dynamic treatment regimes under sequential positivity, with the transition density
+induced by the regime (see Fig. 1(b)).
+Remark 4.4. Assumption 4.2 holds when ϵt is an exogenous, temporally independent disturbance.
+With serially correlated hidden disturbances, the causal effect remains identifiable through the general
+conditional front-door adjustment, but the formula no longer reduces to (4); see (13) in Appendix A.1.
+Proof. We derive a discrete-time version of the adjustment formula (4) in Theorem 4.3 and relegate
+details for the continuous-time version to Appendix A.1. Consider three consecutive time points 0, t
+and t + s. A time-discretized approximation of the ODE in (3) is given by Zt+s ≈ Zt + f (Zt, At) s.
+Assume we have observed o0 = {a0, y0} and yt. To apply the CFD in Theorem 3.2 we make the
+following identifications
+A ↢ At, Y ↢ Yt+s, M ↢ Zt+s, W ↢ {Zt, Yt, A0, Y0} = {Zt, Yt, O0} .
+Although Zt is latent, observability in this discrete-time representation implies that it can be uniquely
+reconstructed from the treatment-outcome history. By Assumption 4.1, the mediator distribution
+under treatment at is then given by p(zt+s|at, zt). Consequently, both the conditioning state and the
+mediator distribution required by the CFD adjustment are identifiable.
+We can check graphically in Fig. 1(a,b) that M = Zt+s satisfies the CFD criterion relative to
+the ordered pair (A, Y ) = (At, Yt+s), if we use W = {Zt, Yt, O0} as conditioning set. Now
+we compute the probability density for the potential outcome Yt+s(at) when applying treatment
+At = at at time t using (2) and replacing the sums by integrals
+PYt+s (at ) (yt+s) =
+∫
+zt+s
+∫
+zt ,yt ,o0
+∫
+a′ t
+{p (yt+s|a′ t, zt+s, zt, yt, o0) (5)
+· p (a′ t|zt, yt, o0) p (zt+s|at, zt, yt, o0) p (zt, yt, o0)} . (6)
+By Assumptions 4.2 and 4.1 we have the following independence relations
+p (yt+s|a′ t, zt+s, zt, yt, o0) = p (yt+s|zt+s)
+p (zt+s|at, zt, yt, o0) = p (zt+s|at, zt) .
+Integrating over a′ t and using p (zt, yt, o0) = p (zt|yt, o0) p (yt, o0) we find
+PYt+s (at ) (yt+s) =
+∫
+zt+s
+∫
+zt ,yt ,o0
+{p (yt+s|zt+s) p (zt+s|at, zt) p (zt|yt, o0) p (yt, o0)} ,
+from which we read the conditional density for the potential outcome Yt+s(at) when applying
+treatment At = at at time t, given we have observed outcome yt at time t and the treatment-outcome
+history o0 at time zero
+PYt+s (at )|Yt ,O0 (yt+s |yt, o0 ) =
+∫
+zt+s
+∫
+zt
+{p (yt+s|zt+s) p (zt+s|at, zt) p (zt|yt, o0)} .
+The adjustment formula remains valid for dynamic treatment regimes in which the current observation
+yt and the observed history o0 determine the treatment at, because the same CFD criterion continues
+to hold (Fig. 1(b)).
+The key requirement is that the latent state is observable from the observed history. For the
+deterministic ODE in (3) the dynamics is given by the point mass: p(zt+s|a[t,t+s), zt) =
+δ(zt+s − zt −
+∫ t+s
+t f (zτ , aτ ) dτ ). If we replace the ODE by a stochastic differential equation we need a notion of stochastic observability (Van Handel, 2009).
+4
+4.2 Neural ODEs in observable normal form (ObsNODEs)
+The identification formula (4) requires that the latent state can be inferred from observed outcomes
+and treatment history. Standard latent Neural ODEs do not guarantee this property. We therefore
+parameterize the latent dynamics in continuous triangular observable normal form (Bernard, 2019;
+Adamy, 2024):
+˙Zt =
+
+
+˙Z (1) t
+...
+˙Z (i) t
+...
+˙Z (m) t
+
+ =
+
+
+Z (2) t + ϕ(1) θ1 (Z (1) t , at) ...
+Z (i+1) t + ϕ(i) θi (Z (1) t , . . . , Z (i) t , at) ...
+ϕ(m) θm (Zt, at)
+
+ , Yt = Z (1) t . (7)
+Here the state Zt =
+(
+Z (1) t , . . . , Z (m) t
+)
+∈ Rdz is partitioned into m blocks Z (i) t ∈ Rdy , so that
+dz = mdy , and each ϕ(i) θi is implemented by a neural network. Under suitable conditions, observable systems can be transformed into this normal form without loss of expressiveness (Bernard, 2019).
+We allow for additive observation noise, Yt = Z (1) t + ηt, where ηt is a centered noise process. This
+noise does not affect identification. The hidden disturbance (ϵt) need not be centered and is accounted
+for by the corresponding adjustment formula.
+4.3 Prediction and training of ObsNODEs
+We approximate the filtering distribution p(zt|yt, o[0,t)) with an RNN encoder, following (Chen
+et al., 2018). Given the inferred state zt, forecasts under a hypothetical treatment path a[t,t+s) are
+obtained by integrating (7) forward in time and projecting to the observed space.
+Training is self-supervised. For each unit, we choose a decision time tc and provide observations up
+to tc. The model then predicts future observations on (tc, tf ].
+Observations are available only at irregular time points Tij . Let Tij (tc, tf ) = Tij ∩ (tc, tf ] denote the
+observation times of component j for unit i in that forecast window (tc, tf ]. The predicted outcome
+vector for unit i and outcome component j at time t is to be compared against the corresponding
+observed value ydat tij in the training data. We minimize the masked squared error
+L(tc ,tf ] =
+n∑
+i=1
+dy∑
+j=1
+1
+n σ2 j |Tij (tc, tf )|
+∑
+t∈Tij (tc ,tf )
+(
+ytij − ydat tij )2 ,
+where |Tij (tc, tf )| denotes the number of observations of component j for unit i in the forecasting
+interval (tc, tf ]. This normalization compensates for varying observation frequencies across units and
+outcome components. The scaling factor σ2 j is the empirical variance of the j−th outcome component
+across all units and observed time points in the training data and can be set to 1 for standardized data.
+During training, a decision time tc ∈ [0, tf ) is selected for all units in a batch of size n and the
+corresponding losses L(tc ,tf ] are averaged over different batches. We found that both a fixed set of
+possible values for tc evenly distributed over [0, tf ) or a uniform random choice led to very similar
+results. Choosing different decision times tc in each batch exposes the model to varying assimilation
+times and forecast horizons.
+5 Experiments
+We evaluate ObsNODE on synthetic and semi-synthetic datasets where the ground-truth causal effect
+of a prescribed treatment path on the outcome trajectories is known and, in addition, on a real world
+data set with an external validation. We compare against the IGC-Net (Hess et al., 2026), SCIP-Net
+(Hess, Feuerriegel, 2025) and two Treatment Effect Neural Controlled Differential Equation models
+(Seedat et al., 2022): optAB for categorical treatments (Wendland et al., 2024) and doseAI for
+categorical and continuous treatments (Wendland, Kschischo, 2025).
+5
+Forecast root mean squared error (RMSE) was scaled with the standard deviation of each dynamic
+variable in the test set and is reported as a function of assimilation time (the duration of the treatment-
+observation history tc) and prediction horizon (Figures 2–4). The RMSE values of these heatmaps
+are given in https://github.com/JenniferJaschob/ObsNODE.git.
+As an ablation study, we compare ObsNODE with an otherwise identical latent Neural ODE without
+the observable normal form. For each test patient, both models assimilate the factual history up to
+tc = 5 and predict outcomes under five prespecified treatment regimes. Counterfactual bias (CB) is
+the signed difference between predicted and ground-truth potential outcomes, averaged over all test
+patients and six prediction time points. We also evaluate the average treatment effect (ATE) of each
+regime relative to a baseline treatment (Tables 2 and 4).
+Results are averaged over five independent runs with disjoint training, validation, and test sets. For
+synthetic and semi-synthetic data we vary the confounding strength γ. Details on data generation and
+the counterfactual treatment scenarios are provided in the Appendix A.4.1 and A.4.2.
+5.1 Experiments with fully-synthetic data
+Data: The synthetic dataset is generated from a dynamic model of tumor volume (Geng et al., 2017)
+and body weight (Wendland, Kschischo, 2025) under chemotherapy and radiotherapy. The treatment
+vector at represents chemo- and radiotherapy doses administered in monthly cycles, and the outcome
+yt consists of tumor volume and body weight.
+To simulate time-dependent confounding, treatment probabilities depend on the mean tumor volume
+over the previous 15 days (Melnychuk et al., 2022). Patient heterogeneity is introduced by sampling
+tumor growth and treatment response parameters from predefined distributions (Appendix A.4.1).
+Body 
+weight
+Body 
+weight
+Body 
+weight
+Body 
+weight
+Tumor
+voume
+Tumor
+voume
+Tumor
+voume
+Tumor
+voume
+Data assimiation time (months)
+Figure 2: Synthetic cancer dataset. RMSE heatmaps (mean over five runs) for standardized (Z-score)
+tumor volume and body weight forecasts at confounding strength γ = 4. The horizontal axis shows
+the assimilation time and the vertical axis the forecast horizon. Columns correspond to ObsNODE,
+doseAI (Wendland, Kschischo, 2025), IGC-Net (Hess et al., 2026) and SCIP-Net (Hess, Feuerriegel,
+2025). RMSE values larger than one were clipped at one.
+Results: Figure 2 compares tumor volume and body weight forecast RMSE for γ = 4. For long
+horizons, doseAI achieves the lowest error, followed by ObsNODE and IGC-Net, whereas ObsNODE
+performs best for short horizons (τ ≤ 2 cycles). Detailed RMSE values for the tumor volume at
+different confounding strengths γ and prediction horizons τ are reported in Table 1. ObsNODE
+consistently shows the smallest variance across different runs.
+ObsNODE consistently outperforms the Neural ODE (NODE) in CB and ATE estimation (Table 2),
+reducing the mean absolute ATE error from 0.5289 to 0.1723 for tumor volume and from 2.0289 to
+0.0933 for body weight.
+6
+γ MODEL/ s 1 2 3 4 5 6
+4 OBSNODE 0.06±0.00 0.11±0.00 0.14±0.00 0.17±0.00 0.19±0.00 0.21±0.01
+DOSEAI 0.16±0.02 0.15±0.02 0.12±0.01 0.12±0.01 0.11±0.00 0.10±0.01
+IGC-NET 0.13±0.01 0.18±0.04 0.22±0.05 0.22±0.03 0.17±0.01 0.26±0.14
+SCIP-NET 0.16±0.00 0.27±0.02 0.32±0.04 0.30±0.05 0.28±0.06 0.27±0.07
+NODE 0.61±0.00 0.47±0.00 0.37±0.00 0.30±0.00 0.25±0.00 0.22±0.00
+6 OBSNODE 0.06±0.00 0.10±0.00 0.13±0.00 0.15±0.00 0.17±0.00 0.18±0.01
+DOSEAI 0.12±0.02 0.11±0.01 0.10±0.01 0.10±0.01 0.10±0.00 0.10±0.01
+IGC-NET 0.12±0.01 0.18±0.03 0.20±0.04 0.20±0.03 0.16±0.01 0.25±0.15
+SCIP-NET 0.14±0.00 0.24±0.02 0.31±0.05 0.29±0.05 0.27±0.06 0.26±0.06
+NODE 0.56±0.00 0.43±0.00 0.34±0.00 0.28±0.00 0.24±0.00 0.20±0.00
+8 OBSNODE 0.05±0.00 0.09±0.00 0.12±0.00 0.14±0.00 0.16±0.00 0.18±0.01
+DOSEAI 0.12±0.01 0.11±0.00 0.11±0.00 0.11±0.01 0.12±0.01 0.13±0.02
+IGC-NET 0.11±0.01 0.18±0.03 0.20±0.04 0.19±0.03 0.16±0.01 0.25±0.17
+SCIP-NET 0.14±0.00 0.24±0.02 0.31±0.04 0.29±0.05 0.28±0.06 0.27±0.06
+NODE 0.55±0.00 0.43±0.00 0.35±0.00 0.29±0.00 0.25±0.00 0.22±0.00
+Table 1: The RMSE for the tumor volume from synthetic data. The RMSE between predicted
+and observed tumor volume (mean ± std over five runs) for a fixed data assimilation time of tc = 5
+and different forecast horizons s = tf − tc (in monthly treatment cycles) at different levels of
+confounding γ.
+METRIC VARIABLE MODEL / CFk 1 2 3 4 5
+CB TUMOR VOLUME OBSNODE 0.1738 0.1739 0.1724 0.1708 0.1708
+NODE -0.5152 -0.5288 -0.5364 -0.5321 -0.5321
+CB BODY WEIGHT OBSNODE 0.0952 0.0941 0.0924 0.0924 0.0926
+NODE -2.0229 -2.0272 -2.0313 -2.0315 -2.0315
+ATE TUMOR VOLUME TRUE -0.0105 0.0031 0.0107 0.0063 0.0063
+OBSNODE 0.1633 0.1770 0.1831 0.1771 0.1771
+NODE -0.5257 -0.5257 -0.5257 -0.5257 -0.5257
+ATE BODY WEIGHT TRUE -0.0016 0.0227 0.0068 0.0070 0.0070
+OBSNODE 0.0937 0.0968 0.0992 0.0995 0.0995
+NODE -2.0245 -2.0245 -2.0245 -2.0245 -2.0245
+Table 2: Counterfactual bias (CB) and estimated average treatment effect (ATE) relative to
+the baseline treatment for five treatment regimes (CF1–CF5) in the synthetic cancer dataset, with
+data assimilation time tc = 5 and confounding level γ = 4. CB and ATE were averaged over six
+prediction time points, and all results are averaged over five runs.
+5.2 Experiments with semi-synthetic data
+Data: The second experiment employs a semi-synthetic dataset derived from real-world medical data.
+The MIMIC-IV dataset (Johnson et al., 2023) serves as the foundation, with a focus on the patient
+cohort diagnosed with sepsis. Based on this patient cohort, synthetic data are generated to represent
+patient trajectories and outcomes under both endogenous and exogenous dependencies, while ex-
+plicitly incorporating treatment effects. The synthetic data generation methodology was originally
+defined using the MIMIC-III dataset (Schulam, Saria, 2018; Johnson et al., 2016; Melnychuk et al.,
+2022). Further details on the synthetic data generation process are provided in Appendix A.4.2.
+IGCNet
+Figure 3: Semi-synthetic MIMIC-IV sepsis dataset. RMSE for ObsNODE, OptAB, IGC-Net and
+SCIP-Net as a function of data assimilation time (observation time) and forecast horizon over a
+24-hour horizon. Results are averaged over five runs and RMSE values larger than one were clipped
+at one.
+7
+MODEL/ s = tf − tc 1 2 3 4 5 6
+OBSNODE 0.13±0.00 0.21±0.00 0.25±0.00 0.27±0.00 0.30±0.00 0.33±0.00
+OPTAB 0.34±0.04 0.35±0.04 0.41±0.02 0.42±0.02 0.44±0.02 0.45±0.02
+IGC-NET 0.10±0.03 0.21±0.01 0.25±0.01 0.29±0.02 0.34±0.02 0.38±0.01
+SCIP-NET 0.34±0.10 0.73±0.10 1.32±0.16 1.32±0.16 1.33±0.16 1.32±0.16
+NODE 0.88±0.06 0.63±0.11 0.48±0.12 0.43±0.06 0.41±0.04 0.42±0.05
+Table 3: Semi-synthetic MIMIC-IV sepsis dataset. RMSE (mean ± std over 5 runs) over a
+s = tf − tc hour horizon when observing for a fixed data assimilation time of tc = 1 hour.
+METRIC VARIABLE MODEL / CFk 1 2 3 4 5
+CB SEMI-SYNTHETIC OBSNODE 1.9165 1.2978 1.3962 2.6466 -0.0149
+OUTCOME NODE 5.1987 2.4121 2.4121 7.6795 -0.5663
+ATE SEMI-SYNTHETIC TRUE -5.7596 -5.1849 -5.1849 -5.1849 -3.9458
+OUTCOME OBSNODE -3.8431 -3.8860 -3.7887 -3.9403 -3.7794
+NODE -0.5608 -2.7728 -2.7728 1.2556 -4.5121
+Table 4: Counterfactual bias (CB) and estimated average treatment effect (ATE) relative to the
+baseline treatment for five treatment regimes (CF1–CF5) in the semi-synthetic MIMIC-IV sepsis
+dataset, with data assimilation time tc = 5. CB and ATE were averaged over six prediction time
+points, and all results are averaged over five runs.
+Results: Figure 3 shows results on the semi-synthetic MIMIC-IV sepsis dataset. ObsNODE achieves
+consistently a low RMSE across the 24-hour prediction horizon and performs better than OptAB,
+IGC-Net and SCIP-Net for longer horizons. RMSE statistics averaged over five runs (Table 3 ) show
+very small variance for ObsNODE, indicating stable predictions compared to the baselines.
+For the semi-synthetic data, ObsNODE consistently achieves lower CB across all counterfactual
+treatment scenarios and reduces the mean absolute ATE error from 3.6537 to 1.4523 compared with
+the standard Neural ODE (NODE) without the observable normal form (Table 4).
+5.3 Experiments with real-world data
+Data: Selecting antibiotic therapy for sepsis patients is challenging (Wendland et al., 2024). We use
+the Sequential Organ Failure Assessment (SOFA) score, a summary measure of organ dysfunction,
+as the primary outcome and predict the effects of the antibiotics vancomycin, ceftriaxone, and
+piperacillin-tazobactam on the SOFA trajectory. In addition, we predict treatment effects on the
+side-effect markers creatinine, total bilirubin, and alanine aminotransferase (ALT). Further dynamic
+variables included in the observation vector are listed in Table 9 in Appendix A.4.3.
+The MIMIC-IV sepsis cohort (Johnson et al., 2023) was used to train and test all models. In addition,
+ObsNODE was externally validated on the independent AmsterdamUMCdb sepsis cohort (Thoral
+et al., 2021).
+Results: Table 5a summarizes the five-run robustness analysis. ObsNODE shows low variability
+across datasets sampled from the same distribution. Its competitive performance is particularly
+evident at longer forecast horizons, while IGC-Net performs better for very short-term predictions of
+selected laboratory variables (Figure 4).
+Table 5b summarizes the external validation of ObsNODE, trained on MIMIC-IV, on AmsterdamUM-
+Cdb. Predictions were more accurate for creatinine and total bilirubin and remained comparable
+for SOFA score and ALT. The improved performance may reflect the higher observation density in
+AmsterdamUMCdb, which provides more measurements for data assimilation during prediction.
+6 Related Work
+Classical statistical approaches for longitudinal causal inference focus on estimating population-
+level average potential outcomes and do not condition on individual treatment and outcome histo-
+ries (Robins, 1986; Bang, Robins, 2005; Lok, 2008; Van Der Laan, Gruber, 2012; Rytgaard et al.,
+2022). Consequently, they cannot be used for individualized outcome forecasting. These approaches
+8
+ALT
+OptAB
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Bilirubin total
+OptAB
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Creatinine
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+SOFA-Score
+OptAB
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+OptAB
+ALT
+ObsNODE
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Bilirubin total
+ObsNODE
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Creatinine
+ObsNODE
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+SOFA-Score
+ObsNODE
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+ALT
+IGC-Net
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Bilirubin total
+IGC-Net
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Creatinine
+IGC-Net
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+SOFA-Score
+IGC-Net
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+ALT
+SCIP-Net
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Bilirubin total
+SCIP-Net
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Creatinine
+SCIP-Net
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+SOFA-Score
+SCIP-Net
+0 5 10
+0
+5
+10
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Data assimilation time (hours)
+Forecast horizon (hours)
+Figure 4: Forecasting performance on MIMIC-IV. Forecast RMSE for SOFA score, creatinine, total
+bilirubin, and alanine aminotransferase (ALT) across data assimilation times and forecast horizons.
+are typically grounded in structural causal models and identification results such as the longitudinal
+g-formula. Extensions to continuous time include structural dynamic causal models (Bongers et al.,
+2022), which adopt a different formulation of interventions than considered here. Recent work has
+developed discrete-time sequence models for estimating conditional average potential outcomes
+(CAPO) (i.e. the expectation value of (4)), including recurrent and attention-based architectures
+(Bica et al., 2020; Li et al., 2020; Melnychuk et al., 2022; Hess et al., 2026). A limitation of these
+approaches is their reliance on fixed time discretizations, whereas clinical measurements are typically
+observed at irregular time points.
+Continuous-time approaches based on neural differential equations address this limitation. Treatment
+Effect Controlled Differential Equations (TE-CDEs) (Seedat et al., 2022) combine controlled dif-
+ferential equations (Kidger et al., 2020) with representation balancing to mitigate time-dependent
+confounding. The original formulation considered binary treatments and was later extended to
+continuous treatments (Wendland, Kschischo, 2025). However, balancing-based approaches may not
+fully address time-dependent confounding in sequential settings (Melnychuk et al., 2022).
+The SCIP-Net (Hess, Feuerriegel, 2025) is a recent continuous time method for estimating the CAPO
+based on a stabilized inverse propensity score weighting, which is, however, restricted to discrete
+treatment levels.
+Our ObsNODE framework is most closely related to CF-ODE (Brouwer et al., 2022), which pa-
+rameterizes a continuous-time state-space model of the form (3) using a Neural ODE. CF-ODE
+assumes that observations at treatment time uniquely determine the latent state, corresponding to
+the observability condition (Definition 3.1). However, this assumption is not structurally enforced
+and is difficult to verify in practice. In contrast, ObsNODE employs the observable normal form (7),
+9
+MODEL/ s = tf − tc 1 2 3 4 5 6
+SOFA-SCORE
+OBSNODE 0.24±0.00 0.32±0.01 0.37±0.01 0.42±0.02 0.47±0.03 0.50±0.04
+OPTAB 0.41±0.01 0.46±0.01 0.50±0.02 0.53±0.02 0.57±0.02 0.59±0.02
+IGC-NET 0.09±0.00 0.37±0.00 0.40±0.00 0.43±0.00 0.45±0.00 0.48±0.01
+SCIP-NET 0.57±0.06 1.03±0.44 1.25±0.43 1.23±0.39 1.21±0.35 1.19±0.33
+CREATININE
+OBSNODE 0.34±0.00 0.44±0.00 0.53±0.00 0.53±0.02 0.58±0.04 0.65±0.07
+OPTAB 1.14±0.02 0.93±0.02 0.89±0.03 1.23±0.03 0.96±0.01 0.62±0.02
+IGC-NET 0.09±0.02 1.13±0.01 0.89±0.00 0.92±0.01 0.78±0.15 0.95±0.01
+SCIP-NET 1.01±0.04 1.06±0.26 1.36±0.28 1.39±0.30 1.17±0.39 0.99±0.42
+BILIRUBIN-TOTAL
+OBSNODE 0.34±0.00 0.38±0.00 0.46±0.02 0.54±0.04 0.62±0.07 0.70±0.11
+OPTAB 1.36±0.05 0.66±0.01 0.73±0.07 1.05±0.04 1.56±0.14 0.97±0.05
+IGC-NET 0.07±0.01 1.40±0.02 0.69±0.01 0.91±0.00 1.07±0.01 1.59±0.03
+SCIP-NET 1.23±0.17 0.72±0.12 1.13±0.11 1.24±0.12 1.84±0.14 1.17±0.14
+ALT
+OBSNODE 0.09±0.00 0.22±0.01 0.27±0.03 0.33±0.06 0.39±0.10 0.47±0.13
+OPTAB 0.72±0.20 1.25±0.09 0.65±0.16 0.76±0.25 0.67±0.21 0.54±0.11
+IGC-NET 0.06±0.02 0.64±0.17 1.34±0.21 0.41±0.02 0.36±0.03 0.90±0.23
+SCIP-NET 1.75±0.20 1.51±0.30 0.81±0.28 0.77±0.37 2.24±0.45 1.45 ± 0.26
+(a) RMSE for ObsNODE, OptAB, IGC-Net and SCIP-Net on a test set from the MIMIC-IV sepsis dataset.
+VARIABLE/ s = tf − tc 1 2 3 4 5 6
+SOFA-SCORE 0.26±0.00 0.37±0.01 0.43±0.02 0.44±0.02 0.51±0.02 0.59±0.03
+CREATININE 0.14±0.00 0.18±0.02 0.22±0.05 0.27±0.09 0.34±0.13 0.39±0.17
+BILIRUBIN-TOTAL 0.01±0.00 0.11±0.02 0.18±0.05 0.25±0.09 0.33±0.13 0.40±0.17
+ALT 0.01±0.00 0.28±0.01 0.34±0.03 0.41±0.05 0.50±0.07 0.86±0.07
+(b) RMSE for ObsNODE, trained on MIMIC-IV sepsis data and tested on an external validation set from
+AmsterdamUMCdb. Bold values indicate lower RMSE on AmsterdamUMCdb than on the MIMIC-IV test set
+reported above.
+Table 5: Forecasting results on the real-world Sepsis dataset. RMSE for different prediction
+horizons (in hours) and a fixed data assimilation time of tc = 1 hour. Mean and standard deviation
+are reported across five runs.
+which guarantees observability by construction and makes explicit the link between control-theoretic
+observability and the identifiability condition required for the causal adjustment formula (4). More-
+over, CF-ODE conditions only on prior observations and does not explicitly incorporate the treatment
+history.
+Together, these limitations motivate a continuous-time state-space formulation that enforces observ-
+ability and enables causal outcome prediction through an explicit adjustment formula, which we
+develop in the ObsNODE framework.
+7 Conclusion and Limitations
+We introduced Observable Neural ODEs (ObsNODEs), linking control-theoretic observability to
+causal identifiability in continuous-time state-space models. ObsNODEs enforce observability by
+construction, enable causal forecasting under alternative treatment trajectories, and perform strongly
+on synthetic, semi-synthetic, and clinical data, including external validation.
+The approach relies on consistency, positivity, and the stated state-space assumptions. The tractable
+adjustment formula permits contemporaneous hidden confounding but assumes temporally indepen-
+dent disturbances; serially correlated confounding requires the general path-space adjustment derived
+in the Appendix. State reconstruction from finite, noisy observations remains approximate, and causal
+accuracy cannot be assessed on clinical data without counterfactual ground truth. Future work should
+address persistent confounding and uncertainty quantification.
+10
+Acknowledgments and Disclosure of Funding
+References
+Adamy Jürgen. Nonlinear Systems and Controls. Berlin, Heidelberg: Springer Berlin Heidelberg,
+2024. 2. 2nd ed. 2024.
+Bang Heejung, Robins James M. Doubly Robust Estimation in Missing Data and Causal Inference
+Models // Biometrics. XII 2005. 61, 4. 962–973.
+Bernard Pauline. Observer Design for Nonlinear Systems. 479. Cham: Springer International
+Publishing, 2019. (Lecture Notes in Control and Information Sciences).
+Bica Ioana, Alaa Ahmed M., Jordon James, Schaar Mihaela van der. Estimating Counterfactual
+Treatment Outcomes over Time Through Adversarially Balanced Representations. II 2020.
+Bongers Stephan, Blom Tineke, Mooij Joris M. Causal Modeling of Dynamical Systems // arXiv.org
+preprint. III 2022. arXiv:1803.08784v4 [cs.AI].
+Brouwer Edward De, Hernández Javier González, Hyland Stephanie. Predicting the impact of
+treatments over time with uncertainty aware neural differential equations. II 2022.
+Chen Ricky T. Q., Rubanova Yulia, Bettencourt Jesse, Duvenaud David K. Neural Ordinary Differen-
+tial Equations // Advances in Neural Information Processing Systems. 31. 2018.
+Geng Changran, Paganetti Harald, Grassberger Clemens. Prediction of Treatment Response for
+Combined Chemo- and Radiation Therapy for Non-Small Cell Lung Cancer Patients Using a
+Bio-Mathematical Model // Scientific Reports. X 2017. 7, 1. 13542.
+Goldberger Ary L., Amaral Luis A. N., Glass Leon, Hausdorff Jeffrey M., Ivanov Plamen Ch, Mark
+Roger G., Mietus Joseph E., Moody George B., Peng Chung-Kang, Stanley H. Eugene. PhysioBank,
+PhysioToolkit, and PhysioNet // Circulation. VI 2000.
+Hensman James, Durrande Nicolas, Solin Arno. Variational Fourier Features for Gaussian Processes
+// Journal of Machine Learning Research. 2018. 18, 151. 1–52.
+Hernán Miguel, Robins James M. Causal inference: what if. Boca Raton: Taylor and Francis, 2023.
+First edition.
+Hess Konstantin, Feuerriegel Stefan. Stabilized Neural Prediction of Potential Outcomes in Continu-
+ous Time. 2025.
+Hess Konstantin, Frauen Dennis, Melnychuk Valentyn, Feuerriegel Stefan. IGC-Net for conditional
+average potential outcome estimation over time // The Fourteenth International Conference on
+Learning Representations. 2026.
+Hofford Mackenzie R, Yu Sean C, Johnson Alistair E W, Lai Albert M, Payne Philip R O, Michelson
+Andrew P. OpenSep: a generalizable open source pipeline for SOFA score calculation and Sepsis-3
+classification // JAMIA Open. XII 2022. 5, 4. ooac105.
+Jazwinski Andrew H. Stochastic processes and filtering theory. Mineola, N.Y: Dover Publications,
+2007. Dover ed. (Dover books on engineering).
+Johnson Alistair E. W., Bulgarelli Lucas, Shen Lu, Gayles Alvin, Shammout Ayad, Horng Steven,
+Pollard Tom J., Hao Sicheng, Moody Benjamin, Gow Brian, Lehman Li-wei H., Celi Leo A., Mark
+Roger G. MIMIC-IV, a freely accessible electronic health record dataset // Scientific Data. I 2023.
+10, 1. 1.
+Johnson Alistair E. W., Pollard Tom J., Shen Lu, Lehman Li-Wei H., Feng Mengling, Ghassemi
+Mohammad, Moody Benjamin, Szolovits Peter, Celi Leo Anthony, Mark Roger G. MIMIC-III, a
+freely accessible critical care database // Scientific Data. V 2016. 3. 160035.
+11
+Jong Johann de, Emon Mohammad Asif, Wu Ping, Karki Reagon, Sood Meemansa, Godard Patrice,
+Ahmad Ashar, Vrooman Henri, Hofmann-Apitius Martin, Fröhlich Holger. Deep learning for
+clustering of multivariate clinical patient trajectories with missing values // GigaScience. XI 2019.
+8, 11. giz134.
+Kallenberg Olav. Foundations of Modern Probability. 99. 2021. 3. (Probability Theory and Stochastic
+Modelling).
+Kidger Patrick, Morrill James, Foster James, Lyons Terry. Neural Controlled Differential Equations
+for Irregular Time Series. XI 2020.
+Li Rui, Shahn Zach, Li Jun, Lu Mingyu, Chakraborty Prithwish, Sow Daby, Ghalwash Mohamed,
+Lehman Li-wei H. G-Net: A Deep Learning Approach to G-computation for Counterfactual
+Outcome Prediction Under Dynamic Treatment Regimes. III 2020.
+Lok Judith J. Statistical modeling of causal effects in continuous time // Ann. Statist. VI 2008. 36, 3.
+Melnychuk Valentyn, Frauen Dennis, Feuerriegel Stefan. Causal Transformer for Estimating Counter-
+factual Outcomes. VI 2022.
+Murphy S. A. Optimal Dynamic Treatment Regimes // Journal of the Royal Statistical Society Series B:
+Statistical Methodology. IV 2003. 65, 2. 331–355. _eprint: https://academic.oup.com/jrsssb/article-
+pdf/65/2/331/49684411/jrsssb_65_2_331.pdf.
+Pearl Judea. Causality: models, reasoning, and inference. Cambridge, U.K. ; New York: Cambridge
+University Press, 2000.
+Peters Jonas, Janzing Dominik, Schölkopf Bernhard. Elements of causal inference: foundations and
+learning algorithms. Cambridge, Mass: The MIT press, 2017. (Adaptive computation and machine
+learning).
+Robins James. A new approach to causal inference in mortality studies with a sustained exposure
+period—application to control of the healthy worker survivor effect // Mathematical Modelling. I
+1986. 7, 9. 1393–1512.
+Robins James M. Optimal Structural Nested Models for Optimal Sequential Decisions // Proceedings
+of the Second Seattle Symposium in Biostatistics: Analysis of Correlated Data. New York, NY:
+Springer New York, 2004. 189–326.
+Rubanova Yulia, Chen Ricky T. Q., Duvenaud David. Latent ODEs for Irregularly-Sampled Time
+Series. 2019.
+Rubin Donald B. Randomization Analysis of Experimental Data: The Fisher Randomization Test
+Comment // Journal of the American Statistical Association. IX 1980. 75, 371. 591.
+Rytgaard Helene C., Gerds Thomas A., Van Der Laan Mark J. Continuous-time targeted minimum
+loss-based estimation of intervention-specific mean outcomes // Ann. Statist. X 2022. 50, 5.
+Schulam Peter, Saria Suchi. Reliable Decision Support using Counterfactual Models. II 2018.
+Seedat Nabeel, Imrie Fergus, Bellot Alexis, Qian Zhaozhi, Schaar Mihaela van der. Continuous-Time
+Modeling of Counterfactual Outcomes Using Neural Controlled Differential Equations. 2022.
+Thoral Patrick J., Peppink Jan M., Driessen Ronald H., Sijbrands Eric J. G., Kompanje Erwin
+J. O., Kaplan Lewis, Bailey Heatherlee, Kesecioglu Jozef, Cecconi Maurizio, Churpek Matthew,
+Clermont Gilles, Van Der Schaar Mihaela, Ercole Ari, Girbes Armand R. J., Elbers Paul W. G.
+Sharing ICU Patient Data Responsibly Under the Society of Critical Care Medicine/European
+Society of Intensive Care Medicine Joint Data Science Collaboration: The Amsterdam University
+Medical Centers Database (AmsterdamUMCdb) Example* // Critical Care Medicine. VI 2021. 49,
+6. e563–e577.
+Van Der Laan Mark J., Gruber Susan. Targeted Minimum Loss Based Estimation of Causal Effects
+of Multiple Time Point Interventions // The International Journal of Biostatistics. V 2012. 8, 1.
+12
+Van Handel Ramon. Observability and nonlinear filtering // Probability Theory and Related Fields.
+IX 2009. 145, 1-2. 35–74.
+Vincent J. L., Moreno R., Takala J., Willatts S., De Mendonça A., Bruining H., Reinhart C. K., Suter
+P. M., Thijs L. G. The SOFA (Sepsis-related Organ Failure Assessment) score to describe organ
+dysfunction/failure. On behalf of the Working Group on Sepsis-Related Problems of the European
+Society of Intensive Care Medicine // Intensive Care Medicine. VII 1996. 22, 7. 707–710.
+Wendland Philipp, Birkenbihl Colin, Gomez-Freixa Marc, Sood Meemansa, Kschischo Maik, Fröhlich
+Holger. Generation of realistic synthetic data using Multimodal Neural Ordinary Differential
+Equations // npj Digital Medicine. VIII 2022. 5, 1. 122.
+Wendland Philipp, Kschischo Maik. Dynamic Dose Optimization Under Side Effect Constraints
+Using Counterfactual Outcome Prediction // Artificial Intelligence in Medicine. 15735. Cham:
+Springer Nature Switzerland, 2025. 428–433. Series Title: Lecture Notes in Computer Science.
+Wendland Philipp, Schenkel-Häger Christof, Wenningmann Ingobert, Kschischo Maik. An optimal
+antibiotic selection framework for Sepsis patients using Artificial Intelligence // NPJ digital
+medicine. XI 2024. 7, 1. 343.
+Xu Ziqi, Cheng Debo, Li Jiuyong, Liu Jixue, Liu Lin, Yu Kui. Causal Inference with Conditional
+Front-Door Adjustment and Identifiable Variational Autoencoder // The Twelfth International
+Conference on Learning Representations. 2024.
+A Technical Appendix and Supplementary Material
+A.1 Derivation of equation 4
+In the main text we derived only a discrete version of the adjustment formula (4) and here we
+provide the continuous time version. Assume we have observed a treatment and outcome history
+o[0,t) = {a[0,t), y[0,t)} before time t and also the outcome Yt = yt at time t. We want to compute the
+probability density PYt+s (a[t,t+s) )|Yt ,O[0,t) (yt+s|yt, o[0,t)) for the potential outcome Yt+s
+(
+a[t,t+s)
+)
+under the hypothetical intervention path a[t,t+s) applied in the time interval [t, t + s).
+Let us partition the data assimilation time interval [0, t) into K subintervals [tk, tk+1) with t0 =
+0, tK = t and [0, t) = ∪K k=1[tk, tk+1). Similarly, partition the prediction interval [t, t + s) into L
+subintervals with [tl, tl+1) with tK+1 = t, tK+L = t + s and [t, t + s) = ∪K+L l=K+1[tl, tl+1).
+For each tk ∈ [0, t) and tl ∈ [t, t + s) we identify the variables in the CFD (2) with variables in our
+model as
+A ↢ At, Y ↢ Ytl , M ↢ Ztl , W ↢ {Zt, Yt, Atk , Ytk } = {Zt, Yt, Otk },
+with Otk = {Atk , Ytk }. We can check graphically (replace tk by 0 and tl by t + s in Fig. 1) that
+M = Ztl fulfills the CFD 3.2 with respect to (A, Y ) = (At, Ytl ) with the conditioning variables
+W = {Zt, Yt, Otk }.
+In order to apply the CFD to sets of variables we define
+A0:K := {Atk |tk ∈ [0, t)}, Y0:K := {Ytk |tk ∈ [0, t)}, AK+1:L := {Atl |tl ∈ [t, t + s)}.
+Selecting the following sets in Theorem 3.2
+A ↢ AK+1:L, Y ↢ Yt+s, M ↢ Zt+s, W ↢ {Zt, Yt, A0:K , Y0:K } = {Zt, Yt, O0:K },
+we see that M = Zt+s fulfills the CFD relative to (A, Y ) = (AK+1:L, Yt+s) with the conditioning
+set W = {Zt, Yt, O0:K }. Applying the adjustment formula of the CFD (2) we have for the probability
+density of the potential outcome Yt+s under the treatment sequence aK+1:L
+PYt+s (AK+1:L ) (yt+s) =
+∫
+zt+s
+∫
+a′ K+1:L
+∫
+zt ,yt ,o0:K
+{
+p(yt+s|a′ K+1:L, zt+s, zt, yt, o0:K ) (8)
+× p(a′ K+1:L|zt, yt, o0:K ) p(zt+s|aK+1:L, zt, yt, o0:K ) p(zt, yt, o0:K ) } .
+(9)
+13
+(a) (b)
+Figure 5: (a) Temporal DAG for treatment A, observation Y , and latent state Z at three consecutive
+time points. In contrast to Fig. 1, the unobserved process ϵ jointly affecting treatment assignment
+and observations exhibits temporal dependence. (b) Under a dynamic treatment regime, treatment
+additionally depends on the observed treatment–outcome history, as indicated by the green dashed
+arrows.
+Now we use the independence relations from assumptions 4.2 and 4.1
+P (yt+s|a′ K+1:L, zt+s, zt, yt, o0:K ) = p(yt+s|zt+s)
+p(zt+s|aK+1:L, zt, yt, o0:K ) = p(zt+s|aK+1:L, zt)
+and find for the probability density of the potential outcome
+PYt+s (AK+1:L ) (yt+s) =
+∫
+zt+s
+∫
+a′ K+1:L
+∫
+zt ,yt ,o0:K
+{p(yt+s|zt+s)
+× p(a′ K+1:L|zt, yt, o0:K ) p(zt+s|aK+1:L, zt) p(zt, yt, o0:K ) }
+=
+∫
+zt+s
+∫
+zt ,yt ,o0:K
+p(yt+s|zt+s)p(zt+s|aK+1:L, zt) p(zt|yt, o0:K ) p(yt, o0:K ).
+From this, we read
+PYt+s (aK+1:L )|Yt ,O0:K (yt+s|yt, o0:K ) (10)
+=
+∫
+zt+s
+∫
+zt
+p(yt+s|zt+s)p(zt+s|aK+1:L, zt) p(zt|yt, o0:K ). (11)
+This formula is valid for any partitions of the data assimilation interval [0, t) and the forecast interval
+[t, t + s). Making the partitions finer and finer by sending K → ∞ and L → ∞ allows us to replace
+o0:K and by o[0,t) and aK+1:L by a[t,t+s) and we obtain (4). The model forecast is deterministic in
+(3) and we have p(zt+s|a[t,t+s), zt) = δ
+(
+zt+s − zt −
+∫ t+s
+t f (zτ , aτ ) dτ
+)
+.
+Applying the continuum limit in (10) only to the hypothetical treatment trajectory (L → ∞) we have
+PYt+s (a[t,t+s) )|Yt ,O0:K (yt+s|yt, o0:K )
+=
+∫
+zt+s
+∫
+zt
+p(yt+s|zt+s)p(zt+s|a[t,t+s), zt) p(zt|yt, o0:K ).
+If the discretization time points tk ∈ [0, t) for the data assimilation interval [0, t) coincide with the
+time points for the observed data, we have an adjustment formula for discrete time observations
+and continuous time treatment trajectories. Here, p(zt|yt, o0:K ) is the filtering distribution for the
+continuous time ODE model 3 with discrete time observations (Jazwinski, 2007).
+A.2 An adjustment formula for serially correlated hidden confounders
+Assumption 4.2 is compatible with temporally independent unobserved disturbances ϵt that affect
+both treatment assignment and contemporaneous observations, as shown in Fig. 1. If ϵt is serially
+correlated, as illustrated in Fig. 5, the observation at time t + s may remain statistically dependent on
+the treatment trajectory even after conditioning on the latent state Zt+s. Consequently, the conditional
+independence
+p(yt+s|a′ K+1:L, zt+s, zt, yt, o0:K ) = p(yt+s|zt+s)
+14
+used in the preceding derivation no longer holds.
+Nevertheless, provided that the CFD criterion remains satisfied, the potential-outcome distribution is
+still identified by the unsimplified adjustment formula 8. For a finite partition, conditioning the CFD
+adjustment formula on the observed history gives
+PYt+s (aK+1:L )|Yt ,O0:K (yt+s|yt, o0:K )
+=
+∫
+zt
+∫
+zt+s
+∫
+a′ K+1:L
+{p
+(
+yt+s|a′ K+1:L, zt+s, zt, yt, o0:K )
+× p
+(
+a′ K+1:L|zt, yt, o0:K ) p (zt+s|aK+1:L, zt) p (zt|yt, o0:K )}. (12)
+Here, aK+1:L denotes the hypothetical treatment sequence of interest, whereas a′ K+1:L is integrated
+with respect to its observational distribution.
+In the continuum limit, a′ K+1:L becomes an alternative treatment trajectory a′ [t,t+s). Because the
+space of continuous-time trajectories is generally infinite-dimensional, the corresponding integration
+is expressed using the conditional path measure (Kallenberg, 2021)
+P
+(
+da′ [t,t+s)|zt, yt, o[0,t)
+)
+.
+The continuous-time adjustment formula is therefore
+PYt+s (a[t,t+s) )|Yt ,O[0,t)
+(
+yt+s|yt, o[0,t)
+)
+=
+∫
+zt
+∫
+zt+s
+∫
+A[t,t+s)
+{
+p
+(
+yt+s|a′ [t,t+s), zt+s, zt, yt, o[0,t)
+)
+× P
+(
+da′ [t,t+s)|zt, yt, o[0,t)
+)
+p
+(
+zt+s|a[t,t+s), zt
+)
+p
+(
+zt|yt, o[0,t)
+)}
+(13)
+where A[t,t+s) denotes the space of admissible treatment trajectories. Thus, observability still permits
+identification through the latent mediator, but serial dependence of the hidden confounder prevents
+the observational treatment-path distribution from being integrated out.
+Equation 13 could in principle be approximated by learning the conditional observational treatment
+process, sampling alternative treatment trajectories from this process, and averaging the conditional
+outcome density over these trajectories. Such an implementation additionally requires estimation
+of the complete treatment-path distribution and suitable path-space positivity. However, its non-
+parametric estimation additionally requires path-space and mediator positivity, which may fail for
+deterministic latent dynamics. Practical implementations may therefore require stochastic latent
+dynamics or an augmented observable state that captures the temporally persistent confounding
+process.
+The ObsNODE implementation considered in this work instead uses Assumption 4.2, under which
+the outcome density is independent of a′ [t,t+s) given Zt+s. The path integral then equals one, and
+(13) reduces to the tractable adjustment formula (4).
+A.3 Details on training the ObsNODE model
+The datasets were split into training, validation, and test sets and feature-wise Z-score normalization
+was applied using statistics computed on the training set only. The normalized dataset is subsequently
+used for model training.
+Each multivariate time series was segmented at a decision time point tc into two disjoint subsequences.
+The prefix segment consists of all observations prior to tc and is used to condition the recognition
+model. The model infers an initial state z0 for each individual trajectory using an an LSTM-based
+recognition network (Rubanova et al., 2019).
+To handle missing observations, the recognition LSTM is augmented with an explicit imputation
+mechanism. The indicator function
+Itij =
+{1 : ytij is observed
+0 : ytij is missing.
+15
+indicates whether the data for the j−th component of the i−th unit at time t is observed or not, The
+imputation layer is defined as the transformation
+ytij = ytij · Itij + bj · (1 − Itij ) ,
+where bj are learnable parameters (Jong de et al., 2019; Wendland et al., 2022). This formulation
+replaces missing entries with trainable values that are optimized jointly with the LSTM parameters in
+an end-to-end fashion.
+The latent initial states z0 inferred by the LSTM, together with the control function at are sub-
+sequently passed as inputs to the Neural Differential Equation (NODE) model. The observations
+after the decision time point tc are used for loss computation and subsequent optimization. Model
+parameters are optimized using the Adam optimizer.
+The ObsNODE model supports both direct long-horizon forecasting and a recursive scheme, similar
+in spirit to ODE-RNN (Rubanova et al., 2019). In the long-horizon setting, the state estimated by
+the LSTM recognition model is used to generate a forecast over the entire prediction window. In
+the recursive setting, forecasts are produced iteratively: at each step, the ODE model generates a
+short-term prediction, which is appended to the observation and treatment history sequence observed
+up to tc. Conditioned on this augmented sequence, the LSTM updates the latent state, which then
+serves as the initial condition for the next ODE rollout. This process repeats until the full horizon is
+covered, without using any ground-truth observations beyond tc. We find empirically that augmenting
+the sequence with intermediate predictions can improve stability for longer forecasting horizons in
+some settings.
+A.3.1 Code availability
+ObsNODE is implemented in PyTorch. Code is available at https://github.com/
+JenniferJaschob/ObsNODE.git. The repository includes scripts for data preprocessing, simula-
+tion, model training, and evaluation, together with configuration files specifying all hyperparameters
+used in the experiments.
+A.4 Details for Computational Experiments
+A.4.1 Details for Synthetic Data Simulation
+The synthetic data set is simulated from a dynamic model for tumor volume V (t) (in cm3) (Geng
+et al., 2017; Bica et al., 2020) and net body weight W net(t) (in kg) in response to a dynamic
+dosing trajectory for chemotherapy C(t) and radiotherapy d(t) combination treatment (Wendland,
+Kschischo, 2025):
+dV (t)
+dt =
+(
+ρ log
+( K
+V (t)
+)
+− βcC (t) −
+(
+αr d (t) + βr d (t)2
+)
++ ϵ(t)
+)
+V (t) (14a)
+dW net (t)
+dt = kg W net (t)
+(
+1 − W net (t) G ) − βwcC (t) − αwr d (t) − λV (t) . (14b)
+The tumor volume is assumed to follow a Gompertz growth function, which is inhibited by the
+chemotherapy and radiotherapy dosing. The Gaussian zero mean white noise process ϵ(t) renders the
+tumour volume a stochastic variable.
+Net body weight W net(t) is modeled as a logistic growth process, modified by tumor volume
+and therapy-induced weight loss (Wendland, Kschischo, 2025). Net body weight W net(t) =
+W (t) − ρdV (t) is defined as body weight W (t) minus the tumor weight, with ρd denoting the tumor
+density. The parameter G corresponds to the saturation level, which in this case is set to the initial
+weight. The parameters βwc, αwr , and λ determine the weight loss contributions of chemotherapy,
+radiotherapy, and disease impact, respectively.
+Treatment doses are modeled as time dependent random variables
+C(t) = Cmax σ
+( γc αdose c
+Dmax
+(D(t) − δc)
+)
+(15a)
+d(t) = dmax σ
+( γr αdose r
+Dmax
+(D(t) − δr )
+)
+, (15b)
+16
+where σ is the softmax function and Cmax = 14 mg/m3 and dmax = 3 Gy are the maximum doses for
+for chemo- and radiotherapy, respectively. The prescribed treatment doses depend on the outcome
+via the mean tumor diameter D(t) over the last 15 days (Melnychuk et al., 2022). The parameter
+Dmax = 13 cm is the maximum tumor diameter and we set δc = δr = Dmax 2 . The degree of time dependent confounding is given by the parameters γc and γr , with range γ = γc = γr ∈ [1, 8]. The
+values of αdose c and αdose c are sampled uniformly in the range from 1cm to 4cm to simulate variability
+in individual dosing decisions. The IGC-Net model can only process binary treatments indicators at
+and we interprete C(t)/Cmax and d(t)/dmax for IGC-Net as probabilities for the Bernoulli-variables
+of treatment for chemo- and radiotherapy, respectively.
+We simulate 3,000 patients and use 1,000 patients each for training, validation, and testing. Chemother-
+apy dose C(t) and radiotherapy dose d(t) was adjusted in monthly treatment cycles by sampling
+from (15). To model patient variability, we sampled patient specific parameters from Gaussian
+distributions, see Table 6.
+MODEL VARIABLE PARAMETER DISTRIBUTION DISTRIBUTION VALUE (µ, σ)
+TUMOR GROWTH PARAMETER ρ NORMAL 7 × 10−5, 0.00723
+TUMOR CARRYING CAPACITY K CONSTANT 30
+TUMOR RADIO CELL KILL (α) αr NORMAL 0.0398, 0.168
+TUMOR RADIO CELL KILL (β) βr - SET α/β = 10
+TUMOR CHEMO CELL KILL βc NORMAL 0.028, 0.0007
+TUMOR NOISE ϵvt NORMAL 0, 0.01
+WEIGHT GROWTH PARAMETER ρw NORMAL 14 × 10−5, 10−5
+WEIGHT CARRYING CAPACITY Kw CONSTANT INITIAL WEIGHT
+WEIGHT RADIO INFLUENCE αwr NORMAL 0.004125, 10−4
+WEIGHT CHEMO INFLUENCE βwc NORMAL 0.001775, 2 × 10−4
+WEIGHT CANCER INFLUENCE λ NORMAL 31 × 10−5, 15 × 10−6
+WEIGHT NOISE ϵwt NORMAL 0, 0.0015
+Table 6: Parameter of the cancer growth simulation model (Wendland, Kschischo, 2025).
+We generated five counterfactual treatment scenarios (CF1–CF5). For CF1 and CF2 , we sampled
+two different treatment sequences by independently and uniformly selecting one of four predefined
+treatment application levels at each time step (chemotherapy: {0, 3, 5, 7}, radiotherapy: {0, 1, 2,
+3}). These sampled dose sequences were then fixed and applied deterministically to all patients
+after the intervention time. These values represent the applied values, while the effective dose is
+modeled via the pharmacokinetic drug decay process. CF1 and CF2 therefore represent randomly
+assigned alternative treatment sequences. CF3 denotes a strategy consisting of maximum radiotherapy
+without chemotherapy, while CF4 denotes a strategy consisting of maximum chemotherapy without
+radiotherapy. CF5 corresponds to no treatment.
+A.4.2 Details for Semi-Synthetic Data Simulation
+To generate semi-synthetic data (Schulam, Saria, 2018) we have modified the approach from (Mel-
+nychuk et al., 2022). We use the sepsis patient cohort (3557 patients) from the MIMIC-IV dataset
+(Johnson et al., 2023) (see also A.4.3) and select three vital signs as time dependent hidden con-
+founders ϵt. Then, we simulate untreated outcomes j ∈ {1, . . . , dy } as
+˜Y j,(i) t = αj s B-spline(t) + αj g gj,(i)(t) + αj ϕ ϕj Y (ϵ(i) t ) + ηj,(i) t (16)
+with noise ηj,(i) t ∼ N (0, 0.0052) and weight coefficients αj s, αj g and αj ϕ. The term B-spline(t)
+represents a mixture of three cubic B-splines. The function gj,(i) is independently sampled for each
+patient i from a Gaussian process with a Matérn kernel, and ϕj Y is sampled via random Fourier
+features (RFF) (Hensman et al., 2018).
+Synthetic binary treatments At = (A1 t , . . . , Ada t ) ∈ {0, 1}da with confounding are simulated via
+Al t ∼ Bernoulli(PAl t ), PAl t = σ ( γl A ¯Y A,l t−1 + γl ϵΦl ϵ(ϵt) + bl ) ,
+17
+where σ is the sigmoid function. The treatment probability PAl t for the l−th treatment component
+Al t depends on the outcome history, represented by an average over a subset of the previous treated
+outcomes ¯Y A,l t−1 (Melnychuk et al., 2022). Hidden confounding of the treatment is represented via the
+function Φl ϵ sampled from a RFF approximation of a Gaussian process. The parameters γl A and γl ϵ
+control the confounding strength and bl is a bias parameter.
+The time dependent treatment effect
+Ej t =
+t∑
+k=t−wl
+minl=1,...,da 1[Al k =1]PAl k βlj
+(wl − k)2 . (17)
+is bounded by the maximum effect size βlj ∈ {0, β} of treatment component l on outcome j. It is
+either zero for outcomes j not affected by treatment l or equals the constant β. Finally, the treated
+outcomes are obtained from the untreated outcomes (16) by adding the treatment effects
+Y j,(i) t = ˜Y j,(i) t + Ej t . (18)
+Parameters for the semi-synthetic sepsis data are given in Table 7.
+Variable Parameter Value
+Outcome α 2
+Outcome αg 0.5
+Outcome αe 1
+Outcome ν 20
+Outcome Exogeneous Variables Creatinine, Bilirubin, ALT
+Treatment 1; 2 γz 0.3; 0.3
+Treatment 1; 2 γ0 0.3; 0.1
+Treatment 1; 2 bias -2; -2
+Treatment 1; 2 ν 20; 20
+Treatment 1; 2 Confounding Variables Creatinine; Bilirubin, ALT
+Table 7: Parameters of the data-simulation model for semi-synthetic data (Wendland, Kschischo,
+2025).
+We generated five counterfactual treatment scenarios CFk for k ∈ 1, . . . , 5 by modifying the
+treatment assignment mechanism during simulation. CF1 corresponds to a randomized treatment
+policy, with treatment probabilities sampled randomly. For CF2–CF5, treatment probabilities are
+deterministically set to one or zero, corresponding to maximal or minimal treatment, respectively.
+CF2 implements a strategy with maximum first treatment and no subsequent treatment, whereas CF3
+represents a strategy with no first treatment and maximum second treatment. CF4 corresponds to a
+no-treatment strategy, while CF5 represents a strategy with maximum treatment for all time points
+after the decision time point tc.
+18
+A.4.3 Details on Experiments with Real-World Data
+MIMICIV sepsis cohort: We use the MIMIC-IV electronic health record dataset collected at
+Beth Israel Deaconess Medical Center, which contains data from approximately 450,000 hospital
+admissions (Johnson et al., 2023). The dataset includes demographic information, laboratory values,
+vital signs, medications, and diagnoses.
+For our analysis we focus on sepsis patients identified using the OpenSep pipeline according to the
+Sepsis-3 criteria (Hofford et al., 2022). Sepsis cases were defined by an increase in the Sequential
+Organ Failure Assessment (SOFA) score of at least two points within 48 hours before or 24 hours
+after a suspected infection.
+The SOFA score is used as the clinical outcome variable. It summarizes dysfunction in six organ
+systems (respiratory, cardiovascular, central nervous system, coagulation, liver, and kidney), each
+scored from 0 to 4 according to the severity of dysfunction (Vincent et al., 1996). An overview of the
+subscores is given in Table 8.
+ORGAN PARAMETER UNIT 1 2 3 4
+RESPIRATION P aO2 /F iO2 mmHg <400 <300 <200 <100
+COAGULATION PLATELETS µl <150.000 <100.00 <50.000 <20.000
+LIVER BILIRUBIN MG/DL 1.2-1.9 2.0-5.9 6.0-11.9 >12.0
+CARDIO-
+VASCULAR
+MAP OR
+VASOPRESSORS
+MMHG OR
+µg/kg/min MAP < 70 DOPAM. ≤ 5 OR DOBUTAM. DOPAM. > 5 OR EPINEPH. ≤0.1 OR NOREPIN. ≤ 0.1 DOPAM. > 15 OR EPINEPH. > 0.1 OR NOREPIN. > 0.1
+CENTRAL
+NERVOUS
+SYSTEM
+GCS 13-14 10-12 6-9 <6
+RENAL CREATININE MG/DL OR ML/D 1.2-1.9 2.0-3.4 3.5-4.9 OR URIN < 500 >5.9
+Table 8: Overview of the SOFA score subscores (Wendland et al., 2024) Each column corresponds
+to a subscore (0–4) reflecting the severity of dysfunction in the central nervous, cardiovascular,
+respiratory, coagulation, hepatic, and renal systems. Subscores of 0 indicate normal organ function as
+defined by the respective criteria.
+We consider patients treated with the antibiotics vancomycin, ceftriaxone, and piperacillin-tazobactam.
+To assess potential treatment side effects we additionally predict laboratory indicators of organ toxicity,
+including creatinine (kidney injury) as well as total bilirubin and alanine aminotransferase (ALT)
+(liver injury).
+Data preprocessing follows the OptAB pipeline (Wendland et al., 2024). The cohort is restricted to
+ICU patients, and antibiotic treatments are encoded as a vector of three binary variables indicating
+administration of vancomycin, ceftriaxone, and piperacillin-tazobactam.
+Time-dependent covariates were selected from all available dynamic variables by excluding variables
+recorded in fewer than 50% of patients and retaining those with an absolute Spearman correlation
+of at least 0.3 with the SOFA score during the first 12 hours. The resulting covariates are listed in
+Table 9 .
+To capture information about measurement patterns, cumulative missingness indicators were added
+as additional time-dependent covariates. Static covariates include sex, age, height, and weight at
+admission.
+The final dataset contains 3,556 patients. We use 80% of the data for training and 20% for testing,
+with the training set further split into 80% training and 20% validation data.
+AmsterdamUMCdb sepsis cohort: For external validation, we evaluated the performance of
+ObsNODE, trained on MIMIC-IV, in the independent AmsterdamUMCdb cohort (Thoral et al., 2021).
+AmsterdamUMCdb comprises Electronic Health Records (EHR) data from 23,106 ICU admissions
+at Amsterdam University Medical Center between 2003 and 2016. The distribution of administered
+antibiotics differed substantially between AmsterdamUMCdb and MIMIC-IV, potentially reflecting
+differences in patient populations, pathogen prevalence, or local treatment practices. Among 6,285
+patients with sepsis in AmsterdamUMCdb, 3,374 received Ceftriaxone, 3,058 Cefotaxime, and 1,718
+erythromycin. For external validation, we restricted the cohort to patients treated with antibiotics
+Vancomycin, Ceftriaxone, or Piperacillin/Tazobactam. This resulted in an external test set of 399
+19
+VARIABLE UNIT
+SOFA SCORE -
+ALANINE AMINOTRANSFERASE IU/L
+ANION GAP MEQ/L
+BICARBONATE MEQ/L
+TOTAL BILIRUBIN MG/DL
+BLOOD UREA NITROGEN (BUN) MG/DL
+CREATININE MG/DL
+DIASTOLIC BLOOD PRESSURE MMHG
+PLATELET COUNT K/µL
+RED CELL DISTRIBUTION WIDTH (RDW) %
+SYSTOLIC BLOOD PRESSURE MMHG
+Table 9: Time-dependent covariates from MIMIC-IV-sepsis dataset
+patients, comprising 364 treated with Ceftriaxone and 35 with vancomycin; no patients treated with
+Piperacillin/Tazobactam.
+The two cohorts differed substantially in both SOFA score distributions and the availability of
+laboratory measurements. The mean SOFA score among patients with sepsis was higher in Amster-
+damUMCdb than in MIMIC-IV (6.8 to 4.43). Laboratory measurements contributing to the SOFA
+score were also more frequently available in AmsterdamUMCdb. In the AmsterdamUMCdb test set,
+23.3% of patients had no recorded total bilirubin measurement and 16.8% had no recorded alanine
+aminotransferase (ALT) measurement, compared with 56.8% and 56.1%, respectively, in MIMIC-
+IV. These differences indicate substantial heterogeneity in laboratory testing and documentation
+practices, which may contribute to the observed distribution shift and affect model robustness and
+generalizability across cohorts.
+The AmsterdamUMCdb data were preprocessed following the OptAB pipeline (Wendland et al.,
+2024), using the same preprocessing procedures as applied to the MIMIC-IV dataset to ensure
+consistency between the training and external validation cohorts.
+Data availability: The public MIMIC-IV dataset (Johnson et al., 2023; Goldberger et al., 2000)
+is available under https://physionet.org/content/mimiciv/2.2/ and is shared by the data
+owners after reasonable request.
+AmsterdamUMCdb dataset (Thoral et al., 2021) is available under https://
+amsterdammedicaldatascience.nl/amsterdamumcdb/. The data is shared by the data
+owners after reasonable request including the supervision of a practising intensivist.
+20
+A.5 Hyperparameter Tuning
+A.5.1 Hyperparameter Tuning of ObsNODE
+For hyperparameter optimization of the ObsNODE model, we use Optuna with the Tree-structured
+Parzen Estimator (TPE). Table 10 summarizes the search space (a) and the selected configurations for
+three datasets: the synthetic cancer dataset, the semi-synthetic MIMIC-IV dataset, and the MIMIC-
+IV sepsis dataset (b). While the parameters of the NODE component can, in principle, be tuned
+separately for each neural network in the observation normal form (7), we keep them identical across
+all components in our experiments.
+SEARCH SPACE/DATA SET SYNTHETIC CANCER (SEMI-SYNTHETIC) MIMIC-IV
+LATENT SPACE DIMENSION [dy , .., 3 dy ] [dy , .., 3 dy ]
+BATCH SIZE {32,64,...,256} [100,250,500,750,1000]
+LEARNING RATE [0.001, 0.0001, 0.00001] [0.001, 0.0001, 0.00001]
+HIDDEN DIM OBSERVER [32,64,128,256] [32,64,128,256]
+HIDDEN DIMENSION NODE [32,64,128,256] [32,64,128,256]
+NUMBER OF LAYERS NODE {1,2,...,10} {1,2,...,10}
+ACTIVATION FUNCTION NODE [LEAKYRELU, TANH, SIGMOID] [LEAKYRELU, TANH, SIGMOID]
+(a) Search space for ObsNODE hyperparameters.
+HYPERPARAMETER/DATA SET SYNTHETIC CANCER SEMI-SYNTHETIC MIMIC-IV MIMIC-IV
+LATENT SPACE DIMENSION = dy × m 2 × 2 1 × 2 11 × 3
+BATCH SIZE 64 100 500
+LEARNING RATE 0.001 0.0001 0.0001
+HIDDEN DIMENSION OBSERVER 128 128 256
+HIDDEN DIMENSION NODE 128 128 256
+NUMBER OF LAYERS NODE 5 6 7
+ACTIVATION FUNCTION NODE LEAKYRELU LEAKYRELU LEAKYRELU
+(b) Optimized hyperparameter values for ObsNODE.
+Table 10: Hyperparameter Tuning of the ObsNODE Model. Table (a) illustrates the hyperparame-
+ter search space, while Table (b) reports the optimal hyperparameter configurations for experiments
+conducted on the synthetic cancer dataset, the semi-synthetic MIMIC-IV sepsis dataset, and the
+MIMIC-IV sepsis dataset.
+21
+A.5.2 Hyperparameter Tuning of OptAB and DoseAI
+For hyperparameter tuning of the OptAB and DoseAI models, we use Optuna with the Tree-structured
+Parzen Estimator (TPE). Table 11 summarizes the search space (a) and the resulting configurations (b)
+for both models. DoseAI can handle continuous treatment doses and is applied to the synthetic cancer
+dataset, while OptAB is restricted to categorial treatments and used for the semi-synthetic dataset
+based on MIMIC-IV and the real world sepsis dataset from MIMIC-IV. The decoder optimization is
+initialized with the final hyperparameter values obtained for the encoder.
+SEARCH SPACE/DATA SET SYNTHETIC CANCER (SEMI-SYNTHETIC) MIMIC-IV
+DIMENSION OF THE LATENT STATE {1, 2, ..., 30} {1, 2, ..., 30}
+BATCH SIZE {16, 32, 64, 125, 250, 500, 1000} {100, 200, 500, 1000, 2000}
+MAX. NUMBER OF NCDE UNITS {1, 2, ..., 1000} {1, 2, ..., 1000}
+LEARNING RATE [0.0001, 0.01] [0.0001, 0.01]
+ACTIVATION FUNCTION OF F {LEAKYRELU, TANH, SIGMOID, IDENTITY} {LEAKYRELU, TANH, SIGMOID, IDENTITY}
+NUMBER OF NCDE LAYERS {1, 2, ..., 20} {1, 2, ..., 20}
+ACTIVATION FUNCTION OF hα
+{LEAKYRELU, TANH,
+SIGMOID, IDENTITY}
+{LEAKYRELU, TANH,
+SIGMOID, IDENTITY}
+NUMBER OF LAYERS OF H {1, 2, ..., 1000} {1, 2, ..., 1000}
+MAX. NUMBER OF UNITS OF H {1, 2, ..., 6} {1, 2, ..., 6}
+(a) Search space for OptAB and DoseAI hyperparameters.
+HYPERPARAMETER/DATA SET SYNTHETIC CANCER SEMI-SYNTHETIC MIMIC-IV MIMIC-IV
+ENCODER
+DIMENSION OF THE LATENT STATE 16 7 17
+BATCH SIZE 250 1000 500
+MAX. NUMBER OF NCDE UNITS 578 174 33
+LEARNING RATE 0.0042 0.0016 0.0051
+ACTIVATION FUNCTION OF F LEAKYRELU LEAKYRELU TANH
+NUMBER OF NCDE LAYERS 2 14 15
+ACTIVATION FUNCTION OF hα TANH LEAKYRELU TANH
+NUMBER OF LAYERS OF H 128 275 128
+MAX. NUMBER OF UNITS OF H 4 4 1
+DECODER
+DIMENSION OF THE LATENT STATE 22 25 17
+BATCH SIZE 125 1000 1000
+MAX. NUMBER OF NCDE UNITS 802 825 33
+LEARNING RATE 0.0016 0.0007 0.0051
+ACTIVATION FUNCTION OF F LEAKYRELU IDENTITY TANH
+NUMBER OF NCDE LAYERS 13 9 15
+ACTIVATION FUNCTION OF hα LEAKYRELU LEAKYRELU TANH
+NUMBER OF LAYERS OF H 798 403 128
+MAX. NUMBER OF UNITS OF H 1 1 1
+(b) Optimized hyperparameter values for OptAB and DoseAI Models.
+Table 11: Hyperparameter Tuning of the OptAB and DoseAI Models. Table (a) presents the
+hyperparameter search space, while Table (b) reports the optimal hyperparameter configurations.
+DoseAI is used for training on the synthetic cancer dataset, whereas OptAB is applied to the semi-
+synthetic data set and the real world sepsis dataset from MIMIC-IV.
+22
+A.5.3 Hyperparameter Tuning of IGC-Net
+For hyperparameter tuning of the IGC-Net model, we employ the Hydra implementation of the random
+grid search strategy for computational effciency reasons. Table 10 presents the hyperparameter search
+space (a) and the selected hyperparameter configuration (b) of the IGC-Net model.
+SEARCH SPACE/ DATA SET SYNTHETIC CANCER SEMI-SYNTHETIC MIMIC-IV MIMIC-IV
+TRANSFORMER BLOCKS [1,2] 1 1
+LEARNING RATE (η) [0.01, 0.001, 0.0001] [0.001, 0.0001, 0.0001] [0.001, 0.0001]
+MINIBATCH SIZE [64, 128, 256] [32,64,128, 256,512] [32,64]
+ATTENTION HEADS 1 [1,2,3] [2,3]
+TRANSFORMER UNITS [1dg , 2dg , 3dg , 4dg ] [1dg , 2dg , 3dg , 4dg ] [0.5dg , 1dg ]
+HIDDEN REPRESENTATION SIZE [0.5dg , 1dg , 2dg , 3dg , 4dg ] [1dg , 2dg , 3dg , 4dg ] [0.5dg , 1dg , 2dg ]
+FEED-FORWARD HIDDEN UNITS [0.5dz , 1dz , 2dz , 3dz , 4dz ] [1dz , 2dz , 3dz , 4dz ] [0.5dz , 1dz , 2dz ]
+SEQUENTIAL DROPOUT RATE [0.1, 0.2] [0.1, 0.2] [0.1, 0.2]
+MAX POSITIONAL ENCODING 15 30 15
+NUMBER OF EPOCHS 50 100 100
+(a) Search space for IGC-Net hyperparameters.
+HYPERPARAMETER/DATA SET SYNTHETIC CANCER SEMI-SYNTHETIC MIMIC-IV MIMIC-IV
+TRANSFORMER BLOCKS 2 2 1
+LEARNING RATE 0.01 0.01 0.001
+MINIBATCH SIZE 64 64 64
+ATTENTION HEADS 0.1 1 2
+TRANSFORMER UNITS 32 24 30
+HIDDEN REPRESENTATION SIZE 64 72 30
+FEED-FORWARD HIDDEN UNITS 32 18 30
+SEQUENTIAL DROPOUT RATE 0.1 0.1 0.1
+MAX POSITIONAL ENCODING 15 30 15
+NUMBER OF EPOCHS 50 100 100
+(b) Optimized hyperparameter values for IGC-Net.
+Table 12: Hyperparameter Tuning of the IGC-Net Model. Table (a) presents the hyperparameter
+search space, while Table (b) reports the optimal hyperparameter configurations of the IGC-Net model
+for experiments conducted on the synthetic cancer dataset, the semi-synthetic MIMIC-IV dataset, and
+the real world MIMIC-IV sepsis dataset. The overall input dimension is given by dg = dy + dx + da,
+and dz denotes the hidden representation size of the IGC-Net model.
+23
+A.5.4 Hyperparameter Tuning of SCIP-Net
+For hyperparameter tuning of the SCIP-Net model for the synthetic cancer data and semi-synthetic
+data, we employed the Hydra–Optuna implementation of the Tree-structured Parzen Estimator (TPE).
+For the real sepsis data, we tuned the SCIP-Net model using a random grid search. Hyperparameter
+optimization with Optuna using the Tree-structured Parzen Estimator (TPE) did not yield improved
+or optimal parameter configurations.
+Table 13 summarizes the hyperparameter search space (a) and the selected configurations (b) for
+the synthetic cancer dataset, the semi-synthetic MIMIC-IV sepsis dataset, and the MIMIC-IV sepsis
+dataset.
+SEARCH SPACE MODEL
+WEIGHT NETWORK,
+TREATMENT NETWORK,
+ENCODER
+DECODER
+NEURAL CDE HIDDEN LAYERS [1,2] [1,2]
+LEARNING RATE [0.01,0.001, 0.0001, 0.0001] [0.01,0.001, 0.0001, 0.0001]
+MINIBATCH SIZE [64,128,256] [256,512,1024]
+NEURAL CDE HIDDEN UNITS [0.5,1,2,3,4]dg [1,2,3,4,8,16]dg
+NEURAL CDE DROPOUT RATE [0.1,0.2] [0.1,0.2]
+MAX. GRADIENT NORM [0.5,1,2] [0.5,1.0,2.0,4.0]
+EPOCHS 50 50
+(a) Search space for SCIP-Net hyperparameters.
+PARAMETER / MODEL WEIGHT NETWORK TREATMENT NETWORK ENCODER DECODER
+SYNTHETIC CANCER
+NEURAL CDE HIDDEN LAYERS 2 1 1 2
+LEARNING RATE 0.0001 0.01 0.01 0.001
+MINIBATCH SIZE 128 64 64 256
+NEURAL CDE HIDDEN UNITS 8 12 8 32
+NEURAL CDE DROPOUT RATE 0.1 0.1 0.1 0.1
+MAX. GRADIENT NORM 0.5 0.5 0.5 1
+SEMI-SYNTHETIC MIMIC-IV
+NEURAL CDE HIDDEN LAYERS 1 2 2 2
+LEARNING RATE 0.01 0.01 0.01 0.0001
+MINIBATCH SIZE 64 64 256 256
+NEURAL CDE HIDDEN UNITS 9 12 6 12
+NEURAL CDE DROPOUT RATE 0.1 0.1 0.2 0.2
+MAX. GRADIENT NORM 0.5 0.5 2 1
+MIMIC-IV
+NEURAL CDE HIDDEN LAYERS 2 2 1 2
+LEARNING RATE 0.01 0.01 0.01 0.01
+MINIBATCH SIZE 256 256 256 512
+NEURAL CDE HIDDEN UNITS 42 42 42 84
+NEURAL CDE DROPOUT RATE 0.2 0.1 0.1 0.1
+MAX. GRADIENT NORM 0.5 2.0 2.0 0.5
+(b) Optimized hyperparameter values for SCIP-Net.
+Table 13: Hyperparameter Tuning of the SCIP-Net Model. Table (a) presents the hyperparameter
+search space. Table (b) reports the optimal configurations for the synthetic cancer dataset and the
+semi-synthetic MIMIC-IV sepsis dataset and the real world MIMIC-IV sepsis dataset.
+24
+A.5.5 Hyperparameter Tuning of NODE-Model
+As a baseline model, we implemented a Neural Ordinary Differential Equation (NODE) model using
+the same encoder-LSTM architecture as employed for the ObsNODE model. In contrast to the
+ObsNODE formulation, the latent dynamics are modeled using a standard latent Neural ODE without
+incorporating an observability normal form. The latent dimension was chosen to be identical to that
+of the ObsNODE model to ensure a fair comparison between both approaches.
+For the hyperparameter optimization of the NODE model, we employed Optuna with the Tree-
+structured Parzen Estimator (TPE) sampler. The considered search space and the resulting optimal
+hyperparameter configuration are summarized in Table 14.
+SEARCH SPACE/ DATA SET SYNTHETIC CANCER SEMI-SYNTHETIC MIMIC-IV
+BATCH SIZE {32,64,...,256} [100,250,500,750,1000]
+LEARNING RATE [0.001, 0.0001, 0.00001] [0.001, 0.0001, 0.00001]
+HIDDEN DIMENSION OBSERVER [32,64,128,256] [32,64,128,256]
+HIDDEN DIMENSION NODE [32,64,128,256] [32,64,128,256]
+NUMBER OF LAYERS NODE {1,2,...,10} {1,2,...,10}
+ACTIVATION FUNCTION NODE [LEAKYRELU, TANH, SIGMOID] [LEAKYRELU, TANH, SIGMOID]
+(a) Search space for NODE hyperparameters.
+HYPERPARAMETER/ DATA SET SYNTHETIC CANCER SEMI-SYNTHETIC MIMIC-IV
+BATCH SIZE 96 100
+LEARNING RATE 0.001 0.001
+HIDDEN DIMENSION OBSERVER 256 64
+HIDDEN DIMENSION NODE 64 64
+NUMBER OF LAYERS NODE 8 3
+ACTIVATION FUNCTION NODE SIGMOID LEAKYRELU
+(b) Optimized hyperparameter values for NODE.
+Table 14: Hyperparameter tuning of the NODE model. Hyperparameter search space (a) and
+optimal configuration (b) for the NODE model on the synthetic cancer and semi-synthetic MIMICIV-
+sepsis dataset.
+A.6 Computational efficiency
+For training and hyperparameter optimization of ObsNODE we utilized two Nvidia A100 GPUs,
+each with 40 GB of memory. The same setting was used for the baseline models DoseAI, OptAB and
+SCIP-Net. For IGC-Net, we used a NVIDIA H100 GPU with 96 GB of memory.
+Training of ObsNODE for the optimal hyperparameter values on a single Nvidia A100 GPU took 140
+min for the synthetic cancer data, 49 min for the semi-synthetic data and 65 min for the real world
+sepsis data.
+This is similar to the training times required for the baseline models IGC-Net and SCIP-Net. Training
+OptAB and DoseAI required between 40 and 74 hours, depending on the data set.
+A.7 Declaration of LLM usage
+The core method development in this research does not involve LLMs as any important original, or
+non-standard components.
+25
