@@ -2035,6 +2035,7 @@ angle$ 的符号，统计"违反 $L_fV<0$ 的时间点比例"（只需一次前�
 <!-- daily-lnn-index:start -->
 ## 4. 自动化追踪与待研读队列
 
+- **2026-11-27**：[[docs/daily/2026-11-27_LNN_research_digest.md|每日追踪]]，候选论文 98 篇，仓库 46 个，模型 7 个。
 - **2026-11-26**：[[docs/daily/2026-11-26_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 46 个，模型 13 个。
 - **2026-11-25**：[[docs/daily/2026-11-25_LNN_research_digest.md|每日追踪]]，候选论文 97 篇，仓库 46 个，模型 4 个。
 - **2026-11-24**：[[docs/daily/2026-11-24_LNN_research_digest.md|每日追踪]]，候选论文 96 篇，仓库 45 个，模型 12 个。
@@ -2211,5 +2212,4 @@ angle$ 的符号，统计"违反 $L_fV<0$ 的时间点比例"（一次前向 + `
   - **三条对本仓实现层面的可执行整改**（此前没人写下来过）：① 本仓 `lnn/core/ltc.py` 是"**对 τ 加性、门大→慢**"，`lnn/core/cfc.py` 才与论文 Eq. 5 **同族**（"对率加性、门大→快"）→ **LTC vs CfC 的任何数值对比都自带系统性偏置**；② 本仓 `lnn/core/variants.py:346` 的 `LRCCell` **命名来自 arXiv:2403.08791，实现却是该文要修正的"耦合 LC"**（该文整篇的动机是解耦）→ 不核对源码按名字引用会把耦合版当成解耦版；③ 本仓 `|τ₀|` 是**无约束**可学习参数，训练可把它推大造成时间尺度整体漂移 → 若要分离"液态"与"静态时间尺度"，`|τ₀|` 应被约束或单独归一化。
   - **流水线修复 9 个缺陷**（B1–B9），详见 [[analysis/pipeline_notes/2026-10-26_hf_ipv6_and_pool_sort_fix]]：B1 HF"限流"真因是**本机 IPv6 通路 TLS 被 RST**（退避救不了，需强制 IPv4）；B4 候选池**从未全局排序**（全池第二新的论文排第 48 位）；B5 **下游只读渲染表 = 截断盲区**（本项目已第 3 次复发：选择器 / 索引 / PDF 下载器）；B7 **解释器选择只测 `import torch`**，把 cu130 的 python3 排在 cu126 的前面 → 16 天产物全是 `ok_cpu`，而本机其实有能跑 sm_87 kernel 的 torch；B8 **仓库自己的 Dockerfile 写着与产物相反的 claim**（"PyPI aarch64 wheel 带 sm_87 SASS"）—— 实际 PyPI aarch64 wheel 是 **CPU-only**（99 MB vs x86_64 865 MB），建出来的镜像是 `torch 2.7.0+cpu` → 已加**构建期 CUDA 自检**（不通过即构建失败）+ 镜像**预检失败即跳过**，并把该镜像移出默认候选列表；B9 **静态扫描证实 cu126 的 manylinux aarch64 wheel 里没有 sm_87**（`libtorch_cuda.so` 只有 `sm_80`/`sm_90`，`get_arch_list()` 返回 `[]`）→ 原默认 `TORCH_SPEC=2.10.0+cu126` 本身就是错的，已改走 **Jetson 构建 `linux_aarch64` 的 2.6.0+cu126 直链**（cu126 索引上该标签只有 2.6.0），并保留构建期 `sm_87` 断言作闸门。
   - **Jetson benchmark 首次产出真实 GPU 数据**：`status=ok` / `device=cuda`（此前 16 天全是 CPU 数据），含 tegrastats 功耗与温度（VDD_IN mean 7046 mW、GPU 峰值 53.4 °C），推理步/秒 PDNAPulse 12276 / CfCStyle 11065 / LTC 2378 / GRU 204976。**注意这是 smoke benchmark（合成数据、单种子），不是论文级复现。**
-- **2026-10-25**：[[docs/daily/2026-10-25_LNN_research_digest.md|每日追踪]]，候选论文 93 篇，仓库 42 个，模型 18 个。
 <!-- daily-lnn-index:end -->
